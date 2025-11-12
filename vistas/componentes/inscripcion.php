@@ -166,25 +166,84 @@ kt-aside--fixed kt-page--loading">
 
                             <hr>
 
+                            <!-- Detalles del Programa (oculto inicialmente) -->
+                            <div id="detalle-programa" class="alert alert-info" style="display:none;">
+                                <h5 class="text-primary"><i class="fa fa-info-circle"></i> Detalles del Programa</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Programa:</strong> <span id="detalle-nombre-programa"></span></p>
+                                        <p><strong>Código:</strong> <span id="detalle-codigo"></span></p>
+                                        <p><strong>Duración:</strong> <span id="detalle-duracion"></span></p>
+                                        <p><strong>Módulos:</strong> <span id="detalle-modulos"></span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Costo Total:</strong> <span id="detalle-costo-total" class="text-success font-weight-bold"></span></p>
+                                        <p><strong>Sede:</strong> <span id="detalle-sede"></span></p>
+                                        <p><strong>Fecha Inicio:</strong> <span id="detalle-inicio"></span></p>
+                                        <p><strong>Modalidad:</strong> <span id="detalle-tipo"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
                             <!-- Pago de Matrícula y Módulos -->
                             <div class="form-group row form-group-marginless kt-margin-t-20">
                             <label class="col-lg-2 col-form-label">PAGO MATRÍCULA:</label>
                             <div class="col-lg-3">
                                 <input type="number" class="form-control" name="pagoMatricula" placeholder="Bs." min="0" step="0.01" required>
                                 <div class="invalid-feedback">Ingrese el monto de matrícula.</div>
+                                <small class="form-text text-muted">Pago inicial/matrícula</small>
                             </div>
 
                             <label class="col-lg-2 col-form-label">NÚMERO DE MÓDULOS:</label>
                             <div class="col-lg-2">
-                                <input type="number" class="form-control" name="numModulos" placeholder="Cantidad" min="1" required>
+                                <input type="number" class="form-control" name="numModulos" placeholder="Cantidad" min="1" required readonly>
                                 <div class="invalid-feedback">Ingrese la cantidad de módulos.</div>
                             </div>
 
                             <label class="col-lg-1 col-form-label">PAGO MÓDULOS:</label>
                             <div class="col-lg-2">
-                                <input type="number" class="form-control" name="pagoModulos" placeholder="Bs." min="0" step="0.01" required>
+                                <input type="number" class="form-control" name="pagoModulos" placeholder="Bs." min="0" step="0.01" required readonly>
                                 <div class="invalid-feedback">Ingrese el monto total de módulos.</div>
                             </div>
+                            </div>
+
+                            <!-- Campo oculto para costo total -->
+                            <input type="hidden" name="costoTotal" value="0">
+
+                            <!-- Costo por Módulo Calculado -->
+                            <div class="form-group row">
+                                <div class="col-lg-12 text-center">
+                                    <div class="alert alert-success" style="display:inline-block;">
+                                        <h5 class="mb-0">
+                                            <i class="fa fa-calculator"></i> Costo por Módulo:
+                                            <span id="costo-por-modulo" class="font-weight-bold text-success">Bs. 0.00</span>
+                                        </h5>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preview del Plan de Pagos -->
+                            <div id="plan-pagos-preview" style="display:none;">
+                                <hr>
+                                <h5 class="text-info"><i class="fa fa-calendar-alt"></i> Preview del Plan de Pagos</h5>
+                                <div class="table-responsive">
+                                    <table id="tabla-plan-pagos" class="table table-bordered table-hover table-striped">
+                                        <thead class="thead-dark">
+                                            <tr>
+                                                <th class="text-center">#</th>
+                                                <th>Módulo</th>
+                                                <th class="text-right">Monto</th>
+                                                <th class="text-center">Fecha Vencimiento</th>
+                                                <th class="text-center">Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Se llena con JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
 
                             <hr>
@@ -214,8 +273,10 @@ kt-aside--fixed kt-page--loading">
 
   <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="vistas/recursos/assets/js/scripts/programa.js"></script>
   <script src="vistas/recursos/assets/js/scripts/estudiante.js"></script>
+  <script src="vistas/recursos/assets/js/scripts/inscripcion.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
   <?php 
