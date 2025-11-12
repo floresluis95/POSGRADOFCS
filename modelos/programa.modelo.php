@@ -5,10 +5,50 @@ class ProgramasModelos
 {
     public static function ListaProgramaModelo()
     {
-        $stmt = Conexion::Conectar()->prepare("SELECT * FROM programa ");
+        $stmt = Conexion::Conectar()->prepare("SELECT * FROM programa ORDER BY FechaInicio DESC");
         $stmt -> execute();
         return $stmt -> fetchAll();
         $stmt =null;
+    }
+
+    // Buscar programas con filtros
+    public static function BuscarProgramasConFiltros($grado = null, $fechaInicio = null, $fechaFin = null)
+    {
+        $sql = "SELECT * FROM programa WHERE 1=1";
+        $params = array();
+
+        // Filtro por grado académico
+        if ($grado !== null && $grado !== '') {
+            $sql .= " AND GradoAcademico = :grado";
+            $params[':grado'] = $grado;
+        }
+
+        // Filtro por fecha inicio (desde)
+        if ($fechaInicio !== null && $fechaInicio !== '') {
+            $sql .= " AND FechaInicio >= :fechaInicio";
+            $params[':fechaInicio'] = $fechaInicio;
+        }
+
+        // Filtro por fecha fin (hasta)
+        if ($fechaFin !== null && $fechaFin !== '') {
+            $sql .= " AND FechaInicio <= :fechaFin";
+            $params[':fechaFin'] = $fechaFin;
+        }
+
+        $sql .= " ORDER BY FechaInicio DESC";
+
+        $stmt = Conexion::Conectar()->prepare($sql);
+
+        // Vincular parámetros
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, PDO::PARAM_STR);
+        }
+
+        $stmt->execute();
+        $resultado = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = null;
+
+        return $resultado;
     }
 
    public static function RegistrarProgramaModelo($datos)
@@ -17,8 +57,8 @@ class ProgramasModelos
     $codigo = self::GenerarCodigo($datos["Sede"], $datos["GradoAcademico"], $datos["FechaInicio"]);
 
     $stmt = Conexion::conectar()->prepare("
-        INSERT INTO programa (NombrePrograma, GradoAcademico, Codigo, DuracionMeses, Modulos, FechaInicio, Sede, Costo, Detalle, Estado)
-        VALUES (:nombre, :grado, :codigo, :duracionmeses, :modulos, :fecha, :sede, :costo, :detalle, 1)
+        INSERT INTO programa (NombrePrograma, GradoAcademico, Codigo, DuracionMeses, Modulos, FechaInicio, Sede, Costo, CostoMatricula, Detalle, Estado)
+        VALUES (:nombre, :grado, :codigo, :duracionmeses, :modulos, :fecha, :sede, :costo, :costomatricula, :detalle, 'ACTIVO')
     ");
 
     $stmt->bindParam(":nombre", $datos["NombrePrograma"], PDO::PARAM_STR);
@@ -29,6 +69,7 @@ class ProgramasModelos
     $stmt->bindParam(":fecha", $datos["FechaInicio"], PDO::PARAM_STR);
     $stmt->bindParam(":sede", $datos["Sede"], PDO::PARAM_STR);
     $stmt->bindParam(":costo", $datos["Costo"], PDO::PARAM_INT);
+    $stmt->bindParam(":costomatricula", $datos["CostoMatricula"], PDO::PARAM_STR);
     $stmt->bindParam(":detalle", $datos["Detalle"], PDO::PARAM_STR);
     if ($stmt->execute()) {
         return "exitoso";
@@ -102,6 +143,44 @@ private static function GenerarCodigo($sede, $grado, $fechaInicio)
         $stmt -> execute();
         return $stmt -> fetchAll();
         $stmt =null;
+    }
+
+    // Actualizar programa existente
+    public static function ActualizarProgramaModelo($datos)
+    {
+        $stmt = Conexion::conectar()->prepare("
+            UPDATE programa
+            SET NombrePrograma = :nombre,
+                GradoAcademico = :grado,
+                DuracionMeses = :duracionmeses,
+                Modulos = :modulos,
+                FechaInicio = :fecha,
+                Sede = :sede,
+                Costo = :costo,
+                CostoMatricula = :costomatricula,
+                Detalle = :detalle
+            WHERE ProgramaID = :id
+        ");
+
+        $stmt->bindParam(":id", $datos["ProgramaID"], PDO::PARAM_INT);
+        $stmt->bindParam(":nombre", $datos["NombrePrograma"], PDO::PARAM_STR);
+        $stmt->bindParam(":grado", $datos["GradoAcademico"], PDO::PARAM_STR);
+        $stmt->bindParam(":duracionmeses", $datos["DuracionMeses"], PDO::PARAM_INT);
+        $stmt->bindParam(":modulos", $datos["Modulos"], PDO::PARAM_INT);
+        $stmt->bindParam(":fecha", $datos["FechaInicio"], PDO::PARAM_STR);
+        $stmt->bindParam(":sede", $datos["Sede"], PDO::PARAM_STR);
+        $stmt->bindParam(":costo", $datos["Costo"], PDO::PARAM_STR);
+        $stmt->bindParam(":costomatricula", $datos["CostoMatricula"], PDO::PARAM_STR);
+        $stmt->bindParam(":detalle", $datos["Detalle"], PDO::PARAM_STR);
+
+        if ($stmt->execute()) {
+            return "exitoso";
+        } else {
+            print_r($stmt->errorInfo());
+            return "error";
+        }
+
+        $stmt = null;
     }  
 
     //detalle programa
@@ -117,8 +196,8 @@ private static function GenerarCodigo($sede, $grado, $fechaInicio)
 class ProgramaEstadoModelo
 {
   public static function SubirProgramaModelo($id)
-{       
-    $stmt = Conexion::conectar()->prepare("UPDATE programa SET Estado = 1 WHERE ProgramaID = :id");
+{
+    $stmt = Conexion::conectar()->prepare("UPDATE programa SET Estado = 'ACTIVO' WHERE ProgramaID = :id");
     $stmt->bindParam(":id", $id, PDO::PARAM_INT);
 
     if ($stmt->execute()) {
@@ -131,11 +210,11 @@ class ProgramaEstadoModelo
 
     $stmt = null;
 }
-     
+
     public static function BajarProgramaModelo($id) {
-        $stmt = Conexion::conectar()->prepare("UPDATE programa SET Estado = 0 WHERE ProgramaID = :id");
+        $stmt = Conexion::conectar()->prepare("UPDATE programa SET Estado = 'INACTIVO' WHERE ProgramaID = :id");
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
-        
+
         if ($stmt->execute()) {
             return "exitoso";
         } else {
