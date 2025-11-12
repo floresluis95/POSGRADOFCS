@@ -12,7 +12,7 @@ class ProgramasControladores
             echo '</pre>';*/
       foreach ($listaprogramas as $key => $programa) 
 {
-    $i++;
+ 
     echo '<tr>
         <td width="50" height="50">'.$programa['ProgramaID'].'</td>
         <td width="50" height="50">'.$programa["NombrePrograma"].'</td>

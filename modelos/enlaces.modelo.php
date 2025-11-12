@@ -8,27 +8,9 @@
                 $enlace == 'salir' ||
                 $enlace == 'usuario' ||
                 $enlace == 'kit' ||
-                $enlace == 'cilindro'||
-                $enlace == 'nentrega'||
-                $enlace == 'nentregac'||
                 $enlace == 'salir' ||
                 $enlace == 'usuario'||
                 $enlace == '404'||
-                $enlace == 'tecnico'||
-                $enlace == 'solicitud'||
-                $enlace == 'notadetalle'||
-                $enlace == 'notadetallec'||
-                $enlace == 'personal'||
-                $enlace == 'prtrabajo'||
-                $enlace == 'sconversion'||
-                $enlace == 'asignados'||
-                $enlace == 'asignadostec'||
-                $enlace == 'concluidos'||
-                $enlace == 'consultas'||
-                $enlace == 'ckit'||
-                $enlace == 'ccilindro'||
-                $enlace == 'prparticular'||
-                $enlace == 'trabajos'||
                 $enlace == 'estudiantes'||
                 $enlace == 'programas'||
                 $enlace == 'inscripcion'||
