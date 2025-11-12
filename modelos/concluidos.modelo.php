@@ -2,18 +2,17 @@
     require_once 'conexion.modelo.php';
     class ConcluidosModelos
     {
-        public function ListaTrabajosConcluidos()
+        public static function ListaTrabajosConcluidos()
         {
             $stmt = Conexion::Conectar()->prepare("SELECT s.codsolicitud, s.fechasolicitud, v.nroplaca, ds.seriekit, ds.seriecilindro, s.estado, ds.fechatrabajo, p.Nombres,p.ApellidoPaterno, u.Tipo, s.fechaconcluido FROM usuario u INNER JOIN dsolicitud ds on u.IdPersonal=ds.idtecnico INNER JOIN solicitud s on s.codsolicitud=ds.codsolicitud INNER JOIN personal p on p.IdPersonal=u.IdPersonal INNER JOIN propvehiculo pr on pr.idpropvehiculo=s.idpropvehiculo INNER JOIN vehiculo v on v.idvehiculo=pr.idvehiculo WHERE s.estado='TERMINADO' GROUP by (s.codsolicitud)");
             $stmt -> execute();
             return $stmt -> fetchAll();
-            $stmt -> close();
             $stmt = null;
         }
     }
     class pdfconcluidoModelos
     {
-        public function concluidoModelo($codigo)
+        public static function concluidoModelo($codigo)
         {
             $stmt = Conexion::Conectar()->prepare("SELECT * FROM (solicitud s INNER JOIN dsolicitud ds ON s.codsolicitud=ds.codsolicitud)
             inner JOIN detalle de on de.dsolicitudt=s.codsolicitud
@@ -30,10 +29,10 @@
             INNER JOIN recepcionkitkit rek on rek.codrecepcion=k.codrecpecion
             INNER JOIN recepcioncilindro rc on rc.codrecepcioncil=cil.codrecpecioncil
             INNER JOIN personal p on p.IdPersonal= ds.idtecnico
-            WHERE s.codsolicitud='$codigo' GROUP by s.codsolicitud");
+            WHERE s.codsolicitud=:codigo GROUP by s.codsolicitud");
+            $stmt->bindParam(":codigo", $codigo, PDO::PARAM_INT);
             $stmt -> execute();
             return $stmt -> fetchAll();
-            $stmt -> close();
             $stmt = null;
         }
     }

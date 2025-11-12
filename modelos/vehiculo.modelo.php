@@ -2,25 +2,24 @@
     require_once 'conexion.modelo.php';
     class VehiculoModelos
     {
-        public function BuscarVehiculoModelo($busplaca)
+        public static function BuscarVehiculoModelo($busplaca)
         {
-            $stmt = Conexion::Conectar()->prepare("SELECT * FROM `vehiculo` WHERE nroplaca = $busplaca");
+            $stmt = Conexion::Conectar()->prepare("SELECT * FROM `vehiculo` WHERE nroplaca = :busplaca");
+            $stmt -> bindParam(":busplaca", $busplaca, PDO::PARAM_STR);
             $stmt -> execute();
             return $stmt -> fetch();
-            $stmt -> close();
-            $stmt = null;
         }
-        public function busv($nroplaca)
+
+        public static function busv($nroplaca)
         {
-            $stmt = Conexion::Conectar()->prepare("SELECT `idvehiculo`, `nroplaca`, `marca`, `tipo`, `clase`, `modelo`, 
-            `tipomotor`, `cilindrada`, `tipotransporte`, `estado` FROM `vehiculo` WHERE nroplaca='$nroplaca'");
+            $stmt = Conexion::Conectar()->prepare("SELECT `idvehiculo`, `nroplaca`, `marca`, `tipo`, `clase`, `modelo`,
+            `tipomotor`, `cilindrada`, `tipotransporte`, `estado` FROM `vehiculo` WHERE nroplaca=:nroplaca");
+            $stmt -> bindParam(":nroplaca", $nroplaca, PDO::PARAM_STR);
             $stmt -> execute();
             return $stmt -> fetch();
-            $stmt -> close();
-            $stmt = null;
         }
         
-        public function InsertarVehiculoModelo($DatosVehiculo)
+        public static function InsertarVehiculoModelo($DatosVehiculo)
         {
             $stmt = Conexion::Conectar()->prepare("INSERT INTO `vehiculo`(`nroplaca`, `marca`, `tipo`, `clase`, `modelo`, `tipomotor`, `cilindrada`, `tipotransporte`) 
                                     VALUES (:nroplaca, :marca, :tipo, :clase, :modelo, :tipomotor, :cilindrada, :tipotransporte)");
@@ -43,7 +42,7 @@
             }
         }
 
-        public function InsertarMarcaModelo($nmmarca)
+        public static function InsertarMarcaModelo($nmmarca)
         {
             $stmt = Conexion::Conectar()->prepare("INSERT INTO `marca`(`descmarca`)
              VALUES (:descmarca)");

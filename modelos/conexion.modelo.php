@@ -1,9 +1,15 @@
 <?php
     class Conexion
     {
-        public function Conectar()
+        public static function Conectar()
         {
-            $link = new PDO("mysql:host=localhost;dbname=proyecto", "root", "12345678");
-            return $link;
+            try {
+                $link = new PDO("mysql:host=localhost;dbname=proyecto", "root", "");
+                $link->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $link->exec("set names utf8");
+                return $link;
+            } catch (PDOException $e) {
+                die("Error de conexión: " . $e->getMessage());
+            }
         }
     }

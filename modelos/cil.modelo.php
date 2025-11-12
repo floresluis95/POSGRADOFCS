@@ -1,44 +1,43 @@
 <?php
     require_once 'conexion.modelo.php';
-  
+
     class MarcaKitModelos
     {
-        public function ListaMarcaKitModelo()
+        public static function ListaMarcaKitModelo()
         {
             $stmt = Conexion::Conectar()->prepare("SELECT * FROM `marcakit`");
             $stmt -> execute();
             return $stmt -> fetchAll();
-            $stmt -> close();
             $stmt = null;
         }
-        public function ListaDetalleKitModelo($CodRecepcion)
+        public static function ListaDetalleKitModelo($CodRecepcion)
         {
-            $stmt = Conexion::Conectar()->prepare("SELECT k.seriekit, mk.descripcion, k.tipo, k.estado FROM kit k INNER JOIN marcakit mk on k.codmarca= mk.codmarca WHERE codrecpecion = '$CodRecepcion'");
+            $stmt = Conexion::Conectar()->prepare("SELECT k.seriekit, mk.descripcion, k.tipo, k.estado FROM kit k INNER JOIN marcakit mk on k.codmarca= mk.codmarca WHERE codrecpecion = :CodRecepcion");
+            $stmt->bindParam(":CodRecepcion", $CodRecepcion, PDO::PARAM_INT);
             $stmt -> execute();
             return $stmt -> fetchAll();
-            $stmt -> close();
             $stmt = null;
         }
-        
-        public function InsertarMarcaKitModelo($nmkit)
+
+        public static function InsertarMarcaKitModelo($nmkit)
         {
-            $stmt = Conexion::Conectar()->prepare("INSERT INTO `marcakit`(`descripcion`, `estado`) 
+            $stmt = Conexion::Conectar()->prepare("INSERT INTO `marcakit`(`descripcion`, `estado`)
             VALUES (:descripcion,:estado)");
             $stmt -> bindParam(":descripcion", $nmkit['descripcion'], PDO::PARAM_STR);
             $stmt -> bindParam(":estado", $nmkit['estado'], PDO::PARAM_INT);
             if ($stmt -> execute())
             {
                 return 'exitoso';
-                
+
             }
-            else 
+            else
             {
                 return 'error';
             }
         }
-        public function InsertaKitModelo($nmkit)
+        public static function InsertaKitModelo($nmkit)
         {
-            $stmt = Conexion::Conectar()->prepare("INSERT INTO `kit`(`seriekit`, `tipo`, `estado`, `codmarca`, `codrecpecion`) 
+            $stmt = Conexion::Conectar()->prepare("INSERT INTO `kit`(`seriekit`, `tipo`, `estado`, `codmarca`, `codrecpecion`)
             VALUES (:seriekit, :tipo, :estado, :codmarca, :codrecpecion)");
             $stmt -> bindParam(":seriekit", $nmkit['seriekit'], PDO::PARAM_STR);
             $stmt -> bindParam(":tipo", $nmkit['tipo'], PDO::PARAM_STR);
@@ -48,64 +47,62 @@
             if ($stmt -> execute())
             {
                 return 'exitoso';
-                
+
             }
-            else 
+            else
             {
                 return 'error';
             }
         }
-      
 
-        public function RegistrarnotakitModelo($nmkit)
+
+        public static function RegistrarnotakitModelo($nmkit)
         {
             $stmt = Conexion::Conectar()->prepare("INSERT INTO `recepcionkitkit`(`notadeentrega`, `idusuario`)
              VALUES (:notadeentrega, :idusuario )");
             $stmt -> bindParam(":notadeentrega", $nmkit['notadeentrega'], PDO::PARAM_STR);
             $stmt -> bindParam(":idusuario", $nmkit['idusuario'], PDO::PARAM_INT);
-           
+
 
             if ($stmt -> execute())
             {
                 return 'exitoso';
-                
+
             }
-            else 
+            else
             {
                 return 'error';
             }
         }
 
-        public function RegistrarNotaEntregaModelo($NotaEntrega, $IdPersonal)
+        public static function RegistrarNotaEntregaModelo($NotaEntrega, $IdPersonal)
         {
             $stmt = Conexion::Conectar()->prepare("INSERT INTO `recepcionkitkit` (`notadeentrega`, `idusuario`)
-             VALUES ('$NotaEntrega', '$IdPersonal' )");
-
+             VALUES (:NotaEntrega, :IdPersonal )");
+            $stmt->bindParam(":NotaEntrega", $NotaEntrega, PDO::PARAM_STR);
+            $stmt->bindParam(":IdPersonal", $IdPersonal, PDO::PARAM_INT);
             return ($stmt -> execute()) ? 'exitoso' : 'error';
         }
-        public function RegistrarNotaEntregacilModelo($NotaEntrega, $IdPersonal)
+        public static function RegistrarNotaEntregacilModelo($NotaEntrega, $IdPersonal)
         {
             $stmt = Conexion::Conectar()->prepare("INSERT INTO `recepcioncilindro` (`notadeentrega`, `idusuario`)
-             VALUES ('$NotaEntrega', '$IdPersonal' )");
-           
+             VALUES (:NotaEntrega, :IdPersonal )");
+            $stmt->bindParam(":NotaEntrega", $NotaEntrega, PDO::PARAM_STR);
+            $stmt->bindParam(":IdPersonal", $IdPersonal, PDO::PARAM_INT);
             return ($stmt -> execute()) ? 'exitoso' : 'error';
         }
-       
+
     }
  /*Notas d entrega*/
     class ListaNotaModelos
     {
-        public function ListaNotaModelo()
+        public static function ListaNotaModelo()
         {
-            $stmt = Conexion::Conectar()->prepare("SELECT rk.fecharecepcion,rk.notadeentrega,p.ApellidoPaterno,p.ApellidoMaterno,p.Nombres, u.tipo FROM personal p INNER JOIN usuario u ON p.IdPersonal=u.IdPersonal 
+            $stmt = Conexion::Conectar()->prepare("SELECT rk.fecharecepcion,rk.notadeentrega,p.ApellidoPaterno,p.ApellidoMaterno,p.Nombres, u.tipo FROM personal p INNER JOIN usuario u ON p.IdPersonal=u.IdPersonal
             INNER JOIN recepcionkitkit rk ON u.IdPersonal=rk.idusuario");
             $stmt -> execute();
             return $stmt -> fetchAll();
-            $stmt -> close();
             $stmt = null;
         }
-     
-    }
-    
-    
 
+    }

@@ -1,8 +1,8 @@
 <?php
   require_once 'conexion.modelo.php';
 class NotaEntregaModelos
-{ 
-    public function RegistrarNotaKitModelo($nmkit)
+{
+    public static function RegistrarNotaKitModelo($nmkit)
     {
         $stmt = Conexion::Conectar()->prepare("INSERT INTO `recepcionkitkit`(`notadeentrega`, `idusuario`)
         VALUES (:notadeentrega, :idusuario )");
@@ -11,35 +11,34 @@ class NotaEntregaModelos
         if ($stmt -> execute())
         {
             return 'exitoso';
-            
+
         }
-        else 
+        else
         {
             return 'error';
         }
     }
-    public function ListaNotaKitModelo()
+    public static function ListaNotaKitModelo()
     {
-        $stmt = Conexion::Conectar()->prepare("SELECT rk.codrecepcion,rk.fecharecepcion,rk.notadeentrega,p.ApellidoPaterno,p.ApellidoMaterno,p.Nombres, u.tipo FROM personal p INNER JOIN usuario u ON p.IdPersonal=u.IdPersonal 
+        $stmt = Conexion::Conectar()->prepare("SELECT rk.codrecepcion,rk.fecharecepcion,rk.notadeentrega,p.ApellidoPaterno,p.ApellidoMaterno,p.Nombres, u.tipo FROM personal p INNER JOIN usuario u ON p.IdPersonal=u.IdPersonal
         INNER JOIN recepcionkitkit rk ON u.IdPersonal=rk.idusuario ORDER BY rk.fecharecepcion DESC");
         $stmt -> execute();
         return $stmt -> fetchAll();
-        $stmt -> close();
         $stmt = null;
     }
 
-    public function ListadetalleKitModelo($idnotadetalle)
+    public static function ListadetalleKitModelo($idnotadetalle)
     {
-        $stmt = Conexion::Conectar()->prepare("SELECT k.seriekit,mk.descripcion, k.tipo ,rc.notadeentrega FROM recepcionkitkit rc ,kit k ,marcakit mk 
-        WHERE rc.codrecepcion=k.codrecpecion and k.codmarca=mk.codmarca and rc.codrecepcion='$idnotadetalle'");
+        $stmt = Conexion::Conectar()->prepare("SELECT k.seriekit,mk.descripcion, k.tipo ,rc.notadeentrega FROM recepcionkitkit rc ,kit k ,marcakit mk
+        WHERE rc.codrecepcion=k.codrecpecion and k.codmarca=mk.codmarca and rc.codrecepcion=:idnotadetalle");
+        $stmt->bindParam(":idnotadetalle", $idnotadetalle, PDO::PARAM_INT);
         $stmt -> execute();
         return $stmt -> fetchAll();
-        $stmt -> close();
         $stmt = null;
     }
 
     //notacilindros
-    public function RegistrarNotaCilModelo($nmkit)
+    public static function RegistrarNotaCilModelo($nmkit)
     {
         $stmt = Conexion::Conectar()->prepare("INSERT INTO `recepcioncilindro`(`notadeentrega`, `idusuario`)
         VALUES (:notadeentrega, :idusuario )");
@@ -48,40 +47,40 @@ class NotaEntregaModelos
         if ($stmt -> execute())
         {
             return 'exitoso';
-            
+
         }
-        else 
+        else
         {
             return 'error';
         }
     }
 
 
-    public function RegistrarNotaEntregacilModelo($NotaEntrega, $IdPersonal)
+    public static function RegistrarNotaEntregacilModelo($NotaEntrega, $IdPersonal)
     {
         $stmt = Conexion::Conectar()->prepare("INSERT INTO `recepcioncilindro` (`notadeentrega`, `idusuario`)
-         VALUES ('$NotaEntrega', '$IdPersonal' )");
-       
+         VALUES (:NotaEntrega, :IdPersonal )");
+        $stmt->bindParam(":NotaEntrega", $NotaEntrega, PDO::PARAM_STR);
+        $stmt->bindParam(":IdPersonal", $IdPersonal, PDO::PARAM_INT);
         return ($stmt -> execute()) ? 'exitoso' : 'error';
     }
 
 
-    public function ListaNotacilModelo()
+    public static function ListaNotacilModelo()
     {
-        $stmt = Conexion::Conectar()->prepare("SELECT rc.codrecepcioncil, rc.fecharecepcioncil,rc.notadeentrega,p.ApellidoPaterno,p.ApellidoMaterno,p.Nombres, u.Tipo FROM personal P INNER JOIN usuario U ON P.IdPersonal=U.IdPersonal 
+        $stmt = Conexion::Conectar()->prepare("SELECT rc.codrecepcioncil, rc.fecharecepcioncil,rc.notadeentrega,p.ApellidoPaterno,p.ApellidoMaterno,p.Nombres, u.Tipo FROM personal P INNER JOIN usuario U ON P.IdPersonal=U.IdPersonal
         INNER JOIN recepcioncilindro rc on u.IdPersonal=rc.idusuario  ORDER BY rc.fecharecepcioncil DESC");
         $stmt -> execute();
         return $stmt -> fetchAll();
-        $stmt -> close();
         $stmt = null;
     }
-    public function ListadetalleCilModelo($idnotadetallecil)
+    public static function ListadetalleCilModelo($idnotadetallecil)
     {
-        $stmt = Conexion::Conectar()->prepare("SELECT rc.codrecepcioncil, c.seriecilindro ,mc.descripcioncil, c.capacidad,c.aofab , rc.notadeentrega FROM cilindro c, marcacilindro mc ,recepcioncilindro rc 
-        WHERE c.codrecpecioncil=rc.codrecepcioncil and c.codmarcacil=mc.codmarcacil and rc.codrecepcioncil='$idnotadetallecil'");
+        $stmt = Conexion::Conectar()->prepare("SELECT rc.codrecepcioncil, c.seriecilindro ,mc.descripcioncil, c.capacidad,c.aofab , rc.notadeentrega FROM cilindro c, marcacilindro mc ,recepcioncilindro rc
+        WHERE c.codrecpecioncil=rc.codrecepcioncil and c.codmarcacil=mc.codmarcacil and rc.codrecepcioncil=:idnotadetallecil");
+        $stmt->bindParam(":idnotadetallecil", $idnotadetallecil, PDO::PARAM_INT);
         $stmt -> execute();
         return $stmt -> fetchAll();
-        $stmt -> close();
         $stmt = null;
     }
     
@@ -90,20 +89,20 @@ class NotaEntregaModelos
 }
 class NotaExistenteModelos
 {
-    public function NotaKitExistenteModelo($NotaEntrega)
+    public static function NotaKitExistenteModelo($NotaEntrega)
     {
-        $stmt = Conexion::Conectar()->prepare("SELECT `codrecepcion`, `fecharecepcion`, `notadeentrega`, `idusuario` FROM `recepcionkitkit` WHERE notadeentrega='$NotaEntrega'");
+        $stmt = Conexion::Conectar()->prepare("SELECT `codrecepcion`, `fecharecepcion`, `notadeentrega`, `idusuario` FROM `recepcionkitkit` WHERE notadeentrega=:NotaEntrega");
+        $stmt->bindParam(":NotaEntrega", $NotaEntrega, PDO::PARAM_STR);
         $stmt -> execute();
         return $stmt -> fetch();
-        $stmt -> close();
         $stmt = null;
     }
-    public function NotaCitExistenteModelo($NotaEntregacil)
+    public static function NotaCitExistenteModelo($NotaEntregacil)
     {
-        $stmt = Conexion::Conectar()->prepare("SELECT `codrecepcioncil`, `fecharecepcioncil`, `notadeentrega`, `idusuario` FROM `recepcioncilindro` WHERE notadeentrega='$NotaEntregacil'");
+        $stmt = Conexion::Conectar()->prepare("SELECT `codrecepcioncil`, `fecharecepcioncil`, `notadeentrega`, `idusuario` FROM `recepcioncilindro` WHERE notadeentrega=:NotaEntregacil");
+        $stmt->bindParam(":NotaEntregacil", $NotaEntregacil, PDO::PARAM_STR);
         $stmt -> execute();
         return $stmt -> fetch();
-        $stmt -> close();
         $stmt = null;
     }
 }

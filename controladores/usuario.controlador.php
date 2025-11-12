@@ -137,15 +137,16 @@
                     );
                 
                     $InsertarPersonal = UsuarioModelos::InsertarPersonalModelo($TablaPersonal, $DatosPersonal);
-                    
+
                     // La contraseña del usuario sera igual a su Cedula de Identidad
-                    $encriptar = crypt($_POST['ci'], '$2a$07$asxx54ahjppf45sd87a5a4dDDGsystemdev$');
+                    // Usar password_hash con bcrypt (más seguro que crypt)
+                    $encriptar = password_hash($_POST['ci'], PASSWORD_BCRYPT, ['cost' => 12]);
 
                     // Enviar datos del Usuario
                     $TablaUsuario = 'usuario';
 
                     $DatosModelo = array(
-                        
+
                         "IdPersonal" => $IdPersonal,
                         "Usuario" => $_POST['usuario'],
                         "Password" => $encriptar,

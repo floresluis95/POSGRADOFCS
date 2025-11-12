@@ -1,7 +1,7 @@
 <?php
     class EnlacesModelos
     {
-        public function EnlacesModelo($enlace)
+        public static function EnlacesModelo($enlace)
         {
             if($enlace == 'ingreso' ||
                 $enlace == 'panel' ||

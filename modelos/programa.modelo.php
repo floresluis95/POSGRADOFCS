@@ -3,12 +3,11 @@
   //PROGRAMAS
 class ProgramasModelos
 {
-    public function ListaProgramaModelo()
+    public static function ListaProgramaModelo()
     {
         $stmt = Conexion::Conectar()->prepare("SELECT * FROM programa ");
         $stmt -> execute();
         return $stmt -> fetchAll();
-        $stmt ->close();
         $stmt =null;
     }
 
@@ -96,12 +95,12 @@ private static function GenerarCodigo($sede, $grado, $fechaInicio)
     $codigo = "{$prefijoSede}-{$prefijoGrado}-{$total}-{$anio}";
     return $codigo;
 }
-    public function Buscarprogramamodelo($nombreprograma)
+    public static function Buscarprogramamodelo($nombreprograma)
     {
-        $stmt =conexion::Conectar()->prepare("SELECT * FROM `programa`where NombrePrograma= `$nombreprograma`");
+        $stmt =conexion::Conectar()->prepare("SELECT * FROM `programa`where NombrePrograma= :nombreprograma");
+        $stmt->bindParam(":nombreprograma", $nombreprograma, PDO::PARAM_STR);
         $stmt -> execute();
         return $stmt -> fetchAll();
-        $stmt ->close();
         $stmt =null;
     }  
 
@@ -143,7 +142,6 @@ class ProgramaEstadoModelo
             return "error";
         }
 
-        $stmt->close();
         $stmt = null;
     }
    

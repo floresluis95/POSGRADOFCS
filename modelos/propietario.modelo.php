@@ -2,15 +2,14 @@
     require_once 'conexion.modelo.php';
     class PropietarioModelos
     {
-        public function BuscarPropietarioModelo($busplaca)
+        public static function BuscarPropietarioModelo($busplaca)
         {
-            $stmt = Conexion::Conectar()->prepare("SELECT * FROM `vehiculo` WHERE nroplaca = $busplaca");
+            $stmt = Conexion::Conectar()->prepare("SELECT * FROM `vehiculo` WHERE nroplaca = :busplaca");
+            $stmt -> bindParam(":busplaca", $busplaca, PDO::PARAM_STR);
             $stmt -> execute();
             return $stmt -> fetch();
-            $stmt -> close();
-            $stmt = null;
         }
-        public function RegistarPropietarioModelo($DatosPropietario)
+        public static function RegistarPropietarioModelo($DatosPropietario)
         {
             $stmt = Conexion::Conectar()->prepare("INSERT INTO `propietario`(`ci`, `nombre`, `paterno`, `materno`, `telefono`, `estado`) 
             VALUES (:ci, :nombre, :paterno, :materno, :telefono, :estado)");
@@ -29,21 +28,19 @@
                 return 'error';
             }
         }
-        public function ListaPropietarioModelo()
+        public static function ListaPropietarioModelo()
         {
             $stmt = Conexion::Conectar()->prepare("SELECT `idpropietaro`, `ci`, `nombre`, `paterno`, `materno`, `telefono`, `estado` FROM `propietario`");
             $stmt -> execute();
             return $stmt -> fetchAll();
-            $stmt -> close();
-            $stmt = null;
         }
-        public function buscarcliente($ci)
+
+        public static function buscarcliente($ci)
         {
-            $stmt = Conexion::Conectar()->prepare("SELECT `idpropietaro`, `ci`, `nombre`, `paterno`, `materno`, `telefono`, `estado` FROM `propietario` WHERE ci='$ci'");
+            $stmt = Conexion::Conectar()->prepare("SELECT `idpropietaro`, `ci`, `nombre`, `paterno`, `materno`, `telefono`, `estado` FROM `propietario` WHERE ci=:ci");
+            $stmt -> bindParam(":ci", $ci, PDO::PARAM_STR);
             $stmt -> execute();
             return $stmt -> fetch();
-            $stmt -> close();
-            $stmt = null;
         }
 
     }
