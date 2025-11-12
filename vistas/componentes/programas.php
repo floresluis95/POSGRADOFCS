@@ -213,7 +213,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                       </div>
 
                     <div class="row">
-                      <div class="col-md-6">
+                      <div class="col-md-4">
                         <div class="modal-body">
                           <?php $fecha_minima = date('Y-m-d'); ?>
                           <label>FECHA DE INICIO</label>
@@ -221,10 +221,16 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                         </div>
                       </div>
 
-                      <div class="col-md-6">
+                      <div class="col-md-4">
                         <div class="modal-body">
-                          <label>COSTO</label>
+                          <label>COSTO DEL PROGRAMA</label>
                           <input type="number" class="form-control" name="Costo" step="0.01" required>
+                        </div>
+                      </div>
+                       <div class="col-md-4">
+                        <div class="modal-body">
+                          <label>COSTO DE LA MATRICULA</label>
+                          <input type="number" class="form-control" name="Costom" step="0.01" required>
                         </div>
                       </div>
                     </div>

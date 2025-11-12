@@ -1,6 +1,6 @@
 
  <?php 
-if ($_SESSION["Tipo"] == "GER") {
+if ($_SESSION["Tipo"] == "ADM") {
  ?>
  <div id="kt_header" class="kt-header  kt-header--fixed " data-ktheader-minimize="on">
           <div class="kt-container  kt-container--fluid ">
@@ -85,7 +85,7 @@ if ($_SESSION["Tipo"] == "GER") {
  ?>
 
 <?php 
-if ($_SESSION["Tipo"] == "ADM") {
+if ($_SESSION["Tipo"] == "SEC") {
  ?>
 <div id="kt_header" class="kt-header  kt-header--fixed " data-ktheader-minimize="on">
           <div class="kt-container  kt-container--fluid ">
