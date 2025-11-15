@@ -89,13 +89,8 @@ kt-aside--fixed kt-page--loading">
                             DATOS DEL ESTUDIANTE
                           </h3>
                         </div>
-                        <?php 
-                          $UltimaSolicitud = HeredadoModelos::UltimoIdModelo('codsolicitud', 'solicitud') + 1; 
-                        ?>
-                        <h3 class="float-right">
-                          <i class="kt-menu__link-icon fa fa-file-word"></i>
-                          <?php echo 'SOLICITUD-'.$UltimaSolicitud; ?>
-                        </h3>
+                        
+                       
                       </div>
 
                       <div class="kt-portlet__body">

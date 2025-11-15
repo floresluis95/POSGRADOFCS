@@ -7,10 +7,11 @@
 // Validación de sesión
 $Validar = new FuncionesControladores();
 $Validar->ValidarSessionControlador();
+
 date_default_timezone_set("America/La_Paz");
 
-// Generar Token CSRF
-
+// Generar Token CSRF (Corregido)
+$csrf_token = bin2hex(random_bytes(32));
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -193,7 +194,7 @@ date_default_timezone_set("America/La_Paz");
                             </div>
                         </div>
 
-                        <!-- Nombres y fecha -->
+                        <!-- Nombre y fecha -->
                         <div class="row mt-2">
                             <div class="col-md-3">
                                 <label for="inputNombres">Nombre(s) <span class="text-danger">*</span></label>
@@ -216,14 +217,16 @@ date_default_timezone_set("America/La_Paz");
                                        min="<?php echo date('Y-m-d', strtotime('-100 years')); ?>">
                             </div>
                         </div>
-                          <div class="row mt-2">
+
+                        <div class="row mt-2">
                             <div class="col-md-3">
                                 <label for="Edad">Edad <span class="text-danger">*</span></label>
                                 <input type="number" id="Edad" name="Edad" class="form-control" required>
                                 <div class="invalid-feedback">Ingrese una edad válida.</div>
-                                </div>
+                            </div>
+
                             <div class="col-md-4">
-                                 <label for="selectLugarn">Lugar de nacimiento <span class="text-danger">*</span></label>
+                                <label for="selectLugarn">Lugar de nacimiento <span class="text-danger">*</span></label>
                                 <select class="form-control" id="Lugarn" name="Lugarn" required>
                                     <option value="" disabled selected>Seleccione departamento</option>
                                     <option value="La Paz">La Paz</option>
@@ -239,8 +242,6 @@ date_default_timezone_set("America/La_Paz");
                                 </select>
                                 <div class="invalid-feedback">Seleccione el lugar de nacimiento.</div>
                             </div>
-                    
-                           
                         </div>
 
                         <hr>
@@ -254,30 +255,32 @@ date_default_timezone_set("America/La_Paz");
                                 <input type="email" id="emailInput" name="Correo" class="form-control" required maxlength="100">
                             </div>
                             
-                            <div class="col-md-6">
-                                <label for="selectprofesion">Profesión <span class="text-danger">*</span></label>
+                          <div class="col-md-6">
+                                <label for="IdProfesion">Profesión <span class="text-danger">*</span></label>
                                 <select class="form-control" id="IdProfesion" name="IdProfesion" required>
                                     <option value="">Seleccione una profesión...</option>
-                                   <?php
-                                            $ListaProfesion = new ProfesionControlador();
-                                            $ListaProfesion->ListaProfesionControlador();
-                                        ?>
+                                    <?php
+                                        $ListaProfesion = new ProfesionControlador();
+                                        $ListaProfesion->ListaProfesionControlador();
+                                    ?>
                                 </select>
                                 <div class="invalid-feedback">Seleccione la profesión.</div>
                             </div>
-                              <div class="col-md-6">
-                               <label for="trabajoInput">Trabajo actual</label>
+                            <div class="col-md-6">
+                                <label for="trabajoInput">Trabajo actual</label>
                                 <input type="text" id="Trabajo" name="Trabajo" class="form-control" maxlength="100">
                             </div>
+
                             <div class="col-md-6">
-                               <label for="direccionInput">Direccion domiciliaria</label>
-                               <input type="text" id="direccionInput" name="Direccion" class="form-control" maxlength="100">
+                                <label for="direccionInput">Dirección domiciliaria</label>
+                                <input type="text" id="direccionInput" name="Direccion" class="form-control" maxlength="100">
                             </div>
 
-                             <div class="col-md-4">
+                            <div class="col-md-4">
                                 <label for="inputTelefono">Teléfono</label>
                                 <input type="tel" id="inputTelefono" name="Telefono" class="form-control" pattern="[0-9]{7,8}">
                             </div>
+
                             <div class="col-md-4">
                                 <label for="inputCelular">Celular <span class="text-danger">*</span></label>
                                 <input type="tel" id="inputCelular" name="Celular" class="form-control" 
@@ -285,10 +288,12 @@ date_default_timezone_set("America/La_Paz");
                                 <div class="invalid-feedback">Celular inválido (8 dígitos, empieza con 6 o 7).</div>
                             </div>
 
-                        <div class="alert alert-info mt-3">
-                            <i class="bi bi-info-circle"></i> Campos marcados con <span class="text-danger">*</span> son obligatorios.
-                        </div>
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle"></i> Campos marcados con 
+                                <span class="text-danger">*</span> son obligatorios.
+                            </div>
 
+                        </div>
                     </div>
 
                     <div class="modal-footer">
@@ -344,6 +349,7 @@ date_default_timezone_set("America/La_Paz");
             let edad = hoy.getFullYear() - nacimiento.getFullYear();
             const mes = hoy.getMonth() - nacimiento.getMonth();
             if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
+
             if (edad < 15) {
                 alert('El estudiante debe tener al menos 15 años.');
                 this.value = '';

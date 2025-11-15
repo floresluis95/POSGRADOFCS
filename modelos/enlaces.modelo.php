@@ -7,7 +7,6 @@
                 $enlace == 'panel' ||
                 $enlace == 'salir' ||
                 $enlace == 'usuario' ||
-                $enlace == 'kit' ||
                 $enlace == 'salir' ||
                 $enlace == 'usuario'||
                 $enlace == '404'||
