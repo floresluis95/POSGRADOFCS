@@ -6,6 +6,8 @@
 
 $(document).ready(function() {
 
+    console.log('Script de inscripción cargado correctamente');
+
     // ========================================
     // 1. CARGAR PROGRAMAS POR GRADO ACADÉMICO
     // ========================================
@@ -13,6 +15,8 @@ $(document).ready(function() {
     $('#gradoAcademico').on('change', function() {
         const gradoAcademico = $(this).val();
         const $selectPrograma = $('#programa');
+
+        console.log('Grado académico seleccionado:', gradoAcademico);
 
         // Limpiar select de programa
         $selectPrograma.html('<option value="" disabled selected>Cargando programas...</option>');
@@ -26,6 +30,8 @@ $(document).ready(function() {
             return;
         }
 
+        console.log('Enviando petición AJAX para obtener programas...');
+
         // Petición AJAX para obtener programas
         $.ajax({
             url: 'controladores/inscripcion.controlador.php',
@@ -35,8 +41,16 @@ $(document).ready(function() {
                 action: 'obtenerProgramas',
                 gradoAcademico: gradoAcademico
             },
+            beforeSend: function() {
+                console.log('Petición enviada con datos:', {
+                    action: 'obtenerProgramas',
+                    gradoAcademico: gradoAcademico
+                });
+            },
             success: function(response) {
-                if (response.success && response.data.length > 0) {
+                console.log('Respuesta recibida:', response);
+
+                if (response.success && response.data && response.data.length > 0) {
                     let options = '<option value="" disabled selected>Seleccione un programa</option>';
 
                     response.data.forEach(function(programa) {
@@ -49,15 +63,33 @@ $(document).ready(function() {
                     });
 
                     $selectPrograma.html(options);
+                    console.log('Se cargaron', response.data.length, 'programas');
                 } else {
                     $selectPrograma.html('<option value="" disabled selected>No hay programas disponibles</option>');
-                    mostrarNotificacion('info', 'No se encontraron programas para este grado académico');
+                    mostrarNotificacion('info', response.message || 'No se encontraron programas para este grado académico');
+                    console.warn('No se encontraron programas:', response);
                 }
             },
             error: function(xhr, status, error) {
-                console.error('Error al cargar programas:', error);
+                console.error('Error al cargar programas:');
+                console.error('Status:', status);
+                console.error('Error:', error);
+                console.error('Response Text:', xhr.responseText);
+                console.error('Status Code:', xhr.status);
+
                 $selectPrograma.html('<option value="" disabled selected>Error al cargar programas</option>');
-                mostrarNotificacion('error', 'Error al cargar programas. Intente nuevamente.');
+
+                // Mostrar error más detallado
+                let errorMsg = 'Error al cargar programas.';
+                if (xhr.status === 404) {
+                    errorMsg = 'No se encontró el controlador de inscripción.';
+                } else if (xhr.status === 500) {
+                    errorMsg = 'Error del servidor. Revise los logs de PHP.';
+                } else if (xhr.responseText) {
+                    errorMsg = 'Error: ' + xhr.responseText.substring(0, 100);
+                }
+
+                mostrarNotificacion('error', errorMsg);
             }
         });
     });
@@ -69,10 +101,14 @@ $(document).ready(function() {
     $('#programa').on('change', function() {
         const programaID = $(this).val();
 
+        console.log('Programa seleccionado:', programaID);
+
         if (!programaID) {
             $('#detalle-programa').hide();
             return;
         }
+
+        console.log('Enviando petición AJAX para obtener detalles del programa...');
 
         // Petición AJAX para obtener detalles del programa
         $.ajax({
@@ -83,7 +119,15 @@ $(document).ready(function() {
                 action: 'obtenerDetallePrograma',
                 programaID: programaID
             },
+            beforeSend: function() {
+                console.log('Petición enviada con datos:', {
+                    action: 'obtenerDetallePrograma',
+                    programaID: programaID
+                });
+            },
             success: function(response) {
+                console.log('Respuesta de detalles recibida:', response);
+
                 if (response.success && response.data) {
                     const programa = response.data;
 
@@ -106,11 +150,15 @@ $(document).ready(function() {
 
                     $('#detalle-programa').slideDown();
                 } else {
-                    mostrarNotificacion('error', 'No se pudieron cargar los detalles del programa');
+                    mostrarNotificacion('error', response.message || 'No se pudieron cargar los detalles del programa');
+                    console.error('Error al obtener detalles:', response);
                 }
             },
             error: function(xhr, status, error) {
-                console.error('Error al cargar detalles:', error);
+                console.error('Error al cargar detalles:');
+                console.error('Status:', status);
+                console.error('Error:', error);
+                console.error('Response Text:', xhr.responseText);
                 mostrarNotificacion('error', 'Error al cargar detalles del programa');
             }
         });
@@ -181,16 +229,18 @@ $(document).ready(function() {
     $('#formMatriculacion').on('submit', function(e) {
         e.preventDefault();
 
+        console.log('Formulario de matriculación enviado');
+
         // Validar que se haya seleccionado estudiante
         const estudianteID = $('select[name="idcliente"]').val();
-        if (!estudianteID) {
+        if (!estudianteID || estudianteID === '' || estudianteID === 'Buscar estudiante por cédula de identidad') {
             mostrarNotificacion('warning', 'Por favor seleccione un estudiante');
             return;
         }
 
         // Validar que se haya seleccionado programa
         const programaID = $('#programa').val();
-        if (!programaID) {
+        if (!programaID || programaID === '') {
             mostrarNotificacion('warning', 'Por favor seleccione un programa');
             return;
         }
@@ -198,6 +248,22 @@ $(document).ready(function() {
         // Validar formulario HTML5
         if (!this.checkValidity()) {
             this.classList.add('was-validated');
+            mostrarNotificacion('warning', 'Por favor complete todos los campos requeridos');
+            return;
+        }
+
+        // Validar montos
+        const pagoMatricula = parseFloat($('input[name="pagoMatricula"]').val());
+        const pagoModulos = parseFloat($('input[name="pagoModulos"]').val());
+        const numModulos = parseInt($('input[name="numModulos"]').val());
+
+        if (isNaN(pagoMatricula) || pagoMatricula < 0) {
+            mostrarNotificacion('warning', 'El pago de matrícula no es válido');
+            return;
+        }
+
+        if (isNaN(numModulos) || numModulos <= 0) {
+            mostrarNotificacion('warning', 'El número de módulos no es válido');
             return;
         }
 
@@ -206,10 +272,12 @@ $(document).ready(function() {
             action: 'registrarInscripcion',
             estudianteID: estudianteID,
             programaID: programaID,
-            pagoInicial: parseFloat($('input[name="pagoMatricula"]').val()),
-            montoModulos: parseFloat($('input[name="pagoModulos"]').val()),
-            cantidadModulos: parseInt($('input[name="numModulos"]').val())
+            pagoInicial: pagoMatricula,
+            montoModulos: pagoModulos,
+            cantidadModulos: numModulos
         };
+
+        console.log('Enviando datos de inscripción:', datos);
 
         // Deshabilitar botón de envío
         const $btnSubmit = $(this).find('button[type="submit"]');
@@ -222,31 +290,52 @@ $(document).ready(function() {
             dataType: 'json',
             data: datos,
             success: function(response) {
+                console.log('Respuesta de inscripción:', response);
+
                 if (response.success) {
                     // Éxito
                     Swal.fire({
                         icon: 'success',
                         title: '¡Inscripción Exitosa!',
                         html: `
-                            <p>La inscripción ha sido registrada correctamente.</p>
-                            <p><strong>ID Inscripción:</strong> ${response.data.idInscripcion}</p>
-                            <p><strong>Plan de Pagos:</strong> ${response.data.planPagoID}</p>
-                            <p>Se ha generado automáticamente el plan de pagos con ${datos.cantidadModulos} cuotas.</p>
+                            <div class="text-left">
+                                <p>La inscripción ha sido registrada correctamente en la tabla <strong>estudianteprograma</strong>.</p>
+                                <hr>
+                                <p><strong>ID Inscripción:</strong> ${response.data.idInscripcion}</p>
+                                <p><strong>Estudiante ID:</strong> ${response.data.estudianteID}</p>
+                                <p><strong>Programa ID:</strong> ${response.data.programaID}</p>
+                                <p><strong>Fecha Inscripción:</strong> ${response.data.fechaInscripcion}</p>
+                                <p><strong>Plan de Pagos ID:</strong> ${response.data.planPagoID}</p>
+                                <hr>
+                                <p class="text-success">✓ Se ha generado automáticamente el plan de pagos con ${datos.cantidadModulos} cuotas.</p>
+                            </div>
                         `,
-                        confirmButtonText: 'Aceptar'
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#3085d6'
                     }).then(() => {
                         // Redirigir o limpiar formulario
                         window.location.href = 'matriculas';
                     });
                 } else {
                     // Error
-                    mostrarNotificacion('error', response.message || 'Error al registrar inscripción');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al registrar inscripción',
+                        text: response.message || 'Error desconocido al registrar inscripción',
+                        confirmButtonText: 'Aceptar'
+                    });
                     $btnSubmit.prop('disabled', false).html('<i class="bi bi-save"></i> Guardar Matriculación');
                 }
             },
             error: function(xhr, status, error) {
                 console.error('Error AJAX:', error);
-                mostrarNotificacion('error', 'Error de conexión. Intente nuevamente.');
+                console.error('Response:', xhr.responseText);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de Conexión',
+                    text: 'No se pudo conectar con el servidor. Intente nuevamente.',
+                    confirmButtonText: 'Aceptar'
+                });
                 $btnSubmit.prop('disabled', false).html('<i class="bi bi-save"></i> Guardar Matriculación');
             }
         });
@@ -306,4 +395,5 @@ $(document).ready(function() {
     $('#detalle-programa').hide();
     $('#plan-pagos-preview').hide();
 
+    console.log('Todos los eventos han sido configurados correctamente');
 });

@@ -121,31 +121,29 @@ kt-aside--fixed kt-page--loading">
 
             <!-- Matriculación -->
           <div class="kt-container kt-grid__item kt-grid__item--fluid">
-                <div class="row justify-content-md-center">
-                    <div class="col-lg-11">
-                    <div class="kt-portlet">
-                        <div class="kt-portlet__head">
-                        <div class="kt-portlet__head-label">
-                            <hr>
-                            <h3>
-                            <img src="vistas/recursos/assets/media/icons/inscripcion.png" width="40" alt="">
+    <div class="row justify-content-md-center">
+        <div class="col-lg-11">
+            <div class="kt-portlet">
+                <div class="kt-portlet__head">
+                    <div class="kt-portlet__head-label">
+                        <h3>
+                            <img src="vistas/recursos/assets/media/icons/inscripcion.png" width="40" alt="Icono Inscripción">
                             MATRICULACIÓN
-                            </h3>
-                        </div>
-                        </div>
+                        </h3>
+                    </div>
+                </div>
 
-                        <div class="kt-portlet__body">
-                        <form method="POST" id="formMatriculacion" class="needs-validation" novalidate>
+                <div class="kt-portlet__body">
+                    <form method="POST" id="formMatriculacion" class="needs-validation" novalidate>
 
-                            <!-- Grado Académico y Programa -->
-                            <div class="form-group row form-group-marginless kt-margin-t-20">
+                        <div class="form-group row form-group-marginless kt-margin-t-20">
                             <label class="col-lg-2 col-form-label">GRADO ACADÉMICO:</label>
                             <div class="col-lg-3">
                                 <select class="form-control" id="gradoAcademico" name="gradoAcademico" required>
-                                <option value="" disabled selected>Elija el grado académico</option>
-                                <option value="DIPLOMADO">DIPLOMADO</option>
-                                <option value="MAESTRIA">MAESTRÍA</option>
-                                <option value="ESPECIALIDAD">ESPECIALIDAD</option>
+                                    <option value="" disabled selected>Elija el grado académico</option>
+                                    <option value="DIPLOMADO">DIPLOMADO</option>
+                                    <option value="MAESTRIA">MAESTRÍA</option>
+                                    <option value="ESPECIALIDAD">ESPECIALIDAD</option>
                                 </select>
                                 <div class="invalid-feedback">Seleccione un grado académico.</div>
                             </div>
@@ -153,114 +151,108 @@ kt-aside--fixed kt-page--loading">
                             <label class="col-lg-1 col-form-label">PROGRAMA:</label>
                             <div class="col-lg-5">
                                 <select class="form-control" id="programa" name="programa" required>
-                                <option value="" disabled selected>Seleccione un programa</option>
-                                </select>
+                                    <option value="" disabled selected>Seleccione un programa</option>
+                                    </select>
                                 <div class="invalid-feedback">Seleccione un programa.</div>
                             </div>
-                            </div>
-
-                            <hr>
-
-                            <!-- Detalles del Programa (oculto inicialmente) -->
-                            <div id="detalle-programa" class="alert alert-info" style="display:none;">
-                                <h5 class="text-primary"><i class="fa fa-info-circle"></i> Detalles del Programa</h5>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <p><strong>Programa:</strong> <span id="detalle-nombre-programa"></span></p>
-                                        <p><strong>Código:</strong> <span id="detalle-codigo"></span></p>
-                                        <p><strong>Duración:</strong> <span id="detalle-duracion"></span></p>
-                                        <p><strong>Módulos:</strong> <span id="detalle-modulos"></span></p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p><strong>Costo Total:</strong> <span id="detalle-costo-total" class="text-success font-weight-bold"></span></p>
-                                        <p><strong>Sede:</strong> <span id="detalle-sede"></span></p>
-                                        <p><strong>Fecha Inicio:</strong> <span id="detalle-inicio"></span></p>
-                                        <p><strong>Modalidad:</strong> <span id="detalle-tipo"></span></p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr>
-
-                            <!-- Pago de Matrícula y Módulos -->
-                            <div class="form-group row form-group-marginless kt-margin-t-20">
-                            <label class="col-lg-2 col-form-label">PAGO MATRÍCULA:</label>
-                            <div class="col-lg-3">
-                                <input type="number" class="form-control" name="pagoMatricula" placeholder="Bs." min="0" step="0.01" required>
-                                <div class="invalid-feedback">Ingrese el monto de matrícula.</div>
-                                <small class="form-text text-muted">Pago inicial/matrícula</small>
-                            </div>
-
-                            <label class="col-lg-2 col-form-label">NÚMERO DE MÓDULOS:</label>
-                            <div class="col-lg-2">
-                                <input type="number" class="form-control" name="numModulos" placeholder="Cantidad" min="1" required readonly>
-                                <div class="invalid-feedback">Ingrese la cantidad de módulos.</div>
-                            </div>
-
-                            <label class="col-lg-1 col-form-label">PAGO MÓDULOS:</label>
-                            <div class="col-lg-2">
-                                <input type="number" class="form-control" name="pagoModulos" placeholder="Bs." min="0" step="0.01" required readonly>
-                                <div class="invalid-feedback">Ingrese el monto total de módulos.</div>
-                            </div>
-                            </div>
-
-                            <!-- Campo oculto para costo total -->
-                            <input type="hidden" name="costoTotal" value="0">
-
-                            <!-- Costo por Módulo Calculado -->
-                            <div class="form-group row">
-                                <div class="col-lg-12 text-center">
-                                    <div class="alert alert-success" style="display:inline-block;">
-                                        <h5 class="mb-0">
-                                            <i class="fa fa-calculator"></i> Costo por Módulo:
-                                            <span id="costo-por-modulo" class="font-weight-bold text-success">Bs. 0.00</span>
-                                        </h5>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Preview del Plan de Pagos -->
-                            <div id="plan-pagos-preview" style="display:none;">
-                                <hr>
-                                <h5 class="text-info"><i class="fa fa-calendar-alt"></i> Preview del Plan de Pagos</h5>
-                                <div class="table-responsive">
-                                    <table id="tabla-plan-pagos" class="table table-bordered table-hover table-striped">
-                                        <thead class="thead-dark">
-                                            <tr>
-                                                <th class="text-center">#</th>
-                                                <th>Módulo</th>
-                                                <th class="text-right">Monto</th>
-                                                <th class="text-center">Fecha Vencimiento</th>
-                                                <th class="text-center">Estado</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <!-- Se llena con JavaScript -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <hr>
-
-                            <!-- Botón de Guardar -->
-                            <div class="form-group row">
-                            <div class="col-lg-12 text-center">
-                                <button type="submit" class="btn btn-success">
-                                <i class="bi bi-save"></i> Guardar Matriculación
-                                </button>
-                            </div>
-                            </div>
-
-                        </form>
                         </div>
 
+                        <hr>
+
+                        <div id="detalle-programa" class="alert alert-info" style="display:none;">
+                            <h5 class="text-primary"><i class="fa fa-info-circle"></i> Detalles del Programa</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Programa:</strong> <span id="detalle-nombre-programa"></span></p>
+                                    <p><strong>Código:</strong> <span id="detalle-codigo"></span></p>
+                                    <p><strong>Duración:</strong> <span id="detalle-duracion"></span></p>
+                                    <p><strong>Módulos:</strong> <span id="detalle-modulos"></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Costo Total:</strong> <span id="detalle-costo-total" class="text-success font-weight-bold"></span></p>
+                                    <p><strong>Sede:</strong> <span id="detalle-sede"></span></p>
+                                    <p><strong>Fecha Inicio:</strong> <span id="detalle-inicio"></span></p>
+                                    <p><strong>Modalidad:</strong> <span id="detalle-tipo"></span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+            <div class="form-group row form-group-marginless kt-margin-t-20">
+    
+                <div class="col-lg-4">
+                    <div class="form-group row">
+                        <label class="col-5 col-form-label">PAGO MATRÍCULA:</label>
+                        <div class="col-7">
+                            <input type="number" class="form-control" name="montoMatricula" placeholder="Bs. 0.00" min="0" step="0.01" required>
+                            <div class="invalid-feedback">Ingrese el monto de matrícula.</div>
+                            <small class="form-text text-muted">Pago inicial/matrícula</small>
+                        </div>
                     </div>
-                    </div>
-                </div>
                 </div>
 
-          </div> <!-- End kt-content -->
+              <div class="col-lg-4">
+                  <div class="form-group row">
+                      <label class="col-5 col-form-label">N° VAUCHER:</label>
+                      <div class="col-7">
+                          <input type="text" class="form-control" name="numeroVaucher" placeholder="Número de comprobante" required>
+                          <div class="invalid-feedback">Ingrese el número de vaucher.</div>
+                          
+                      </div>
+                  </div>
+              </div>
+
+             
+                   
+          </div>
+
+           <div class="form-group row form-group-marginless kt-margin-t-20">
+           <div class="col-lg-4">
+                  <div class="form-group row">
+                      <label class="col-5 col-form-label">FECHA INSCRIPCIÓN:</label>
+                      <div class="col-7">
+                          <input type="date" class="form-control" name="fechaInscripcion" required>
+                          <div class="invalid-feedback">Ingrese la fecha de inscripción.</div>
+                         
+                      </div>
+                  </div>
+              </div>
+                <div class="col-lg-4">
+              <div class="form-group row">
+                  <label class="col-5 col-form-label">COMPROBANTE (IMAGEN):</label>
+                  <div class="col-7">
+                      <input 
+                          type="file" 
+                          class="form-control" 
+                          name="comprobanteImagen" 
+                          accept="image/*" 
+                          required
+                      >
+                      <div class="invalid-feedback">Seleccione la imagen del comprobante de pago.</div>
+                      <small class="form-text text-muted">Formatos aceptados: JPG, PNG, PDF (si se permite)</small>
+                  </div>
+              </div>
+          </div> 
+              
+            </div>
+
+                        <hr>
+                        <div class="form-group row">
+                            <div class="col-lg-12 text-center">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-save"></i> Guardar Matriculación
+                                </button>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div><!-- End kt-content -->
         </div> <!-- End kt-body -->
       </div> <!-- End wrapper -->
     </div>
@@ -448,7 +440,7 @@ kt-aside--fixed kt-page--loading">
 
                     <?php
                         $DatosEstudiante = new EstudiantesControladores();
-                        $DatosEstudiante->RegistarEstudianteControlador();
+                        $DatosEstudiante->RegistarEstudianteControlador2();
                     ?>
                 </form>
             </div>

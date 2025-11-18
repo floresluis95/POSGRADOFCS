@@ -113,6 +113,81 @@ class EstudiantesControladores
         }
     }
 }
+  public function RegistarEstudianteControlador2()
+{
+  
+    if (isset($_POST["Ci"])) {
+
+        // Validaciones mínimas
+        if (empty($_POST["IdProfesion"]) || !is_numeric($_POST["IdProfesion"])) {
+            echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                  <script>
+                  swal("ERROR!", "Seleccione una profesión válida", "error")
+                  .then(function () { location.href="inscripcion"; });
+                  </script>';
+            return;
+        }
+
+        $DatosEstudiante = array(
+            "Ci"              => htmlspecialchars(trim($_POST['Ci'])),
+            "Complemento"     => htmlspecialchars(trim($_POST['Complemento'])),
+            "Exp"             => htmlspecialchars(trim($_POST['Exp'])),
+            "Nombre"          => htmlspecialchars(trim($_POST['Nombre'])),
+            "Apaterno"        => htmlspecialchars(trim($_POST['Apaterno'])),
+            "Amaterno"        => htmlspecialchars(trim($_POST['Amaterno'])),
+            "FechaNacimiento" => htmlspecialchars(trim($_POST['FechaNacimiento'])),
+            "Edad"            => (int)htmlspecialchars(trim($_POST['Edad'])),
+            "Lugarn"          => htmlspecialchars(trim($_POST['Lugarn'])),
+            "Correo"          => htmlspecialchars(trim($_POST['Correo'])),
+            "IdProfesion"     => (int)$_POST["IdProfesion"],
+            "Trabajo"         => htmlspecialchars(trim($_POST['Trabajo'])),
+            "Direccion"       => htmlspecialchars(trim($_POST['Direccion'])),
+            "Telefono"        => htmlspecialchars(trim($_POST['Telefono'])),
+            "Celular"         => htmlspecialchars(trim($_POST['Celular'])),
+        );
+
+            $ciestudiante = $DatosEstudiante['Ci']; 
+        $existe = EstudiantesModelos::BuscarEstudianteModelo($ciestudiante);
+
+        if ($existe) {
+            echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                  <script>
+                  swal("ERROR!", "El estudiante ya esta registrado en el sistema", "error")
+                  .then(function () { location.href="inscripcion"; });
+                  </script>';
+            return;
+        }
+
+        // Verificar que la profesión existe en la tabla profesion (previene FK fail)
+        $existeProf = ProfesionModelos::ObtenerPorId($DatosEstudiante['IdProfesion']);
+        if (!$existeProf) {
+            echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                  <script>
+                  swal("ERROR!", "Profesión no válida (no existe)", "error")
+                  .then(function () { location.href="inscripcion"; });
+                  </script>';
+            return;
+        }
+
+        $resultado = EstudiantesModelos::RegistrarEstudianteModelo($DatosEstudiante);
+
+        if ($resultado === 'exitoso') {
+            echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                  <script>
+                  swal("EXITOSO!", "Se registro al estudiante", "success")
+                  .then(function () { location.href="inscripcion"; });
+                  </script>';
+        } else {
+            // Si $resultado trae mensaje de error, mostrarlo (útil para debugging)
+            $msg = addslashes($resultado);
+            echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                  <script>
+                  swal("ERROR!", "No se registro al estudiante: ' . $msg . '", "error")
+                  .then(function () { location.href="inscripcion"; });
+                  </script>';
+        }
+    }
+}
 
 
     public function EstudianteActivoControlador()

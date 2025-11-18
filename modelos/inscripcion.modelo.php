@@ -2,7 +2,7 @@
 require_once 'conexion.modelo.php';
 
 /**
- * Modelo de Inscripción
+ * Modelo de InscripciÃ³n
  * Gestiona inscripciones, planes de pago, cuotas y vouchers
  * Compatible con PHP 8 - PDO
  */
@@ -27,27 +27,54 @@ class InscripcionModelos
     }
 
     /**
-     * Listar programas por grado académico
+     * Listar programas por grado acadÃ©mico
      * @param string $gradoAcademico
      * @return array
      */
     public static function ListarProgramasPorGradoModelo($gradoAcademico)
     {
-        $stmt = Conexion::Conectar()->prepare(
-            "SELECT ProgramaID, NombrePrograma, GradoAcademico, Codigo, Costo, Modulos, Sede
-             FROM programa
-             WHERE GradoAcademico = :gradoAcademico AND Estado = 1
-             ORDER BY NombrePrograma ASC"
-        );
-        $stmt->bindParam(":gradoAcademico", $gradoAcademico, PDO::PARAM_STR);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            error_log("ListarProgramasPorGradoModelo - Buscando: " . $gradoAcademico);
+
+            // Normalizar el grado acadÃ©mico (sin acentos)
+            $gradoNormalizado = str_replace(['Ã', 'Ã­'], ['I', 'i'], $gradoAcademico);
+            error_log("ListarProgramasPorGradoModelo - Grado normalizado: " . $gradoNormalizado);
+
+            $pdo = Conexion::Conectar();
+
+            // Buscar con ambas variantes (con y sin tilde)
+            $stmt = $pdo->prepare(
+                "SELECT ProgramaID, NombrePrograma, GradoAcademico, Codigo, Costo, Modulos, Sede
+                 FROM programa
+                 WHERE (GradoAcademico = :gradoAcademico
+                    OR GradoAcademico = :gradoNormalizado
+                    OR REPLACE(REPLACE(GradoAcademico, 'Ã', 'I'), 'Ã­', 'i') = :gradoNormalizado)
+                    AND Estado = 1
+                 ORDER BY NombrePrograma ASC"
+            );
+            $stmt->bindParam(":gradoAcademico", $gradoAcademico, PDO::PARAM_STR);
+            $stmt->bindParam(":gradoNormalizado", $gradoNormalizado, PDO::PARAM_STR);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("ListarProgramasPorGradoModelo - Resultados encontrados: " . count($resultados));
+
+            if (count($resultados) > 0) {
+                error_log("ListarProgramasPorGradoModelo - Primer resultado: " . print_r($resultados[0], true));
+            }
+
+            return $resultados;
+        } catch (PDOException $e) {
+            error_log("Error en ListarProgramasPorGradoModelo: " . $e->getMessage());
+            error_log("SQL State: " . $e->getCode());
+            return [];
+        }
     }
 
     /**
-     * Registrar inscripción de estudiante a programa
-     * @param array $datos
-     * @return int|false ID de inscripción o false si falla
+     * Registrar inscripciÃ³n de estudiante a programa
+     * @param array $datos - Array con EstudianteID, ProgramaID, FechaInscripcion
+     * @return int|false ID de inscripciÃ³n o false si falla
      */
     public static function RegistrarInscripcionModelo($datos)
     {
@@ -55,7 +82,7 @@ class InscripcionModelos
             $pdo = Conexion::Conectar();
             $pdo->beginTransaction();
 
-            // 1. Verificar si ya está inscrito en el mismo programa
+            // 1. Verificar si ya estÃ¡ inscrito en el mismo programa
             $stmtCheck = $pdo->prepare(
                 "SELECT idInscripcion FROM estudianteprograma
                  WHERE EstudianteID = :estudianteID AND ProgramaID = :programaID"
@@ -65,10 +92,35 @@ class InscripcionModelos
             $stmtCheck->execute();
 
             if ($stmtCheck->fetch()) {
-                throw new Exception("El estudiante ya está inscrito en este programa");
+                $pdo->rollBack();
+                throw new Exception("El estudiante ya estÃ¡ inscrito en este programa");
             }
 
-            // 2. Insertar inscripción
+            // 2. Verificar que el estudiante exista y estÃ© activo
+            $stmtEstudiante = $pdo->prepare(
+                "SELECT EstudianteID FROM estudiante WHERE EstudianteID = :estudianteID AND Estado = 1"
+            );
+            $stmtEstudiante->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
+            $stmtEstudiante->execute();
+
+            if (!$stmtEstudiante->fetch()) {
+                $pdo->rollBack();
+                throw new Exception("El estudiante no existe o estÃ¡ inactivo");
+            }
+
+            // 3. Verificar que el programa exista y estÃ© activo
+            $stmtPrograma = $pdo->prepare(
+                "SELECT ProgramaID FROM programa WHERE ProgramaID = :programaID AND Estado = 1"
+            );
+            $stmtPrograma->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
+            $stmtPrograma->execute();
+
+            if (!$stmtPrograma->fetch()) {
+                $pdo->rollBack();
+                throw new Exception("El programa no existe o estÃ¡ inactivo");
+            }
+
+            // 4. Insertar inscripciÃ³n en tabla estudianteprograma
             $stmt = $pdo->prepare(
                 "INSERT INTO estudianteprograma (EstudianteID, ProgramaID, FechaInscripcion)
                  VALUES (:estudianteID, :programaID, :fechaInscripcion)"
@@ -78,7 +130,8 @@ class InscripcionModelos
             $stmt->bindParam(":fechaInscripcion", $datos['FechaInscripcion'], PDO::PARAM_STR);
 
             if (!$stmt->execute()) {
-                throw new Exception("Error al registrar inscripción");
+                $pdo->rollBack();
+                throw new Exception("Error al registrar inscripciÃ³n en la base de datos");
             }
 
             $idInscripcion = $pdo->lastInsertId();
@@ -87,14 +140,16 @@ class InscripcionModelos
             return $idInscripcion;
 
         } catch (Exception $e) {
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             error_log("Error en RegistrarInscripcionModelo: " . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Crear plan de pagos para una inscripción
+     * Crear plan de pagos para una inscripciÃ³n
      * @param array $datos
      * @return int|false PlanPagoID o false si falla
      */
@@ -124,7 +179,7 @@ class InscripcionModelos
 
             $planPagoID = $pdo->lastInsertId();
 
-            // 2. Crear cuotas (una por módulo)
+            // 2. Crear cuotas (una por mÃ³dulo)
             $stmtCuota = $pdo->prepare(
                 "INSERT INTO cuota
                  (PlanPagoID, NumeroModulo, NombreModulo, MontoCuota, FechaVencimiento)
@@ -132,15 +187,15 @@ class InscripcionModelos
             );
 
             for ($i = 1; $i <= $datos['CantidadModulos']; $i++) {
-                // Calcular fecha de vencimiento (mes a mes desde la inscripción)
+                // Calcular fecha de vencimiento (mes a mes desde la inscripciÃ³n)
                 $fechaVencimiento = date('Y-m-d', strtotime("+{$i} month", strtotime($datos['FechaInicio'])));
 
-                // Nombre del módulo
-                $nombreModulo = "MÓDULO " . romano($i);
+                // Nombre del mÃ³dulo
+                $nombreModulo = "MÃ“DULO " . romano($i);
 
                 // Monto de la cuota (distribuir equitativamente)
                 if ($i == $datos['CantidadModulos']) {
-                    // Última cuota: ajustar por redondeos
+                    // Ãšltima cuota: ajustar por redondeos
                     $montoCuota = $datos['MontoModulos'] - ($datos['CostoPorModulo'] * ($datos['CantidadModulos'] - 1));
                 } else {
                     $montoCuota = $datos['CostoPorModulo'];
@@ -288,7 +343,7 @@ class InscripcionModelos
     }
 
     /**
-     * Generar código único de voucher
+     * Generar cÃ³digo Ãºnico de voucher
      * @return string
      */
     public static function GenerarCodigoVoucherModelo()
@@ -296,10 +351,50 @@ class InscripcionModelos
         // Formato: VOU-YYYYMMDD-HHMMSS-RAND
         return 'VOU-' . date('Ymd-His') . '-' . strtoupper(substr(md5(uniqid(rand(), true)), 0, 4));
     }
+
+    /**
+     * Listar todas las inscripciones
+     * @return array
+     */
+    public static function ListarInscripcionesModelo()
+    {
+        $stmt = Conexion::Conectar()->prepare(
+            "SELECT ep.idInscripcion, ep.FechaInscripcion,
+                    e.EstudianteID, CONCAT(e.Nombre, ' ', e.Apaterno, ' ', e.Amaterno) AS NombreCompleto, e.Ci,
+                    p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Sede
+             FROM estudianteprograma ep
+             INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
+             INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
+             ORDER BY ep.FechaInscripcion DESC"
+        );
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtener inscripciÃ³n por ID
+     * @param int $idInscripcion
+     * @return array|false
+     */
+    public static function ObtenerInscripcionPorIdModelo($idInscripcion)
+    {
+        $stmt = Conexion::Conectar()->prepare(
+            "SELECT ep.idInscripcion, ep.EstudianteID, ep.ProgramaID, ep.FechaInscripcion,
+                    e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Correo, e.Celular,
+                    p.NombrePrograma, p.GradoAcademico, p.Costo, p.Modulos, p.Sede
+             FROM estudianteprograma ep
+             INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
+             INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
+             WHERE ep.idInscripcion = :idInscripcion"
+        );
+        $stmt->bindParam(":idInscripcion", $idInscripcion, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }
 
 /**
- * Función auxiliar: Convertir número a romano
+ * FunciÃ³n auxiliar: Convertir nÃºmero a romano
  * @param int $numero
  * @return string
  */
