@@ -10,6 +10,7 @@ class EstudiantesControladores
                     <td WIDTH="30" HEIGHT="30">' . $Estudiante['EstudianteID'] . '</td>
                     <td>' . $Estudiante['Ci'] . ' ' . $Estudiante['Complemento'] . ' ' . $Estudiante['Exp'] . '</td>
                     <td>' . $Estudiante['Nombre'] . ' ' . $Estudiante['Apaterno'] . ' ' . $Estudiante['Amaterno'] . '</td>
+                     <td>' . $Estudiante['NombreProfesion'] . '</td>
                     <td>' . $Estudiante['Correo'] . '</td>
                     <td>' . $Estudiante['Celular'] . ' / ' . $Estudiante['Telefono'] . '</td>
 
@@ -29,6 +30,7 @@ class EstudiantesControladores
                     <td WIDTH="30" HEIGHT="30">' . $Estudiante['EstudianteID'] . '</td>
                     <td>' . $Estudiante['Ci'] . ' ' . $Estudiante['Complemento'] . ' ' . $Estudiante['Exp'] . '</td>
                     <td>' . $Estudiante['Nombre'] . ' ' . $Estudiante['Apaterno'] . ' ' . $Estudiante['Amaterno'] . '</td>
+                  
                     <td>' . $Estudiante['Celular'] . ' / ' . $Estudiante['Telefono'] . '</td>
                     <td>' . $Estudiante['NombrePrograma'] . '</td>
                     <td>' . $Estudiante['FechaInscripcion'] . '</td>

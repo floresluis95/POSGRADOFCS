@@ -110,8 +110,9 @@ $csrf_token = bin2hex(random_bytes(32));
                                                                     <th>Nº</th>
                                                                     <th>CI</th>
                                                                     <th>NOMBRE COMPLETO</th>
+                                                                    <th>PROFESION</th>
                                                                     <th>CORREO</th>
-                                                                    <th>CONTACTOS</th>
+                                                                    <th>CONTACTOS</th>                                                                 
                                                                     <th>DETALLE</th>
                                                                     <th>BAJA</th>
                                                                     <th>ELIMINAR</th>

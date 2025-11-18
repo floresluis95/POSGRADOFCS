@@ -281,193 +281,179 @@ kt-aside--fixed kt-page--loading">
 
 
  <!-- Modal: Nuevo Estudiante -->
-<div class="modal fade" id="ModalInsertarEstudiante" tabindex="-1" role="dialog" aria-labelledby="modalNuevoEstudianteLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
+<div class="modal fade" id="ModalInsertarEstudiante" tabindex="-1" role="dialog" 
+         aria-labelledby="modalNuevoEstudianteLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h4 class="modal-title text-white" id="modalNuevoEstudianteLabel">
+                        <i class="bi bi-person-plus-fill"></i> Nuevo Registro de Estudiante
+                    </h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                
+                <form method="post" id="formNuevoEstudiante" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
+                    
+                    <div class="modal-body">
 
-      <!-- Encabezado -->
-      <div class="modal-header bg-info text-white">
-        <h4 class="modal-title text-white" id="modalNuevoEstudianteLabel">
-          <i class="bi bi-person-plus-fill"></i> Nuevo Registro de Estudiante
-        </h4>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
+                        <h5 class="form-section text-info">
+                            <i class="bi bi-person-vcard"></i> DATOS PERSONALES
+                        </h5>
 
-      <!-- Formulario -->
-      <form method="post" id="formNuevoEstudiante" enctype="multipart/form-data" class="needs-validation" novalidate>
-        <!-- Token CSRF -->
-        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
+                        <!-- C.I. y complementos -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="inputCi">C.I. <span class="text-danger">*</span></label>
+                                <input type="text" id="inputCi" name="Ci" class="form-control" 
+                                       placeholder="1234567" required pattern="[0-9]{6,12}" maxlength="12">
+                                <div class="invalid-feedback">Ingrese un CI válido.</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="inputComplemento">Complemento</label>
+                                <input type="text" id="inputComplemento" name="Complemento" 
+                                       class="form-control text-uppercase" pattern="[A-Za-z0-9]{1,5}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="selectExpedido">Expedido <span class="text-danger">*</span></label>
+                                <select class="form-control" id="selectExpedido" name="Exp" required>
+                                    <option value="" disabled selected>Seleccione departamento</option>
+                                    <option value="LP">La Paz</option>
+                                    <option value="CB">Cochabamba</option>
+                                    <option value="SC">Santa Cruz</option>
+                                    <option value="OR">Oruro</option>
+                                    <option value="PT">Potosí</option>
+                                    <option value="CH">Chuquisaca</option>
+                                    <option value="TJ">Tarija</option>
+                                    <option value="BN">Beni</option>
+                                    <option value="PD">Pando</option>
+                                    <option value="OTR">Otro</option>
+                                </select>
+                                <div class="invalid-feedback">Seleccione el lugar de expedición.</div>
+                            </div>
+                        </div>
 
-        <div class="modal-body">
-          <!-- Sección: Datos Personales -->
-          <h5 class="form-section text-info">
-            <i class="bi bi-person-vcard"></i> DATOS PERSONALES
-          </h5>
+                        <!-- Nombre y fecha -->
+                        <div class="row mt-2">
+                            <div class="col-md-3">
+                                <label for="inputNombres">Nombre(s) <span class="text-danger">*</span></label>
+                                <input type="text" id="inputNombres" name="Nombre" class="form-control" 
+                                       required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}">
+                                <div class="invalid-feedback">Ingrese un nombre válido.</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="apaterno">Apellido Paterno <span class="text-danger">*</span></label>
+                                <input type="text" id="apaterno" name="Apaterno" class="form-control" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="amaterno">Apellido Materno</label>
+                                <input type="text" id="amaterno" name="Amaterno" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="fechaNacimiento">Fecha Nacimiento <span class="text-danger">*</span></label>
+                                <input type="date" id="fechaNacimiento" name="FechaNacimiento" class="form-control" required 
+                                       max="<?php echo date('Y-m-d'); ?>" 
+                                       min="<?php echo date('Y-m-d', strtotime('-100 years')); ?>">
+                            </div>
+                        </div>
 
-          <!-- Identificación -->
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="inputCi">C.I. <span class="text-danger">*</span></label>
-                <input type="text" id="inputCi" name="Ci" class="form-control"
-                       placeholder="Ej: 1234567" required
-                       pattern="[0-9]{6,12}" maxlength="12"
-                       title="Solo números, entre 6 y 12 dígitos" autocomplete="off">
-                <div class="invalid-feedback">Por favor ingrese un CI válido.</div>
-              </div>
+                        <div class="row mt-2">
+                            <div class="col-md-3">
+                                <label for="Edad">Edad <span class="text-danger">*</span></label>
+                                <input type="number" id="Edad" name="Edad" class="form-control" required>
+                                <div class="invalid-feedback">Ingrese una edad válida.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="selectLugarn">Lugar de nacimiento <span class="text-danger">*</span></label>
+                                <select class="form-control" id="Lugarn" name="Lugarn" required>
+                                    <option value="" disabled selected>Seleccione departamento</option>
+                                    <option value="La Paz">La Paz</option>
+                                    <option value="Cochabamba">Cochabamba</option>
+                                    <option value="Santa Cruz">Santa Cruz</option>
+                                    <option value="Oruro">Oruro</option>
+                                    <option value="Potosí">Potosí</option>
+                                    <option value="Chuquisaca">Chuquisaca</option>
+                                    <option value="Tarija">Tarija</option>
+                                    <option value="Beni">Beni</option>
+                                    <option value="Pando">Pando</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                                <div class="invalid-feedback">Seleccione el lugar de nacimiento.</div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Contacto -->
+                        <h5 class="form-section text-info"><i class="bi bi-telephone-fill"></i> OTROS DATOS</h5>
+                        <div class="row">
+                            
+                            <div class="col-md-4">
+                                <label for="emailInput">Correo <span class="text-danger">*</span></label>
+                                <input type="email" id="emailInput" name="Correo" class="form-control" required maxlength="100">
+                            </div>
+                            
+                          <div class="col-md-6">
+                                <label for="IdProfesion">Profesión <span class="text-danger">*</span></label>
+                                <select class="form-control" id="IdProfesion" name="IdProfesion" required>
+                                    <option value="">Seleccione una profesión...</option>
+                                    <?php
+                                        $ListaProfesion = new ProfesionControlador();
+                                        $ListaProfesion->ListaProfesionControlador();
+                                    ?>
+                                </select>
+                                <div class="invalid-feedback">Seleccione la profesión.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="trabajoInput">Trabajo actual</label>
+                                <input type="text" id="Trabajo" name="Trabajo" class="form-control" maxlength="100">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="direccionInput">Dirección domiciliaria</label>
+                                <input type="text" id="direccionInput" name="Direccion" class="form-control" maxlength="100">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="inputTelefono">Teléfono</label>
+                                <input type="tel" id="inputTelefono" name="Telefono" class="form-control" pattern="[0-9]{7,8}">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="inputCelular">Celular <span class="text-danger">*</span></label>
+                                <input type="tel" id="inputCelular" name="Celular" class="form-control" 
+                                       required pattern="[6-7][0-9]{7}">
+                                <div class="invalid-feedback">Celular inválido (8 dígitos, empieza con 6 o 7).</div>
+                            </div>
+
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle"></i> Campos marcados con 
+                                <span class="text-danger">*</span> son obligatorios.
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                    </div>
+
+                    <?php
+                        $DatosEstudiante = new EstudiantesControladores();
+                        $DatosEstudiante->RegistarEstudianteControlador();
+                    ?>
+                </form>
             </div>
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="inputComplemento">Complemento</label>
-                <input type="text" id="inputComplemento" name="Complemento" class="form-control"
-                       placeholder="Ej: 1A" pattern="[A-Za-z0-9]{1,5}" maxlength="5"
-                       title="Máximo 5 caracteres alfanuméricos" style="text-transform: uppercase;">
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="selectExpedido">Expedido <span class="text-danger">*</span></label>
-                <select class="form-control" id="selectExpedido" name="Exp" required>
-                  <option value="" disabled selected>Seleccione departamento</option>
-                  <option value="LP">La Paz</option>
-                  <option value="CB">Cochabamba</option>
-                  <option value="SC">Santa Cruz</option>
-                  <option value="OR">Oruro</option>
-                  <option value="PT">Potosí</option>
-                  <option value="CH">Chuquisaca</option>
-                  <option value="TJ">Tarija</option>
-                  <option value="BN">Beni</option>
-                  <option value="PD">Pando</option>
-                </select>
-                <div class="invalid-feedback">Seleccione el lugar de expedición.</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Nombres y Apellidos -->
-          <div class="row">
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="inputNombres">Nombre(s) <span class="text-danger">*</span></label>
-                <input type="text" id="inputNombres" name="Nombre" class="form-control"
-                       placeholder="Juan Carlos" required
-                       pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}" maxlength="50"
-                       title="Solo letras, entre 2 y 50 caracteres">
-                <div class="invalid-feedback">Ingrese un nombre válido.</div>
-              </div>
-            </div>
-
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="apaterno">Apellido Paterno <span class="text-danger">*</span></label>
-                <input type="text" id="apaterno" name="Apaterno" class="form-control"
-                       placeholder="López" required
-                       pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}" maxlength="50"
-                       title="Solo letras, entre 2 y 50 caracteres">
-                <div class="invalid-feedback">Ingrese un apellido válido.</div>
-              </div>
-            </div>
-
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="amaterno">Apellido Materno</label>
-                <input type="text" id="amaterno" name="Amaterno" class="form-control"
-                       placeholder="Pérez"
-                       pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}" maxlength="50"
-                       title="Solo letras, entre 2 y 50 caracteres">
-              </div>
-            </div>
-
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="fechaNacimiento">Fecha de Nacimiento <span class="text-danger">*</span></label>
-                <input type="date" id="fechaNacimiento" name="FechaNacimiento" class="form-control"
-                       required max="<?php echo date('Y-m-d'); ?>"
-                       min="<?php echo date('Y-m-d', strtotime('-100 years')); ?>">
-                <div class="invalid-feedback">Ingrese una fecha válida.</div>
-              </div>
-            </div>
-          </div>
-
-          <hr>
-
-          <!-- Sección: Contacto -->
-          <h5 class="form-section text-info">
-            <i class="bi bi-telephone-fill"></i> INFORMACIÓN DE CONTACTO
-          </h5>
-
-          <div class="row">
-            <div class="col-md-8">
-              <div class="form-group">
-                <label for="direccionInput">Dirección Domiciliaria</label>
-                <input type="text" id="direccionInput" name="Direccion" class="form-control"
-                       placeholder="Calle, número, zona..." maxlength="100" autocomplete="off">
-                <div class="invalid-feedback">Ingrese la dirección del domicilio.</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="emailInput">Correo Electrónico <span class="text-danger">*</span></label>
-                <input type="email" id="emailInput" name="Correo" class="form-control"
-                       placeholder="ejemplo@dominio.com" required maxlength="100" autocomplete="off">
-                <div class="invalid-feedback">Ingrese un correo válido.</div>
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="inputTelefono">Teléfono Fijo</label>
-                <input type="tel" id="inputTelefono" name="Telefono" class="form-control"
-                       placeholder="2525252" pattern="[0-9]{7,8}" maxlength="8"
-                       title="7 u 8 dígitos">
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="inputCelular">Celular <span class="text-danger">*</span></label>
-                <input type="tel" id="inputCelular" name="Celular" class="form-control"
-                       placeholder="75123456" pattern="[6-7][0-9]{7}" maxlength="8"
-                       title="Debe comenzar con 6 o 7 y tener 8 dígitos" required>
-                <div class="invalid-feedback">Ingrese un celular válido (8 dígitos).</div>
-              </div>
-            </div>
-          </div>
-
-          <hr>
-
-          <div class="alert alert-info mt-3" role="alert">
-            <i class="bi bi-info-circle"></i>
-            Los campos marcados con <span class="text-danger">*</span> son obligatorios.
-          </div>
         </div>
-
-        <!-- Pie del modal -->
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">
-            <i class="bi bi-x-circle"></i> Cancelar
-          </button>
-          <button type="submit" class="btn btn-success">
-            <i class="bi bi-save"></i> Guardar Estudiante
-          </button>
-        </div>
-
-        <?php
-          $DatosEstudiante = new EstudiantesControladores();
-          $DatosEstudiante->RegistarEstudianteControlador2();
-        ?>
-      </form>
     </div>
-  </div>
-</div>
-
 
 <script>
  // Validación personalizada del formulario de estudiante

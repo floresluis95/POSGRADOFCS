@@ -18,7 +18,7 @@ class EstudiantesModelos
     /* LISTAR SOLO ACTIVOS */
     public static function ListaEstudianteActivoModelo()
     {
-        $stmt = Conexion::Conectar()->prepare("SELECT * FROM estudiante WHERE Estado = 1");
+        $stmt = Conexion::Conectar()->prepare("SELECT * FROM estudiante e INNER JOIN profesion p ON e.IdProfesion = p.IdProfesion AND e.Estado= 1");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
