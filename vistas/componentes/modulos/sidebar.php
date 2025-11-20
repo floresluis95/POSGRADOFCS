@@ -18,7 +18,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                   <i class="kt-menu__section-icon flaticon-more-v2"></i>
                 </li>
                 <li class="kt-menu__item " aria-haspopup="true"><a href="inscripcion" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-file"></i><span class="kt-menu__link-text">NUEVA INSCRIPCION</span></a></li>
-                <li class="kt-menu__item " aria-haspopup="true"><a href="matriculas" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-file"></i><span class="kt-menu__link-text">MATRICULADOS</span></a></li>
+                <li class="kt-menu__item " aria-haspopup="true"><a href="matriculados" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-file"></i><span class="kt-menu__link-text">MATRICULADOS</span></a></li>
                 <li class="kt-menu__item " aria-haspopup="true"><a href="modulos" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-file"></i><span class="kt-menu__link-text">MODULOS</span></a></li>
 
                 <li class="kt-menu__section ">

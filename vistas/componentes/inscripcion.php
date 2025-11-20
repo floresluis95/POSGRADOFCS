@@ -1,7 +1,7 @@
-<?php 
-$Validar = new FuncionesControladores(); 
-$Validar->ValidarSessionControlador(); 
-date_default_timezone_set("America/La_Paz"); 
+<?php
+$Validar = new FuncionesControladores();
+$Validar->ValidarSessionControlador();
+date_default_timezone_set("America/La_Paz");
 ?>
 
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right 
@@ -80,40 +80,7 @@ kt-aside--fixed kt-page--loading">
                 <div class="col-lg-11">
                   <div class="kt-portlet">
 
-                    <!-- Datos del estudiante -->
-                    <form class="kt-form kt-form--label-right" method="POST">
-                      <div class="kt-portlet__head">
-                        <div>
-                          <h3>
-                            <img src="vistas/recursos/assets/media/icons/gr.png" width="40" alt="">
-                            DATOS DEL ESTUDIANTE
-                          </h3>
-                        </div>
-                        
-                       
-                      </div>
-
-                      <div class="kt-portlet__body">
-                        <div class="form-group row">
-                          <label class="col-lg-2 col-form-label">ESTUDIANTE:</label>
-                          <div class="col-lg-5">
-                            <select class="form-control kt-select2 kt-select2-general" name="idcliente" required>
-                              <option>Buscar estudiante por cédula de identidad</option>
-                              <?php 
-                                $Lista = new EstudiantesControladores(); 
-                                $Lista->EstudianteActivoControlador(); 
-                              ?>
-                            </select>
-                          </div>
-                          <div class="col-lg-4">
-                            <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#ModalInsertarEstudiante">
-                              <img src="vistas/recursos/assets/media/icons/svg/Communication/Add-user.svg"/>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </form>
-
+                    <!-- Formulario Único de Matriculación -->
                   </div>
                 </div>
               </div>
@@ -124,17 +91,49 @@ kt-aside--fixed kt-page--loading">
     <div class="row justify-content-md-center">
         <div class="col-lg-11">
             <div class="kt-portlet">
-                <div class="kt-portlet__head">
-                    <div class="kt-portlet__head-label">
-                        <h3>
-                            <img src="vistas/recursos/assets/media/icons/inscripcion.png" width="40" alt="Icono Inscripción">
-                            MATRICULACIÓN
-                        </h3>
-                    </div>
-                </div>
 
                 <div class="kt-portlet__body">
-                    <form method="POST" id="formMatriculacion" class="needs-validation" novalidate>
+                    <form method="POST" id="formMatriculacion" class="needs-validation" enctype="multipart/form-data" novalidate>
+
+                        <!-- DATOS DEL ESTUDIANTE -->
+                        <div class="kt-portlet__head">
+                            <div>
+                                <h3>
+                                    <img src="vistas/recursos/assets/media/icons/gr.png" width="40" alt="">
+                                    DATOS DEL ESTUDIANTE
+                                </h3>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-lg-2 col-form-label">ESTUDIANTE:</label>
+                            <div class="col-lg-5">
+                                <select class="form-control kt-select2 kt-select2-general" name="idcliente" required>
+                                    <option value="">Buscar estudiante por cédula de identidad</option>
+                                    <?php
+                                        $Lista = new EstudiantesControladores();
+                                        $Lista->EstudianteActivoControlador();
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="col-lg-4">
+                                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#ModalInsertarEstudiante">
+                                    <img src="vistas/recursos/assets/media/icons/svg/Communication/Add-user.svg"/>
+                                </button>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- DATOS DE MATRICULACIÓN -->
+                        <div class="kt-portlet__head">
+                            <div class="kt-portlet__head-label">
+                                <h3>
+                                    <img src="vistas/recursos/assets/media/icons/inscripcion.png" width="40" alt="Icono Inscripción">
+                                    MATRICULACIÓN
+                                </h3>
+                            </div>
+                        </div>
 
                         <div class="form-group row form-group-marginless kt-margin-t-20">
                             <label class="col-lg-2 col-form-label">GRADO ACADÉMICO:</label>
@@ -161,6 +160,7 @@ kt-aside--fixed kt-page--loading">
 
                         <div id="detalle-programa" class="alert alert-info" style="display:none;">
                             <h5 class="text-primary"><i class="fa fa-info-circle"></i> Detalles del Programa</h5>
+
                             <div class="row">
                                 <div class="col-md-6">
                                     <p><strong>Programa:</strong> <span id="detalle-nombre-programa"></span></p>
@@ -169,15 +169,16 @@ kt-aside--fixed kt-page--loading">
                                     <p><strong>Módulos:</strong> <span id="detalle-modulos"></span></p>
                                 </div>
                                 <div class="col-md-6">
-                                    <p><strong>Costo Total:</strong> <span id="detalle-costo-total" class="text-success font-weight-bold"></span></p>
+                                    <p><strong>Costo Del Programa:</strong> <span id="detalle-costo-total" class="text-success font-weight-bold"></span></p>
+                                    <p><strong>Costo Matrícula:</strong> <span id="detalle-costo-matricula" class="text-info font-weight-bold"></span></p>
                                     <p><strong>Sede:</strong> <span id="detalle-sede"></span></p>
                                     <p><strong>Fecha Inicio:</strong> <span id="detalle-inicio"></span></p>
-                                    <p><strong>Modalidad:</strong> <span id="detalle-tipo"></span></p>
+                                    <p><strong>Grado Académico:</strong> <span id="detalle-tipo"></span></p>
                                 </div>
                             </div>
                         </div>
 
-                        <hr>
+            <hr>
 
             <div class="form-group row form-group-marginless kt-margin-t-20">
     
@@ -218,7 +219,7 @@ kt-aside--fixed kt-page--loading">
                       </div>
                   </div>
               </div>
-                <div class="col-lg-4">
+                <div class="col-lg-6">
               <div class="form-group row">
                   <label class="col-5 col-form-label">COMPROBANTE (IMAGEN):</label>
                   <div class="col-7">
@@ -226,8 +227,7 @@ kt-aside--fixed kt-page--loading">
                           type="file" 
                           class="form-control" 
                           name="comprobanteImagen" 
-                          accept="image/*" 
-                          required
+                          accept="image/*"            
                       >
                       <div class="invalid-feedback">Seleccione la imagen del comprobante de pago.</div>
                       <small class="form-text text-muted">Formatos aceptados: JPG, PNG, PDF (si se permite)</small>
@@ -240,12 +240,16 @@ kt-aside--fixed kt-page--loading">
                         <hr>
                         <div class="form-group row">
                             <div class="col-lg-12 text-center">
-                                <button type="submit" class="btn btn-success">
+                                <button type="submit" name="registrarMatricula" class="btn btn-success">
                                     <i class="bi bi-save"></i> Guardar Matriculación
                                 </button>
                             </div>
                         </div>
 
+                    <?php
+                        $RegistrarMatricula = new MatriculaControladores();
+                        $RegistrarMatricula->RegistrarMatriculaControlador();
+                    ?>
                     </form>
                 </div>
 

@@ -8,6 +8,8 @@
     require_once 'controladores/programa.controlador.php';
     require_once 'controladores/estudiantes.controlador.php';
     require_once 'controladores/inscripcion.controlador.php';
+    require_once 'controladores/matricula.controlador.php';
+    require_once 'controladores/inscripcionmodulo.controlador.php';
     require_once 'controladores/docentes.controlador.php';
     // Modelos
     require_once 'modelos/enlaces.modelo.php';
@@ -17,6 +19,8 @@
     require_once 'modelos/programa.modelo.php';
     require_once 'modelos/estudiantes.modelo.php';
     require_once 'modelos/inscripcion.modelo.php';
+    require_once 'modelos/matricula.modelo.php';
+    require_once 'modelos/inscripcionmodulo.modelo.php';
     require_once 'modelos/docentes.modelo.php';
     
     

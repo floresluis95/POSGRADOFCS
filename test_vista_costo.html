@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Visual - Costo de Matrícula</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2196F3;
+            border-bottom: 3px solid #2196F3;
+            padding-bottom: 10px;
+        }
+        .step {
+            background: #e3f2fd;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 5px solid #2196F3;
+        }
+        .success {
+            background: #e8f5e9;
+            border-left-color: #4CAF50;
+            color: #2e7d32;
+        }
+        .info {
+            background: #fff3e0;
+            border-left-color: #FF9800;
+            color: #e65100;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background: #1976D2;
+        }
+        .btn-success {
+            background: #4CAF50;
+        }
+        .btn-success:hover {
+            background: #45a049;
+        }
+        ol {
+            line-height: 2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Visual - Costo de Matrícula</h1>
+
+        <div class="step success">
+            <h3>✅ Archivo Actualizado</h3>
+            <p><strong>Archivo:</strong> <code>selectprograma.js</code></p>
+            <p>Se ha agregado la funcionalidad para mostrar el costo de matrícula y autocompletar el campo de pago.</p>
+        </div>
+
+        <div class="step">
+            <h3>📋 Instrucciones para Probar</h3>
+            <ol>
+                <li>Haz clic en el botón "Ir a Inscripción" abajo</li>
+                <li>Selecciona un <strong>GRADO ACADÉMICO</strong> (DIPLOMADO, MAESTRÍA o ESPECIALIDAD)</li>
+                <li>Selecciona un <strong>PROGRAMA</strong> de la lista</li>
+                <li><strong>Verifica que se muestre:</strong>
+                    <ul>
+                        <li>✓ Panel "Detalles del Programa"</li>
+                        <li>✓ Campo "Costo Total"</li>
+                        <li>✓ Campo <strong>"Costo Matrícula"</strong> (NUEVO)</li>
+                        <li>✓ Otros detalles (Sede, Fecha Inicio, etc.)</li>
+                    </ul>
+                </li>
+                <li><strong>Verifica que el campo "PAGO MATRÍCULA" se autocomplete</strong> con el valor del costo de matrícula</li>
+            </ol>
+        </div>
+
+        <div class="step info">
+            <h3>🔍 Qué Buscar en la Vista</h3>
+            <p><strong>Panel de Detalles del Programa:</strong></p>
+            <ul>
+                <li><strong>Programa:</strong> [Nombre del programa]</li>
+                <li><strong>Código:</strong> [Código]</li>
+                <li><strong>Duración:</strong> [X meses]</li>
+                <li><strong>Módulos:</strong> [X módulos]</li>
+                <li><strong>Costo Total:</strong> <span style="color: green;">Bs. X,XXX.XX</span></li>
+                <li><strong>Costo Matrícula:</strong> <span style="color: blue;">Bs. X,XXX.XX</span> ← <strong>ESTE ES EL NUEVO</strong></li>
+                <li><strong>Sede:</strong> [Sede]</li>
+                <li><strong>Fecha Inicio:</strong> [Fecha]</li>
+                <li><strong>Modalidad:</strong> [Tipo]</li>
+            </ul>
+        </div>
+
+        <div class="step info">
+            <h3>💡 Comportamiento Esperado</h3>
+            <ul>
+                <li>Al seleccionar un programa, se muestra el panel de detalles</li>
+                <li>El <strong>Costo Matrícula</strong> aparece en color azul</li>
+                <li>El campo <strong>"PAGO MATRÍCULA"</strong> se llena automáticamente con el mismo valor</li>
+                <li>Si cambias de grado académico o programa, el campo se actualiza</li>
+                <li>Puedes modificar manualmente el valor del campo si es necesario</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>🐛 Si NO Funciona</h3>
+            <p><strong>Prueba lo siguiente:</strong></p>
+            <ol>
+                <li><strong>Limpia el caché del navegador:</strong>
+                    <ul>
+                        <li>Chrome/Edge: Ctrl + Shift + Delete</li>
+                        <li>Firefox: Ctrl + Shift + Delete</li>
+                    </ul>
+                </li>
+                <li><strong>Recarga la página con forzar actualización:</strong>
+                    <ul>
+                        <li>Ctrl + F5 (Windows)</li>
+                        <li>Cmd + Shift + R (Mac)</li>
+                    </ul>
+                </li>
+                <li><strong>Abre la Consola del Navegador:</strong>
+                    <ul>
+                        <li>F12 → Pestaña "Console"</li>
+                        <li>Busca errores en rojo</li>
+                        <li>Mira si hay mensajes de error en la consola</li>
+                    </ul>
+                </li>
+                <li><strong>Verifica que el archivo JS se cargue:</strong>
+                    <ul>
+                        <li>F12 → Pestaña "Network"</li>
+                        <li>Recarga la página</li>
+                        <li>Busca <code>selectprograma.js</code></li>
+                        <li>Debe aparecer con estado 200 (OK)</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="index.php?ruta=inscripcion" class="btn btn-success">
+                🚀 Ir a Inscripción (Probar)
+            </a>
+            <a href="test_costo_matricula.php" class="btn">
+                🧪 Test Técnico
+            </a>
+        </div>
+
+        <div class="step" style="margin-top: 30px; background: #e8f5e9; border-left-color: #4CAF50;">
+            <h3 style="color: #2e7d32; margin-top: 0;">✅ Confirmación</h3>
+            <p>Después de probar, confirma que:</p>
+            <ul>
+                <li>✓ Se muestra el campo "Costo Matrícula" en los detalles</li>
+                <li>✓ El valor aparece en color azul</li>
+                <li>✓ El campo "PAGO MATRÍCULA" se autocompleta</li>
+                <li>✓ El valor coincide con el costo de matrícula del programa</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        console.log('Test Visual de Costo de Matrícula');
+        console.log('Archivo actualizado: selectprograma.js');
+        console.log('Verifica que se muestre el campo "Costo Matrícula" y se autocomplete el pago');
+    </script>
+</body>
+</html>

@@ -195,9 +195,9 @@ class EstudiantesControladores
         $TraerListaEstudianteActivo = EstudiantesModelos::ListaEstudianteActivoModelo();
 
         foreach ($TraerListaEstudianteActivo as $value) {
-            echo '<option value="' . $value["Ci"] . '">' . 
-                 $value["Ci"] . ' -> ' . $value["Nombre"] . ' ' . 
-                 $value["Apaterno"] . ' ' . $value["Amaterno"] . 
+            echo '<option value="' . $value["EstudianteID"] . '">' .
+                 $value["Ci"] . ' -> ' . $value["Nombre"] . ' ' .
+                 $value["Apaterno"] . ' ' . $value["Amaterno"] .
                  '</option>';
         }
     }

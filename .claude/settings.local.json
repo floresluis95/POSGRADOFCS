@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php:*)"
+      "Bash(php:*)",
+      "Bash(curl:*)",
+      "Bash(C:xamppphpphp.exe -l modelos/matricula.modelo.php)",
+      "Bash(C:xamppphpphp.exe -l controladores/matricula.controlador.php)",
+      "Bash(echo:*)",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"modelos/matricula.modelo.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"controladores/matricula.controlador.php\")"
     ],
     "deny": [],
     "ask": []

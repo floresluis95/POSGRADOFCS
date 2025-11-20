@@ -10,8 +10,8 @@ function recargarLista(){
         type:"POST",
         url:"ajax/filtrar.ajax.php",
         data:"continente=" + $('#lista1').val(),
-    succes:function(r){
-        $('#select2lista').hmtl(r);
+    success:function(r){
+        $('#select2lista').html(r);
     }   
  });
 }

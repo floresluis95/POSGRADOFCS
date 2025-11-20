@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrección: Vista de Detalles del Programa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1976D2;
+            border-bottom: 3px solid #1976D2;
+            padding-bottom: 10px;
+        }
+        .before-after {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .before, .after {
+            padding: 15px;
+            border-radius: 5px;
+            border: 2px solid;
+        }
+        .before {
+            border-color: #d32f2f;
+            background: #ffebee;
+        }
+        .after {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+        .before h3 {
+            color: #d32f2f;
+            margin-top: 0;
+        }
+        .after h3 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .highlight {
+            background: #ffeb3b;
+            padding: 2px 4px;
+            font-weight: bold;
+        }
+        .success-box {
+            background: #e8f5e9;
+            border-left: 5px solid #4CAF50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+        ul {
+            line-height: 1.8;
+        }
+        .demo-box {
+            background: #e3f2fd;
+            border: 2px dashed #2196F3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .demo-box.hidden {
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Corrección: Vista de Detalles del Programa</h1>
+
+        <div class="success-box">
+            <h3 style="margin-top: 0;">🎯 Problema Resuelto</h3>
+            <p>El título <strong>"Detalles del Programa"</strong> se mostraba siempre, incluso cuando no había programa seleccionado.</p>
+        </div>
+
+        <h2>📋 Cambios Realizados</h2>
+
+        <div class="before-after">
+            <div class="before">
+                <h3>❌ ANTES (Incorrecto)</h3>
+                <pre style="font-size: 11px; overflow-x: auto;">&lt;hr&gt;
+<span class="highlight">&lt;h5&gt;Detalles del Programa&lt;/h5&gt;</span>
+
+&lt;div id="detalle-programa"
+     style="display:none;"&gt;
+    &lt;!-- Contenido oculto --&gt;
+    &lt;p&gt;Programa: ...&lt;/p&gt;
+    &lt;p&gt;Costo: ...&lt;/p&gt;
+&lt;/div&gt;</pre>
+                <p style="margin: 10px 0 0 0; color: #c62828;">
+                    <strong>Problema:</strong> El h5 está FUERA del div, por lo que siempre se ve.
+                </p>
+            </div>
+
+            <div class="after">
+                <h3>✅ AHORA (Correcto)</h3>
+                <pre style="font-size: 11px; overflow-x: auto;">&lt;hr&gt;
+
+&lt;div id="detalle-programa"
+     style="display:none;"&gt;
+    <span class="highlight">&lt;h5&gt;Detalles del Programa&lt;/h5&gt;</span>
+
+    &lt;p&gt;Programa: ...&lt;/p&gt;
+    &lt;p&gt;Costo Total: ...&lt;/p&gt;
+    <span class="highlight">&lt;p&gt;Costo Matrícula: ...&lt;/p&gt;</span>
+&lt;/div&gt;</pre>
+                <p style="margin: 10px 0 0 0; color: #2e7d32;">
+                    <strong>Solución:</strong> El h5 está DENTRO del div, se oculta/muestra junto con todo.
+                </p>
+            </div>
+        </div>
+
+        <h2>✨ Mejoras Adicionales</h2>
+
+        <div class="success-box">
+            <h3 style="margin-top: 0;">1. Título dentro del div</h3>
+            <p>El título "Detalles del Programa" ahora está DENTRO del <code>&lt;div id="detalle-programa"&gt;</code></p>
+            <p><strong>Resultado:</strong> Se oculta cuando no hay programa seleccionado y se muestra cuando seleccionas uno.</p>
+        </div>
+
+        <div class="success-box">
+            <h3 style="margin-top: 0;">2. Campo "Costo Matrícula" agregado</h3>
+            <p>Se agregó el campo que faltaba:</p>
+            <code>&lt;p&gt;&lt;strong&gt;Costo Matrícula:&lt;/strong&gt; &lt;span id="detalle-costo-matricula"&gt;&lt;/span&gt;&lt;/p&gt;</code>
+            <p><strong>Resultado:</strong> Ahora se muestra el costo de matrícula del programa.</p>
+        </div>
+
+        <div class="success-box">
+            <h3 style="margin-top: 0;">3. Corrección ortográfica</h3>
+            <p>Cambio: <code>"Grado Academico"</code> → <code>"Grado Académico"</code> (con tilde)</p>
+        </div>
+
+        <h2>👀 Comportamiento Esperado</h2>
+
+        <h3>Cuando NO hay programa seleccionado:</h3>
+        <div class="demo-box hidden">
+            <p style="text-align: center; color: #666;">
+                [Esta sección está oculta]
+            </p>
+        </div>
+        <p style="color: #666;">✓ No se muestra nada (div oculto con <code>display:none</code>)</p>
+
+        <h3 style="margin-top: 30px;">Cuando seleccionas un programa:</h3>
+        <div class="demo-box">
+            <h5 style="color: #1976D2; margin-top: 0;">
+                <i>ℹ️</i> Detalles del Programa
+            </h5>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <p><strong>Programa:</strong> MESTRIA EN ORTODONCIA</p>
+                    <p><strong>Código:</strong> ORU-MAE-1-2025</p>
+                    <p><strong>Duración:</strong> 24 meses</p>
+                    <p><strong>Módulos:</strong> 12</p>
+                </div>
+                <div>
+                    <p><strong>Costo Del Programa:</strong> <span style="color: green; font-weight: bold;">Bs. 25,000.00</span></p>
+                    <p><strong>Costo Matrícula:</strong> <span style="color: blue; font-weight: bold;">Bs. 1,500.00</span></p>
+                    <p><strong>Sede:</strong> ORURO</p>
+                    <p><strong>Fecha Inicio:</strong> 2025-01-15</p>
+                    <p><strong>Grado Académico:</strong> MAESTRIA</p>
+                </div>
+            </div>
+        </div>
+        <p style="color: #2e7d32;">✓ Se muestra el panel completo con todos los detalles (div visible con <code>display:block</code>)</p>
+
+        <h2>🧪 Cómo Probar</h2>
+
+        <ol>
+            <li><strong>Limpia el caché del navegador:</strong>
+                <ul>
+                    <li>Ctrl + Shift + Delete</li>
+                    <li>O Ctrl + F5 para forzar recarga</li>
+                </ul>
+            </li>
+            <li><strong>Abre la página de inscripción</strong></li>
+            <li><strong>Observa:</strong> NO deberías ver el título "Detalles del Programa" al inicio</li>
+            <li><strong>Selecciona un grado académico:</strong> Ej. MAESTRÍA</li>
+            <li><strong>Selecciona un programa:</strong> Ej. MESTRIA EN ORTODONCIA</li>
+            <li><strong>Verifica:</strong>
+                <ul>
+                    <li>✓ Aparece el panel azul con el título</li>
+                    <li>✓ Se muestran todos los detalles</li>
+                    <li>✓ Aparece "Costo Matrícula"</li>
+                    <li>✓ El campo "PAGO MATRÍCULA" se autocompleta</li>
+                </ul>
+            </li>
+        </ol>
+
+        <div style="text-align: center; margin: 30px 0; padding: 20px; background: #e3f2fd; border-radius: 5px;">
+            <h3 style="color: #1976D2; margin-top: 0;">🚀 Prueba los Cambios</h3>
+            <a href="index.php?ruta=inscripcion" class="btn">
+                📝 Ir a Inscripción
+            </a>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 5px; border-left: 5px solid #ffc107;">
+            <h3 style="color: #856404; margin-top: 0;">💡 Recuerda</h3>
+            <ul style="margin: 0; color: #856404;">
+                <li><strong>Limpia el caché</strong> antes de probar (muy importante)</li>
+                <li>El panel debe estar <strong>oculto</strong> al inicio</li>
+                <li>Debe <strong>aparecer</strong> solo al seleccionar un programa</li>
+                <li>Debe mostrar el <strong>Costo Matrícula</strong> en azul</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

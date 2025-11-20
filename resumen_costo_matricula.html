@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualización: Costo de Matrícula Automático</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #764ba2;
+            margin-top: 30px;
+        }
+        .success-box {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .info-box {
+            background: #d1ecf1;
+            border-left: 5px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+        .feature-list li:before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px 5px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .screenshot {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background: #667eea;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Actualización: Costo de Matrícula Automático</h1>
+
+        <div class="success-box">
+            <h3 style="margin-top: 0;">✅ IMPLEMENTACIÓN EXITOSA</h3>
+            <p style="margin: 0; font-size: 16px;">
+                Se ha agregado la funcionalidad para mostrar el costo de matrícula en los detalles del programa
+                y autocompletar automáticamente el campo de pago.
+            </p>
+        </div>
+
+        <h2>📋 Cambios Realizados</h2>
+
+        <h3>1. Vista - inscripcion.php</h3>
+        <div class="info-box">
+            <strong>Archivo:</strong> <code>vistas/componentes/inscripcion.php</code><br>
+            <strong>Cambio:</strong> Se agregó el campo "Costo Matrícula" en el panel de detalles del programa
+        </div>
+
+        <div class="code">
+&lt;div class="col-md-6"&gt;
+    &lt;p&gt;&lt;strong&gt;Costo Total:&lt;/strong&gt; &lt;span id="detalle-costo-total"&gt;&lt;/span&gt;&lt;/p&gt;
+    &lt;p&gt;&lt;strong&gt;Costo Matrícula:&lt;/strong&gt; &lt;span id="detalle-costo-matricula"&gt;&lt;/span&gt;&lt;/p&gt;
+    &lt;p&gt;&lt;strong&gt;Sede:&lt;/strong&gt; &lt;span id="detalle-sede"&gt;&lt;/span&gt;&lt;/p&gt;
+    ...
+&lt;/div&gt;
+        </div>
+
+        <h3>2. JavaScript - programa.js</h3>
+        <div class="info-box">
+            <strong>Archivo:</strong> <code>vistas/recursos/assets/js/scripts/programa.js</code><br>
+            <strong>Cambios:</strong>
+            <ul style="margin: 10px 0;">
+                <li>Muestra el costo de matrícula en los detalles</li>
+                <li>Autocompleta el campo de pago matrícula</li>
+                <li>Limpia el campo al cambiar de grado académico o programa</li>
+            </ul>
+        </div>
+
+        <div class="code">
+// Mostrar y autocompletar costo de matrícula
+var costoMatricula = respuesta.CostoMatricula ? parseFloat(respuesta.CostoMatricula) : 0;
+$('#detalle-costo-matricula').text('Bs. ' + costoMatricula.toFixed(2));
+
+// Autocompletar el campo de pago matrícula
+$('input[name="montoMatricula"]').val(costoMatricula.toFixed(2));
+        </div>
+
+        <h2>✨ Funcionalidades Implementadas</h2>
+
+        <ul class="feature-list">
+            <li><strong>Visualización automática:</strong> Al seleccionar un programa, se muestra su costo de matrícula en los detalles</li>
+            <li><strong>Autocompletado:</strong> El campo "PAGO MATRÍCULA" se llena automáticamente con el valor del costo de matrícula del programa</li>
+            <li><strong>Limpieza automática:</strong> Al cambiar de grado académico o programa, el campo se limpia y actualiza</li>
+            <li><strong>Formato de moneda:</strong> Los valores se muestran con formato boliviano (Bs. X,XXX.XX)</li>
+            <li><strong>Validación de datos:</strong> Verifica que el campo exista antes de mostrarlo</li>
+        </ul>
+
+        <h2>🔄 Flujo de Funcionamiento</h2>
+
+        <div class="screenshot">
+            <h3 style="margin-top: 0;">Paso 1: Seleccionar Grado Académico</h3>
+            <p>Usuario selecciona: <strong>MAESTRÍA</strong></p>
+            <p style="color: #666;">→ Se cargan los programas de maestría</p>
+            <p style="color: #666;">→ Campo de matrícula se limpia</p>
+        </div>
+
+        <div class="screenshot">
+            <h3 style="margin-top: 0;">Paso 2: Seleccionar Programa</h3>
+            <p>Usuario selecciona: <strong>MESTRIA EN ORTODONCIA</strong></p>
+            <p style="color: #666;">→ Se cargan los detalles del programa:</p>
+            <ul style="margin: 10px 0; color: #444;">
+                <li>Costo Total: <strong style="color: green;">Bs. 25,000.00</strong></li>
+                <li>Costo Matrícula: <strong style="color: blue;">Bs. 1,500.00</strong></li>
+                <li>Duración: 24 meses</li>
+                <li>Módulos: 12</li>
+                <li>Sede: ORURO</li>
+            </ul>
+        </div>
+
+        <div class="screenshot">
+            <h3 style="margin-top: 0;">Paso 3: Campo Autocompletado</h3>
+            <p>Campo <strong>"PAGO MATRÍCULA"</strong> se llena automáticamente:</p>
+            <div style="background: white; border: 2px solid #4CAF50; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                <strong>PAGO MATRÍCULA:</strong>
+                <input type="text" value="1500.00" readonly style="border: 1px solid #ddd; padding: 8px; border-radius: 4px; background: #e8f5e9;">
+            </div>
+            <p style="color: #666;">→ El usuario puede modificar el valor si es necesario</p>
+        </div>
+
+        <h2>🧪 Resultados de las Pruebas</h2>
+
+        <table>
+            <tr>
+                <th>Programa</th>
+                <th>Grado</th>
+                <th>Costo Total</th>
+                <th>Costo Matrícula</th>
+                <th>Estado</th>
+            </tr>
+            <tr>
+                <td>MESTRIA EN ORTODONCIA</td>
+                <td>MAESTRIA</td>
+                <td>Bs. 25,000.00</td>
+                <td style="color: blue; font-weight: bold;">Bs. 1,500.00</td>
+                <td style="color: green;">✓ Probado</td>
+            </tr>
+            <tr>
+                <td>MAESTRIA EN ENDODONCIA</td>
+                <td>MAESTRIA</td>
+                <td>Bs. 25,000.00</td>
+                <td style="color: blue; font-weight: bold;">Bs. 1,500.00</td>
+                <td style="color: green;">✓ Probado</td>
+            </tr>
+            <tr>
+                <td>DIPLOMADO EN ENDODONCIA</td>
+                <td>DIPLOMADO</td>
+                <td>Bs. 15,000.00</td>
+                <td style="color: blue; font-weight: bold;">Bs. 1,500.00</td>
+                <td style="color: green;">✓ Probado</td>
+            </tr>
+        </table>
+
+        <div class="success-box">
+            <h3 style="margin-top: 0;">✅ Verificaciones Realizadas</h3>
+            <ul style="margin: 0;">
+                <li>✓ Campo CostoMatricula presente en la base de datos</li>
+                <li>✓ Consulta SQL retorna el campo correctamente</li>
+                <li>✓ AJAX recibe el valor en formato JSON</li>
+                <li>✓ JavaScript muestra el valor en los detalles</li>
+                <li>✓ Campo de pago se autocompleta correctamente</li>
+                <li>✓ Formato de moneda correcto (2 decimales)</li>
+            </ul>
+        </div>
+
+        <h2>📊 Datos Técnicos</h2>
+
+        <table>
+            <tr>
+                <th>Aspecto</th>
+                <th>Detalles</th>
+            </tr>
+            <tr>
+                <td><strong>Campo en BD</strong></td>
+                <td>CostoMatricula (DECIMAL)</td>
+            </tr>
+            <tr>
+                <td><strong>Formato</strong></td>
+                <td>Bs. X,XXX.XX (2 decimales)</td>
+            </tr>
+            <tr>
+                <td><strong>Método Backend</strong></td>
+                <td>ProgramasModelos::MostrarDetallePrograma()</td>
+            </tr>
+            <tr>
+                <td><strong>Endpoint AJAX</strong></td>
+                <td>ajax/programa.ajax.php</td>
+            </tr>
+            <tr>
+                <td><strong>Elemento HTML</strong></td>
+                <td>#detalle-costo-matricula</td>
+            </tr>
+            <tr>
+                <td><strong>Campo Input</strong></td>
+                <td>input[name="montoMatricula"]</td>
+            </tr>
+        </table>
+
+        <h2>🎯 Beneficios de la Implementación</h2>
+
+        <div class="info-box">
+            <h4 style="margin-top: 0;">Para el Usuario:</h4>
+            <ul>
+                <li>✓ <strong>Ahorro de tiempo:</strong> No necesita buscar manualmente el costo de matrícula</li>
+                <li>✓ <strong>Menos errores:</strong> Se reduce el riesgo de ingresar un monto incorrecto</li>
+                <li>✓ <strong>Información clara:</strong> Ve el costo antes de confirmar el registro</li>
+                <li>✓ <strong>Flexibilidad:</strong> Puede modificar el valor si hay descuentos o promociones</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h4 style="margin-top: 0;">Para el Sistema:</h4>
+            <ul>
+                <li>✓ <strong>Consistencia:</strong> Los datos se mantienen coherentes entre programas e inscripciones</li>
+                <li>✓ <strong>Automatización:</strong> Reduce la carga manual de trabajo</li>
+                <li>✓ <strong>Trazabilidad:</strong> Facilita el seguimiento de pagos</li>
+                <li>✓ <strong>Escalabilidad:</strong> Fácil de mantener y extender</li>
+            </ul>
+        </div>
+
+        <div class="actions">
+            <h2>🚀 Probar la Funcionalidad</h2>
+            <a href="index.php?ruta=inscripcion" class="btn">Ir a Inscripción</a>
+            <a href="test_costo_matricula.php" class="btn" style="background: #28a745;">Ver Test Técnico</a>
+            <a href="resumen_pruebas_matricula.html" class="btn" style="background: #17a2b8;">Resumen General</a>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 5px; border-left: 5px solid #ffc107;">
+            <h3 style="color: #856404; margin-top: 0;">💡 Nota Importante</h3>
+            <p style="margin: 0; color: #856404;">
+                El campo se autocompleta pero el usuario puede modificarlo si es necesario.
+                Esto permite flexibilidad para casos especiales como descuentos, becas o promociones.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

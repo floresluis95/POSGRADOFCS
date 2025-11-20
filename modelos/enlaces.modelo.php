@@ -14,6 +14,7 @@
                 $enlace == 'programas'||
                 $enlace == 'inscripcion'||
                 $enlace == 'matriculas'||
+                $enlace == 'matriculados'||
                 $enlace == 'modulos' ||
                 $enlace == 'docentes'
                 )
