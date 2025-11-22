@@ -31,24 +31,53 @@ class InscripcionModuloControladores
             $colorEstado = $estudiante['Estado'] == 'ACTIVO' ? 'success' : 'danger';
 
             echo '<tr>
-                    <td class="text-center">' . ($key + 1) . '</td>
-                    <td>' . $nombreCompleto . '</td>
-                    <td class="text-center">' . $estudiante['Ci'] . '</td>
+                    <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
+                    <td><strong>' . $nombreCompleto . '</strong></td>
+                    <td class="text-center"><span class="badge badge-secondary">' . $estudiante['Ci'] . '</span></td>
                     <td>' . $estudiante['NombrePrograma'] . '</td>
-                    <td class="text-center">' . $estudiante['GradoAcademico'] . '</td>
-                    <td class="text-center">' . $estudiante['CodigoPrograma'] . '</td>
-                    <td class="text-center">Bs. ' . number_format($estudiante['costomatricula'], 2) . '</td>
+                    <td class="text-center"><span class="badge badge-info">' . $estudiante['GradoAcademico'] . '</span></td>
+                    <td class="text-center"><span class="badge badge-primary">' . $estudiante['CodigoPrograma'] . '</span></td>
+                    <td class="text-center"><strong>Bs. ' . number_format($estudiante['costomatricula'], 2) . '</strong></td>
                     <td class="text-center">' . $estudiante['nvauchermatricula'] . '</td>
                     <td class="text-center">' . $fechaFormateada . '</td>
                     <td class="text-center">
-                        <button type="button" class="btn btn-primary btn-sm btn-inscribir-modulo"
-                                data-estudiante-id="' . $estudiante['EstudianteID'] . '"
-                                data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
-                                data-programa-id="' . $estudiante['ProgramaID'] . '"
-                                data-programa-nombre="' . htmlspecialchars($estudiante['NombrePrograma']) . '"
-                                title="Inscribir a Módulo">
-                            <i class="fa fa-book"></i> Inscribir a Módulo
-                        </button>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle btn-actions-dropdown"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fa fa-cog"></i> Acciones
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item btn-inscribir-modulo" href="#"
+                                   data-estudiante-id="' . $estudiante['EstudianteID'] . '"
+                                   data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
+                                   data-programa-id="' . $estudiante['ProgramaID'] . '"
+                                   data-programa-nombre="' . htmlspecialchars($estudiante['NombrePrograma']) . '"
+                                   data-idinscripcion="' . $estudiante['idInscripcion'] . '">
+                                    <i class="fa fa-book text-primary"></i> Inscribir a Módulo
+                                </a>
+                                <a class="dropdown-item btn-ver-detalles" href="#"
+                                   data-estudiante-id="' . $estudiante['EstudianteID'] . '"
+                                   data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
+                                   data-estudiante-ci="' . $estudiante['Ci'] . '"
+                                   data-programa-nombre="' . htmlspecialchars($estudiante['NombrePrograma']) . '"
+                                   data-grado="' . $estudiante['GradoAcademico'] . '"
+                                   data-codigo="' . $estudiante['CodigoPrograma'] . '"
+                                   data-costo="' . number_format($estudiante['costomatricula'], 2) . '"
+                                   data-voucher="' . $estudiante['nvauchermatricula'] . '"
+                                   data-fecha="' . $fechaFormateada . '">
+                                    <i class="fa fa-eye text-info"></i> Ver Detalles
+                                </a>
+                                <a class="dropdown-item btn-ver-modulos" href="#"
+                                   data-estudiante-id="' . $estudiante['EstudianteID'] . '"
+                                   data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '">
+                                    <i class="fa fa-list text-success"></i> Ver Módulos Inscritos
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfestudiante.php?id=' . $estudiante['EstudianteID'] . '" target="_blank">
+                                    <i class="fa fa-print text-warning"></i> Imprimir Información
+                                </a>
+                            </div>
+                        </div>
                     </td>
                   </tr>';
         }
