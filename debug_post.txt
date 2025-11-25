@@ -1,0 +1,86 @@
+2025-11-25 11:01:46
+Array
+(
+    [programaID] => 7
+    [totalModulos] => 2
+    [codigomodulo_1] => MODULO I
+    [nombremodulo_1] => METODOLOGIA
+    [docentemodulo_1] => 1
+    [codigomodulo_2] => MODULO II
+    [nombremodulo_2] => REVISION 2
+    [docentemodulo_2] => 1
+)
+
+
+2025-11-25 11:02:57
+Array
+(
+    [programaID] => 7
+    [totalModulos] => 2
+    [codigomodulo_1] => MODULO I
+    [nombremodulo_1] => METODOLOGIA
+    [docentemodulo_1] => 1
+    [codigomodulo_2] => MODULO II
+    [nombremodulo_2] => REVISION 2
+    [docentemodulo_2] => 1
+)
+
+
+2025-11-25 11:03:18
+Array
+(
+    [programaID] => 7
+    [totalModulos] => 2
+    [codigomodulo_1] => MODULO I
+    [nombremodulo_1] => METODOLOGIA
+    [docentemodulo_1] => 1
+    [codigomodulo_2] => MODULO II
+    [nombremodulo_2] => MET 2
+    [docentemodulo_2] => 1
+)
+
+
+2025-11-25 11:10:00
+Array
+(
+    [programaID] => 7
+    [totalModulos] => 2
+    [codigomodulo_1] => MODULO I
+    [nombremodulo_1] => METODOLOGIA
+    [docentemodulo_1] => 1
+    [codigomodulo_2] => MODULO II
+    [nombremodulo_2] => MET 2
+    [docentemodulo_2] => 1
+)
+
+
+2025-11-25 11:10:15
+Array
+(
+    [programaID] => 7
+    [totalModulos] => 2
+    [registrarModulosPorPrograma] => 1
+    [codigomodulo_1] => MODULO I
+    [nombremodulo_1] => METODOLOGIA
+    [docentemodulo_1] => 1
+    [codigomodulo_2] => MODULO II
+    [nombremodulo_2] => REVISION 2
+    [docentemodulo_2] => 
+)
+
+
+2025-11-25 11:10:45
+Array
+(
+    [programaID] => 7
+    [totalModulos] => 2
+    [registrarModulosPorPrograma] => 1
+    [codigomodulo_1] => MODULO I
+    [nombremodulo_1] => METODOLOGIA
+    [docentemodulo_1] => 
+    [codigomodulo_2] => MODULO II
+    [nombremodulo_2] => REVISION 2
+    [docentemodulo_2] => 
+)
+
+

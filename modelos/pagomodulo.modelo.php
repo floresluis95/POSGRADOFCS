@@ -10,6 +10,7 @@ class PagoModuloModelo
 {
     /**
      * Obtener módulos de un programa con estado de pago por inscripción
+     * Usa la tabla modulos (con 's') que tiene la estructura: ProgramaId, nombremodulo, codigomodulo
      * @param int $programaID
      * @param int $idinscripcion
      * @return array
@@ -19,31 +20,29 @@ class PagoModuloModelo
         try {
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT
-                    m.ModuloID,
-                    m.NombreModulo,
-                    m.Codigo,
-                    m.Descripcion,
-                    m.Creditos,
-                    m.HorasTeoricas,
-                    m.HorasPracticas,
-                    m.Costo,
-                    m.Estado,
-                    pm.Idmodulo,
+                    m.Idmodulo as ModuloID,
+                    m.nombremodulo as NombreModulo,
+                    m.codigomodulo as Codigo,
+                    m.estadomodulo,
+                    CONCAT(d.Nombre, ' ', d.Apaterno, ' ', d.Amaterno) as NombreDocente,
+                    d.Especialidad as EspecialidadDocente,
+                    pm.Idpagomodulo,
                     pm.costomodulo as CostoPagado,
                     pm.fechapago as FechaPago,
                     pm.nvaucher as NumeroVaucher,
                     pm.Estado as EstadoPago,
                     CASE
-                        WHEN pm.Idmodulo IS NOT NULL THEN 1
+                        WHEN pm.Idpagomodulo IS NOT NULL THEN 1
                         ELSE 0
                     END as Pagado
-                FROM modulo m
-                LEFT JOIN pagomodulo pm ON m.NombreModulo = pm.nmodulo
+                FROM modulos m
+                LEFT JOIN docente d ON m.DocenteID = d.DocenteID
+                LEFT JOIN pagomodulo pm ON m.Idmodulo = pm.IdModulo
                     AND pm.idinscripcion = :idinscripcion
                     AND pm.Estado != 'ANULADO'
-                WHERE m.ProgramaID = :programaID
-                AND m.Estado = 1
-                ORDER BY m.Codigo ASC"
+                WHERE m.ProgramaId = :programaID
+                AND m.estadomodulo = 'ACTIVO'
+                ORDER BY m.codigomodulo ASC"
             );
             $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
             $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
@@ -65,19 +64,16 @@ class PagoModuloModelo
         try {
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT
-                    ModuloID,
-                    NombreModulo,
-                    Codigo,
-                    Descripcion,
-                    Creditos,
-                    HorasTeoricas,
-                    HorasPracticas,
-                    Costo,
-                    Estado
-                FROM modulo
-                WHERE ProgramaID = :programaID
-                AND Estado = 1
-                ORDER BY Codigo ASC"
+                    m.Idmodulo as ModuloID,
+                    m.nombremodulo as NombreModulo,
+                    m.codigomodulo as Codigo,
+                    m.estadomodulo as Estado,
+                    CONCAT(d.Nombre, ' ', d.Apaterno, ' ', d.Amaterno) as NombreDocente
+                FROM modulos m
+                LEFT JOIN docente d ON m.DocenteID = d.DocenteID
+                WHERE m.ProgramaId = :programaID
+                AND m.estadomodulo = 'ACTIVO'
+                ORDER BY m.codigomodulo ASC"
             );
             $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
             $stmt->execute();
@@ -90,7 +86,8 @@ class PagoModuloModelo
 
     /**
      * Registrar pago de módulo
-     * @param array $datos
+     * Ahora usa IdModulo como FK a la tabla modulos
+     * @param array $datos - debe incluir: idinscripcion, IdModulo, costomodulo, fechapago, nvaucher, fmodulo
      * @return string
      */
     public static function RegistrarPagoModuloModelo($datos)
@@ -101,18 +98,29 @@ class PagoModuloModelo
 
             // Verificar si ya existe un pago para este módulo en esta inscripción
             $stmtCheck = $pdo->prepare(
-                "SELECT Idmodulo FROM pagomodulo
+                "SELECT Idpagomodulo FROM pagomodulo
                  WHERE idinscripcion = :idinscripcion
-                 AND nmodulo = :nmodulo
+                 AND IdModulo = :idModulo
                  AND Estado != 'ANULADO'"
             );
             $stmtCheck->bindParam(":idinscripcion", $datos['idinscripcion'], PDO::PARAM_INT);
-            $stmtCheck->bindParam(":nmodulo", $datos['nmodulo'], PDO::PARAM_STR);
+            $stmtCheck->bindParam(":idModulo", $datos['IdModulo'], PDO::PARAM_INT);
             $stmtCheck->execute();
 
             if ($stmtCheck->fetch()) {
                 $pdo->rollBack();
                 return "duplicado";
+            }
+
+            // Obtener nombre del módulo desde la tabla modulos
+            $stmtModulo = $pdo->prepare("SELECT nombremodulo FROM modulos WHERE Idmodulo = :idModulo");
+            $stmtModulo->bindParam(":idModulo", $datos['IdModulo'], PDO::PARAM_INT);
+            $stmtModulo->execute();
+            $modulo = $stmtModulo->fetch(PDO::FETCH_ASSOC);
+
+            if (!$modulo) {
+                $pdo->rollBack();
+                return "modulo_no_encontrado";
             }
 
             // Preparar el archivo (si existe)
@@ -121,15 +129,16 @@ class PagoModuloModelo
                 $fmodulo = $datos['fmodulo'];
             }
 
-            // Insertar el pago del módulo
+            // Insertar el pago del módulo (mantiene nmodulo por compatibilidad)
             $stmt = $pdo->prepare(
                 "INSERT INTO pagomodulo
-                (idinscripcion, nmodulo, costomodulo, fechapago, nvaucher, fmodulo, Estado)
-                VALUES (:idinscripcion, :nmodulo, :costomodulo, :fechapago, :nvaucher, :fmodulo, 'PAGADO')"
+                (idinscripcion, IdModulo, nmodulo, costomodulo, fechapago, nvaucher, fmodulo, Estado)
+                VALUES (:idinscripcion, :idModulo, :nmodulo, :costomodulo, :fechapago, :nvaucher, :fmodulo, 'PAGADO')"
             );
 
             $stmt->bindParam(":idinscripcion", $datos['idinscripcion'], PDO::PARAM_INT);
-            $stmt->bindParam(":nmodulo", $datos['nmodulo'], PDO::PARAM_STR);
+            $stmt->bindParam(":idModulo", $datos['IdModulo'], PDO::PARAM_INT);
+            $stmt->bindParam(":nmodulo", $modulo['nombremodulo'], PDO::PARAM_STR);
             $stmt->bindParam(":costomodulo", $datos['costomodulo'], PDO::PARAM_STR);
             $stmt->bindParam(":fechapago", $datos['fechapago'], PDO::PARAM_STR);
             $stmt->bindParam(":nvaucher", $datos['nvaucher'], PDO::PARAM_STR);

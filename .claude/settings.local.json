@@ -24,7 +24,12 @@
       "Bash(\"C:\\xampp\\php\\php.exe\" -l \"ajax/modulo.ajax.php\")",
       "Bash(\"C:\\xampp\\php\\php.exe\" diagnostico_modulos.php)",
       "Bash(del diagnostico_modulos.php diagnostico_resultado.html)",
-      "Bash(cmd /c \"del diagnostico_modulos.php diagnostico_resultado.html\")"
+      "Bash(cmd /c \"del diagnostico_modulos.php diagnostico_resultado.html\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\test_registro_modulos.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\limpiar_modulos_prueba.php\")",
+      "Bash(del \"C:\\xampp\\htdocs\\POSGRADOFCS\\test_registro_modulos.php\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\limpiar_modulos_prueba.php\")",
+      "Bash(cmd /c \"del C:\\xampp\\htdocs\\POSGRADOFCS\\test_registro_modulos.php C:\\xampp\\htdocs\\POSGRADOFCS\\limpiar_modulos_prueba.php\")",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

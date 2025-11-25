@@ -246,7 +246,9 @@ class ModuloControlador
 
         if (empty($modulos)) {
             echo '<tr>
-                    <td colspan="7" class="text-center">No hay módulos registrados por programa</td>
+                    <td colspan="8" class="text-center text-muted">
+                        <i class="fa fa-info-circle"></i> No hay módulos registrados por programa
+                    </td>
                   </tr>';
             return;
         }
@@ -255,7 +257,7 @@ class ModuloControlador
             $estadoBadge = $modulo['estadomodulo'] == 'ACTIVO' ? 'badge-success' : 'badge-secondary';
 
             // Información del docente
-            $docenteInfo = '<span class="text-muted">Sin asignar</span>';
+            $docenteInfo = '<span class="text-muted"><em>Sin asignar</em></span>';
             if (!empty($modulo['NombreDocente'])) {
                 $docenteInfo = '<strong>' . htmlspecialchars($modulo['NombreDocente']) . '</strong>';
                 if (!empty($modulo['EspecialidadDocente'])) {
@@ -263,9 +265,20 @@ class ModuloControlador
                 }
             }
 
+            // Datos para el botón de editar (en JSON para pasar al modal)
+            $datosModulo = htmlspecialchars(json_encode([
+                'idmodulo' => $modulo['Idmodulo'],
+                'programaId' => $modulo['ProgramaId'],
+                'nombremodulo' => $modulo['nombremodulo'],
+                'codigomodulo' => $modulo['codigomodulo'],
+                'docenteID' => $modulo['DocenteID'],
+                'nombrePrograma' => $modulo['NombrePrograma'],
+                'codigoPrograma' => $modulo['CodigoPrograma']
+            ]), ENT_QUOTES, 'UTF-8');
+
             echo '<tr>
                     <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
-                    <td class="text-center">' . htmlspecialchars($modulo['codigomodulo']) . '</td>
+                    <td class="text-center"><span class="badge badge-primary">' . htmlspecialchars($modulo['codigomodulo']) . '</span></td>
                     <td><strong>' . htmlspecialchars($modulo['nombremodulo']) . '</strong></td>
                     <td>' . htmlspecialchars($modulo['NombrePrograma']) . '</td>
                     <td class="text-center"><span class="badge badge-info">' . htmlspecialchars($modulo['CodigoPrograma']) . '</span></td>
@@ -273,7 +286,74 @@ class ModuloControlador
                     <td class="text-center">
                         <span class="badge ' . $estadoBadge . '">' . htmlspecialchars($modulo['estadomodulo']) . '</span>
                     </td>
+                    <td class="text-center">
+                        <button type="button"
+                                class="btn btn-sm btn-warning btn-editar-modulo"
+                                data-modulo=\'' . $datosModulo . '\'
+                                title="Editar módulo">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                    </td>
                   </tr>';
+        }
+    }
+
+    /**
+     * Actualizar módulo
+     */
+    public function ActualizarModuloControlador()
+    {
+        if (isset($_POST["actualizarModulo"])) {
+            // Validar datos requeridos
+            if (empty($_POST['idmodulo']) || empty($_POST['programaID']) || empty($_POST['nombremodulo']) || empty($_POST['codigomodulo'])) {
+                echo '
+                <script src="vistas/recursos/sweetalert.min.js"></script>
+                <script>
+                swal("ERROR!", "Faltan datos obligatorios para actualizar", "error")
+                .then(function () {
+                    location.href="modulos";
+                });
+                </script>';
+                return;
+            }
+
+            $idmodulo = (int)$_POST['idmodulo'];
+            $programaID = (int)$_POST['programaID'];
+            $nombremodulo = htmlspecialchars(trim($_POST['nombremodulo']));
+            $codigomodulo = htmlspecialchars(trim($_POST['codigomodulo']));
+            $docenteID = isset($_POST['docenteID']) && !empty($_POST['docenteID']) ? (int)$_POST['docenteID'] : null;
+
+            // Preparar datos para el modelo
+            $datosModulo = [
+                'idmodulo' => $idmodulo,
+                'programaID' => $programaID,
+                'nombremodulo' => $nombremodulo,
+                'codigomodulo' => $codigomodulo,
+                'docenteID' => $docenteID
+            ];
+
+            // Actualizar en la base de datos
+            $resultado = ModuloModelo::ActualizarModuloPorProgramaModelo($datosModulo);
+
+            if ($resultado) {
+                echo '
+                <script src="vistas/recursos/sweetalert.min.js"></script>
+                <script>
+                swal("EXITOSO!", "El módulo se actualizó correctamente", "success")
+                .then(function () {
+                    location.href="modulos";
+                });
+                </script>';
+            } else {
+                echo '
+                <script src="vistas/recursos/sweetalert.min.js"></script>
+                <script>
+                swal("ERROR!", "No se pudo actualizar el módulo", "error")
+                .then(function () {
+                    location.href="modulos";
+                });
+                </script>';
+            }
         }
     }
 }

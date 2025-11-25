@@ -253,11 +253,8 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                             <div class="col-md-6">
                                 <p class="mb-1"><strong>Código:</strong> <span id="detalle-codigo"></span></p>
                                 <p class="mb-1"><strong>Nombre:</strong> <span id="detalle-nombre"></span></p>
-                                <p class="mb-1"><strong>Créditos:</strong> <span id="detalle-creditos"></span></p>
                             </div>
                             <div class="col-md-6">
-                                <p class="mb-1"><strong>Horas Teóricas:</strong> <span id="detalle-horas-teoricas"></span></p>
-                                <p class="mb-1"><strong>Horas Prácticas:</strong> <span id="detalle-horas-practicas"></span></p>
                                 <p class="mb-1"><strong>Costo Sugerido:</strong> <span id="detalle-costo-modulo" class="text-primary font-weight-bold"></span></p>
                             </div>
                         </div>

@@ -86,34 +86,44 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                             </div>
                         </div>
 
-                      <div id="infoProgramaSeleccionadoNuevo" style="display: none;" class="card border-info shadow-sm mt-3">
-    <div class="card-header bg-info text-white">
-        <h5 class="mb-0">Programa Seleccionado</h5>
+<div id="infoProgramaSeleccionadoNuevo" style="display: none;" class="card border-primary shadow-lg mt-4 animate__animated animate__fadeIn">
+    
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <i class="bi bi-journal-bookmark-fill fs-4 me-2"></i> 
+        <h5 class="mb-0 flex-grow-1">Detalles del Programa</h5>
+        <span class="badge bg-light text-primary fs-6">Seleccionado</span>
     </div>
     
     <div class="card-body">
         
-        <h4 class="card-title text-primary" id="infoNombrePrograma">
-            </h4>
-        <hr>
+        <h3 class="card-title text-dark border-bottom pb-2" id="infoNombrePrograma">
+            [Nombre del Programa]
+        </h3>
         
-        <dl class="row mb-0">
-            <dt class="col-sm-4 text-muted">Grado:</dt>
-            <dd class="col-sm-8 fw-bold" id="infoGradoPrograma">
-                </dd>
+        <dl class="row mb-0 mt-3">
+            
+            <dt class="col-sm-4 text-muted d-flex align-items-center">
+                <i class="bi bi-award-fill text-warning me-2"></i>Grado:
+            </dt>
+            <dd class="col-sm-8 fw-bolder text-uppercase text-primary" id="infoGradoPrograma">
+                [Grado]
+            </dd>
 
-            <dt class="col-sm-4 text-muted">N° de Módulos:</dt>
+            <dt class="col-sm-4 text-muted d-flex align-items-center">
+                <i class="bi bi-stack me-2"></i>N° de Módulos:
+            </dt>
             <dd class="col-sm-8">
-                <span id="infoNumModulosPrograma" class="badge bg-success fs-6">
-                    </span>
+                <span id="infoNumModulosPrograma" class="badge bg-success-subtle text-success border border-success fs-5 px-3 py-1 rounded-pill">
+                    [0]
+                </span>
             </dd>
             
-            </dl>
+        </dl>
         
     </div>
     
-    <div class="card-footer text-end bg-light">
-        <small class="text-muted">Detalles del programa seleccionado.</small>
+    <div class="card-footer text-center bg-light border-0">
+        <small class="text-secondary fst-italic">Información clave para la matrícula.</small>
     </div>
 </div>
                     </div>
@@ -125,9 +135,9 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
         <div class="row">
             <div class="col-lg-12">
                 <div class="kt-portlet">
-                    <div class="kt-portlet__head">
+                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                         <div class="kt-portlet__head-label">
-                            <h4>
+                            <h4 style="color: white; margin: 0;">
                                 <i class="fa fa-list"></i> Módulos Registrados
                             </h4>
                         </div>
@@ -135,16 +145,17 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
 
                     <div class="kt-portlet__body">
                         <div class="table-responsive">
-                            <table class="table table-striped table-bordered table-hover" id="tablaModulos">
+                            <table class="table table-striped table-bordered table-hover" id="tablaModulos" style="width: 100%;">
                                 <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                                     <tr>
-                                        <th class="text-center" style="color: white;">#</th>
-                                        <th class="text-center" style="color: white;">CÓDIGO</th>
-                                        <th style="color: white;">NOMBRE MÓDULO</th>
-                                        <th style="color: white;">PROGRAMA</th>
-                                        <th class="text-center" style="color: white;">COD. PROGRAMA</th>
-                                        <th style="color: white;">DOCENTE ASIGNADO</th>
-                                        <th class="text-center" style="color: white;">ESTADO</th>
+                                        <th class="text-center" style="color: white; width: 50px;">#</th>
+                                        <th class="text-center" style="color: white; width: 120px;">CÓDIGO</th>
+                                        <th style="color: white; min-width: 180px;">NOMBRE MÓDULO</th>
+                                        <th style="color: white; min-width: 180px;">PROGRAMA</th>
+                                        <th class="text-center" style="color: white; width: 120px;">COD. PROGRAMA</th>
+                                        <th style="color: white; min-width: 150px;">DOCENTE ASIGNADO</th>
+                                        <th class="text-center" style="color: white; width: 100px;">ESTADO</th>
+                                        <th class="text-center" style="color: white; width: 120px;">ACCIONES</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -165,7 +176,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
 
 <!-- Modal para Registrar Módulos del Programa -->
 <div class="modal fade" id="modalRegistrarModulos" tabindex="-1" role="dialog" style="z-index: 1050;">
-    <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-dialog modal-xl" role="document" style="max-width: 90%;">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                 <h5 class="modal-title">
@@ -177,7 +188,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
             </div>
 
             <form method="POST" id="formRegistrarModulosPorPrograma">
-                <div class="modal-body" style="overflow: visible !important;">
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto; overflow-x: hidden; padding: 20px;">
                     <!-- Información del Programa -->
                     <div class="alert alert-info">
                         <div class="row">
@@ -195,6 +206,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
 
                     <input type="hidden" name="programaID" id="modalProgramaID">
                     <input type="hidden" name="totalModulos" id="modalTotalModulos">
+                    <input type="hidden" name="registrarModulosPorPrograma" value="1">
 
                     <hr>
 
@@ -204,7 +216,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                     </div>
                 </div>
 
-                <div class="modal-footer">
+                <div class="modal-footer" style="border-top: 2px solid #ddd; background-color: #f8f9fa; padding: 15px 20px; display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <i class="fa fa-times"></i> Cancelar
                     </button>
@@ -216,6 +228,117 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                 <?php
                 $registrarProg = new ModuloControlador();
                 $registrarProg->RegistrarModulosPorProgramaControlador();
+                ?>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Editar Módulo -->
+<div class="modal fade" id="modalEditarModulo" tabindex="-1" role="dialog" style="z-index: 1050;">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <h5 class="modal-title">
+                    <i class="fa fa-edit"></i> EDITAR MÓDULO
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" style="color: white;">&times;</span>
+                </button>
+            </div>
+
+            <form method="POST" id="formEditarModulo">
+                <div class="modal-body">
+                    <!-- Información del Programa -->
+                    <div class="alert alert-info">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong><i class="fa fa-graduation-cap"></i> Programa:</strong>
+                                <span id="editNombrePrograma"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fa fa-barcode"></i> Código:</strong>
+                                <span id="editCodigoPrograma"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos ocultos -->
+                    <input type="hidden" name="idmodulo" id="editIdmodulo">
+                    <input type="hidden" name="programaID" id="editProgramaID">
+                    <input type="hidden" name="actualizarModulo" value="1">
+
+                    <!-- Formulario de edición -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><strong><i class="fa fa-code"></i> Código del Módulo:</strong></label>
+                                <input type="text"
+                                       class="form-control"
+                                       name="codigomodulo"
+                                       id="editCodigoModulo"
+                                       placeholder="Ej: MODULO I"
+                                       maxlength="50"
+                                       required
+                                       readonly
+                                       style="background-color: #e9ecef; font-weight: bold;">
+                                <small class="form-text text-muted">
+                                    <i class="fa fa-info-circle"></i> El código del módulo no se puede modificar
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><strong><i class="fa fa-book"></i> Nombre del Módulo:</strong> <span class="text-danger">*</span></label>
+                                <input type="text"
+                                       class="form-control"
+                                       name="nombremodulo"
+                                       id="editNombreModulo"
+                                       placeholder="Ej: Metodología de Investigación"
+                                       maxlength="100"
+                                       required>
+                                <small class="form-text text-muted">
+                                    <i class="fa fa-info-circle"></i> Campo obligatorio
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong><i class="fa fa-user-tie"></i> Docente Asignado:</strong></label>
+                        <select class="form-control select2-docente-edit"
+                                name="docenteID"
+                                id="editDocenteID"
+                                style="width: 100%;">
+                            <option value="">-- Sin Docente Asignado --</option>
+                            <?php
+                            foreach ($docentes as $doc) {
+                                $especialidad = $doc['Especialidad'] ? ' - ' . $doc['Especialidad'] : '';
+                                echo '<option value="' . $doc['DocenteID'] . '">' .
+                                     htmlspecialchars($doc['NombreCompleto']) .
+                                     htmlspecialchars($especialidad) . '</option>';
+                            }
+                            ?>
+                        </select>
+                        <small class="form-text text-muted">
+                            <i class="fa fa-info-circle"></i> Puede cambiar o dejar sin asignar docente
+                        </small>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="border-top: 2px solid #ddd; background-color: #f8f9fa;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fa fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fa fa-save"></i> Actualizar Módulo
+                    </button>
+                </div>
+
+                <?php
+                $actualizar = new ModuloControlador();
+                $actualizar->ActualizarModuloControlador();
                 ?>
             </form>
         </div>
@@ -384,12 +507,7 @@ $(document).ready(function() {
 
         if (numModulos <= 0) {
             console.log('⚠ Programa sin módulos configurados');
-            Swal.fire({
-                icon: 'warning',
-                title: 'Atención',
-                text: 'Este programa no tiene módulos configurados. Configure primero el número de módulos en la tabla de programas.',
-                confirmButtonText: 'Aceptar'
-            });
+            alert('Este programa no tiene módulos configurados. Configure primero el número de módulos en la tabla de programas.');
             return;
         }
 
@@ -462,15 +580,15 @@ $(document).ready(function() {
 
             html += `
                 <div class="col-lg-6 mb-3">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
+                    <div class="card shadow-sm" style="height: auto;">
+                        <div class="card-header bg-primary text-white" style="padding: 10px 15px;">
                             <strong><i class="fa fa-book"></i> ${codigoModulo}</strong>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body" style="padding: 15px;">
                             <div class="form-group">
-                                <label><strong>Código Módulo:</strong></label>
+                                <label class="mb-1"><strong>Código Módulo:</strong></label>
                                 <input type="text"
-                                       class="form-control"
+                                       class="form-control form-control-sm"
                                        name="codigomodulo_${i}"
                                        value="${codigoModulo}"
                                        readonly
@@ -480,17 +598,17 @@ $(document).ready(function() {
                                 </small>
                             </div>
                             <div class="form-group">
-                                <label><strong>Nombre del Módulo:</strong></label>
+                                <label class="mb-1"><strong>Nombre del Módulo:</strong></label>
                                 <input type="text"
-                                       class="form-control"
+                                       class="form-control form-control-sm"
                                        name="nombremodulo_${i}"
                                        placeholder="Ej: Metodología de Investigación"
                                        maxlength="100"
                                        required>
                             </div>
                             <div class="form-group mb-0">
-                                <label><strong>Docente Asignado:</strong></label>
-                                <select class="form-control select2-docente"
+                                <label class="mb-1"><strong>Docente Asignado:</strong></label>
+                                <select class="form-control form-control-sm select2-docente"
                                         name="docentemodulo_${i}"
                                         id="docentemodulo_${i}"
                                         style="width: 100%;">
@@ -534,40 +652,17 @@ $(document).ready(function() {
         }
 
         if (modulosValidos === 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Atención',
-                text: 'Debe completar al menos un módulo',
-                confirmButtonText: 'Aceptar'
-            });
+            alert('Debe completar al menos un módulo');
             return false;
         }
 
         // Confirmar
-        Swal.fire({
-            title: '¿Registrar módulos?',
-            text: `Se van a registrar ${modulosValidos} módulos para este programa`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, registrar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Mostrar loading
-                Swal.fire({
-                    title: 'Procesando...',
-                    text: 'Registrando módulos, por favor espere',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
+        const confirmacion = confirm(`¿Desea registrar ${modulosValidos} módulos para este programa?`);
 
-                // Enviar formulario
-                $('#formRegistrarModulosPorPrograma')[0].submit();
-            }
-        });
+        if (confirmacion) {
+            // Enviar formulario
+            $('#formRegistrarModulosPorPrograma')[0].submit();
+        }
     });
 
     // ========================================
@@ -576,6 +671,86 @@ $(document).ready(function() {
     $('#modalRegistrarModulos').on('hidden.bs.modal', function () {
         if ($('.select2-docente').hasClass('select2-hidden-accessible')) {
             $('.select2-docente').select2('destroy');
+        }
+    });
+
+    // ========================================
+    // MODAL DE EDICIÓN DE MÓDULO
+    // ========================================
+
+    // Abrir modal de edición cuando se hace clic en el botón editar
+    $(document).on('click', '.btn-editar-modulo', function() {
+        console.log('>>> Botón editar módulo clickeado');
+
+        const datosModulo = $(this).data('modulo');
+        console.log('Datos del módulo:', datosModulo);
+
+        // Llenar el modal con los datos
+        $('#editIdmodulo').val(datosModulo.idmodulo);
+        $('#editProgramaID').val(datosModulo.programaId);
+        $('#editCodigoModulo').val(datosModulo.codigomodulo);
+        $('#editNombreModulo').val(datosModulo.nombremodulo);
+        $('#editNombrePrograma').text(datosModulo.nombrePrograma);
+        $('#editCodigoPrograma').text(datosModulo.codigoPrograma);
+
+        // Establecer el docente seleccionado
+        $('#editDocenteID').val(datosModulo.docenteID || '');
+
+        // Abrir el modal
+        $('#modalEditarModulo').modal('show');
+
+        console.log('✓ Modal de edición abierto');
+    });
+
+    // Inicializar Select2 cuando el modal de edición se muestra
+    $('#modalEditarModulo').on('shown.bs.modal', function () {
+        console.log('✓ Modal de edición mostrado, inicializando Select2...');
+
+        $('.select2-docente-edit').select2({
+            placeholder: '-- Sin Docente Asignado --',
+            allowClear: true,
+            language: {
+                noResults: function() {
+                    return "No se encontraron docentes";
+                },
+                searching: function() {
+                    return "Buscando...";
+                }
+            },
+            dropdownParent: $('#modalEditarModulo .modal-content'),
+            width: '100%'
+        });
+
+        console.log('✓ Select2 del modal de edición inicializado');
+    });
+
+    // Limpiar Select2 al cerrar el modal de edición
+    $('#modalEditarModulo').on('hidden.bs.modal', function () {
+        if ($('.select2-docente-edit').hasClass('select2-hidden-accessible')) {
+            $('.select2-docente-edit').select2('destroy');
+        }
+    });
+
+    // Envío del formulario de edición
+    $('#formEditarModulo').on('submit', function(e) {
+        e.preventDefault();
+        console.log('>>> Formulario de edición enviado');
+
+        const nombreModulo = $('#editNombreModulo').val().trim();
+
+        if (nombreModulo === '') {
+            alert('El nombre del módulo es obligatorio');
+            return false;
+        }
+
+        // Confirmar actualización
+        const confirmacion = confirm('¿Está seguro de actualizar este módulo?');
+
+        if (confirmacion) {
+            console.log('✓ Confirmado, enviando formulario...');
+            this.submit();
+        } else {
+            console.log('✗ Actualización cancelada');
         }
     });
 
@@ -678,7 +853,7 @@ $(document).ready(function() {
 }
 
 .select2-container--default .select2-selection--single {
-    height: 38px !important;
+    height: 32px !important;
     border: 1px solid #ced4da !important;
     border-radius: 0.25rem !important;
     padding: 0 !important;
@@ -688,16 +863,16 @@ $(document).ready(function() {
 }
 
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: 36px !important;
-    padding-left: 12px !important;
-    padding-right: 30px !important;
+    line-height: 30px !important;
+    padding-left: 10px !important;
+    padding-right: 28px !important;
     color: #495057 !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
     display: block !important;
 }
 
 .select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 36px !important;
+    height: 30px !important;
     right: 5px !important;
     top: 1px !important;
 }
@@ -729,17 +904,274 @@ $(document).ready(function() {
 
 /* Fix para scroll en modal */
 #modalRegistrarModulos .modal-body {
-    max-height: 70vh !important;
+    max-height: 60vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
 }
 
-/* Los cards deben permitir overflow visible para dropdowns */
-.card {
-    overflow: visible !important;
+#modalRegistrarModulos .modal-content {
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
 }
 
-.card-body {
+#modalRegistrarModulos .modal-footer {
+    flex-shrink: 0;
+    border-top: 2px solid #ddd !important;
+    background-color: #f8f9fa !important;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+/* Los cards dentro del modal con tamaño controlado */
+#modalRegistrarModulos .card {
     overflow: visible !important;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+#modalRegistrarModulos .card-body {
+    overflow: visible !important;
+    padding: 15px;
+}
+
+/* Contenedor de módulos con padding adecuado */
+#contenedorModulosModal {
+    width: 100%;
+    padding: 0 10px;
+}
+
+#contenedorModulosModal .row {
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
+#contenedorModulosModal .col-lg-6 {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* Estilos para formularios más compactos */
+#modalRegistrarModulos .form-group {
+    margin-bottom: 12px;
+}
+
+#modalRegistrarModulos .form-control-sm {
+    height: 32px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+#modalRegistrarModulos label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+#modalRegistrarModulos small.text-muted {
+    font-size: 11px;
+}
+
+/* Responsive para pantallas pequeñas */
+@media (max-width: 992px) {
+    #modalRegistrarModulos .modal-dialog {
+        max-width: 95% !important;
+    }
+
+    #contenedorModulosModal .col-lg-6 {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    #modalRegistrarModulos .modal-body {
+        padding: 15px !important;
+    }
+
+    #modalRegistrarModulos .card-body {
+        padding: 10px !important;
+    }
+}
+
+/* ========================================
+   ESTILOS MEJORADOS PARA LA TABLA
+   ======================================== */
+
+/* Mejoras visuales para la tabla */
+#tablaModulos {
+    font-size: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#tablaModulos thead th {
+    padding: 15px 10px;
+    vertical-align: middle;
+    border-bottom: 3px solid rgba(255,255,255,0.2);
+}
+
+#tablaModulos tbody td {
+    padding: 12px 10px;
+    vertical-align: middle;
+}
+
+#tablaModulos tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #e9ecef;
+}
+
+#tablaModulos tbody tr:hover {
+    background-color: #f5f7fa !important;
+    transform: translateX(2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Badges mejorados */
+.badge {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+}
+
+.badge-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.badge-info {
+    background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.badge-secondary {
+    background: linear-gradient(135deg, #868f96 0%, #596164 100%);
+}
+
+/* Botones de acción mejorados */
+.btn-editar-modulo {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(245, 87, 108, 0.3);
+}
+
+.btn-editar-modulo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.5);
+    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+    color: white;
+}
+
+.btn-editar-modulo:active {
+    transform: translateY(0);
+}
+
+.btn-editar-modulo i {
+    font-size: 14px;
+}
+
+/* Modal de edición mejorado */
+#modalEditarModulo .modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+#modalEditarModulo .modal-header {
+    padding: 20px 25px;
+    border-bottom: none;
+}
+
+#modalEditarModulo .modal-body {
+    padding: 25px;
+}
+
+#modalEditarModulo .form-control {
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+}
+
+#modalEditarModulo .form-control:focus {
+    border-color: #f5576c;
+    box-shadow: 0 0 0 3px rgba(245, 87, 108, 0.1);
+}
+
+#modalEditarModulo .alert-info {
+    background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+    border: none;
+    border-left: 4px solid #3b82f6;
+    border-radius: 8px;
+}
+
+/* DataTable mejorado */
+.dataTables_wrapper .dataTables_filter input {
+    border-radius: 20px;
+    padding: 8px 15px;
+    border: 1px solid #d1d5db;
+    margin-left: 10px;
+}
+
+.dataTables_wrapper .dataTables_length select {
+    border-radius: 6px;
+    padding: 5px 30px 5px 10px;
+    border: 1px solid #d1d5db;
+    margin: 0 10px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    border-radius: 6px !important;
+    margin: 0 3px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    color: white !important;
+}
+
+/* Animaciones */
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.btn-editar-modulo {
+    animation: slideInFromRight 0.3s ease;
+}
+
+/* Tooltips mejorados */
+.btn-editar-modulo[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1f2937;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    margin-bottom: 5px;
+    z-index: 1000;
 }
 </style>
