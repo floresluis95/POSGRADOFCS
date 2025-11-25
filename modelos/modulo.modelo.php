@@ -37,7 +37,7 @@ class ModuloModelo
     }
 
     /**
-     * Registrar múltiples módulos de un programa
+     * Registrar múltiples módulos de un programa (por inscripción)
      * @param array $datos
      * @return string
      */
@@ -48,7 +48,7 @@ class ModuloModelo
             $pdo->beginTransaction();
 
             $idinscripcion = $datos['idinscripcion'];
-            $modulos = $datos['modulos']; // Array de módulos
+            $modulos = $datos['modulos'];
 
             // Verificar si ya existen módulos para esta inscripción
             $stmtCheck = $pdo->prepare(
@@ -73,7 +73,7 @@ class ModuloModelo
             $insertados = 0;
             foreach ($modulos as $modulo) {
                 if (empty($modulo['nombremodulo']) || empty($modulo['codigomodulo'])) {
-                    continue; // Saltar módulos vacíos
+                    continue;
                 }
 
                 $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
@@ -193,6 +193,231 @@ class ModuloModelo
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Error en ListarTodosModulosModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * ========================================
+     * FUNCIONES PARA MÓDULOS POR PROGRAMA
+     * ========================================
+     */
+
+    /**
+     * Registrar módulos directamente por ProgramaId
+     * @param array $datos
+     * @return string
+     */
+    public static function RegistrarModulosPorProgramaModelo($datos)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+            $pdo->beginTransaction();
+
+            $programaID = $datos['programaID'];
+            $modulos = $datos['modulos'];
+
+            // Verificar si ya existen módulos para este programa
+            $stmtCheck = $pdo->prepare(
+                "SELECT COUNT(*) as total FROM modulos WHERE ProgramaId = :programaID"
+            );
+            $stmtCheck->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmtCheck->execute();
+            $result = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+            if ($result['total'] > 0) {
+                $pdo->rollBack();
+                return "duplicado";
+            }
+
+            // Insertar cada módulo
+            $stmt = $pdo->prepare(
+                "INSERT INTO modulos
+                (ProgramaId, nombremodulo, codigomodulo, estadomodulo, DocenteID)
+                VALUES (:programaID, :nombremodulo, :codigomodulo, 'ACTIVO', :docenteID)"
+            );
+
+            $insertados = 0;
+            foreach ($modulos as $modulo) {
+                if (empty($modulo['codigomodulo'])) {
+                    continue;
+                }
+
+                // Si no hay nombre, usar el código como nombre
+                $nombremodulo = !empty($modulo['nombremodulo']) ? $modulo['nombremodulo'] : $modulo['codigomodulo'];
+
+                // DocenteID puede ser NULL si no se asigna docente
+                $docenteID = isset($modulo['docenteID']) && !empty($modulo['docenteID']) ? (int)$modulo['docenteID'] : null;
+
+                $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+                $stmt->bindParam(":nombremodulo", $nombremodulo, PDO::PARAM_STR);
+                $stmt->bindParam(":codigomodulo", $modulo['codigomodulo'], PDO::PARAM_STR);
+
+                // Usar bindValue con PDO::PARAM_NULL para valores NULL
+                if ($docenteID === null) {
+                    $stmt->bindValue(":docenteID", null, PDO::PARAM_NULL);
+                } else {
+                    $stmt->bindValue(":docenteID", $docenteID, PDO::PARAM_INT);
+                }
+
+                if ($stmt->execute()) {
+                    $insertados++;
+                }
+            }
+
+            if ($insertados > 0) {
+                $pdo->commit();
+                return "exitoso";
+            } else {
+                $pdo->rollBack();
+                return "error";
+            }
+
+        } catch (PDOException $e) {
+            if (isset($pdo) && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("Error en RegistrarModulosPorProgramaModelo: " . $e->getMessage());
+            return "error";
+        }
+    }
+
+    /**
+     * Obtener módulos de un programa por ProgramaId
+     * @param int $programaID
+     * @return array
+     */
+    public static function ObtenerModulosPorProgramaIdModelo($programaID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    Idmodulo,
+                    ProgramaId,
+                    nombremodulo,
+                    codigomodulo,
+                    estadomodulo,
+                    DocenteID
+                FROM modulos
+                WHERE ProgramaId = :programaID
+                ORDER BY codigomodulo ASC"
+            );
+            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerModulosPorProgramaIdModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Listar todos los módulos por ProgramaId con información del programa y docente
+     * @return array
+     */
+    public static function ListarModulosPorProgramaModelo()
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    m.Idmodulo,
+                    m.ProgramaId,
+                    m.nombremodulo,
+                    m.codigomodulo,
+                    m.estadomodulo,
+                    m.DocenteID,
+                    p.NombrePrograma,
+                    p.Codigo as CodigoPrograma,
+                    p.GradoAcademico,
+                    CONCAT(d.Nombre, ' ', d.Apaterno, ' ', d.Amaterno) as NombreDocente,
+                    d.Especialidad as EspecialidadDocente
+                FROM modulos m
+                INNER JOIN programa p ON m.ProgramaId = p.ProgramaID
+                LEFT JOIN docente d ON m.DocenteID = d.DocenteID
+                ORDER BY m.ProgramaId DESC, m.codigomodulo ASC"
+            );
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ListarModulosPorProgramaModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Actualizar un módulo por ProgramaId
+     * @param array $datos
+     * @return bool
+     */
+    public static function ActualizarModuloPorProgramaModelo($datos)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "UPDATE modulos
+                SET nombremodulo = :nombremodulo,
+                    codigomodulo = :codigomodulo,
+                    DocenteID = :docenteID
+                WHERE Idmodulo = :idmodulo AND ProgramaId = :programaID"
+            );
+            $stmt->bindParam(":idmodulo", $datos['idmodulo'], PDO::PARAM_INT);
+            $stmt->bindParam(":programaID", $datos['programaID'], PDO::PARAM_INT);
+            $stmt->bindParam(":nombremodulo", $datos['nombremodulo'], PDO::PARAM_STR);
+            $stmt->bindParam(":codigomodulo", $datos['codigomodulo'], PDO::PARAM_STR);
+
+            if (isset($datos['docenteID']) && !empty($datos['docenteID'])) {
+                $stmt->bindParam(":docenteID", $datos['docenteID'], PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue(":docenteID", null, PDO::PARAM_NULL);
+            }
+
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error en ActualizarModuloPorProgramaModelo: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Eliminar módulos de un programa
+     * @param int $programaID
+     * @return bool
+     */
+    public static function EliminarModulosPorProgramaModelo($programaID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "DELETE FROM modulos WHERE ProgramaId = :programaID"
+            );
+            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error en EliminarModulosPorProgramaModelo: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Obtener lista de docentes activos
+     * @return array
+     */
+    public static function ListarDocentesActivosModelo()
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    DocenteID,
+                    CONCAT(Nombre, ' ', Apaterno, ' ', Amaterno) as NombreCompleto,
+                    Ci,
+                    Especialidad,
+                    Correo
+                FROM docente
+                WHERE Estado = 1
+                ORDER BY Nombre ASC, Apaterno ASC"
+            );
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ListarDocentesActivosModelo: " . $e->getMessage());
             return [];
         }
     }

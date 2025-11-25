@@ -16,7 +16,9 @@
                 $enlace == 'matriculas'||
                 $enlace == 'matriculados'||
                 $enlace == 'modulos' ||
-                $enlace == 'docentes'
+                $enlace == 'docentes'||
+                $enlace == 'reportemodulos'
+                
                 )
             {
                 $ruta = "vistas/componentes/".$enlace.".php";
