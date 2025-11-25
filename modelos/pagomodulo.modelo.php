@@ -23,6 +23,7 @@ class PagoModuloModelo
                     m.Idmodulo as ModuloID,
                     m.nombremodulo as NombreModulo,
                     m.codigomodulo as Codigo,
+                    m.costomodulo as Costo,
                     m.estadomodulo,
                     CONCAT(d.Nombre, ' ', d.Apaterno, ' ', d.Amaterno) as NombreDocente,
                     d.Especialidad as EspecialidadDocente,
@@ -67,6 +68,7 @@ class PagoModuloModelo
                     m.Idmodulo as ModuloID,
                     m.nombremodulo as NombreModulo,
                     m.codigomodulo as Codigo,
+                    m.costomodulo as Costo,
                     m.estadomodulo as Estado,
                     CONCAT(d.Nombre, ' ', d.Apaterno, ' ', d.Amaterno) as NombreDocente
                 FROM modulos m
@@ -112,33 +114,21 @@ class PagoModuloModelo
                 return "duplicado";
             }
 
-            // Obtener nombre del módulo desde la tabla modulos
-            $stmtModulo = $pdo->prepare("SELECT nombremodulo FROM modulos WHERE Idmodulo = :idModulo");
-            $stmtModulo->bindParam(":idModulo", $datos['IdModulo'], PDO::PARAM_INT);
-            $stmtModulo->execute();
-            $modulo = $stmtModulo->fetch(PDO::FETCH_ASSOC);
-
-            if (!$modulo) {
-                $pdo->rollBack();
-                return "modulo_no_encontrado";
-            }
-
             // Preparar el archivo (si existe)
             $fmodulo = null;
             if (!empty($datos['fmodulo'])) {
                 $fmodulo = $datos['fmodulo'];
             }
 
-            // Insertar el pago del módulo (mantiene nmodulo por compatibilidad)
+            // Insertar el pago del módulo
             $stmt = $pdo->prepare(
                 "INSERT INTO pagomodulo
-                (idinscripcion, IdModulo, nmodulo, costomodulo, fechapago, nvaucher, fmodulo, Estado)
-                VALUES (:idinscripcion, :idModulo, :nmodulo, :costomodulo, :fechapago, :nvaucher, :fmodulo, 'PAGADO')"
+                (idinscripcion, IdModulo, costomodulo, fechapago, nvaucher, fmodulo, Estado)
+                VALUES (:idinscripcion, :idModulo, :costomodulo, :fechapago, :nvaucher, :fmodulo, 'PAGADO')"
             );
 
             $stmt->bindParam(":idinscripcion", $datos['idinscripcion'], PDO::PARAM_INT);
             $stmt->bindParam(":idModulo", $datos['IdModulo'], PDO::PARAM_INT);
-            $stmt->bindParam(":nmodulo", $modulo['nombremodulo'], PDO::PARAM_STR);
             $stmt->bindParam(":costomodulo", $datos['costomodulo'], PDO::PARAM_STR);
             $stmt->bindParam(":fechapago", $datos['fechapago'], PDO::PARAM_STR);
             $stmt->bindParam(":nvaucher", $datos['nvaucher'], PDO::PARAM_STR);
@@ -172,18 +162,21 @@ class PagoModuloModelo
         try {
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT
-                    Idmodulo,
-                    idinscripcion,
-                    nmodulo,
-                    costomodulo,
-                    fechapago,
-                    nvaucher,
-                    Estado,
-                    FechaRegistro
-                FROM pagomodulo
-                WHERE idinscripcion = :idinscripcion
-                AND Estado != 'ANULADO'
-                ORDER BY fechapago DESC"
+                    pm.Idpagomodulo,
+                    pm.idinscripcion,
+                    pm.IdModulo,
+                    m.nombremodulo as nmodulo,
+                    m.codigomodulo,
+                    pm.costomodulo,
+                    pm.fechapago,
+                    pm.nvaucher,
+                    pm.Estado,
+                    pm.FechaRegistro
+                FROM pagomodulo pm
+                LEFT JOIN modulos m ON pm.IdModulo = m.Idmodulo
+                WHERE pm.idinscripcion = :idinscripcion
+                AND pm.Estado != 'ANULADO'
+                ORDER BY pm.fechapago DESC"
             );
             $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
             $stmt->execute();
@@ -204,8 +197,10 @@ class PagoModuloModelo
         try {
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT
-                    pm.Idmodulo,
-                    pm.nmodulo,
+                    pm.Idpagomodulo,
+                    pm.IdModulo,
+                    m.nombremodulo as nmodulo,
+                    m.codigomodulo,
                     pm.costomodulo,
                     pm.fechapago,
                     pm.nvaucher,
@@ -215,6 +210,7 @@ class PagoModuloModelo
                     p.NombrePrograma,
                     p.GradoAcademico
                 FROM pagomodulo pm
+                LEFT JOIN modulos m ON pm.IdModulo = m.Idmodulo
                 INNER JOIN estudianteprograma ep ON pm.idinscripcion = ep.idInscripcion
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
                 WHERE ep.EstudianteID = :estudianteID

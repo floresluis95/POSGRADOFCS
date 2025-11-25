@@ -162,6 +162,7 @@ class ModuloControlador
                 $nombreKey = 'nombremodulo_' . $i;
                 $codigoKey = 'codigomodulo_' . $i;
                 $docenteKey = 'docentemodulo_' . $i;
+                $costoKey = 'costomodulo_' . $i;
 
                 if (isset($_POST[$codigoKey])) {
                     $codigomodulo = htmlspecialchars(trim($_POST[$codigoKey]));
@@ -175,11 +176,16 @@ class ModuloControlador
                         ? (int)$_POST[$docenteKey]
                         : null;
 
+                    $costomodulo = isset($_POST[$costoKey]) && !empty($_POST[$costoKey])
+                        ? (int)$_POST[$costoKey]
+                        : 0;
+
                     if (!empty($codigomodulo)) {
                         $modulos[] = [
                             'nombremodulo' => $nombremodulo,
                             'codigomodulo' => $codigomodulo,
-                            'docenteID' => $docenteID
+                            'docenteID' => $docenteID,
+                            'costomodulo' => $costomodulo
                         ];
                     }
                 }
@@ -246,7 +252,7 @@ class ModuloControlador
 
         if (empty($modulos)) {
             echo '<tr>
-                    <td colspan="8" class="text-center text-muted">
+                    <td colspan="9" class="text-center text-muted">
                         <i class="fa fa-info-circle"></i> No hay módulos registrados por programa
                     </td>
                   </tr>';
@@ -271,6 +277,7 @@ class ModuloControlador
                 'programaId' => $modulo['ProgramaId'],
                 'nombremodulo' => $modulo['nombremodulo'],
                 'codigomodulo' => $modulo['codigomodulo'],
+                'costomodulo' => $modulo['costomodulo'],
                 'docenteID' => $modulo['DocenteID'],
                 'nombrePrograma' => $modulo['NombrePrograma'],
                 'codigoPrograma' => $modulo['CodigoPrograma']
@@ -280,6 +287,7 @@ class ModuloControlador
                     <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
                     <td class="text-center"><span class="badge badge-primary">' . htmlspecialchars($modulo['codigomodulo']) . '</span></td>
                     <td><strong>' . htmlspecialchars($modulo['nombremodulo']) . '</strong></td>
+                    <td class="text-center"><strong class="text-success">Bs. ' . number_format($modulo['costomodulo'], 2) . '</strong></td>
                     <td>' . htmlspecialchars($modulo['NombrePrograma']) . '</td>
                     <td class="text-center"><span class="badge badge-info">' . htmlspecialchars($modulo['CodigoPrograma']) . '</span></td>
                     <td>' . $docenteInfo . '</td>
@@ -322,6 +330,7 @@ class ModuloControlador
             $nombremodulo = htmlspecialchars(trim($_POST['nombremodulo']));
             $codigomodulo = htmlspecialchars(trim($_POST['codigomodulo']));
             $docenteID = isset($_POST['docenteID']) && !empty($_POST['docenteID']) ? (int)$_POST['docenteID'] : null;
+            $costomodulo = isset($_POST['costomodulo']) && !empty($_POST['costomodulo']) ? (int)$_POST['costomodulo'] : 0;
 
             // Preparar datos para el modelo
             $datosModulo = [
@@ -329,7 +338,8 @@ class ModuloControlador
                 'programaID' => $programaID,
                 'nombremodulo' => $nombremodulo,
                 'codigomodulo' => $codigomodulo,
-                'docenteID' => $docenteID
+                'docenteID' => $docenteID,
+                'costomodulo' => $costomodulo
             ];
 
             // Actualizar en la base de datos

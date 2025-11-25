@@ -151,6 +151,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                                         <th class="text-center" style="color: white; width: 50px;">#</th>
                                         <th class="text-center" style="color: white; width: 120px;">CÓDIGO</th>
                                         <th style="color: white; min-width: 180px;">NOMBRE MÓDULO</th>
+                                        <th class="text-center" style="color: white; width: 120px;">COSTO (Bs.)</th>
                                         <th style="color: white; min-width: 180px;">PROGRAMA</th>
                                         <th class="text-center" style="color: white; width: 120px;">COD. PROGRAMA</th>
                                         <th style="color: white; min-width: 150px;">DOCENTE ASIGNADO</th>
@@ -300,6 +301,24 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                                        required>
                                 <small class="form-text text-muted">
                                     <i class="fa fa-info-circle"></i> Campo obligatorio
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><strong><i class="fa fa-money"></i> Costo del Módulo (Bs.):</strong></label>
+                                <input type="number"
+                                       class="form-control"
+                                       name="costomodulo"
+                                       id="editCostoModulo"
+                                       placeholder="Ej: 500"
+                                       min="0"
+                                       step="1">
+                                <small class="form-text text-muted">
+                                    <i class="fa fa-info-circle"></i> Ingrese el costo en bolivianos (0 si no aplica)
                                 </small>
                             </div>
                         </div>
@@ -606,6 +625,18 @@ $(document).ready(function() {
                                        maxlength="100"
                                        required>
                             </div>
+                            <div class="form-group">
+                                <label class="mb-1"><strong>Costo del Módulo (Bs.):</strong></label>
+                                <input type="number"
+                                       class="form-control form-control-sm"
+                                       name="costomodulo_${i}"
+                                       placeholder="Ej: 500"
+                                       min="0"
+                                       step="1">
+                                <small class="form-text text-muted">
+                                    <i class="fa fa-money"></i> Costo en bolivianos (0 si no aplica)
+                                </small>
+                            </div>
                             <div class="form-group mb-0">
                                 <label class="mb-1"><strong>Docente Asignado:</strong></label>
                                 <select class="form-control form-control-sm select2-docente"
@@ -690,6 +721,7 @@ $(document).ready(function() {
         $('#editProgramaID').val(datosModulo.programaId);
         $('#editCodigoModulo').val(datosModulo.codigomodulo);
         $('#editNombreModulo').val(datosModulo.nombremodulo);
+        $('#editCostoModulo').val(datosModulo.costomodulo || 0);
         $('#editNombrePrograma').text(datosModulo.nombrePrograma);
         $('#editCodigoPrograma').text(datosModulo.codigoPrograma);
 

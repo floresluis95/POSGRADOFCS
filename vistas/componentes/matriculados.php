@@ -219,25 +219,34 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                     <input type="hidden" name="estudianteID" id="estudianteID">
                     <input type="hidden" name="programaID" id="programaID">
                     <input type="hidden" name="idinscripcion" id="idinscripcion">
-                    <input type="hidden" name="moduloSeleccionado" id="moduloSeleccionado">
 
                     <!-- Leyenda de Estados -->
                     <div class="alert alert-light border">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <span class="badge badge-success"><i class="fa fa-check-circle"></i> PAGADO</span>
                                 <small class="ml-2">Módulo ya cancelado</small>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <span class="badge badge-danger"><i class="fa fa-times-circle"></i> PENDIENTE</span>
-                                <small class="ml-2">Módulo por cancelar (clic para pagar)</small>
+                                <small class="ml-2">Módulo por cancelar</small>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-sm btn-primary" id="btnSeleccionarTodos">
+                                    <i class="fa fa-check-square"></i> Seleccionar Todos
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary" id="btnLimpiarSeleccion">
+                                    <i class="fa fa-times"></i> Limpiar
+                                </button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Módulos del Programa -->
                     <h6 class="text-primary"><i class="fa fa-list"></i> Módulos del Programa</h6>
-                    <small class="text-muted d-block mb-3">Haga clic en un módulo ROJO para registrar el pago</small>
+                    <small class="text-muted d-block mb-3">
+                        <i class="fa fa-info-circle"></i> Seleccione uno o más módulos pendientes para registrar el pago
+                    </small>
 
                     <div id="contenedorModulos" class="modulos-grid">
                         <div class="text-center p-4">
@@ -246,16 +255,27 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                         </div>
                     </div>
 
-                    <!-- Módulo Seleccionado (se muestra cuando se hace clic en uno rojo) -->
-                    <div id="moduloSeleccionadoInfo" style="display: none;" class="alert alert-info mt-3">
-                        <h6><i class="fa fa-check"></i> Módulo Seleccionado para Pago</h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p class="mb-1"><strong>Código:</strong> <span id="detalle-codigo"></span></p>
-                                <p class="mb-1"><strong>Nombre:</strong> <span id="detalle-nombre"></span></p>
+                    <!-- Módulos Seleccionados (se muestra cuando se seleccionan uno o más módulos) -->
+                    <div id="modulosSeleccionadosInfo" style="display: none;" class="card border-success shadow-sm mt-4">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">
+                                <i class="fa fa-check-square"></i>
+                                Módulos Seleccionados (<span id="contadorSeleccionados">0</span>)
+                            </h6>
+                        </div>
+                        <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                            <div id="listaModulosSeleccionados">
+                                <!-- Se llenará dinámicamente con JavaScript -->
                             </div>
-                            <div class="col-md-6">
-                                <p class="mb-1"><strong>Costo Sugerido:</strong> <span id="detalle-costo-modulo" class="text-primary font-weight-bold"></span></p>
+                        </div>
+                        <div class="card-footer bg-light">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Total a Pagar:</strong>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <span id="totalAPagar" class="text-success font-weight-bold h5">Bs. 0.00</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -265,16 +285,19 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                     <!-- Datos de Pago -->
                     <h6 class="text-primary"><i class="fa fa-money"></i> Datos del Pago</h6>
 
-                    <div class="row">
-                        <div class="col-lg-6">
-                            <div class="form-group">
-                                <label>COSTO DEL MÓDULO (Bs.): *</label>
-                                <input type="number" class="form-control" name="costoModulo" id="costoModulo"
-                                       placeholder="0.00" step="0.01" min="0" required>
-                                <div class="invalid-feedback">Ingrese el costo del módulo.</div>
-                            </div>
+                    <!-- Costos por módulo (se genera dinámicamente) -->
+                    <div id="contenedorCostos" style="display: none;">
+                        <div class="alert alert-warning">
+                            <i class="fa fa-info-circle"></i>
+                            <strong>Nota:</strong> Ingrese el costo de cada módulo seleccionado
                         </div>
+                        <div id="camposCostos" class="row">
+                            <!-- Se llenará dinámicamente con JavaScript -->
+                        </div>
+                    </div>
 
+                    <!-- Datos comunes del pago -->
+                    <div class="row">
                         <div class="col-lg-6">
                             <div class="form-group">
                                 <label>FECHA DE PAGO: *</label>
@@ -283,23 +306,27 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                 <div class="invalid-feedback">Seleccione la fecha de pago.</div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="row">
                         <div class="col-lg-6">
                             <div class="form-group">
                                 <label>N° VOUCHER:</label>
-                                <input type="text" class="form-control" name="numeroVaucher"
+                                <input type="text" class="form-control" name="numeroVaucher" id="numeroVaucher"
                                        placeholder="Número de comprobante (opcional)">
+                                <small class="form-text text-muted">Mismo voucher para todos los módulos</small>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="col-lg-6">
+                    <div class="row">
+                        <div class="col-lg-12">
                             <div class="form-group">
                                 <label>FOTO/ARCHIVO DE VOUCHER:</label>
                                 <input type="file" class="form-control-file" name="fmodulo" id="fmodulo"
                                        accept="image/*,.pdf">
-                                <small class="form-text text-muted">Adjunte una imagen o PDF del comprobante de pago (opcional)</small>
+                                <small class="form-text text-muted">
+                                    <i class="fa fa-info-circle"></i>
+                                    Adjunte una imagen o PDF del comprobante de pago (opcional). Este archivo se asociará a todos los módulos seleccionados.
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -329,7 +356,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
 <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
-<script src="vistas/recursos/assets/js/scripts/inscripcionmodulo.js"></script>
+<script src="vistas/recursos/assets/js/scripts/inscripcionmodulo.js?v=<?php echo time(); ?>"></script>
 
 <style>
     /* Estilos modernos para la tabla de matriculados */
@@ -456,8 +483,8 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
        ==================================== */
     .modulos-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 15px;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
         max-height: 500px;
         overflow-y: auto;
         padding: 10px;
@@ -468,12 +495,12 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     .modulo-card {
         background: white;
         border: 2px solid #ddd;
-        border-radius: 10px;
-        padding: 15px;
+        border-radius: 8px;
+        padding: 10px;
         cursor: pointer;
         transition: all 0.3s ease;
         position: relative;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
     }
 
     .modulo-card:hover {
@@ -491,18 +518,18 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     .modulo-card.pagado::before {
         content: "✓";
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 8px;
+        right: 8px;
         background: #28a745;
         color: white;
-        width: 30px;
-        height: 30px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 18px;
+        font-size: 14px;
     }
 
     .modulo-card.pagado:hover {
@@ -519,18 +546,18 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     .modulo-card.pendiente::before {
         content: "!";
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 8px;
+        right: 8px;
         background: #dc3545;
         color: white;
-        width: 30px;
-        height: 30px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 20px;
+        font-size: 16px;
     }
 
     .modulo-card.pendiente:hover {
@@ -549,92 +576,51 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
 
     .modulo-card-codigo {
         background: #667eea;
         color: white;
-        padding: 4px 10px;
-        border-radius: 5px;
-        font-size: 12px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
         font-weight: bold;
     }
 
     .modulo-card-titulo {
-        font-size: 15px;
+        font-size: 13px;
         font-weight: 600;
         color: #333;
-        margin: 10px 0;
-        padding-right: 35px;
-        line-height: 1.3;
-        min-height: 40px;
+        margin: 8px 0;
+        padding-right: 30px;
+        line-height: 1.2;
+        min-height: 32px;
     }
 
-    .modulo-card-info {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px solid #ddd;
-        font-size: 12px;
-        color: #666;
-    }
-
-    .modulo-card-info-item {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .modulo-card-info-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        color: #999;
-        margin-bottom: 2px;
-    }
-
-    .modulo-card-info-valor {
-        font-weight: bold;
-        color: #333;
-    }
-
-    .modulo-card-costo {
-        font-size: 16px;
-        font-weight: bold;
-        color: #667eea;
-        margin-top: 8px;
-    }
-
-    .modulo-card-estado {
-        margin-top: 10px;
-        padding: 5px;
-        border-radius: 5px;
-        text-align: center;
+    .modulo-card-docente {
         font-size: 11px;
-        font-weight: 600;
+        color: #666;
+        margin-top: 6px;
+        padding: 4px 0;
     }
 
-    .modulo-card.pagado .modulo-card-estado {
-        background: #28a745;
-        color: white;
-    }
-
-    .modulo-card.pendiente .modulo-card-estado {
-        background: #dc3545;
-        color: white;
+    .modulo-card-docente i {
+        color: #667eea;
+        margin-right: 4px;
     }
 
     /* Información de pago (solo en tarjetas pagadas) */
     .modulo-card-pago-info {
-        margin-top: 10px;
-        padding: 8px;
+        margin-top: 8px;
+        padding: 6px;
         background: rgba(40, 167, 69, 0.1);
-        border-radius: 5px;
-        font-size: 11px;
+        border-radius: 4px;
+        font-size: 10px;
     }
 
     .modulo-card-pago-info p {
-        margin: 3px 0;
+        margin: 2px 0;
         color: #155724;
     }
 
@@ -668,4 +654,16 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
             font-size: 14px;
         }
     }
+
+    /* Checkbox en tarjetas */
+    .modulo-checkbox {
+        pointer-events: none;
+    }
+
+    .modulo-card.seleccionable {
+        cursor: pointer;
+    }
 </style>
+
+<!-- Script para selección múltiple de módulos -->
+<script src="vistas/recursos/assets/js/scripts/matriculados-modulos-multiple.js?v=<?php echo time(); ?>"></script>

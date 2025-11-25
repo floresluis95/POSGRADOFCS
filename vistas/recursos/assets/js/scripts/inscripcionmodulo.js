@@ -37,12 +37,18 @@ $(document).ready(function() {
         $('#programaID').val(programaID);
         $('#idinscripcion').val(idinscripcion);
 
-        // Limpiar formulario
-        $('#moduloSeleccionado').val(''); // Campo hidden
-        $('#costoModulo').val('');
+        // Limpiar formulario de pago múltiple
         $('input[name="numeroVaucher"]').val('');
         $('#fmodulo').val('');
-        $('#moduloSeleccionadoInfo').hide();
+
+        // Limpiar selección de módulos (manejado por matriculados-modulos-multiple.js)
+        if (typeof modulosSeleccionados !== 'undefined') {
+            modulosSeleccionados = [];
+        }
+        $('.modulo-card').removeClass('seleccionado');
+        $('.modulo-checkbox').prop('checked', false);
+        $('#modulosSeleccionadosInfo').hide();
+        $('#contenedorCostos').hide();
 
         // Mostrar loader en contenedor de módulos
         $('#contenedorModulos').html(`
@@ -130,36 +136,32 @@ $(document).ready(function() {
                             `;
                         }
 
+                        // Checkbox para módulos pendientes
+                        const checkbox = !esPagado ? `
+                            <input type="checkbox" class="modulo-checkbox"
+                                   style="position: absolute; top: 10px; left: 10px; width: 20px; height: 20px; cursor: pointer; z-index: 10;">
+                        ` : '';
+
                         tarjetasHTML += `
-                            <div class="modulo-card ${claseEstado}"
+                            <div class="modulo-card ${claseEstado} ${!esPagado ? 'seleccionable' : ''}"
+                                 data-moduloid="${modulo.ModuloID}"
                                  data-nombre="${modulo.NombreModulo}"
                                  data-codigo="${modulo.Codigo}"
-                                 data-creditos="${modulo.Creditos}"
-                                 data-horas-teoricas="${modulo.HorasTeoricas}"
-                                 data-horas-practicas="${modulo.HorasPracticas}"
-                                 data-costo="${modulo.Costo}"
+                                 data-costo="${modulo.Costo || 0}"
                                  data-pagado="${modulo.Pagado}">
-
+                                ${checkbox}
                                 <div class="modulo-card-header">
                                     <span class="modulo-card-codigo">${modulo.Codigo}</span>
+                                    <span class="badge ${esPagado ? 'badge-success' : 'badge-danger'}">${textoEstado}</span>
                                 </div>
 
                                 <div class="modulo-card-titulo">${modulo.NombreModulo}</div>
 
-                                <div class="modulo-card-info">
-                                    <div class="modulo-card-info-item">
-                                        <span class="modulo-card-info-label">Créditos</span>
-                                        <span class="modulo-card-info-valor">${modulo.Creditos}</span>
+                                ${modulo.NombreDocente ? `
+                                    <div class="modulo-card-docente">
+                                        <i class="fa fa-user"></i> ${modulo.NombreDocente}
                                     </div>
-                                    <div class="modulo-card-info-item">
-                                        <span class="modulo-card-info-label">Horas</span>
-                                        <span class="modulo-card-info-valor">${parseInt(modulo.HorasTeoricas) + parseInt(modulo.HorasPracticas)}</span>
-                                    </div>
-                                </div>
-
-                                <div class="modulo-card-costo">Bs. ${parseFloat(modulo.Costo).toFixed(2)}</div>
-
-                                <div class="modulo-card-estado">${textoEstado}</div>
+                                ` : ''}
 
                                 ${infoPago}
                             </div>
@@ -174,14 +176,8 @@ $(document).ready(function() {
                     // Mostrar resumen
                     console.log(`📈 RESUMEN: Total módulos: ${response.length}, Pagados: ${contadorPagados}, Pendientes: ${contadorPendientes}`);
 
-                    // Agregar event listeners a las tarjetas pendientes
-                    console.log('🖱️ Agregando eventos click a tarjetas pendientes...');
-                    $('.modulo-card.pendiente').on('click', function() {
-                        console.log('Click en tarjeta pendiente');
-                        seleccionarModulo($(this));
-                    });
-
                     console.log('✅ Tarjetas cargadas correctamente');
+                    console.log('ℹ️ Los eventos de selección múltiple son manejados por matriculados-modulos-multiple.js');
 
                     // Mensaje si todo está pagado
                     if (contadorPendientes === 0) {
@@ -222,139 +218,15 @@ $(document).ready(function() {
                     </div>
                 `);
 
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se pudieron cargar los módulos del programa. Revisa la consola para más detalles.'
-                });
+                console.error('No se pudieron cargar los módulos del programa. Error:', error);
             }
         });
     }
 
     // ========================================
-    // SELECCIONAR MÓDULO (AL HACER CLIC EN TARJETA ROJA)
+    // NOTA: La selección y validación de módulos múltiples
+    // está manejada por matriculados-modulos-multiple.js
     // ========================================
-    function seleccionarModulo(card) {
-        // Remover selección anterior
-        $('.modulo-card').removeClass('seleccionado');
-
-        // Marcar como seleccionado
-        card.addClass('seleccionado');
-
-        // Obtener datos del módulo
-        const nombre = card.data('nombre');
-        const codigo = card.data('codigo');
-        const creditos = card.data('creditos');
-        const horasTeo = card.data('horas-teoricas');
-        const horasPrac = card.data('horas-practicas');
-        const costo = card.data('costo');
-
-        console.log('Módulo seleccionado:', nombre);
-
-        // Actualizar campo hidden
-        $('#moduloSeleccionado').val(nombre);
-
-        // Mostrar información del módulo seleccionado
-        $('#detalle-codigo').text(codigo);
-        $('#detalle-nombre').text(nombre);
-        $('#detalle-creditos').text(creditos);
-        $('#detalle-horas-teoricas').text(horasTeo);
-        $('#detalle-horas-practicas').text(horasPrac);
-        $('#detalle-costo-modulo').text('Bs. ' + parseFloat(costo).toFixed(2));
-
-        // Auto-completar el costo
-        $('#costoModulo').val(parseFloat(costo).toFixed(2));
-
-        // Mostrar el panel de información
-        $('#moduloSeleccionadoInfo').slideDown();
-
-        // Hacer scroll suave hacia el formulario de pago
-        $('html, body').animate({
-            scrollTop: $('#moduloSeleccionadoInfo').offset().top - 100
-        }, 500);
-    }
-
-    // ========================================
-    // EVENTO OBSOLETO - AHORA SE USA TARJETAS EN LUGAR DE SELECT
-    // ========================================
-    // La selección de módulos ahora se hace mediante tarjetas (cajoncitos)
-    // Ver función seleccionarModulo() más arriba
-
-    // ========================================
-    // VALIDACIÓN DEL FORMULARIO DE PAGO DE MÓDULO
-    // ========================================
-    $('#formPagoModulo').on('submit', function(e) {
-        // Validar módulo seleccionado
-        const moduloSeleccionado = $('#moduloSeleccionado').val();
-        if (!moduloSeleccionado || moduloSeleccionado === '') {
-            e.preventDefault();
-            Swal.fire({
-                icon: 'warning',
-                title: 'Atención',
-                text: 'Por favor seleccione un módulo',
-                confirmButtonText: 'Aceptar'
-            });
-            return false;
-        }
-
-        // Validar costo
-        const costo = parseFloat($('#costoModulo').val());
-        if (!costo || costo <= 0) {
-            e.preventDefault();
-            Swal.fire({
-                icon: 'warning',
-                title: 'Atención',
-                text: 'Por favor ingrese un costo válido',
-                confirmButtonText: 'Aceptar'
-            });
-            return false;
-        }
-
-        // Validar fecha
-        const fecha = $('#fechaPago').val();
-        if (!fecha || fecha === '') {
-            e.preventDefault();
-            Swal.fire({
-                icon: 'warning',
-                title: 'Atención',
-                text: 'Por favor seleccione la fecha de pago',
-                confirmButtonText: 'Aceptar'
-            });
-            return false;
-        }
-
-        // Validar inscripción ID
-        const idinscripcion = $('#idinscripcion').val();
-        if (!idinscripcion) {
-            e.preventDefault();
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'No se pudo obtener el ID de inscripción',
-                confirmButtonText: 'Aceptar'
-            });
-            return false;
-        }
-
-        console.log('Formulario válido - Enviando datos de pago...');
-        console.log('Módulo:', moduloSeleccionado);
-        console.log('Costo:', costo);
-        console.log('Fecha:', fecha);
-        console.log('ID Inscripción:', idinscripcion);
-
-        // Mostrar mensaje de procesamiento
-        Swal.fire({
-            title: 'Procesando...',
-            text: 'Registrando pago del módulo, por favor espere',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        return true;
-    });
 
     // ========================================
     // VER DETALLES DEL ESTUDIANTE MATRICULADO

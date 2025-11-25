@@ -233,8 +233,8 @@ class ModuloModelo
             // Insertar cada módulo
             $stmt = $pdo->prepare(
                 "INSERT INTO modulos
-                (ProgramaId, nombremodulo, codigomodulo, estadomodulo, DocenteID)
-                VALUES (:programaID, :nombremodulo, :codigomodulo, 'ACTIVO', :docenteID)"
+                (ProgramaId, nombremodulo, codigomodulo, costomodulo, estadomodulo, DocenteID)
+                VALUES (:programaID, :nombremodulo, :codigomodulo, :costomodulo, 'ACTIVO', :docenteID)"
             );
 
             $insertados = 0;
@@ -249,9 +249,13 @@ class ModuloModelo
                 // DocenteID puede ser NULL si no se asigna docente
                 $docenteID = isset($modulo['docenteID']) && !empty($modulo['docenteID']) ? (int)$modulo['docenteID'] : null;
 
+                // Costo del módulo (puede ser 0 si no se especifica)
+                $costomodulo = isset($modulo['costomodulo']) && !empty($modulo['costomodulo']) ? (int)$modulo['costomodulo'] : 0;
+
                 $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
                 $stmt->bindParam(":nombremodulo", $nombremodulo, PDO::PARAM_STR);
                 $stmt->bindParam(":codigomodulo", $modulo['codigomodulo'], PDO::PARAM_STR);
+                $stmt->bindParam(":costomodulo", $costomodulo, PDO::PARAM_INT);
 
                 // Usar bindValue con PDO::PARAM_NULL para valores NULL
                 if ($docenteID === null) {
@@ -296,6 +300,7 @@ class ModuloModelo
                     ProgramaId,
                     nombremodulo,
                     codigomodulo,
+                    costomodulo,
                     estadomodulo,
                     DocenteID
                 FROM modulos
@@ -324,6 +329,7 @@ class ModuloModelo
                     m.ProgramaId,
                     m.nombremodulo,
                     m.codigomodulo,
+                    m.costomodulo,
                     m.estadomodulo,
                     m.DocenteID,
                     p.NombrePrograma,
@@ -356,6 +362,7 @@ class ModuloModelo
                 "UPDATE modulos
                 SET nombremodulo = :nombremodulo,
                     codigomodulo = :codigomodulo,
+                    costomodulo = :costomodulo,
                     DocenteID = :docenteID
                 WHERE Idmodulo = :idmodulo AND ProgramaId = :programaID"
             );
@@ -363,6 +370,9 @@ class ModuloModelo
             $stmt->bindParam(":programaID", $datos['programaID'], PDO::PARAM_INT);
             $stmt->bindParam(":nombremodulo", $datos['nombremodulo'], PDO::PARAM_STR);
             $stmt->bindParam(":codigomodulo", $datos['codigomodulo'], PDO::PARAM_STR);
+
+            $costomodulo = isset($datos['costomodulo']) && !empty($datos['costomodulo']) ? (int)$datos['costomodulo'] : 0;
+            $stmt->bindParam(":costomodulo", $costomodulo, PDO::PARAM_INT);
 
             if (isset($datos['docenteID']) && !empty($datos['docenteID'])) {
                 $stmt->bindParam(":docenteID", $datos['docenteID'], PDO::PARAM_INT);

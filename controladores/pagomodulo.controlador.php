@@ -10,7 +10,7 @@ require_once __DIR__ . '/../modelos/conexion.modelo.php';
 class PagoModuloControlador
 {
     /**
-     * Registrar pago de módulo
+     * Registrar pago de uno o múltiples módulos
      */
     public function RegistrarPagoModuloControlador()
     {
@@ -22,13 +22,13 @@ class PagoModuloControlador
             error_log("POST registrarPagoModulo detectado");
 
             // Validar datos requeridos
-            if (empty($_POST['idinscripcion']) || empty($_POST['moduloSeleccionado']) ||
-                empty($_POST['costoModulo']) || empty($_POST['fechaPago'])) {
+            if (empty($_POST['idinscripcion']) || empty($_POST['fechaPago']) ||
+                (empty($_POST['costos']) || !is_array($_POST['costos']))) {
 
                 echo '
                 <script src="vistas/recursos/sweetalert.min.js"></script>
                 <script>
-                swal("ERROR!", "Todos los campos obligatorios deben ser completados", "error")
+                swal("ERROR!", "Debe seleccionar al menos un módulo e ingresar todos los costos", "error")
                 .then(function () {
                     location.href="matriculados";
                 });
@@ -36,50 +36,102 @@ class PagoModuloControlador
                 return;
             }
 
-            // Procesar archivo de voucher (si existe)
+            $idinscripcion = (int)$_POST['idinscripcion'];
+            $fechaPago = htmlspecialchars(trim($_POST['fechaPago']));
+            $numeroVaucher = htmlspecialchars(trim($_POST['numeroVaucher'] ?? ''));
+            $costosModulos = $_POST['costos']; // Array: [IdModulo => costo]
+
+            // Procesar archivo de voucher (si existe) - mismo para todos
             $archivoVoucher = null;
             if (isset($_FILES['fmodulo']) && $_FILES['fmodulo']['error'] == 0) {
                 $archivoVoucher = file_get_contents($_FILES['fmodulo']['tmp_name']);
             }
 
-            // Preparar datos para insertar
-            $datosPago = array(
-                "idinscripcion" => (int)$_POST['idinscripcion'],
-                "nmodulo" => htmlspecialchars(trim($_POST['moduloSeleccionado'])),
-                "costomodulo" => floatval($_POST['costoModulo']),
-                "fechapago" => htmlspecialchars(trim($_POST['fechaPago'])),
-                "nvaucher" => htmlspecialchars(trim($_POST['numeroVaucher'] ?? '')),
-                "fmodulo" => $archivoVoucher
-            );
+            // Registrar cada módulo
+            $exitosos = 0;
+            $errores = 0;
+            $duplicados = 0;
+            $modulosProcesados = array();
 
-            error_log("Datos a registrar: " . print_r($datosPago, true));
+            foreach ($costosModulos as $idModulo => $costo) {
+                // Validar costo
+                if (empty($costo) || floatval($costo) <= 0) {
+                    $errores++;
+                    continue;
+                }
 
-            // Registrar en la base de datos
-            $resultado = PagoModuloModelo::RegistrarPagoModuloModelo($datosPago);
+                // Preparar datos para insertar
+                $datosPago = array(
+                    "idinscripcion" => $idinscripcion,
+                    "IdModulo" => (int)$idModulo,
+                    "costomodulo" => floatval($costo),
+                    "fechapago" => $fechaPago,
+                    "nvaucher" => $numeroVaucher,
+                    "fmodulo" => $archivoVoucher
+                );
 
-            if ($resultado == 'exitoso') {
+                error_log("Registrando módulo ID {$idModulo}: " . print_r($datosPago, true));
+
+                // Registrar en la base de datos
+                $resultado = PagoModuloModelo::RegistrarPagoModuloModelo($datosPago);
+
+                if ($resultado == 'exitoso') {
+                    $exitosos++;
+                    $modulosProcesados[] = $idModulo;
+                } elseif ($resultado == 'duplicado') {
+                    $duplicados++;
+                } else {
+                    $errores++;
+                }
+            }
+
+            // Mensajes según resultado
+            $totalProcesados = count($costosModulos);
+
+            if ($exitosos == $totalProcesados) {
+                // Todos exitosos
+                $mensaje = $exitosos == 1
+                    ? "El pago del módulo se registró correctamente"
+                    : "Los pagos de {$exitosos} módulos se registraron correctamente";
+
                 echo '
                 <script src="vistas/recursos/sweetalert.min.js"></script>
                 <script>
-                swal("EXITOSO!", "El pago del módulo se registró correctamente", "success")
+                swal("EXITOSO!", "' . $mensaje . '", "success")
                 .then(function () {
                     location.href="matriculados";
                 });
                 </script>';
-            } elseif ($resultado == 'duplicado') {
+            } elseif ($exitosos > 0) {
+                // Algunos exitosos, algunos con errores
+                $mensaje = "Se registraron {$exitosos} de {$totalProcesados} módulos.";
+                if ($duplicados > 0) $mensaje .= " {$duplicados} ya estaban registrados.";
+                if ($errores > 0) $mensaje .= " {$errores} tuvieron errores.";
+
                 echo '
                 <script src="vistas/recursos/sweetalert.min.js"></script>
                 <script>
-                swal("ERROR!", "Este módulo ya fue registrado para esta inscripción", "error")
+                swal("PARCIAL!", "' . $mensaje . '", "warning")
+                .then(function () {
+                    location.href="matriculados";
+                });
+                </script>';
+            } elseif ($duplicados > 0 && $errores == 0) {
+                // Todos eran duplicados
+                echo '
+                <script src="vistas/recursos/sweetalert.min.js"></script>
+                <script>
+                swal("ERROR!", "Todos los módulos seleccionados ya fueron registrados", "error")
                 .then(function () {
                     location.href="matriculados";
                 });
                 </script>';
             } else {
+                // Todos fallaron
                 echo '
                 <script src="vistas/recursos/sweetalert.min.js"></script>
                 <script>
-                swal("ERROR!", "No se pudo registrar el pago del módulo", "error")
+                swal("ERROR!", "No se pudo registrar ningún pago", "error")
                 .then(function () {
                     location.href="matriculados";
                 });

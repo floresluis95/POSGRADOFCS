@@ -29,7 +29,18 @@
       "Bash(\"C:\\xampp\\php\\php.exe\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\limpiar_modulos_prueba.php\")",
       "Bash(del \"C:\\xampp\\htdocs\\POSGRADOFCS\\test_registro_modulos.php\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\limpiar_modulos_prueba.php\")",
       "Bash(cmd /c \"del C:\\xampp\\htdocs\\POSGRADOFCS\\test_registro_modulos.php C:\\xampp\\htdocs\\POSGRADOFCS\\limpiar_modulos_prueba.php\")",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(php -l:*)",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\controladores\\pagomodulo.controlador.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\matriculados.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\modelos\\pagomodulo.modelo.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\modelos\\modulo.modelo.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\controladores\\modulo.controlador.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\modulos.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\modelos\\reportemodulos.modelo.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\controladores\\reportemodulos.controlador.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\ajax\\reportemodulos.ajax.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\reportemodulos.php\")"
     ],
     "deny": [],
     "ask": []

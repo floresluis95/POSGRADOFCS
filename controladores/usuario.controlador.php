@@ -66,7 +66,7 @@
             
         }
 
-        public function ListaUsuariosControlador()
+        public static function ListaUsuariosControlador()
         {
             $ListaUsuarios = UsuarioModelos::ListaUsuariosModelo();
                 // PREFORMATEAR CODIGO - VARDUMP
@@ -75,10 +75,10 @@
                 echo '</pre>';*/
             foreach ($ListaUsuarios as $key => $Usuario) 
             {
-                $i++;
+                 
         
                 echo '<tr>
-                    <td>'.$i.'</td>
+                    
                     <td>'.$Usuario["CedulaIdentidad"].'</td>
                     <td>'.$Usuario['ApellidoPaterno'].' '.$Usuario["ApellidoMaterno"].' '.$Usuario["Nombres"].'</td>
                     <td>'.$Usuario['Direccion'].'</td>
