@@ -16,7 +16,11 @@
 
         public static function ListaUsuariosModelo()
         {
-            $stmt = Conexion::Conectar()->prepare("SELECT * FROM personal p INNER JOIN usuario u ON p.IdPersonal = u.IdPersonal");
+            // Solo muestra usuarios de personal (IdPersonal NOT NULL)
+            $stmt = Conexion::Conectar()->prepare("SELECT p.*, u.*
+                                                    FROM usuario u
+                                                    INNER JOIN personal p ON p.IdPersonal = u.IdPersonal
+                                                    WHERE u.IdPersonal IS NOT NULL");
             $stmt -> execute();
             return $stmt -> fetchAll();
         }
@@ -118,8 +122,8 @@
             $stmt = Conexion::Conectar()->prepare("SELECT e.EstudianteID, e.Ci, e.Complemento, e.Exp,
                                                     e.Nombre, e.Apaterno, e.Amaterno, e.Correo
                                                     FROM estudiante e
-                                                    LEFT JOIN usuario u ON e.Ci = u.IdPersonal
-                                                    WHERE u.IdPersonal IS NULL AND e.Estado = 1
+                                                    LEFT JOIN usuario u ON e.EstudianteID = u.EstudianteID
+                                                    WHERE u.EstudianteID IS NULL AND e.Estado = 1
                                                     ORDER BY e.Apaterno, e.Amaterno, e.Nombre");
             $stmt->execute();
             return $stmt->fetchAll();
@@ -131,11 +135,11 @@
                 $conexion = Conexion::Conectar();
                 $conexion->beginTransaction();
 
-                // Insertar en tabla usuario
-                $stmt = $conexion->prepare("INSERT INTO `usuario` (`IdPersonal`, `Usuario`, `Password`, `Tipo`, `Estado`)
-                                           VALUES (:IdPersonal, :Usuario, :Password, :Tipo, '1')");
+                // Insertar en tabla usuario (EstudianteID para estudiantes, IdPersonal NULL)
+                $stmt = $conexion->prepare("INSERT INTO `usuario` (`IdPersonal`, `EstudianteID`, `Usuario`, `Password`, `Tipo`, `Estado`)
+                                           VALUES (NULL, :EstudianteID, :Usuario, :Password, :Tipo, '1')");
 
-                $stmt->bindParam(":IdPersonal", $DatosModelo['IdPersonal'], PDO::PARAM_INT);
+                $stmt->bindParam(":EstudianteID", $DatosModelo['EstudianteID'], PDO::PARAM_INT);
                 $stmt->bindParam(":Usuario", $DatosModelo['Usuario'], PDO::PARAM_STR);
                 $stmt->bindParam(":Password", $DatosModelo['Password'], PDO::PARAM_STR);
                 $stmt->bindParam(":Tipo", $DatosModelo['Tipo'], PDO::PARAM_STR);
@@ -158,10 +162,10 @@
             }
         }
 
-        public static function VerificarUsuarioEstudianteModelo($ci)
+        public static function VerificarUsuarioEstudianteModelo($estudianteID)
         {
-            $stmt = Conexion::Conectar()->prepare("SELECT u.IdPersonal FROM usuario u WHERE u.IdPersonal = :ci");
-            $stmt->bindParam(":ci", $ci, PDO::PARAM_INT);
+            $stmt = Conexion::Conectar()->prepare("SELECT u.EstudianteID FROM usuario u WHERE u.EstudianteID = :estudianteID");
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetch();
         }

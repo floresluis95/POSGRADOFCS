@@ -48,7 +48,17 @@
       "Bash(del \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\estudiantes-usuarios.php\")",
       "Bash(cmd /c \"del C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\estudiantes-usuarios.php\")",
       "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\estudianteusr.php\")",
-      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\index.php\")"
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\index.php\")",
+      "Bash(del \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\estudianteusr.php\")",
+      "Bash(cmd /c \"del C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\estudianteusr.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\estudiantes.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\controladores\\estudiantes.controlador.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\modelos\\estudiantes.modelo.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\modificar_tabla_usuario.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\modificar_tabla_usuario_v2.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\modificar_tabla_usuario_final.php\")",
+      "Bash(cmd /c \"php -r \"\"copy(''https://getcomposer.org/installer'', ''composer-setup.php'');\"\" && php composer-setup.php && php -r \"\"unlink(''composer-setup.php'');\"\" && php composer.phar install --no-dev\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\instalar_tcpdf.php\")"
     ],
     "deny": [],
     "ask": []

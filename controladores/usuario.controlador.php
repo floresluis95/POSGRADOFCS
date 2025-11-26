@@ -73,39 +73,63 @@
                 /*echo '<pre>';
                     var_dump($ListaUsuarios);
                 echo '</pre>';*/
-            foreach ($ListaUsuarios as $key => $Usuario) 
+            $contador=0;
+            foreach ($ListaUsuarios as $key => $Usuario)
             {
-                 
-        
+                $contador=$contador+1;
+
+                // Definir badges de color según el tipo
+                $tipoBadge = '';
+                switch($Usuario['Tipo']) {
+                    case 'ADM':
+                        $tipoBadge = '<span class="badge badge-danger">ADMINISTRADOR</span>';
+                        break;
+                    case 'SEC':
+                        $tipoBadge = '<span class="badge badge-info">SECRETARIA</span>';
+                        break;
+                    case 'DOC':
+                        $tipoBadge = '<span class="badge badge-primary">DOCENTE</span>';
+                        break;
+                    case 'EST':
+                        $tipoBadge = '<span class="badge badge-success">ESTUDIANTE</span>';
+                        break;
+                    default:
+                        $tipoBadge = '<span class="badge badge-secondary">'.$Usuario['Tipo'].'</span>';
+                }
+
+                // Badge para el estado
+                $estadoBadge = $Usuario['Estado'] == '1'
+                    ? '<span class="badge badge-success"><i class="fa fa-check"></i> Activo</span>'
+                    : '<span class="badge badge-danger"><i class="fa fa-times"></i> Inactivo</span>';
+
                 echo '<tr>
-                    
-                    <td>'.$Usuario["CedulaIdentidad"].'</td>
+                    <td class="text-center">'.$contador.'</td>
+                    <td class="text-center"><strong>'.$Usuario["CedulaIdentidad"].'</strong></td>
                     <td>'.$Usuario['ApellidoPaterno'].' '.$Usuario["ApellidoMaterno"].' '.$Usuario["Nombres"].'</td>
-                    <td>'.$Usuario['Direccion'].'</td>
-                    <td>'.$Usuario['Celular'].' - '.$Usuario["Telefono"].'</td>       
-                    <td>'.$Usuario['FechaIngreso'].'</td>
-                    <td>'.$Usuario['Tipo'].'</td>             
-                    <td>'.$Usuario['Estado'].'</td>            
-                    <td>
-                    <button 
-                    data-toggle="modal"
-                    data-target="#ModalEditarUsuario"
-                    type="button"
-                    class="btn btn-info btnEditarUsuario" 
-                    CedulaIdentidad="'.$Usuario["CedulaIdentidad"].'"
-                    ApellidoPaterno="'.$Usuario["ApellidoPaterno"].'"
-                    ApellidoMaterno="'.$Usuario["ApellidoMaterno"].'"
-                    Nombres="'.$Usuario["Nombres"].'"
-                    Direccion="'.$Usuario["Direccion"].'"
-                    Celular="'.$Usuario["Celular"].'"
-                    Telefono="'.$Usuario["Telefono"].'">
-                    <i class="fa fa-edit"></i></button>
-                    </td>
-                    <td>
-                    <button data-toggle="modal" data-target="#modalu" type="button" idusr="'.$Usuario['CedulaIdentidad'].'" class="btn btn-danger btn-sm round  mr-1 mb-1 btnusr"><i class="fa fa-trash-alt"></i></button>           
-                    </td>
-                    <td>
-                    <button data-toggle="modal" data-target="#modals" type="button" idusrs="'.$Usuario['CedulaIdentidad'].'" class="btn btn-success btn-sm round  mr-1 mb-1 btnsubir"><i class="fa fa-arrow-up"></i></button>           
+                    <td><strong>'.$Usuario['Usuario'].'</strong></td>
+                    <td>'.$Usuario['Celular'].'</td>
+                    <td class="text-center">'.date('d/m/Y', strtotime($Usuario['FechaIngreso'])).'</td>
+                    <td class="text-center">'.$tipoBadge.'</td>
+                    <td class="text-center">'.$estadoBadge.'</td>
+                    <td class="text-center">
+                        <button
+                            data-toggle="modal"
+                            data-target="#ModalEditarUsuario"
+                            type="button"
+                            class="btn btn-warning btn-sm btnEditarUsuario"
+                            CedulaIdentidad="'.$Usuario["CedulaIdentidad"].'"
+                            ApellidoPaterno="'.$Usuario["ApellidoPaterno"].'"
+                            ApellidoMaterno="'.$Usuario["ApellidoMaterno"].'"
+                            Nombres="'.$Usuario["Nombres"].'"
+                            Direccion="'.$Usuario["Direccion"].'"
+                            Celular="'.$Usuario["Celular"].'"
+                            Telefono="'.$Usuario["Telefono"].'"
+                            title="Editar usuario">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        '.($Usuario['Estado'] == '1'
+                            ? '<button data-toggle="modal" data-target="#modalu" type="button" idusr="'.$Usuario['CedulaIdentidad'].'" class="btn btn-danger btn-sm btnusr" title="Dar de baja"><i class="fa fa-ban"></i></button>'
+                            : '<button data-toggle="modal" data-target="#modals" type="button" idusrs="'.$Usuario['CedulaIdentidad'].'" class="btn btn-success btn-sm btnsubir" title="Activar usuario"><i class="fa fa-check"></i></button>').'
                     </td>
                 </tr>';
             }
@@ -257,6 +281,7 @@
                             data-target="#ModalAsignarUsuario"
                             type="button"
                             class="btn btn-success btn-sm btnAsignarUsuario btn-asignar"
+                            data-estudiante-id="'.$estudiante['EstudianteID'].'"
                             data-ci="'.$estudiante['Ci'].'"
                             data-ci-completo="'.$ciCompleto.'"
                             data-nombre-completo="'.$nombreCompleto.'"
@@ -275,12 +300,15 @@
             error_log("=== DEBUG CrearUsuarioEstudianteControlador ===");
             error_log("POST recibido: " . print_r($_POST, true));
 
-            if(isset($_POST['estudiante_ci']))
+            if(isset($_POST['estudiante_id']) && isset($_POST['estudiante_ci']))
             {
-                error_log("Procesando estudiante CI: " . $_POST['estudiante_ci']);
+                $estudianteID = $_POST['estudiante_id'];
+                $ci = $_POST['estudiante_ci'];
+
+                error_log("Procesando estudiante ID: " . $estudianteID . ", CI: " . $ci);
 
                 // Verificar si el estudiante ya tiene usuario
-                $verificar = UsuarioModelos::VerificarUsuarioEstudianteModelo($_POST['estudiante_ci']);
+                $verificar = UsuarioModelos::VerificarUsuarioEstudianteModelo($estudianteID);
                 error_log("Verificación de usuario existente: " . ($verificar ? 'YA EXISTE' : 'NO EXISTE'));
 
                 if($verificar)
@@ -290,7 +318,7 @@
                     <script>
                     swal("ADVERTENCIA!", "Este estudiante ya tiene un usuario asignado", "warning")
                     .then(function () {
-                        location.href="estudianteusr";
+                        location.href="estudiantes";
                       })
                       ;
                      </script>';
@@ -298,7 +326,7 @@
                 }
 
                 // Usuario será el número de carnet (CI)
-                $usuario = $_POST['estudiante_ci'];
+                $usuario = $ci;
 
                 // Contraseña será: primera letra del nombre + número de carnet
                 $nombre = isset($_POST['estudiante_nombre']) ? $_POST['estudiante_nombre'] : '';
@@ -311,20 +339,20 @@
                     <script>
                     swal("ERROR!", "Falta el nombre del estudiante", "error")
                     .then(function () {
-                        location.href="estudianteusr";
+                        location.href="estudiantes";
                       });
                      </script>';
                     return;
                 }
 
                 $primeraLetra = strtoupper(substr($nombre, 0, 1));
-                $passwordTexto = $primeraLetra . $_POST['estudiante_ci'];
+                $passwordTexto = $primeraLetra . $ci;
                 $password = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
 
                 error_log("Credenciales generadas - Usuario: " . $usuario . ", Password texto: " . $passwordTexto);
 
                 $DatosModelo = array(
-                    "IdPersonal" => $_POST['estudiante_ci'],
+                    "EstudianteID" => $estudianteID,
                     "Usuario" => $usuario,
                     "Password" => $password,
                     "Tipo" => "EST"
@@ -348,7 +376,7 @@
                         button: "Aceptar"
                     })
                     .then(function () {
-                        location.href="estudianteusr";
+                        location.href="estudiantes";
                       });
                      </script>';
                 }
@@ -360,13 +388,13 @@
                     <script>
                     swal("ERROR!", "No se pudo crear el usuario: '.$resultado.'", "error")
                     .then(function () {
-                        location.href="estudianteusr";
+                        location.href="estudiantes";
                       })
                       ;
                      </script>';
                 }
             } else {
-                error_log("No se recibió estudiante_ci en POST");
+                error_log("No se recibió estudiante_id o estudiante_ci en POST");
             }
         }
         }

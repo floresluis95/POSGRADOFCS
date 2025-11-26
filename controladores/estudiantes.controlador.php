@@ -2,21 +2,54 @@
 class EstudiantesControladores
 { 
     public function ListaEstudianteControladores()
-    {     
+    {
         $Listae = EstudiantesModelos::ListaEstudianteActivoModelo();
+        $contador = 0;
 
         foreach ($Listae as $Estudiante) {
-            echo '<tr>
-                    <td WIDTH="30" HEIGHT="30">' . $Estudiante['EstudianteID'] . '</td>
-                    <td>' . $Estudiante['Ci'] . ' ' . $Estudiante['Complemento'] . ' ' . $Estudiante['Exp'] . '</td>
-                    <td>' . $Estudiante['Nombre'] . ' ' . $Estudiante['Apaterno'] . ' ' . $Estudiante['Amaterno'] . '</td>
-                     <td>' . $Estudiante['NombreProfesion'] . '</td>
-                    <td>' . $Estudiante['Correo'] . '</td>
-                    <td>' . $Estudiante['Celular'] . ' / ' . $Estudiante['Telefono'] . '</td>
+            $contador++;
 
-                    <td><button type="button" class="btn btn-success"><i class="bi bi-card-checklist"></i></button></td>
-                    <td><button type="button" class="btn btn-outline-info"><i class="bi bi-arrow-down-circle-fill"></i></button></td>
-                    <td><button type="button" class="btn btn-outline-danger"><i class="bi bi-trash-fill"></i></button></td>
+            $nombreCompleto = $Estudiante['Apaterno'] . ' ' . $Estudiante['Amaterno'] . ' ' . $Estudiante['Nombre'];
+            $ciCompleto = $Estudiante['Ci'] . ($Estudiante['Complemento'] ? '-' . $Estudiante['Complemento'] : '') . ' ' . $Estudiante['Exp'];
+
+            // Verificar si tiene usuario
+            $tieneUsuario = !empty($Estudiante['Usuario']);
+            $estadoUsuarioBadge = '';
+            $botonUsuario = '';
+
+            if ($tieneUsuario) {
+                $estadoActivo = $Estudiante['EstadoUsuario'] == '1';
+                $estadoUsuarioBadge = $estadoActivo
+                    ? '<span class="badge badge-success"><i class="fa fa-check"></i> ' . $Estudiante['Usuario'] . '</span>'
+                    : '<span class="badge badge-danger"><i class="fa fa-times"></i> ' . $Estudiante['Usuario'] . ' (Inactivo)</span>';
+                $botonUsuario = '';
+            } else {
+                $estadoUsuarioBadge = '<span class="badge badge-warning"><i class="fa fa-exclamation-triangle"></i> Sin usuario</span>';
+                $botonUsuario = '<button
+                                    data-toggle="modal"
+                                    data-target="#ModalAsignarUsuario"
+                                    type="button"
+                                    class="btn btn-success btn-sm btnAsignarUsuario"
+                                    data-estudiante-id="' . $Estudiante['EstudianteID'] . '"
+                                    data-ci="' . $Estudiante['Ci'] . '"
+                                    data-ci-completo="' . $ciCompleto . '"
+                                    data-nombre-completo="' . $nombreCompleto . '"
+                                    data-nombre-pila="' . $Estudiante['Nombre'] . '"
+                                    data-correo="' . ($Estudiante['Correo'] ? $Estudiante['Correo'] : '') . '"
+                                    title="Asignar usuario">
+                                    <i class="fa fa-user-plus"></i> Asignar
+                                </button>';
+            }
+
+            echo '<tr>
+                    <td class="text-center">' . $contador . '</td>
+                    <td class="text-center"><strong>' . $ciCompleto . '</strong></td>
+                    <td>' . $nombreCompleto . '</td>
+                    <td>' . $Estudiante['NombreProfesion'] . '</td>
+                    <td>' . ($Estudiante['Correo'] ? $Estudiante['Correo'] : '<span class="text-muted">No registrado</span>') . '</td>
+                    <td class="text-center">' . $Estudiante['Celular'] . '</td>
+                    <td class="text-center">' . $estadoUsuarioBadge . '</td>
+                    <td class="text-center">' . $botonUsuario . '</td>
                   </tr>';
         }
     }

@@ -14,7 +14,7 @@ if ($_SESSION["Tipo"] == "ADM") {
               <div id="kt_header_menu" class="kt-header-menu kt-header-menu-mobile ">
                 <ul class="kt-menu__nav ">
                 <li class="kt-menu__item " aria-haspopup="true"><a href="panel" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-circle-notch"></i><span class="kt-menu__link-text">INICIO</span></a></li> 
-                <li class="kt-menu__item " aria-haspopup="true"><a href="consultas" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-filter"></i><span class="kt-menu__link-text">CONSULTAS</span></a></li>   
+                <li class="kt-menu__item " aria-haspopup="true"><a href="reportes" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-filter"></i><span class="kt-menu__link-text">REPORTES PDF</span></a></li>   
                   
                 
                   </li>

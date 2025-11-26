@@ -18,10 +18,11 @@
                 $enlace == 'modulos' ||
                 $enlace == 'docentes'||
                 $enlace == 'reportemodulos'||
+                $enlace == 'reportes'||
                  $enlace == 'notasestudiante'||
-                 $enlace == 'calificacionesfinales'||
-                 $enlace == 'estudianteusr'
-                
+                 $enlace == 'calificacionesfinales'
+
+
                 )
             {
                 $ruta = "vistas/componentes/".$enlace.".php";

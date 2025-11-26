@@ -15,10 +15,16 @@ class EstudiantesModelos
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /* LISTAR SOLO ACTIVOS */
+    /* LISTAR SOLO ACTIVOS CON INFORMACIÓN DE USUARIO */
     public static function ListaEstudianteActivoModelo()
     {
-        $stmt = Conexion::Conectar()->prepare("SELECT * FROM estudiante e INNER JOIN profesion p ON e.IdProfesion = p.IdProfesion AND e.Estado= 1");
+        $stmt = Conexion::Conectar()->prepare("SELECT e.*, p.NombreProfesion,
+                                                u.Usuario, u.Estado as EstadoUsuario
+                                                FROM estudiante e
+                                                INNER JOIN profesion p ON e.IdProfesion = p.IdProfesion
+                                                LEFT JOIN usuario u ON e.EstudianteID = u.EstudianteID
+                                                WHERE e.Estado = 1
+                                                ORDER BY e.Apaterno, e.Amaterno, e.Nombre");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

@@ -1,0 +1,14 @@
+{
+    "name": "posgradofcs/sistema",
+    "description": "Sistema de Gestión de Posgrado FCS",
+    "type": "project",
+    "require": {
+        "php": ">=7.2",
+        "tecnickcom/tcpdf": "^6.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    }
+}
