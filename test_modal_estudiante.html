@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Modal Asignar Usuario</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .console-output {
+            background-color: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .console-line {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="test-container">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3><i class="fas fa-vial"></i> Prueba de Modal - Asignar Usuario a Estudiante</h3>
+        </div>
+        <div class="card-body">
+            <h5>Estudiantes de Prueba:</h5>
+            <table class="table table-striped table-bordered">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>C.I.</th>
+                        <th>Nombre Completo</th>
+                        <th>Correo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Estudiante 1 -->
+                    <tr>
+                        <td class="text-center"><strong>12345678 LP</strong></td>
+                        <td>PÉREZ LÓPEZ JUAN</td>
+                        <td>juan.perez@mail.com</td>
+                        <td class="text-center">
+                            <button
+                                data-toggle="modal"
+                                data-target="#ModalAsignarUsuario"
+                                type="button"
+                                class="btn btn-success btn-sm btnAsignarUsuario"
+                                data-ci="12345678"
+                                data-ci-completo="12345678 LP"
+                                data-nombre-completo="PÉREZ LÓPEZ JUAN"
+                                data-nombre-pila="JUAN"
+                                data-correo="juan.perez@mail.com">
+                                <i class="fas fa-user-plus"></i> Asignar
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Estudiante 2 -->
+                    <tr>
+                        <td class="text-center"><strong>87654321-1A CB</strong></td>
+                        <td>GONZÁLEZ MIRANDA MARÍA</td>
+                        <td>maria.gonzalez@mail.com</td>
+                        <td class="text-center">
+                            <button
+                                data-toggle="modal"
+                                data-target="#ModalAsignarUsuario"
+                                type="button"
+                                class="btn btn-success btn-sm btnAsignarUsuario"
+                                data-ci="87654321"
+                                data-ci-completo="87654321-1A CB"
+                                data-nombre-completo="GONZÁLEZ MIRANDA MARÍA"
+                                data-nombre-pila="MARÍA"
+                                data-correo="maria.gonzalez@mail.com">
+                                <i class="fas fa-user-plus"></i> Asignar
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Estudiante 3 - Sin correo -->
+                    <tr>
+                        <td class="text-center"><strong>11223344 SC</strong></td>
+                        <td>RODRÍGUEZ SALAZAR CARLOS</td>
+                        <td><span class="text-muted">No registrado</span></td>
+                        <td class="text-center">
+                            <button
+                                data-toggle="modal"
+                                data-target="#ModalAsignarUsuario"
+                                type="button"
+                                class="btn btn-success btn-sm btnAsignarUsuario"
+                                data-ci="11223344"
+                                data-ci-completo="11223344 SC"
+                                data-nombre-completo="RODRÍGUEZ SALAZAR CARLOS"
+                                data-nombre-pila="CARLOS"
+                                data-correo="">
+                                <i class="fas fa-user-plus"></i> Asignar
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Instrucciones:</strong> Haz clic en el botón "Asignar" de cualquier estudiante para ver el modal con los datos cargados.
+            </div>
+
+            <div class="console-output" id="consoleOutput">
+                <div class="console-line">> Consola de Debug - Los eventos se mostrarán aquí...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Asignar Usuario -->
+<div style="z-index: 1500;" class="modal fade" id="ModalAsignarUsuario" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
+        <h4 class="modal-title text-white" id="myModalLabel">
+          <i class="fas fa-user-plus mr-2"></i> Asignar Usuario a Estudiante
+        </h4>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form method="post" enctype="multipart/form-data">
+        <div class="modal-body" style="padding: 30px;">
+
+          <div class="alert alert-info" style="border-left: 4px solid #17a2b8; background-color: #d1ecf1;">
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>Credenciales que se generarán automáticamente:</strong>
+            <ul class="mb-0 mt-2">
+              <li><strong>Usuario:</strong> Número de Carnet (C.I.)</li>
+              <li><strong>Contraseña:</strong> Primera letra del nombre + Número de Carnet</li>
+            </ul>
+          </div>
+
+          <input type="hidden" id="estudiante_ci" name="estudiante_ci">
+          <input type="hidden" id="estudiante_nombre" name="estudiante_nombre">
+
+          <div class="form-group">
+            <label for="nombre_estudiante_display" class="font-weight-bold">
+              <i class="fas fa-user text-primary"></i> Estudiante Seleccionado
+            </label>
+            <input type="text" id="nombre_estudiante_display" class="form-control form-control-lg" readonly
+                   style="background-color: #f8f9fa; border: 2px solid #e9ecef; font-weight: 600;">
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="ci_display" class="font-weight-bold">
+                  <i class="fas fa-id-card text-info"></i> C.I.
+                </label>
+                <input type="text" id="ci_display" class="form-control" readonly
+                       style="background-color: #f8f9fa; border: 2px solid #e9ecef;">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="usuario_generado" class="font-weight-bold">
+                  <i class="fas fa-user-circle text-success"></i> Usuario
+                </label>
+                <input type="text" id="usuario_generado" class="form-control" readonly
+                       style="background-color: #f8f9fa; border: 2px solid #e9ecef;">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password_generada" class="font-weight-bold">
+              <i class="fas fa-key text-warning"></i> Contraseña Generada
+            </label>
+            <input type="text" id="password_generada" class="form-control" readonly
+                   style="background-color: #fff3cd; border: 2px solid #ffc107; font-weight: 600; font-size: 16px;">
+          </div>
+
+          <div class="form-group">
+            <label for="correo_estudiante" class="font-weight-bold">
+              <i class="fas fa-envelope text-danger"></i> Correo Electrónico
+            </label>
+            <input type="email" id="correo_estudiante" class="form-control" readonly
+                   style="background-color: #f8f9fa; border: 2px solid #e9ecef;">
+          </div>
+
+        </div>
+        <div class="modal-footer" style="background-color: #f8f9fa; border-top: 2px solid #e9ecef;">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="button" class="btn btn-success" style="min-width: 150px;" onclick="alert('¡En el sistema real, esto enviaría el formulario!')">
+            <i class="fas fa-check"></i> Confirmar y Crear
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// Función para agregar mensajes a la consola
+function addToConsole(message, type = 'info') {
+    var consoleDiv = $('#consoleOutput');
+    var color = type === 'success' ? '#00ff00' : type === 'error' ? '#ff0000' : '#00bfff';
+    var line = $('<div class="console-line"></div>').html('> <span style="color: ' + color + '">' + message + '</span>');
+    consoleDiv.append(line);
+    consoleDiv.scrollTop(consoleDiv[0].scrollHeight);
+}
+
+$(document).ready(function(){
+    addToConsole('Sistema iniciado correctamente', 'success');
+
+    // Capturar datos del estudiante al hacer clic en el botón
+    $(document).on('click', '.btnAsignarUsuario', function(){
+        addToConsole('Botón "Asignar" clickeado');
+
+        // Obtener todos los atributos data del botón
+        var ci = $(this).attr('data-ci');
+        var ciCompleto = $(this).attr('data-ci-completo');
+        var nombreCompleto = $(this).attr('data-nombre-completo');
+        var nombrePila = $(this).attr('data-nombre-pila');
+        var correo = $(this).attr('data-correo');
+
+        addToConsole('Datos capturados del botón:');
+        addToConsole('  - CI: ' + ci);
+        addToConsole('  - CI Completo: ' + ciCompleto);
+        addToConsole('  - Nombre Completo: ' + nombreCompleto);
+        addToConsole('  - Nombre: ' + nombrePila);
+        addToConsole('  - Correo: ' + (correo || 'vacío'));
+
+        // Obtener la primera letra del nombre en mayúscula
+        var primeraLetra = nombrePila ? nombrePila.charAt(0).toUpperCase() : 'X';
+        addToConsole('Primera letra extraída: ' + primeraLetra);
+
+        // Generar usuario (será el CI)
+        var usuario = ci;
+
+        // Generar contraseña (primera letra del nombre + CI)
+        var password = primeraLetra + ci;
+
+        addToConsole('Credenciales generadas:', 'success');
+        addToConsole('  - Usuario: ' + usuario, 'success');
+        addToConsole('  - Contraseña: ' + password, 'success');
+
+        // Llenar campos hidden que se enviarán al servidor
+        $('#estudiante_ci').val(ci);
+        $('#estudiante_nombre').val(nombrePila);
+
+        // Llenar campos de visualización en el modal
+        $('#nombre_estudiante_display').val(nombreCompleto);
+        $('#ci_display').val(ciCompleto);
+        $('#usuario_generado').val(usuario);
+        $('#password_generada').val(password);
+        $('#correo_estudiante').val(correo || 'No registrado');
+
+        addToConsole('Modal actualizado con los datos', 'success');
+        addToConsole('---');
+    });
+
+    // Detectar cuando se cierra el modal
+    $('#ModalAsignarUsuario').on('hidden.bs.modal', function () {
+        addToConsole('Modal cerrado');
+    });
+});
+</script>
+
+</body>
+</html>

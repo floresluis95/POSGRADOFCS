@@ -163,37 +163,28 @@
             </div>
           </div>
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-4">
               <div class="form-group">
                   <label for="validationCustum02">Apellido Paterno</label>
                   <div class="position-relative has-icon-left">
-                    <input  type="text" id="validationCustum02" name="apaterno" class="form-control" placeholder="Apellido paterno" required="" pattern="[A-Za-z]+" title="No indtrodusca números">
+                    <input  type="text" id="validationCustum02" name="apaterno" class="form-control" placeholder="Apellido paterno" required="" pattern="[A-Za-z]+" title="No introduzca números">
                   </div>
               </div>
             </div>
 
-            <div class="col-md-3">
-              <div class="form-group">
-                  <label for="validationCustum02">Apellido Paterno</label>
-                  <div class="position-relative has-icon-left">
-                    <input  type="text" id="validationCustum02" name="prueba" class="form-control" placeholder="Apellido paterno" required="" pattern="[A-Za-z]+" title="No indtrodusca números">
-                  </div>
-              </div>
-            </div>
-
-              <div class="col-md-3">  
+              <div class="col-md-4">
                 <div class="form-group">
                   <label for="validationCustum03">Apellido Materno</label>
                   <div class="position-relative has-icon-left">
-                    <input type="text" id="validationCustum03" name="amaterno" class="form-control" placeholder="Apellido materno" required="" pattern="[A-Za-z]+" title="No indtrodusca números">
+                    <input type="text" id="validationCustum03" name="amaterno" class="form-control" placeholder="Apellido materno" required="" pattern="[A-Za-z]+" title="No introduzca números">
                   </div>
                 </div>
               </div>
-               <div class="col-md-6">  
+               <div class="col-md-4">
                 <div class="form-group">
                   <label for="validationCustum04">Nombres</label>
                   <div class="position-relative has-icon-left">
-                    <input  type="text" id="validationCustum04"  name="nombres"class="form-control" placeholder="Nombre completo" required pattern="[A-Za-z]+" title="No indtrodusca números">
+                    <input  type="text" id="validationCustum04"  name="nombres" class="form-control" placeholder="Nombre completo" required pattern="[A-Za-z ]+" title="No introduzca números">
                   </div>
                 </div>
               </div>

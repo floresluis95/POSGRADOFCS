@@ -40,7 +40,15 @@
       "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\modelos\\reportemodulos.modelo.php\")",
       "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\controladores\\reportemodulos.controlador.php\")",
       "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\ajax\\reportemodulos.ajax.php\")",
-      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\reportemodulos.php\")"
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\reportemodulos.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\modelos\\usuario.modelo.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\controladores\\usuario.controlador.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\usuario.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\estudiantes-usuarios.php\")",
+      "Bash(del \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\estudiantes-usuarios.php\")",
+      "Bash(cmd /c \"del C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\estudiantes-usuarios.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\vistas\\componentes\\estudianteusr.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"C:\\xampp\\htdocs\\POSGRADOFCS\\index.php\")"
     ],
     "deny": [],
     "ask": []

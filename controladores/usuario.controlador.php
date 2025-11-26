@@ -130,7 +130,6 @@
                         "ApellidoPaterno" => strtoupper($_POST['apaterno']),
                         "ApellidoMaterno" => strtoupper($_POST['amaterno']),
                         "Nombres" => strtoupper($_POST['nombres']),
-                        "Prueba" => strtoupper($_POST['prueba']),
                         "Direccion" => strtoupper($_POST['direccion']),
                         "Celular" => $_POST['celular'],
                         "Telefono" => $_POST['telefono']
@@ -184,55 +183,190 @@
                     
                 }
             }
-         /*public function EditarUsuarioControlador()
+        public function EditarUsuarioControlador()
+        {
+            if(isset($_POST['editarci']))
             {
-                if(isset($_POST['editarapaterno']))
-                {    
-               
-                        // Capturar el IdPersonal Maximo de la tabla personal
-                    
-                        
-                        // Enviar datos del Personal
-                       
-    
-                        $DatosPersonal = array(
-                            
-                            "ApellidoPaterno" => $_POST['editarapaterno'],
-                            "ApellidoMaterno" => $_POST['editaramaterno'],
-                            "Nombres" => $_POST['editarnombres'],
-                            "Direccion" => $_POST['editardireccion'],
-                            "Celular" => $_POST['editarcelular'],
-                            "Telefono" => $_POST['editartelefono']
-                        );
-                    
-                        $EditarPersonal = UsuarioModelos::EditarUsuaario($DatosPersonal);
-                        
-                        if ($EditarPersonal == 'exitoso')
-                         {
-                            echo'
-                            <script src="vistas/recursos/sweetalert.min.js"></script>
-                            <script>
-                            swal("EXITOSO!", "Se edito el personal correctamente", "success")
-                            .then(function () {
-                                location.href="usuario";
-                              })
-                              ;
-                             </script>';    
-                        }
-                        
-                        {
-                            echo'
-                            <script src="vistas/recursos/sweetalert.min.js"></script>
-                            <script>
-                            swal("ERROR!", "No se edito al personal", "error")
-                            .then(function () {
-                                location.href="usuario";
-                              })
-                              ;
-                             </script>';
-                        }
-                        
-                    }
-            }*/
+                $DatosPersonal = array(
+                    "CedulaIdentidad" => $_POST['editarci'],
+                    "ApellidoPaterno" => strtoupper($_POST['editarapaterno']),
+                    "ApellidoMaterno" => strtoupper($_POST['editaramaterno']),
+                    "Nombres" => strtoupper($_POST['editarnombres']),
+                    "Direccion" => strtoupper($_POST['editardireccion']),
+                    "Celular" => $_POST['editarcelular'],
+                    "Telefono" => $_POST['editartelefono']
+                );
+
+                $EditarPersonal = UsuarioModelos::EditarUsuaario($DatosPersonal);
+
+                if ($EditarPersonal == 'exitoso')
+                {
+                    echo'
+                    <script src="vistas/recursos/sweetalert.min.js"></script>
+                    <script>
+                    swal("EXITOSO!", "Se edito el personal correctamente", "success")
+                    .then(function () {
+                        location.href="usuario";
+                      })
+                      ;
+                     </script>';
+                }
+                else
+                {
+                    echo'
+                    <script src="vistas/recursos/sweetalert.min.js"></script>
+                    <script>
+                    swal("ERROR!", "No se edito al personal", "error")
+                    .then(function () {
+                        location.href="usuario";
+                      })
+                      ;
+                     </script>';
+                }
+            }
         }
-    
+
+        // Métodos para gestión de estudiantes con usuarios
+        public static function ListaEstudiantesSinUsuarioControlador()
+        {
+            $ListaEstudiantes = UsuarioModelos::ListaEstudiantesSinUsuarioModelo();
+
+            if(count($ListaEstudiantes) == 0)
+            {
+                echo '<tr>
+                    <td colspan="4" class="text-center py-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 48px;"></i>
+                        <h5 class="mt-3">Todos los estudiantes tienen usuario asignado</h5>
+                    </td>
+                </tr>';
+                return;
+            }
+
+            foreach ($ListaEstudiantes as $key => $estudiante)
+            {
+                $nombreCompleto = $estudiante['Apaterno'].' '.$estudiante['Amaterno'].' '.$estudiante['Nombre'];
+                $ciCompleto = $estudiante['Ci'].($estudiante['Complemento'] ? '-'.$estudiante['Complemento'] : '').' '.$estudiante['Exp'];
+
+                echo '<tr>
+                    <td class="text-center"><strong>'.$ciCompleto.'</strong></td>
+                    <td>'.$nombreCompleto.'</td>
+                    <td>'.($estudiante['Correo'] ? $estudiante['Correo'] : '<span class="text-muted">No registrado</span>').'</td>
+                    <td class="text-center">
+                        <button
+                            data-toggle="modal"
+                            data-target="#ModalAsignarUsuario"
+                            type="button"
+                            class="btn btn-success btn-sm btnAsignarUsuario btn-asignar"
+                            data-ci="'.$estudiante['Ci'].'"
+                            data-ci-completo="'.$ciCompleto.'"
+                            data-nombre-completo="'.$nombreCompleto.'"
+                            data-nombre-pila="'.$estudiante['Nombre'].'"
+                            data-correo="'.($estudiante['Correo'] ? $estudiante['Correo'] : '').'">
+                            <i class="fas fa-user-plus"></i> Asignar
+                        </button>
+                    </td>
+                </tr>';
+            }
+        }
+
+        public function CrearUsuarioEstudianteControlador()
+        {
+            // Debug: Registrar todos los datos POST recibidos
+            error_log("=== DEBUG CrearUsuarioEstudianteControlador ===");
+            error_log("POST recibido: " . print_r($_POST, true));
+
+            if(isset($_POST['estudiante_ci']))
+            {
+                error_log("Procesando estudiante CI: " . $_POST['estudiante_ci']);
+
+                // Verificar si el estudiante ya tiene usuario
+                $verificar = UsuarioModelos::VerificarUsuarioEstudianteModelo($_POST['estudiante_ci']);
+                error_log("Verificación de usuario existente: " . ($verificar ? 'YA EXISTE' : 'NO EXISTE'));
+
+                if($verificar)
+                {
+                    echo'
+                    <script src="vistas/recursos/sweetalert.min.js"></script>
+                    <script>
+                    swal("ADVERTENCIA!", "Este estudiante ya tiene un usuario asignado", "warning")
+                    .then(function () {
+                        location.href="estudianteusr";
+                      })
+                      ;
+                     </script>';
+                    return;
+                }
+
+                // Usuario será el número de carnet (CI)
+                $usuario = $_POST['estudiante_ci'];
+
+                // Contraseña será: primera letra del nombre + número de carnet
+                $nombre = isset($_POST['estudiante_nombre']) ? $_POST['estudiante_nombre'] : '';
+                error_log("Nombre recibido: " . $nombre);
+
+                if(empty($nombre)) {
+                    error_log("ERROR: Nombre del estudiante vacío");
+                    echo'
+                    <script src="vistas/recursos/sweetalert.min.js"></script>
+                    <script>
+                    swal("ERROR!", "Falta el nombre del estudiante", "error")
+                    .then(function () {
+                        location.href="estudianteusr";
+                      });
+                     </script>';
+                    return;
+                }
+
+                $primeraLetra = strtoupper(substr($nombre, 0, 1));
+                $passwordTexto = $primeraLetra . $_POST['estudiante_ci'];
+                $password = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
+
+                error_log("Credenciales generadas - Usuario: " . $usuario . ", Password texto: " . $passwordTexto);
+
+                $DatosModelo = array(
+                    "IdPersonal" => $_POST['estudiante_ci'],
+                    "Usuario" => $usuario,
+                    "Password" => $password,
+                    "Tipo" => "EST"
+                );
+
+                error_log("Datos a insertar: " . print_r($DatosModelo, true));
+
+                $resultado = UsuarioModelos::CrearUsuarioEstudianteModelo($DatosModelo);
+                error_log("Resultado del modelo: " . $resultado);
+
+                if ($resultado == 'exitoso')
+                {
+                    error_log("Usuario creado exitosamente");
+                    echo'
+                    <script src="vistas/recursos/sweetalert.min.js"></script>
+                    <script>
+                    swal({
+                        title: "EXITOSO!",
+                        text: "Usuario: '.$usuario.'\\nContraseña: '.$passwordTexto.'",
+                        icon: "success",
+                        button: "Aceptar"
+                    })
+                    .then(function () {
+                        location.href="estudianteusr";
+                      });
+                     </script>';
+                }
+                else
+                {
+                    error_log("ERROR al crear usuario: " . $resultado);
+                    echo'
+                    <script src="vistas/recursos/sweetalert.min.js"></script>
+                    <script>
+                    swal("ERROR!", "No se pudo crear el usuario: '.$resultado.'", "error")
+                    .then(function () {
+                        location.href="estudianteusr";
+                      })
+                      ;
+                     </script>';
+                }
+            } else {
+                error_log("No se recibió estudiante_ci en POST");
+            }
+        }
+        }

@@ -133,5 +133,110 @@ class ReporteModulosModelo
             return [];
         }
     }
+
+    /**
+     * Obtener estadísticas generales del sistema
+     * @return array
+     */
+    public static function ObtenerEstadisticasGeneralesModelo()
+    {
+        try {
+            $conexion = Conexion::Conectar();
+
+            // Contar programas activos
+            $stmtProgramas = $conexion->prepare("SELECT COUNT(*) as total FROM programa WHERE Estado = 1");
+            $stmtProgramas->execute();
+            $totalProgramas = $stmtProgramas->fetch(PDO::FETCH_ASSOC)['total'];
+
+            // Contar módulos activos
+            $stmtModulos = $conexion->prepare("SELECT COUNT(*) as total FROM modulos WHERE estadomodulo = 'ACTIVO'");
+            $stmtModulos->execute();
+            $totalModulos = $stmtModulos->fetch(PDO::FETCH_ASSOC)['total'];
+
+            // Contar estudiantes inscritos
+            $stmtEstudiantes = $conexion->prepare("SELECT COUNT(DISTINCT EstudianteID) as total FROM estudianteprograma");
+            $stmtEstudiantes->execute();
+            $totalEstudiantes = $stmtEstudiantes->fetch(PDO::FETCH_ASSOC)['total'];
+
+            // Contar pagos de módulos
+            $stmtPagos = $conexion->prepare("SELECT COUNT(*) as total FROM pagomodulo WHERE Estado != 'ANULADO'");
+            $stmtPagos->execute();
+            $totalPagos = $stmtPagos->fetch(PDO::FETCH_ASSOC)['total'];
+
+            return [
+                'totalProgramas' => $totalProgramas,
+                'totalModulos' => $totalModulos,
+                'totalEstudiantes' => $totalEstudiantes,
+                'totalPagos' => $totalPagos
+            ];
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerEstadisticasGeneralesModelo: " . $e->getMessage());
+            return [
+                'totalProgramas' => 0,
+                'totalModulos' => 0,
+                'totalEstudiantes' => 0,
+                'totalPagos' => 0
+            ];
+        }
+    }
+
+    /**
+     * Obtener conteo de módulos por programa
+     * @return array
+     */
+    public static function ObtenerConteoModulosPorProgramaModelo()
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    p.ProgramaID,
+                    p.NombrePrograma,
+                    p.Codigo,
+                    p.GradoAcademico,
+                    COUNT(m.Idmodulo) as TotalModulos
+                FROM programa p
+                LEFT JOIN modulos m ON p.ProgramaID = m.ProgramaId AND m.estadomodulo = 'ACTIVO'
+                WHERE p.Estado = 1
+                GROUP BY p.ProgramaID, p.NombrePrograma, p.Codigo, p.GradoAcademico
+                ORDER BY p.GradoAcademico ASC, p.NombrePrograma ASC"
+            );
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerConteoModulosPorProgramaModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener conteo de inscritos por módulo
+     * @param int $programaID
+     * @return array
+     */
+    public static function ObtenerConteoInscritosPorModuloModelo($programaID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    m.Idmodulo,
+                    m.codigomodulo,
+                    m.nombremodulo,
+                    m.costomodulo,
+                    COUNT(DISTINCT pm.idinscripcion) as TotalInscritos
+                FROM modulos m
+                LEFT JOIN pagomodulo pm ON m.Idmodulo = pm.IdModulo AND pm.Estado != 'ANULADO'
+                WHERE m.ProgramaId = :programaID
+                AND m.estadomodulo = 'ACTIVO'
+                GROUP BY m.Idmodulo, m.codigomodulo, m.nombremodulo, m.costomodulo
+                ORDER BY m.codigomodulo ASC"
+            );
+            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerConteoInscritosPorModuloModelo: " . $e->getMessage());
+            return [];
+        }
+    }
 }
 ?>

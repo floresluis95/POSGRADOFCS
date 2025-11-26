@@ -19,7 +19,8 @@
                 $enlace == 'docentes'||
                 $enlace == 'reportemodulos'||
                  $enlace == 'notasestudiante'||
-                 $enlace == 'calificacionesfinales'
+                 $enlace == 'calificacionesfinales'||
+                 $enlace == 'estudianteusr'
                 
                 )
             {

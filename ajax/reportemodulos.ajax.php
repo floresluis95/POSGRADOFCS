@@ -24,4 +24,19 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerModulos') {
 if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerInscritos') {
     ReporteModulosControlador::ObtenerInscritosReporteControlador();
 }
+
+// Obtener estadísticas generales
+if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerEstadisticas') {
+    ReporteModulosControlador::ObtenerEstadisticasGeneralesControlador();
+}
+
+// Obtener conteo de módulos por programa
+if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerConteoModulosPorPrograma') {
+    ReporteModulosControlador::ObtenerConteoModulosPorProgramaControlador();
+}
+
+// Obtener conteo de inscritos por módulo
+if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerConteoInscritosPorModulo') {
+    ReporteModulosControlador::ObtenerConteoInscritosPorModuloControlador();
+}
 ?>

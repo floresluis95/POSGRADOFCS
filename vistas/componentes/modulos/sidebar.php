@@ -52,6 +52,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                 </li>
                 <li class="kt-menu__item " aria-haspopup="true"><a href="usuario" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-user-circle"></i><span class="kt-menu__link-text">USUARIOS</span></a></li>
                 <li class="kt-menu__item " aria-haspopup="true"><a href="estudiantes" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-user-circle"></i><span class="kt-menu__link-text">ESTUDIANTES</span></a></li>
+                <li class="kt-menu__item " aria-haspopup="true"><a href="estudianteusr" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-user-circle"></i><span class="kt-menu__link-text">ESTUDIANTES - USUARIOS</span></a></li>
 
               </ul>
             </div>
@@ -117,6 +118,7 @@ if ($_SESSION["Tipo"] == "SEC") {
                 </li>
                 <li class="kt-menu__item " aria-haspopup="true"><a href="usuario" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-user-circle"></i><span class="kt-menu__link-text">USUARIOS</span></a></li>
                 <li class="kt-menu__item " aria-haspopup="true"><a href="estudiantes" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-user-circle"></i><span class="kt-menu__link-text">ESTUDIANTES</span></a></li>
+                <li class="kt-menu__item " aria-haspopup="true"><a href="estudiantesusarios" class="kt-menu__link "><i class="kt-menu__link-icon fa fa-user-circle"></i><span class="kt-menu__link-text">ESTUDIANTES - USUARIOS</span></a></li>
 
               </ul>
             </div>

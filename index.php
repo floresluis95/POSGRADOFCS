@@ -12,6 +12,7 @@
     require_once 'controladores/inscripcionmodulo.controlador.php';
     require_once 'controladores/docentes.controlador.php';
     require_once 'controladores/modulo.controlador.php';
+    require_once 'controladores/reportemodulos.controlador.php';
     // Modelos
     require_once 'modelos/enlaces.modelo.php';
     require_once 'modelos/ingreso.modelo.php';
@@ -24,8 +25,9 @@
     require_once 'modelos/inscripcionmodulo.modelo.php';
     require_once 'modelos/docentes.modelo.php';
     require_once 'modelos/modulo.modelo.php';
-    
-    
+    require_once 'modelos/reportemodulos.modelo.php';
+
+
     // Llamar plantilla
     $Plantilla = new PlantillaControladores();
     $Plantilla -> LlamarPlantillaControlador();
