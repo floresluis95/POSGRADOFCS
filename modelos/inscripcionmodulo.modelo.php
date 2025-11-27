@@ -166,5 +166,93 @@ class InscripcionModuloModelos
             return [];
         }
     }
+
+    /**
+     * Obtener datos completos del estudiante matriculado para PDF
+     * @param int $estudianteID
+     * @return array|null
+     */
+    public static function ObtenerDatosCompletosEstudianteModelo($estudianteID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    ep.idInscripcion,
+                    ep.EstudianteID,
+                    ep.ProgramaID,
+                    ep.FechaInscripcion,
+                    ep.costomatricula,
+                    ep.nvauchermatricula,
+                    ep.Estado,
+                    e.Nombre,
+                    e.Apaterno,
+                    e.Amaterno,
+                    e.Ci,
+                    e.Complemento,
+                    e.Exp,
+                    e.Correo,
+                    e.Celular,
+                    e.Telefono,
+                    e.Direccion,
+                    e.FechaNacimiento,
+                    e.Edad,
+                    e.Trabajo,
+                    prof.NombreProfesion,
+                    p.NombrePrograma,
+                    p.GradoAcademico,
+                    p.Codigo as CodigoPrograma,
+                    p.DuracionMeses,
+                    p.Modulos,
+                    p.Costo
+                FROM estudianteprograma ep
+                INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
+                INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
+                LEFT JOIN profesion prof ON e.IdProfesion = prof.IdProfesion
+                WHERE ep.EstudianteID = :estudianteID
+                AND ep.Estado = 'ACTIVO'
+                LIMIT 1"
+            );
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerDatosCompletosEstudianteModelo: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Obtener módulos pagados del estudiante para PDF
+     * @param int $estudianteID
+     * @return array
+     */
+    public static function ObtenerModulosPagadosEstudianteModelo($estudianteID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    pm.Idpagomodulo,
+                    pm.fechapago,
+                    pm.costomodulo,
+                    pm.nvaucher,
+                    pm.Estado,
+                    m.nombremodulo as NombreModulo,
+                    m.codigomodulo as Codigo,
+                    m.costomodulo as CostoOriginal
+                FROM pagomodulo pm
+                INNER JOIN modulos m ON pm.IdModulo = m.Idmodulo
+                INNER JOIN estudianteprograma ep ON pm.idinscripcion = ep.idInscripcion
+                WHERE ep.EstudianteID = :estudianteID
+                AND pm.Estado = 'PAGADO'
+                ORDER BY pm.fechapago DESC"
+            );
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerModulosPagadosEstudianteModelo: " . $e->getMessage());
+            return [];
+        }
+    }
 }
 ?>

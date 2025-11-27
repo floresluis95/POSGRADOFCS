@@ -1,25 +1,56 @@
 <?php
+/**
+ * Script para verificar estructura de tablas
+ */
+
 require_once 'modelos/conexion.modelo.php';
 
-$pdo = Conexion::Conectar();
+echo "=== Verificación de Estructura de Tablas ===\n\n";
 
-echo "<h1>Verificación de Estructura de Base de Datos</h1>";
-echo "<hr>";
+try {
+    $pdo = Conexion::Conectar();
 
-// Verificar tabla programa
-echo "<h2>Tabla PROGRAMA</h2>";
-$stmt = $pdo->query("DESCRIBE programa");
-echo "<table border='1' cellpadding='5'>";
-echo "<tr><th>Campo</th><th>Tipo</th><th>Key</th><th>Default</th></tr>";
-while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    echo "<tr>";
-    echo "<td><strong>{$row['Field']}</strong></td>";
-    echo "<td>{$row['Type']}</td>";
-    echo "<td>{$row['Key']}</td>";
-    echo "<td>{$row['Default']}</td>";
-    echo "</tr>";
+    // Ver columnas de la tabla estudiante
+    echo "1. Columnas de la tabla 'estudiante':\n";
+    $stmt = $pdo->query("DESCRIBE estudiante");
+    $columnas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($columnas as $col) {
+        echo "  - " . $col['Field'] . " (" . $col['Type'] . ")\n";
+    }
+    echo "\n";
+
+    // Ver qué tablas existen relacionadas con módulos
+    echo "2. Tablas relacionadas con módulos/pagos:\n";
+    $stmt = $pdo->query("SHOW TABLES LIKE '%modulo%'");
+    $tablas = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    foreach ($tablas as $tabla) {
+        echo "  - " . $tabla . "\n";
+    }
+    echo "\n";
+
+    // Ver tablas relacionadas con pagos
+    echo "3. Tablas relacionadas con pagos:\n";
+    $stmt = $pdo->query("SHOW TABLES LIKE '%pago%'");
+    $tablas = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    foreach ($tablas as $tabla) {
+        echo "  - " . $tabla . "\n";
+    }
+    echo "\n";
+
+    // Ver columnas de pagomodulo si existe
+    echo "4. Columnas de la tabla 'pagomodulo':\n";
+    $stmt = $pdo->query("DESCRIBE pagomodulo");
+    $columnas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($columnas as $col) {
+        echo "  - " . $col['Field'] . " (" . $col['Type'] . ")\n";
+    }
+    echo "\n";
+
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
 }
-echo "</table>";
+
+echo "\n=== Verificar tabla programa
 
 // Verificar si existe tabla modulo
 echo "<h2>Tabla MODULO</h2>";

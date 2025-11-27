@@ -58,7 +58,12 @@
       "Bash(\"C:\\xampp\\php\\php.exe\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\modificar_tabla_usuario_v2.php\")",
       "Bash(\"C:\\xampp\\php\\php.exe\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\modificar_tabla_usuario_final.php\")",
       "Bash(cmd /c \"php -r \"\"copy(''https://getcomposer.org/installer'', ''composer-setup.php'');\"\" && php composer-setup.php && php -r \"\"unlink(''composer-setup.php'');\"\" && php composer.phar install --no-dev\")",
-      "Bash(\"C:\\xampp\\php\\php.exe\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\instalar_tcpdf.php\")"
+      "Bash(\"C:\\xampp\\php\\php.exe\" \"C:\\xampp\\htdocs\\POSGRADOFCS\\instalar_tcpdf.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" test_tcpdf.php)",
+      "Bash(del test_tcpdf.php instalar_tcpdf.php)",
+      "Bash(cmd /c \"del test_tcpdf.php instalar_tcpdf.php\")",
+      "Bash(mkdir:*)",
+      "Bash(\"C:\\xampp\\php\\php.exe\" verificar_gd.php)"
     ],
     "deny": [],
     "ask": []
