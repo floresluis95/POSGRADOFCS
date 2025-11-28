@@ -67,7 +67,17 @@
       "Bash(del diagnostico_pdf_programa.php)",
       "Bash(cmd /c \"del diagnostico_pdf_programa.php\")",
       "Bash(\"C:\\xampp\\php\\php.exe\" -l \"ajax/calificacion.ajax.php\")",
-      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"vistas/componentes/rnotasestudiante.php\")"
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"vistas/componentes/rnotasestudiante.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"modelos\\usuario.modelo.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"modelos\\docentes.modelo.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"controladores\\docentes.controlador.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"controladores\\usuario.controlador.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"vistas\\componentes\\docentes.php\")",
+      "Bash(cmd /c \"del agregar_campo_docente_usuario.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" verificar_campo_estado_docente.php)",
+      "Bash(\"C:\\xampp\\php\\php.exe\" test_login.php)",
+      "Bash(cmd /c \"del test_login.php\")",
+      "Bash(cmd /c \"del verificar_estructura_reportes.php\")"
     ],
     "deny": [],
     "ask": []

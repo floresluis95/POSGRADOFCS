@@ -2,14 +2,26 @@
   require_once 'conexion.modelo.php';
   //docentes
   class DocentesModelo{
+    /* LISTAR TODOS LOS DOCENTES */
     public static function ListaDocenteModelo()
     {
          $stmt = Conexion::Conectar()->prepare
-        ("SELECT * FROM docente ");
+        ("SELECT * FROM docente ORDER BY Apaterno, Amaterno, Nombre");
         $stmt -> execute();
         return $stmt -> fetchAll();
         $stmt =null;
+    }
 
+    /* LISTAR DOCENTES CON INFORMACIÓN DE USUARIO */
+    public static function ListaDocenteActivoModelo()
+    {
+        $stmt = Conexion::Conectar()->prepare("SELECT d.*,
+                                                u.Usuario, u.Estado as EstadoUsuario
+                                                FROM docente d
+                                                LEFT JOIN usuario u ON d.DocenteID = u.DocenteID
+                                                ORDER BY d.Apaterno, d.Amaterno, d.Nombre");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     public static function RegistrarDocenteModelo($DatosDocentes)
     {
@@ -68,11 +80,65 @@
     }
     public static function BuscarDocenteModelo($Ci)
     {
-        $stmt =conexion::Conectar()->prepare("SELECT * FROM `docente` where Ci= :Ci");
+        $stmt = Conexion::Conectar()->prepare("SELECT * FROM `docente` WHERE Ci = :Ci");
         $stmt->bindParam(":Ci", $Ci, PDO::PARAM_STR);
-        $stmt -> execute();
-        return $stmt -> fetchAll();
-        $stmt =null;
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 
+    /* EDITAR DOCENTE */
+    public static function EditarDocenteModelo($DatosDocente)
+    {
+        $stmt = Conexion::Conectar()->prepare("UPDATE `docente` SET
+            `Complemento` = :Complemento,
+            `Exp` = :Exp,
+            `Nombre` = :Nombre,
+            `Apaterno` = :Apaterno,
+            `Amaterno` = :Amaterno,
+            `FechaNacimiento` = :FechaNacimiento,
+            `CedulaProfesional` = :CedulaProfesional,
+            `Especialidad` = :Especialidad,
+            `Direccion` = :Direccion,
+            `Correo` = :Correo,
+            `Tel` = :Tel,
+            `Cel` = :Cel
+            WHERE `Ci` = :Ci");
+
+        $stmt->bindParam(":Ci", $DatosDocente['Ci'], PDO::PARAM_STR);
+        $stmt->bindParam(":Complemento", $DatosDocente['Complemento'], PDO::PARAM_STR);
+        $stmt->bindParam(":Exp", $DatosDocente['Exp'], PDO::PARAM_STR);
+        $stmt->bindParam(":Nombre", $DatosDocente['Nombre'], PDO::PARAM_STR);
+        $stmt->bindParam(":Apaterno", $DatosDocente['Apaterno'], PDO::PARAM_STR);
+        $stmt->bindParam(":Amaterno", $DatosDocente['Amaterno'], PDO::PARAM_STR);
+        $stmt->bindParam(":FechaNacimiento", $DatosDocente['FechaNacimiento'], PDO::PARAM_STR);
+        $stmt->bindParam(":CedulaProfesional", $DatosDocente['CedulaProfesional'], PDO::PARAM_STR);
+        $stmt->bindParam(":Especialidad", $DatosDocente['Especialidad'], PDO::PARAM_STR);
+        $stmt->bindParam(":Direccion", $DatosDocente['Direccion'], PDO::PARAM_STR);
+        $stmt->bindParam(":Correo", $DatosDocente['Correo'], PDO::PARAM_STR);
+        $stmt->bindParam(":Tel", $DatosDocente['Tel'], PDO::PARAM_STR);
+        $stmt->bindParam(":Cel", $DatosDocente['Cel'], PDO::PARAM_STR);
+
+        if ($stmt->execute()) {
+            return 'exitoso';
+        } else {
+            print_r($stmt->errorInfo());
+            return 'error';
+        }
+    }
+
+    /* CAMBIAR ESTADO DEL DOCENTE (ELIMINAR LÓGICO) */
+    public static function CambiarEstadoDocenteModelo($Ci)
+    {
+        $stmt = Conexion::Conectar()->prepare("UPDATE docente SET Estado = 0 WHERE Ci = :Ci");
+        $stmt->bindParam(":Ci", $Ci, PDO::PARAM_STR);
+        return $stmt->execute() ? "exitoso" : "error";
+    }
+
+    /* REACTIVAR DOCENTE */
+    public static function CambiarEstadosDocenteModelo($Ci)
+    {
+        $stmt = Conexion::Conectar()->prepare("UPDATE docente SET Estado = 1 WHERE Ci = :Ci");
+        $stmt->bindParam(":Ci", $Ci, PDO::PARAM_STR);
+        return $stmt->execute() ? "exitoso" : "error";
     }
   }

@@ -1,353 +1,359 @@
 <?php
-    $Validar = new FuncionesControladores();
-    $Validar -> ValidarSessionControlador();
-    date_default_timezone_set("America/La_Paz");
+/**
+ * Vista: Reporte de Notas por Programa
+ * Lista todos los programas, sus módulos y permite generar reportes PDF
+ */
 
-    // === SIMULACIÓN: ID DEL ESTUDIANTE LOGUEADO (ASUMIDO DE SESIÓN) ===
-    // Usaremos el ID 301 (Ana Morales) para filtrar los programas.
-    const ID_ESTUDIANTE_ACTUAL = 301;
-    // ==================================================================
+// Validación de sesión
+$Validar = new FuncionesControladores();
+$Validar->ValidarSessionControlador();
 
-    // === 1. DATOS DE EJEMPLO PHP: Programas, Módulos y Estudiantes ===
-    // En una aplicación real, esta información vendría de la Base de Datos
-    $datos_maestros = [
-        '1' => [ // ID del Programa
-            'nombre' => 'Ingeniería de Software',
-            'modulos' => [
-                '101' => [
-                    'nombre' => 'Fundamentos de Programación',
-                    'docente' => 'Dr. Alex Vaca',
-                    'nota_aprobacion' => 60, // Nota mínima para aprobar
-                    'estudiantes' => [
-                        ['id_estudiante' => 301, 'nombre_completo' => 'Ana Morales', 'nota_final' => 85, 'estado' => 'Aprobado'],
-                        ['id_estudiante' => 302, 'nombre_completo' => 'Luis Rojas', 'nota_final' => 45, 'estado' => 'Reprobado'],
-                    ]
-                ],
-                '102' => [
-                    'nombre' => 'Bases de Datos Avanzadas',
-                    'docente' => 'Ing. Clara Mendoza',
-                    'nota_aprobacion' => 60,
-                    'estudiantes' => [
-                        ['id_estudiante' => 301, 'nombre_completo' => 'Ana Morales', 'nota_final' => 60, 'estado' => 'Aprobado'], // Ana Morales en este módulo
-                        ['id_estudiante' => 304, 'nombre_completo' => 'Roberto Paz', 'nota_final' => 60, 'estado' => 'Aprobado'],
-                    ]
-                ],
-            ],
-        ],
-        '2' => [ // ID del Programa
-            'nombre' => 'Diseño Gráfico Digital',
-            'modulos' => [
-                '201' => [
-                    'nombre' => 'Teoría del Color',
-                    'docente' => 'Lic. Pedro Soliz',
-                    'nota_aprobacion' => 65,
-                    'estudiantes' => [
-                        ['id_estudiante' => 401, 'nombre_completo' => 'Marta Roca', 'nota_final' => 75, 'estado' => 'Aprobado'],
-                    ]
-                ]
-            ],
-        ],
-        '3' => [ // ID del Programa
-            'nombre' => 'Marketing Digital',
-            'modulos' => [
-                '301' => [
-                    'nombre' => 'Estrategias SEO',
-                    'docente' => 'Lic. Jaime Pardo',
-                    'nota_aprobacion' => 70,
-                    'estudiantes' => [
-                        ['id_estudiante' => 301, 'nombre_completo' => 'Ana Morales', 'nota_final' => 55, 'estado' => 'Reprobado'], // Ana Morales en otro programa
-                    ]
-                ]
-            ],
-        ],
-    ];
+date_default_timezone_set("America/La_Paz");
 
-    // === 2. FILTRADO DE DATOS PARA EL ESTUDIANTE Y PROGRAMAS INSCRITOS ===
-    $programas_inscritos = [];
-    $nombre_estudiante = "Estudiante Desconocido";
-    $primer_programa_id = null;
-    $primer_programa_nombre = null;
-
-    foreach ($datos_maestros as $id_programa => $programa) {
-        $programa_nombre = $programa['nombre'];
-        $modulos_del_programa = [];
-        $esta_inscrito_en_programa = false;
-
-        foreach ($programa['modulos'] as $id_modulo => $modulo) {
-            $nota_minima = $modulo['nota_aprobacion'];
-            
-            foreach ($modulo['estudiantes'] as $estudiante) {
-                if ($estudiante['id_estudiante'] == ID_ESTUDIANTE_ACTUAL) {
-                    $esta_inscrito_en_programa = true;
-                    $nombre_estudiante = $estudiante['nombre_completo']; // Asigna el nombre
-                    
-                    $nota_final = $estudiante['nota_final'];
-                    
-                    // Calcular el estado basado en la nota mínima por seguridad
-                    if ($nota_final !== null) {
-                        $estado = ($nota_final >= $nota_minima) ? 'Aprobado' : 'Reprobado';
-                    } else {
-                        $estado = 'Pendiente';
-                    }
-
-                    $modulos_del_programa[] = [
-                        'modulo' => $modulo['nombre'],
-                        'docente' => $modulo['docente'],
-                        'nota_aprobacion' => $nota_minima,
-                        'nota_final' => $nota_final,
-                        'estado' => $estado,
-                    ];
-                    break; // Pasa al siguiente módulo/programa una vez encontrado
-                }
-            }
-        }
-        
-        if ($esta_inscrito_en_programa) {
-            if ($primer_programa_id === null) {
-                $primer_programa_id = $id_programa;
-                $primer_programa_nombre = $programa_nombre;
-            }
-            $programas_inscritos[$id_programa] = [
-                'nombre' => $programa_nombre,
-                'modulos' => $modulos_del_programa
-            ];
-        }
-    }
-    // ========================================================
+// Generar Token CSRF
+$csrf_token = bin2hex(random_bytes(32));
 ?>
 
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
-<!-- El kt-header-mobile se mantiene para compatibilidad con la plantilla base -->
-<div class="kt-grid kt-grid--hor kt-grid--root" style="background:#E0DEDE;">
-    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
-        <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
-        
-            <?php $NavBar = new FuncionesControladores(); $NavBar -> NavBarControlador(); ?>
-            <button class="kt-aside-close " id="kt_aside_close_btn"><i class="la la-close"></i></button>
-            <?php $Sidebar = new FuncionesControladores(); $Sidebar -> SidebarControlador(); ?>
-
-            <div class="kt-body kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-grid--stretch" id="kt_body">
-                <div class="kt-content  kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
-
-                    <!-- begin:: Subheader -->
-                    <div class="kt-subheader kt-grid__item" id="kt_subheader">
-                        <div class="kt-container ">
-                            <div class="kt-subheader__main">
-                                <h2 class="">CALIFICACIONES</h2>
-                                <span class="kt-subheader__separator kt-hidden"></span>
-                                <div class="kt-subheader__breadcrumbs">
-                                    <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
-                                    <span class="kt-subheader__breadcrumbs-separator"></span>
-                                    <h4>REPORTE DE NOTAS FINALES</h4>
-                                </div>
-                            </div>
-                            <div class="kt-subheader__toolbar">
-                                <div class="kt-subheader__wrapper">
-                                    <div id="lafecha" style="font-size:13pt"><?php echo date('d/m/Y H:i:s'); ?></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- COMIENZO DEL CONTENIDO PRINCIPAL -->
-                    <div class="container">
-                        <div class="kt-portlet kt-portlet--mobile">
-                            <div class="kt-portlet__head">
-                                <div class="kt-portlet__head-label">
-                                    <h3 class="kt-portlet__head-title">
-                                        <i class="fa fa-user text-primary"></i> Mis Calificaciones: **<?php echo htmlspecialchars($nombre_estudiante); ?>**
-                                    </h3>
-                                </div>
-                            </div>
-                            
-                            <div class="kt-portlet__body">
-                                
-                                <!-- FILTROS DE BÚSQUEDA DEL ESTUDIANTE -->
-                                <div class="row mb-5 justify-content-center">
-                                    <!-- SELECT PROGRAMA -->
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="programa-select-estudiante">**1. Seleccione el Programa:**</label>
-                                            <select class="form-control select2-buscador" id="programa-select-estudiante">
-                                                <option value="">-- Seleccionar Programa Inscrito --</option>
-                                                <?php foreach ($programas_inscritos as $id => $programa): ?>
-                                                    <option value="<?php echo $id; ?>" 
-                                                            <?php echo ($id == $primer_programa_id) ? 'selected' : ''; ?>>
-                                                        <?php echo htmlspecialchars($programa['nombre']); ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- BOTÓN DE BÚSQUEDA -->
-                                    <div class="col-md-4 d-flex align-items-end">
-                                        <div class="form-group w-100">
-                                            <button class="btn btn-brand btn-block" onclick="buscarCalificaciones()">
-                                                <i class="la la-search"></i> Buscar Calificaciones
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <hr>
-                                
-                                <!-- INFORMACIÓN DEL PROGRAMA SELECCIONADO -->
-                                <div id="info-programa-container" style="display: none;" class="alert alert-light alert-elevate">
-                                    <p class="mb-0"><i class="fa fa-book-open"></i> <strong>Programa Seleccionado:</strong> <span id="detalle-programa" class="kt-font-brand kt-font-boldest"></span></p>
-                                </div>
-
-
-                                <!-- ÁREA DE TABLA DE NOTAS -->
-                                <div id="notas-container" class="mt-4">
-                                    <div class="alert alert-secondary text-center">
-                                        <i class="flaticon-edit"></i> Seleccione un **Programa Inscrito** y presione **Buscar Calificaciones**.
-                                    </div>
-                                </div>
-                                
-                            </div>
-                            
-                        </div>
-                    </div>
-                    <!-- FIN DEL CONTENIDO PRINCIPAL -->
-
-                    <?php $Footer = new FuncionesControladores(); $Footer -> FooterControlador(); ?>
-                </div>
-            </div>
-        </div>
+  <div id="kt_header_mobile" class="kt-header-mobile  kt-header-mobile--fixed " >
+    <div class="kt-header-mobile__logo">
+      <a href="demo9/index.html">
+         <img alt="Logo" src="vistas/recursos/assets/media/logos/logo0.png" width="40" />
+      </a>
     </div>
+    <div class="kt-header-mobile__toolbar">
+      <button class="kt-header-mobile__toolbar-toggler kt-header-mobile__toolbar-toggler--left" id="kt_aside_mobile_toggler"><span></span></button>
+      <button class="kt-header-mobile__toolbar-toggler" id="kt_header_mobile_toggler"><span></span></button>
+      <button class="kt-header-mobile__toolbar-topbar-toggler" id="kt_header_mobile_topbar_toggler"><i class="flaticon-more-1"></i></button>
+    </div>
+  </div>
+
+  <div class="kt-grid kt-grid--hor kt-grid--root" style="background:#E0DEDE;">
+    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
+      <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+
+    <?php
+      $NavBar = new FuncionesControladores();
+      $NavBar -> NavBarControlador();
+    ?>
+    <button class="kt-aside-close " id="kt_aside_close_btn"><i class="la la-close"></i></button>
+    <?php
+      $Sidebar = new FuncionesControladores();
+      $Sidebar -> SidebarControlador();
+    ?>
+            <!-- begin:: Subheader -->
+            <div class="kt-subheader   kt-grid__item" id="kt_subheader">
+              <div class="kt-container ">
+                <div class="kt-subheader__main">
+                  <h2 class="">REPORTES DE CALIFICACIONES</h2>
+                  <span class="kt-subheader__separator kt-hidden"></span>
+                  <div class="kt-subheader__breadcrumbs">
+                    <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
+                    <span class="kt-subheader__breadcrumbs-separator"></span>
+                    <h3>Reporte de Notas por Programa</h3>
+                  </div>
+                </div>
+                <div class="kt-subheader__toolbar">
+                  <div class="kt-subheader__wrapper">
+                  <div id="lafecha" style="font-size:13pt"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+<!-- end:: Subheader -->
+<!-- begin:: Content -->
+<div class="app-content content">
+  <div class="content-wrapper">
+    <div class="content-body">
+      <section id="html">
+        <div class="row">
+          <div class="col-12">
+            <div class="card shadow-sm">
+              <div class="card-header bg-gradient-primary">
+                <h4 class="card-title text-white mb-0">
+                  <i class="fas fa-file-alt"></i> Programas Académicos - Reportes de Notas
+                </h4>
+                <div class="heading-elements">
+                  <button type="button" class="btn btn-light btn-sm" onclick="location.reload()">
+                    <i class="fas fa-sync-alt mr-1"></i>Actualizar
+                  </button>
+                </div>
+              </div>
+              <div class="card-content collapse show">
+                <div class="card-body card-dashboard">
+                  <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle" id="tablaProgramas">
+                      <thead class="thead-dark">
+                        <tr>
+                          <th class="text-center" style="width: 5%;">Nº</th>
+                          <th style="width: 35%;">
+                            <i class="fas fa-graduation-cap"></i> Programa Académico
+                          </th>
+                          <th class="text-center" style="width: 15%;">
+                            <i class="fas fa-award"></i> Grado
+                          </th>
+                          <th class="text-center" style="width: 10%;">
+                            <i class="fas fa-code"></i> Código
+                          </th>
+                          <th class="text-center" style="width: 10%;">
+                            <i class="fas fa-book"></i> Módulos
+                          </th>
+                          <th class="text-center" style="width: 10%;">
+                            <i class="fas fa-users"></i> Estudiantes
+                          </th>
+                          <th class="text-center" style="width: 15%;">
+                            <i class="fas fa-cog"></i> Acciones
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <?php
+                          $ListaProgramas = new ReporteNotasControlador();
+                          $ListaProgramas -> ListarProgramasConModulosControlador();
+                        ?>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
 </div>
 
-<!-- SCRIPT DE JAVASCRIPT Y LÓGICA -->
-<script>
-    // Copiar los datos filtrados de PHP a una variable JavaScript
-    const programasInscritos = <?php echo json_encode($programas_inscritos); ?>;
-    const notasContainer = document.getElementById('notas-container');
-    const selectProgramaEstudiante = document.getElementById('programa-select-estudiante');
-    const infoProgramaContainer = document.getElementById('info-programa-container');
-    const detalleProgramaSpan = document.getElementById('detalle-programa');
-    
-    // El ID del primer programa inscrito para cargar al inicio si existe
-    const primerProgramaId = "<?php echo $primer_programa_id; ?>";
-    
+<style>
+  .table thead.thead-dark th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 15px 10px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
 
-    // ==========================================================
-    // INICIALIZACIÓN
-    // ==========================================================
-    $(document).ready(function() {
-        // Inicializar Select2 para buscador (Asume que Select2.js está cargado en la plantilla)
-        $('.select2-buscador').select2({
-            placeholder: 'Seleccione una opción',
-            allowClear: true
-        });
-        
-        // Cargar las calificaciones del primer programa al inicio
-        if (primerProgramaId) {
-            buscarCalificaciones(primerProgramaId);
+  .table tbody tr {
+    transition: all 0.2s ease;
+  }
+
+  .table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.005);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+
+  .table tbody td {
+    padding: 12px 10px;
+    vertical-align: middle;
+    border-color: #e9ecef;
+    font-size: 13px;
+  }
+
+  .card.shadow-sm {
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .card-header.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .badge {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+</style>
+
+<!-- Modal: Ver Módulos del Programa -->
+<div class="modal fade" id="ModalModulosPrograma" tabindex="-1" role="dialog" aria-labelledby="modalModulosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <h4 class="modal-title text-white" id="modalModulosLabel">
+          <i class="fas fa-book mr-2"></i> Módulos del Programa: <span id="nombreProgramaModal"></span>
+        </h4>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 30px;">
+        <div id="loadingModulos" class="text-center" style="display: none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Cargando...</span>
+          </div>
+          <p class="mt-3">Cargando módulos...</p>
+        </div>
+        <div id="contenedorModulos"></div>
+      </div>
+      <div class="modal-footer" style="background-color: #f8f9fa;">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times"></i> Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<?php
+  $Footer = new FuncionesControladores();
+  $Footer -> FooterControlador();
+?>
+
+<!-- Scripts -->
+<script>
+$(document).ready(function() {
+    // Inicializar DataTables
+    $('#tablaProgramas').DataTable({
+        language: {
+            search: "Buscar:",
+            lengthMenu: "Mostrar _MENU_ registros",
+            info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+            paginate: {
+                first: "Primero",
+                last: "Último",
+                next: "Siguiente",
+                previous: "Anterior"
+            },
+            emptyTable: "No hay programas disponibles",
+            zeroRecords: "No se encontraron resultados"
         }
     });
 
-    // ==========================================================
-    // FUNCIÓN PRINCIPAL: BUSCAR Y RENDERIZAR CALIFICACIONES
-    // ==========================================================
-    function buscarCalificaciones(initialId = null) {
-        const programaId = initialId || selectProgramaEstudiante.value;
+    // Evento: Ver módulos del programa
+    $(document).on('click', '.btnVerModulos', function() {
+        const programaID = $(this).data('programa-id');
+        const programaNombre = $(this).data('programa-nombre');
 
-        if (!programaId || !programasInscritos[programaId]) {
-            notasContainer.innerHTML = '<div class="alert alert-danger text-center"><i class="flaticon-warning-sign"></i> Debe seleccionar un **Programa Inscrito** válido.</div>';
-            infoProgramaContainer.style.display = 'none';
-            return;
-        }
+        $('#nombreProgramaModal').text(programaNombre);
+        $('#loadingModulos').show();
+        $('#contenedorModulos').html('');
 
-        const programaData = programasInscritos[programaId];
+        // Petición AJAX para obtener módulos
+        $.ajax({
+            url: 'ajax/reportenotas.ajax.php',
+            type: 'POST',
+            data: {
+                action: 'obtenerModulos',
+                programaID: programaID
+            },
+            dataType: 'json',
+            success: function(response) {
+                $('#loadingModulos').hide();
 
-        // Mostrar información del programa
-        detalleProgramaSpan.textContent = programaData.nombre;
-        infoProgramaContainer.style.display = 'block';
+                if (response.status === 'success' && response.data.length > 0) {
+                    let html = '<div class="table-responsive"><table class="table table-striped table-bordered">';
+                    html += '<thead class="thead-light">';
+                    html += '<tr>';
+                    html += '<th class="text-center" style="width: 5%;">Nº</th>';
+                    html += '<th>Código</th>';
+                    html += '<th>Módulo</th>';
+                    html += '<th>Docente</th>';
+                    html += '<th class="text-center">Inscritos</th>';
+                    html += '<th class="text-center">Calificados</th>';
+                    html += '<th class="text-center">Estado</th>';
+                    html += '<th class="text-center">Acciones</th>';
+                    html += '</tr>';
+                    html += '</thead><tbody>';
 
-        // Generar la tabla
-        let htmlTabla = `
-            <div class="table-responsive">
-                <table class="table table-striped table-bordered table-hover">
-                    <thead>
-                        <tr class="kt-bg-brand text-white">
-                            <th style="width: 5%;">#</th>
-                            <th>Módulo</th>
-                            <th class="text-center">Docente</th>
-                            <th class="text-center">Nota Mín. Aprob.</th>
-                            <th class="text-center">Nota Final</th>
-                            <th class="text-center">Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
+                    let contador = 0;
+                    response.data.forEach(function(modulo) {
+                        contador++;
+                        const inscritos = parseInt(modulo.TotalInscritos) || 0;
+                        const calificados = parseInt(modulo.TotalCalificados) || 0;
+                        const porcentaje = inscritos > 0 ? Math.round((calificados / inscritos) * 100) : 0;
 
-        if (programaData.modulos.length === 0) {
-            htmlTabla += '<tr><td colspan="6" class="text-center text-warning">⚠️ No hay calificaciones disponibles para este programa en este momento.</td></tr>';
-        } else {
-            programaData.modulos.forEach((calificacion, index) => {
-                const notaFinal = calificacion.nota_final;
-                const notaAprobacion = calificacion.nota_aprobacion;
-                
-                // Determinar clases CSS
-                let notaClase = '';
-                if (notaFinal !== null) {
-                    notaClase = (notaFinal >= notaAprobacion) ? 'kt-font-success kt-font-boldest' : 'kt-font-danger kt-font-boldest';
+                        let estadoBadge = '';
+                        if (calificados === 0) {
+                            estadoBadge = '<span class="badge badge-secondary">Sin calificar</span>';
+                        } else if (calificados < inscritos) {
+                            estadoBadge = '<span class="badge badge-warning">Parcial (' + porcentaje + '%)</span>';
+                        } else {
+                            estadoBadge = '<span class="badge badge-success">Completo (100%)</span>';
+                        }
+
+                        html += '<tr>';
+                        html += '<td class="text-center">' + contador + '</td>';
+                        html += '<td><strong>' + (modulo.codigomodulo || 'N/A') + '</strong></td>';
+                        html += '<td>' + modulo.nombremodulo + '</td>';
+                        html += '<td>' + (modulo.NombreDocente || '<span class="text-muted">Sin docente</span>') + '</td>';
+                        html += '<td class="text-center"><span class="badge badge-info">' + inscritos + '</span></td>';
+                        html += '<td class="text-center"><span class="badge badge-primary">' + calificados + '</span></td>';
+                        html += '<td class="text-center">' + estadoBadge + '</td>';
+                        html += '<td class="text-center">';
+
+                        if (calificados > 0) {
+                            html += '<button type="button" class="btn btn-success btn-sm btnGenerarPDF" ' +
+                                   'data-modulo-id="' + modulo.Idmodulo + '" ' +
+                                   'data-programa-id="' + programaID + '" ' +
+                                   'data-modulo-nombre="' + modulo.nombremodulo + '" ' +
+                                   'title="Generar PDF">' +
+                                   '<i class="fas fa-file-pdf"></i> PDF' +
+                                   '</button>';
+                        } else {
+                            html += '<button type="button" class="btn btn-secondary btn-sm" disabled>' +
+                                   '<i class="fas fa-ban"></i> Sin notas' +
+                                   '</button>';
+                        }
+
+                        html += '</td>';
+                        html += '</tr>';
+                    });
+
+                    html += '</tbody></table></div>';
+                    $('#contenedorModulos').html(html);
+                } else {
+                    $('#contenedorModulos').html('<div class="alert alert-warning text-center">' +
+                        '<i class="fas fa-exclamation-triangle"></i> Este programa no tiene módulos registrados.' +
+                        '</div>');
                 }
-                
-                let estadoClase = 'kt-badge--secondary';
-                switch (calificacion.estado) {
-                    case 'Aprobado':
-                        estadoClase = 'kt-badge--success';
-                        break;
-                    case 'Reprobado':
-                        estadoClase = 'kt-badge--danger';
-                        break;
-                    case 'Pendiente':
-                    default:
-                        estadoClase = 'kt-badge--secondary';
-                        break;
-                }
-                
-                htmlTabla += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${calificacion.modulo}</td>
-                        <td class="text-center">${calificacion.docente}</td>
-                        <td class="text-center">${notaAprobacion}</td>
-                        <td class="text-center ${notaClase}">
-                            ${notaFinal !== null ? notaFinal : '--'}
-                        </td>
-                        <td class="text-center">
-                            <span class="kt-badge kt-badge--xl ${estadoClase} kt-badge--inline">
-                                ${calificacion.estado}
-                            </span>
-                        </td>
-                    </tr>
-                `;
-            });
+            },
+            error: function() {
+                $('#loadingModulos').hide();
+                $('#contenedorModulos').html('<div class="alert alert-danger text-center">' +
+                    '<i class="fas fa-times-circle"></i> Error al cargar los módulos.' +
+                    '</div>');
+            }
+        });
+    });
+
+    // Evento: Generar PDF
+    $(document).on('click', '.btnGenerarPDF', function() {
+        const moduloID = $(this).data('modulo-id');
+        const programaID = $(this).data('programa-id');
+        const moduloNombre = $(this).data('modulo-nombre');
+
+        if (confirm('¿Generar reporte PDF de calificaciones para el módulo: ' + moduloNombre + '?')) {
+            // Redirigir a la página de generación de PDF
+            window.open('extensiones/tcpdf/pdf/planilla_calificaciones.php?moduloID=' + moduloID + '&programaID=' + programaID, '_blank');
         }
+    });
 
-        htmlTabla += `
-                    </tbody>
-                </table>
-            </div>
-        `;
-
-        notasContainer.innerHTML = htmlTabla;
+    // Actualizar fecha
+    function actualizarFecha() {
+        const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const fecha = new Date().toLocaleDateString('es-ES', opciones);
+        $('#lafecha').text(fecha.charAt(0).toUpperCase() + fecha.slice(1));
     }
-
-    // ==========================================================
-    // LÓGICA DE LA FECHA (Mantenida del código original)
-    // ==========================================================
-    setInterval(function() {
-        const lafecha = document.getElementById('lafecha');
-        if (lafecha) {
-            const now = new Date();
-            const pad = (num) => (num < 10 ? '0' : '') + num;
-            const date = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
-            const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-            lafecha.textContent = `${date} ${time}`;
-        }
-    }, 1000);
+    actualizarFecha();
+    setInterval(actualizarFecha, 60000);
+});
 </script>
+
+</body>

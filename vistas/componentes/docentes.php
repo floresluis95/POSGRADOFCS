@@ -1,19 +1,24 @@
 <?php
-  $Validar = new FuncionesControladores();
-  $Validar->ValidarSessionControlador();
-  date_default_timezone_set("America/La_Paz");
+/**
+ * Vista: Registro de Docentes
+ * Versión mejorada con gestión de usuarios
+ */
+
+// Validación de sesión
+$Validar = new FuncionesControladores();
+$Validar->ValidarSessionControlador();
+
+date_default_timezone_set("America/La_Paz");
+
+// Generar Token CSRF
+$csrf_token = bin2hex(random_bytes(32));
 ?>
 
-<body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right 
-kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed 
-kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed 
-kt-page--loading">
-
-  <!-- Header Mobile -->
-  <div id="kt_header_mobile" class="kt-header-mobile  kt-header-mobile--fixed ">
+<body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
+  <div id="kt_header_mobile" class="kt-header-mobile  kt-header-mobile--fixed " >
     <div class="kt-header-mobile__logo">
-      <a href="#">
-        <img alt="Logo" src="vistas/recursos/assets/media/logos/logo0.png" width="40" />
+      <a href="demo9/index.html">
+         <img alt="Logo" src="vistas/recursos/assets/media/logos/logo0.png" width="40" />
       </a>
     </div>
     <div class="kt-header-mobile__toolbar">
@@ -27,427 +32,580 @@ kt-page--loading">
     <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
       <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
 
-        <?php
-          $NavBar = new FuncionesControladores();
-          $NavBar->NavBarControlador();
-
-          $Sidebar = new FuncionesControladores();
-          $Sidebar->SidebarControlador();
-        ?>
-
-        <div class="kt-body kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-grid--stretch" id="kt_body">
-          <div class="kt-content  kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
-
-            <!-- Subheader -->
-            <div class="kt-subheader kt-grid__item" id="kt_subheader">
-              <div class="kt-container">
+    <?php
+      $NavBar = new FuncionesControladores();
+      $NavBar -> NavBarControlador();
+    ?>
+    <button class="kt-aside-close " id="kt_aside_close_btn"><i class="la la-close"></i></button>
+    <?php
+      $Sidebar = new FuncionesControladores();
+      $Sidebar -> SidebarControlador();
+    ?>
+            <!-- begin:: Subheader -->
+            <div class="kt-subheader   kt-grid__item" id="kt_subheader">
+              <div class="kt-container ">
                 <div class="kt-subheader__main">
-                  <h2>DOCENTES</h2>
+                  <h2 class="">Gestión de Docentes</h2>
                   <span class="kt-subheader__separator kt-hidden"></span>
                   <div class="kt-subheader__breadcrumbs">
                     <a href="#" class="kt-subheader__breadcrumbs-home"><i class="fas fa-chalkboard-teacher"></i></a>
                     <span class="kt-subheader__breadcrumbs-separator"></span>
-                    <h3>LISTA DE DOCENTES</h3>
+                    <h3>Registro de Docentes</h3>
                   </div>
                 </div>
                 <div class="kt-subheader__toolbar">
                   <div class="kt-subheader__wrapper">
-                    <div id="lafecha" style="font-size:13pt"></div>
+                  <div id="lafecha" style="font-size:13pt"></div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Botón Registrar -->
-            <div class="kt-container">
-              <div class="row justify-content-md-right">
-                <div class="col-lg-12">
-                  <div class="kt-portlet">
-                    <div class="kt-portlet__head">
-                      <div class="kt-portlet__head-label">
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#nDocente">
-                          <i class="kt-menu__link-icon flaticon-add"></i> Registrar docente
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+<!-- end:: Subheader -->
+<!-- begin:: Content -->
+<div class="app-content content">
+  <div class="content-wrapper">
+    <div class="content-body">
+      <section id="html">
+        <div class="row">
+          <div class="col-12">
+            <div class="card shadow-sm">
+              <div class="card-header bg-gradient-primary">
+                <h4 class="card-title text-white mb-0">
+                  <i class="fas fa-chalkboard-teacher"></i> Docentes Registrados
+                </h4>
+                <div class="heading-elements">
+                  <button data-toggle="modal" data-target="#ModalInsertarDocente" type="button" class="btn btn-light btn-sm">
+                    <i class="fas fa-user-plus mr-1"></i>Nuevo Docente
+                  </button>
                 </div>
               </div>
-
-              <!-- Tabla de docentes -->
-              <div class="row justify-content-md-center">
-                <div class="col-lg-12">
-                  <div class="kt-portlet kt-portlet--mobile">
-                    <div class="kt-portlet__head kt-portlet__head--lg">
-                      <div class="kt-portlet__head-label">
-                        <span class="kt-portlet__head-icon">
-                          <i class="fas fa-list"></i>
-                        </span>
-                        <h3 class="kt-portlet__head-title">REPORTE DE DOCENTES</h3>
-                      </div>
-                    </div>
-                    <div class="kt-portlet__body">
-                      <table class="table table-striped table-bordered table-hover table-checkable" id="tablaDocentes">
-                    <thead>
+              <div class="card-content collapse show">
+                <div class="card-body card-dashboard">
+                  <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle TablaDocentes" id="kt_table_1">
+                      <thead class="thead-dark">
                         <tr>
-                            <th>Id</th>
-                            <th>CI</th>
-                            <th>Nombre Completo</th>
-                            <th>Cédula Profesional</th>
-                            <th>Email</th>
-                            <th>Especialidad</th>
-                            <th>Acciones</th>
+                          <th class="text-center" style="width: 5%;">Nº</th>
+                          <th class="text-center" style="width: 10%;">
+                            <i class="fas fa-id-card"></i> C.I.
+                          </th>
+                          <th style="width: 18%;">
+                            <i class="fas fa-user"></i> Nombre Completo
+                          </th>
+                          <th class="text-center" style="width: 12%;">
+                            <i class="fas fa-certificate"></i> Cédula Prof.
+                          </th>
+                          <th style="width: 15%;">
+                            <i class="fas fa-envelope"></i> Correo
+                          </th>
+                          <th style="width: 12%;">
+                            <i class="fas fa-graduation-cap"></i> Especialidad
+                          </th>
+                          <th class="text-center" style="width: 12%;">
+                            <i class="fas fa-user-circle"></i> Usuario
+                          </th>
+                          <th class="text-center" style="width: 16%;">
+                            <i class="fas fa-cog"></i> Acción
+                          </th>
                         </tr>
-                    </thead>
-                        <tbody>
-                            <?php
-                                $Listadoc = new DocentesControlador();
-                                $Listadoc->ListaDocenteControlador();
-                            ?>
-                        </tbody>
+                      </thead>
+                      <tbody>
+                        <?php
+                          $ListaDocentes = new DocentesControlador();
+                          $ListaDocentes -> ListaDocenteControlador();
+                        ?>
+                      </tbody>
                     </table>
-                    </div>
                   </div>
                 </div>
               </div>
-
             </div>
-          </div>
-
-          <?php
-            $Footer = new FuncionesControladores();
-            $Footer->FooterControlador();
-          ?>
-          
-
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL REGISTRO DOCENTE -->
-  <div class="modal fade" id="nDocente" tabindex="-1" role="dialog" 
-     aria-labelledby="modalNuevoDocenteLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      
-      <div class="modal-header bg-primary text-white">
-        <h4 class="modal-title text-white" id="modalNuevoDocenteLabel">
-          <i class="bi bi-person-workspace"></i> Nuevo Registro de Docente
-        </h4>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-
-      <form method="post" id="formNuevoDocente" enctype="multipart/form-data" class="needs-validation" novalidate>
-        <!-- Token CSRF -->
-        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
-
-        <div class="modal-body">
-          <!-- Sección: Datos Personales -->
-          <h5 class="form-section text-primary">
-            <i class="bi bi-person-vcard"></i> DATOS PERSONALES
-          </h5>
-
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="inputCi">C.I. <span class="text-danger">*</span></label>
-                <input type="text" id="inputCi" name="Ci" class="form-control" 
-                       placeholder="Ej: 1234567" required pattern="[0-9]{6,12}" maxlength="12"
-                       title="Solo números, entre 6 y 12 dígitos" autocomplete="off">
-                <div class="invalid-feedback">Ingrese un CI válido.</div>
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="inputComplemento">Complemento</label>
-                <input type="text" id="inputComplemento" name="Complemento" class="form-control"
-                       placeholder="Ej: 1A" pattern="[A-Za-z0-9]{1,5}" maxlength="5"
-                       style="text-transform: uppercase;">
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="selectExpedido">Expedido <span class="text-danger">*</span></label>
-                <select class="form-control" id="selectExpedido" name="Exp" required>
-                  <option value="" disabled selected>Seleccione departamento</option>
-                  <option value="LP">La Paz</option>
-                  <option value="CB">Cochabamba</option>
-                  <option value="SC">Santa Cruz</option>
-                  <option value="OR">Oruro</option>
-                  <option value="PT">Potosí</option>
-                  <option value="CH">Chuquisaca</option>
-                  <option value="TJ">Tarija</option>
-                  <option value="BN">Beni</option>
-                  <option value="PD">Pando</option>
-                </select>
-                <div class="invalid-feedback">Seleccione el lugar de expedición.</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Nombres y Apellidos -->
-          <div class="row">
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="inputNombres">Nombre(s) <span class="text-danger">*</span></label>
-                <input type="text" id="inputNombres" name="Nombre" class="form-control"
-                       placeholder="Juan Carlos" required
-                       pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}" maxlength="50"
-                       title="Solo letras, entre 2 y 50 caracteres">
-                <div class="invalid-feedback">Ingrese un nombre válido.</div>
-              </div>
-            </div>
-
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="apaterno">Apellido Paterno <span class="text-danger">*</span></label>
-                <input type="text" id="apaterno" name="Apaterno" class="form-control"
-                       placeholder="López" required
-                       pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}" maxlength="50">
-                <div class="invalid-feedback">Ingrese un apellido válido.</div>
-              </div>
-            </div>
-
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="amaterno">Apellido Materno</label>
-                <input type="text" id="amaterno" name="Amaterno" class="form-control"
-                       placeholder="Pérez" pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}" maxlength="50">
-              </div>
-            </div>
-
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="fechaNacimiento">Fecha de Nacimiento</label>
-                <input type="date" id="fechaNacimiento" name="FechaNacimiento" class="form-control"
-                       max="<?php echo date('Y-m-d'); ?>" 
-                       min="<?php echo date('Y-m-d', strtotime('-100 years')); ?>">
-              </div>
-            </div>
-          </div>
-
-          <hr>
-
-          <!-- Sección: Información Profesional -->
-          <h5 class="form-section text-primary">
-            <i class="bi bi-mortarboard-fill"></i> INFORMACIÓN PROFESIONAL
-          </h5>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="cedulaProfesional">Cédula Profesional <span class="text-danger">*</span></label>
-                <input type="text" id="cedulaProfesional" name="CedulaProfesional" class="form-control"
-                       placeholder="Ej: CP-4567" required maxlength="20">
-                <div class="invalid-feedback">Ingrese la cédula profesional.</div>
-              </div>
-            </div>
-
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="especialidad">Especialidad <span class="text-danger">*</span></label>
-                <input type="text" id="especialidad" name="Especialidad" class="form-control"
-                       placeholder="Ej: Endodoncia, Rehabilitación Oral..." required maxlength="100">
-                <div class="invalid-feedback">Ingrese la especialidad.</div>
-              </div>
-            </div>
-          </div>
-
-          <hr>
-
-          <!-- Sección: Contacto -->
-          <h5 class="form-section text-primary">
-            <i class="bi bi-telephone-fill"></i> INFORMACIÓN DE CONTACTO
-          </h5>
-
-          <div class="row">
-            <div class="col-md-8">
-              <div class="form-group">
-                <label for="direccionInput">Dirección Domiciliaria</label>
-                <input type="text" id="direccionInput" name="Direccion" class="form-control"
-                       maxlength="100" placeholder="Calle, Zona, Nº">
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="emailInput">Correo Electrónico <span class="text-danger">*</span></label>
-                <input type="email" id="emailInput" name="Correo" class="form-control"
-                       placeholder="ejemplo@dominio.com" required maxlength="100">
-                <div class="invalid-feedback">Ingrese un correo válido.</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="telefonoInput">Teléfono Fijo</label>
-                <input type="tel" id="telefonoInput" name="Tel" class="form-control"
-                       placeholder="2 525252" pattern="[0-9]{7,8}" maxlength="8">
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="celularInput">Celular <span class="text-danger">*</span></label>
-                <input type="tel" id="celularInput" name="Cel" class="form-control"
-                       placeholder="75123456" pattern="[6-7][0-9]{7}" maxlength="8" required>
-                <div class="invalid-feedback">Ingrese un celular válido (8 dígitos).</div>
-              </div>
-            </div>
-          </div>
-
-          <hr>
-
-          <div class="alert alert-primary mt-3" role="alert">
-            <i class="bi bi-info-circle"></i>
-            Los campos marcados con <span class="text-danger">*</span> son obligatorios.
           </div>
         </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">
-            <i class="bi bi-x-circle"></i> Cancelar
-          </button>
-          <button type="submit" class="btn btn-success">
-            <i class="bi bi-save"></i> Guardar Docente
-          </button>
-        </div>
-
-        <?php
-  
-         $DatosDocente = new DocentesControlador();
-        $DatosDocente ->RegistrarDocenteControlador();
-         ?>
-        
-      </form>
+      </section>
     </div>
   </div>
 </div>
 
+<style>
+  .table thead.thead-dark th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 15px 10px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
 
+  .table tbody tr {
+    transition: all 0.2s ease;
+  }
 
+  .table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.005);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    
-    <script>
-        $(document).ready(function() {
-            
+  .table tbody td {
+    padding: 12px 10px;
+    vertical-align: middle;
+    border-color: #e9ecef;
+    font-size: 13px;
+  }
 
-            // Validación personalizada del formulario
-            const form = document.getElementById('formNuevoDocente');
-            
-            form.addEventListener('submit', function(event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-                form.classList.add('was-validated');
-            }, false);
+  .card.shadow-sm {
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+  }
 
-            // Convertir complemento a mayúsculas
-            $('#inputComplemento').on('input', function() {
-                this.value = this.value.toUpperCase();
-            });
-            // Convertir Nombre a mayúsculas
-             $('#inputNombres').on('input', function() {
-                this.value = this.value.toUpperCase();
-            });
+  .card-header.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-              $('#apaterno').on('input', function() {
-                this.value = this.value.toUpperCase();
-            });
-            $('#amaterno').on('input', function() {
-                this.value = this.value.toUpperCase();
-            });
+  .btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
 
-            // Validar que solo se ingresen números en CI
-            $('#inputCi, #inputTelefono, #inputCelular').on('keypress', function(e) {
-                if (e.which < 48 || e.which > 57) {
-                    e.preventDefault();
-                }
-            });
+  .badge {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
 
-            // Validar que solo se ingresen letras en nombres
-            $('#inputNombres, #apaterno, #amaterno').on('keypress', function(e) {
-                const char = String.fromCharCode(e.which);
-                if (!/[A-Za-zñÑáéíóúÁÉÍÓÚ\s]/.test(char)) {
-                    e.preventDefault();
-                }
-            });
+  .modal-header.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border: none;
+  }
 
-            // Validar edad mínima (debe ser mayor de 15 años)
-            $('#fechaNacimiento').on('change', function() {
-                const birthDate = new Date(this.value);
-                const today = new Date();
-                const age = today.getFullYear() - birthDate.getFullYear();
-                const monthDiff = today.getMonth() - birthDate.getMonth();
-                
-                if (age < 15 || (age === 15 && monthDiff < 0)) {
-                    alert('El Docente debe tener al menos 18 años de edad.');
-                    this.value = '';
-                }
-            });
+  .modal-header.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+  }
 
-            // Actualizar fecha automáticamente
-            function actualizarFecha() {
-                const opciones = { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                };
-                const fecha = new Date().toLocaleDateString('es-ES', opciones);
-                $('#lafecha').text(fecha.charAt(0).toUpperCase() + fecha.slice(1));
-            }
-            
-            actualizarFecha();
-            setInterval(actualizarFecha, 60000); // Actualizar cada minuto
-        });
-    </script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+  .form-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin: 20px 0 15px 0;
+  }
 
+  .form-group label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+  }
+</style>
+
+<!-- Modal: Nuevo Docente -->
+<div class="modal fade" id="ModalInsertarDocente" tabindex="-1" role="dialog"
+     aria-labelledby="modalNuevoDocenteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
+            <div class="modal-header bg-gradient-info">
+                <h4 class="modal-title text-white" id="modalNuevoDocenteLabel">
+                    <i class="fas fa-chalkboard-teacher mr-2"></i> Nuevo Registro de Docente
+                </h4>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <form method="post" id="formNuevoDocente" enctype="multipart/form-data" class="needs-validation" novalidate>
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
+
+                <div class="modal-body" style="padding: 30px;">
+
+                    <h4 class="form-section">
+                        <i class="fas fa-id-card mr-2"></i> Datos de Identificación
+                    </h4>
+
+                    <!-- C.I. y complementos -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="inputCi"><i class="fas fa-id-card text-primary"></i> C.I. *</label>
+                                <input type="text" id="inputCi" name="Ci" class="form-control"
+                                       placeholder="1234567" required pattern="[0-9]{6,12}" maxlength="12">
+                                <div class="invalid-feedback">Ingrese un CI válido.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="inputComplemento"><i class="fas fa-bookmark text-primary"></i> Complemento</label>
+                                <input type="text" id="inputComplemento" name="Complemento"
+                                       class="form-control text-uppercase" pattern="[A-Za-z0-9]{1,5}" maxlength="5">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="selectExpedido"><i class="fas fa-map-marker-alt text-primary"></i> Expedido *</label>
+                                <select class="form-control" id="selectExpedido" name="Exp" required>
+                                    <option value="" disabled selected>Seleccione...</option>
+                                    <option value="LP">La Paz</option>
+                                    <option value="CB">Cochabamba</option>
+                                    <option value="SC">Santa Cruz</option>
+                                    <option value="OR">Oruro</option>
+                                    <option value="PT">Potosí</option>
+                                    <option value="CH">Chuquisaca</option>
+                                    <option value="TJ">Tarija</option>
+                                    <option value="BN">Beni</option>
+                                    <option value="PD">Pando</option>
+                                </select>
+                                <div class="invalid-feedback">Seleccione el lugar de expedición.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="form-section">
+                        <i class="fas fa-user mr-2"></i> Datos Personales
+                    </h4>
+
+                    <!-- Nombre y fecha -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="inputNombres"><i class="fas fa-user text-primary"></i> Nombre(s) *</label>
+                                <input type="text" id="inputNombres" name="Nombre" class="form-control"
+                                       required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}" placeholder="Juan Carlos">
+                                <div class="invalid-feedback">Ingrese un nombre válido.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="apaterno"><i class="fas fa-user text-primary"></i> Apellido Paterno *</label>
+                                <input type="text" id="apaterno" name="Apaterno" class="form-control" required placeholder="García">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="amaterno"><i class="fas fa-user text-primary"></i> Apellido Materno</label>
+                                <input type="text" id="amaterno" name="Amaterno" class="form-control" placeholder="López">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="fechaNacimiento"><i class="fas fa-calendar text-info"></i> Fecha Nacimiento</label>
+                                <input type="date" id="fechaNacimiento" name="FechaNacimiento" class="form-control"
+                                       max="<?php echo date('Y-m-d'); ?>"
+                                       min="<?php echo date('Y-m-d', strtotime('-100 years')); ?>">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="form-section">
+                        <i class="fas fa-graduation-cap mr-2"></i> Información Profesional
+                    </h4>
+
+                    <!-- Información profesional -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cedulaProfesional"><i class="fas fa-certificate text-danger"></i> Cédula Profesional *</label>
+                                <input type="text" id="cedulaProfesional" name="CedulaProfesional" class="form-control"
+                                       required placeholder="Ej: CP-1234" maxlength="30">
+                                <div class="invalid-feedback">Ingrese la cédula profesional.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="especialidad"><i class="fas fa-briefcase text-danger"></i> Especialidad *</label>
+                                <input type="text" id="especialidad" name="Especialidad" class="form-control"
+                                       required placeholder="Ej: Odontología General" maxlength="100">
+                                <div class="invalid-feedback">Ingrese la especialidad.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="form-section">
+                        <i class="fas fa-phone mr-2"></i> Información de Contacto
+                    </h4>
+
+                    <!-- Contacto -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="emailInput"><i class="fas fa-envelope text-success"></i> Correo Electrónico *</label>
+                                <input type="email" id="emailInput" name="Correo" class="form-control" required maxlength="100"
+                                       placeholder="ejemplo@correo.com">
+                                <div class="invalid-feedback">Ingrese un correo válido.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="direccionInput"><i class="fas fa-home text-warning"></i> Dirección</label>
+                                <input type="text" id="direccionInput" name="Direccion" class="form-control" maxlength="100"
+                                       placeholder="Av. Principal #123">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="inputTelefono"><i class="fas fa-phone text-warning"></i> Teléfono</label>
+                                <input type="tel" id="inputTelefono" name="Tel" class="form-control" pattern="[0-9]{7,8}"
+                                       placeholder="2525252">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="inputCelular"><i class="fas fa-mobile-alt text-warning"></i> Celular *</label>
+                                <input type="tel" id="inputCelular" name="Cel" class="form-control"
+                                       required pattern="[6-7][0-9]{7}" placeholder="70123456">
+                                <div class="invalid-feedback">Celular inválido (8 dígitos, empieza con 6 o 7).</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info" style="border-left: 4px solid #17a2b8; background-color: #d1ecf1;">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Los campos marcados con <span class="text-danger">*</span> son obligatorios.
+                    </div>
+
+                </div>
+
+                <div class="modal-footer" style="background-color: #f8f9fa; border-top: 2px solid #e9ecef;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success" style="min-width: 120px;">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+
+                <?php
+                    $DatosDocente = new DocentesControlador();
+                    $DatosDocente->RegistrarDocenteControlador();
+                ?>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Asignar Usuario a Docente -->
+<div style="z-index: 1500;" class="modal fade" id="ModalAsignarUsuarioDocente" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
+        <h4 class="modal-title text-white" id="myModalLabel">
+          <i class="fas fa-user-plus mr-2"></i> Asignar Usuario a Docente
+        </h4>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form method="post" enctype="multipart/form-data">
+        <div class="modal-body" style="padding: 30px;">
+
+          <div class="alert alert-info" style="border-left: 4px solid #17a2b8; background-color: #d1ecf1;">
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>Credenciales que se generarán automáticamente:</strong>
+            <ul class="mb-0 mt-2">
+              <li><strong>Usuario:</strong> Número de Carnet (C.I.)</li>
+              <li><strong>Contraseña:</strong> Primera letra del nombre + Número de Carnet</li>
+              <li><strong>Cargo:</strong> DOC (Docente)</li>
+            </ul>
+          </div>
+
+          <input type="hidden" id="docente_id" name="docente_id">
+          <input type="hidden" id="docente_ci" name="docente_ci">
+          <input type="hidden" id="docente_nombre" name="docente_nombre">
+
+          <div class="form-group">
+            <label for="nombre_docente_display" class="font-weight-bold">
+              <i class="fas fa-chalkboard-teacher text-primary"></i> Docente Seleccionado
+            </label>
+            <input type="text" id="nombre_docente_display" class="form-control form-control-lg" readonly
+                   style="background-color: #f8f9fa; border: 2px solid #e9ecef; font-weight: 600;">
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="ci_display_docente" class="font-weight-bold">
+                  <i class="fas fa-id-card text-info"></i> C.I.
+                </label>
+                <input type="text" id="ci_display_docente" class="form-control" readonly
+                       style="background-color: #f8f9fa; border: 2px solid #e9ecef;">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="usuario_generado_docente" class="font-weight-bold">
+                  <i class="fas fa-user-circle text-success"></i> Usuario
+                </label>
+                <input type="text" id="usuario_generado_docente" class="form-control" readonly
+                       style="background-color: #f8f9fa; border: 2px solid #e9ecef;">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password_generada_docente" class="font-weight-bold">
+              <i class="fas fa-key text-warning"></i> Contraseña Generada
+            </label>
+            <input type="text" id="password_generada_docente" class="form-control" readonly
+                   style="background-color: #fff3cd; border: 2px solid #ffc107; font-weight: 600; font-size: 16px;">
+          </div>
+
+          <div class="form-group">
+            <label for="correo_docente" class="font-weight-bold">
+              <i class="fas fa-envelope text-danger"></i> Correo Electrónico
+            </label>
+            <input type="email" id="correo_docente" class="form-control" readonly
+                   style="background-color: #f8f9fa; border: 2px solid #e9ecef;">
+          </div>
+
+        </div>
+        <div class="modal-footer" style="background-color: #f8f9fa; border-top: 2px solid #e9ecef;">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" class="btn btn-success" style="min-width: 150px;">
+            <i class="fas fa-check"></i> Confirmar y Crear
+          </button>
+        </div>
+      </form>
+      <?php
+        $crearUsuario = new UsuarioControladores();
+        $crearUsuario -> CrearUsuarioDocenteControlador();
+      ?>
+    </div>
+  </div>
+</div>
+
+<?php
+  $Footer = new FuncionesControladores();
+  $Footer -> FooterControlador();
+?>
+
+<!-- Scripts -->
 <script>
-$(document).ready(function() {
-    $('#tablaDocentes').DataTable({
-        responsive: true,
-        dom: 'Bfrtip', // Posición de botones
-        buttons: [
-            { extend: 'copy', className: 'btn btn-sm btn-primary' },
-            { extend: 'csv', className: 'btn btn-sm btn-primary' },
-            { extend: 'excel', className: 'btn btn-sm btn-primary' },
-            { extend: 'pdf', className: 'btn btn-sm btn-primary' },
-            { extend: 'print', className: 'btn btn-sm btn-primary' }
-        ],
-        language: {
-            search: "Buscar:",
-            lengthMenu: "Mostrar _MENU_ registros",
-            info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-            paginate: {
-                first: "Primero",
-                last: "Último",
-                next: "Siguiente",
-                previous: "Anterior"
-            },
-            emptyTable: "No hay datos disponibles"
-        }
+// Función que se ejecuta cuando jQuery está disponible
+function inicializarModalAsignarUsuarioDocente() {
+  if (typeof jQuery === 'undefined') {
+    console.log('jQuery no está cargado aún, reintentando...');
+    setTimeout(inicializarModalAsignarUsuarioDocente, 100);
+    return;
+  }
+
+  console.log('✅ jQuery cargado - Inicializando modal de asignación de usuario para docente');
+
+  // Capturar datos del docente al hacer clic en el botón
+  jQuery(document).on('click', '.btnAsignarUsuarioDocente', function(){
+    // Obtener todos los atributos data del botón
+    var docenteID = jQuery(this).attr('data-docente-id');
+    var ci = jQuery(this).attr('data-ci');
+    var ciCompleto = jQuery(this).attr('data-ci-completo');
+    var nombreCompleto = jQuery(this).attr('data-nombre-completo');
+    var nombrePila = jQuery(this).attr('data-nombre-pila');
+    var correo = jQuery(this).attr('data-correo');
+
+    console.log('📋 Datos capturados:', {
+      docenteID: docenteID,
+      ci: ci,
+      ciCompleto: ciCompleto,
+      nombreCompleto: nombreCompleto,
+      nombrePila: nombrePila,
+      correo: correo
     });
+
+    // Obtener la primera letra del nombre en mayúscula
+    var primeraLetra = nombrePila ? nombrePila.charAt(0).toUpperCase() : 'X';
+
+    // Generar usuario (será el CI)
+    var usuario = ci;
+
+    // Generar contraseña (primera letra del nombre + CI)
+    var password = primeraLetra + ci;
+
+    // Llenar campos hidden que se enviarán al servidor
+    jQuery('#docente_id').val(docenteID);
+    jQuery('#docente_ci').val(ci);
+    jQuery('#docente_nombre').val(nombrePila);
+
+    // Llenar campos de visualización en el modal
+    jQuery('#nombre_docente_display').val(nombreCompleto);
+    jQuery('#ci_display_docente').val(ciCompleto);
+    jQuery('#usuario_generado_docente').val(usuario);
+    jQuery('#password_generada_docente').val(password);
+    jQuery('#correo_docente').val(correo || 'No registrado');
+
+    console.log('✅ Modal actualizado con:', {
+      usuario: usuario,
+      password: password
+    });
+  });
+
+  console.log('✅ Event listener configurado para botones .btnAsignarUsuarioDocente');
+}
+
+// Ejecutar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', inicializarModalAsignarUsuarioDocente);
+} else {
+  inicializarModalAsignarUsuarioDocente();
+}
+
+// Validación del formulario de nuevo docente
+jQuery(document).ready(function() {
+    const form = document.getElementById('formNuevoDocente');
+
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+
+        // Mayúsculas automáticas
+        jQuery('#inputComplemento, #inputNombres, #apaterno, #amaterno').on('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+
+        // Validar edad mínima
+        jQuery('#fechaNacimiento').on('change', function() {
+            const nacimiento = new Date(this.value);
+            const hoy = new Date();
+            let edad = hoy.getFullYear() - nacimiento.getFullYear();
+            const mes = hoy.getMonth() - nacimiento.getMonth();
+            if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
+
+            if (edad < 18) {
+                alert('El docente debe tener al menos 18 años.');
+                this.value = '';
+            }
+        });
+
+        // Mostrar fecha actual
+        function actualizarFecha() {
+            const opciones = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+            const fecha = new Date().toLocaleDateString('es-ES', opciones);
+            jQuery('#lafecha').text(fecha.charAt(0).toUpperCase() + fecha.slice(1));
+        }
+        actualizarFecha();
+        setInterval(actualizarFecha, 60000);
+    }
 });
 </script>
-
 
 </body>

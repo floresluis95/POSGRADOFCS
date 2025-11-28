@@ -1,27 +1,61 @@
 <?php
 class DocentesControlador
 {
- public function ListaDocenteControlador() 
+ public function ListaDocenteControlador()
 {
-    $Listad = DocentesModelo::ListaDocenteModelo();
+    $Listad = DocentesModelo::ListaDocenteActivoModelo();
+    $contador = 0;
 
     foreach ($Listad as $key => $Docente) {
+        $contador++;
+
+        $nombreCompleto = $Docente['Apaterno'] . ' ' . $Docente['Amaterno'] . ' ' . $Docente['Nombre'];
+        $ciCompleto = $Docente['Ci'] . ($Docente['Complemento'] ? '-' . $Docente['Complemento'] : '') . ' ' . $Docente['Exp'];
+
+        // Verificar si tiene usuario
+        $tieneUsuario = !empty($Docente['Usuario']);
+        $estadoUsuarioBadge = '';
+        $botonUsuario = '';
+
+        if ($tieneUsuario) {
+            $estadoActivo = $Docente['EstadoUsuario'] == '1';
+            $estadoUsuarioBadge = $estadoActivo
+                ? '<span class="badge badge-success"><i class="fa fa-check"></i> ' . htmlspecialchars($Docente['Usuario']) . '</span>'
+                : '<span class="badge badge-danger"><i class="fa fa-times"></i> ' . htmlspecialchars($Docente['Usuario']) . ' (Inactivo)</span>';
+            $botonUsuario = '';
+        } else {
+            $estadoUsuarioBadge = '<span class="badge badge-warning"><i class="fa fa-exclamation-triangle"></i> Sin usuario</span>';
+            $botonUsuario = '<button
+                                data-toggle="modal"
+                                data-target="#ModalAsignarUsuarioDocente"
+                                type="button"
+                                class="btn btn-success btn-sm btnAsignarUsuarioDocente"
+                                data-docente-id="' . $Docente['DocenteID'] . '"
+                                data-ci="' . $Docente['Ci'] . '"
+                                data-ci-completo="' . htmlspecialchars($ciCompleto) . '"
+                                data-nombre-completo="' . htmlspecialchars($nombreCompleto) . '"
+                                data-nombre-pila="' . htmlspecialchars($Docente['Nombre']) . '"
+                                data-correo="' . htmlspecialchars($Docente['Correo'] ? $Docente['Correo'] : '') . '"
+                                title="Asignar usuario">
+                                <i class="fa fa-user-plus"></i> Asignar
+                            </button>';
+        }
+
         echo '<tr>
-                <td width="30" height="30">' . htmlspecialchars($Docente['DocenteID']) . '</td>
-                <td>' . htmlspecialchars($Docente['Ci'] . ' ' . $Docente['Complemento'] . ' ' . $Docente['Exp']) . '</td>
-                <td>' . htmlspecialchars($Docente['Nombre'] . ' ' . $Docente['Apaterno'] . ' ' . $Docente['Amaterno']) . '</td>
+                <td class="text-center">' . $contador . '</td>
+                <td class="text-center"><strong>' . htmlspecialchars($ciCompleto) . '</strong></td>
+                <td>' . htmlspecialchars($nombreCompleto) . '</td>
                 <td>' . htmlspecialchars($Docente['CedulaProfesional']) . '</td>
-                <td>' . htmlspecialchars($Docente['Correo']) . '</td>
+                <td>' . htmlspecialchars($Docente['Correo'] ? $Docente['Correo'] : 'No registrado') . '</td>
                 <td>' . htmlspecialchars($Docente['Especialidad']) . '</td>
-                <td>
-                    <button type="button" class="btn btn-success btn-sm" title="Ver detalle">
+                <td class="text-center">' . $estadoUsuarioBadge . '</td>
+                <td class="text-center">
+                    ' . $botonUsuario . '
+                    <button type="button" class="btn btn-info btn-sm" title="Ver detalle">
                         <i class="bi bi-card-checklist"></i>
                     </button>
-                    <button type="button" class="btn btn-outline-info btn-sm" title="Descargar">
-                        <i class="bi bi-arrow-down-circle-fill"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" title="Eliminar">
-                        <i class="bi bi-trash-fill"></i>
+                    <button type="button" class="btn btn-warning btn-sm" title="Editar">
+                        <i class="bi bi-pencil-fill"></i>
                     </button>
                 </td>
             </tr>';

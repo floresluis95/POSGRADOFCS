@@ -397,4 +397,108 @@
                 error_log("No se recibió estudiante_id o estudiante_ci en POST");
             }
         }
+
+        public function CrearUsuarioDocenteControlador()
+        {
+            // Debug: Registrar todos los datos POST recibidos
+            error_log("=== DEBUG CrearUsuarioDocenteControlador ===");
+            error_log("POST recibido: " . print_r($_POST, true));
+
+            if(isset($_POST['docente_id']) && isset($_POST['docente_ci']))
+            {
+                $docenteID = $_POST['docente_id'];
+                $ci = $_POST['docente_ci'];
+
+                error_log("Procesando docente ID: " . $docenteID . ", CI: " . $ci);
+
+                // Verificar si el docente ya tiene usuario
+                $verificar = UsuarioModelos::VerificarUsuarioDocenteModelo($docenteID);
+                error_log("Verificación de usuario existente: " . ($verificar ? 'YA EXISTE' : 'NO EXISTE'));
+
+                if($verificar)
+                {
+                    echo'
+                    <script src="vistas/recursos/sweetalert.min.js"></script>
+                    <script>
+                    swal("ADVERTENCIA!", "Este docente ya tiene un usuario asignado", "warning")
+                    .then(function () {
+                        location.href="docentes";
+                      })
+                      ;
+                     </script>';
+                    return;
+                }
+
+                // Usuario será el número de carnet (CI)
+                $usuario = $ci;
+
+                // Contraseña será: primera letra del nombre + número de carnet
+                $nombre = isset($_POST['docente_nombre']) ? $_POST['docente_nombre'] : '';
+                error_log("Nombre recibido: " . $nombre);
+
+                if(empty($nombre)) {
+                    error_log("ERROR: Nombre del docente vacío");
+                    echo'
+                    <script src="vistas/recursos/sweetalert.min.js"></script>
+                    <script>
+                    swal("ERROR!", "Falta el nombre del docente", "error")
+                    .then(function () {
+                        location.href="docentes";
+                      });
+                     </script>';
+                    return;
+                }
+
+                $primeraLetra = strtoupper(substr($nombre, 0, 1));
+                $passwordTexto = $primeraLetra . $ci;
+                $password = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
+
+                error_log("Credenciales generadas - Usuario: " . $usuario . ", Password texto: " . $passwordTexto);
+
+                $DatosModelo = array(
+                    "DocenteID" => $docenteID,
+                    "Usuario" => $usuario,
+                    "Password" => $password,
+                    "Tipo" => "DOC"
+                );
+
+                error_log("Datos a insertar: " . print_r($DatosModelo, true));
+
+                $resultado = UsuarioModelos::CrearUsuarioDocenteModelo($DatosModelo);
+                error_log("Resultado del modelo: " . $resultado);
+
+                if ($resultado == 'exitoso')
+                {
+                    error_log("Usuario creado exitosamente");
+                    echo'
+                    <script src="vistas/recursos/sweetalert.min.js"></script>
+                    <script>
+                    swal({
+                        title: "EXITOSO!",
+                        text: "Usuario: '.$usuario.'\\nContraseña: '.$passwordTexto.'",
+                        icon: "success",
+                        button: "Aceptar"
+                    })
+                    .then(function () {
+                        location.href="docentes";
+                      });
+                     </script>';
+                }
+                else
+                {
+                    error_log("ERROR al crear usuario: " . $resultado);
+                    echo'
+                    <script src="vistas/recursos/sweetalert.min.js"></script>
+                    <script>
+                    swal("ERROR!", "No se pudo crear el usuario: '.$resultado.'", "error")
+                    .then(function () {
+                        location.href="docentes";
+                      })
+                      ;
+                     </script>';
+                }
+            } else {
+                error_log("No se recibió docente_id o docente_ci en POST");
+            }
+        }
         }

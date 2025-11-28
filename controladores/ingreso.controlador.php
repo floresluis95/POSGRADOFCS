@@ -30,20 +30,50 @@
                     if ($passwordValido) {
                         session_start();
                         $_SESSION["Validar"] = true;
-                        // Aplicar Variables de Session con los datos del usuario y personal
-                        $_SESSION["IdPersonal"] = $TraerUsuario["IdPersonal"];
-                        $_SESSION["CedulaIdentidad"] = $TraerUsuario["CedulaIdentidad"];
-                        $_SESSION["ApellidoPaterno"] = $TraerUsuario["ApellidoPaterno"];
-                        $_SESSION["ApellidoMaterno"] = $TraerUsuario["ApellidoMaterno"];
-                        $_SESSION["Nombres"] = $TraerUsuario["Nombres"];
-                        $_SESSION["Direccion"] = $TraerUsuario["Direccion"];
-                        $_SESSION["Celular"] = $TraerUsuario["Celular"];
-                        $_SESSION["Telefono"] = $TraerUsuario["Telefono"];
                         $_SESSION["Usuario"] = $TraerUsuario["Usuario"];
-                        // NO guardar password en sesión por seguridad
                         $_SESSION["FechaIngreso"] = $TraerUsuario["FechaIngreso"];
                         $_SESSION["Estado"] = $TraerUsuario["Estado"];
                         $_SESSION["Tipo"] = $TraerUsuario["Tipo"];
+
+                        // Determinar tipo de usuario y cargar datos correspondientes
+                        if (!empty($TraerUsuario["IdPersonal"])) {
+                            // Usuario es PERSONAL ADMINISTRATIVO
+                            $_SESSION["IdPersonal"] = $TraerUsuario["IdPersonal"];
+                            $_SESSION["CedulaIdentidad"] = $TraerUsuario["CedulaIdentidad"];
+                            $_SESSION["ApellidoPaterno"] = $TraerUsuario["ApellidoPaterno"];
+                            $_SESSION["ApellidoMaterno"] = $TraerUsuario["ApellidoMaterno"];
+                            $_SESSION["Nombres"] = $TraerUsuario["Nombres"];
+                            $_SESSION["Direccion"] = $TraerUsuario["Direccion"];
+                            $_SESSION["Celular"] = $TraerUsuario["Celular"];
+                            $_SESSION["Telefono"] = $TraerUsuario["Telefono"];
+                        }
+                        elseif (!empty($TraerUsuario["EstudianteID"])) {
+                            // Usuario es ESTUDIANTE
+                            $_SESSION["EstudianteID"] = $TraerUsuario["EstudianteID"];
+                            $_SESSION["CedulaIdentidad"] = $TraerUsuario["EstudianteCi"];
+                            $_SESSION["Complemento"] = $TraerUsuario["EstudianteComplemento"];
+                            $_SESSION["Expedido"] = $TraerUsuario["EstudianteExp"];
+                            $_SESSION["ApellidoPaterno"] = $TraerUsuario["EstudianteApaterno"];
+                            $_SESSION["ApellidoMaterno"] = $TraerUsuario["EstudianteAmaterno"];
+                            $_SESSION["Nombres"] = $TraerUsuario["EstudianteNombre"];
+                            $_SESSION["Correo"] = $TraerUsuario["EstudianteCorreo"];
+                            $_SESSION["Celular"] = $TraerUsuario["EstudianteCelular"];
+                            $_SESSION["Direccion"] = $TraerUsuario["EstudianteDireccion"];
+                        }
+                        elseif (!empty($TraerUsuario["DocenteID"])) {
+                            // Usuario es DOCENTE
+                            $_SESSION["DocenteID"] = $TraerUsuario["DocenteID"];
+                            $_SESSION["CedulaIdentidad"] = $TraerUsuario["DocenteCi"];
+                            $_SESSION["Complemento"] = $TraerUsuario["DocenteComplemento"];
+                            $_SESSION["Expedido"] = $TraerUsuario["DocenteExp"];
+                            $_SESSION["ApellidoPaterno"] = $TraerUsuario["DocenteApaterno"];
+                            $_SESSION["ApellidoMaterno"] = $TraerUsuario["DocenteAmaterno"];
+                            $_SESSION["Nombres"] = $TraerUsuario["DocenteNombre"];
+                            $_SESSION["Correo"] = $TraerUsuario["DocenteCorreo"];
+                            $_SESSION["Celular"] = $TraerUsuario["DocenteCel"];
+                            $_SESSION["Direccion"] = $TraerUsuario["DocenteDireccion"];
+                            $_SESSION["Especialidad"] = $TraerUsuario["DocenteEspecialidad"];
+                        }
 
                        header('Location: panel');
                        exit();
