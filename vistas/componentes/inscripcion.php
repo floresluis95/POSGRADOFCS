@@ -78,185 +78,197 @@ kt-aside--fixed kt-page--loading">
             <div class="kt-container kt-grid__item kt-grid__item--fluid">
               <div class="row justify-content-md-center">
                 <div class="col-lg-11">
-                  <div class="kt-portlet">
 
-                    <!-- Formulario Único de Matriculación -->
-                  </div>
-                </div>
-              </div>
-            </div>
+                  <!-- Card principal con diseño mejorado -->
+                  <div class="kt-portlet kt-portlet--height-fluid" style="box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-radius: 10px;">
 
-            <!-- Matriculación -->
-          <div class="kt-container kt-grid__item kt-grid__item--fluid">
-    <div class="row justify-content-md-center">
-        <div class="col-lg-11">
-            <div class="kt-portlet">
+                    <div class="kt-portlet__body" style="padding: 2.5rem;">
+                      <form method="POST" id="formMatriculacion" class="needs-validation" enctype="multipart/form-data" novalidate>
 
-                <div class="kt-portlet__body">
-                    <form method="POST" id="formMatriculacion" class="needs-validation" enctype="multipart/form-data" novalidate>
-
-                        <!-- DATOS DEL ESTUDIANTE -->
-                        <div class="kt-portlet__head">
-                            <div>
-                                <h3>
-                                    <img src="vistas/recursos/assets/media/icons/gr.png" width="40" alt="">
-                                    DATOS DEL ESTUDIANTE
-                                </h3>
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label class="col-lg-2 col-form-label">ESTUDIANTE:</label>
-                            <div class="col-lg-5">
-                                <select class="form-control kt-select2 kt-select2-general" name="idcliente" required>
-                                    <option value="">Buscar estudiante por cédula de identidad</option>
-                                    <?php
-                                        $Lista = new EstudiantesControladores();
-                                        $Lista->EstudianteActivoControlador();
-                                    ?>
+                        <!-- SECCIÓN 1: DATOS DEL ESTUDIANTE -->
+                        <div class="card mb-4" style="border-left: 4px solid #5867dd; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                          <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px 6px 0 0;">
+                            <h4 class="mb-0" style="font-weight: 600;">
+                              <i class="flaticon2-user-outline-symbol"></i> DATOS DEL ESTUDIANTE
+                            </h4>
+                          </div>
+                          <div class="card-body" style="background-color: #f8f9fa; padding: 2rem;">
+                            <div class="row align-items-end">
+                              <div class="col-lg-6">
+                                <label class="font-weight-bold mb-2" style="color: #3f4254; font-size: 0.95rem;">
+                                  <i class="flaticon2-search text-primary"></i> Buscar Estudiante
+                                </label>
+                                <select class="form-control kt-select2 kt-select2-general" name="idcliente"
+                                        style="border: 2px solid #e1e3ea; border-radius: 6px; font-size: 1rem;" required>
+                                  <option value="">Buscar por cédula de identidad...</option>
+                                  <?php
+                                    $Lista = new EstudiantesControladores();
+                                    $Lista->EstudianteActivoControlador();
+                                  ?>
                                 </select>
-                            </div>
-                            <div class="col-lg-4">
-                                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#ModalInsertarEstudiante">
-                                    <img src="vistas/recursos/assets/media/icons/svg/Communication/Add-user.svg"/>
+                                <small class="form-text text-muted">
+                                  <i class="flaticon2-information"></i> Seleccione un estudiante existente
+                                </small>
+                              </div>
+                              <div class="col-lg-3">
+                                <button type="button" class="btn btn-primary btn-lg btn-block"
+                                        data-toggle="modal" data-target="#ModalInsertarEstudiante"
+                                        style="border-radius: 6px; box-shadow: 0 3px 10px rgba(88, 103, 221, 0.3);">
+                                  <i class="flaticon2-plus"></i> Nuevo Estudiante
                                 </button>
+                              </div>
                             </div>
+                          </div>
                         </div>
 
-                        <hr>
-
-                        <!-- DATOS DE MATRICULACIÓN -->
-                        <div class="kt-portlet__head">
-                            <div class="kt-portlet__head-label">
-                                <h3>
-                                    <img src="vistas/recursos/assets/media/icons/inscripcion.png" width="40" alt="Icono Inscripción">
-                                    MATRICULACIÓN
-                                </h3>
-                            </div>
-                        </div>
-
-                        <div class="form-group row form-group-marginless kt-margin-t-20">
-                            <label class="col-lg-2 col-form-label">GRADO ACADÉMICO:</label>
-                            <div class="col-lg-3">
-                                <select class="form-control" id="gradoAcademico" name="gradoAcademico" required>
-                                    <option value="" disabled selected>Elija el grado académico</option>
-                                    <option value="DIPLOMADO">DIPLOMADO</option>
-                                    <option value="MAESTRIA">MAESTRÍA</option>
-                                    <option value="ESPECIALIDAD">ESPECIALIDAD</option>
+                        <!-- SECCIÓN 2: DATOS DE MATRICULACIÓN -->
+                        <div class="card mb-4" style="border-left: 4px solid #1dc9b7; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                          <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px 6px 0 0;">
+                            <h4 class="mb-0" style="font-weight: 600;">
+                              <i class="flaticon2-writing"></i> INFORMACIÓN ACADÉMICA
+                            </h4>
+                          </div>
+                          <div class="card-body" style="background-color: #f8f9fa; padding: 2rem;">
+                            <div class="row">
+                              <div class="col-lg-4 mb-3">
+                                <label class="font-weight-bold mb-2" style="color: #3f4254; font-size: 0.95rem;">
+                                  <i class="flaticon2-list-3 text-success"></i> Grado Académico *
+                                </label>
+                                <select class="form-control form-control-lg" id="gradoAcademico" name="gradoAcademico"
+                                        style="border: 2px solid #e1e3ea; border-radius: 6px;" required>
+                                  <option value="" disabled selected>Seleccione el grado...</option>
+                                  <option value="DIPLOMADO">📚 DIPLOMADO</option>
+                                  <option value="MAESTRIA">🎓 MAESTRÍA</option>
+                                  <option value="ESPECIALIDAD">🏆 ESPECIALIDAD</option>
                                 </select>
                                 <div class="invalid-feedback">Seleccione un grado académico.</div>
-                            </div>
+                              </div>
 
-                            <label class="col-lg-1 col-form-label">PROGRAMA:</label>
-                            <div class="col-lg-5">
-                                <select class="form-control" id="programa" name="programa" required>
-                                    <option value="" disabled selected>Seleccione un programa</option>
-                                    </select>
+                              <div class="col-lg-8 mb-3">
+                                <label class="font-weight-bold mb-2" style="color: #3f4254; font-size: 0.95rem;">
+                                  <i class="flaticon2-document text-info"></i> Programa *
+                                </label>
+                                <select class="form-control form-control-lg" id="programa" name="programa"
+                                        style="border: 2px solid #e1e3ea; border-radius: 6px;" required>
+                                  <option value="" disabled selected>Seleccione un programa...</option>
+                                </select>
                                 <div class="invalid-feedback">Seleccione un programa.</div>
+                              </div>
                             </div>
+
+                            <!-- Detalles del programa -->
+                            <div id="detalle-programa" class="alert"
+                                 style="display:none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 10px; color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                              <h5 style="color: white; font-weight: 600; margin-bottom: 1.5rem;">
+                                <i class="flaticon2-information"></i> Detalles del Programa Seleccionado
+                              </h5>
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <div class="mb-2"><strong><i class="flaticon2-tag"></i> Programa:</strong> <span id="detalle-nombre-programa"></span></div>
+                                  <div class="mb-2"><strong><i class="flaticon2-box-1"></i> Código:</strong> <span id="detalle-codigo"></span></div>
+                                  <div class="mb-2"><strong><i class="flaticon2-calendar-9"></i> Duración:</strong> <span id="detalle-duracion"></span></div>
+                                  <div class="mb-2"><strong><i class="flaticon2-layers-2"></i> Módulos:</strong> <span id="detalle-modulos"></span></div>
+                                </div>
+                                <div class="col-md-6">
+                                  <div class="mb-2"><strong><i class="flaticon2-hourglass"></i> Costo Total:</strong> <span id="detalle-costo-total" style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;"></span></div>
+                                  <div class="mb-2"><strong><i class="flaticon2-credit-card"></i> Matrícula:</strong> <span id="detalle-costo-matricula" style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;"></span></div>
+                                  <div class="mb-2"><strong><i class="flaticon2-location"></i> Sede:</strong> <span id="detalle-sede"></span></div>
+                                  <div class="mb-2"><strong><i class="flaticon2-calendar-3"></i> Inicio:</strong> <span id="detalle-inicio"></span></div>
+                                  <div class="mb-2"><strong><i class="flaticon2-medical-records"></i> Grado:</strong> <span id="detalle-tipo"></span></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
 
-                        <hr>
-
-                        <div id="detalle-programa" class="alert alert-info" style="display:none;">
-                            <h5 class="text-primary"><i class="fa fa-info-circle"></i> Detalles del Programa</h5>
-
+                        <!-- SECCIÓN 3: DATOS DE PAGO -->
+                        <div class="card mb-4" style="border-left: 4px solid #ffb822; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                          <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px 6px 0 0;">
+                            <h4 class="mb-0" style="font-weight: 600;">
+                              <i class="flaticon2-crisp-icons"></i> INFORMACIÓN DE PAGO
+                            </h4>
+                          </div>
+                          <div class="card-body" style="background-color: #f8f9fa; padding: 2rem;">
                             <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Programa:</strong> <span id="detalle-nombre-programa"></span></p>
-                                    <p><strong>Código:</strong> <span id="detalle-codigo"></span></p>
-                                    <p><strong>Duración:</strong> <span id="detalle-duracion"></span></p>
-                                    <p><strong>Módulos:</strong> <span id="detalle-modulos"></span></p>
+                              <div class="col-lg-4 mb-3">
+                                <label class="font-weight-bold mb-2" style="color: #3f4254; font-size: 0.95rem;">
+                                  <i class="flaticon2-piggy-bank text-warning"></i> Monto de Matrícula *
+                                </label>
+                                <div class="input-group input-group-lg">
+                                  <div class="input-group-prepend">
+                                    <span class="input-group-text" style="background: #667eea; color: white; border: none;">Bs.</span>
+                                  </div>
+                                  <input type="number" class="form-control" name="montoMatricula"
+                                         placeholder="0.00" min="0" step="0.01"
+                                         style="border: 2px solid #e1e3ea; border-left: none;" required>
                                 </div>
-                                <div class="col-md-6">
-                                    <p><strong>Costo Del Programa:</strong> <span id="detalle-costo-total" class="text-success font-weight-bold"></span></p>
-                                    <p><strong>Costo Matrícula:</strong> <span id="detalle-costo-matricula" class="text-info font-weight-bold"></span></p>
-                                    <p><strong>Sede:</strong> <span id="detalle-sede"></span></p>
-                                    <p><strong>Fecha Inicio:</strong> <span id="detalle-inicio"></span></p>
-                                    <p><strong>Grado Académico:</strong> <span id="detalle-tipo"></span></p>
+                                <small class="form-text text-muted">
+                                  <i class="flaticon2-information"></i> Pago inicial de inscripción
+                                </small>
+                              </div>
+
+                              <div class="col-lg-4 mb-3">
+                                <label class="font-weight-bold mb-2" style="color: #3f4254; font-size: 0.95rem;">
+                                  <i class="flaticon2-file-1 text-info"></i> N° de Voucher *
+                                </label>
+                                <input type="text" class="form-control form-control-lg" name="numeroVaucher"
+                                       placeholder="Ej: 123456789"
+                                       style="border: 2px solid #e1e3ea; border-radius: 6px;" required>
+                                <small class="form-text text-muted">
+                                  <i class="flaticon2-information"></i> Número del comprobante de pago
+                                </small>
+                              </div>
+
+                              <div class="col-lg-4 mb-3">
+                                <label class="font-weight-bold mb-2" style="color: #3f4254; font-size: 0.95rem;">
+                                  <i class="flaticon2-calendar-8 text-danger"></i> Fecha de Inscripción *
+                                </label>
+                                <input type="date" class="form-control form-control-lg" name="fechaInscripcion"
+                                       style="border: 2px solid #e1e3ea; border-radius: 6px;" required>
+                                <small class="form-text text-muted">
+                                  <i class="flaticon2-information"></i> Fecha del registro
+                                </small>
+                              </div>
+
+                              <div class="col-lg-12 mb-3">
+                                <label class="font-weight-bold mb-2" style="color: #3f4254; font-size: 0.95rem;">
+                                  <i class="flaticon2-image-file text-success"></i> Comprobante de Pago (Imagen)
+                                </label>
+                                <div class="custom-file">
+                                  <input type="file" class="custom-file-input" name="comprobanteImagen"
+                                         id="comprobanteFile" accept="image/*">
+                                  <label class="custom-file-label" for="comprobanteFile"
+                                         style="border: 2px dashed #e1e3ea; border-radius: 6px; padding: 1rem;">
+                                    <i class="flaticon2-photograph"></i> Seleccionar imagen del comprobante...
+                                  </label>
                                 </div>
+                                <small class="form-text text-muted">
+                                  <i class="flaticon2-information"></i> Formatos: JPG, PNG (Máx. 5MB)
+                                </small>
+                              </div>
                             </div>
+                          </div>
                         </div>
 
-            <hr>
-
-            <div class="form-group row form-group-marginless kt-margin-t-20">
-    
-                <div class="col-lg-4">
-                    <div class="form-group row">
-                        <label class="col-5 col-form-label">PAGO MATRÍCULA:</label>
-                        <div class="col-7">
-                            <input type="number" class="form-control" name="montoMatricula" placeholder="Bs. 0.00" min="0" step="0.01" required>
-                            <div class="invalid-feedback">Ingrese el monto de matrícula.</div>
-                            <small class="form-text text-muted">Pago inicial/matrícula</small>
+                        <!-- Botón de envío -->
+                        <div class="text-center mt-4">
+                          <button type="submit" name="registrarMatricula" class="btn btn-success btn-lg"
+                                  style="padding: 1rem 3rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600; box-shadow: 0 4px 15px rgba(29, 201, 183, 0.4);">
+                            <i class="flaticon2-check-mark"></i> Guardar Matriculación
+                          </button>
                         </div>
+
+                        <?php
+                          $RegistrarMatricula = new MatriculaControladores();
+                          $RegistrarMatricula->RegistrarMatriculaControlador();
+                        ?>
+                      </form>
                     </div>
+
+                  </div>
                 </div>
-
-              <div class="col-lg-4">
-                  <div class="form-group row">
-                      <label class="col-5 col-form-label">N° VAUCHER:</label>
-                      <div class="col-7">
-                          <input type="text" class="form-control" name="numeroVaucher" placeholder="Número de comprobante" required>
-                          <div class="invalid-feedback">Ingrese el número de vaucher.</div>
-                          
-                      </div>
-                  </div>
               </div>
-
-             
-                   
-          </div>
-
-           <div class="form-group row form-group-marginless kt-margin-t-20">
-           <div class="col-lg-4">
-                  <div class="form-group row">
-                      <label class="col-5 col-form-label">FECHA INSCRIPCIÓN:</label>
-                      <div class="col-7">
-                          <input type="date" class="form-control" name="fechaInscripcion" required>
-                          <div class="invalid-feedback">Ingrese la fecha de inscripción.</div>
-                         
-                      </div>
-                  </div>
-              </div>
-                <div class="col-lg-6">
-              <div class="form-group row">
-                  <label class="col-5 col-form-label">COMPROBANTE (IMAGEN):</label>
-                  <div class="col-7">
-                      <input 
-                          type="file" 
-                          class="form-control" 
-                          name="comprobanteImagen" 
-                          accept="image/*"            
-                      >
-                      <div class="invalid-feedback">Seleccione la imagen del comprobante de pago.</div>
-                      <small class="form-text text-muted">Formatos aceptados: JPG, PNG, PDF (si se permite)</small>
-                  </div>
-              </div>
-          </div> 
-              
-            </div>
-
-                        <hr>
-                        <div class="form-group row">
-                            <div class="col-lg-12 text-center">
-                                <button type="submit" name="registrarMatricula" class="btn btn-success">
-                                    <i class="bi bi-save"></i> Guardar Matriculación
-                                </button>
-                            </div>
-                        </div>
-
-                    <?php
-                        $RegistrarMatricula = new MatriculaControladores();
-                        $RegistrarMatricula->RegistrarMatriculaControlador();
-                    ?>
-                    </form>
-                </div>
-
-            </div>
-        </div>
-    </div>
-</div><!-- End kt-content -->
+            </div><!-- End kt-content -->
         </div> <!-- End kt-body -->
       </div> <!-- End wrapper -->
     </div>
@@ -277,27 +289,29 @@ kt-aside--fixed kt-page--loading">
 
 
  <!-- Modal: Nuevo Estudiante -->
-<div class="modal fade" id="ModalInsertarEstudiante" tabindex="-1" role="dialog" 
+<div class="modal fade" id="ModalInsertarEstudiante" tabindex="-1" role="dialog"
          aria-labelledby="modalNuevoEstudianteLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
-                    <h4 class="modal-title text-white" id="modalNuevoEstudianteLabel">
-                        <i class="bi bi-person-plus-fill"></i> Nuevo Registro de Estudiante
+        <div class="modal-dialog modal-lg" role="document" style="max-width: 900px;">
+            <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px 15px 0 0; padding: 1.5rem;">
+                    <h4 class="modal-title text-white" id="modalNuevoEstudianteLabel" style="font-weight: 600;">
+                        <i class="flaticon2-user-outline-symbol"></i> Nuevo Registro de Estudiante
                     </h4>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
-                        <span aria-hidden="true">&times;</span>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar" style="opacity: 1;">
+                        <span aria-hidden="true" style="font-size: 2rem;">&times;</span>
                     </button>
                 </div>
                 
                 <form method="post" id="formNuevoEstudiante" enctype="multipart/form-data" class="needs-validation" novalidate>
                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
-                    
-                    <div class="modal-body">
 
-                        <h5 class="form-section text-info">
-                            <i class="bi bi-person-vcard"></i> DATOS PERSONALES
-                        </h5>
+                    <div class="modal-body" style="padding: 2rem; background-color: #fafafa;">
+
+                        <div class="mb-4 p-3" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-left: 4px solid #667eea; border-radius: 8px;">
+                            <h5 class="mb-0" style="color: #667eea; font-weight: 600;">
+                                <i class="flaticon2-user"></i> DATOS PERSONALES
+                            </h5>
+                        </div>
 
                         <!-- C.I. y complementos -->
                         <div class="row">
@@ -381,10 +395,11 @@ kt-aside--fixed kt-page--loading">
                             </div>
                         </div>
 
-                        <hr>
-
-                        <!-- Contacto -->
-                        <h5 class="form-section text-info"><i class="bi bi-telephone-fill"></i> OTROS DATOS</h5>
+                        <div class="mb-4 mt-4 p-3" style="background: linear-gradient(135deg, rgba(29, 201, 183, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%); border-left: 4px solid #1dc9b7; border-radius: 8px;">
+                            <h5 class="mb-0" style="color: #1dc9b7; font-weight: 600;">
+                                <i class="flaticon2-phone"></i> OTROS DATOS
+                            </h5>
+                        </div>
                         <div class="row">
                             
                             <div class="col-md-4">
@@ -425,20 +440,24 @@ kt-aside--fixed kt-page--loading">
                                 <div class="invalid-feedback">Celular inválido (8 dígitos, empieza con 6 o 7).</div>
                             </div>
 
-                            <div class="alert alert-info mt-3">
-                                <i class="bi bi-info-circle"></i> Campos marcados con 
-                                <span class="text-danger">*</span> son obligatorios.
+                            <div class="col-md-12">
+                                <div class="alert mt-3" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%); border: 2px solid #667eea; border-radius: 8px;">
+                                    <i class="flaticon2-information"></i> <strong>Importante:</strong> Los campos marcados con
+                                    <span class="text-danger font-weight-bold">*</span> son obligatorios.
+                                </div>
                             </div>
 
                         </div>
                     </div>
 
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                            <i class="bi bi-x-circle"></i> Cancelar
+                    <div class="modal-footer" style="background-color: #f5f5f5; padding: 1.5rem; border-radius: 0 0 15px 15px;">
+                        <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal"
+                                style="padding: 0.75rem 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <i class="flaticon2-cancel"></i> Cancelar
                         </button>
-                        <button type="submit" class="btn btn-success">
-                            <i class="bi bi-save"></i> Guardar
+                        <button type="submit" class="btn btn-success btn-lg"
+                                style="padding: 0.75rem 2rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(29, 201, 183, 0.4);">
+                            <i class="flaticon2-check-mark"></i> Guardar Estudiante
                         </button>
                     </div>
 
@@ -451,11 +470,76 @@ kt-aside--fixed kt-page--loading">
         </div>
     </div>
 
+<style>
+/* Estilos adicionales para mejorar la vista */
+.form-control:focus, .custom-file-input:focus ~ .custom-file-label {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Animación para el detalle del programa */
+#detalle-programa {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mejorar select2 */
+.select2-container--default .select2-selection--single {
+    border: 2px solid #e1e3ea !important;
+    border-radius: 6px !important;
+    height: calc(2.25rem + 2px) !important;
+}
+
+.select2-container--default .select2-selection--single:focus {
+    border-color: #667eea !important;
+}
+
+/* Custom file input */
+.custom-file-label::after {
+    background: #667eea;
+    color: white;
+    content: "Buscar";
+    border-radius: 0 6px 6px 0;
+}
+</style>
+
 <script>
  // Validación personalizada del formulario de estudiante
 $(document).ready(function() {
 
-    
+    // Mostrar nombre del archivo seleccionado
+    $('#comprobanteFile').on('change', function() {
+        var fileName = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').html('<i class="flaticon2-image-file text-success"></i> ' + (fileName || 'Seleccionar imagen del comprobante...'));
+    });
+
     const form = document.getElementById('formNuevoEstudiante');
 
     form.addEventListener('submit', function(event) {

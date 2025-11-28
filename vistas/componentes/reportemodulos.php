@@ -69,6 +69,7 @@ date_default_timezone_set("America/La_Paz");
                                                     <th>Nombre del Programa</th>
                                                     <th class="text-center" style="width: 150px;">Grado</th>
                                                     <th class="text-center" style="width: 150px;">Total Módulos</th>
+                                                    <th class="text-center" style="width: 150px;">Inscritos</th>
                                                     <th class="text-center" style="width: 120px;">Acciones</th>
                                                 </tr>
                                             </thead>

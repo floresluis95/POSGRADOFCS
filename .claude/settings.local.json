@@ -63,7 +63,11 @@
       "Bash(del test_tcpdf.php instalar_tcpdf.php)",
       "Bash(cmd /c \"del test_tcpdf.php instalar_tcpdf.php\")",
       "Bash(mkdir:*)",
-      "Bash(\"C:\\xampp\\php\\php.exe\" verificar_gd.php)"
+      "Bash(\"C:\\xampp\\php\\php.exe\" verificar_gd.php)",
+      "Bash(del diagnostico_pdf_programa.php)",
+      "Bash(cmd /c \"del diagnostico_pdf_programa.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"ajax/calificacion.ajax.php\")",
+      "Bash(\"C:\\xampp\\php\\php.exe\" -l \"vistas/componentes/rnotasestudiante.php\")"
     ],
     "deny": [],
     "ask": []

@@ -19,8 +19,9 @@
                 $enlace == 'docentes'||
                 $enlace == 'reportemodulos'||
                 $enlace == 'reportes'||
-                 $enlace == 'notasestudiante'||
-                 $enlace == 'calificacionesfinales'
+                 $enlace == 'rnotasestudiante'||
+                 $enlace == 'reportenotas'||
+                 $enlace == 'notasdocente'
 
 
                 )

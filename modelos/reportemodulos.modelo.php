@@ -181,7 +181,7 @@ class ReporteModulosModelo
     }
 
     /**
-     * Obtener conteo de módulos por programa
+     * Obtener conteo de módulos e inscritos por programa
      * @return array
      */
     public static function ObtenerConteoModulosPorProgramaModelo()
@@ -193,9 +193,11 @@ class ReporteModulosModelo
                     p.NombrePrograma,
                     p.Codigo,
                     p.GradoAcademico,
-                    COUNT(m.Idmodulo) as TotalModulos
+                    COUNT(DISTINCT m.Idmodulo) as TotalModulos,
+                    COUNT(DISTINCT ep.EstudianteID) as TotalInscritos
                 FROM programa p
                 LEFT JOIN modulos m ON p.ProgramaID = m.ProgramaId AND m.estadomodulo = 'ACTIVO'
+                LEFT JOIN estudianteprograma ep ON p.ProgramaID = ep.ProgramaID AND ep.Estado = 'ACTIVO'
                 WHERE p.Estado = 1
                 GROUP BY p.ProgramaID, p.NombrePrograma, p.Codigo, p.GradoAcademico
                 ORDER BY p.GradoAcademico ASC, p.NombrePrograma ASC"

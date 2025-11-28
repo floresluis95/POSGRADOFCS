@@ -210,6 +210,7 @@ class InscripcionModuloModelos
                 LEFT JOIN profesion prof ON e.IdProfesion = prof.IdProfesion
                 WHERE ep.EstudianteID = :estudianteID
                 AND ep.Estado = 'ACTIVO'
+                ORDER BY ep.FechaInscripcion DESC, ep.idInscripcion DESC
                 LIMIT 1"
             );
             $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);

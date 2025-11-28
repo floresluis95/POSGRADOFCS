@@ -329,7 +329,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                        <div class="col-md-4">
                         <div class="modal-body">
                           <label>COSTO DE LA MATRICULA</label>
-                          <input type="number" class="form-control" name="Costom" step="0.01" required>
+                          <input type="number" class="form-control" name="CostoMatricula" step="0.01" required>
                         </div>
                       </div>
                     </div>
