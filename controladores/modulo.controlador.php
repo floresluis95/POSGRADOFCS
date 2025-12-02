@@ -177,7 +177,7 @@ class ModuloControlador
                         : null;
 
                     $costomodulo = isset($_POST[$costoKey]) && !empty($_POST[$costoKey])
-                        ? (int)$_POST[$costoKey]
+                        ? (float)$_POST[$costoKey]
                         : 0;
 
                     if (!empty($codigomodulo)) {
@@ -330,7 +330,7 @@ class ModuloControlador
             $nombremodulo = htmlspecialchars(trim($_POST['nombremodulo']));
             $codigomodulo = htmlspecialchars(trim($_POST['codigomodulo']));
             $docenteID = isset($_POST['docenteID']) && !empty($_POST['docenteID']) ? (int)$_POST['docenteID'] : null;
-            $costomodulo = isset($_POST['costomodulo']) && !empty($_POST['costomodulo']) ? (int)$_POST['costomodulo'] : 0;
+            $costomodulo = isset($_POST['costomodulo']) && !empty($_POST['costomodulo']) ? (float)$_POST['costomodulo'] : 0;
 
             // Preparar datos para el modelo
             $datosModulo = [

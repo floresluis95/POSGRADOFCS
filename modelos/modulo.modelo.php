@@ -250,12 +250,12 @@ class ModuloModelo
                 $docenteID = isset($modulo['docenteID']) && !empty($modulo['docenteID']) ? (int)$modulo['docenteID'] : null;
 
                 // Costo del módulo (puede ser 0 si no se especifica)
-                $costomodulo = isset($modulo['costomodulo']) && !empty($modulo['costomodulo']) ? (int)$modulo['costomodulo'] : 0;
+                $costomodulo = isset($modulo['costomodulo']) && !empty($modulo['costomodulo']) ? (float)$modulo['costomodulo'] : 0.0;
 
                 $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
                 $stmt->bindParam(":nombremodulo", $nombremodulo, PDO::PARAM_STR);
                 $stmt->bindParam(":codigomodulo", $modulo['codigomodulo'], PDO::PARAM_STR);
-                $stmt->bindParam(":costomodulo", $costomodulo, PDO::PARAM_INT);
+                $stmt->bindParam(":costomodulo", $costomodulo, PDO::PARAM_STR);
 
                 // Usar bindValue con PDO::PARAM_NULL para valores NULL
                 if ($docenteID === null) {
@@ -318,13 +318,13 @@ class ModuloModelo
 
     /**
      * Listar todos los módulos por ProgramaId con información del programa y docente
+     * @param int|null $programaID (opcional) - Si se proporciona, filtra por ese programa
      * @return array
      */
-    public static function ListarModulosPorProgramaModelo()
+    public static function ListarModulosPorProgramaModelo($programaID = null)
     {
         try {
-            $stmt = Conexion::Conectar()->prepare(
-                "SELECT
+            $sql = "SELECT
                     m.Idmodulo,
                     m.ProgramaId,
                     m.nombremodulo,
@@ -339,9 +339,21 @@ class ModuloModelo
                     d.Especialidad as EspecialidadDocente
                 FROM modulos m
                 INNER JOIN programa p ON m.ProgramaId = p.ProgramaID
-                LEFT JOIN docente d ON m.DocenteID = d.DocenteID
-                ORDER BY m.ProgramaId DESC, m.codigomodulo ASC"
-            );
+                LEFT JOIN docente d ON m.DocenteID = d.DocenteID";
+
+            // Si se proporciona programaID, agregar filtro
+            if ($programaID !== null) {
+                $sql .= " WHERE m.ProgramaId = :programaID";
+            }
+
+            $sql .= " ORDER BY m.ProgramaId DESC, m.codigomodulo ASC";
+
+            $stmt = Conexion::Conectar()->prepare($sql);
+
+            if ($programaID !== null) {
+                $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            }
+
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -371,8 +383,8 @@ class ModuloModelo
             $stmt->bindParam(":nombremodulo", $datos['nombremodulo'], PDO::PARAM_STR);
             $stmt->bindParam(":codigomodulo", $datos['codigomodulo'], PDO::PARAM_STR);
 
-            $costomodulo = isset($datos['costomodulo']) && !empty($datos['costomodulo']) ? (int)$datos['costomodulo'] : 0;
-            $stmt->bindParam(":costomodulo", $costomodulo, PDO::PARAM_INT);
+            $costomodulo = isset($datos['costomodulo']) && !empty($datos['costomodulo']) ? (float)$datos['costomodulo'] : 0.0;
+            $stmt->bindParam(":costomodulo", $costomodulo, PDO::PARAM_STR);
 
             if (isset($datos['docenteID']) && !empty($datos['docenteID'])) {
                 $stmt->bindParam(":docenteID", $datos['docenteID'], PDO::PARAM_INT);

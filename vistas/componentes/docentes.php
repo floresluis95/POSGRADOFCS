@@ -491,6 +491,187 @@ $csrf_token = bin2hex(random_bytes(32));
   </div>
 </div>
 
+<!-- Modal: Editar Docente -->
+<div class="modal fade" id="ModalEditarDocente" tabindex="-1" role="dialog"
+     aria-labelledby="modalEditarDocenteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border: none;">
+                <h4 class="modal-title text-white" id="modalEditarDocenteLabel">
+                    <i class="fas fa-edit mr-2"></i> Editar Datos del Docente
+                </h4>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <form method="post" id="formEditarDocente" enctype="multipart/form-data" class="needs-validation" novalidate>
+                <input type="hidden" name="editDocenteID" id="editDocenteID">
+
+                <div class="modal-body" style="padding: 30px;">
+
+                    <h4 class="form-section">
+                        <i class="fas fa-id-card mr-2"></i> Datos de Identificación
+                    </h4>
+
+                    <!-- C.I. y complementos -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editCi"><i class="fas fa-id-card text-primary"></i> C.I. *</label>
+                                <input type="text" id="editCi" name="editCi" class="form-control"
+                                       placeholder="1234567" required readonly style="background-color: #e9ecef;">
+                                <small class="text-muted">El CI no se puede modificar</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editComplemento"><i class="fas fa-bookmark text-primary"></i> Complemento</label>
+                                <input type="text" id="editComplemento" name="editComplemento"
+                                       class="form-control text-uppercase" pattern="[A-Za-z0-9]{1,5}" maxlength="5">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editExp"><i class="fas fa-map-marker-alt text-primary"></i> Expedido *</label>
+                                <select class="form-control" id="editExp" name="editExp" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="LP">La Paz</option>
+                                    <option value="CB">Cochabamba</option>
+                                    <option value="SC">Santa Cruz</option>
+                                    <option value="OR">Oruro</option>
+                                    <option value="PT">Potosí</option>
+                                    <option value="CH">Chuquisaca</option>
+                                    <option value="TJ">Tarija</option>
+                                    <option value="BN">Beni</option>
+                                    <option value="PD">Pando</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="form-section">
+                        <i class="fas fa-user mr-2"></i> Datos Personales
+                    </h4>
+
+                    <!-- Nombre y fecha -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editNombre"><i class="fas fa-user text-primary"></i> Nombre(s) *</label>
+                                <input type="text" id="editNombre" name="editNombre" class="form-control"
+                                       required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}" placeholder="Juan Carlos">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editApaterno"><i class="fas fa-user text-primary"></i> Apellido Paterno *</label>
+                                <input type="text" id="editApaterno" name="editApaterno" class="form-control" required placeholder="García">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editAmaterno"><i class="fas fa-user text-primary"></i> Apellido Materno</label>
+                                <input type="text" id="editAmaterno" name="editAmaterno" class="form-control" placeholder="López">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="editFechaNacimiento"><i class="fas fa-calendar text-info"></i> Fecha Nacimiento</label>
+                                <input type="date" id="editFechaNacimiento" name="editFechaNacimiento" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="form-section">
+                        <i class="fas fa-graduation-cap mr-2"></i> Información Profesional
+                    </h4>
+
+                    <!-- Información profesional -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCedulaProfesional"><i class="fas fa-certificate text-danger"></i> Cédula Profesional *</label>
+                                <input type="text" id="editCedulaProfesional" name="editCedulaProfesional" class="form-control"
+                                       required placeholder="Ej: CP-1234" maxlength="30">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editEspecialidad"><i class="fas fa-briefcase text-danger"></i> Especialidad *</label>
+                                <input type="text" id="editEspecialidad" name="editEspecialidad" class="form-control"
+                                       required placeholder="Ej: Odontología General" maxlength="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="form-section">
+                        <i class="fas fa-phone mr-2"></i> Información de Contacto
+                    </h4>
+
+                    <!-- Contacto -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="editCorreo"><i class="fas fa-envelope text-success"></i> Correo Electrónico *</label>
+                                <input type="email" id="editCorreo" name="editCorreo" class="form-control" required maxlength="100"
+                                       placeholder="ejemplo@correo.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editDireccion"><i class="fas fa-home text-warning"></i> Dirección</label>
+                                <input type="text" id="editDireccion" name="editDireccion" class="form-control" maxlength="100"
+                                       placeholder="Av. Principal #123">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editTel"><i class="fas fa-phone text-warning"></i> Teléfono</label>
+                                <input type="tel" id="editTel" name="editTel" class="form-control" pattern="[0-9]{7,8}"
+                                       placeholder="2525252">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editCel"><i class="fas fa-mobile-alt text-warning"></i> Celular *</label>
+                                <input type="tel" id="editCel" name="editCel" class="form-control"
+                                       required pattern="[6-7][0-9]{7}" placeholder="70123456">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer" style="background-color: #f8f9fa; border-top: 2px solid #e9ecef;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" name="editarDocente" class="btn btn-warning" style="min-width: 120px;">
+                        <i class="fas fa-save"></i> Actualizar
+                    </button>
+                </div>
+
+                <?php
+                    $editarDocente = new DocentesControlador();
+                    $editarDocente->EditarDocenteControlador();
+                ?>
+            </form>
+        </div>
+    </div>
+</div>
+
+<?php
+    $darDeBaja = new DocentesControlador();
+    $darDeBaja->DarDeBajaDocenteControlador();
+?>
+
 <?php
   $Footer = new FuncionesControladores();
   $Footer -> FooterControlador();
@@ -563,6 +744,107 @@ if (document.readyState === 'loading') {
 } else {
   inicializarModalAsignarUsuarioDocente();
 }
+
+// ========================================
+// FUNCIONALIDAD EDITAR DOCENTE
+// ========================================
+jQuery(document).on('click', '.btnEditarDocente', function() {
+    console.log('Botón Editar Docente clickeado');
+
+    // Capturar datos del docente
+    const docenteID = jQuery(this).attr('data-docente-id');
+    const ci = jQuery(this).attr('data-ci');
+    const complemento = jQuery(this).attr('data-complemento');
+    const exp = jQuery(this).attr('data-exp');
+    const nombre = jQuery(this).attr('data-nombre');
+    const apaterno = jQuery(this).attr('data-apaterno');
+    const amaterno = jQuery(this).attr('data-amaterno');
+    const fechaNacimiento = jQuery(this).attr('data-fecha-nacimiento');
+    const cedula = jQuery(this).attr('data-cedula');
+    const especialidad = jQuery(this).attr('data-especialidad');
+    const direccion = jQuery(this).attr('data-direccion');
+    const correo = jQuery(this).attr('data-correo');
+    const tel = jQuery(this).attr('data-tel');
+    const cel = jQuery(this).attr('data-cel');
+
+    console.log('Datos del docente:', {
+        docenteID, ci, nombre, apaterno, amaterno
+    });
+
+    // Llenar el formulario del modal
+    jQuery('#editDocenteID').val(docenteID);
+    jQuery('#editCi').val(ci);
+    jQuery('#editComplemento').val(complemento);
+    jQuery('#editExp').val(exp);
+    jQuery('#editNombre').val(nombre);
+    jQuery('#editApaterno').val(apaterno);
+    jQuery('#editAmaterno').val(amaterno);
+    jQuery('#editFechaNacimiento').val(fechaNacimiento);
+    jQuery('#editCedulaProfesional').val(cedula);
+    jQuery('#editEspecialidad').val(especialidad);
+    jQuery('#editDireccion').val(direccion);
+    jQuery('#editCorreo').val(correo);
+    jQuery('#editTel').val(tel);
+    jQuery('#editCel').val(cel);
+
+    console.log('✓ Modal de edición llenado con datos del docente');
+});
+
+// ========================================
+// FUNCIONALIDAD DAR DE BAJA DOCENTE
+// ========================================
+jQuery(document).on('click', '.btnDarDeBaja', function() {
+    const docenteID = jQuery(this).attr('data-docente-id');
+    const nombreCompleto = jQuery(this).attr('data-nombre-completo');
+
+    console.log('Solicitud de baja para docente:', docenteID, nombreCompleto);
+
+    swal({
+        title: '¿Dar de baja al docente?',
+        text: 'Docente: ' + nombreCompleto + '\n\nNOTA: Si el docente tiene módulos asignados, no se podrá dar de baja.',
+        icon: 'warning',
+        buttons: {
+            cancel: {
+                text: 'Cancelar',
+                value: null,
+                visible: true,
+                className: 'btn btn-secondary',
+                closeModal: true
+            },
+            confirm: {
+                text: 'Sí, dar de baja',
+                value: true,
+                visible: true,
+                className: 'btn btn-danger',
+                closeModal: false
+            }
+        },
+        dangerMode: true
+    }).then((willDelete) => {
+        if (willDelete) {
+            // Crear formulario y enviarlo
+            const form = jQuery('<form>', {
+                method: 'POST',
+                action: ''
+            });
+
+            form.append(jQuery('<input>', {
+                type: 'hidden',
+                name: 'darDeBajaDocente',
+                value: '1'
+            }));
+
+            form.append(jQuery('<input>', {
+                type: 'hidden',
+                name: 'docenteID',
+                value: docenteID
+            }));
+
+            jQuery('body').append(form);
+            form.submit();
+        }
+    });
+});
 
 // Validación del formulario de nuevo docente
 jQuery(document).ready(function() {

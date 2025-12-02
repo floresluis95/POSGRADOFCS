@@ -66,12 +66,14 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                                         $codigo = htmlspecialchars($prog['Codigo'] ?? '', ENT_QUOTES);
                                         $grado = htmlspecialchars($prog['GradoAcademico'] ?? '', ENT_QUOTES);
                                         $modulos = htmlspecialchars($prog['Modulos'] ?? 0, ENT_QUOTES);
+                                        $costo = htmlspecialchars($prog['Costo'] ?? 0, ENT_QUOTES);
 
                                         echo '<option value="' . $programaID . '"
                                                     data-nombre="' . $nombrePrograma . '"
                                                     data-codigo="' . $codigo . '"
                                                     data-grado="' . $grado . '"
-                                                    data-modulos="' . $modulos . '">';
+                                                    data-modulos="' . $modulos . '"
+                                                    data-costo="' . $costo . '">';
                                         echo $nombrePrograma . ' - ' . $grado . ' (' . $codigo . ')';
                                         echo '</option>';
                                     }
@@ -178,7 +180,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
         <div class="row g-4">
 
             <!-- Grado -->
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="label-modern d-flex align-items-center mb-1">
                     <i class="bi bi-mortarboard fs-4 me-2 text-primary"></i>
                     Grado
@@ -189,7 +191,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
             </div>
 
             <!-- Número de módulos resaltado -->
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="label-modern d-flex align-items-center mb-1">
                     <i class="bi bi-layers fs-4 me-2 text-success"></i>
                     N° de Módulos
@@ -197,6 +199,17 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                 <span id="infoNumModulosPrograma" class="modulo-highlight">
                     [0]
                 </span>
+            </div>
+
+            <!-- Costo Total del Programa -->
+            <div class="col-md-4">
+                <div class="label-modern d-flex align-items-center mb-1">
+                    <i class="bi bi-cash-coin fs-4 me-2 text-warning"></i>
+                    Costo Total
+                </div>
+                <div class="value-modern text-warning" id="infoCostoPrograma" style="font-size: 1.8rem; font-weight: 700;">
+                    Bs. 0.00
+                </div>
             </div>
 
         </div>
@@ -242,11 +255,12 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                                         <th class="text-center" style="color: white; width: 120px;">ACCIONES</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <?php
-                                    $listar = new ModuloControlador();
-                                    $listar->ListarModulosPorProgramaControlador();
-                                    ?>
+                                <tbody id="tablaModulosBody">
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted">
+                                            <i class="fa fa-hand-pointer-o"></i> Seleccione un programa para ver los módulos registrados
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -276,14 +290,17 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                     <!-- Información del Programa -->
                     <div class="alert alert-info">
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <strong>Programa:</strong> <span id="modalNombrePrograma"></span>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <strong>Código:</strong> <span id="modalCodigoPrograma"></span>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <strong>N° Módulos:</strong> <span id="modalNumModulos" class="badge badge-primary"></span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Costo Total:</strong> <span id="modalCostoTotal" class="badge badge-success" style="font-size: 14px;"></span>
                             </div>
                         </div>
                     </div>
@@ -539,30 +556,37 @@ $(document).ready(function() {
             const codigoPrograma = selectedOption.data('codigo');
             const gradoPrograma = selectedOption.data('grado');
             const numModulos = parseInt(selectedOption.data('modulos')) || 0;
+            const costoTotal = parseFloat(selectedOption.data('costo')) || 0;
 
             console.log('Datos del programa:', {
                 id: programaID,
                 nombre: nombrePrograma,
                 codigo: codigoPrograma,
                 grado: gradoPrograma,
-                modulos: numModulos
+                modulos: numModulos,
+                costo: costoTotal
             });
 
             // Actualizar información en la interfaz
             $('#infoNombrePrograma').text(nombrePrograma || 'N/A');
             $('#infoGradoPrograma').text(gradoPrograma || 'N/A');
             $('#infoNumModulosPrograma').text(numModulos);
+            $('#infoCostoPrograma').text('Bs. ' + costoTotal.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
 
             // Guardar datos en el botón para usarlos en el modal
             $('#btnAbrirModalModulos').data('programaid', programaID);
             $('#btnAbrirModalModulos').data('nombre', nombrePrograma);
             $('#btnAbrirModalModulos').data('codigo', codigoPrograma);
             $('#btnAbrirModalModulos').data('modulos', numModulos);
+            $('#btnAbrirModalModulos').data('costo', costoTotal);
 
             // Habilitar botón y mostrar info
             console.log('Habilitando botón "Agregar Módulos"');
             $('#btnAbrirModalModulos').prop('disabled', false);
             $('#infoProgramaSeleccionadoNuevo').slideDown(300);
+
+            // Cargar módulos del programa en la tabla
+            cargarTablaModulos(programaID);
 
             console.log('✓ Programa seleccionado correctamente');
 
@@ -586,8 +610,89 @@ $(document).ready(function() {
         console.log('>>> Evento select2:clear disparado');
         $('#infoProgramaSeleccionadoNuevo').hide();
         $('#btnAbrirModalModulos').prop('disabled', true);
+
+        // Limpiar tabla y volver al mensaje inicial
+        $('#tablaModulosBody').html('<tr><td colspan="9" class="text-center text-muted"><i class="fa fa-hand-pointer-o"></i> Seleccione un programa para ver los módulos registrados</td></tr>');
+
+        // Destruir DataTable si existe
+        if ($.fn.DataTable.isDataTable('#tablaModulos')) {
+            $('#tablaModulos').DataTable().destroy();
+        }
     });
     console.log('✓ Eventos de Select2 registrados');
+
+    // ========================================
+    // FUNCIÓN PARA CARGAR TABLA DE MÓDULOS VÍA AJAX
+    // ========================================
+    function cargarTablaModulos(programaID) {
+        console.log('>>> Cargando módulos del programa:', programaID);
+
+        // Destruir DataTable si existe
+        if ($.fn.DataTable.isDataTable('#tablaModulos')) {
+            $('#tablaModulos').DataTable().destroy();
+        }
+
+        // Mostrar mensaje de carga
+        $('#tablaModulosBody').html('<tr><td colspan="9" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando módulos...</td></tr>');
+
+        // Petición AJAX
+        $.ajax({
+            url: 'ajax/modulo.ajax.php',
+            type: 'POST',
+            data: {
+                accion: 'cargarTablaModulos',
+                programaIDFiltro: programaID
+            },
+            success: function(response) {
+                console.log('✓ Módulos cargados correctamente');
+                $('#tablaModulosBody').html(response);
+
+                // Verificar si hay datos reales (sin colspan)
+                const $firstRow = $('#tablaModulosBody tr:first');
+                const hasColspan = $firstRow.find('td[colspan]').length > 0;
+
+                if (!hasColspan) {
+                    // Inicializar DataTable solo si hay datos
+                    try {
+                        $('#tablaModulos').DataTable({
+                            language: {
+                                processing: "Procesando...",
+                                search: "Buscar:",
+                                lengthMenu: "Mostrar _MENU_ registros",
+                                info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                                infoEmpty: "Mostrando 0 a 0 de 0 registros",
+                                infoFiltered: "(filtrado de _MAX_ registros totales)",
+                                infoPostFix: "",
+                                loadingRecords: "Cargando...",
+                                zeroRecords: "No se encontraron registros coincidentes",
+                                emptyTable: "No hay datos disponibles en la tabla",
+                                paginate: {
+                                    first: "Primero",
+                                    previous: "Anterior",
+                                    next: "Siguiente",
+                                    last: "Último"
+                                },
+                                aria: {
+                                    sortAscending: ": activar para ordenar la columna ascendente",
+                                    sortDescending: ": activar para ordenar la columna descendente"
+                                }
+                            },
+                            order: [[0, 'asc']],
+                            pageLength: 25,
+                            responsive: true
+                        });
+                        console.log('✓ DataTable inicializado después de cargar módulos');
+                    } catch (error) {
+                        console.error('✗ Error al inicializar DataTable:', error);
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('✗ Error al cargar módulos:', error);
+                $('#tablaModulosBody').html('<tr><td colspan="9" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los módulos</td></tr>');
+            }
+        });
+    }
 
     // ========================================
     // ABRIR MODAL PARA REGISTRAR MÓDULOS
@@ -599,12 +704,14 @@ $(document).ready(function() {
         const nombrePrograma = $(this).data('nombre');
         const codigoPrograma = $(this).data('codigo');
         const numModulos = parseInt($(this).data('modulos'));
+        const costoTotal = parseFloat($(this).data('costo')) || 0;
 
         console.log('Datos del programa para el modal:', {
             programaID,
             nombrePrograma,
             codigoPrograma,
-            numModulos
+            numModulos,
+            costoTotal
         });
 
         if (numModulos <= 0) {
@@ -617,13 +724,14 @@ $(document).ready(function() {
         $('#modalNombrePrograma').text(nombrePrograma);
         $('#modalCodigoPrograma').text(codigoPrograma);
         $('#modalNumModulos').text(numModulos);
+        $('#modalCostoTotal').text('Bs. ' + costoTotal.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
         $('#modalProgramaID').val(programaID);
         $('#modalTotalModulos').val(numModulos);
 
         console.log('Generando campos para', numModulos, 'módulos...');
 
-        // Generar campos de módulos
-        generarCamposModulosModal(numModulos);
+        // Generar campos de módulos con el costo repartido
+        generarCamposModulosModal(numModulos, costoTotal);
 
         console.log('Abriendo modal...');
 
@@ -661,8 +769,14 @@ $(document).ready(function() {
     // ========================================
     // GENERAR CAMPOS DINÁMICOS EN EL MODAL
     // ========================================
-    function generarCamposModulosModal(cantidad) {
+    function generarCamposModulosModal(cantidad, costoTotalPrograma) {
         let html = '<div class="row">';
+
+        // Calcular el costo por módulo (repartir equitativamente)
+        const costoPorModulo = cantidad > 0 ? Math.round(costoTotalPrograma / cantidad) : 0;
+        console.log('Costo total del programa:', costoTotalPrograma);
+        console.log('Cantidad de módulos:', cantidad);
+        console.log('Costo por módulo calculado:', costoPorModulo);
 
         // Generar opciones de docentes para el select
         let optionsDocentes = '<option value="">-- Seleccionar Docente (Opcional) --</option>';
@@ -705,19 +819,19 @@ $(document).ready(function() {
                                        class="form-control form-control-sm"
                                        name="nombremodulo_${i}"
                                        placeholder="Ej: Metodología de Investigación"
-                                       maxlength="100"
-                                       required>
+                                       maxlength="100">
                             </div>
                             <div class="form-group">
                                 <label class="mb-1"><strong>Costo del Módulo (Bs.):</strong></label>
                                 <input type="number"
                                        class="form-control form-control-sm"
                                        name="costomodulo_${i}"
+                                       value="${costoPorModulo}"
                                        placeholder="Ej: 500"
                                        min="0"
                                        step="1">
                                 <small class="form-text text-muted">
-                                    <i class="fa fa-money"></i> Costo en bolivianos (0 si no aplica)
+                                    <i class="fa fa-money"></i> Costo calculado automáticamente (puede modificar)
                                 </small>
                             </div>
                             <div class="form-group mb-0">
@@ -754,24 +868,27 @@ $(document).ready(function() {
         e.preventDefault();
 
         const numModulos = parseInt($('#modalTotalModulos').val());
-        let modulosValidos = 0;
+        let modulosConNombre = 0;
 
+        // Contar cuántos módulos tienen nombre
         for (let i = 1; i <= numModulos; i++) {
             const nombre = $(`input[name="nombremodulo_${i}"]`).val();
-            const codigo = $(`input[name="codigomodulo_${i}"]`).val();
-
-            if (nombre && nombre.trim() !== '' && codigo && codigo.length > 0) {
-                modulosValidos++;
+            if (nombre && nombre.trim() !== '') {
+                modulosConNombre++;
             }
         }
 
-        if (modulosValidos === 0) {
-            alert('Debe completar al menos un módulo');
+        if (modulosConNombre === 0) {
+            alert('Debe completar el nombre de al menos un módulo');
             return false;
         }
 
         // Confirmar
-        const confirmacion = confirm(`¿Desea registrar ${modulosValidos} módulos para este programa?`);
+        const mensaje = modulosConNombre === 1
+            ? '¿Desea registrar 1 módulo para este programa?'
+            : `¿Desea registrar ${modulosConNombre} módulos para este programa?`;
+
+        const confirmacion = confirm(mensaje);
 
         if (confirmacion) {
             // Enviar formulario
@@ -870,56 +987,11 @@ $(document).ready(function() {
     });
 
     // ========================================
-    // INICIALIZAR DATATABLE
+    // NOTA: DataTable se inicializa dinámicamente
     // ========================================
-    console.log('Inicializando DataTable...');
-
-    // Verificar si la tabla tiene filas válidas (sin colspan)
-    const $tbody = $('#tablaModulos tbody');
-    const $firstRow = $tbody.find('tr:first');
-    const hasColspan = $firstRow.find('td[colspan]').length > 0;
-
-    console.log('Tabla tiene colspan (vacía):', hasColspan);
-
-    if (hasColspan) {
-        // Si la tabla está vacía (tiene colspan), no inicializar DataTables
-        console.log('⚠ Tabla vacía detectada. DataTable no se inicializará.');
-        console.log('ℹ Registra módulos para ver la funcionalidad de búsqueda y filtrado.');
-    } else {
-        // Solo inicializar DataTable si hay datos reales
-        try {
-            $('#tablaModulos').DataTable({
-                language: {
-                    processing: "Procesando...",
-                    search: "Buscar:",
-                    lengthMenu: "Mostrar _MENU_ registros",
-                    info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-                    infoEmpty: "Mostrando 0 a 0 de 0 registros",
-                    infoFiltered: "(filtrado de _MAX_ registros totales)",
-                    infoPostFix: "",
-                    loadingRecords: "Cargando...",
-                    zeroRecords: "No se encontraron registros coincidentes",
-                    emptyTable: "No hay datos disponibles en la tabla",
-                    paginate: {
-                        first: "Primero",
-                        previous: "Anterior",
-                        next: "Siguiente",
-                        last: "Último"
-                    },
-                    aria: {
-                        sortAscending: ": activar para ordenar la columna ascendente",
-                        sortDescending: ": activar para ordenar la columna descendente"
-                    }
-                },
-                order: [[0, 'desc']],
-                pageLength: 25,
-                responsive: true
-            });
-            console.log('✓ DataTable inicializado correctamente');
-        } catch (error) {
-            console.error('✗ Error al inicializar DataTable:', error);
-        }
-    }
+    // El DataTable se inicializa automáticamente después de cargar
+    // los módulos vía AJAX cuando se selecciona un programa.
+    // No es necesario inicializarlo aquí.
 
     console.log('=== SISTEMA DE MÓDULOS LISTO ===');
 });

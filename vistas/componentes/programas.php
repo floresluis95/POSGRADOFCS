@@ -235,6 +235,12 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                   data: { idprograma: idprograma },
                   dataType: "json",
                   success: function(respuesta) {
+                      // Formatear costos a 2 decimales
+                      var costoFormateado = parseFloat(respuesta.Costo).toFixed(2);
+                      var costoMatriculaFormateado = respuesta.CostoMatricula
+                          ? parseFloat(respuesta.CostoMatricula).toFixed(2)
+                          : 'No especificado';
+
                       // Mostrar en el panel o modal
                       $("#detalleNombre").text(respuesta.NombrePrograma);
                       $("#detalleCodigo").text(respuesta.Codigo);
@@ -243,8 +249,8 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                       $("#detalleModulos").text(respuesta.Modulos);
                       $("#detalleFecha").text(respuesta.FechaInicio);
                       $("#detalleSede").text(respuesta.Sede);
-                      $("#detalleCosto").text(respuesta.Costo);
-                      $("#detalleCostoMatricula").text(respuesta.CostoMatricula || 'No especificado');
+                      $("#detalleCosto").text(costoFormateado);
+                      $("#detalleCostoMatricula").text(costoMatriculaFormateado);
                       $("#detalleDetalle").text(respuesta.Detalle);
 
                       // Abrir modal si no se abre automáticamente
@@ -779,6 +785,10 @@ $(document).on('click', '.btnEditarPrograma', function() {
     var costomatricula = $(this).data('costomatricula');
     var detalle = $(this).data('detalle');
 
+    // Formatear costos a 2 decimales
+    var costoFormateado = parseFloat(costo).toFixed(2);
+    var costoMatriculaFormateado = costomatricula ? parseFloat(costomatricula).toFixed(2) : '';
+
     $('#ProgramaIDEditar').val(idprograma);
     $('#NombreProgramaEditar').val(nombre);
     $('#GradoAcademicoEditar').val(grado);
@@ -786,8 +796,8 @@ $(document).on('click', '.btnEditarPrograma', function() {
     $('#ModulosEditar').val(modulos);
     $('#FechaInicioEditar').val(fecha);
     $('#SedeEditar').val(sede);
-    $('#CostoEditar').val(costo);
-    $('#CostoMatriculaEditar').val(costomatricula);
+    $('#CostoEditar').val(costoFormateado);
+    $('#CostoMatriculaEditar').val(costoMatriculaFormateado);
     $('#DetalleEditar').val(detalle);
 });
 

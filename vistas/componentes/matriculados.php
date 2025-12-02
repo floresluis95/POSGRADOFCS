@@ -34,6 +34,51 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
             </div>
         </div>
 
+        <!-- Sección de Filtro por Programa -->
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="kt-portlet">
+                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
+                        <div class="kt-portlet__head-label">
+                            <h4 style="color: white; margin: 0;">
+                                <i class="fa fa-filter"></i> FILTRAR POR PROGRAMA
+                            </h4>
+                        </div>
+                    </div>
+
+                    <div class="kt-portlet__body">
+                        <div class="form-group row">
+                            <label class="col-lg-2 col-form-label"><strong>SELECCIONAR PROGRAMA:</strong></label>
+                            <div class="col-lg-8">
+                                <select class="form-control select2-programa" id="selectProgramaFiltro" style="width: 100%;">
+                                    <option value="">Todos los programas...</option>
+                                    <?php
+                                    require_once 'modelos/programa.modelo.php';
+                                    $programas = ProgramasModelos::ListaProgramaModelo();
+                                    foreach ($programas as $prog) {
+                                        $programaID = htmlspecialchars($prog['ProgramaID'] ?? '', ENT_QUOTES);
+                                        $nombrePrograma = htmlspecialchars($prog['NombrePrograma'] ?? '', ENT_QUOTES);
+                                        $codigo = htmlspecialchars($prog['Codigo'] ?? '', ENT_QUOTES);
+                                        $grado = htmlspecialchars($prog['GradoAcademico'] ?? '', ENT_QUOTES);
+
+                                        echo '<option value="' . $programaID . '">';
+                                        echo $nombrePrograma . ' - ' . $grado . ' (' . $codigo . ')';
+                                        echo '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="col-lg-2">
+                                <button type="button" class="btn btn-secondary btn-block" id="btnLimpiarFiltro">
+                                    <i class="fa fa-times"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Tabla de Estudiantes Matriculados -->
         <div class="row">
             <div class="col-lg-12">
@@ -70,7 +115,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                         <th class="text-center" style="color: white; width: 150px;">ACCIONES</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="tablaMatriculadosBody">
                                     <?php
                                         $listar = new InscripcionModuloControladores();
                                         $listar->ListarEstudiantesMatriculadosControlador();
@@ -356,6 +401,8 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
 <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="vistas/recursos/assets/js/scripts/inscripcionmodulo.js?v=<?php echo time(); ?>"></script>
 
 <style>
@@ -663,7 +710,153 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     .modulo-card.seleccionable {
         cursor: pointer;
     }
+
+    /* Estilos para Select2 */
+    .select2-container {
+        width: 100% !important;
+        display: block !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+        height: 38px !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        background-color: #fff !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 36px !important;
+        padding-left: 12px !important;
+        padding-right: 28px !important;
+        color: #495057 !important;
+        font-size: 14px !important;
+        display: block !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+        right: 5px !important;
+        top: 1px !important;
+    }
+
+    .select2-dropdown {
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+        background-color: #fff !important;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #667eea !important;
+        color: white !important;
+    }
 </style>
 
 <!-- Script para selección múltiple de módulos -->
 <script src="vistas/recursos/assets/js/scripts/matriculados-modulos-multiple.js?v=<?php echo time(); ?>"></script>
+
+<!-- Script para filtro por programa -->
+<script>
+$(document).ready(function() {
+    console.log('=== FILTRO DE MATRICULADOS POR PROGRAMA ===');
+
+    // Inicializar Select2
+    $('.select2-programa').select2({
+        placeholder: 'Todos los programas...',
+        allowClear: true,
+        language: {
+            noResults: function() {
+                return "No se encontraron resultados";
+            },
+            searching: function() {
+                return "Buscando...";
+            }
+        }
+    });
+
+    // Función para cargar estudiantes filtrados por programa
+    function cargarEstudiantes(programaID) {
+        console.log('>>> Cargando estudiantes. ProgramaID:', programaID || 'TODOS');
+
+        // Destruir DataTable si existe
+        if ($.fn.DataTable.isDataTable('#tablaMatriculados')) {
+            $('#tablaMatriculados').DataTable().destroy();
+        }
+
+        // Mostrar mensaje de carga
+        $('#tablaMatriculadosBody').html('<tr><td colspan="10" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando estudiantes...</td></tr>');
+
+        // Petición AJAX
+        $.ajax({
+            url: 'ajax/inscripcionmodulo.ajax.php',
+            type: 'POST',
+            data: {
+                accion: 'cargarTablaMatriculados',
+                programaIDFiltro: programaID || ''
+            },
+            success: function(response) {
+                console.log('✓ Estudiantes cargados correctamente');
+                $('#tablaMatriculadosBody').html(response);
+
+                // Verificar si hay datos reales (sin colspan)
+                const $firstRow = $('#tablaMatriculadosBody tr:first');
+                const hasColspan = $firstRow.find('td[colspan]').length > 0;
+
+                if (!hasColspan) {
+                    // Inicializar DataTable solo si hay datos
+                    try {
+                        $('#tablaMatriculados').DataTable({
+                            language: {
+                                processing: "Procesando...",
+                                search: "Buscar:",
+                                lengthMenu: "Mostrar _MENU_ registros",
+                                info: "Mostrando _START_ a _END_ de _TOTAL_ estudiantes",
+                                infoEmpty: "Mostrando 0 a 0 de 0 estudiantes",
+                                infoFiltered: "(filtrado de _MAX_ estudiantes totales)",
+                                infoPostFix: "",
+                                loadingRecords: "Cargando...",
+                                zeroRecords: "No se encontraron estudiantes",
+                                emptyTable: "No hay estudiantes matriculados",
+                                paginate: {
+                                    first: "Primero",
+                                    previous: "Anterior",
+                                    next: "Siguiente",
+                                    last: "Último"
+                                }
+                            },
+                            order: [[0, 'asc']],
+                            pageLength: 25,
+                            responsive: true
+                        });
+                        console.log('✓ DataTable inicializado');
+                    } catch (error) {
+                        console.error('✗ Error al inicializar DataTable:', error);
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('✗ Error al cargar estudiantes:', error);
+                $('#tablaMatriculadosBody').html('<tr><td colspan="10" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los estudiantes</td></tr>');
+            }
+        });
+    }
+
+    // Evento al cambiar el programa
+    $('#selectProgramaFiltro').on('change', function() {
+        const programaID = $(this).val();
+        console.log('>>> Programa seleccionado:', programaID);
+        cargarEstudiantes(programaID);
+    });
+
+    // Evento al limpiar filtro
+    $('#btnLimpiarFiltro').on('click', function() {
+        console.log('>>> Limpiando filtro');
+        $('#selectProgramaFiltro').val('').trigger('change');
+    });
+
+    console.log('=== FILTRO INICIALIZADO ===');
+});
+</script>

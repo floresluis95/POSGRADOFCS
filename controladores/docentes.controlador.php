@@ -51,11 +51,33 @@ class DocentesControlador
                 <td class="text-center">' . $estadoUsuarioBadge . '</td>
                 <td class="text-center">
                     ' . $botonUsuario . '
-                    <button type="button" class="btn btn-info btn-sm" title="Ver detalle">
-                        <i class="bi bi-card-checklist"></i>
-                    </button>
-                    <button type="button" class="btn btn-warning btn-sm" title="Editar">
+                    <button type="button"
+                            class="btn btn-warning btn-sm btnEditarDocente"
+                            title="Editar"
+                            data-toggle="modal"
+                            data-target="#ModalEditarDocente"
+                            data-docente-id="' . $Docente['DocenteID'] . '"
+                            data-ci="' . $Docente['Ci'] . '"
+                            data-complemento="' . htmlspecialchars($Docente['Complemento']) . '"
+                            data-exp="' . htmlspecialchars($Docente['Exp']) . '"
+                            data-nombre="' . htmlspecialchars($Docente['Nombre']) . '"
+                            data-apaterno="' . htmlspecialchars($Docente['Apaterno']) . '"
+                            data-amaterno="' . htmlspecialchars($Docente['Amaterno']) . '"
+                            data-fecha-nacimiento="' . htmlspecialchars($Docente['FechaNacimiento']) . '"
+                            data-cedula="' . htmlspecialchars($Docente['CedulaProfesional']) . '"
+                            data-especialidad="' . htmlspecialchars($Docente['Especialidad']) . '"
+                            data-direccion="' . htmlspecialchars($Docente['Direccion']) . '"
+                            data-correo="' . htmlspecialchars($Docente['Correo']) . '"
+                            data-tel="' . htmlspecialchars($Docente['Tel']) . '"
+                            data-cel="' . htmlspecialchars($Docente['Cel']) . '">
                         <i class="bi bi-pencil-fill"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-danger btn-sm btnDarDeBaja"
+                            title="Dar de baja"
+                            data-docente-id="' . $Docente['DocenteID'] . '"
+                            data-nombre-completo="' . htmlspecialchars($nombreCompleto) . '">
+                        <i class="fa fa-ban"></i>
                     </button>
                 </td>
             </tr>';
@@ -129,5 +151,92 @@ class DocentesControlador
     }
     }
   
-    
+
+    /**
+     * Editar Docente
+     */
+    public function EditarDocenteControlador()
+    {
+        if (isset($_POST["editarDocente"])) {
+            $DatosDocente = array(
+                "Ci"                => htmlspecialchars(trim($_POST['editCi'])),
+                "Complemento"       => htmlspecialchars(trim($_POST['editComplemento'])),
+                "Exp"               => htmlspecialchars(trim($_POST['editExp'])),
+                "Nombre"            => htmlspecialchars(trim($_POST['editNombre'])),
+                "Apaterno"          => htmlspecialchars(trim($_POST['editApaterno'])),
+                "Amaterno"          => htmlspecialchars(trim($_POST['editAmaterno'])),
+                "FechaNacimiento"   => htmlspecialchars(trim($_POST['editFechaNacimiento'])),
+                "CedulaProfesional" => htmlspecialchars(trim($_POST['editCedulaProfesional'])),
+                "Especialidad"      => htmlspecialchars(trim($_POST['editEspecialidad'])),
+                "Direccion"         => htmlspecialchars(trim($_POST['editDireccion'])),
+                "Correo"            => htmlspecialchars(trim($_POST['editCorreo'])),
+                "Tel"               => htmlspecialchars(trim($_POST['editTel'])),
+                "Cel"               => htmlspecialchars(trim($_POST['editCel']))
+            );
+
+            $resultado = DocentesModelo::EditarDocenteModelo($DatosDocente);
+
+            if ($resultado == 'exitoso') {
+                echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                      <script>
+                      swal("EXITOSO!", "Datos del docente actualizados correctamente", "success")
+                      .then(function () {
+                          location.href="docentes";
+                      });
+                      </script>';
+            } else {
+                echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                      <script>
+                      swal("ERROR!", "No se pudo actualizar los datos del docente", "error")
+                      .then(function () {
+                          location.href="docentes";
+                      });
+                      </script>';
+            }
+        }
+    }
+
+    /**
+     * Dar de baja a Docente (solo si no tiene módulos asignados)
+     */
+    public function DarDeBajaDocenteControlador()
+    {
+        if (isset($_POST["darDeBajaDocente"])) {
+            $docenteID = intval($_POST['docenteID']);
+
+            // Verificar si tiene módulos asignados
+            $tieneModulos = DocentesModelo::VerificarModulosAsignadosModelo($docenteID);
+
+            if ($tieneModulos) {
+                echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                      <script>
+                      swal("NO SE PUEDE DAR DE BAJA!", "Este docente tiene módulos asignados actualmente. Debe reasignar o desactivar los módulos primero.", "warning")
+                      .then(function () {
+                          location.href="docentes";
+                      });
+                      </script>';
+            } else {
+                $resultado = DocentesModelo::DarDeBajaDocenteModelo($docenteID);
+
+                if ($resultado == 'exitoso') {
+                    echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                          <script>
+                          swal("EXITOSO!", "Docente dado de baja correctamente", "success")
+                          .then(function () {
+                              location.href="docentes";
+                          });
+                          </script>';
+                } else {
+                    echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                          <script>
+                          swal("ERROR!", "No se pudo dar de baja al docente", "error")
+                          .then(function () {
+                              location.href="docentes";
+                          });
+                          </script>';
+                }
+            }
+        }
+    }
+
 }

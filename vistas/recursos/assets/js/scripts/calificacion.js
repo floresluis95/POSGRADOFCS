@@ -557,11 +557,23 @@ function enviarCalificaciones(calificaciones) {
                     type: 'success',
                     title: 'Éxito',
                     text: 'Calificaciones guardadas correctamente',
-                    timer: 2000,
+                    timer: 1500,
                     showConfirmButton: false
                 }).then(function() {
-                    // Recargar estudiantes para mostrar datos actualizados
-                    cargarEstudiantes(asignacionSeleccionada.moduloID, asignacionSeleccionada.programaID);
+                    // Cerrar el panel de registro de notas (paso 3)
+                    $('#paso3-container').slideUp(300, function() {
+                        // Después de cerrar, volver al paso 2
+                        $('#paso2-container').slideDown(300);
+
+                        // Recargar las asignaciones para mostrar el estado actualizado
+                        if (docenteSeleccionado && docenteSeleccionado.id) {
+                            cargarAsignacionesDocente(docenteSeleccionado.id);
+                        }
+                    });
+
+                    // Limpiar datos del módulo actual
+                    asignacionSeleccionada = null;
+                    estudiantesActuales = [];
                 });
             } else {
                 Swal.fire({

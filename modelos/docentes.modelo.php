@@ -141,4 +141,31 @@
         $stmt->bindParam(":Ci", $Ci, PDO::PARAM_STR);
         return $stmt->execute() ? "exitoso" : "error";
     }
+
+    /* VERIFICAR SI EL DOCENTE TIENE MÓDULOS ASIGNADOS */
+    public static function VerificarModulosAsignadosModelo($DocenteID)
+    {
+        $stmt = Conexion::Conectar()->prepare("SELECT COUNT(*) as total FROM modulos WHERE DocenteID = :DocenteID AND estadomodulo = 'ACTIVO'");
+        $stmt->bindParam(":DocenteID", $DocenteID, PDO::PARAM_INT);
+        $stmt->execute();
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $resultado['total'] > 0;
+    }
+
+    /* OBTENER DOCENTE POR ID */
+    public static function ObtenerDocentePorIDModelo($DocenteID)
+    {
+        $stmt = Conexion::Conectar()->prepare("SELECT * FROM docente WHERE DocenteID = :DocenteID");
+        $stmt->bindParam(":DocenteID", $DocenteID, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /* DAR DE BAJA DOCENTE (CAMBIAR ESTADO) */
+    public static function DarDeBajaDocenteModelo($DocenteID)
+    {
+        $stmt = Conexion::Conectar()->prepare("UPDATE docente SET Estado = 0 WHERE DocenteID = :DocenteID");
+        $stmt->bindParam(":DocenteID", $DocenteID, PDO::PARAM_INT);
+        return $stmt->execute() ? "exitoso" : "error";
+    }
   }
