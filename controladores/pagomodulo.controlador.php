@@ -97,8 +97,16 @@ class PagoModuloControlador
                 echo '
                 <script src="vistas/recursos/sweetalert.min.js"></script>
                 <script>
-                swal("EXITOSO!", "' . $mensaje . '", "success")
-                .then(function () {
+                swal("EXITOSO!", "' . $mensaje . '\\n\\n¿Desea ver el recibo de pago?", "success", {
+                    buttons: {
+                        cancel: "No, volver",
+                        confirm: "Sí, ver recibo"
+                    }
+                })
+                .then(function (value) {
+                    if (value) {
+                        window.open("vistas/componentes/recibo-pago-modulos.php?idinscripcion=' . $idinscripcion . '", "_blank");
+                    }
                     location.href="matriculados";
                 });
                 </script>';

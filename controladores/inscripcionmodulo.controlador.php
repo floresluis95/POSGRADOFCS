@@ -73,6 +73,9 @@ class InscripcionModuloControladores
                                     <i class="fa fa-list text-success"></i> Ver Módulos Inscritos
                                 </a>
                                 <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="vistas/componentes/recibo-pago-modulos.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
+                                    <i class="fa fa-file-text text-success"></i> Ver Recibo de Pagos
+                                </a>
                                 <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfestudiante.php?id=' . $estudiante['EstudianteID'] . '" target="_blank">
                                     <i class="fa fa-print text-warning"></i> Imprimir Información
                                 </a>

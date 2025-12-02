@@ -9,6 +9,76 @@ require_once 'conexion.modelo.php';
 class PagoModuloModelo
 {
     /**
+     * Distribuir el costo total del programa entre sus módulos activos
+     * Si el programa tiene 2 o más módulos, divide el costo equitativamente
+     * @param int $programaID
+     * @return bool
+     */
+    public static function DistribuirCostoProgramaEnModulosModelo($programaID)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+            $pdo->beginTransaction();
+
+            // 1. Obtener el costo total del programa
+            $stmtPrograma = $pdo->prepare(
+                "SELECT CostoMatricula FROM programa WHERE ProgramaID = :programaID"
+            );
+            $stmtPrograma->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmtPrograma->execute();
+            $programa = $stmtPrograma->fetch(PDO::FETCH_ASSOC);
+
+            if (!$programa || !isset($programa['CostoMatricula'])) {
+                $pdo->rollBack();
+                error_log("Programa no encontrado o sin costo: " . $programaID);
+                return false;
+            }
+
+            $costoTotalPrograma = floatval($programa['CostoMatricula']);
+
+            // 2. Contar módulos activos del programa
+            $stmtCount = $pdo->prepare(
+                "SELECT COUNT(*) as total FROM modulos
+                 WHERE ProgramaId = :programaID AND estadomodulo = 'ACTIVO'"
+            );
+            $stmtCount->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmtCount->execute();
+            $count = $stmtCount->fetch(PDO::FETCH_ASSOC);
+            $totalModulos = intval($count['total']);
+
+            if ($totalModulos === 0) {
+                $pdo->rollBack();
+                error_log("No hay módulos activos para el programa: " . $programaID);
+                return false;
+            }
+
+            // 3. Calcular costo por módulo
+            $costoPorModulo = $costoTotalPrograma / $totalModulos;
+
+            // 4. Actualizar todos los módulos con el costo distribuido
+            $stmtUpdate = $pdo->prepare(
+                "UPDATE modulos
+                 SET costomodulo = :costo
+                 WHERE ProgramaId = :programaID AND estadomodulo = 'ACTIVO'"
+            );
+            $stmtUpdate->bindParam(":costo", $costoPorModulo, PDO::PARAM_STR);
+            $stmtUpdate->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmtUpdate->execute();
+
+            $pdo->commit();
+
+            error_log("Costos distribuidos exitosamente: Programa ID $programaID, $totalModulos módulos, Bs. $costoPorModulo c/u");
+            return true;
+
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("Error en DistribuirCostoProgramaEnModulosModelo: " . $e->getMessage());
+            return false;
+        }
+    }
+    /**
      * Obtener módulos de un programa con estado de pago por inscripción
      * Usa la tabla modulos (con 's') que tiene la estructura: ProgramaId, nombremodulo, codigomodulo
      * @param int $programaID
@@ -17,6 +87,9 @@ class PagoModuloModelo
      */
     public static function ObtenerModulosConEstadoPagoModelo($programaID, $idinscripcion)
     {
+        // Primero distribuir los costos del programa entre sus módulos
+        self::DistribuirCostoProgramaEnModulosModelo($programaID);
+
         try {
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT

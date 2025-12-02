@@ -165,16 +165,38 @@ class CalificacionModelo
             $calificaciones = $datos['calificaciones'];
             $fechaRegistro = date('Y-m-d');
 
+            // Obtener el ID del usuario actual de la sesión
+            $usuarioRegistroID = null;
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            // El sistema guarda $_SESSION['Usuario'] pero no $_SESSION['ID']
+            // Necesitamos obtener el ID basándonos en el Usuario
+            if (isset($_SESSION['Usuario'])) {
+                $stmtUser = $pdo->prepare("SELECT ID FROM usuario WHERE Usuario = :usuario LIMIT 1");
+                $stmtUser->bindParam(":usuario", $_SESSION['Usuario'], PDO::PARAM_STR);
+                $stmtUser->execute();
+                $userRow = $stmtUser->fetch(PDO::FETCH_ASSOC);
+                if ($userRow) {
+                    $usuarioRegistroID = $userRow['ID'];
+                }
+            }
+
             $stmt = $pdo->prepare(
                 "INSERT INTO calificacion
-                (EstudianteID, ProgramaId, Idmodulo, Nota, FechaRegistro)
-                VALUES (:estudianteID, :programaID, :moduloID, :nota, :fechaRegistro)
+                (EstudianteID, ProgramaId, Idmodulo, Nota, estado, FechaRegistro, UsuarioRegistroID)
+                VALUES (:estudianteID, :programaID, :moduloID, :nota, :estado, :fechaRegistro, :usuarioRegistroID)
                 ON DUPLICATE KEY UPDATE
                 Nota = :nota,
-                FechaRegistro = :fechaRegistro"
+                estado = :estado,
+                FechaRegistro = :fechaRegistro,
+                UsuarioRegistroID = :usuarioRegistroID"
             );
 
             $guardados = 0;
+            $estado = 'REGISTRADO'; // Estado por defecto para las calificaciones
+
             foreach ($calificaciones as $calificacion) {
                 $estudianteID = $calificacion['estudianteID'];
                 $nota = $calificacion['nota'];
@@ -188,7 +210,9 @@ class CalificacionModelo
                 $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
                 $stmt->bindParam(":moduloID", $moduloID, PDO::PARAM_INT);
                 $stmt->bindParam(":nota", $nota, PDO::PARAM_STR);
+                $stmt->bindParam(":estado", $estado, PDO::PARAM_STR);
                 $stmt->bindParam(":fechaRegistro", $fechaRegistro, PDO::PARAM_STR);
+                $stmt->bindParam(":usuarioRegistroID", $usuarioRegistroID, PDO::PARAM_INT);
 
                 if ($stmt->execute()) {
                     $guardados++;
@@ -264,7 +288,42 @@ class CalificacionModelo
                     (SELECT COUNT(DISTINCT EstudianteID)
                      FROM estudianteprograma
                      WHERE ProgramaID = p.ProgramaID
-                     AND Estado = 'ACTIVO') as TotalEstudiantes
+                     AND Estado = 'ACTIVO') as TotalEstudiantes,
+                    (SELECT COUNT(*)
+                     FROM calificacion c
+                     WHERE c.Idmodulo = m.Idmodulo
+                     AND c.ProgramaId = p.ProgramaID
+                     AND c.Nota IS NOT NULL) as TotalCalificados,
+                    (SELECT MAX(c.FechaRegistro)
+                     FROM calificacion c
+                     WHERE c.Idmodulo = m.Idmodulo
+                     AND c.ProgramaId = p.ProgramaID) as UltimaCalificacion,
+                    (SELECT c.estado
+                     FROM calificacion c
+                     WHERE c.Idmodulo = m.Idmodulo
+                     AND c.ProgramaId = p.ProgramaID
+                     LIMIT 1) as EstadoCalificacion,
+                    (SELECT
+                        CASE
+                            WHEN u.DocenteID IS NOT NULL THEN CONCAT(d.Nombre, ' ', d.Apaterno)
+                            WHEN u.EstudianteID IS NOT NULL THEN CONCAT(e.Nombre, ' ', e.Apaterno)
+                            ELSE u.Usuario
+                        END
+                     FROM calificacion c
+                     LEFT JOIN usuario u ON c.UsuarioRegistroID = u.ID
+                     LEFT JOIN docente d ON u.DocenteID = d.DocenteID
+                     LEFT JOIN estudiante e ON u.EstudianteID = e.EstudianteID
+                     WHERE c.Idmodulo = m.Idmodulo
+                     AND c.ProgramaId = p.ProgramaID
+                     AND c.UsuarioRegistroID IS NOT NULL
+                     LIMIT 1) as RegistradoPor,
+                    (SELECT u.Tipo
+                     FROM calificacion c
+                     LEFT JOIN usuario u ON c.UsuarioRegistroID = u.ID
+                     WHERE c.Idmodulo = m.Idmodulo
+                     AND c.ProgramaId = p.ProgramaID
+                     AND c.UsuarioRegistroID IS NOT NULL
+                     LIMIT 1) as TipoUsuarioRegistro
                 FROM modulos m
                 INNER JOIN programa p ON m.ProgramaId = p.ProgramaID
                 WHERE m.DocenteID = :docenteID
@@ -293,7 +352,42 @@ class CalificacionModelo
                     (SELECT COUNT(DISTINCT EstudianteID)
                      FROM estudianteprograma
                      WHERE ProgramaID = p.ProgramaID
-                     AND Estado = 'ACTIVO') as TotalEstudiantes
+                     AND Estado = 'ACTIVO') as TotalEstudiantes,
+                    (SELECT COUNT(*)
+                     FROM calificacion c
+                     WHERE c.Idmodulo = m.ModuloID
+                     AND c.ProgramaId = p.ProgramaID
+                     AND c.Nota IS NOT NULL) as TotalCalificados,
+                    (SELECT MAX(c.FechaRegistro)
+                     FROM calificacion c
+                     WHERE c.Idmodulo = m.ModuloID
+                     AND c.ProgramaId = p.ProgramaID) as UltimaCalificacion,
+                    (SELECT c.estado
+                     FROM calificacion c
+                     WHERE c.Idmodulo = m.ModuloID
+                     AND c.ProgramaId = p.ProgramaID
+                     LIMIT 1) as EstadoCalificacion,
+                    (SELECT
+                        CASE
+                            WHEN u.DocenteID IS NOT NULL THEN CONCAT(d.Nombre, ' ', d.Apaterno)
+                            WHEN u.EstudianteID IS NOT NULL THEN CONCAT(e.Nombre, ' ', e.Apaterno)
+                            ELSE u.Usuario
+                        END
+                     FROM calificacion c
+                     LEFT JOIN usuario u ON c.UsuarioRegistroID = u.ID
+                     LEFT JOIN docente d ON u.DocenteID = d.DocenteID
+                     LEFT JOIN estudiante e ON u.EstudianteID = e.EstudianteID
+                     WHERE c.Idmodulo = m.ModuloID
+                     AND c.ProgramaId = p.ProgramaID
+                     AND c.UsuarioRegistroID IS NOT NULL
+                     LIMIT 1) as RegistradoPor,
+                    (SELECT u.Tipo
+                     FROM calificacion c
+                     LEFT JOIN usuario u ON c.UsuarioRegistroID = u.ID
+                     WHERE c.Idmodulo = m.ModuloID
+                     AND c.ProgramaId = p.ProgramaID
+                     AND c.UsuarioRegistroID IS NOT NULL
+                     LIMIT 1) as TipoUsuarioRegistro
                 FROM modulo m
                 INNER JOIN programa p ON m.ProgramaID = p.ProgramaID
                 WHERE m.DocenteID = :docenteID

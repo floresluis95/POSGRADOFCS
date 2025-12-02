@@ -79,7 +79,7 @@ function cargarAsignacionesDocente(docenteID) {
                 title: 'Cargando asignaciones...',
                 text: 'Por favor espere',
                 allowOutsideClick: false,
-                didOpen: () => {
+                onOpen: function() {
                     Swal.showLoading();
                 }
             });
@@ -98,7 +98,7 @@ function cargarAsignacionesDocente(docenteID) {
             } else {
                 console.log('No hay asignaciones');
                 Swal.fire({
-                    icon: 'info',
+                    type: 'info',
                     title: 'Sin asignaciones',
                     text: 'Este docente no tiene módulos asignados',
                     html: 'DocenteID: ' + docenteID + '<br>Response: ' + JSON.stringify(response)
@@ -114,7 +114,7 @@ function cargarAsignacionesDocente(docenteID) {
 
             Swal.close();
             Swal.fire({
-                icon: 'error',
+                type: 'error',
                 title: 'Error',
                 text: 'Error al cargar las asignaciones',
                 html: 'Error: ' + error + '<br>Status: ' + status
@@ -141,50 +141,99 @@ function mostrarAsignaciones(asignaciones) {
                 <thead>
                     <tr>
                         <th style="width: 5%;">#</th>
-                        <th style="width: 15%;">Grado Académico</th>
+                        <th style="width: 12%;">Grado Académico</th>
                         <th>Programa</th>
                         <th>Módulo</th>
-                        <th style="width: 12%;">Código</th>
-                        <th style="width: 10%;">Estudiantes</th>
-                        <th style="width: 12%;">Acción</th>
+                        <th style="width: 10%;">Código</th>
+                        <th style="width: 8%;">Estudiantes</th>
+                        <th style="width: 15%;">Estado Calificación</th>
+                        <th style="width: 10%;">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
 
     asignaciones.forEach(function(asig, index) {
-        html += `
-            <tr class="asignacion-row">
-                <td class="text-center">${index + 1}</td>
-                <td>
-                    <span class="kt-badge kt-badge--inline kt-badge--primary">${asig.GradoAcademico}</span>
-                </td>
-                <td>
-                    <strong>${asig.NombrePrograma}</strong>
-                    <br><small class="text-muted">${asig.CodigoPrograma}</small>
-                </td>
-                <td>${asig.nombremodulo}</td>
-                <td class="text-center">
-                    <span class="kt-badge kt-badge--dark kt-badge--inline">${asig.codigomodulo}</span>
-                </td>
-                <td class="text-center">
-                    <span class="kt-badge kt-badge--${asig.TotalEstudiantes > 0 ? 'success' : 'secondary'} kt-badge--inline kt-badge--bold">
-                        ${asig.TotalEstudiantes}
-                    </span>
-                </td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-brand btn-evaluar"
-                            data-modulo-id="${asig.Idmodulo}"
-                            data-programa-id="${asig.ProgramaID}"
-                            data-modulo-nombre="${asig.nombremodulo}"
-                            data-modulo-codigo="${asig.codigomodulo}"
-                            data-programa-nombre="${asig.NombrePrograma}"
-                            data-grado="${asig.GradoAcademico}">
-                        <i class="la la-edit"></i> Evaluar
-                    </button>
-                </td>
-            </tr>
-        `;
+        // Determinar estado de calificación
+        var totalEstudiantes = parseInt(asig.TotalEstudiantes) || 0;
+        var totalCalificados = parseInt(asig.TotalCalificados) || 0;
+        var porcentaje = totalEstudiantes > 0 ? Math.round((totalCalificados / totalEstudiantes) * 100) : 0;
+
+        var estadoBadgeClass = '';
+        var estadoTexto = '';
+        var estadoIcono = '';
+
+        if (totalCalificados === 0) {
+            estadoBadgeClass = 'kt-badge--secondary';
+            estadoTexto = 'Sin calificar';
+            estadoIcono = 'la la-clock-o';
+        } else if (totalCalificados < totalEstudiantes) {
+            estadoBadgeClass = 'kt-badge--warning';
+            estadoTexto = 'Parcial (' + totalCalificados + '/' + totalEstudiantes + ')';
+            estadoIcono = 'la la-hourglass-half';
+        } else {
+            estadoBadgeClass = 'kt-badge--success';
+            estadoTexto = 'Completo (' + totalCalificados + '/' + totalEstudiantes + ')';
+            estadoIcono = 'la la-check-circle';
+        }
+
+        var fechaInfo = '';
+        if (asig.UltimaCalificacion) {
+            fechaInfo = '<br><small class="text-muted"><i class="la la-calendar"></i> ' + asig.UltimaCalificacion + '</small>';
+        }
+
+        // Información de quién registró
+        if (asig.RegistradoPor) {
+            var tipoUsuario = asig.TipoUsuarioRegistro || '';
+            var iconoTipo = '';
+            if (tipoUsuario === 'ADM' || tipoUsuario === 'Administrador') {
+                iconoTipo = '<i class="la la-user-shield" style="color: #fd397a;"></i> ';
+            } else if (tipoUsuario === 'DOC' || tipoUsuario === 'Docente') {
+                iconoTipo = '<i class="la la-user" style="color: #5867dd;"></i> ';
+            } else if (tipoUsuario === 'EST' || tipoUsuario === 'Estudiante') {
+                iconoTipo = '<i class="la la-graduation-cap" style="color: #1dc9b7;"></i> ';
+            }
+            fechaInfo += '<br><small class="text-muted">' + iconoTipo + 'Por: ' + asig.RegistradoPor + '</small>';
+        }
+
+        html += '<tr class="asignacion-row">';
+        html += '<td class="text-center">' + (index + 1) + '</td>';
+        html += '<td><span class="kt-badge kt-badge--inline kt-badge--primary">' + asig.GradoAcademico + '</span></td>';
+        html += '<td><strong>' + asig.NombrePrograma + '</strong><br><small class="text-muted">' + asig.CodigoPrograma + '</small></td>';
+        html += '<td>' + asig.nombremodulo + '</td>';
+        html += '<td class="text-center"><span class="kt-badge kt-badge--dark kt-badge--inline">' + asig.codigomodulo + '</span></td>';
+        html += '<td class="text-center"><span class="kt-badge kt-badge--' + (totalEstudiantes > 0 ? 'success' : 'secondary') + ' kt-badge--inline kt-badge--bold">' + totalEstudiantes + '</span></td>';
+        html += '<td class="text-center">';
+        html += '<span class="kt-badge kt-badge--inline ' + estadoBadgeClass + ' kt-badge--bold">';
+        html += '<i class="' + estadoIcono + '"></i> ' + estadoTexto;
+        html += '</span>' + fechaInfo;
+        html += '</td>';
+        html += '<td class="text-center">';
+        html += '<div class="btn-group" role="group">';
+        html += '<button class="btn btn-sm btn-brand btn-evaluar" ';
+        html += 'data-modulo-id="' + asig.Idmodulo + '" ';
+        html += 'data-programa-id="' + asig.ProgramaID + '" ';
+        html += 'data-modulo-nombre="' + asig.nombremodulo + '" ';
+        html += 'data-modulo-codigo="' + asig.codigomodulo + '" ';
+        html += 'data-programa-nombre="' + asig.NombrePrograma + '" ';
+        html += 'data-grado="' + asig.GradoAcademico + '" ';
+        html += 'title="' + (totalCalificados > 0 ? 'Editar calificaciones' : 'Evaluar estudiantes') + '">';
+        html += '<i class="la la-edit"></i> ' + (totalCalificados > 0 ? 'Editar' : 'Evaluar');
+        html += '</button>';
+        html += '<button class="btn btn-sm btn-success btn-imprimir-reporte" ';
+        html += 'data-modulo-id="' + asig.Idmodulo + '" ';
+        html += 'data-programa-id="' + asig.ProgramaID + '" ';
+        html += 'data-modulo-nombre="' + asig.nombremodulo + '" ';
+        html += 'data-modulo-codigo="' + asig.codigomodulo + '" ';
+        html += 'data-programa-nombre="' + asig.NombrePrograma + '" ';
+        html += 'data-grado="' + asig.GradoAcademico + '" ';
+        html += 'data-docente-nombre="' + docenteSeleccionado.nombre + '" ';
+        html += 'title="Imprimir reporte de calificaciones">';
+        html += '<i class="la la-print"></i>';
+        html += '</button>';
+        html += '</div>';
+        html += '</td>';
+        html += '</tr>';
     });
 
     html += `
@@ -211,6 +260,19 @@ function mostrarAsignaciones(asignaciones) {
 
         cargarEstudiantes(moduloID, programaID);
     });
+
+    // Agregar evento click a los botones de imprimir reporte
+    $('.btn-imprimir-reporte').on('click', function() {
+        const moduloID = $(this).data('modulo-id');
+        const programaID = $(this).data('programa-id');
+        const moduloNombre = $(this).data('modulo-nombre');
+        const moduloCodigo = $(this).data('modulo-codigo');
+        const programaNombre = $(this).data('programa-nombre');
+        const gradoAcademico = $(this).data('grado');
+        const docenteNombre = $(this).data('docente-nombre');
+
+        imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, gradoAcademico, docenteNombre);
+    });
 }
 
 /**
@@ -234,7 +296,7 @@ function cargarEstudiantes(moduloID, programaID) {
                 title: 'Cargando estudiantes...',
                 text: 'Por favor espere',
                 allowOutsideClick: false,
-                didOpen: () => {
+                onOpen: function() {
                     Swal.showLoading();
                 }
             });
@@ -247,7 +309,7 @@ function cargarEstudiantes(moduloID, programaID) {
                 mostrarFormularioCalificaciones(response.data);
             } else {
                 Swal.fire({
-                    icon: 'error',
+                    type: 'error',
                     title: 'Error',
                     text: 'Error al cargar los estudiantes'
                 });
@@ -256,7 +318,7 @@ function cargarEstudiantes(moduloID, programaID) {
         error: function() {
             Swal.close();
             Swal.fire({
-                icon: 'error',
+                type: 'error',
                 title: 'Error',
                 text: 'Error al conectar con el servidor'
             });
@@ -435,7 +497,7 @@ function guardarCalificaciones() {
 
     if (hayErrores) {
         Swal.fire({
-            icon: 'error',
+            type: 'error',
             title: 'Error de validación',
             text: 'Hay calificaciones inválidas o vacías. Por favor, corrija los errores antes de guardar.'
         });
@@ -444,7 +506,7 @@ function guardarCalificaciones() {
 
     if (calificaciones.length === 0) {
         Swal.fire({
-            icon: 'warning',
+            type: 'warning',
             title: 'Sin datos',
             text: 'No hay calificaciones para guardar'
         });
@@ -454,15 +516,15 @@ function guardarCalificaciones() {
     // Confirmar guardado
     Swal.fire({
         title: '¿Guardar calificaciones?',
-        html: `Se guardarán <strong>${calificaciones.length}</strong> calificaciones para el módulo:<br><strong>${asignacionSeleccionada.moduloNombre}</strong>`,
-        icon: 'question',
+        html: 'Se guardarán <strong>' + calificaciones.length + '</strong> calificaciones para el módulo:<br><strong>' + asignacionSeleccionada.moduloNombre + '</strong>',
+        type: 'question',
         showCancelButton: true,
         confirmButtonColor: '#1dc9b7',
         cancelButtonColor: '#fd397a',
         confirmButtonText: 'Sí, guardar',
         cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
+    }).then(function(result) {
+        if (result.value) {
             enviarCalificaciones(calificaciones);
         }
     });
@@ -484,7 +546,7 @@ function enviarCalificaciones(calificaciones) {
                 title: 'Guardando calificaciones...',
                 text: 'Por favor espere',
                 allowOutsideClick: false,
-                didOpen: () => {
+                onOpen: function() {
                     Swal.showLoading();
                 }
             });
@@ -492,18 +554,18 @@ function enviarCalificaciones(calificaciones) {
         success: function(response) {
             if (response.status === 'success') {
                 Swal.fire({
-                    icon: 'success',
+                    type: 'success',
                     title: 'Éxito',
                     text: 'Calificaciones guardadas correctamente',
                     timer: 2000,
                     showConfirmButton: false
-                }).then(() => {
+                }).then(function() {
                     // Recargar estudiantes para mostrar datos actualizados
                     cargarEstudiantes(asignacionSeleccionada.moduloID, asignacionSeleccionada.programaID);
                 });
             } else {
                 Swal.fire({
-                    icon: 'error',
+                    type: 'error',
                     title: 'Error',
                     text: response.message || 'Error al guardar las calificaciones'
                 });
@@ -511,7 +573,7 @@ function enviarCalificaciones(calificaciones) {
         },
         error: function() {
             Swal.fire({
-                icon: 'error',
+                type: 'error',
                 title: 'Error',
                 text: 'Error al conectar con el servidor'
             });
@@ -537,4 +599,24 @@ function volverPaso2() {
     $('#paso2-container').slideDown();
     asignacionSeleccionada = null;
     estudiantesActuales = [];
+}
+
+/**
+ * ================================================================
+ * IMPRIMIR REPORTE DE CALIFICACIONES
+ * ================================================================
+ */
+
+function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, gradoAcademico, docenteNombre) {
+    // Abrir el reporte en una nueva ventana
+    const url = 'vistas/componentes/reporte-calificaciones-pdf.php?' +
+        'moduloID=' + moduloID +
+        '&programaID=' + programaID +
+        '&moduloNombre=' + encodeURIComponent(moduloNombre) +
+        '&moduloCodigo=' + encodeURIComponent(moduloCodigo) +
+        '&programaNombre=' + encodeURIComponent(programaNombre) +
+        '&gradoAcademico=' + encodeURIComponent(gradoAcademico) +
+        '&docenteNombre=' + encodeURIComponent(docenteNombre);
+
+    window.open(url, '_blank');
 }

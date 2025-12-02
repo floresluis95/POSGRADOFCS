@@ -85,45 +85,128 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                                 </button>
                             </div>
                         </div>
+                      
+                     
 
-<div id="infoProgramaSeleccionadoNuevo" style="display: none;" class="card border-primary shadow-lg mt-4 animate__animated animate__fadeIn">
-    
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <i class="bi bi-journal-bookmark-fill fs-4 me-2"></i> 
-        <h5 class="mb-0 flex-grow-1">Detalles del Programa</h5>
-        <span class="badge bg-light text-primary fs-6">Seleccionado</span>
+<style>
+    /* Animación suave para resaltar */
+    @keyframes pulseGlow {
+        0% { box-shadow: 0 0 12px rgba(25,135,84,0.4); }
+        50% { box-shadow: 0 0 20px rgba(25,135,84,0.7); }
+        100% { box-shadow: 0 0 12px rgba(25,135,84,0.4); }
+    }
+
+    /* Chip destacado */
+    .modulo-highlight {
+        background: linear-gradient(135deg, #2adf7f 0%, #1fb765 100%);
+        color: white !important;
+        padding: 14px 32px;
+        border-radius: 60px;
+        font-size: 2rem;
+        font-weight: 800;
+        display: inline-block;
+        animation: pulseGlow 2.8s infinite ease-in-out;
+        border: 1px solid rgba(255,255,255,0.3);
+        backdrop-filter: blur(5px);
+    }
+
+    /* Correcciones modernas generales */
+    .card-modern {
+        border-radius: 22px;
+        overflow: hidden;
+    }
+
+    .header-modern {
+        background: rgba(13,110,253,0.15);
+        backdrop-filter: blur(14px);
+        border: none;
+        padding: 20px 30px;
+    }
+
+    .header-modern h4 {
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+
+    .program-title {
+        font-size: 2rem;
+        font-weight: 800;
+        border-left: 5px solid #0d6efd;
+        padding-left: 14px;
+    }
+
+    .label-modern {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .value-modern {
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+</style>
+
+
+<div id="infoProgramaSeleccionadoNuevo" 
+     style="display:none;" 
+     class="card card-modern shadow-lg mt-4 animate__animated animate__fadeIn">
+
+    <!-- Header moderno -->
+    <div class="card-header header-modern d-flex justify-content-between align-items-center">
+
+        <div class="d-flex align-items-center">
+            <i class="bi bi-journal-bookmark fs-2 me-3 text-primary opacity-75"></i>
+            <h4 class="mb-0 text-dark">Programa Seleccionado</h4>
+        </div>
+
+        <span class="badge px-4 py-2 rounded-pill"
+              style="background: rgba(255,255,255,0.45); backdrop-filter: blur(10px); color: #0d6efd; font-size: 1.1rem;">
+            Activo
+        </span>
+
     </div>
-    
-    <div class="card-body">
-        
-        <h3 class="card-title text-dark border-bottom pb-2" id="infoNombrePrograma">
-            [Nombre del Programa]
-        </h3>
-        
-        <dl class="row mb-0 mt-3">
-            
-            <dt class="col-sm-4 text-muted d-flex align-items-center">
-                <i class="bi bi-award-fill text-warning me-2"></i>Grado:
-            </dt>
-            <dd class="col-sm-8 fw-bolder text-uppercase text-primary" id="infoGradoPrograma">
-                [Grado]
-            </dd>
 
-            <dt class="col-sm-4 text-muted d-flex align-items-center">
-                <i class="bi bi-stack me-2"></i>N° de Módulos:
-            </dt>
-            <dd class="col-sm-8">
-                <span id="infoNumModulosPrograma" class="badge bg-success-subtle text-success border border-success fs-5 px-3 py-1 rounded-pill">
+    <!-- Body -->
+    <div class="card-body px-4 py-4">
+
+        <!-- Título -->
+        <h2 class="program-title text-dark mb-4" id="infoNombrePrograma">
+            [Nombre del Programa]
+        </h2>
+
+        <div class="row g-4">
+
+            <!-- Grado -->
+            <div class="col-md-6">
+                <div class="label-modern d-flex align-items-center mb-1">
+                    <i class="bi bi-mortarboard fs-4 me-2 text-primary"></i>
+                    Grado
+                </div>
+                <div class="value-modern text-primary" id="infoGradoPrograma">
+                    [Grado]
+                </div>
+            </div>
+
+            <!-- Número de módulos resaltado -->
+            <div class="col-md-6">
+                <div class="label-modern d-flex align-items-center mb-1">
+                    <i class="bi bi-layers fs-4 me-2 text-success"></i>
+                    N° de Módulos
+                </div>
+                <span id="infoNumModulosPrograma" class="modulo-highlight">
                     [0]
                 </span>
-            </dd>
-            
-        </dl>
-        
+            </div>
+
+        </div>
     </div>
-    
-    <div class="card-footer text-center bg-light border-0">
-        <small class="text-secondary fst-italic">Información clave para la matrícula.</small>
+
+    <!-- Footer -->
+    <div class="card-footer text-center bg-transparent border-0 py-3">
+        <small class="text-muted" style="font-size: 1.1rem; font-style: italic;">
+            Información relevante para la matrícula.
+        </small>
     </div>
 </div>
                     </div>
