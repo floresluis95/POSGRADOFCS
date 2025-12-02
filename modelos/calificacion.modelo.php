@@ -183,17 +183,6 @@ class CalificacionModelo
                 }
             }
 
-            $stmt = $pdo->prepare(
-                "INSERT INTO calificacion
-                (EstudianteID, ProgramaId, Idmodulo, Nota, estado, FechaRegistro, UsuarioRegistroID)
-                VALUES (:estudianteID, :programaID, :moduloID, :nota, :estado, :fechaRegistro, :usuarioRegistroID)
-                ON DUPLICATE KEY UPDATE
-                Nota = :nota,
-                estado = :estado,
-                FechaRegistro = :fechaRegistro,
-                UsuarioRegistroID = :usuarioRegistroID"
-            );
-
             $guardados = 0;
             $estado = 'REGISTRADO'; // Estado por defecto para las calificaciones
 
@@ -203,8 +192,24 @@ class CalificacionModelo
 
                 // Validar nota
                 if ($nota < 0 || $nota > 100) {
+                    error_log("Nota fuera de rango: $nota para estudiante: $estudianteID");
                     continue;
                 }
+
+                // Log para debug
+                error_log("Guardando calificación: EstudianteID=$estudianteID, ProgramaID=$programaID, ModuloID=$moduloID, Nota=$nota");
+
+                // Preparar statement individual para cada calificación
+                $stmt = $pdo->prepare(
+                    "INSERT INTO calificacion
+                    (EstudianteID, ProgramaId, Idmodulo, Nota, estado, FechaRegistro, UsuarioRegistroID)
+                    VALUES (:estudianteID, :programaID, :moduloID, :nota, :estado, :fechaRegistro, :usuarioRegistroID)
+                    ON DUPLICATE KEY UPDATE
+                    Nota = VALUES(Nota),
+                    estado = VALUES(estado),
+                    FechaRegistro = VALUES(FechaRegistro),
+                    UsuarioRegistroID = VALUES(UsuarioRegistroID)"
+                );
 
                 $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
                 $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
@@ -212,10 +217,23 @@ class CalificacionModelo
                 $stmt->bindParam(":nota", $nota, PDO::PARAM_STR);
                 $stmt->bindParam(":estado", $estado, PDO::PARAM_STR);
                 $stmt->bindParam(":fechaRegistro", $fechaRegistro, PDO::PARAM_STR);
-                $stmt->bindParam(":usuarioRegistroID", $usuarioRegistroID, PDO::PARAM_INT);
 
-                if ($stmt->execute()) {
-                    $guardados++;
+                // Manejar usuarioRegistroID como NULL si no se encontró
+                if ($usuarioRegistroID === null) {
+                    $stmt->bindValue(":usuarioRegistroID", null, PDO::PARAM_NULL);
+                } else {
+                    $stmt->bindParam(":usuarioRegistroID", $usuarioRegistroID, PDO::PARAM_INT);
+                }
+
+                try {
+                    if ($stmt->execute()) {
+                        $guardados++;
+                        error_log("Calificación guardada exitosamente para estudiante: $estudianteID");
+                    } else {
+                        error_log("Error al ejecutar statement para estudiante: $estudianteID - " . print_r($stmt->errorInfo(), true));
+                    }
+                } catch (PDOException $e) {
+                    error_log("Error PDO al guardar calificación: " . $e->getMessage());
                 }
             }
 

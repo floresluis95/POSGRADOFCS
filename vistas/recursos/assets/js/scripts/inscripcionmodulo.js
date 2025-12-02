@@ -301,10 +301,12 @@ $(document).ready(function() {
                                         <th class="text-center" style="color: white;">#</th>
                                         <th style="color: white;">MÓDULO</th>
                                         <th class="text-center" style="color: white;">CÓDIGO</th>
-                                        <th class="text-center" style="color: white;">CRÉDITOS</th>
+                                        <th style="color: white;">DOCENTE</th>
+                                        <th class="text-center" style="color: white;">CALIFICACIÓN</th>
+                                        <th class="text-center" style="color: white;">ESTADO</th>
                                         <th class="text-center" style="color: white;">COSTO</th>
                                         <th class="text-center" style="color: white;">N° VOUCHER</th>
-                                        <th class="text-center" style="color: white;">FECHA INSCRIPCIÓN</th>
+                                        <th class="text-center" style="color: white;">FECHA PAGO</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -314,12 +316,35 @@ $(document).ready(function() {
                         const fechaFormateada = modulo.FechaInscripcion ?
                             new Date(modulo.FechaInscripcion).toLocaleDateString('es-BO') : 'N/A';
 
+                        // Información del docente
+                        let docenteInfo = modulo.NombreDocente || 'Sin asignar';
+                        if (modulo.EspecialidadDocente) {
+                            docenteInfo += `<br><small class="text-muted">${modulo.EspecialidadDocente}</small>`;
+                        }
+
+                        // Calificación
+                        let notaDisplay = modulo.Nota !== null && modulo.Nota !== undefined
+                            ? `<strong class="h5">${modulo.Nota}</strong>`
+                            : '<span class="text-muted">-</span>';
+
+                        // Badge de estado según aprobación
+                        let estadoBadge = '';
+                        if (modulo.EstadoAprobacion === 'APROBADO') {
+                            estadoBadge = '<span class="badge badge-success badge-lg"><i class="fa fa-check-circle"></i> APROBADO</span>';
+                        } else if (modulo.EstadoAprobacion === 'REPROBADO') {
+                            estadoBadge = '<span class="badge badge-danger badge-lg"><i class="fa fa-times-circle"></i> REPROBADO</span>';
+                        } else {
+                            estadoBadge = '<span class="badge badge-secondary badge-lg"><i class="fa fa-clock-o"></i> SIN CALIFICACIÓN</span>';
+                        }
+
                         tabla += `
                             <tr>
                                 <td class="text-center"><strong>${index + 1}</strong></td>
-                                <td>${modulo.NombreModulo || 'N/A'}</td>
+                                <td><strong>${modulo.NombreModulo || 'N/A'}</strong></td>
                                 <td class="text-center"><span class="badge badge-primary">${modulo.Codigo || 'N/A'}</span></td>
-                                <td class="text-center">${modulo.Creditos || 'N/A'}</td>
+                                <td>${docenteInfo}</td>
+                                <td class="text-center">${notaDisplay}</td>
+                                <td class="text-center">${estadoBadge}</td>
                                 <td class="text-center"><strong>Bs. ${parseFloat(modulo.Costo || 0).toFixed(2)}</strong></td>
                                 <td class="text-center">${modulo.NumeroVaucher || 'N/A'}</td>
                                 <td class="text-center">${fechaFormateada}</td>
@@ -331,9 +356,17 @@ $(document).ready(function() {
                                 </tbody>
                             </table>
                         </div>
-                        <div class="alert alert-success mt-3">
-                            <i class="fa fa-check-circle"></i>
-                            Total de módulos inscritos: <strong>${response.length}</strong>
+                        <div class="alert alert-info mt-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <i class="fa fa-list"></i>
+                                    Total de módulos inscritos: <strong>${response.length}</strong>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <span class="badge badge-success mr-2"><i class="fa fa-check"></i> Aprobado: >= 51</span>
+                                    <span class="badge badge-danger"><i class="fa fa-times"></i> Reprobado: < 51</span>
+                                </div>
+                            </div>
                         </div>
                     `;
 

@@ -81,13 +81,14 @@ if ($_SESSION["Tipo"] == "ADM") {
                   </h4>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="inscripcion" class="kt-menu__link">
+                  <a href="bnotaestudiante" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-search-1" style="color: #fd397a;"></i>
-                    <span class="kt-menu__link-text">Buscar Estudiante</span>
+                    <span class="kt-menu__link-text">Buscar por Estudiante</span>
                   </a>
                 </li>
+               
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="rnotasestudiante" class="kt-menu__link">
+                  <a href="historialnotaestudiante" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-list-3" style="color: #fd397a;"></i>
                     <span class="kt-menu__link-text">Historial de Notas</span>
                   </a>
@@ -108,28 +109,12 @@ if ($_SESSION["Tipo"] == "ADM") {
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="notasdocente" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">NOTAS Docentes</span>
+                    <span class="kt-menu__link-text">Notas - Docentes</span>
                   </a>
                 </li>
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="concluidos" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-add-1" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">Asignación de Docentes</span>
-                  </a>
-                </li>
+             
 
-                <!-- REPORTES PDF -->
-                <li class="kt-menu__section">
-                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
-                    <i class="flaticon2-printer" style="color: #c49bbb;"></i> REPORTES
-                  </h4>
-                </li>
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="reportes" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-file-2" style="color: #c49bbb;"></i>
-                    <span class="kt-menu__link-text">Generar Reportes PDF</span>
-                  </a>
-                </li>
+              
 
                 <!-- PERSONAL -->
                 <li class="kt-menu__section">
@@ -149,6 +134,26 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Estudiantes</span>
                   </a>
                 </li>
+
+                  <!-- REPORTES PDF -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-printer" style="color: #c49bbb;"></i> REPORTES
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="reportes" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-file-2" style="color: #c49bbb;"></i>
+                    <span class="kt-menu__link-text">Generar Reportes PDF</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="reportes" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-file-2" style="color: #c49bbb;"></i>
+                    <span class="kt-menu__link-text">ORDEN DE PAGO</span>
+                  </a>
+                </li>
+
 
               </ul>
             </div>

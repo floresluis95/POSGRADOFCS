@@ -87,8 +87,9 @@ class PagoModuloModelo
      */
     public static function ObtenerModulosConEstadoPagoModelo($programaID, $idinscripcion)
     {
-        // Primero distribuir los costos del programa entre sus módulos
-        self::DistribuirCostoProgramaEnModulosModelo($programaID);
+        // NOTA: Ya no es necesario distribuir costos porque los módulos
+        // ya tienen su costo asignado cuando se registran
+        // self::DistribuirCostoProgramaEnModulosModelo($programaID);
 
         try {
             $stmt = Conexion::Conectar()->prepare(

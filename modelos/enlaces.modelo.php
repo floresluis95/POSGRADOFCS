@@ -21,7 +21,11 @@
                 $enlace == 'reportes'||
                  $enlace == 'rnotasestudiante'||
                  $enlace == 'reportenotas'||
-                 $enlace == 'notasdocente'
+                 $enlace == 'notasdocente'||
+                  $enlace == 'bnotaestudiante'||
+                   $enlace == 'historialnotaestudiante'
+                  
+                 
 
 
                 )

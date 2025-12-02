@@ -22,7 +22,11 @@ if (isset($_POST["accion"]) && $_POST["accion"] === "obtenerModulosInscritos" &&
                 'Costo' => $modulo['costomodulo'],
                 'NumeroVaucher' => $modulo['nvauchermodulo'],
                 'FechaInscripcion' => $modulo['FechaInscripcion'],
-                'Estado' => $modulo['Estado']
+                'Estado' => $modulo['Estado'],
+                'NombreDocente' => $modulo['NombreDocente'] ?? 'Sin asignar',
+                'EspecialidadDocente' => $modulo['EspecialidadDocente'] ?? '',
+                'Nota' => $modulo['Nota'],
+                'EstadoAprobacion' => $modulo['EstadoAprobacion']
             ];
         }, $modulos);
 

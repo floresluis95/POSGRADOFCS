@@ -148,29 +148,62 @@ class InscripcionModuloModelos
     }
 
     /**
-     * Listar módulos inscritos de un estudiante
+     * Listar módulos inscritos de un estudiante con información del docente y calificación
      * @param int $estudianteID
      * @return array
      */
     public static function ObtenerModulosInscritosEstudianteModelo($estudianteID)
     {
         try {
+            // Primero obtener el programa del estudiante
+            $stmtPrograma = Conexion::Conectar()->prepare(
+                "SELECT ProgramaID FROM estudianteprograma
+                 WHERE EstudianteID = :estudianteID
+                 AND Estado = 'ACTIVO'
+                 LIMIT 1"
+            );
+            $stmtPrograma->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmtPrograma->execute();
+            $programa = $stmtPrograma->fetch(PDO::FETCH_ASSOC);
+
+            if (!$programa) {
+                return [];
+            }
+
+            $programaID = $programa['ProgramaID'];
+
+            // Consultar módulos pagados (de la tabla pagomodulo)
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT
-                    em.idEstudianteModulo,
-                    em.FechaInscripcion,
-                    em.costomodulo,
-                    em.nvauchermodulo,
-                    em.Estado,
-                    m.NombreModulo,
-                    m.Codigo,
-                    m.Creditos
-                FROM estudiantemodulo em
-                INNER JOIN modulo m ON em.ModuloID = m.ModuloID
-                WHERE em.EstudianteID = :estudianteID
-                ORDER BY em.FechaInscripcion DESC"
+                    pm.Idpagomodulo,
+                    pm.fechapago as FechaInscripcion,
+                    pm.costomodulo,
+                    pm.nvaucher as nvauchermodulo,
+                    pm.Estado,
+                    m.nombremodulo as NombreModulo,
+                    m.codigomodulo as Codigo,
+                    0 as Creditos,
+                    CONCAT(d.Nombre, ' ', d.Apaterno, ' ', d.Amaterno) as NombreDocente,
+                    d.Especialidad as EspecialidadDocente,
+                    c.Nota,
+                    CASE
+                        WHEN c.Nota IS NULL THEN 'SIN CALIFICACIÓN'
+                        WHEN c.Nota >= 51 THEN 'APROBADO'
+                        ELSE 'REPROBADO'
+                    END as EstadoAprobacion
+                FROM pagomodulo pm
+                INNER JOIN modulos m ON pm.IdModulo = m.Idmodulo
+                INNER JOIN estudianteprograma ep ON pm.idinscripcion = ep.idInscripcion
+                LEFT JOIN docente d ON m.DocenteID = d.DocenteID
+                LEFT JOIN calificacion c ON c.EstudianteID = :estudianteID
+                    AND c.Idmodulo = m.Idmodulo
+                    AND c.ProgramaId = :programaID
+                WHERE ep.EstudianteID = :estudianteID
+                AND pm.Estado != 'ANULADO'
+                ORDER BY pm.fechapago DESC"
             );
             $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {

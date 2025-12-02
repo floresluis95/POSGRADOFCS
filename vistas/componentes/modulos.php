@@ -535,7 +535,7 @@ $(document).ready(function() {
     }
 
     // ========================================
-    // AL SELECCIONAR UN PROGRAMA
+    // FUNCIÓN PARA MANEJAR LA SELECCIÓN DE PROGRAMA
     // ========================================
     function manejarSeleccionPrograma() {
         console.log('>>> Función manejarSeleccionPrograma ejecutada');
@@ -620,6 +620,61 @@ $(document).ready(function() {
         }
     });
     console.log('✓ Eventos de Select2 registrados');
+
+    // ========================================
+    // RESTAURAR PROGRAMA SELECCIONADO DESPUÉS DE GUARDAR
+    // ========================================
+    const programaIDGuardado = sessionStorage.getItem('programaIDSeleccionado');
+    if (programaIDGuardado) {
+        console.log('>>> Restaurando programa seleccionado:', programaIDGuardado);
+        console.log('Tipo de dato:', typeof programaIDGuardado);
+
+        // Seleccionar el programa en el select (sin disparar eventos)
+        $('#selectPrograma').val(programaIDGuardado);
+
+        // Actualizar visual de Select2 sin disparar eventos
+        $('#selectPrograma').trigger('change.select2');
+
+        // Obtener la opción seleccionada para extraer los datos
+        const selectedOption = $('#selectPrograma').find('option:selected');
+        const nombrePrograma = selectedOption.data('nombre');
+        const codigoPrograma = selectedOption.data('codigo');
+        const gradoPrograma = selectedOption.data('grado');
+        const numModulos = parseInt(selectedOption.data('modulos')) || 0;
+        const costoTotal = parseFloat(selectedOption.data('costo')) || 0;
+
+        console.log('Datos extraídos del programa:', {
+            id: programaIDGuardado,
+            nombre: nombrePrograma,
+            grado: gradoPrograma,
+            modulos: numModulos,
+            costo: costoTotal
+        });
+
+        // Actualizar información en la interfaz
+        $('#infoNombrePrograma').text(nombrePrograma || 'N/A');
+        $('#infoGradoPrograma').text(gradoPrograma || 'N/A');
+        $('#infoNumModulosPrograma').text(numModulos);
+        $('#infoCostoPrograma').text('Bs. ' + costoTotal.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+
+        // Guardar datos en el botón para usarlos en el modal
+        $('#btnAbrirModalModulos').data('programaid', programaIDGuardado);
+        $('#btnAbrirModalModulos').data('nombre', nombrePrograma);
+        $('#btnAbrirModalModulos').data('codigo', codigoPrograma);
+        $('#btnAbrirModalModulos').data('modulos', numModulos);
+        $('#btnAbrirModalModulos').data('costo', costoTotal);
+
+        // Habilitar botón y mostrar info
+        $('#btnAbrirModalModulos').prop('disabled', false);
+        $('#infoProgramaSeleccionadoNuevo').slideDown(300);
+
+        // Cargar módulos del programa en la tabla
+        cargarTablaModulos(programaIDGuardado);
+
+        // Limpiar el sessionStorage después de usar
+        sessionStorage.removeItem('programaIDSeleccionado');
+        console.log('✓ Programa restaurado automáticamente y tabla cargada');
+    }
 
     // ========================================
     // FUNCIÓN PARA CARGAR TABLA DE MÓDULOS VÍA AJAX

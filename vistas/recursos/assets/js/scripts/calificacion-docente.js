@@ -12,9 +12,12 @@ $(document).ready(function() {
     // Auto-cargar información del docente logueado
     cargarDocenteLogueado();
 
-    // Event Listeners
-    $('#btn-volver-asignaciones').on('click', volverPaso1);
-    $('#btn-guardar-notas').on('click', guardarCalificaciones);
+    // Event Listeners - Usando event delegation para elementos dinámicos
+    $(document).on('click', '#btn-volver-asignaciones', volverPaso1);
+    $(document).on('click', '#btn-guardar-notas', function() {
+        console.log('¡Botón Guardar Calificaciones clickeado!');
+        guardarCalificaciones();
+    });
 });
 
 /**
@@ -163,8 +166,9 @@ function mostrarAsignaciones(asignaciones) {
                         <th style="width: 15%;">Grado Académico</th>
                         <th>Programa</th>
                         <th>Módulo</th>
-                        <th style="width: 12%;">Código</th>
+                        <th style="width: 10%;">Código</th>
                         <th style="width: 10%;">Estudiantes</th>
+                        <th style="width: 12%;">Estado</th>
                         <th style="width: 12%;">Acción</th>
                     </tr>
                 </thead>
@@ -172,6 +176,31 @@ function mostrarAsignaciones(asignaciones) {
     `;
 
     asignaciones.forEach(function(asig, index) {
+        // Determinar estado de calificación
+        const totalCalificados = parseInt(asig.TotalCalificados) || 0;
+        const totalEstudiantes = parseInt(asig.TotalEstudiantes) || 0;
+
+        let estadoBadge = '';
+        let estadoTexto = '';
+        let estadoIcono = '';
+
+        if (totalCalificados === 0) {
+            // Sin calificar
+            estadoBadge = 'kt-badge--secondary';
+            estadoTexto = 'SIN CALIFICAR';
+            estadoIcono = 'la-clock-o';
+        } else if (totalCalificados < totalEstudiantes) {
+            // Parcialmente calificado
+            estadoBadge = 'kt-badge--warning';
+            estadoTexto = `PARCIAL (${totalCalificados}/${totalEstudiantes})`;
+            estadoIcono = 'la-exclamation-triangle';
+        } else {
+            // Completamente calificado
+            estadoBadge = 'kt-badge--success';
+            estadoTexto = 'CALIFICADO';
+            estadoIcono = 'la-check-circle';
+        }
+
         html += `
             <tr class="asignacion-row">
                 <td class="text-center">${index + 1}</td>
@@ -192,6 +221,11 @@ function mostrarAsignaciones(asignaciones) {
                     </span>
                 </td>
                 <td class="text-center">
+                    <span class="kt-badge ${estadoBadge} kt-badge--inline kt-badge--bold">
+                        <i class="la ${estadoIcono}"></i> ${estadoTexto}
+                    </span>
+                </td>
+                <td class="text-center">
                     <button class="btn btn-sm btn-brand btn-evaluar"
                             data-modulo-id="${asig.Idmodulo}"
                             data-programa-id="${asig.ProgramaID}"
@@ -199,7 +233,7 @@ function mostrarAsignaciones(asignaciones) {
                             data-modulo-codigo="${asig.codigomodulo}"
                             data-programa-nombre="${asig.NombrePrograma}"
                             data-grado="${asig.GradoAcademico}">
-                        <i class="la la-edit"></i> Evaluar
+                        <i class="la la-edit"></i> Registrar Calificaciones
                     </button>
                 </td>
             </tr>
@@ -214,8 +248,9 @@ function mostrarAsignaciones(asignaciones) {
 
     $('#asignaciones-container').html(html);
 
-    // Agregar evento click a los botones de evaluar
-    $('.btn-evaluar').on('click', function() {
+    // Event delegation para botones que se crean dinámicamente
+    $(document).off('click', '.btn-evaluar').on('click', '.btn-evaluar', function() {
+        console.log('>>> Botón Evaluar clickeado');
         const moduloID = $(this).data('modulo-id');
         const programaID = $(this).data('programa-id');
 
@@ -227,6 +262,8 @@ function mostrarAsignaciones(asignaciones) {
             programaNombre: $(this).data('programa-nombre'),
             grado: $(this).data('grado')
         };
+
+        console.log('>>> Asignación establecida:', asignacionSeleccionada);
 
         cargarEstudiantes(moduloID, programaID);
     });
@@ -253,7 +290,7 @@ function cargarEstudiantes(moduloID, programaID) {
                 title: 'Cargando estudiantes...',
                 text: 'Por favor espere',
                 allowOutsideClick: false,
-                didOpen: () => {
+                onOpen: () => {
                     Swal.showLoading();
                 }
             });
@@ -266,7 +303,7 @@ function cargarEstudiantes(moduloID, programaID) {
                 mostrarFormularioCalificaciones(response.data);
             } else {
                 Swal.fire({
-                    icon: 'error',
+                    type: 'error',
                     title: 'Error',
                     text: 'Error al cargar los estudiantes'
                 });
@@ -275,7 +312,7 @@ function cargarEstudiantes(moduloID, programaID) {
         error: function() {
             Swal.close();
             Swal.fire({
-                icon: 'error',
+                type: 'error',
                 title: 'Error',
                 text: 'Error al conectar con el servidor'
             });
@@ -424,16 +461,26 @@ function validarNota(input) {
  */
 
 function guardarCalificaciones() {
+    console.log('>>> Iniciando guardarCalificaciones()');
+
     // Recolectar calificaciones
     const calificaciones = [];
     let hayErrores = false;
 
-    $('.input-nota').each(function() {
+    console.log('>>> Buscando inputs de notas...');
+    const inputs = $('.input-nota');
+    console.log('>>> Total de inputs encontrados:', inputs.length);
+
+    inputs.each(function(index) {
         const estudianteID = $(this).data('estudiante-id');
-        const nota = parseFloat($(this).val());
+        const valorNota = $(this).val();
+        const nota = parseFloat(valorNota);
+
+        console.log(`>>> Input ${index + 1}: EstudianteID=${estudianteID}, Valor="${valorNota}", Nota=${nota}`);
 
         // Validar que tenga nota
-        if ($(this).val() === '' || isNaN(nota)) {
+        if (valorNota === '' || isNaN(nota)) {
+            console.log(`>>> Error en input ${index + 1}: vacío o NaN`);
             hayErrores = true;
             $(this).addClass('is-invalid');
             return;
@@ -441,6 +488,7 @@ function guardarCalificaciones() {
 
         // Validar rango
         if (nota < 0 || nota > 100) {
+            console.log(`>>> Error en input ${index + 1}: fuera de rango`);
             hayErrores = true;
             $(this).addClass('is-invalid');
             return;
@@ -450,11 +498,16 @@ function guardarCalificaciones() {
             estudianteID: estudianteID,
             nota: nota
         });
+        console.log(`>>> Calificación agregada: EstudianteID=${estudianteID}, Nota=${nota}`);
     });
 
+    console.log('>>> Total de calificaciones recolectadas:', calificaciones.length);
+    console.log('>>> Hay errores:', hayErrores);
+
     if (hayErrores) {
+        console.log('>>> Mostrando alerta de error de validación');
         Swal.fire({
-            icon: 'error',
+            type: 'error',
             title: 'Error de validación',
             text: 'Hay calificaciones inválidas o vacías. Por favor, corrija los errores antes de guardar.'
         });
@@ -462,32 +515,38 @@ function guardarCalificaciones() {
     }
 
     if (calificaciones.length === 0) {
+        console.log('>>> Mostrando alerta de sin datos');
         Swal.fire({
-            icon: 'warning',
+            type: 'warning',
             title: 'Sin datos',
             text: 'No hay calificaciones para guardar'
         });
         return;
     }
 
-    // Confirmar guardado
-    Swal.fire({
-        title: '¿Guardar calificaciones?',
-        html: `Se guardarán <strong>${calificaciones.length}</strong> calificaciones para el módulo:<br><strong>${asignacionSeleccionada.moduloNombre}</strong>`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#1dc9b7',
-        cancelButtonColor: '#fd397a',
-        confirmButtonText: 'Sí, guardar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            enviarCalificaciones(calificaciones);
-        }
-    });
+    console.log('>>> Mostrando popup de confirmación');
+    console.log('>>> Asignación seleccionada:', asignacionSeleccionada);
+
+    // Confirmar guardado - usando sintaxis compatible
+    if (confirm(`¿Guardar ${calificaciones.length} calificación(es) para el módulo ${asignacionSeleccionada.moduloNombre}?`)) {
+        console.log('>>> Usuario confirmó, llamando enviarCalificaciones()');
+        enviarCalificaciones(calificaciones);
+    } else {
+        console.log('>>> Usuario canceló');
+    }
 }
 
 function enviarCalificaciones(calificaciones) {
+    console.log('=== ENVIAR CALIFICACIONES ===');
+    console.log('Asignación seleccionada:', asignacionSeleccionada);
+    console.log('Calificaciones a enviar:', calificaciones);
+    console.log('Datos que se enviarán:', {
+        accion: 'guardarCalificaciones',
+        programaID: asignacionSeleccionada.programaID,
+        moduloID: asignacionSeleccionada.moduloID,
+        calificaciones: JSON.stringify(calificaciones)
+    });
+
     $.ajax({
         url: 'ajax/calificacion.ajax.php',
         method: 'POST',
@@ -503,15 +562,17 @@ function enviarCalificaciones(calificaciones) {
                 title: 'Guardando calificaciones...',
                 text: 'Por favor espere',
                 allowOutsideClick: false,
-                didOpen: () => {
+                onOpen: () => {
                     Swal.showLoading();
                 }
             });
         },
         success: function(response) {
+            console.log('Respuesta del servidor:', response);
+
             if (response.status === 'success') {
                 Swal.fire({
-                    icon: 'success',
+                    type: 'success',
                     title: 'Éxito',
                     text: 'Calificaciones guardadas correctamente',
                     timer: 1500,
@@ -533,18 +594,24 @@ function enviarCalificaciones(calificaciones) {
                     estudiantesActuales = [];
                 });
             } else {
+                console.error('Error del servidor:', response.message);
                 Swal.fire({
-                    icon: 'error',
+                    type: 'error',
                     title: 'Error',
                     text: response.message || 'Error al guardar las calificaciones'
                 });
             }
         },
-        error: function() {
+        error: function(xhr, status, error) {
+            console.error('Error AJAX:', {
+                status: status,
+                error: error,
+                responseText: xhr.responseText
+            });
             Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Error al conectar con el servidor'
+                type: 'error',
+                title: 'Error de conexión',
+                text: 'Error al conectar con el servidor. Por favor, revise la consola del navegador para más detalles.'
             });
         }
     });

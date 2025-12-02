@@ -40,10 +40,12 @@ try {
             ep.idInscripcion,
             ep.ProgramaID,
             ep.FechaInscripcion,
-            ep.nvauchermatricula as NumeroVaucher,
+            ep.costomatricula as CostoMatriculaPagado,
+            ep.nvauchermatricula as VoucherMatricula,
             p.NombrePrograma,
             p.Codigo as CodigoPrograma,
             p.GradoAcademico,
+            p.Costo as CostoTotalPrograma,
             p.CostoMatricula
         FROM estudianteprograma ep
         INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
@@ -73,9 +75,13 @@ try {
     $modulosPendientes = array_filter($modulos, function($m) { return $m['Pagado'] == 0; });
 
     // Calcular totales
-    $totalPagado = array_sum(array_column($modulosPagados, 'CostoPagado'));
+    $costoMatriculaPagado = floatval($estudiante['CostoMatriculaPagado']);
+    $totalPagadoModulos = array_sum(array_column($modulosPagados, 'CostoPagado'));
     $totalPendiente = array_sum(array_column($modulosPendientes, 'Costo'));
-    $totalPrograma = floatval($estudiante['CostoMatricula']);
+    $totalPrograma = floatval($estudiante['CostoTotalPrograma']);
+
+    // El saldo se calcula solo con los módulos (la matrícula es aparte)
+    $saldoPrograma = $totalPrograma - $totalPagadoModulos;
 
 } catch (PDOException $e) {
     die('Error al obtener datos: ' . $e->getMessage());
@@ -369,6 +375,37 @@ try {
         </table>
     </div>
 
+    <!-- MATRÍCULA PAGADA -->
+    <?php if ($costoMatriculaPagado > 0): ?>
+    <div class="seccion">
+        <div class="seccion-titulo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            ✓ MATRÍCULA CANCELADA
+        </div>
+        <table class="tabla-modulos">
+            <thead>
+                <tr>
+                    <th class="col-numero">#</th>
+                    <th class="col-modulo">Concepto</th>
+                    <th class="col-costo">Monto Pagado</th>
+                    <th class="col-fecha">Fecha Pago</th>
+                    <th class="col-voucher">N° Voucher</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="col-numero">1</td>
+                    <td class="col-modulo">
+                        <strong>Matrícula - <?php echo htmlspecialchars($estudiante['NombrePrograma']); ?></strong>
+                    </td>
+                    <td class="col-costo">Bs. <?php echo number_format($costoMatriculaPagado, 2); ?></td>
+                    <td class="col-fecha"><?php echo date('d/m/Y', strtotime($estudiante['FechaInscripcion'])); ?></td>
+                    <td class="col-voucher"><?php echo htmlspecialchars($estudiante['VoucherMatricula'] ?: '-'); ?></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <?php endif; ?>
+
     <!-- MÓDULOS PAGADOS -->
     <?php if (count($modulosPagados) > 0): ?>
     <div class="seccion">
@@ -447,24 +484,58 @@ try {
     <!-- RESUMEN DE PAGOS -->
     <div class="resumen">
         <table>
-            <tr>
-                <td>Costo Total del Programa:</td>
-                <td>Bs. <?php echo number_format($totalPrograma, 2); ?></td>
+            <!-- MATRÍCULA (PAGO APARTE) -->
+            <tr style="background: #e8eaf6; border-left: 4px solid #667eea;">
+                <td colspan="2" style="padding: 10px; text-align: center; font-weight: bold; color: #667eea;">
+                    📋 MATRÍCULA (PAGO INDEPENDIENTE)
+                </td>
             </tr>
             <tr>
-                <td>Total Módulos Pagados (<?php echo count($modulosPagados); ?>):</td>
-                <td style="color: #28a745;">Bs. <?php echo number_format($totalPagado, 2); ?></td>
+                <td>Matrícula Cancelada:</td>
+                <td style="color: #667eea; font-weight: bold;">Bs. <?php echo number_format($costoMatriculaPagado, 2); ?> ✓</td>
+            </tr>
+
+            <!-- SEPARADOR -->
+            <tr style="height: 20px;">
+                <td colspan="2"></td>
+            </tr>
+
+            <!-- PROGRAMA (MÓDULOS) -->
+            <tr style="background: #e8f5e9; border-left: 4px solid #28a745;">
+                <td colspan="2" style="padding: 10px; text-align: center; font-weight: bold; color: #28a745;">
+                    📚 COSTO DEL PROGRAMA (MÓDULOS)
+                </td>
             </tr>
             <tr>
-                <td>Total Módulos Pendientes (<?php echo count($modulosPendientes); ?>):</td>
+                <td><strong>Costo Total del Programa:</strong></td>
+                <td><strong>Bs. <?php echo number_format($totalPrograma, 2); ?></strong></td>
+            </tr>
+            <tr>
+                <td style="padding-left: 20px;">(-) Módulos Pagados (<?php echo count($modulosPagados); ?>):</td>
+                <td style="color: #28a745;">Bs. <?php echo number_format($totalPagadoModulos, 2); ?></td>
+            </tr>
+            <tr>
+                <td style="padding-left: 20px;">(-) Módulos Pendientes (<?php echo count($modulosPendientes); ?>):</td>
                 <td style="color: #dc3545;">Bs. <?php echo number_format($totalPendiente, 2); ?></td>
             </tr>
-            <tr style="background: #e9ecef;">
-                <td>SALDO:</td>
+            <tr style="background: #e9ecef; border-top: 3px solid #667eea;">
+                <td><strong>SALDO DEL PROGRAMA POR PAGAR:</strong></td>
                 <td><?php
-                    $saldo = $totalPrograma - $totalPagado;
-                    echo ($saldo > 0 ? 'Bs. ' . number_format($saldo, 2) : 'CANCELADO');
+                    if ($saldoPrograma > 0) {
+                        echo '<span style="color: #dc3545; font-weight: bold; font-size: 14pt;">Bs. ' . number_format($saldoPrograma, 2) . '</span>';
+                    } else {
+                        echo '<span style="color: #28a745; font-weight: bold; font-size: 14pt;">CANCELADO ✓</span>';
+                    }
                 ?></td>
+            </tr>
+
+            <!-- GRAN TOTAL (INFORMATIVO) -->
+            <tr style="height: 10px; border-top: 2px dashed #ccc;">
+                <td colspan="2"></td>
+            </tr>
+            <tr style="background: #f8f9fa;">
+                <td style="color: #666; font-size: 10pt;"><em>Total General Pagado (Matrícula + Módulos):</em></td>
+                <td style="color: #666; font-size: 10pt;"><em>Bs. <?php echo number_format($costoMatriculaPagado + $totalPagadoModulos, 2); ?></em></td>
             </tr>
         </table>
     </div>

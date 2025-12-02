@@ -6,6 +6,7 @@
  */
 
 // Validar sesión
+
 session_start();
 if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
     die('Acceso denegado');
@@ -33,11 +34,43 @@ $fechaImpresion = date('d/m/Y H:i:s');
 ?>
 <!DOCTYPE html>
 <html lang="es">
+    
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reporte de Calificaciones - <?php echo htmlspecialchars($moduloCodigo); ?></title>
     <style>
+        /* Contenedor principal */
+.header {
+    text-align: center; /* Centra el texto del encabezado */
+    overflow: hidden; /* Importante para contener los elementos flotantes */
+    padding: 10px 0; /* Agrega un poco de espacio arriba y abajo */
+}
+
+/* Estilo para las imágenes de logo */
+.header img {
+    width: 80px; /* Ajusta este valor al tamaño deseado de tu logo */
+    height: auto;
+    margin-top: -10px; /* Ajusta la posición vertical si es necesario */
+}
+
+/* Posiciona la imagen izquierda */
+.logo-izquierda {
+    float: left;
+    margin-left: 20px; /* Espacio desde el borde izquierdo */
+}
+
+/* Posiciona la imagen derecha */
+.logo-derecha {
+    float: right;
+    margin-right: 20px; /* Espacio desde el borde derecho */
+}
+
+/* Estilos para el texto, si quieres asegurarte que no se superponga */
+.header h1, .header h2, .header p {
+    margin-left: 120px; /* Reserva espacio para el logo izquierdo */
+    margin-right: 120px; /* Reserva espacio para el logo derecho */
+}
         /* ====================================
            ESTILOS GENERALES
            ==================================== */
@@ -306,7 +339,36 @@ $fechaImpresion = date('d/m/Y H:i:s');
         .btn-imprimir:active {
             transform: translateY(0);
         }
+
+.col-nombre {
+    width: 20%; /* Para nombres más largos */
+}
+.col-sigla {
+    width: 15%; /* Sigla es corto */
+}
+.col-modulo {
+    width: 15%; /* Módulo es largo */
+}
+.col-num {
+    width: 15%; /* Número */
+}
+.col-literal {
+    width: 60%; /* Literal */
+}
+
+/* Opcional: Para asegurar que el ancho se aplica correctamente */
+table {
+    width: 100%;
+    table-layout: fixed; /* Ayuda a que los anchos definidos se respeten */
+}
+th {
+    /* Opcional: para que el texto largo no fuerce el ancho */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
     </style>
+
 </head>
 <body>
 
@@ -315,46 +377,56 @@ $fechaImpresion = date('d/m/Y H:i:s');
         🖨️ Imprimir / Guardar PDF
     </button>
 
-    <!-- ENCABEZADO -->
-    <div class="header">
-        <h1>Universidad / Institución</h1>
-        <h2>Facultad de Ciencias Sociales</h2>
-        <p>Reporte de Calificaciones</p>
-        <p style="font-size: 9pt; margin-top: 5px;">Generado el: <?php echo $fechaImpresion; ?></p>
-    </div>
+   <div class="header">
+    <img src="../../extensiones/imagenespdf/logouto.png"  class="logo-izquierda">
+    
+    <img src="../../extensiones/imagenespdf/logofcs.png"  class="logo-derecha">
 
+    <h1>UNIVERSIDAD TECNICA DE ORURO</h1>
+    <h2>FACULTAD DE CIENCIAS DE LA SALUD</h2>
+    <h2>COORDINACION POSGRADO AREA - ODONTOLOGIA</h2>
+    <p>AV. Del Moreno Edificio San Agustin II (Ex Almacenes COMIBOL) Telefonos: 52 - 37317 - Fax: 52 - 47110 </p>
+    <p>Oruro - Bolivia</p>
+    <p style="font-size: 9pt; margin-top: 5px;">Generado el: <?php echo $fechaImpresion; ?></p>
+</div>
+        
     <!-- INFORMACIÓN DEL MÓDULO -->
     <div class="info-modulo">
-        <table>
-            <tr>
-                <td>Grado Académico:</td>
-                <td><?php echo htmlspecialchars($gradoAcademico); ?></td>
-                <td>Código del Módulo:</td>
-                <td><strong><?php echo htmlspecialchars($moduloCodigo); ?></strong></td>
-            </tr>
-            <tr>
-                <td>Programa:</td>
-                <td><?php echo htmlspecialchars($programaNombre); ?></td>
-                <td>Módulo:</td>
-                <td><strong><?php echo htmlspecialchars($moduloNombre); ?></strong></td>
-            </tr>
-            <tr>
-                <td>Docente:</td>
-                <td colspan="3"><?php echo htmlspecialchars($docenteNombre); ?></td>
-            </tr>
-        </table>
+      <table style="border: 1px solid black; border-collapse: collapse; width: 100%;">
+    <tr> 
+        <td style="border: 1px solid black; padding: 8px;">PROGRAMA:</td>
+        <td style="border: 1px solid black; padding: 8px;"><?php echo htmlspecialchars($programaNombre); ?></td> 
+    </tr>
+    <tr>
+        <td style="border: 1px solid black; padding: 8px;">MODULO:</td>
+        <td style="border: 1px solid black; padding: 8px;" colspan="2">
+            <strong><?php echo htmlspecialchars($moduloCodigo); ?> - </strong>
+            <strong><?php echo htmlspecialchars($moduloNombre); ?></strong>
+        </td>
+    </tr>
+    <tr>
+        <td style="border: 1px solid black; padding: 8px;">DOCENTE:</td>
+        <td style="border: 1px solid black; padding: 8px;" colspan="2"><?php echo htmlspecialchars($docenteNombre); ?></td>
+    </tr>
+     <tr>
+        <td style="border: 1px solid black; padding: 8px;">FECHA:</td>
+        <td style="border: 1px solid black; padding: 8px;" colspan="2"> <input type="date">  <input type="date"> </td>
+    </tr>
+</table>
     </div>
+    <center> <h2>PLANILLA DE CALIFICACIONES</h2></center>
 
     <!-- TABLA DE CALIFICACIONES -->
     <table class="tabla-calificaciones">
         <thead>
             <tr>
-                <th class="col-numero">#</th>
-                <th class="col-ci">C.I.</th>
-                <th class="col-estudiante">ESTUDIANTE</th>
-                <th class="col-nota">NOTA</th>
-                <th class="col-estado">ESTADO</th>
-                <th class="col-fecha">FECHA REGISTRO</th>
+               <th class="col-numero">#</th>
+                
+               <th class="col-nombre">NOMBRE COMPLETO</th>
+      <th class="col-sigla">SIGLA</th>
+      <th class="col-modulo">MODULO</th>
+      <th class="col-num">NUM.</th>
+      <th class="col-literal">LITERAL</th>
             </tr>
         </thead>
         <tbody>
@@ -397,13 +469,12 @@ $fechaImpresion = date('d/m/Y H:i:s');
             ?>
             <tr>
                 <td class="col-numero"><?php echo $index + 1; ?></td>
-                <td class="col-ci"><?php echo $ci; ?></td>
                 <td class="col-estudiante"><?php echo $nombreCompleto; ?></td>
+                <td class="col-estudiante"></td>
+                <td class="col-estudiante"><?php echo $moduloCodigo; ?></td>
                 <td class="col-nota"><?php echo $notaMostrar; ?></td>
-                <td class="col-estado">
-                    <span class="badge <?php echo $estadoClase; ?>"><?php echo $estadoTexto; ?></span>
-                </td>
-                <td class="col-fecha"><?php echo $fechaRegistro; ?></td>
+             
+                
             </tr>
             <?php
                 endforeach;
@@ -414,31 +485,7 @@ $fechaImpresion = date('d/m/Y H:i:s');
         </tbody>
     </table>
 
-    <!-- ESTADÍSTICAS -->
-    <div class="estadisticas">
-        <div class="estadistica-item" style="background: #d4edda; border-left-color: #1dc9b7;">
-            <h3 style="color: #1dc9b7;"><?php echo $aprobados; ?></h3>
-            <p>Aprobados</p>
-        </div>
-        <div class="estadistica-item" style="background: #f8d7da; border-left-color: #fd397a; margin: 0 10px;">
-            <h3 style="color: #fd397a;"><?php echo $reprobados; ?></h3>
-            <p>Reprobados</p>
-        </div>
-        <div class="estadistica-item" style="background: #e2e3e5; border-left-color: #6c757d;">
-            <h3 style="color: #6c757d;"><?php echo $pendientes; ?></h3>
-            <p>Pendientes</p>
-        </div>
-    </div>
 
-    <div style="text-align: center; margin: 20px 0;">
-        <p style="font-size: 12pt; color: #667eea;">
-            <strong>Promedio General: <?php echo number_format($promedio, 2); ?></strong>
-        </p>
-        <p style="font-size: 10pt; color: #666;">
-            Total de estudiantes: <?php echo count($estudiantes); ?> |
-            Calificados: <?php echo $totalNotas; ?>
-        </p>
-    </div>
 
     <?php else: ?>
         </tbody>
@@ -463,7 +510,7 @@ $fechaImpresion = date('d/m/Y H:i:s');
             <div class="firma">
                 <div class="linea"></div>
                 <p>Sello y Firma de Autorización</p>
-                <p style="font-weight: normal; font-size: 9pt;">Dirección Académica</p>
+                <p style="font-weight: normal; font-size: 9pt;">COORDINACION POSGRADO ODONTOLOGIA</p>
             </div>
         </div>
 
@@ -473,4 +520,5 @@ $fechaImpresion = date('d/m/Y H:i:s');
     </div>
 
 </body>
+
 </html>

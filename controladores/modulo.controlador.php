@@ -216,6 +216,8 @@ class ModuloControlador
                 echo '
                 <script src="vistas/recursos/sweetalert.min.js"></script>
                 <script>
+                // Guardar el programaID en sessionStorage para mantener la selección
+                sessionStorage.setItem("programaIDSeleccionado", "' . $programaID . '");
                 swal("EXITOSO!", "Los módulos se registraron correctamente (' . count($modulos) . ' módulos)", "success")
                 .then(function () {
                     location.href="modulos";
