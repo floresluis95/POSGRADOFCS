@@ -68,14 +68,12 @@
                                 <div class="kt-portlet__body">
                                     
                                     <div class="form-group row">
-                                        <label class="col-lg-3 col-form-label">Selecciona el Programa Inscrito:</label>
+                                        <label class="col-lg-3 col-form-label">Filtrar por Programa:</label>
                                         <div class="col-lg-6">
                                             <select class="form-control" id="select_programa_calificaciones" name="select_programa_calificaciones">
-                                                <option value="">-- Seleccione un Programa --</option>
-                                                <option value="1">Curso Básico de Programación (2024)</option>
-                                                <option value="2">Diplomado en Redes y Seguridad (2023)</option>
+                                                <option value="">-- Todos los Programas --</option>
                                             </select>
-                                            <span class="form-text text-muted">Elija el programa para ver sus notas.</span>
+                                            <span class="form-text text-muted">Opcional: Elija un programa específico para filtrar resultados.</span>
                                         </div>
                                     </div>
 
@@ -139,5 +137,77 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Scripts necesarios -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="vistas/recursos/assets/js/scripts/buscar-calificaciones.js"></script>
+
+    <style>
+        .kt-user-card-v2 {
+            display: flex;
+            align-items: center;
+        }
+
+        .kt-user-card-v2__details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kt-user-card-v2__name {
+            font-weight: 600;
+            color: #464457;
+            font-size: 1rem;
+        }
+
+        .kt-user-card-v2__desc {
+            color: #74788d;
+            font-size: 0.875rem;
+        }
+
+        .table-responsive {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .table-striped tbody tr:hover {
+            background-color: #f4f5f8;
+            transition: background-color 0.2s ease;
+        }
+
+        .kt-badge--pill {
+            border-radius: 12px;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        /* Estilos para el botón de buscar */
+        #btn_buscar_calificaciones {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        #btn_buscar_calificaciones:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Mejorar el select */
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+    </style>
+
     </body>

@@ -483,6 +483,319 @@ class CalificacionModelo
     }
 
     /**
+     * Buscar calificaciones por diferentes criterios
+     * @param string $tipoBusqueda - 'ci', 'nombre', 'apellido'
+     * @param string $valor - Valor a buscar
+     * @param int|null $programaID - ID del programa (opcional)
+     * @return array
+     */
+    public static function BuscarCalificacionesEstudianteModelo($tipoBusqueda, $valor, $programaID = null)
+    {
+        try {
+            $sql = "SELECT
+                        e.EstudianteID,
+                        e.Ci,
+                        e.Complemento,
+                        e.Exp,
+                        e.Nombre,
+                        e.Apaterno,
+                        e.Amaterno,
+                        m.nombremodulo as NombreModulo,
+                        m.codigomodulo as CodigoModulo,
+                        c.Nota,
+                        c.estado as Estado,
+                        c.FechaRegistro,
+                        p.NombrePrograma,
+                        p.GradoAcademico
+                    FROM calificacion c
+                    INNER JOIN estudiante e ON c.EstudianteID = e.EstudianteID
+                    INNER JOIN modulos m ON c.Idmodulo = m.Idmodulo
+                    INNER JOIN programa p ON c.ProgramaId = p.ProgramaID
+                    WHERE 1=1";
+
+            $params = [];
+
+            // Agregar condición según tipo de búsqueda
+            switch ($tipoBusqueda) {
+                case 'ci':
+                    $sql .= " AND e.Ci LIKE :valor";
+                    $params[':valor'] = "%$valor%";
+                    break;
+                case 'nombre':
+                    $sql .= " AND e.Nombre LIKE :valor";
+                    $params[':valor'] = "%$valor%";
+                    break;
+                case 'apellido':
+                    $sql .= " AND (e.Apaterno LIKE :valor OR e.Amaterno LIKE :valor)";
+                    $params[':valor'] = "%$valor%";
+                    break;
+            }
+
+            // Agregar filtro de programa si se especifica
+            if ($programaID !== null && $programaID !== '') {
+                $sql .= " AND c.ProgramaId = :programaID";
+                $params[':programaID'] = $programaID;
+            }
+
+            $sql .= " ORDER BY e.Apaterno, e.Amaterno, e.Nombre, p.NombrePrograma, m.codigomodulo";
+
+            $stmt = Conexion::Conectar()->prepare($sql);
+
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
+            }
+
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch (PDOException $e) {
+            error_log("Error en BuscarCalificacionesEstudianteModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener todas las calificaciones de un estudiante específico
+     * @param int $estudianteID
+     * @return array
+     */
+    public static function ObtenerCalificacionesPorEstudianteModelo($estudianteID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    c.CalificacionID,
+                    c.Nota,
+                    c.estado,
+                    c.FechaRegistro,
+                    m.nombremodulo as NombreModulo,
+                    m.codigomodulo as CodigoModulo,
+                    p.NombrePrograma,
+                    p.GradoAcademico,
+                    p.ProgramaID
+                FROM calificacion c
+                INNER JOIN modulos m ON c.Idmodulo = m.Idmodulo
+                INNER JOIN programa p ON c.ProgramaId = p.ProgramaID
+                WHERE c.EstudianteID = :estudianteID
+                ORDER BY p.NombrePrograma, m.codigomodulo"
+            );
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerCalificacionesPorEstudianteModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener lista de programas con calificaciones registradas
+     * @return array
+     */
+    public static function ObtenerProgramasConCalificacionesModelo()
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT DISTINCT
+                    p.ProgramaID,
+                    p.NombrePrograma,
+                    p.Codigo,
+                    p.GradoAcademico
+                FROM programa p
+                INNER JOIN calificacion c ON p.ProgramaID = c.ProgramaId
+                WHERE p.Estado = 1
+                ORDER BY p.GradoAcademico, p.NombrePrograma"
+            );
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerProgramasConCalificacionesModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener estudiante por ID
+     * @param int $estudianteID - ID del estudiante
+     * @return array|null
+     */
+    public static function ObtenerEstudiantePorIDModelo($estudianteID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    EstudianteID,
+                    Ci,
+                    Complemento,
+                    Exp,
+                    Nombre,
+                    Apaterno,
+                    Amaterno,
+                    Correo,
+                    Telefono,
+                    Celular,
+                    Direccion,
+                    Estado
+                FROM estudiante
+                WHERE EstudianteID = :estudianteID
+                AND Estado = 1
+                LIMIT 1"
+            );
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerEstudiantePorIDModelo: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Obtener estudiante por CI (usuario)
+     * @param string $ci - CI del estudiante
+     * @return array|null
+     */
+    public static function ObtenerEstudiantePorCIModelo($ci)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    EstudianteID,
+                    Ci,
+                    Complemento,
+                    Exp,
+                    Nombre,
+                    Apaterno,
+                    Amaterno,
+                    Correo,
+                    Telefono,
+                    Celular,
+                    Direccion,
+                    Estado
+                FROM estudiante
+                WHERE Ci = :ci
+                AND Estado = 1
+                LIMIT 1"
+            );
+            $stmt->bindParam(":ci", $ci, PDO::PARAM_STR);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerEstudiantePorCIModelo: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Obtener programas inscritos de un estudiante
+     * @param int $estudianteID
+     * @return array
+     */
+    public static function ObtenerProgramasEstudianteModelo($estudianteID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT DISTINCT
+                    p.ProgramaID,
+                    p.NombrePrograma,
+                    p.Codigo,
+                    p.GradoAcademico,
+                    ep.FechaInscripcion,
+                    ep.Estado,
+                    (SELECT COUNT(*)
+                     FROM calificacion c
+                     WHERE c.EstudianteID = :estudianteID
+                     AND c.ProgramaId = p.ProgramaID) as TotalModulosConNota
+                FROM programa p
+                INNER JOIN estudianteprograma ep ON p.ProgramaID = ep.ProgramaID
+                WHERE ep.EstudianteID = :estudianteID
+                AND ep.Estado = 'ACTIVO'
+                ORDER BY ep.FechaInscripcion DESC, p.NombrePrograma"
+            );
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerProgramasEstudianteModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener calificaciones de un estudiante por programa
+     * @param int $estudianteID
+     * @param int $programaID
+     * @return array
+     */
+    public static function ObtenerCalificacionesEstudianteProgramaModelo($estudianteID, $programaID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    c.CalificacionID,
+                    c.Nota,
+                    c.estado,
+                    c.FechaRegistro,
+                    m.nombremodulo as NombreModulo,
+                    m.codigomodulo as CodigoModulo,
+                    m.Idmodulo,
+                    d.Nombre as DocenteNombre,
+                    d.Apaterno as DocenteApaterno,
+                    d.Amaterno as DocenteAmaterno,
+                    p.NombrePrograma,
+                    p.GradoAcademico
+                FROM calificacion c
+                INNER JOIN modulos m ON c.Idmodulo = m.Idmodulo
+                INNER JOIN programa p ON c.ProgramaId = p.ProgramaID
+                LEFT JOIN docente d ON m.DocenteID = d.DocenteID
+                WHERE c.EstudianteID = :estudianteID
+                AND c.ProgramaId = :programaID
+                ORDER BY m.codigomodulo ASC"
+            );
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerCalificacionesEstudianteProgramaModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener resumen de calificaciones de un estudiante
+     * @param int $estudianteID
+     * @param int $programaID
+     * @return array
+     */
+    public static function ObtenerResumenCalificacionesModelo($estudianteID, $programaID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    COUNT(*) as TotalModulos,
+                    SUM(CASE WHEN c.Nota >= 51 THEN 1 ELSE 0 END) as ModulosAprobados,
+                    SUM(CASE WHEN c.Nota < 51 THEN 1 ELSE 0 END) as ModulosReprobados,
+                    ROUND(AVG(c.Nota), 2) as PromedioGeneral,
+                    MAX(c.Nota) as NotaMaxima,
+                    MIN(c.Nota) as NotaMinima
+                FROM calificacion c
+                WHERE c.EstudianteID = :estudianteID
+                AND c.ProgramaId = :programaID"
+            );
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerResumenCalificacionesModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Verificar si existe índice único en la tabla calificacion
      * Si no existe, lo crea para evitar duplicados
      */

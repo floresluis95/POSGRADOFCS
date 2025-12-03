@@ -376,20 +376,36 @@ if ($_SESSION["Tipo"] == "EST") {
             <div id="kt_aside_menu" class="kt-aside-menu" data-ktmenu-vertical="1" data-ktmenu-scroll="1">
 
               <ul class="kt-menu__nav">
-
-                <!-- CALIFICACIONES -->
+                <!-- NOTAS ESTUDIANTES -->
                 <li class="kt-menu__section">
                   <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
-                    <i class="flaticon2-chart2" style="color: #ffb822;"></i> MIS CALIFICACIONES
+                    <i class="flaticon2-analytics-1" style="color: #fd397a;"></i> CONSULTA DE NOTAS
                   </h4>
-                </li>
+                </li>  
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="calificacionesfinales" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-document" style="color: #ffb822;"></i>
-                    <span class="kt-menu__link-text">Ver Mis Notas</span>
+                  <a href="historialnotaestudiante" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-list-3" style="color: #fd397a;"></i>
+                    <span class="kt-menu__link-text">Historial de Notas</span>
                   </a>
                 </li>
 
+                  <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-analytics-1" style="color: #fd397a;"></i> DETALLE DE PAGOS
+                  </h4>
+                </li>  
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="historialmodulosestudiante" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-list-3" style="color: #fd397a;"></i>
+                    <span class="kt-menu__link-text">MODULOS</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="historialreciboestudiante" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-list-3" style="color: #fd397a;"></i>
+                    <span class="kt-menu__link-text">RECIBOS</span>
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

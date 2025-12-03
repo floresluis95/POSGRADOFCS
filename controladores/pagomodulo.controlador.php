@@ -181,5 +181,56 @@ class PagoModuloControlador
             }
         }
     }
+
+    /**
+     * Obtener programas inscritos del estudiante logueado
+     */
+    public function ObtenerProgramasEstudianteControlador()
+    {
+        if (!isset($_SESSION['EstudianteID'])) {
+            return json_encode([
+                'success' => false,
+                'error' => 'No se encontró el estudiante en la sesión'
+            ]);
+        }
+
+        $estudianteID = $_SESSION['EstudianteID'];
+        $programas = PagoModuloModelo::ObtenerProgramasEstudianteConInscripcionModelo($estudianteID);
+
+        return json_encode([
+            'success' => true,
+            'programas' => $programas
+        ]);
+    }
+
+    /**
+     * Obtener detalle de módulos (pagados y pendientes) del estudiante por programa
+     */
+    public function ObtenerDetalleModulosEstudianteControlador()
+    {
+        if (!isset($_SESSION['EstudianteID'])) {
+            return json_encode([
+                'success' => false,
+                'error' => 'No se encontró el estudiante en la sesión'
+            ]);
+        }
+
+        if (!isset($_POST['programaID'])) {
+            return json_encode([
+                'success' => false,
+                'error' => 'Falta el ID del programa'
+            ]);
+        }
+
+        $estudianteID = $_SESSION['EstudianteID'];
+        $programaID = (int)$_POST['programaID'];
+
+        $detalle = PagoModuloModelo::ObtenerDetalleModulosEstudianteModelo($estudianteID, $programaID);
+
+        return json_encode([
+            'success' => true,
+            'detalle' => $detalle
+        ]);
+    }
 }
 ?>

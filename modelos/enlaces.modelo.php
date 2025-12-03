@@ -19,11 +19,13 @@
                 $enlace == 'docentes'||
                 $enlace == 'reportemodulos'||
                 $enlace == 'reportes'||
-                 $enlace == 'rnotasestudiante'||
-                 $enlace == 'reportenotas'||
-                 $enlace == 'notasdocente'||
-                  $enlace == 'bnotaestudiante'||
-                   $enlace == 'historialnotaestudiante'
+                $enlace == 'rnotasestudiante'||
+                $enlace == 'reportenotas'||
+                $enlace == 'notasdocente'||
+                $enlace == 'bnotaestudiante'||
+                $enlace == 'historialnotaestudiante'||
+                $enlace == 'historialmodulosestudiante'||
+                $enlace == 'historialreciboestudiante'
                   
                  
 

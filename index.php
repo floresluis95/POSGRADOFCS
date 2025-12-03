@@ -16,6 +16,7 @@
     require_once 'controladores/reportes.controlador.php';
     require_once 'controladores/reportenotas.controlador.php';
     require_once 'controladores/calificacion.controlador.php';
+    require_once 'controladores/pagomodulo.controlador.php';
     // Modelos
     require_once 'modelos/enlaces.modelo.php';
     require_once 'modelos/ingreso.modelo.php';
@@ -32,6 +33,7 @@
     require_once 'modelos/reportes.modelo.php';
     require_once 'modelos/reportenotas.modelo.php';
     require_once 'modelos/calificacion.modelo.php';
+    require_once 'modelos/pagomodulo.modelo.php';
 
 
     // Llamar plantilla

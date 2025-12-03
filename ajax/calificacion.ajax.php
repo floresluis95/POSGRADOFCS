@@ -51,6 +51,26 @@ if (isset($_POST['accion'])) {
             $controlador->ObtenerDocenteLogueadoControlador();
             break;
 
+        case 'buscarCalificaciones':
+            $controlador->BuscarCalificacionesControlador();
+            break;
+
+        case 'obtenerProgramasConCalificaciones':
+            $controlador->ObtenerProgramasConCalificacionesControlador();
+            break;
+
+        case 'obtenerEstudianteLogueado':
+            $controlador->ObtenerEstudianteLogueadoControlador();
+            break;
+
+        case 'obtenerProgramasEstudiante':
+            $controlador->ObtenerProgramasEstudianteControlador();
+            break;
+
+        case 'obtenerCalificacionesEstudiantePrograma':
+            $controlador->ObtenerCalificacionesEstudianteProgramaControlador();
+            break;
+
         default:
             echo json_encode([
                 'status' => 'error',

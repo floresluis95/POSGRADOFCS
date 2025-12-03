@@ -339,5 +339,125 @@ class PagoModuloModelo
             return false;
         }
     }
+
+    /**
+     * Obtener programas inscritos del estudiante con ID de inscripción
+     * @param int $estudianteID
+     * @return array
+     */
+    public static function ObtenerProgramasEstudianteConInscripcionModelo($estudianteID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    ep.idInscripcion,
+                    ep.ProgramaID,
+                    p.NombrePrograma,
+                    p.GradoAcademico,
+                    p.CostoMatricula,
+                    ep.FechaInscripcion,
+                    ep.Estado as EstadoInscripcion
+                FROM estudianteprograma ep
+                INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
+                WHERE ep.EstudianteID = :estudianteID
+                AND ep.Estado = 'ACTIVO'
+                ORDER BY ep.FechaInscripcion DESC"
+            );
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerProgramasEstudianteConInscripcionModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener detalle de módulos con estado de pago para el estudiante
+     * @param int $estudianteID
+     * @param int $programaID
+     * @return array con módulos pagados y pendientes
+     */
+    public static function ObtenerDetalleModulosEstudianteModelo($estudianteID, $programaID)
+    {
+        try {
+            // Primero obtener el ID de inscripción del estudiante en el programa
+            $stmtInsc = Conexion::Conectar()->prepare(
+                "SELECT idInscripcion FROM estudianteprograma
+                 WHERE EstudianteID = :estudianteID
+                 AND ProgramaID = :programaID
+                 AND Estado = 'ACTIVO'
+                 LIMIT 1"
+            );
+            $stmtInsc->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmtInsc->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmtInsc->execute();
+            $inscripcion = $stmtInsc->fetch(PDO::FETCH_ASSOC);
+
+            if (!$inscripcion) {
+                return [
+                    'modulosPagados' => [],
+                    'modulosPendientes' => [],
+                    'resumen' => [
+                        'totalModulos' => 0,
+                        'modulosPagados' => 0,
+                        'modulosPendientes' => 0,
+                        'costoTotal' => 0,
+                        'montoPagado' => 0,
+                        'montoPendiente' => 0
+                    ]
+                ];
+            }
+
+            $idinscripcion = $inscripcion['idInscripcion'];
+
+            // Obtener todos los módulos con estado de pago
+            $modulos = self::ObtenerModulosConEstadoPagoModelo($programaID, $idinscripcion);
+
+            $modulosPagados = [];
+            $modulosPendientes = [];
+            $totalCosto = 0;
+            $totalPagado = 0;
+
+            foreach ($modulos as $modulo) {
+                $totalCosto += floatval($modulo['Costo']);
+
+                if ($modulo['Pagado'] == 1) {
+                    $modulosPagados[] = $modulo;
+                    $totalPagado += floatval($modulo['CostoPagado']);
+                } else {
+                    $modulosPendientes[] = $modulo;
+                }
+            }
+
+            return [
+                'modulosPagados' => $modulosPagados,
+                'modulosPendientes' => $modulosPendientes,
+                'resumen' => [
+                    'totalModulos' => count($modulos),
+                    'modulosPagados' => count($modulosPagados),
+                    'modulosPendientes' => count($modulosPendientes),
+                    'costoTotal' => $totalCosto,
+                    'montoPagado' => $totalPagado,
+                    'montoPendiente' => $totalCosto - $totalPagado
+                ]
+            ];
+
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerDetalleModulosEstudianteModelo: " . $e->getMessage());
+            return [
+                'modulosPagados' => [],
+                'modulosPendientes' => [],
+                'resumen' => [
+                    'totalModulos' => 0,
+                    'modulosPagados' => 0,
+                    'modulosPendientes' => 0,
+                    'costoTotal' => 0,
+                    'montoPagado' => 0,
+                    'montoPendiente' => 0
+                ]
+            ];
+        }
+    }
 }
 ?>

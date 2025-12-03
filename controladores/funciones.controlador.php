@@ -3,8 +3,11 @@
     {
         public function ValidarSessionControlador()
         {
-            //session_start();
-            if (!$_SESSION["Validar"])
+            // Iniciar sesión si aún no se ha iniciado
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            if (!isset($_SESSION["Validar"]) || !$_SESSION["Validar"])
             {
                 header('Location: ingreso');
                 exit();

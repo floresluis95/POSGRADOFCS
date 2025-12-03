@@ -214,5 +214,213 @@ class CalificacionControlador
             ]);
         }
     }
+
+    /**
+     * Buscar calificaciones de estudiantes (AJAX)
+     * Para vista de búsqueda de calificaciones
+     */
+    public function BuscarCalificacionesControlador()
+    {
+        if (isset($_POST['tipoBusqueda']) && isset($_POST['valorBusqueda'])) {
+            $tipoBusqueda = $_POST['tipoBusqueda'];
+            $valorBusqueda = trim($_POST['valorBusqueda']);
+            $programaID = isset($_POST['programaID']) ? $_POST['programaID'] : null;
+
+            // Validar que el valor de búsqueda no esté vacío
+            if (empty($valorBusqueda)) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Debe ingresar un valor para buscar'
+                ]);
+                return;
+            }
+
+            // Validar tipo de búsqueda
+            $tiposValidos = ['ci', 'nombre', 'apellido'];
+            if (!in_array($tipoBusqueda, $tiposValidos)) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Tipo de búsqueda no válido'
+                ]);
+                return;
+            }
+
+            $resultados = CalificacionModelo::BuscarCalificacionesEstudianteModelo(
+                $tipoBusqueda,
+                $valorBusqueda,
+                $programaID
+            );
+
+            echo json_encode([
+                'status' => 'success',
+                'data' => $resultados,
+                'total' => count($resultados)
+            ]);
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Parámetros incompletos'
+            ]);
+        }
+    }
+
+    /**
+     * Obtener programas con calificaciones registradas (AJAX)
+     */
+    public function ObtenerProgramasConCalificacionesControlador()
+    {
+        $programas = CalificacionModelo::ObtenerProgramasConCalificacionesModelo();
+
+        echo json_encode([
+            'status' => 'success',
+            'data' => $programas
+        ]);
+    }
+
+    /**
+     * Listar programas con calificaciones para SELECT
+     */
+    public function ListarProgramasCalificacionesSelectControlador()
+    {
+        $programas = CalificacionModelo::ObtenerProgramasConCalificacionesModelo();
+
+        foreach ($programas as $programa) {
+            echo '<option value="' . $programa['ProgramaID'] . '">' .
+                 htmlspecialchars($programa['NombrePrograma']) . ' (' .
+                 htmlspecialchars($programa['GradoAcademico']) . ')' .
+                 '</option>';
+        }
+    }
+
+    /**
+     * Obtener información del estudiante logueado (AJAX)
+     */
+    public function ObtenerEstudianteLogueadoControlador()
+    {
+        if (!session_id()) {
+            session_start();
+        }
+
+        if (isset($_SESSION['Usuario'])) {
+            $ci = $_SESSION['Usuario'];
+            $estudiante = CalificacionModelo::ObtenerEstudiantePorCIModelo($ci);
+
+            if ($estudiante) {
+                // Agregar nombre completo
+                $estudiante['NombreCompleto'] = $estudiante['Nombre'] . ' ' .
+                                                 $estudiante['Apaterno'] . ' ' .
+                                                 $estudiante['Amaterno'];
+                $estudiante['CICompleto'] = $estudiante['Ci'];
+                if (!empty($estudiante['Complemento'])) {
+                    $estudiante['CICompleto'] .= '-' . $estudiante['Complemento'];
+                }
+                $estudiante['CICompleto'] .= ' ' . $estudiante['Exp'];
+
+                echo json_encode([
+                    'status' => 'success',
+                    'data' => $estudiante
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'No se encontró un estudiante asociado a este usuario'
+                ]);
+            }
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Sesión no válida'
+            ]);
+        }
+    }
+
+    /**
+     * Obtener programas inscritos del estudiante logueado (AJAX)
+     */
+    public function ObtenerProgramasEstudianteControlador()
+    {
+        if (!session_id()) {
+            session_start();
+        }
+
+        // Verificar que la sesión tenga EstudianteID
+        if (isset($_SESSION['EstudianteID']) && !empty($_SESSION['EstudianteID'])) {
+            $estudianteID = $_SESSION['EstudianteID'];
+
+            // Obtener datos completos del estudiante
+            $estudiante = CalificacionModelo::ObtenerEstudiantePorIDModelo($estudianteID);
+
+            if ($estudiante) {
+                $programas = CalificacionModelo::ObtenerProgramasEstudianteModelo($estudianteID);
+
+                echo json_encode([
+                    'status' => 'success',
+                    'data' => $programas,
+                    'estudiante' => [
+                        'EstudianteID' => $estudiante['EstudianteID'],
+                        'NombreCompleto' => $estudiante['Nombre'] . ' ' .
+                                           $estudiante['Apaterno'] . ' ' .
+                                           $estudiante['Amaterno'],
+                        'CI' => $estudiante['Ci']
+                    ]
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'No se encontró un estudiante con ID: ' . $estudianteID
+                ]);
+            }
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'No hay un estudiante asociado a esta sesión. Por favor, cierre sesión e inicie nuevamente.'
+            ]);
+        }
+    }
+
+    /**
+     * Obtener calificaciones del estudiante por programa (AJAX)
+     */
+    public function ObtenerCalificacionesEstudianteProgramaControlador()
+    {
+        if (!session_id()) {
+            session_start();
+        }
+
+        if (isset($_POST['programaID'])) {
+            $programaID = intval($_POST['programaID']);
+
+            // Verificar que la sesión tenga EstudianteID
+            if (isset($_SESSION['EstudianteID']) && !empty($_SESSION['EstudianteID'])) {
+                $estudianteID = $_SESSION['EstudianteID'];
+
+                $calificaciones = CalificacionModelo::ObtenerCalificacionesEstudianteProgramaModelo(
+                    $estudianteID,
+                    $programaID
+                );
+
+                $resumen = CalificacionModelo::ObtenerResumenCalificacionesModelo(
+                    $estudianteID,
+                    $programaID
+                );
+
+                echo json_encode([
+                    'status' => 'success',
+                    'data' => $calificaciones,
+                    'resumen' => $resumen
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'No hay un estudiante asociado a esta sesión. Por favor, cierre sesión e inicie nuevamente.'
+                ]);
+            }
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'ID de programa no especificado'
+            ]);
+        }
+    }
 }
 ?>

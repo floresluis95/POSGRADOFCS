@@ -1,4 +1,8 @@
 <?php
+// Iniciar sesión si aún no se ha iniciado
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 ob_start();
 ?>
 <!DOCTYPE html>
