@@ -34,24 +34,24 @@
                 <div class="kt-body kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-grid--stretch" id="kt_body">
                     <div class="kt-content  kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
 
-                        <div class="kt-subheader   kt-grid__item" id="kt_subheader">
-                            <div class="kt-container ">
+                        <div class="kt-subheader kt-grid__item" id="kt_subheader" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem 0;">
+                            <div class="kt-container">
                                 <div class="kt-subheader__main">
-                                    <h2 class="kt-subheader__title">
-                                        CONSULTA DE CALIFICACIONES
+                                    <h2 class="kt-subheader__title" style="color: white; font-size: 2rem; font-weight: 700;">
+                                        <i class="flaticon2-chart" style="font-size: 2.5rem;"></i> CONSULTA DE CALIFICACIONES
                                     </h2>
                                     <span class="kt-subheader__separator kt-hidden"></span>
                                     <div class="kt-subheader__breadcrumbs">
-                                        <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
-                                        <span class="kt-subheader__breadcrumbs-separator"></span>
-                                        <h4>
+                                        <a href="#" class="kt-subheader__breadcrumbs-home" style="color: rgba(255,255,255,0.8);"><i class="flaticon2-shelter"></i></a>
+                                        <span class="kt-subheader__breadcrumbs-separator" style="color: rgba(255,255,255,0.5);"></span>
+                                        <h4 style="color: rgba(255,255,255,0.9); font-weight: 500;">
                                             ACCESO ESTUDIANTIL
                                         </h4>
                                     </div>
                                 </div>
                                 <div class="kt-subheader__toolbar">
                                     <div class="kt-subheader__wrapper">
-                                        <div id="lafecha" style="font-size:13pt"></div>
+                                        <div id="lafecha" style="font-size:13pt; color: white; font-weight: 500;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -65,78 +65,88 @@
                                         </h3>
                                     </div>
                                 </div>
-                                <div class="kt-portlet__body" style="padding: 2rem;">
+                                <div class="kt-portlet__body" style="padding: 2.5rem; background: #f8f9fa;">
 
                                     <!-- Información del estudiante -->
-                                    <div class="alert alert-light border-primary mb-4" style="border-left: 4px solid #5867dd;">
+                                    <div class="mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
                                         <div class="row align-items-center">
                                             <div class="col-md-8">
-                                                <h5 class="mb-2" style="color: #5867dd;">
-                                                    <i class="flaticon2-user kt-font-primary"></i>
-                                                    <span id="estudiante_nombre">Estudiante</span>
-                                                </h5>
-                                                <p class="mb-0 text-muted">
-                                                    <i class="flaticon2-medical-records"></i>
-                                                    Acceda a sus calificaciones seleccionando un programa inscrito
-                                                </p>
+                                                <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                                                    <div style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; margin-right: 1.5rem;">
+                                                        <i class="flaticon2-user" style="font-size: 2rem; color: white;"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="mb-1" style="color: white; font-weight: 700; font-size: 1.5rem;">
+                                                            <span id="estudiante_nombre">Estudiante</span>
+                                                        </h4>
+                                                        <p class="mb-0" style="color: rgba(255,255,255,0.8); font-size: 1rem;">
+                                                            <i class="flaticon2-line-chart"></i> Acceda a sus calificaciones por programa académico
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div class="col-md-4 text-right">
-                                                <span class="kt-badge kt-badge--brand kt-badge--inline kt-badge--pill" style="font-size: 1rem; padding: 8px 16px;">
-                                                    <i class="flaticon2-hourglass"></i> Sesión Activa
-                                                </span>
+                                                <div style="background: rgba(255,255,255,0.2); border-radius: 30px; padding: 12px 24px; display: inline-block;">
+                                                    <i class="flaticon2-protected" style="color: white; font-size: 1.2rem;"></i>
+                                                    <span style="color: white; font-weight: 600; font-size: 1rem; margin-left: 8px;">Sesión Activa</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Selector de programa -->
-                                    <div class="form-group row">
-                                        <label class="col-lg-3 col-form-label" style="font-weight: 600;">
-                                            <i class="flaticon2-list-3 text-primary"></i> Programas Inscritos:
-                                        </label>
-                                        <div class="col-lg-7">
-                                            <select class="form-control form-control-lg" id="select_programa_calificaciones" name="select_programa_calificaciones" disabled>
-                                                <option value="">Cargando programas...</option>
-                                            </select>
-                                            <span class="form-text text-muted">
-                                                <i class="flaticon2-information"></i> Seleccione un programa para ver el detalle de sus calificaciones.
-                                            </span>
+                                    <div style="background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 2rem;">
+                                        <div class="row align-items-center">
+                                            <div class="col-lg-3">
+                                                <label class="mb-0" style="font-weight: 700; font-size: 1.1rem; color: #464E5F;">
+                                                    <i class="flaticon2-layers-1" style="color: #667eea; font-size: 1.5rem; margin-right: 10px;"></i>
+                                                    Programa:
+                                                </label>
+                                            </div>
+                                            <div class="col-lg-9">
+                                                <select class="form-control" id="select_programa_calificaciones" name="select_programa_calificaciones" disabled style="height: 50px; border: 2px solid #E4E6EF; border-radius: 10px; font-size: 1rem; font-weight: 500;">
+                                                    <option value="">Cargando programas...</option>
+                                                </select>
+                                                <small class="form-text" style="color: #B5B5C3; margin-top: 8px;">
+                                                    <i class="flaticon2-information"></i> Seleccione un programa para visualizar sus calificaciones
+                                                </small>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div class="kt-separator kt-separator--border-dashed kt-separator--space-lg"></div>
-
-                                    <!-- Título de la tabla -->
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h4 class="kt-section__title mb-0">
-                                            <i class="flaticon2-chart text-success"></i> Detalle de Calificaciones Finales
-                                        </h4>
-                                        <button class="btn btn-outline-brand btn-sm" id="btn_descargar_pdf" style="display: none;">
-                                            <i class="flaticon2-download"></i> Descargar PDF
-                                        </button>
-                                    </div>
-
                                     <!-- Tabla de calificaciones -->
-                                    <div class="kt-section__content">
-                                        <div class="table-responsive" style="border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
-                                            <table class="table table-striped table-bordered table-hover mb-0" id="tabla_calificaciones_finales">
-                                                <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                                                    <tr>
-                                                        <th style="width: 30%;">Módulo/Asignatura</th>
-                                                        <th style="width: 25%;">Docente</th>
-                                                        <th class="text-center" style="width: 15%;">Nota Obtenida</th>
-                                                        <th class="text-center" style="width: 15%;">Ponderación Máxima</th>
-                                                        <th class="text-center" style="width: 15%;">Estado</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="contenido_calificaciones">
-                                                    <tr>
-                                                        <td colspan="5" class="text-center text-muted py-5">
-                                                            <i class="flaticon-file-2" style="font-size: 3rem; opacity: 0.3;"></i>
-                                                            <p class="mt-2">Seleccione un programa en el menú superior.</p>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
+                                    <div class="mb-4" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
+                                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center;">
+                                            <h3 style="color: white; font-weight: 700; margin: 0; font-size: 1.4rem;">
+                                                <i class="flaticon2-line-chart" style="font-size: 1.8rem; margin-right: 10px;"></i>
+                                                Detalle de Calificaciones Finales
+                                            </h3>
+                                            <button class="btn btn-light btn-sm" id="btn_descargar_pdf" style="display: none; border-radius: 25px; padding: 10px 24px; font-weight: 600; box-shadow: 0 4px 15px rgba(255,255,255,0.3);">
+                                                <i class="flaticon2-download"></i> Descargar PDF
+                                            </button>
+                                        </div>
+                                        <div style="padding: 2rem;">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover mb-0" id="tabla_calificaciones_finales">
+                                                    <thead>
+                                                        <tr style="background: #f8f9fa; border-bottom: 2px solid #667eea;">
+                                                            <th width="30%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">MÓDULO / ASIGNATURA</th>
+                                                            <th width="25%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">DOCENTE</th>
+                                                            <th class="text-center" width="15%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">NOTA OBTENIDA</th>
+                                                            <th class="text-center" width="15%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">PONDERACIÓN</th>
+                                                            <th class="text-center" width="15%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">ESTADO</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="contenido_calificaciones">
+                                                        <tr>
+                                                            <td colspan="5" class="text-center" style="padding: 3rem; color: #B5B5C3;">
+                                                                <i class="flaticon2-list-3" style="font-size: 3rem; color: #E4E6EF;"></i>
+                                                                <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">Seleccione un programa en el menú superior</p>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -157,36 +167,25 @@
     <!-- Scripts necesarios -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="vistas/recursos/assets/js/scripts/historial-estudiante.js"></script>
+    <script src="vistas/recursos/assets/js/scripts/historial-estudiante.js?v=<?php echo time(); ?>"></script>
 
     <style>
-        /* Estilos personalizados */
-        .table-striped tbody tr:hover {
+        /* Estilos personalizados mejorados */
+        .table tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+
+        .table tbody tr:hover {
             background-color: #f8f9fa;
-            transition: background-color 0.2s ease;
-        }
-
-        .kt-badge--pill {
-            border-radius: 20px;
-            padding: 6px 14px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .spinner-border {
-            width: 3rem;
-            height: 3rem;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         /* Estilos para el select */
         .form-control:focus {
             border-color: #667eea;
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-
-        .form-control-lg {
-            font-size: 1rem;
-            padding: 0.75rem 1rem;
         }
 
         /* Animación para las filas */
@@ -205,40 +204,6 @@
             }
         }
 
-        /* Colores para los estados */
-        .kt-font-success {
-            color: #1dc9b7 !important;
-            font-weight: 700;
-        }
-
-        .kt-font-danger {
-            color: #fd397a !important;
-            font-weight: 700;
-        }
-
-        .kt-font-brand {
-            color: #5867dd !important;
-            font-weight: 700;
-        }
-
-        /* Resumen de calificaciones */
-        .table-info {
-            background-color: #f8f9fa !important;
-            border-top: 3px solid #5867dd;
-            border-bottom: 3px solid #5867dd;
-        }
-
-        .table-info h6 {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Mejora visual de la alerta */
-        .alert {
-            border-radius: 8px;
-        }
-
         /* Botón de descarga */
         #btn_descargar_pdf {
             transition: all 0.3s ease;
@@ -246,22 +211,67 @@
 
         #btn_descargar_pdf:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(88, 103, 221, 0.4);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
         }
 
-        /* Mejorar el thead */
-        thead th {
+        /* Badge de estado */
+        .badge-estado {
+            padding: 8px 16px;
+            border-radius: 20px;
             font-weight: 600;
-            text-transform: uppercase;
             font-size: 0.85rem;
-            letter-spacing: 0.5px;
-            padding: 1rem 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .badge-aprobado {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .badge-reprobado {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+            color: white;
+        }
+
+        .badge-pendiente {
+            background: linear-gradient(135deg, #ffa800 0%, #ffcd00 100%);
+            color: white;
+        }
+
+        /* Nota destacada */
+        .nota-destacada {
+            font-size: 1.3rem;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .nota-aprobado {
+            background: #e8f5f3;
+            color: #11998e;
+        }
+
+        .nota-reprobado {
+            background: #fee5ed;
+            color: #ee0979;
+        }
+
+        /* Spinner de carga */
+        .kt-spinner {
+            width: 3rem;
+            height: 3rem;
         }
 
         /* Mejorar tbody */
         tbody td {
-            padding: 1rem 0.75rem;
+            padding: 1.2rem 1rem;
             vertical-align: middle;
+        }
+
+        /* Fondo del body */
+        body {
+            background: #f8f9fa;
         }
     </style>
 

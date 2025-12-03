@@ -25,7 +25,9 @@
                 $enlace == 'bnotaestudiante'||
                 $enlace == 'historialnotaestudiante'||
                 $enlace == 'historialmodulosestudiante'||
-                $enlace == 'historialreciboestudiante'
+                $enlace == 'historialreciboestudiante'||
+                $enlace == 'ordenpago'
+                
                   
                  
 

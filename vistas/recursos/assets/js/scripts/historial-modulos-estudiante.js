@@ -1,9 +1,14 @@
 /**
  * Script para vista de historial de módulos del estudiante
  * Muestra módulos pagados y pendientes de pago
+ * Versión actualizada con columnas adicionales
  */
 
+console.log('=== HISTORIAL MODULOS ESTUDIANTE V2.0 CARGADO ===');
+
 $(document).ready(function() {
+    console.log('jQuery ready - Iniciando carga de programas...');
+
     // Cargar programas del estudiante al iniciar
     cargarProgramasEstudiante();
 
@@ -107,17 +112,17 @@ function cargarDetalleModulos(programaID) {
             // Mostrar loading
             $('#tbody_modulos_pagados').html(`
                 <tr>
-                    <td colspan="7" class="text-center">
-                        <div class="kt-spinner kt-spinner--sm kt-spinner--brand"></div>
-                        Cargando módulos...
+                    <td colspan="8" class="text-center" style="padding: 3rem;">
+                        <div class="kt-spinner kt-spinner--lg kt-spinner--brand"></div>
+                        <p style="margin-top: 1.5rem; color: #667eea; font-weight: 600; font-size: 1.1rem;">Cargando módulos pagados...</p>
                     </td>
                 </tr>
             `);
             $('#tbody_modulos_pendientes').html(`
                 <tr>
-                    <td colspan="5" class="text-center">
-                        <div class="kt-spinner kt-spinner--sm kt-spinner--brand"></div>
-                        Cargando módulos...
+                    <td colspan="7" class="text-center" style="padding: 3rem;">
+                        <div class="kt-spinner kt-spinner--lg kt-spinner--brand"></div>
+                        <p style="margin-top: 1.5rem; color: #ee0979; font-weight: 600; font-size: 1.1rem;">Cargando módulos pendientes...</p>
                     </td>
                 </tr>
             `);
@@ -185,18 +190,31 @@ function actualizarTablaPagados(modulos) {
             const fechaPago = modulo.FechaPago ? formatearFecha(modulo.FechaPago) : 'N/A';
             const voucher = modulo.NumeroVaucher || 'N/A';
             const costo = parseFloat(modulo.CostoPagado || 0).toFixed(2);
+            const docente = modulo.NombreDocente || 'Por asignar';
+            const especialidad = modulo.EspecialidadDocente || 'N/A';
 
             html += `
-                <tr>
-                    <td class="text-center"><strong>${index + 1}</strong></td>
-                    <td>${modulo.NombreModulo || 'N/A'}</td>
-                    <td>${modulo.Codigo || 'N/A'}</td>
-                    <td class="text-center"><strong class="kt-font-success">Bs. ${costo}</strong></td>
-                    <td class="text-center">${fechaPago}</td>
-                    <td class="text-center">${voucher}</td>
-                    <td class="text-center">
-                        <span class="kt-badge kt-badge--success kt-badge--inline kt-badge--pill">
-                            ${modulo.EstadoPago || 'PAGADO'}
+                <tr style="border-bottom: 1px solid #f0f0f0; transition: all 0.3s;">
+                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
+                        <span style="background: #11998e; color: white; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700;">${index + 1}</span>
+                    </td>
+                    <td style="padding: 1.2rem; vertical-align: middle;">
+                        <strong style="color: #464E5F; font-size: 1rem;">${modulo.NombreModulo || 'N/A'}</strong>
+                    </td>
+                    <td style="padding: 1.2rem; vertical-align: middle;">
+                        <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem;">${modulo.Codigo || 'N/A'}</span>
+                    </td>
+                    <td style="padding: 1.2rem; vertical-align: middle; color: #464E5F; font-weight: 500;">${docente}</td>
+                    <td style="padding: 1.2rem; vertical-align: middle;">
+                        <small style="color: #B5B5C3; font-style: italic;">${especialidad}</small>
+                    </td>
+                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
+                        <strong style="color: #11998e; font-size: 1.1rem; font-weight: 700;">Bs. ${costo}</strong>
+                    </td>
+                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle; color: #464E5F; font-weight: 500;">${fechaPago}</td>
+                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
+                        <span style="background: #f3f6f9; color: #667eea; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+                            ${voucher}
                         </span>
                     </td>
                 </tr>
@@ -205,8 +223,9 @@ function actualizarTablaPagados(modulos) {
     } else {
         html = `
             <tr>
-                <td colspan="7" class="text-center text-muted">
-                    <i class="flaticon2-information"></i> No hay módulos pagados
+                <td colspan="8" class="text-center" style="padding: 3rem; color: #B5B5C3;">
+                    <i class="flaticon2-information" style="font-size: 3rem; color: #E4E6EF;"></i>
+                    <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay módulos pagados</p>
                 </td>
             </tr>
         `;
@@ -224,16 +243,48 @@ function actualizarTablaPendientes(modulos) {
     if (modulos && modulos.length > 0) {
         modulos.forEach(function(modulo, index) {
             const docente = modulo.NombreDocente || 'Por asignar';
+            const especialidad = modulo.EspecialidadDocente || 'N/A';
             const costo = parseFloat(modulo.Costo || 0).toFixed(2);
+            const estadoModulo = modulo.estadomodulo || 'ACTIVO';
+
+            // Badge de estado según el estado del módulo
+            let estadoBadge = 'kt-badge--success';
+            if (estadoModulo === 'INACTIVO') {
+                estadoBadge = 'kt-badge--dark';
+            } else if (estadoModulo === 'PENDIENTE') {
+                estadoBadge = 'kt-badge--warning';
+            }
+
+            // Color del badge según estado
+            let badgeColor = '#38ef7d';
+            if (estadoModulo === 'INACTIVO') {
+                badgeColor = '#6c757d';
+            } else if (estadoModulo === 'PENDIENTE') {
+                badgeColor = '#ffa800';
+            }
 
             html += `
-                <tr>
-                    <td class="text-center"><strong>${index + 1}</strong></td>
-                    <td>${modulo.NombreModulo || 'N/A'}</td>
-                    <td>${modulo.Codigo || 'N/A'}</td>
-                    <td>${docente}</td>
-                    <td class="text-center">
-                        <strong class="kt-font-danger" style="font-size: 1.1rem;">Bs. ${costo}</strong>
+                <tr style="border-bottom: 1px solid #f0f0f0; transition: all 0.3s;">
+                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
+                        <span style="background: #ee0979; color: white; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700;">${index + 1}</span>
+                    </td>
+                    <td style="padding: 1.2rem; vertical-align: middle;">
+                        <strong style="color: #464E5F; font-size: 1rem;">${modulo.NombreModulo || 'N/A'}</strong>
+                    </td>
+                    <td style="padding: 1.2rem; vertical-align: middle;">
+                        <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem;">${modulo.Codigo || 'N/A'}</span>
+                    </td>
+                    <td style="padding: 1.2rem; vertical-align: middle; color: #464E5F; font-weight: 500;">${docente}</td>
+                    <td style="padding: 1.2rem; vertical-align: middle;">
+                        <small style="color: #B5B5C3; font-style: italic;">${especialidad}</small>
+                    </td>
+                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
+                        <strong style="color: #ee0979; font-size: 1.2rem; font-weight: 700;">Bs. ${costo}</strong>
+                    </td>
+                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
+                        <span style="background: ${badgeColor}; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.85rem;">
+                            ${estadoModulo}
+                        </span>
                     </td>
                 </tr>
             `;
@@ -241,9 +292,9 @@ function actualizarTablaPendientes(modulos) {
     } else {
         html = `
             <tr>
-                <td colspan="5" class="text-center text-success">
-                    <i class="flaticon2-check-mark kt-font-success"></i>
-                    <strong>¡Felicidades! No tiene módulos pendientes de pago</strong>
+                <td colspan="7" class="text-center" style="padding: 3rem; color: #B5B5C3;">
+                    <i class="flaticon2-check-mark" style="font-size: 3rem; color: #38ef7d;"></i>
+                    <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 600; color: #38ef7d;">¡Felicidades! No tiene módulos pendientes de pago</p>
                 </td>
             </tr>
         `;
@@ -261,16 +312,18 @@ function ocultarResultados() {
     // Resetear tablas
     $('#tbody_modulos_pagados').html(`
         <tr>
-            <td colspan="7" class="text-center text-muted">
-                <i class="flaticon2-information"></i> No hay módulos pagados
+            <td colspan="8" class="text-center" style="padding: 3rem; color: #B5B5C3;">
+                <i class="flaticon2-information" style="font-size: 3rem; color: #E4E6EF;"></i>
+                <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay módulos pagados</p>
             </td>
         </tr>
     `);
 
     $('#tbody_modulos_pendientes').html(`
         <tr>
-            <td colspan="5" class="text-center text-muted">
-                <i class="flaticon2-information"></i> No hay módulos pendientes
+            <td colspan="7" class="text-center" style="padding: 3rem; color: #B5B5C3;">
+                <i class="flaticon2-check-mark" style="font-size: 3rem; color: #38ef7d;"></i>
+                <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 600; color: #38ef7d;">¡Felicidades! No tiene módulos pendientes de pago</p>
             </td>
         </tr>
     `);

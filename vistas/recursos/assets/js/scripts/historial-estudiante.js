@@ -130,11 +130,9 @@ function cargarCalificacionesPrograma(programaID) {
             const $tbody = $('#contenido_calificaciones');
             $tbody.html(`
                 <tr>
-                    <td colspan="5" class="text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="sr-only">Cargando...</span>
-                        </div>
-                        <p class="mt-2">Cargando calificaciones...</p>
+                    <td colspan="5" class="text-center" style="padding: 3rem;">
+                        <div class="kt-spinner kt-spinner--lg kt-spinner--brand"></div>
+                        <p style="margin-top: 1.5rem; color: #667eea; font-weight: 600; font-size: 1.1rem;">Cargando calificaciones...</p>
                     </td>
                 </tr>
             `);
@@ -173,8 +171,9 @@ function mostrarCalificaciones(calificaciones, resumen) {
     if (calificaciones.length === 0) {
         $tbody.html(`
             <tr>
-                <td colspan="5" class="text-center text-muted">
-                    <i class="flaticon-info"></i> No hay calificaciones registradas para este programa
+                <td colspan="5" class="text-center" style="padding: 3rem; color: #B5B5C3;">
+                    <i class="flaticon2-file" style="font-size: 3rem; color: #E4E6EF;"></i>
+                    <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay calificaciones registradas para este programa</p>
                 </td>
             </tr>
         `);
@@ -185,42 +184,44 @@ function mostrarCalificaciones(calificaciones, resumen) {
     mostrarResumenCalificaciones(resumen);
 
     // Construir filas de la tabla
-    calificaciones.forEach(function(calificacion) {
+    calificaciones.forEach(function(calificacion, index) {
         const nota = parseFloat(calificacion.Nota);
         const docenteNombre = calificacion.DocenteNombre
             ? `${calificacion.DocenteNombre} ${calificacion.DocenteApaterno || ''} ${calificacion.DocenteAmaterno || ''}`.trim()
             : 'No asignado';
 
-        let estadoHTML = '';
-        let notaClass = '';
+        let estadoBadge = '';
+        let notaClasses = '';
 
         if (nota >= 51) {
-            estadoHTML = '<span class="kt-badge kt-badge--success kt-badge--inline kt-badge--pill">APROBADO</span>';
-            notaClass = 'text-success font-weight-bold';
+            estadoBadge = '<span class="badge-estado badge-aprobado">APROBADO</span>';
+            notaClasses = 'nota-destacada nota-aprobado';
         } else {
-            estadoHTML = '<span class="kt-badge kt-badge--danger kt-badge--inline kt-badge--pill">REPROBADO</span>';
-            notaClass = 'text-danger font-weight-bold';
+            estadoBadge = '<span class="badge-estado badge-reprobado">REPROBADO</span>';
+            notaClasses = 'nota-destacada nota-reprobado';
         }
 
         const fila = `
-            <tr>
-                <td>
+            <tr style="border-bottom: 1px solid #f0f0f0; transition: all 0.3s;">
+                <td style="padding: 1.2rem;">
                     <div>
-                        <strong>${calificacion.NombreModulo}</strong><br>
-                        <small class="text-muted">Código: ${calificacion.CodigoModulo}</small>
+                        <strong style="color: #464E5F; font-size: 1rem;">${calificacion.NombreModulo}</strong><br>
+                        <small style="color: #B5B5C3;">
+                            <i class="flaticon2-tag"></i> Código: ${calificacion.CodigoModulo}
+                        </small>
                     </div>
                 </td>
-                <td>
-                    <i class="flaticon2-user"></i> ${docenteNombre}
+                <td style="padding: 1.2rem; color: #464E5F; font-weight: 500;">
+                    <i class="flaticon2-user" style="color: #667eea; margin-right: 5px;"></i> ${docenteNombre}
                 </td>
-                <td class="text-center ${notaClass}" style="font-size: 1.3rem;">
-                    ${nota}
+                <td class="text-center" style="padding: 1.2rem;">
+                    <span class="${notaClasses}">${nota}</span>
                 </td>
-                <td class="text-center">
+                <td class="text-center" style="padding: 1.2rem; color: #464E5F; font-weight: 600; font-size: 1.1rem;">
                     100
                 </td>
-                <td class="text-center">
-                    ${estadoHTML}
+                <td class="text-center" style="padding: 1.2rem;">
+                    ${estadoBadge}
                 </td>
             </tr>
         `;
@@ -243,30 +244,62 @@ function mostrarResumenCalificaciones(resumen) {
         ? ((modulosAprobados / totalModulos) * 100).toFixed(1)
         : 0;
 
-    let estadoPromedioClass = promedioGeneral >= 51 ? 'success' : 'danger';
+    let gradientePromedio = promedioGeneral >= 51
+        ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)'
+        : 'linear-gradient(135deg, #ee0979 0%, #ff6a00 100%)';
 
     const resumenHTML = `
-        <tr class="table-info">
-            <td colspan="5">
-                <div class="row text-center py-3">
-                    <div class="col-md-3">
-                        <h6 class="text-muted mb-1">Promedio General</h6>
-                        <h3 class="kt-font-${estadoPromedioClass} mb-0">${promedioGeneral}</h3>
-                    </div>
-                    <div class="col-md-3">
-                        <h6 class="text-muted mb-1">Módulos Cursados</h6>
-                        <h3 class="kt-font-brand mb-0">${totalModulos}</h3>
-                    </div>
-                    <div class="col-md-3">
-                        <h6 class="text-muted mb-1">Aprobados / Reprobados</h6>
-                        <h3 class="mb-0">
-                            <span class="kt-font-success">${modulosAprobados}</span> /
-                            <span class="kt-font-danger">${modulosReprobados}</span>
-                        </h3>
-                    </div>
-                    <div class="col-md-3">
-                        <h6 class="text-muted mb-1">Porcentaje de Aprobación</h6>
-                        <h3 class="kt-font-brand mb-0">${porcentajeAprobacion}%</h3>
+        <tr>
+            <td colspan="5" style="padding: 0; border: none;">
+                <div style="background: #f8f9fa; padding: 2rem; margin-bottom: 1rem; border-radius: 10px;">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div style="background: ${gradientePromedio}; border-radius: 12px; padding: 1.5rem; text-align: center; height: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                                <div style="background: rgba(255,255,255,0.2); border-radius: 10px; width: 50px; height: 50px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                                    <i class="flaticon2-chart-2" style="font-size: 1.5rem; color: white;"></i>
+                                </div>
+                                <h6 style="color: rgba(255,255,255,0.9); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Promedio General</h6>
+                                <h2 style="color: white; font-weight: 700; font-size: 2.5rem; margin: 0;">${promedioGeneral}</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 1.5rem; text-align: center; height: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                                <div style="background: rgba(255,255,255,0.2); border-radius: 10px; width: 50px; height: 50px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                                    <i class="flaticon2-layers" style="font-size: 1.5rem; color: white;"></i>
+                                </div>
+                                <h6 style="color: rgba(255,255,255,0.9); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Módulos Cursados</h6>
+                                <h2 style="color: white; font-weight: 700; font-size: 2.5rem; margin: 0;">${totalModulos}</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div style="background: white; border-radius: 12px; padding: 1.5rem; text-align: center; height: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                                <h6 style="color: #B5B5C3; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Aprobados / Reprobados</h6>
+                                <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+                                    <div style="text-align: center;">
+                                        <div style="background: #e8f5f3; border-radius: 10px; padding: 10px 15px; margin-bottom: 5px;">
+                                            <span style="color: #11998e; font-weight: 700; font-size: 1.8rem;">${modulosAprobados}</span>
+                                        </div>
+                                        <small style="color: #11998e; font-weight: 600;">Aprobados</small>
+                                    </div>
+                                    <span style="color: #E4E6EF; font-size: 1.5rem;">/</span>
+                                    <div style="text-align: center;">
+                                        <div style="background: #fee5ed; border-radius: 10px; padding: 10px 15px; margin-bottom: 5px;">
+                                            <span style="color: #ee0979; font-weight: 700; font-size: 1.8rem;">${modulosReprobados}</span>
+                                        </div>
+                                        <small style="color: #ee0979; font-weight: 600;">Reprobados</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div style="background: linear-gradient(135deg, #ffa800 0%, #ffcd00 100%); border-radius: 12px; padding: 1.5rem; text-align: center; height: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                                <div style="background: rgba(255,255,255,0.2); border-radius: 10px; width: 50px; height: 50px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                                    <i class="flaticon2-percentage" style="font-size: 1.5rem; color: white;"></i>
+                                </div>
+                                <h6 style="color: rgba(255,255,255,0.9); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">% Aprobación</h6>
+                                <h2 style="color: white; font-weight: 700; font-size: 2.5rem; margin: 0;">${porcentajeAprobacion}%</h2>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </td>
@@ -283,14 +316,15 @@ function limpiarTablaCalificaciones() {
     const $tbody = $('#contenido_calificaciones');
     $tbody.html(`
         <tr>
-            <td colspan="5" class="text-center text-muted">
-                <i class="flaticon-file-2"></i> Seleccione un programa en el menú superior.
+            <td colspan="5" class="text-center" style="padding: 3rem; color: #B5B5C3;">
+                <i class="flaticon2-list-3" style="font-size: 3rem; color: #E4E6EF;"></i>
+                <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">Seleccione un programa en el menú superior</p>
             </td>
         </tr>
     `);
 
     // Eliminar resumen si existe
-    $('tr.table-info').remove();
+    $('#contenido_calificaciones').prev('tr').remove();
 }
 
 /**

@@ -31,6 +31,20 @@ $(document).ready(function() {
     $('#btn-imprimir').on('click', function() {
         imprimirReporte();
     });
+
+    // Event listener para botones "Ver Módulos" en la tabla de programas
+    $(document).on('click', '.ver-modulos-programa', function() {
+        const programaID = $(this).data('programa-id');
+        const programaNombre = $(this).data('programa-nombre');
+        mostrarModulosPrograma(programaID, programaNombre);
+    });
+
+    // Event listener para hacer clic en una tarjeta de módulo
+    $(document).on('click', '.modulo-card', function() {
+        const moduloID = $(this).data('modulo-id');
+        const programaID = $(this).data('programa-id');
+        generarReporteDesdeModal(programaID, moduloID);
+    });
 });
 
 /**
@@ -381,4 +395,159 @@ function limpiarResultados() {
         </div>
     `);
     $('#contenedor-imprimir').hide();
+}
+
+/**
+ * Mostrar módulos del programa en modal
+ */
+function mostrarModulosPrograma(programaID, programaNombre) {
+    console.log('Mostrando módulos del programa:', programaID, programaNombre);
+
+    // Actualizar título del modal
+    $('#modalModulosProgramaLabel').html(`<i class="flaticon2-layers"></i> Módulos de: ${programaNombre}`);
+
+    // Mostrar modal
+    $('#modalModulosPrograma').modal('show');
+
+    // Resetear contenido con spinner
+    $('#contenido-modulos-programa').html(`
+        <div class="text-center p-5">
+            <div class="kt-spinner kt-spinner--lg kt-spinner--brand"></div>
+            <p class="mt-3" style="color: #667eea; font-weight: 600;">Cargando módulos...</p>
+        </div>
+    `);
+
+    // Cargar módulos con inscritos
+    $.ajax({
+        url: 'ajax/reportemodulos.ajax.php',
+        method: 'POST',
+        data: {
+            accion: 'obtenerConteoInscritosPorModulo',
+            programaID: programaID
+        },
+        dataType: 'json',
+        success: function(response) {
+            console.log('Módulos con inscritos:', response);
+            mostrarTarjetasModulos(response, programaID);
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al cargar módulos:', error);
+            $('#contenido-modulos-programa').html(`
+                <div class="alert alert-danger text-center">
+                    <i class="fa fa-exclamation-circle fa-2x"></i>
+                    <h5 class="mt-2">Error al cargar módulos</h5>
+                    <p>Por favor, intente nuevamente</p>
+                </div>
+            `);
+        }
+    });
+}
+
+/**
+ * Mostrar tarjetas de módulos
+ */
+function mostrarTarjetasModulos(modulos, programaID) {
+    if (!modulos || modulos.length === 0) {
+        $('#contenido-modulos-programa').html(`
+            <div class="alert alert-warning text-center">
+                <i class="fa fa-exclamation-triangle fa-2x"></i>
+                <h5 class="mt-2">No hay módulos disponibles</h5>
+                <p>Este programa no tiene módulos registrados</p>
+            </div>
+        `);
+        return;
+    }
+
+    let html = `
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle"></i>
+            <strong>Haga clic en cualquier módulo</strong> para generar el reporte de inscritos
+        </div>
+    `;
+
+    modulos.forEach(function(modulo) {
+        const inscritos = parseInt(modulo.TotalInscritos || 0);
+        const costo = parseFloat(modulo.costomodulo || 0).toFixed(2);
+
+        html += `
+            <div class="modulo-card" data-modulo-id="${modulo.Idmodulo}" data-programa-id="${programaID}">
+                <div class="modulo-card-header">
+                    <span class="modulo-codigo">
+                        <i class="flaticon2-file-1"></i> ${modulo.codigomodulo}
+                    </span>
+                    <span class="modulo-inscritos">
+                        <i class="flaticon2-group"></i> ${inscritos} inscrito${inscritos !== 1 ? 's' : ''}
+                    </span>
+                </div>
+                <div class="modulo-nombre">
+                    ${modulo.nombremodulo}
+                </div>
+                <div class="modulo-card-footer">
+                    <div>
+                        <small style="color: #B5B5C3; text-transform: uppercase; font-size: 11px;">Costo del Módulo</small>
+                        <div class="modulo-costo">Bs. ${costo}</div>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-primary" style="border-radius: 20px; pointer-events: none;">
+                            <i class="fa fa-chart-bar"></i> Ver Reporte
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    $('#contenido-modulos-programa').html(html);
+}
+
+/**
+ * Generar reporte desde el modal (al hacer clic en módulo)
+ */
+function generarReporteDesdeModal(programaID, moduloID) {
+    console.log('Generando reporte desde modal - Programa:', programaID, 'Módulo:', moduloID);
+
+    // Cerrar el modal
+    $('#modalModulosPrograma').modal('hide');
+
+    // Esperar a que el modal se cierre completamente
+    setTimeout(function() {
+        // Scroll al área de resultados
+        $('html, body').animate({
+            scrollTop: $('#resultados-reporte').offset().top - 100
+        }, 500);
+
+        // Mostrar loading
+        $('#resultados-reporte').html(`
+            <div class="text-center p-5">
+                <i class="fa fa-spinner fa-spin fa-3x text-primary"></i>
+                <h5 class="mt-3">Generando reporte del módulo seleccionado...</h5>
+            </div>
+        `);
+
+        // Generar reporte
+        $.ajax({
+            url: 'ajax/reportemodulos.ajax.php',
+            method: 'POST',
+            data: {
+                accion: 'obtenerInscritos',
+                programaID: programaID,
+                moduloID: moduloID
+            },
+            dataType: 'json',
+            success: function(response) {
+                console.log('Reporte generado:', response);
+                mostrarReporte(response);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error al generar reporte:', error);
+                $('#resultados-reporte').html(`
+                    <div class="alert alert-danger text-center">
+                        <i class="fa fa-exclamation-circle fa-2x"></i>
+                        <h5 class="mt-2">Error al generar el reporte</h5>
+                        <p>Por favor, intente nuevamente</p>
+                    </div>
+                `);
+            }
+        });
+    }, 500);
 }

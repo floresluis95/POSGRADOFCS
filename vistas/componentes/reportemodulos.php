@@ -164,6 +164,35 @@ date_default_timezone_set("America/La_Paz");
         </div>
     </div>
 
+    <!-- Modal de Módulos por Programa -->
+    <div class="modal fade" id="modalModulosPrograma" tabindex="-1" role="dialog" aria-labelledby="modalModulosProgramaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h5 class="modal-title" id="modalModulosProgramaLabel">
+                        <i class="flaticon2-layers"></i> Módulos del Programa
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="contenido-modulos-programa">
+                        <div class="text-center p-5">
+                            <div class="kt-spinner kt-spinner--lg kt-spinner--brand"></div>
+                            <p class="mt-3" style="color: #667eea; font-weight: 600;">Cargando módulos...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fa fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -228,6 +257,70 @@ date_default_timezone_set("America/La_Paz");
             padding: 4px 10px;
             border-radius: 15px;
             font-size: 10px;
+        }
+
+        /* Estilos para modal de módulos */
+        .modulo-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+        }
+
+        .modulo-card:hover {
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            transform: translateY(-3px);
+            border-left-color: #667eea;
+        }
+
+        .modulo-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modulo-codigo {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .modulo-inscritos {
+            background: linear-gradient(135deg, #fd397a 0%, #e91e63 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .modulo-nombre {
+            font-size: 16px;
+            font-weight: 600;
+            color: #464E5F;
+            margin-bottom: 0.5rem;
+        }
+
+        .modulo-costo {
+            font-size: 20px;
+            font-weight: 700;
+            color: #11998e;
+        }
+
+        .modulo-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid #f0f0f0;
         }
     </style>
 </body>

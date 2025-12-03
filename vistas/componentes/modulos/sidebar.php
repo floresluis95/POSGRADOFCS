@@ -147,8 +147,9 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Generar Reportes PDF</span>
                   </a>
                 </li>
+             
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="reportes" class="kt-menu__link">
+                  <a href="ordenpago" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-file-2" style="color: #c49bbb;"></i>
                     <span class="kt-menu__link-text">ORDEN DE PAGO</span>
                   </a>
@@ -385,7 +386,7 @@ if ($_SESSION["Tipo"] == "EST") {
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="historialnotaestudiante" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-list-3" style="color: #fd397a;"></i>
-                    <span class="kt-menu__link-text">Historial de Notas</span>
+                    <span class="kt-menu__link-text">CALIFICACIONES</span>
                   </a>
                 </li>
 
