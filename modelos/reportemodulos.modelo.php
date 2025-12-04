@@ -18,7 +18,7 @@ class ReporteModulosModelo
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT DISTINCT GradoAcademico
                 FROM programa
-                WHERE Estado = 1
+                WHERE Estado = 'ACTIVO'
                 ORDER BY GradoAcademico ASC"
             );
             $stmt->execute();
@@ -45,7 +45,7 @@ class ReporteModulosModelo
                     GradoAcademico
                 FROM programa
                 WHERE GradoAcademico = :grado
-                AND Estado = 1
+                AND Estado = 'ACTIVO'
                 ORDER BY NombrePrograma ASC"
             );
             $stmt->bindParam(":grado", $grado, PDO::PARAM_STR);
@@ -144,7 +144,7 @@ class ReporteModulosModelo
             $conexion = Conexion::Conectar();
 
             // Contar programas activos
-            $stmtProgramas = $conexion->prepare("SELECT COUNT(*) as total FROM programa WHERE Estado = 1");
+            $stmtProgramas = $conexion->prepare("SELECT COUNT(*) as total FROM programa WHERE Estado = 'ACTIVO'");
             $stmtProgramas->execute();
             $totalProgramas = $stmtProgramas->fetch(PDO::FETCH_ASSOC)['total'];
 
@@ -158,6 +158,11 @@ class ReporteModulosModelo
             $stmtEstudiantes->execute();
             $totalEstudiantes = $stmtEstudiantes->fetch(PDO::FETCH_ASSOC)['total'];
 
+            // Contar docentes activos
+            $stmtDocentes = $conexion->prepare("SELECT COUNT(*) as total FROM docente WHERE Estado = 1");
+            $stmtDocentes->execute();
+            $totalDocentes = $stmtDocentes->fetch(PDO::FETCH_ASSOC)['total'];
+
             // Contar pagos de módulos
             $stmtPagos = $conexion->prepare("SELECT COUNT(*) as total FROM pagomodulo WHERE Estado != 'ANULADO'");
             $stmtPagos->execute();
@@ -167,6 +172,7 @@ class ReporteModulosModelo
                 'totalProgramas' => $totalProgramas,
                 'totalModulos' => $totalModulos,
                 'totalEstudiantes' => $totalEstudiantes,
+                'totalDocentes' => $totalDocentes,
                 'totalPagos' => $totalPagos
             ];
         } catch (PDOException $e) {
@@ -175,6 +181,7 @@ class ReporteModulosModelo
                 'totalProgramas' => 0,
                 'totalModulos' => 0,
                 'totalEstudiantes' => 0,
+                'totalDocentes' => 0,
                 'totalPagos' => 0
             ];
         }
@@ -198,7 +205,7 @@ class ReporteModulosModelo
                 FROM programa p
                 LEFT JOIN modulos m ON p.ProgramaID = m.ProgramaId AND m.estadomodulo = 'ACTIVO'
                 LEFT JOIN estudianteprograma ep ON p.ProgramaID = ep.ProgramaID AND ep.Estado = 'ACTIVO'
-                WHERE p.Estado = 1
+                WHERE p.Estado = 'ACTIVO'
                 GROUP BY p.ProgramaID, p.NombrePrograma, p.Codigo, p.GradoAcademico
                 ORDER BY p.GradoAcademico ASC, p.NombrePrograma ASC"
             );
@@ -237,6 +244,65 @@ class ReporteModulosModelo
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Error en ObtenerConteoInscritosPorModuloModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener conteo de programas por sede
+     * @return array
+     */
+    public static function ObtenerProgramasPorSedeModelo()
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    Sede,
+                    COUNT(*) as TotalProgramas,
+                    COUNT(DISTINCT GradoAcademico) as TiposGrado
+                FROM programa
+                WHERE Estado = 'ACTIVO'
+                GROUP BY Sede
+                ORDER BY TotalProgramas DESC, Sede ASC"
+            );
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerProgramasPorSedeModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener estadísticas por categoría (Grado Académico)
+     * @return array
+     */
+    public static function ObtenerEstadisticasPorCategoriaModelo()
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    GradoAcademico,
+                    COUNT(*) as TotalProgramas,
+                    (SELECT COUNT(DISTINCT ep.EstudianteID)
+                     FROM estudianteprograma ep
+                     INNER JOIN programa p2 ON ep.ProgramaID = p2.ProgramaID
+                     WHERE p2.GradoAcademico = p.GradoAcademico
+                     AND ep.Estado = 'ACTIVO') as TotalEstudiantes,
+                    (SELECT COUNT(*)
+                     FROM modulos m
+                     INNER JOIN programa p3 ON m.ProgramaId = p3.ProgramaID
+                     WHERE p3.GradoAcademico = p.GradoAcademico
+                     AND m.estadomodulo = 'ACTIVO') as TotalModulos
+                FROM programa p
+                WHERE Estado = 'ACTIVO'
+                GROUP BY GradoAcademico
+                ORDER BY GradoAcademico ASC"
+            );
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerEstadisticasPorCategoriaModelo: " . $e->getMessage());
             return [];
         }
     }

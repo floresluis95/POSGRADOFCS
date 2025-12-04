@@ -23,6 +23,11 @@ $(document).ready(function() {
     $('#btn-cambiar-docente').on('click', volverPaso1);
     $('#btn-volver-asignaciones').on('click', volverPaso2);
     $('#btn-guardar-notas').on('click', guardarCalificaciones);
+
+    // Usar delegación de eventos para el botón de lista de asistencia
+    $(document).on('click', '#btn-generar-lista-asistencia', generarListaAsistencia);
+
+    console.log('Event listeners registrados correctamente');
 });
 
 /**
@@ -631,4 +636,72 @@ function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, modul
         '&docenteNombre=' + encodeURIComponent(docenteNombre);
 
     window.open(url, '_blank');
+}
+
+/**
+ * ================================================================
+ * GENERAR LISTA DE ASISTENCIA
+ * ================================================================
+ */
+
+function generarListaAsistencia() {
+    console.log('');
+    console.log('========================================');
+    console.log('=== GENERAR LISTA DE ASISTENCIA ===');
+    console.log('========================================');
+    console.log('Función llamada correctamente');
+    console.log('asignacionSeleccionada:', asignacionSeleccionada);
+    console.log('docenteSeleccionado:', docenteSeleccionado);
+    console.log('estudiantesActuales:', estudiantesActuales);
+    console.log('estudiantesActuales.length:', estudiantesActuales ? estudiantesActuales.length : 0);
+
+    // Verificar que hay una asignación seleccionada
+    if (!asignacionSeleccionada) {
+        console.log('Error: No hay asignación seleccionada');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: 'Por favor, seleccione primero un módulo'
+        });
+        return;
+    }
+
+    // Verificar que hay estudiantes cargados
+    if (!estudiantesActuales || estudiantesActuales.length === 0) {
+        console.log('Error: No hay estudiantes');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin estudiantes',
+            text: 'No hay estudiantes inscritos en este módulo para generar la lista de asistencia'
+        });
+        return;
+    }
+
+    // Generar el PDF con los datos actuales
+    const url = 'vistas/componentes/generar-lista-asistencia-pdf.php?' +
+        'moduloID=' + asignacionSeleccionada.moduloID +
+        '&programaID=' + asignacionSeleccionada.programaID +
+        '&moduloNombre=' + encodeURIComponent(asignacionSeleccionada.moduloNombre) +
+        '&moduloCodigo=' + encodeURIComponent(asignacionSeleccionada.moduloCodigo) +
+        '&programaNombre=' + encodeURIComponent(asignacionSeleccionada.programaNombre) +
+        '&grado=' + encodeURIComponent(asignacionSeleccionada.grado) +
+        '&docenteNombre=' + encodeURIComponent(docenteSeleccionado.nombre);
+
+    console.log('URL generada:', url);
+
+    // Abrir en nueva ventana
+    console.log('Abriendo ventana...');
+    const ventana = window.open(url, '_blank');
+
+    if (!ventana) {
+        console.error('El navegador bloqueó la ventana emergente');
+        Swal.fire({
+            icon: 'error',
+            title: 'Ventana bloqueada',
+            html: 'El navegador bloqueó la ventana emergente.<br>Por favor, permita ventanas emergentes para este sitio.<br><br>URL: <small>' + url + '</small>',
+            confirmButtonText: 'Entendido'
+        });
+    } else {
+        console.log('Ventana abierta exitosamente');
+    }
 }

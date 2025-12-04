@@ -1,6 +1,6 @@
 <?php
 /**
- * Generar Orden de Pago para Imprimir
+ * Generar Orden de Pago en PDF usando TCPDF
  */
 
 // Iniciar sesión
@@ -17,6 +17,9 @@ if (!isset($_SESSION['Validar']) || !$_SESSION['Validar']) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     die('Método no permitido');
 }
+
+// Incluir TCPDF
+require_once __DIR__ . '/../../vendor/tecnickcom/tcpdf/tcpdf.php';
 
 // Recibir datos del POST
 $apaterno = $_POST['apaterno'] ?? '';
@@ -39,377 +42,304 @@ $firma = $_POST['firma'] ?? '';
 // Nombre completo del estudiante
 $nombreCompleto = trim("$apaterno $amaterno $nombres");
 
-// Fecha actual
+// Fecha y hora actual
 $fechaActual = date('d/m/Y');
 $horaActual = date('H:i:s');
 
+// Crear instancia de TCPDF
+$pdf = new TCPDF('P', 'mm', 'LETTER', true, 'UTF-8', false);
+
+// Configurar información del documento
+$pdf->SetCreator('Universidad Técnica de Oruro');
+$pdf->SetAuthor('Facultad de Ciencias de la Salud - Postgrado');
+$pdf->SetTitle('Orden de Pago - ' . $nombreCompleto);
+$pdf->SetSubject('Orden de Pago de Módulo');
+
+// Configurar márgenes
+$pdf->SetMargins(15, 15, 15);
+$pdf->SetHeaderMargin(5);
+$pdf->SetFooterMargin(10);
+
+// Quitar header y footer por defecto
+$pdf->setPrintHeader(false);
+$pdf->setPrintFooter(false);
+
+// Configurar auto page break
+$pdf->SetAutoPageBreak(TRUE, 15);
+
+// Agregar página
+$pdf->AddPage();
+
+// Configurar fuente
+$pdf->SetFont('helvetica', '', 10);
+
+// ========================================
+// HEADER DEL DOCUMENTO
+// ========================================
+// Asegúrate de que las rutas a las imágenes sean correctas
+$imagen_izquierda = '../../extensiones/imagenespdf/logouto.png';
+$imagen_derecha = '../../extensiones/imagenespdf/logofcs.png';
+
+// --- CONFIGURACIÓN DE COLORES Y FUENTE BASE (Solo el color del texto será negro) ---
+$pdf->SetTextColor(0, 0, 0); // Texto negro (RGB 0, 0, 0)
+$pdf->SetDrawColor(0, 0, 0); // Para bordes, si los hubiere
+
+// La altura de celda (el interlineado) se ajusta a 4 para ser muy compacto.
+
+// --- 1. COLOCAR IMAGEN IZQUIERDA ---
+// $pdf->Image(ruta, X, Y, Ancho, Alto);
+// Ajusta las coordenadas X, Y, Ancho y Alto según el tamaño real de tu documento.
+$x_left = 10; // Posición X desde el borde izquierdo
+$y_top = 10;  // Posición Y desde el borde superior
+$width_img = 20; // Ancho de la imagen
+$height_img = 20; // Alto de la imagen
+$pdf->Image($imagen_izquierda, $x_left, $y_top, $width_img, $height_img);
+
+
+// --- 2. TEXTO CENTRADO (Con interlineado ajustado a 4) ---
+
+// UNIVERSIDAD TECNICA DE ORURO (Interlineado de 4)
+$pdf->SetFont('helvetica', 'B', 10);
+// NOTA: Se usa 'false' en el último parámetro para NO aplicar relleno de fondo
+$pdf->Cell(0, 4, 'UNIVERSIDAD TECNICA DE ORURO', 0, 1, 'C', false);
+
+// FACULTAD DE CIENCIAS DE LA SALUD (Interlineado de 4)
+$pdf->SetFont('helvetica', 'B', 10);
+$pdf->Cell(0, 4, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C', false);
+
+// COORDINACION DE POSGRADO - ODONTOLOGIA (Interlineado de 4)
+$pdf->SetFont('helvetica', '', 10);
+$pdf->Cell(0, 4, 'COORDINACION DE POSGRADO - ODONTOLOGIA', 0, 1, 'C', false);
+
+// Dirección (Interlineado de 3.5, aún más compacto)
+$pdf->SetFont('helvetica', '', 8);
+$pdf->Cell(0, 3.5, 'Av. Del Minero Edificio San Agustin II (Ex Almacenes COMIBOL) Telefono: 5237317 - Fax: 5247110', 0, 1, 'C', false);
+
+// Ciudad (Interlineado de 3.5)
+$pdf->SetFont('helvetica', '', 8);
+$pdf->Cell(0, 3.5, 'Oruro - Bolivia', 0, 1, 'C', false);
+
+
+// --- 3. COLOCAR IMAGEN DERECHA ---
+// Necesitas calcular la posición X para que la imagen quede pegada al borde derecho.
+// Ancho Total del Documento (ej. A4 es 210mm) - Margen Derecho - Ancho de la Imagen
+$page_width = $pdf->GetPageWidth(); // Obtiene el ancho de la página actual
+$margin_right = 10; // Asumiendo un margen derecho de 10
+$x_right = $page_width - $margin_right - $width_img; 
+
+$pdf->Image($imagen_derecha, $x_right, $y_top, $width_img, $height_img);
+// Línea separadora
+$pdf->SetDrawColor(102, 126, 234);
+$pdf->SetLineWidth(0.5);
+$pdf->Line(15, $pdf->GetY() + 2, 195, $pdf->GetY() + 2);
+
+$pdf->Ln(5);
+
+// Fecha y Hora
+$pdf->SetTextColor(70, 78, 95);
+$pdf->SetFont('helvetica', 'B', 9);
+$y = $pdf->GetY();
+$pdf->Cell(95, 5, 'Fecha: ' . $fechaActual, 0, 0, 'L');
+$pdf->Cell(95, 5, 'Hora: ' . $horaActual, 0, 1, 'R');
+
+$pdf->Ln(3);
+
+// ========================================
+// SECCIÓN: DATOS DEL ESTUDIANTE
+// ========================================
+$pdf->SetFillColor(17, 153, 142); // Color #11998e
+$pdf->SetTextColor(255, 255, 255);
+$pdf->SetFont('helvetica', 'B', 10);
+$pdf->Cell(0, 7, 'DATOS DEL ESTUDIANTE', 0, 1, 'L', true);
+
+// Contenido de la sección
+$pdf->SetFillColor(248, 249, 250);
+$pdf->SetTextColor(70, 78, 95);
+$pdf->SetFont('helvetica', '', 9);
+
+// Crear tabla
+$pdf->SetFont('helvetica', 'B', 7);
+$pdf->SetTextColor(153, 153, 153);
+$pdf->Cell(60, 5, 'APELLIDO PATERNO', 0, 0, 'L');
+$pdf->Cell(60, 5, 'APELLIDO MATERNO', 0, 0, 'L');
+$pdf->Cell(60, 5, 'NOMBRES', 0, 1, 'L');
+
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(51, 51, 51);
+$pdf->Cell(60, 6, $apaterno, 0, 0, 'L');
+$pdf->Cell(60, 6, $amaterno, 0, 0, 'L');
+$pdf->Cell(60, 6, $nombres, 0, 1, 'L');
+
+$pdf->Ln(2);
+
+$pdf->SetFont('helvetica', 'B', 7);
+$pdf->SetTextColor(153, 153, 153);
+$pdf->Cell(60, 5, 'CORREO ELECTRÓNICO', 0, 0, 'L');
+$pdf->Cell(60, 5, 'C.I.', 0, 0, 'L');
+$pdf->Cell(60, 5, 'N° CELULAR', 0, 1, 'L');
+
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(51, 51, 51);
+$pdf->Cell(60, 6, $correo, 0, 0, 'L');
+$pdf->Cell(60, 6, $ci, 0, 0, 'L');
+$pdf->Cell(60, 6, $celular, 0, 1, 'L');
+
+$pdf->Ln(5);
+
+// ========================================
+// SECCIÓN: DATOS PARA EMISIÓN DE COMPROBANTE
+// ========================================
+$pdf->SetFillColor(253, 57, 122); // Color #fd397a
+$pdf->SetTextColor(255, 255, 255);
+$pdf->SetFont('helvetica', 'B', 10);
+$pdf->Cell(0, 7, 'DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO', 0, 1, 'L', true);
+
+$pdf->SetTextColor(70, 78, 95);
+
+// Programa
+$pdf->SetFont('helvetica', 'B', 7);
+$pdf->SetTextColor(153, 153, 153);
+$pdf->Cell(0, 5, 'PROGRAMA', 0, 1, 'L');
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(51, 51, 51);
+$pdf->MultiCell(0, 5, $programa, 0, 'L');
+
+$pdf->Ln(1);
+
+// Módulo
+$pdf->SetFont('helvetica', 'B', 7);
+$pdf->SetTextColor(153, 153, 153);
+$pdf->Cell(0, 5, 'MÓDULO', 0, 1, 'L');
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(51, 51, 51);
+$pdf->MultiCell(0, 5, $modulo, 0, 'L');
+
+$pdf->Ln(1);
+
+// Monto
+$pdf->SetFont('helvetica', 'B', 7);
+$pdf->SetTextColor(153, 153, 153);
+$pdf->Cell(90, 5, 'MONTO (NUMERAL)', 0, 0, 'L');
+$pdf->Cell(90, 5, 'MONTO (LITERAL)', 0, 1, 'L');
+
+$pdf->SetFont('helvetica', 'B', 14);
+$pdf->SetTextColor(17, 153, 142);
+$pdf->Cell(90, 8, $montoNumeral, 0, 0, 'L');
+
+$pdf->SetFont('helvetica', 'I', 8);
+$pdf->SetTextColor(70, 78, 95);
+$pdf->MultiCell(90, 8, $montoLiteral, 0, 'L');
+
+$pdf->Ln(5);
+
+// ========================================
+// SECCIÓN: FORMULARIO DE REGISTRO
+// ========================================
+$pdf->SetFillColor(102, 126, 234);
+$pdf->SetTextColor(255, 255, 255);
+$pdf->SetFont('helvetica', 'B', 10);
+$pdf->Cell(0, 7, 'FORMULARIO DE REGISTRO', 0, 1, 'L', true);
+
+$pdf->SetTextColor(70, 78, 95);
+
+// Versión y Cuenta Auxiliar
+$pdf->SetFont('helvetica', 'B', 7);
+$pdf->SetTextColor(153, 153, 153);
+$pdf->Cell(90, 5, 'VERSIÓN', 0, 0, 'L');
+$pdf->Cell(90, 5, 'CUENTA AUXILIAR', 0, 1, 'L');
+
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(51, 51, 51);
+$pdf->Cell(90, 6, $version, 0, 0, 'L');
+$pdf->Cell(90, 6, $cuentaAuxiliar, 0, 1, 'L');
+
+$pdf->Ln(3);
+
+// Subsección: Datos para Emisión de Factura
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(102, 126, 234);
+$pdf->Cell(0, 6, 'DATOS PARA LA EMISIÓN DE FACTURA', 0, 1, 'L');
+
+$pdf->SetFont('helvetica', 'B', 7);
+$pdf->SetTextColor(153, 153, 153);
+$pdf->Cell(90, 5, 'NOMBRE DE LA FACTURA', 0, 0, 'L');
+$pdf->Cell(90, 5, 'NIT O CI', 0, 1, 'L');
+
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(51, 51, 51);
+$pdf->Cell(90, 6, $nombreFactura, 0, 0, 'L');
+$pdf->Cell(90, 6, $nitCiFactura, 0, 1, 'L');
+
+$pdf->Ln(5);
+
+// ========================================
+// DENOMINACIÓN DE LA CUENTA
+// ========================================
+$pdf->SetFillColor(248, 249, 250);
+$pdf->SetDrawColor(102, 126, 234);
+$pdf->SetLineWidth(0.5);
+$pdf->Rect($pdf->GetX(), $pdf->GetY(), 180, 18, 'D');
+
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(102, 126, 234);
+$pdf->Cell(0, 6, 'DENOMINACIÓN DE LA CUENTA', 0, 1, 'L');
+
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(70, 78, 95);
+$pdf->Cell(0, 5, 'UTO - APORTES EXTRAORDINARIOS - NÚMERO DE CUENTA 10000006050938', 0, 1, 'L');
+
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(17, 153, 142);
+$pdf->Cell(0, 5, 'NIT: 120129022', 0, 1, 'L');
+
+$pdf->Ln(8);
+
+// ========================================
+// RESPONSABLE Y FIRMA
+// ========================================
+$pdf->SetDrawColor(226, 229, 236);
+$pdf->SetLineWidth(0.3);
+$pdf->Line(15, $pdf->GetY(), 195, $pdf->GetY());
+
+$pdf->Ln(3);
+
+$pdf->SetFont('helvetica', 'B', 7);
+$pdf->SetTextColor(153, 153, 153);
+$pdf->Cell(90, 5, 'RESPONSABLE', 0, 0, 'L');
+$pdf->Cell(90, 5, 'FIRMA', 0, 1, 'L');
+
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(51, 51, 51);
+$pdf->Cell(90, 6, $responsable, 0, 0, 'L');
+$pdf->Cell(90, 6, !empty($firma) ? $firma : '____________________', 0, 1, 'L');
+
+$pdf->Ln(15);
+
+// Línea para firma del responsable
+$pdf->SetLineWidth(0.3);
+$pdf->Line(80, $pdf->GetY(), 130, $pdf->GetY());
+$pdf->Ln(2);
+
+$pdf->SetFont('helvetica', 'B', 10);
+$pdf->SetTextColor(51, 51, 51);
+$pdf->Cell(0, 5, 'Firma del Responsable', 0, 1, 'C');
+
+$pdf->Ln(5);
+
+// Pie de página
+$pdf->SetFont('helvetica', 'I', 8);
+$pdf->SetTextColor(153, 153, 153);
+$pdf->Cell(0, 5, 'Este documento fue generado electrónicamente el ' . $fechaActual . ' a las ' . $horaActual, 0, 1, 'C');
+
+// ========================================
+// SALIDA DEL PDF
+// ========================================
+// Limpiar cualquier salida previa
+ob_end_clean();
+
+// Generar el PDF
+$nombreArchivo = 'Orden_Pago_' . str_replace(' ', '_', $nombreCompleto) . '_' . date('YmdHis') . '.pdf';
+$pdf->Output($nombreArchivo, 'I'); // I = inline (mostrar en navegador), D = descargar
+
+exit;
 ?>
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Orden de Pago - <?php echo htmlspecialchars($nombreCompleto); ?></title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 10px;
-            padding: 15px;
-            background: white;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 12px;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 8px;
-        }
-
-        .header h1 {
-            margin: 0;
-            color: #667eea;
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-        .header h2 {
-            margin: 3px 0 0 0;
-            color: #464E5F;
-            font-size: 14px;
-        }
-
-        .section {
-            margin-bottom: 10px;
-            border: 1px solid #e2e5ec;
-            border-radius: 5px;
-            overflow: hidden;
-            page-break-inside: avoid;
-        }
-
-        .section-header {
-            background: #667eea;
-            color: white;
-            padding: 6px 8px;
-            font-weight: bold;
-            font-size: 11px;
-        }
-
-        .section-header-green {
-            background: #11998e;
-        }
-
-        .section-header-red {
-            background: #fd397a;
-        }
-
-        .section-content {
-            padding: 8px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        table td {
-            padding: 4px 6px;
-            vertical-align: top;
-        }
-
-        .label {
-            color: #999;
-            font-size: 8px;
-            font-weight: bold;
-            text-transform: uppercase;
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        .value {
-            color: #333;
-            font-weight: bold;
-            font-size: 10px;
-            display: block;
-        }
-
-        .monto-numeral {
-            color: #11998e;
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .monto-literal {
-            color: #464E5F;
-            font-style: italic;
-            font-size: 9px;
-        }
-
-        .cuenta-box {
-            background: #f8f9fa;
-            border: 1px solid #667eea;
-            border-radius: 5px;
-            padding: 10px;
-            margin: 10px 0;
-        }
-
-        .cuenta-box strong {
-            color: #667eea;
-            display: block;
-            margin-bottom: 6px;
-            font-size: 11px;
-        }
-
-        .cuenta-box p {
-            margin: 4px 0;
-            font-size: 10px;
-        }
-
-        .footer {
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid #e2e5ec;
-        }
-
-        .firma-box {
-            text-align: center;
-            margin-top: 25px;
-            page-break-inside: avoid;
-        }
-
-        .firma-linea {
-            border-top: 1px solid #333;
-            width: 250px;
-            margin: 0 auto 6px auto;
-        }
-
-        .no-print {
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .btn-imprimir {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 0 10px;
-        }
-
-        .btn-imprimir:hover {
-            background: #5568d3;
-        }
-
-        .btn-cerrar {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 0 10px;
-        }
-
-        .btn-cerrar:hover {
-            background: #5a6268;
-        }
-
-        /* Estilos para impresión */
-        @media print {
-            body {
-                padding: 10px;
-            }
-
-            .no-print {
-                display: none !important;
-            }
-
-            .section {
-                page-break-inside: avoid;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Botones de acción (solo en pantalla) -->
-    <div class="no-print">
-        <button class="btn-imprimir" onclick="window.print()">
-            Imprimir / Guardar como PDF
-        </button>
-        <button class="btn-cerrar" onclick="window.close()">
-            Cerrar
-        </button>
-    </div>
-
-    <!-- Contenido del documento -->
-    <div class="header">
-        <h1>ORDEN DE PAGO</h1>
-        <h2>Universidad Técnica de Oruro</h2>
-        <p style="margin: 10px 0; font-size: 13px;">
-            <strong>Fecha:</strong> <?php echo $fechaActual; ?> -
-            <strong>Hora:</strong> <?php echo $horaActual; ?>
-        </p>
-    </div>
-
-    <!-- Datos del Estudiante -->
-    <div class="section">
-        <div class="section-header section-header-green">
-            DATOS DEL ESTUDIANTE
-        </div>
-        <div class="section-content">
-            <table>
-                <tr>
-                    <td style="width: 33%;">
-                        <span class="label">Apellido Paterno</span>
-                        <span class="value"><?php echo htmlspecialchars($apaterno); ?></span>
-                    </td>
-                    <td style="width: 33%;">
-                        <span class="label">Apellido Materno</span>
-                        <span class="value"><?php echo htmlspecialchars($amaterno); ?></span>
-                    </td>
-                    <td style="width: 33%;">
-                        <span class="label">Nombres</span>
-                        <span class="value"><?php echo htmlspecialchars($nombres); ?></span>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <span class="label">Correo Electrónico</span>
-                        <span class="value"><?php echo htmlspecialchars($correo); ?></span>
-                    </td>
-                    <td>
-                        <span class="label">C.I.</span>
-                        <span class="value"><?php echo htmlspecialchars($ci); ?></span>
-                    </td>
-                    <td>
-                        <span class="label">N° Celular</span>
-                        <span class="value"><?php echo htmlspecialchars($celular); ?></span>
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-
-    <!-- Datos para la Emisión de Comprobante de Pago -->
-    <div class="section">
-        <div class="section-header section-header-red">
-            DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO
-        </div>
-        <div class="section-content">
-            <table>
-                <tr>
-                    <td colspan="2">
-                        <span class="label">Programa</span>
-                        <span class="value"><?php echo htmlspecialchars($programa); ?></span>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2">
-                        <span class="label">Módulo</span>
-                        <span class="value"><?php echo htmlspecialchars($modulo); ?></span>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width: 50%;">
-                        <span class="label">Monto (Numeral)</span>
-                        <span class="monto-numeral"><?php echo htmlspecialchars($montoNumeral); ?></span>
-                    </td>
-                    <td style="width: 50%;">
-                        <span class="label">Monto (Literal)</span>
-                        <span class="monto-literal"><?php echo htmlspecialchars($montoLiteral); ?></span>
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-
-    <!-- Datos del Formulario -->
-    <div class="section">
-        <div class="section-header">
-            FORMULARIO DE REGISTRO
-        </div>
-        <div class="section-content">
-            <table>
-                <tr>
-                    <td style="width: 50%;">
-                        <span class="label">Versión</span>
-                        <span class="value"><?php echo htmlspecialchars($version); ?></span>
-                    </td>
-                    <td style="width: 50%;">
-                        <span class="label">Cuenta Auxiliar</span>
-                        <span class="value"><?php echo htmlspecialchars($cuentaAuxiliar); ?></span>
-                    </td>
-                </tr>
-            </table>
-
-            <div style="margin-top: 20px;">
-                <strong style="color: #667eea; font-size: 13px; display: block; margin-bottom: 10px;">
-                    DATOS PARA LA EMISIÓN DE FACTURA
-                </strong>
-                <table>
-                    <tr>
-                        <td style="width: 50%;">
-                            <span class="label">Nombre de la Factura</span>
-                            <span class="value"><?php echo htmlspecialchars($nombreFactura); ?></span>
-                        </td>
-                        <td style="width: 50%;">
-                            <span class="label">NIT o CI</span>
-                            <span class="value"><?php echo htmlspecialchars($nitCiFactura); ?></span>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Denominación de la Cuenta -->
-    <div class="cuenta-box">
-        <strong>DENOMINACIÓN DE LA CUENTA</strong>
-        <p style="font-weight: bold; color: #464E5F;">
-            UTO - APORTES EXTRAORDINARIOS - NÚMERO DE CUENTA 10000006050938
-        </p>
-        <p style="font-weight: bold; color: #11998e;">
-            NIT: 120129022
-        </p>
-    </div>
-
-    <!-- Responsable -->
-    <div class="footer">
-        <table>
-            <tr>
-                <td style="width: 50%;">
-                    <span class="label">Responsable</span>
-                    <span class="value"><?php echo htmlspecialchars($responsable); ?></span>
-                </td>
-                <td style="width: 50%;">
-                    <span class="label">Firma</span>
-                    <span class="value"><?php echo htmlspecialchars($firma ?: '____________________'); ?></span>
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="firma-box">
-        <div class="firma-linea"></div>
-        <strong style="font-size: 14px;">Firma del Responsable</strong>
-    </div>
-
-    <p style="text-align: center; color: #999; font-size: 10px; margin-top: 30px;">
-        Este documento fue generado electrónicamente el <?php echo $fechaActual; ?> a las <?php echo $horaActual; ?>
-    </p>
-
-    <div class="no-print" style="margin-top: 30px;">
-        <p style="text-align: center; color: #666; font-size: 12px;">
-            <strong>Instrucciones:</strong> Presione el botón "Imprimir" y seleccione "Guardar como PDF" como destino para generar el archivo PDF.
-        </p>
-    </div>
-</body>
-</html>

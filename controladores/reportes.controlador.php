@@ -4,8 +4,9 @@
  * Utiliza TCPDF para generar reportes
  */
 
-require_once 'vendor/autoload.php';
-require_once 'modelos/reportes.modelo.php';
+// Incluir TCPDF
+require_once __DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php';
+require_once __DIR__ . '/../modelos/reportes.modelo.php';
 
 class ReportesControladores extends TCPDF
 {
@@ -13,13 +14,14 @@ class ReportesControladores extends TCPDF
     public function Header()
     {
         // Logo (opcional)
-        if (file_exists('vistas/recursos/assets/media/logos/logo0.png')) {
-            $this->Image('vistas/recursos/assets/media/logos/logo0.png', 15, 10, 20, '', 'PNG');
+        $logoPath = __DIR__ . '/../vistas/recursos/assets/media/logos/logo0.png';
+        if (file_exists($logoPath)) {
+            $this->Image($logoPath, 15, 10, 20, '', 'PNG');
         }
 
         $this->SetFont('helvetica', 'B', 16);
         $this->SetTextColor(102, 126, 234);
-        $this->Cell(0, 15, 'UNIVERSIDAD - POSGRADO FCS', 0, false, 'C', 0, '', 0, false, 'M', 'M');
+        $this->Cell(0, 15, 'UNIVERSIDAD TÉCNICA DE ORURO - POSGRADO FCS', 0, false, 'C', 0, '', 0, false, 'M', 'M');
         $this->Ln();
 
         $this->SetFont('helvetica', '', 9);
@@ -108,7 +110,7 @@ class ReportesControladores extends TCPDF
         $pdf->Cell(100, 7, 'TOTAL DE ESTUDIANTES:', 1, 0, 'R', true);
         $pdf->Cell(80, 7, count($estudiantes), 1, 1, 'C', true);
 
-        $pdf->Output('Lista_Estudiantes_' . date('Ymd_His') . '.pdf', 'D');
+        $pdf->Output('Lista_Estudiantes_' . date('Ymd_His') . '.pdf', 'I');
     }
 
     // Reporte 2: Estudiantes por Programa
@@ -134,12 +136,13 @@ class ReportesControladores extends TCPDF
         if (empty($estudiantes)) {
             $pdf->SetFont('helvetica', '', 12);
             $pdf->Cell(0, 10, 'No hay estudiantes inscritos en programas', 0, 1, 'C');
-            $pdf->Output('Estudiantes_Por_Programa_' . date('Ymd') . '.pdf', 'D');
+            $pdf->Output('Estudiantes_Por_Programa_' . date('Ymd') . '.pdf', 'I');
             return;
         }
 
         $programaActual = '';
         $contadorPrograma = 0;
+        $contadorGeneral = 0;
 
         foreach ($estudiantes as $est) {
             // Nuevo programa
@@ -147,7 +150,7 @@ class ReportesControladores extends TCPDF
                 $programaActual = $est['NombrePrograma'];
                 $contadorPrograma = 1;
 
-                if ($contadorPrograma > 1) {
+                if ($contadorGeneral > 0) {
                     $pdf->Ln(5);
                 }
 
@@ -188,9 +191,11 @@ class ReportesControladores extends TCPDF
             $pdf->Cell(40, 5, substr($est['NombreProfesion'], 0, 25), 1, 0, 'L', $fill);
             $pdf->Cell(25, 5, date('d/m/Y', strtotime($est['FechaInscripcion'])), 1, 0, 'C', $fill);
             $pdf->Cell(25, 5, $est['Celular'], 1, 1, 'C', $fill);
+
+            $contadorGeneral++;
         }
 
-        $pdf->Output('Estudiantes_Por_Programa_' . date('Ymd_His') . '.pdf', 'D');
+        $pdf->Output('Estudiantes_Por_Programa_' . date('Ymd_His') . '.pdf', 'I');
     }
 
     // Reporte 3: Módulos y Matriculados
@@ -265,7 +270,7 @@ class ReportesControladores extends TCPDF
         $pdf->Cell(50, 7, '', 1, 0, 'C', true);
         $pdf->Cell(35, 7, number_format($totalRecaudado, 2), 1, 1, 'R', true);
 
-        $pdf->Output('Reporte_Modulos_' . date('Ymd_His') . '.pdf', 'D');
+        $pdf->Output('Reporte_Modulos_' . date('Ymd_His') . '.pdf', 'I');
     }
 }
 ?>

@@ -214,11 +214,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                         </div>
                       </div>
 
-                      <center>
-                        <a href="extensiones/tcpdf/pdf/pdfnotacil.php?codigo=6" class="btn btn-primary" target="_blank">
-                          <i class="fa fa-print" aria-hidden="true"></i> REPORTE DE PROGRAMAS
-                        </a>
-                      </center>
+                      
                     </form>
                   </div>
                 </div>
@@ -713,8 +709,8 @@ $(document).ready(function() {
         console.log('Fecha Inicio:', fechaInicio);
         console.log('Fecha Fin:', fechaFin);
 
-        // Construir URL con parámetros
-        var url = 'programas';
+        // Construir URL con parámetros - USAR index.php?action=
+        var url = 'index.php?action=programas';
         var params = [];
 
         if (grado && grado !== '') {
@@ -728,7 +724,7 @@ $(document).ready(function() {
         }
 
         if (params.length > 0) {
-            url += '?' + params.join('&');
+            url += '&' + params.join('&');
         }
 
         console.log('URL final:', url);
@@ -748,7 +744,7 @@ $(document).ready(function() {
         $('#filtroGrado').val('');
         $('#filtroFechaInicio').val('');
         $('#filtroFechaFin').val('');
-        window.location.href = 'programas';
+        window.location.href = 'index.php?action=programas';
     });
 
     // Mantener valores de filtros después de búsqueda

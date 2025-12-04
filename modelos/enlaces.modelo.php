@@ -26,11 +26,8 @@
                 $enlace == 'historialnotaestudiante'||
                 $enlace == 'historialmodulosestudiante'||
                 $enlace == 'historialreciboestudiante'||
-                $enlace == 'ordenpago'
-                
-                  
-                 
-
+                $enlace == 'ordenpago'||
+                $enlace == 'asignaciondocente'
 
                 )
             {

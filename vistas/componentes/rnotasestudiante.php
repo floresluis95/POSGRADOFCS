@@ -122,13 +122,16 @@ require_once 'modelos/calificacion.modelo.php';
                                 <div id="paso3-container" class="card mb-4" style="display: none; border-left: 4px solid #ffb822; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                                     <div class="card-header" style="background-color: #f8f9fa;">
                                         <div class="row align-items-center">
-                                            <div class="col-md-8">
+                                            <div class="col-md-6">
                                                 <h5 class="mb-0" style="color: #ffb822;">
                                                     <i class="flaticon2-edit"></i> Paso 3: Ingresar Calificaciones
                                                 </h5>
                                             </div>
-                                            <div class="col-md-4 text-right">
-                                                <button class="btn btn-sm btn-secondary" id="btn-volver-asignaciones">
+                                            <div class="col-md-6 text-right">
+                                                <button type="button" class="btn btn-sm btn-danger" id="btn-generar-lista-asistencia" style="margin-right: 10px;">
+                                                    <i class="fa fa-file-pdf"></i> Lista de Asistencia
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-secondary" id="btn-volver-asignaciones">
                                                     <i class="la la-arrow-left"></i> Volver a Asignaciones
                                                 </button>
                                             </div>
@@ -292,6 +295,37 @@ $(document).ready(function() {
     // Actualizar fecha
     actualizarFecha();
     setInterval(actualizarFecha, 1000);
+
+    // DEBUG: Verificar botón de lista de asistencia
+    console.log('=== DEBUG VISTA RNOTASESTUDIANTE ===');
+
+    // Verificar si el botón existe inicialmente
+    const botonInicial = $('#btn-generar-lista-asistencia');
+    console.log('Botón encontrado al cargar:', botonInicial.length > 0 ? 'SÍ' : 'NO');
+
+    // Verificar periódicamente si el botón aparece
+    setInterval(function() {
+        const botonActual = $('#btn-generar-lista-asistencia');
+        if (botonActual.length > 0 && botonActual.is(':visible')) {
+            console.log('✅ Botón de lista de asistencia está visible');
+        }
+    }, 5000);
+
+    // Test manual del botón
+    window.testBotonAsistencia = function() {
+        console.log('=== TEST MANUAL DEL BOTÓN ===');
+        const boton = $('#btn-generar-lista-asistencia');
+        console.log('Botón existe:', boton.length > 0);
+        console.log('Botón visible:', boton.is(':visible'));
+        console.log('Elemento:', boton[0]);
+
+        if (boton.length > 0) {
+            console.log('Intentando hacer clic programáticamente...');
+            boton.trigger('click');
+        }
+    };
+
+    console.log('Para probar manualmente, escribe en consola: testBotonAsistencia()');
 });
 </script>
 

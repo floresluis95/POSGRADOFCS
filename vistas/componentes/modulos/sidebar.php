@@ -29,7 +29,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="reportemodulos" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-file-1" style="color: #667eea;"></i>
-                    <span class="kt-menu__link-text">Reporte de Módulos</span>
+                    <span class="kt-menu__link-text">Reporte General de Programas</span>
                   </a>
                 </li>
 
@@ -90,7 +90,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="historialnotaestudiante" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-list-3" style="color: #fd397a;"></i>
-                    <span class="kt-menu__link-text">Historial de Notas</span>
+                    <span class="kt-menu__link-text">Historial de Notas - Estudiantes</span>
                   </a>
                 </li>
 
@@ -106,10 +106,17 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Lista de Docentes</span>
                   </a>
                 </li>
+                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="asignaciondocente" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-add-1" style="color: #36a3f7;"></i>
+                    <span class="kt-menu__link-text">Asignación de Modulos</span>
+                  </a>
+                </li>
+
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="notasdocente" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">Notas - Docentes</span>
+                    <span class="kt-menu__link-text">Registro de Notas - Docentes</span>
                   </a>
                 </li>
              
@@ -275,9 +282,9 @@ if ($_SESSION["Tipo"] == "SEC") {
                   </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="concluidos" class="kt-menu__link">
+                  <a href="asignaciondocente" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-add-1" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">Asignación de Docentes</span>
+                    <span class="kt-menu__link-text">Asignación de Docentes - Modulos</span>
                   </a>
                 </li>
 
@@ -332,13 +339,13 @@ if ($_SESSION["Tipo"] == "DOC") {
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="notasdocente" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">NOTAS Docentes</span>
+                    <span class="kt-menu__link-text">Notas Docentes</span>
                   </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="concluidos" class="kt-menu__link">
+                  <a href="asignaciondocente" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-add-1" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">Asignación de Docentes</span>
+                    <span class="kt-menu__link-text">Modulos Asignados</span>
                   </a>
                 </li>
 

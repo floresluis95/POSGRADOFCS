@@ -88,14 +88,7 @@
                                     </small>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>&nbsp;</label>
-                                    <button class="btn btn-success btn-block" id="btn_abrir_formulario" style="height: 45px;">
-                                        <i class="fa fa-plus-circle"></i> Nuevo Registro
-                                    </button>
-                                </div>
-                            </div>
+                           
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label>&nbsp;</label>
@@ -163,11 +156,18 @@
                 </div>
 
                 <!-- Mensaje inicial -->
-                <div id="mensaje_inicial">
-                    <div class="alert alert-info text-center" style="padding: 3rem;">
-                        <i class="flaticon2-search fa-3x" style="color: #667eea;"></i>
-                        <h4 class="mt-3" style="color: #464E5F;">Seleccione un estudiante del listado</h4>
-                        <p style="color: #B5B5C3;">Podrá ver toda la información del estudiante y el detalle de sus pagos de módulos</p>
+               <div id="mensaje_inicial_v3" class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+                    <div class="alert alert-secondary text-center p-4 w-100" role="alert" style="max-width: 450px; border: 1px solid #dee2e6; border-radius: 12px; background-color: #f8f9fa;">
+                        
+                        <i class="fas fa-list-alt fa-3x mb-3" style="color: #adb5bd;"></i>
+                        
+                        <h5 class="fw-bold" style="color: #495057;">
+                            Listado de Estudiantes
+                        </h5>
+                        
+                        <p class="mb-0 text-muted">
+                            Por favor, elija un nombre de la lista para cargar sus datos y revisar los pagos correspondientes a los módulos.
+                        </p>
                     </div>
                 </div>
 

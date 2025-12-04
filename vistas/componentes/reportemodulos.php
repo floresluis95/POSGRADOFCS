@@ -51,6 +51,23 @@ date_default_timezone_set("America/La_Paz");
                             $stats->MostrarPanelEstadisticasControlador();
                             ?>
 
+                            <!-- Estadísticas por Sede -->
+                            <div class="kt-portlet mb-4">
+                                <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                    <div class="kt-portlet__head-label">
+                                        <h3 style="color: white; margin: 0;">
+                                            <i class="flaticon2-location"></i> Programas por Sede
+                                        </h3>
+                                    </div>
+                                </div>
+                                <div class="kt-portlet__body">
+                                    <?php
+                                    $sedes = new ReporteModulosControlador();
+                                    $sedes->MostrarEstadisticaSedesControlador();
+                                    ?>
+                                </div>
+                            </div>
+
                             <!-- Tabla de Programas y Módulos -->
                             <div class="kt-portlet mb-4">
                                 <div class="kt-portlet__head" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">

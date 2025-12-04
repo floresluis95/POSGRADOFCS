@@ -1,5 +1,5 @@
 <?php
-require_once 'conexion.modelo.php';
+require_once __DIR__ . '/conexion.modelo.php';
 
 class ReportesModelos
 {
@@ -27,7 +27,8 @@ class ReportesModelos
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa pr ON ep.ProgramaID = pr.ProgramaID
                 INNER JOIN profesion p ON e.IdProfesion = p.IdProfesion
-                WHERE pr.ProgramaID = :programaID AND e.Estado = 1
+                WHERE pr.ProgramaID = :programaID
+                AND ep.Estado = 'ACTIVO'
                 ORDER BY e.Apaterno, e.Amaterno
             ");
             $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
@@ -38,7 +39,7 @@ class ReportesModelos
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa pr ON ep.ProgramaID = pr.ProgramaID
                 INNER JOIN profesion p ON e.IdProfesion = p.IdProfesion
-                WHERE e.Estado = 1
+                WHERE ep.Estado = 'ACTIVO'
                 ORDER BY pr.NombrePrograma, e.Apaterno, e.Amaterno
             ");
         }
