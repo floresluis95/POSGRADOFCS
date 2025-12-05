@@ -144,47 +144,90 @@ $pdf->Cell(95, 5, 'Hora: ' . $horaActual, 0, 1, 'R');
 
 $pdf->Ln(3);
 
+$pdf->SetFillColor(174, 198, 207); // Color #04126aff
+$pdf->SetTextColor(0, 0, 0);
+$pdf->SetFont('helvetica', 'B', 13);
+$pdf->Cell(0, 7, 'ORDEN DE PAGO EN CAJA DE POSGRADO', 0, 1, 'C', true);
+
+
+
 // ========================================
 // SECCIÓN: DATOS DEL ESTUDIANTE
 // ========================================
-$pdf->SetFillColor(17, 153, 142); // Color #11998e
-$pdf->SetTextColor(255, 255, 255);
+// --- CONFIGURACIÓN DE COLOR DE BORDE (MARGENES) ---
+$pdf->SetDrawColor(0, 0, 0); // Color del borde: Negro (RGB 0, 0, 0)
+
+// --- Anchos de Columna ---
+$W_ENCABEZADO = 30;
+$W_CELDA = 160 / 3; // 53.33 mm por celda
+$H_TOTAL = 27;      // Altura total del bloque
+
+// --- Encabezado "NOMBRE COMPLETO DEL POSGRADUANTE" (MultiCell) ---
+$pdf->SetFillColor(17, 153, 142); // Color de fondo: #11998e
+$pdf->SetTextColor(255, 0, 0); 
 $pdf->SetFont('helvetica', 'B', 10);
-$pdf->Cell(0, 7, 'DATOS DEL ESTUDIANTE', 0, 1, 'L', true);
 
-// Contenido de la sección
-$pdf->SetFillColor(248, 249, 250);
+// 1. Guardar posición inicial (X, Y)
+$x_inicio_columna = $pdf->GetX();
+$y_inicio_columna = $pdf->GetY();
+
+// 2. Usar MultiCell: El texto se ajustará automáticamente en varias líneas 
+// dentro de los 30mm de ancho.
+// El '4.5' es la altura de cada línea. 27/4.5 = 6 líneas (suficiente para el texto).
+$pdf->MultiCell($W_ENCABEZADO, 4.5, 'NOMBRE COMPLETO DEL POSGRADUANTE', 1, 'C', true);
+
+// 3. Mover el cursor para comenzar la tabla a la derecha
+// Usamos SetXY para saltar de nuevo a la posición X del borde derecho del MultiCell
+// y volver a la posición Y inicial.
+$pdf->SetXY($x_inicio_columna + $W_ENCABEZADO, $y_inicio_columna);
+
+// --- Preparación para la Tabla (a la derecha del encabezado) ---
+$x_inicio_tabla = $pdf->GetX(); 
+$y_inicio_tabla = $pdf->GetY(); 
+
+// --- Creación de la Tabla ---
+$pdf->SetFillColor(248, 249, 250); 
 $pdf->SetTextColor(70, 78, 95);
-$pdf->SetFont('helvetica', '', 9);
 
-// Crear tabla
-$pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(153, 153, 153);
-$pdf->Cell(60, 5, 'APELLIDO PATERNO', 0, 0, 'L');
-$pdf->Cell(60, 5, 'APELLIDO MATERNO', 0, 0, 'L');
-$pdf->Cell(60, 5, 'NOMBRES', 0, 1, 'L');
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(51, 51, 51);
-$pdf->Cell(60, 6, $apaterno, 0, 0, 'L');
-$pdf->Cell(60, 6, $amaterno, 0, 0, 'L');
-$pdf->Cell(60, 6, $nombres, 0, 1, 'L');
-
-$pdf->Ln(2);
+// ******* Fila 1: Títulos de APELLIDOS/NOMBRES (Color ROJO) *******
+$pdf->SetX($x_inicio_tabla); 
 
 $pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(153, 153, 153);
-$pdf->Cell(60, 5, 'CORREO ELECTRÓNICO', 0, 0, 'L');
-$pdf->Cell(60, 5, 'C.I.', 0, 0, 'L');
-$pdf->Cell(60, 5, 'N° CELULAR', 0, 1, 'L');
+$pdf->SetTextColor(255, 0, 0); 
+$pdf->Cell($W_CELDA, 4.5, 'APELLIDO PATERNO', 1, 0, 'L'); 
+$pdf->Cell($W_CELDA, 4.5, 'APELLIDO MATERNO', 1, 0, 'L');
+$pdf->Cell($W_CELDA, 4.5, 'NOMBRES', 1, 1, 'L');
+
+// ******* Fila 2: Valores de APELLIDOS/NOMBRES (Color original) *******
+$pdf->SetX($x_inicio_tabla); 
 
 $pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(51, 51, 51);
-$pdf->Cell(60, 6, $correo, 0, 0, 'L');
-$pdf->Cell(60, 6, $ci, 0, 0, 'L');
-$pdf->Cell(60, 6, $celular, 0, 1, 'L');
+$pdf->SetTextColor(51, 51, 51); 
+$pdf->Cell($W_CELDA, 5.5, $apaterno, 1, 0, 'L');
+$pdf->Cell($W_CELDA, 5.5, $amaterno, 1, 0, 'L');
+$pdf->Cell($W_CELDA, 5.5, $nombres, 1, 1, 'L');
 
-$pdf->Ln(5);
+$pdf->Ln(1); // Salto de línea reducido a 1mm
+
+// ******* Fila 3: Títulos de CORREO/CI/CELULAR (Color ROJO) *******
+$pdf->SetX($x_inicio_tabla); 
+
+$pdf->SetFont('helvetica', 'B', 7);
+$pdf->SetTextColor(255, 0, 0); 
+$pdf->Cell($W_CELDA, 4.5, 'CORREO ELECTRÓNICO', 1, 0, 'L');
+$pdf->Cell($W_CELDA, 4.5, 'C.I.', 1, 0, 'L');
+$pdf->Cell($W_CELDA, 4.5, 'N° CELULAR', 1, 1, 'L');
+
+// ******* Fila 4: Valores de CORREO/CI/CELULAR (Color original) *******
+$pdf->SetX($x_inicio_tabla); 
+
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(51, 51, 51); 
+$pdf->Cell($W_CELDA, 5.5, $correo, 1, 0, 'L');
+$pdf->Cell($W_CELDA, 5.5, $ci, 1, 0, 'L');
+$pdf->Cell($W_CELDA, 5.5, $celular, 1, 1, 'L');
+
+$pdf->Ln(4);
 
 // ========================================
 // SECCIÓN: DATOS PARA EMISIÓN DE COMPROBANTE

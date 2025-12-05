@@ -348,6 +348,12 @@ if ($_SESSION["Tipo"] == "DOC") {
                     <span class="kt-menu__link-text">Modulos Asignados</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="reportecalificaciones" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-add-1" style="color: #36a3f7;"></i>
+                    <span class="kt-menu__link-text">Reporte de calificaciones</span>
+                  </a>
+                </li>
 
                 <!-- REPORTES PDF -->
                 <li class="kt-menu__section">

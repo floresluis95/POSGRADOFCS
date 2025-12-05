@@ -59,11 +59,15 @@ class ReporteNotasModelo
                     m.nombremodulo,
                     m.codigomodulo,
                     m.DocenteID,
+                    m.ProgramaId,
                     CONCAT(d.Nombre, ' ', d.Apaterno, ' ', d.Amaterno) as NombreDocente,
                     d.Especialidad as EspecialidadDocente,
+                    p.NombrePrograma,
+                    p.GradoAcademico,
                     COUNT(DISTINCT c.EstudianteID) as TotalCalificados,
                     COUNT(DISTINCT ep.EstudianteID) as TotalInscritos
                 FROM modulos m
+                LEFT JOIN programa p ON m.ProgramaId = p.ProgramaID
                 LEFT JOIN docente d ON m.DocenteID = d.DocenteID
                 LEFT JOIN estudianteprograma ep ON ep.ProgramaID = m.ProgramaId
                 LEFT JOIN calificacion c ON c.Idmodulo = m.Idmodulo AND c.ProgramaId = m.ProgramaId

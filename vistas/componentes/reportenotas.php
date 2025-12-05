@@ -299,12 +299,16 @@ $(document).ready(function() {
                         html += '<td class="text-center">';
 
                         if (calificados > 0) {
-                            html += '<button type="button" class="btn btn-success btn-sm btnGenerarPDF" ' +
+                            html += '<button type="button" class="btn btn-danger btn-sm btnGenerarPDF" ' +
                                    'data-modulo-id="' + modulo.Idmodulo + '" ' +
-                                   'data-programa-id="' + programaID + '" ' +
+                                   'data-programa-id="' + (modulo.ProgramaId || programaID) + '" ' +
                                    'data-modulo-nombre="' + modulo.nombremodulo + '" ' +
-                                   'title="Generar PDF">' +
-                                   '<i class="fas fa-file-pdf"></i> PDF' +
+                                   'data-modulo-codigo="' + (modulo.codigomodulo || '') + '" ' +
+                                   'data-programa-nombre="' + (modulo.NombrePrograma || programaNombre) + '" ' +
+                                   'data-docente-nombre="' + (modulo.NombreDocente || '') + '" ' +
+                                   'data-grado="' + (modulo.GradoAcademico || '') + '" ' +
+                                   'title="Imprimir Planilla de Calificaciones">' +
+                                   '<i class="fas fa-print"></i> IMPRIMIR PLANILLA' +
                                    '</button>';
                         } else {
                             html += '<button type="button" class="btn btn-secondary btn-sm" disabled>' +
@@ -333,16 +337,59 @@ $(document).ready(function() {
         });
     });
 
-    // Evento: Generar PDF
+    // Evento: Generar PDF con selección de fecha
     $(document).on('click', '.btnGenerarPDF', function() {
         const moduloID = $(this).data('modulo-id');
         const programaID = $(this).data('programa-id');
         const moduloNombre = $(this).data('modulo-nombre');
+        const moduloCodigo = $(this).data('modulo-codigo');
+        const programaNombre = $(this).data('programa-nombre');
+        const docenteNombre = $(this).data('docente-nombre');
+        const grado = $(this).data('grado');
 
-        if (confirm('¿Generar reporte PDF de calificaciones para el módulo: ' + moduloNombre + '?')) {
-            // Redirigir a la página de generación de PDF
-            window.open('extensiones/tcpdf/pdf/planilla_calificaciones.php?moduloID=' + moduloID + '&programaID=' + programaID, '_blank');
-        }
+        // Crear modal para seleccionar fecha
+        Swal.fire({
+            title: 'Generar Planilla de Calificaciones',
+            html: '<p>Módulo: <strong>' + moduloNombre + '</strong></p>' +
+                  '<label for="fechaPlanillaPDF" style="font-weight: bold; display: block; margin-top: 15px;">Fecha de la planilla:</label>' +
+                  '<input type="date" id="fechaPlanillaPDF" class="swal2-input" style="width: 80%; margin-top: 5px;" required>',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa fa-print"></i> Generar PDF',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            preConfirm: () => {
+                const fecha = document.getElementById('fechaPlanillaPDF').value;
+                if (!fecha) {
+                    Swal.showValidationMessage('Por favor seleccione una fecha');
+                    return false;
+                }
+                return fecha;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const fecha = result.value;
+
+                // Crear formulario dinámico para enviar datos por POST
+                const form = $('<form>', {
+                    action: 'tcpdf/pdf/generar-calificaciones-pdf.php',
+                    method: 'POST',
+                    target: '_blank'
+                });
+
+                form.append($('<input>', { type: 'hidden', name: 'programaNombre', value: programaNombre || '' }));
+                form.append($('<input>', { type: 'hidden', name: 'moduloNombre', value: moduloNombre }));
+                form.append($('<input>', { type: 'hidden', name: 'moduloCodigo', value: moduloCodigo || '' }));
+                form.append($('<input>', { type: 'hidden', name: 'docenteNombre', value: docenteNombre || '' }));
+                form.append($('<input>', { type: 'hidden', name: 'fechaPlanilla', value: fecha }));
+                form.append($('<input>', { type: 'hidden', name: 'moduloID', value: moduloID }));
+                form.append($('<input>', { type: 'hidden', name: 'programaID', value: programaID }));
+                form.append($('<input>', { type: 'hidden', name: 'grado', value: grado || '' }));
+
+                form.appendTo('body').submit().remove();
+            }
+        });
     });
 
     // Actualizar fecha

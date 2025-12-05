@@ -27,8 +27,9 @@
                 $enlace == 'historialmodulosestudiante'||
                 $enlace == 'historialreciboestudiante'||
                 $enlace == 'ordenpago'||
-                $enlace == 'asignaciondocente'
-
+                $enlace == 'asignaciondocente'||
+                $enlace == 'reportecalificaciones'
+                
                 )
             {
                 $ruta = "vistas/componentes/".$enlace.".php";

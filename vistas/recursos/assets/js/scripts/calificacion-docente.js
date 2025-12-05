@@ -18,6 +18,9 @@ $(document).ready(function() {
         console.log('¡Botón Guardar Calificaciones clickeado!');
         guardarCalificaciones();
     });
+    $(document).on('click', '#btn-generar-pdf', function() {
+        generarPDF();
+    });
 });
 
 /**
@@ -400,6 +403,7 @@ function mostrarFormularioCalificaciones(estudiantes) {
 
     $('#estudiantes-container').html(html);
     $('#footer-guardar').slideDown();
+    $('#pdf-section').slideDown();
 }
 
 /**
@@ -410,17 +414,17 @@ function mostrarFormularioCalificaciones(estudiantes) {
 
 function getEstadoClass(nota) {
     if (nota === '' || nota === null) return 'kt-badge--secondary';
-    return parseFloat(nota) >= 51 ? 'kt-badge--success' : 'kt-badge--danger';
+    return parseFloat(nota) >= 76 ? 'kt-badge--success' : 'kt-badge--danger';
 }
 
 function getEstadoTexto(nota) {
     if (nota === '' || nota === null) return 'Pendiente';
-    return parseFloat(nota) >= 51 ? 'Aprobado' : 'Reprobado';
+    return parseFloat(nota) >= 76 ? 'Aprobado' : 'Reprobado';
 }
 
 function getNotaInputClass(nota) {
     if (nota === '' || nota === null) return '';
-    return parseFloat(nota) >= 51 ? 'is-valid' : 'is-invalid';
+    return parseFloat(nota) >= 76 ? 'is-valid' : 'is-invalid';
 }
 
 function validarNota(input) {
@@ -440,8 +444,8 @@ function validarNota(input) {
         return;
     }
 
-    // Validar aprobado/reprobado (nota mínima 51)
-    if (nota >= 51) {
+    // Validar aprobado/reprobado (nota mínima 76)
+    if (nota >= 76) {
         $(input).addClass('is-valid');
         estadoBadge.removeClass('kt-badge--danger kt-badge--warning kt-badge--secondary')
                    .addClass('kt-badge--success')
@@ -628,4 +632,63 @@ function volverPaso1() {
     $('#paso1-container').slideDown();
     asignacionSeleccionada = null;
     estudiantesActuales = [];
+}
+
+/**
+ * ================================================================
+ * GENERACIÓN DE PDF
+ * ================================================================
+ */
+
+function generarPDF() {
+    console.log('>>> Iniciando generarPDF()');
+
+    // Validar que haya una asignación seleccionada
+    if (!asignacionSeleccionada) {
+        Swal.fire({
+            type: 'error',
+            title: 'Error',
+            text: 'No hay un módulo seleccionado'
+        });
+        return;
+    }
+
+    // Validar fecha
+    const fechaPlanilla = $('#fecha-planilla').val();
+
+    if (!fechaPlanilla) {
+        Swal.fire({
+            type: 'warning',
+            title: 'Fecha requerida',
+            text: 'Por favor ingrese la fecha de la planilla'
+        });
+        return;
+    }
+
+    console.log('>>> Datos para el PDF:');
+    console.log('>>> Asignación:', asignacionSeleccionada);
+    console.log('>>> Docente:', docenteSeleccionado);
+    console.log('>>> Fecha Planilla:', fechaPlanilla);
+
+    // Crear formulario dinámico para POST
+    const form = $('<form>', {
+        action: 'tcpdf/pdf/generar-calificaciones-pdf.php',
+        method: 'POST',
+        target: '_blank'
+    });
+
+    // Agregar campos al formulario
+    form.append($('<input>', { type: 'hidden', name: 'programaNombre', value: asignacionSeleccionada.programaNombre }));
+    form.append($('<input>', { type: 'hidden', name: 'moduloNombre', value: asignacionSeleccionada.moduloNombre }));
+    form.append($('<input>', { type: 'hidden', name: 'moduloCodigo', value: asignacionSeleccionada.moduloCodigo }));
+    form.append($('<input>', { type: 'hidden', name: 'docenteNombre', value: docenteSeleccionado.nombre }));
+    form.append($('<input>', { type: 'hidden', name: 'fechaPlanilla', value: fechaPlanilla }));
+    form.append($('<input>', { type: 'hidden', name: 'moduloID', value: asignacionSeleccionada.moduloID }));
+    form.append($('<input>', { type: 'hidden', name: 'programaID', value: asignacionSeleccionada.programaID }));
+    form.append($('<input>', { type: 'hidden', name: 'grado', value: asignacionSeleccionada.grado }));
+
+    // Agregar formulario al body, enviarlo y eliminarlo
+    form.appendTo('body').submit().remove();
+
+    console.log('>>> Formulario enviado para generar PDF');
 }

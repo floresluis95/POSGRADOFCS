@@ -140,6 +140,32 @@ require_once 'modelos/calificacion.modelo.php';
                                                 <i class="flaticon-edit"></i> Seleccione un módulo para cargar los estudiantes
                                             </div>
                                         </div>
+
+                                        <!-- SECCIÓN DE GENERACIÓN DE PDF -->
+                                        <div id="pdf-section" class="mt-4" style="display: none;">
+                                            <div class="card" style="border: 2px solid #5867dd; border-radius: 10px;">
+                                                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                                    <h5 class="mb-0 text-white">
+                                                        <i class="fa fa-file-pdf"></i> Imprimir Planilla de Calificaciones (PDF)
+                                                    </h5>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <label for="fecha-planilla" class="font-weight-bold">
+                                                                <i class="fa fa-calendar"></i> Fecha:
+                                                            </label>
+                                                            <input type="date" class="form-control" id="fecha-planilla" required>
+                                                        </div>
+                                                        <div class="col-md-8 d-flex align-items-end">
+                                                            <button class="btn btn-danger btn-lg" id="btn-generar-pdf" style="width: 100%;">
+                                                                <i class="fa fa-print"></i> IMPRIMIR PLANILLA DE CALIFICACIONES
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- FOOTER CON BOTÓN DE GUARDAR -->
