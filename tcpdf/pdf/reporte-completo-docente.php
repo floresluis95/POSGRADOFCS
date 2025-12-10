@@ -4,12 +4,26 @@
  * Genera un reporte con TODOS los módulos del docente y sus calificaciones
  */
 
+// Activar reporte de errores para depuración
+error_reporting(E_ALL);
+ini_set('display_errors', 1); // TEMPORAL: Mostrar errores en pantalla
+ini_set('log_errors', 1);
+
 // Iniciar sesión
 session_start();
 
+// TEMPORAL: Depuración
+if (isset($_GET['debug'])) {
+    echo "<h2>DEPURACIÓN - Reporte Completo</h2>";
+    echo "<h3>Sesión:</h3><pre>";
+    print_r($_SESSION);
+    echo "</pre>";
+    exit;
+}
+
 // Verificar sesión válida
 if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
-    die('Acceso no autorizado. Sesión inválida.');
+    die('Acceso no autorizado. Sesión inválida. <br><a href="../../index.php">Ir al inicio de sesión</a>');
 }
 
 // Incluir autoload de Composer para TCPDF
@@ -291,8 +305,10 @@ $pdf->Cell(0, 5, 'Generado por: Sistema de Gestión Académica - POSGRADO ODONTO
 // SALIDA DEL PDF
 // ===================================
 
-// Limpiar buffer de salida
-ob_end_clean();
+// Limpiar buffer de salida (si existe)
+if (ob_get_contents()) {
+    ob_end_clean();
+}
 
 // Nombre del archivo
 $nombreArchivo = 'Reporte_Calificaciones_' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $docenteNombre) . '_' . date('YmdHis') . '.pdf';

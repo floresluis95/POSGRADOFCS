@@ -355,18 +355,7 @@ if ($_SESSION["Tipo"] == "DOC") {
                   </a>
                 </li>
 
-                <!-- REPORTES PDF -->
-                <li class="kt-menu__section">
-                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
-                    <i class="flaticon2-printer" style="color: #c49bbb;"></i> REPORTES
-                  </h4>
-                </li>
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="reportes" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-file-2" style="color: #c49bbb;"></i>
-                    <span class="kt-menu__link-text">Generar Reportes PDF</span>
-                  </a>
-                </li>
+         
 
              
 

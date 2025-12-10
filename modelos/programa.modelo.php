@@ -57,8 +57,8 @@ class ProgramasModelos
     $codigo = self::GenerarCodigo($datos["Sede"], $datos["GradoAcademico"], $datos["FechaInicio"]);
 
     $stmt = Conexion::conectar()->prepare("
-        INSERT INTO programa (NombrePrograma, GradoAcademico, Codigo, DuracionMeses, Modulos, FechaInicio, Sede, Costo, CostoMatricula, Detalle, Estado)
-        VALUES (:nombre, :grado, :codigo, :duracionmeses, :modulos, :fecha, :sede, :costo, :costomatricula, :detalle, 'ACTIVO')
+        INSERT INTO programa (NombrePrograma, GradoAcademico, Codigo, DuracionMeses, Modulos, FechaInicio, Sede, Costo, CostoMatricula, Detalle, Estado, Version, NumeroTramite)
+        VALUES (:nombre, :grado, :codigo, :duracionmeses, :modulos, :fecha, :sede, :costo, :costomatricula, :detalle, 'ACTIVO', :version, :numerotramite)
     ");
 
     $stmt->bindParam(":nombre", $datos["NombrePrograma"], PDO::PARAM_STR);
@@ -71,6 +71,8 @@ class ProgramasModelos
     $stmt->bindParam(":costo", $datos["Costo"], PDO::PARAM_INT);
     $stmt->bindParam(":costomatricula", $datos["CostoMatricula"], PDO::PARAM_STR);
     $stmt->bindParam(":detalle", $datos["Detalle"], PDO::PARAM_STR);
+    $stmt->bindParam(":version", $datos["Version"], PDO::PARAM_STR);
+    $stmt->bindParam(":numerotramite", $datos["NumeroTramite"], PDO::PARAM_STR);
     if ($stmt->execute()) {
         return "exitoso";
     } else {

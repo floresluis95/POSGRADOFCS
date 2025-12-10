@@ -162,7 +162,9 @@ class ProgramasControladores
                 "Sede" => htmlspecialchars(trim($_POST['Sede'])),
                 "Costo" => (float)$_POST['Costo'], // Forzar tipo flotante/decimal
                 "CostoMatricula" => (float)$_POST['CostoMatricula'], // Costo de matrícula
-                "Detalle" => htmlspecialchars(trim($_POST['Detalle']))
+                "Detalle" => htmlspecialchars(trim($_POST['Detalle'])),
+                "Version" => htmlspecialchars(trim($_POST['Version'] ?? 'V-1')), // Versión del programa
+                "NumeroTramite" => htmlspecialchars(trim($_POST['NumeroTramite'] ?? '')) // Número de trámite
                 );
                 $nombreprograma = $_POST['NombrePrograma'];
                 $existe = ProgramasModelos::Buscarprogramamodelo($nombreprograma);

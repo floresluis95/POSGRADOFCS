@@ -146,162 +146,175 @@ $pdf->Ln(3);
 
 $pdf->SetFillColor(174, 198, 207); // Color #04126aff
 $pdf->SetTextColor(0, 0, 0);
-$pdf->SetFont('helvetica', 'B', 13);
+$pdf->SetFont('helvetica', 'B', 9);
 $pdf->Cell(0, 7, 'ORDEN DE PAGO EN CAJA DE POSGRADO', 0, 1, 'C', true);
 
 
 
-// ========================================
-// SECCIÓN: DATOS DEL ESTUDIANTE
-// ========================================
-// --- CONFIGURACIÓN DE COLOR DE BORDE (MARGENES) ---
-$pdf->SetDrawColor(0, 0, 0); // Color del borde: Negro (RGB 0, 0, 0)
+// ====================================================================
+// SECCIÓN: DATOS DEL ESTUDIANTE (Posgraduante)
+// ====================================================================
 
-// --- Anchos de Columna ---
-$W_ENCABEZADO = 30;
-$W_CELDA = 160 / 3; // 53.33 mm por celda
-$H_TOTAL = 27;      // Altura total del bloque
+// --- 1. CONFIGURACIÓN GENERAL ---
+// Color del borde de todas las celdas: Negro
+$pdf->SetDrawColor(0, 0, 0); 
+// Color general del texto para los datos (ej. un gris oscuro)
+$pdf->SetTextColor(51, 51, 51); // #333333
 
-// --- Encabezado "NOMBRE COMPLETO DEL POSGRADUANTE" (MultiCell) ---
-$pdf->SetFillColor(17, 153, 142); // Color de fondo: #11998e
-$pdf->SetTextColor(255, 0, 0); 
-$pdf->SetFont('helvetica', 'B', 10);
+// --- 2. DEFINICIÓN DE DIMENSIONES Y CONTENIDO ---
+$W_ENCABEZADO = 30; // Ancho del encabezado lateral (30mm)
+$W_TOTAL_DATOS = 160; // Ancho total de la tabla de datos
+$W_CELDA = $W_TOTAL_DATOS / 3; // Ancho de cada celda de datos (160 / 3)
 
-// 1. Guardar posición inicial (X, Y)
-$x_inicio_columna = $pdf->GetX();
-$y_inicio_columna = $pdf->GetY();
+// Altura calculada: Suma de las alturas de las 4 filas de datos.
+// Fila 1 (Título) + Fila 2 (Valor) + Fila 3 (Título) + Fila 4 (Valor)
+$H_FILA_TITULO = 4.5;
+$H_FILA_VALOR = 5.5;
+$H_TOTAL = ($H_FILA_TITULO + $H_FILA_VALOR) * 2; // (4.5 + 5.5) * 2 = 20mm. 
+// NOTA: El código original tenía H_TOTAL=27, lo cual es innecesario. 
+// Usaremos la suma de las 4 alturas reales (20mm).
 
-// 2. Usar MultiCell: El texto se ajustará automáticamente en varias líneas 
-// dentro de los 30mm de ancho.
-// El '4.5' es la altura de cada línea. 27/4.5 = 6 líneas (suficiente para el texto).
-$pdf->MultiCell($W_ENCABEZADO, 4.5, 'NOMBRE COMPLETO DEL POSGRADUANTE', 1, 'C', true);
+// --- 3. INICIO DE BLOQUE ---
+$x_inicio_bloque = $pdf->GetX();
+$y_inicio_bloque = $pdf->GetY();
 
-// 3. Mover el cursor para comenzar la tabla a la derecha
-// Usamos SetXY para saltar de nuevo a la posición X del borde derecho del MultiCell
-// y volver a la posición Y inicial.
-$pdf->SetXY($x_inicio_columna + $W_ENCABEZADO, $y_inicio_columna);
+// ====================================================================
+// A. ENCABEZADO LATERAL: 'NOMBRE COMPLETO DEL POSGRADUANTE'
+// ====================================================================
 
-// --- Preparación para la Tabla (a la derecha del encabezado) ---
-$x_inicio_tabla = $pdf->GetX(); 
-$y_inicio_tabla = $pdf->GetY(); 
+// Configuración de estilo del encabezado
+$pdf->SetFillColor(255, 255, 255); // Fondo BLANCO (anula el #11998e original)
+$pdf->SetTextColor(0, 0, 0);// Texto: Blanco (MEJORADO: No usar rojo aquí, es confuso)
+$pdf->SetFont('helvetica', 'B', 8);
 
-// --- Creación de la Tabla ---
-$pdf->SetFillColor(248, 249, 250); 
-$pdf->SetTextColor(70, 78, 95);
+// Usar MultiCell con la altura TOTAL del bloque para asegurar alineación vertical
+// El parámetro 'h' (altura de línea) del MultiCell se ajusta a H_TOTAL / (número de líneas necesarias).
+// En este caso, simplemente usamos la altura total del bloque (20mm) como altura mínima.
+// El '1' indica el borde, 'C' centra el texto, 'true' rellena el fondo.
+$pdf->MultiCell(
+    $W_ENCABEZADO, 
+    $H_TOTAL, 
+    'NOMBRE COMPLETO DEL POSGRADUANTE', 
+    1, 
+    'C', 
+    true, 
+    0 // Importante: 0 para continuar en la misma línea (a la derecha)
+);
 
-// ******* Fila 1: Títulos de APELLIDOS/NOMBRES (Color ROJO) *******
-$pdf->SetX($x_inicio_tabla); 
+// ====================================================================
+// B. BLOQUE DE DATOS (Tabla de 2x3)
+// ====================================================================
 
+// 1. Posicionar el cursor a la derecha del MultiCell, volviendo a Y inicial.
+$pdf->SetXY($x_inicio_bloque + $W_ENCABEZADO, $y_inicio_bloque);
+$x_inicio_tabla = $pdf->GetX(); // Guardar X inicial de la tabla
+
+// 2. Definir estilos generales para las celdas de datos
+$pdf->SetFillColor(248, 249, 250); // Fondo de las celdas de valor: Gris muy claro #F8F9FA
+
+// --- Fila 1: Títulos APELLIDOS/NOMBRES (en ROJO) ---
 $pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(255, 0, 0); 
-$pdf->Cell($W_CELDA, 4.5, 'APELLIDO PATERNO', 1, 0, 'L'); 
-$pdf->Cell($W_CELDA, 4.5, 'APELLIDO MATERNO', 1, 0, 'L');
-$pdf->Cell($W_CELDA, 4.5, 'NOMBRES', 1, 1, 'L');
+$pdf->SetTextColor(255, 0, 0); // Títulos en ROJO
 
-// ******* Fila 2: Valores de APELLIDOS/NOMBRES (Color original) *******
-$pdf->SetX($x_inicio_tabla); 
+$pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO PATERNO', 1, 0, 'L', false); // false: sin relleno
+$pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO MATERNO', 1, 0, 'L', false);
+$pdf->Cell($W_CELDA, $H_FILA_TITULO, 'NOMBRES', 1, 1, 'L', false); // 1: Salto de línea
 
+// --- Fila 2: Valores APELLIDOS/NOMBRES ---
+$pdf->SetX($x_inicio_tabla); // Volver a la X de inicio de la tabla
 $pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(51, 51, 51); 
-$pdf->Cell($W_CELDA, 5.5, $apaterno, 1, 0, 'L');
-$pdf->Cell($W_CELDA, 5.5, $amaterno, 1, 0, 'L');
-$pdf->Cell($W_CELDA, 5.5, $nombres, 1, 1, 'L');
+$pdf->SetTextColor(51, 51, 51); // Texto de valor: Gris oscuro
 
-$pdf->Ln(1); // Salto de línea reducido a 1mm
+$pdf->Cell($W_CELDA, $H_FILA_VALOR, $apaterno, 1, 0, 'L', true); // true: con relleno
+$pdf->Cell($W_CELDA, $H_FILA_VALOR, $amaterno, 1, 0, 'L', true);
+$pdf->Cell($W_CELDA, $H_FILA_VALOR, $nombres, 1, 1, 'L', true); // 1: Salto de línea
 
-// ******* Fila 3: Títulos de CORREO/CI/CELULAR (Color ROJO) *******
-$pdf->SetX($x_inicio_tabla); 
-
+// --- Fila 3: Títulos CORREO/CI/CELULAR (en ROJO) ---
+$pdf->SetX($x_inicio_tabla); // Volver a la X de inicio de la tabla
 $pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(255, 0, 0); 
-$pdf->Cell($W_CELDA, 4.5, 'CORREO ELECTRÓNICO', 1, 0, 'L');
-$pdf->Cell($W_CELDA, 4.5, 'C.I.', 1, 0, 'L');
-$pdf->Cell($W_CELDA, 4.5, 'N° CELULAR', 1, 1, 'L');
+$pdf->SetTextColor(255, 0, 0); // Títulos en ROJO
 
-// ******* Fila 4: Valores de CORREO/CI/CELULAR (Color original) *******
-$pdf->SetX($x_inicio_tabla); 
+$pdf->Cell($W_CELDA, $H_FILA_TITULO, 'CORREO ELECTRÓNICO', 1, 0, 'L', false);
+$pdf->Cell($W_CELDA, $H_FILA_TITULO, 'C.I.', 1, 0, 'L', false);
+$pdf->Cell($W_CELDA, $H_FILA_TITULO, 'N° CELULAR', 1, 1, 'L', false); // 1: Salto de línea
 
+// --- Fila 4: Valores CORREO/CI/CELULAR ---
+$pdf->SetX($x_inicio_tabla); // Volver a la X de inicio de la tabla
 $pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(51, 51, 51); 
-$pdf->Cell($W_CELDA, 5.5, $correo, 1, 0, 'L');
-$pdf->Cell($W_CELDA, 5.5, $ci, 1, 0, 'L');
-$pdf->Cell($W_CELDA, 5.5, $celular, 1, 1, 'L');
+$pdf->SetTextColor(51, 51, 51); // Texto de valor: Gris oscuro
 
-$pdf->Ln(4);
+$pdf->Cell($W_CELDA, $H_FILA_VALOR, $correo, 1, 0, 'L', true);
+$pdf->Cell($W_CELDA, $H_FILA_VALOR, $ci, 1, 0, 'L', true);
+$pdf->Cell($W_CELDA, $H_FILA_VALOR, $celular, 1, 1, 'L', true); // 1: Salto de línea
+
+// --- 4. SALTO DE LÍNEA ---
+$pdf->Ln(4); // Separación con la siguiente sección
 
 // ========================================
 // SECCIÓN: DATOS PARA EMISIÓN DE COMPROBANTE
 // ========================================
-$pdf->SetFillColor(253, 57, 122); // Color #fd397a
-$pdf->SetTextColor(255, 255, 255);
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->Cell(0, 7, 'DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO', 0, 1, 'L', true);
+$pdf->SetFillColor(174, 198, 207); // Color #a5a5a5ff
+$pdf->SetTextColor(0, 0, 0);
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->Cell(0, 7, 'DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO', 0, 1, 'C', true);
 
 $pdf->SetTextColor(70, 78, 95);
 
-// Programa
+// --- Sección 1: PROGRAMA, VERSIÓN y CUENTA AUXILIAR (Anchos Ajustados y Bordes) ---
+
+// Definir estilo de las Etiquetas/Títulos (Rojo, 7pt)
 $pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(153, 153, 153);
-$pdf->Cell(0, 5, 'PROGRAMA', 0, 1, 'L');
+$pdf->SetTextColor(255, 0, 0); // Color de texto: ROJO
+
+// --- TÍTULOS ---
+// Anchos ajustados: 80, 40, 0 (resto)
+$pdf->Cell(80, 5, 'PROGRAMA', 1, 0, 'L'); // 80 ancho, Borde 1, no salta línea (0)
+$pdf->Cell(40, 5, 'VERSIÓN', 1, 0, 'L');  // 40 ancho (más pequeño), Borde 1, no salta línea (0)
+$pdf->Cell(0, 5, 'CUENTA AUXILIAR', 1, 1, 'L'); // Resto del ancho (automático), Borde 1, salta línea (1)
+
+// Definir estilo de los Valores (Gris Oscuro, 9pt)
 $pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(51, 51, 51);
-$pdf->MultiCell(0, 5, $programa, 0, 'L');
+$pdf->SetTextColor(51, 51, 51); // Gris Oscuro (#333333)
 
-$pdf->Ln(1);
+// --- VALORES ---
+// NOTA: MultiCell para el programa (si es largo). Usar 'false, 0' para evitar salto de línea.
+$pdf->MultiCell(80, 5, $programa, 1, 'L', false, 0); // Ancho 80, Borde 1, no salta línea (0)
+$pdf->Cell(40, 5, $version, 1, 0, 'L');             // Ancho 40, Borde 1, no salta línea (0)
+$pdf->Cell(0, 5, $cuentaAuxiliar, 1, 1, 'L');        // Resto del ancho, Borde 1, salta línea (1)
 
-// Módulo
+$pdf->Ln(3); // Espacio
+
+// --- Sección 3: MONTO (NUMERAL y LITERAL) (Bordes y Títulos Rojos) ---
+
+// Definir estilo de las Etiquetas/Títulos (Rojo, 7pt)
 $pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(153, 153, 153);
-$pdf->Cell(0, 5, 'MÓDULO', 0, 1, 'L');
-$pdf->SetFont('helvetica', 'B', 9);
+$pdf->SetTextColor(255, 0, 0); // Color de texto: ROJO
+
+// Etiquetas (Con borde: 1)
+$pdf->Cell(90, 5, 'MONTO (NUMERAL)', 1, 0, 'L'); // 90 ancho, Borde 1, no salta línea (0)
+$pdf->Cell(90, 5, 'MONTO (LITERAL)', 1, 1, 'L'); // 90 ancho, Borde 1, salta línea (1)
+
+// Valor Numeral (Izquierda)
+$pdf->SetFont('helvetica', 'B', 8);
 $pdf->SetTextColor(51, 51, 51);
-$pdf->MultiCell(0, 5, $modulo, 0, 'L');
+$pdf->Cell(90, 8, $montoNumeral, 1, 0, 'L'); // 90 ancho, Borde 1, no salta línea (0)
 
-$pdf->Ln(1);
-
-// Monto
-$pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(153, 153, 153);
-$pdf->Cell(90, 5, 'MONTO (NUMERAL)', 0, 0, 'L');
-$pdf->Cell(90, 5, 'MONTO (LITERAL)', 0, 1, 'L');
-
-$pdf->SetFont('helvetica', 'B', 14);
-$pdf->SetTextColor(17, 153, 142);
-$pdf->Cell(90, 8, $montoNumeral, 0, 0, 'L');
-
-$pdf->SetFont('helvetica', 'I', 8);
-$pdf->SetTextColor(70, 78, 95);
-$pdf->MultiCell(90, 8, $montoLiteral, 0, 'L');
+// Valor Literal (Derecha)
+$pdf->SetFont('helvetica', 'B', 8); // Cursiva, 8pt
+$pdf->SetTextColor(51, 51, 51); // Gris Azulado (#464E5F)
+$pdf->MultiCell(0, 8, $montoLiteral, 1, 0, 'L'); // Resto del ancho (0), Borde 1, salta línea
 
 $pdf->Ln(5);
+// Subsección: Datos para Emisión de Factura
 
-// ========================================
-// SECCIÓN: FORMULARIO DE REGISTRO
-// ========================================
-$pdf->SetFillColor(102, 126, 234);
-$pdf->SetTextColor(255, 255, 255);
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->Cell(0, 7, 'FORMULARIO DE REGISTRO', 0, 1, 'L', true);
+
+
+$pdf->SetFillColor(174, 198, 207); // Color #a5a5a5ff
+$pdf->SetTextColor(0, 0, 0);
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->Cell(0, 7, 'DATOS PARA LA EMISIÓN DE FACTURA', 0, 1, 'C', true);
 
 $pdf->SetTextColor(70, 78, 95);
-
-// Versión y Cuenta Auxiliar
-$pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(153, 153, 153);
-$pdf->Cell(90, 5, 'VERSIÓN', 0, 0, 'L');
-$pdf->Cell(90, 5, 'CUENTA AUXILIAR', 0, 1, 'L');
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(51, 51, 51);
-$pdf->Cell(90, 6, $version, 0, 0, 'L');
-$pdf->Cell(90, 6, $cuentaAuxiliar, 0, 1, 'L');
-
-$pdf->Ln(3);
-
-// Subsección: Datos para Emisión de Factura
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(102, 126, 234);
-$pdf->Cell(0, 6, 'DATOS PARA LA EMISIÓN DE FACTURA', 0, 1, 'L');
 
 $pdf->SetFont('helvetica', 'B', 7);
 $pdf->SetTextColor(153, 153, 153);

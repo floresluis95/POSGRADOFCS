@@ -311,6 +311,31 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                             <input type="number" class="form-control" name="Modulos" required placeholder="Ej: 6">
                           </div>
                         </div>
+
+                        <div class="col-md-4">
+                          <div class="modal-body">
+                            <label>VERSIÓN</label>
+                            <select class="form-control" name="Version">
+                              <option value="V-1" selected>V-1</option>
+                              <option value="V-2">V-2</option>
+                              <option value="V-3">V-3</option>
+                              <option value="V-4">V-4</option>
+                              <option value="V-5">V-5</option>
+                              <option value="V-6">V-6</option>
+                              <option value="V-7">V-7</option>
+                              <option value="V-8">V-8</option>
+                              <option value="V-9">V-9</option>
+                              <option value="V-10">V-10</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div class="col-md-4">
+                          <div class="modal-body">
+                            <label>NÚMERO DE TRÁMITE</label>
+                            <input type="text" class="form-control" name="NumeroTramite" placeholder="Ej: 2024-001">
+                          </div>
+                        </div>
                       </div>
 
                     <div class="row">

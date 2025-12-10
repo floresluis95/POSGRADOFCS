@@ -4,8 +4,25 @@
  * Utiliza TCPDF para generar la planilla de calificaciones con datos del módulo
  */
 
+// Activar reporte de errores para depuración
+error_reporting(E_ALL);
+ini_set('display_errors', 1); // TEMPORAL: Mostrar errores en pantalla
+ini_set('log_errors', 1);
+
 // Iniciar sesión para validación
 session_start();
+
+// TEMPORAL: Depuración de datos POST
+if (isset($_GET['debug'])) {
+    echo "<h2>DEPURACIÓN - Datos recibidos</h2>";
+    echo "<h3>POST:</h3><pre>";
+    print_r($_POST);
+    echo "</pre>";
+    echo "<h3>Sesión:</h3><pre>";
+    print_r($_SESSION);
+    echo "</pre>";
+    exit;
+}
 
 // Verificar sesión válida
 if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
@@ -35,7 +52,23 @@ $grado = $_POST['grado'] ?? '';
 // Validar datos requeridos
 if (empty($programaNombre) || empty($moduloNombre) || empty($docenteNombre) ||
     empty($fechaPlanilla) || empty($moduloID) || empty($programaID)) {
-    die('Error: Faltan datos requeridos para generar el PDF.');
+    echo "<h2>Error: Faltan datos requeridos</h2>";
+    echo "<h3>Datos recibidos:</h3>";
+    echo "<pre>";
+    echo "programaNombre: '" . $programaNombre . "'\n";
+    echo "moduloNombre: '" . $moduloNombre . "'\n";
+    echo "moduloCodigo: '" . $moduloCodigo . "'\n";
+    echo "docenteNombre: '" . $docenteNombre . "'\n";
+    echo "fechaPlanilla: '" . $fechaPlanilla . "'\n";
+    echo "moduloID: " . $moduloID . "\n";
+    echo "programaID: " . $programaID . "\n";
+    echo "grado: '" . $grado . "'\n";
+    echo "</pre>";
+    echo "<h3>POST completo:</h3>";
+    echo "<pre>";
+    print_r($_POST);
+    echo "</pre>";
+    die();
 }
 
 // Obtener estudiantes y calificaciones del módulo
@@ -222,8 +255,10 @@ $pdf->Cell(92.5, 5, '', 0, 1, 'C');
 // SALIDA DEL PDF
 // ===================================
 
-// Limpiar buffer de salida
-ob_end_clean();
+// Limpiar buffer de salida (si existe)
+if (ob_get_contents()) {
+    ob_end_clean();
+}
 
 // Nombre del archivo
 $nombreArchivo = 'Planilla_Calificaciones_' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $moduloCodigo) . '_' . date('YmdHis') . '.pdf';

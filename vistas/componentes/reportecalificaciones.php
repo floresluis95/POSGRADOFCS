@@ -33,7 +33,7 @@ date_default_timezone_set("America/La_Paz");
                                 <div class="kt-subheader__breadcrumbs">
                                     <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
                                     <span class="kt-subheader__breadcrumbs-separator"></span>
-                                    <h4>MIS M�DULOS Y CALIFICACIONES</h4>
+                                    <h4>MIS MODULOS Y CALIFICACIONES</h4>
                                 </div>
                             </div>
                             <div class="kt-subheader__toolbar">
@@ -50,7 +50,7 @@ date_default_timezone_set("America/La_Paz");
                             <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px 10px 0 0;">
                                 <div class="kt-portlet__head-label">
                                     <h3 class="kt-portlet__head-title text-white">
-                                        <i class="fa fa-chart-bar"></i> Mis M�dulos Asignados - Estado de Calificaciones
+                                        <i class="fa fa-chart-bar"></i> Mis Modulos Asignados - Estado de Calificaciones
                                     </h3>
                                 </div>
                                 <div class="kt-portlet__head-toolbar">
@@ -82,7 +82,7 @@ date_default_timezone_set("America/La_Paz");
                                         </div>
                                         <div class="col-md-6">
                                             <p class="mb-1"><strong><i class="fa fa-graduation-cap"></i> Especialidad:</strong> <span id="docente-especialidad"></span></p>
-                                            <p class="mb-0"><strong><i class="fa fa-book"></i> Total M�dulos:</strong> <span id="total-modulos" class="kt-badge kt-badge--brand kt-badge--inline"></span></p>
+                                            <p class="mb-0"><strong><i class="fa fa-book"></i> Total Modulos:</strong> <span id="total-modulos" class="kt-badge kt-badge--brand kt-badge--inline"></span></p>
                                         </div>
                                     </div>
                                 </div>
@@ -320,10 +320,10 @@ function mostrarTablaModulos(modulos) {
 function generarPlanillaPDF(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, grado) {
     Swal.fire({
         title: 'Imprimir Planilla de Calificaciones',
-        html: '<p>M�dulo: <strong>' + moduloNombre + '</strong></p>' +
+        html: '<p>Modulo: <strong>' + moduloNombre + '</strong></p>' +
               '<label for="fechaPlanillaPDF" style="font-weight: bold; display: block; margin-top: 15px;">Fecha de la planilla:</label>' +
               '<input type="date" id="fechaPlanillaPDF" class="swal2-input" style="width: 80%; margin-top: 5px;" required>',
-        icon: 'question',
+        type: 'question',
         showCancelButton: true,
         confirmButtonText: '<i class="fa fa-print"></i> Generar PDF',
         cancelButtonText: 'Cancelar',
@@ -366,8 +366,8 @@ function mostrarSinModulos() {
     $('#tabla-modulos-container').html(`
         <div class="alert alert-warning text-center py-5">
             <i class="fa fa-info-circle" style="font-size: 3rem;"></i>
-            <h4 class="mt-3">No tiene m�dulos asignados</h4>
-            <p class="text-muted">No se encontraron m�dulos asignados a su usuario</p>
+            <h4 class="mt-3">No tiene modulos asignados</h4>
+            <p class="text-muted">No se encontraron modulos asignados a su usuario</p>
         </div>
     `);
 }
@@ -388,7 +388,7 @@ function mostrarError(mensaje) {
 function generarReporteCompleto() {
     if (!docenteData) {
         Swal.fire({
-            icon: 'error',
+            type: 'error',
             title: 'Error',
             text: 'No se ha cargado la información del docente'
         });
@@ -399,7 +399,7 @@ function generarReporteCompleto() {
         title: 'Generar Reporte Completo',
         html: '<p>Se generará un reporte PDF con <strong>TODOS</strong> sus módulos asignados y sus calificaciones.</p>' +
               '<p class="text-muted mt-2">Este reporte incluirá una página por cada módulo con su respectiva planilla de calificaciones.</p>',
-        icon: 'info',
+        type: 'info',
         showCancelButton: true,
         confirmButtonText: '<i class="fa fa-print"></i> Generar Reporte PDF',
         cancelButtonText: 'Cancelar',
@@ -411,7 +411,7 @@ function generarReporteCompleto() {
             window.open('tcpdf/pdf/reporte-completo-docente.php', '_blank');
 
             Swal.fire({
-                icon: 'success',
+                type: 'success',
                 title: 'Generando reporte...',
                 text: 'El PDF se abrirá en una nueva pestaña',
                 timer: 2000,

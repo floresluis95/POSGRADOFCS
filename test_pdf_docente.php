@@ -1,36 +1,59 @@
 <?php
 /**
- * Script de diagnóstico para generación de PDF
+ * Script de prueba para generación de PDF de docente
  */
 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+echo "<h2>DIAGNÓSTICO DE GENERACIÓN DE PDF - DOCENTE</h2>";
+
+// Iniciar sesión
 session_start();
 
-echo "<h2>Diagnóstico de Generación de PDF</h2>";
-echo "<hr>";
+// Simular sesión de docente
+$_SESSION['Validar'] = true;
+$_SESSION['Usuario'] = '1245878'; // CI del docente JUANA DIAZ
 
-// 1. Verificar sesión
-echo "<h3>1. Verificación de Sesión</h3>";
-if (isset($_SESSION['Validar']) && $_SESSION['Validar'] === true) {
-    echo "✓ Sesión válida<br>";
-    echo "Usuario: " . ($_SESSION['Usuario'] ?? 'No definido') . "<br>";
+echo "<p><strong>Sesión iniciada como:</strong> " . $_SESSION['Usuario'] . "</p>";
+
+// Verificar que existe vendor/autoload.php
+echo "<h3>1. Verificando TCPDF:</h3>";
+if (file_exists('vendor/autoload.php')) {
+    echo "<p style='color: green;'>✓ vendor/autoload.php existe</p>";
+    require_once 'vendor/autoload.php';
+
+    try {
+        $pdf = new TCPDF();
+        echo "<p style='color: green;'>✓ TCPDF se puede instanciar correctamente</p>";
+    } catch (Exception $e) {
+        echo "<p style='color: red;'>✗ Error al instanciar TCPDF: " . $e->getMessage() . "</p>";
+    }
 } else {
-    echo "✗ Sesión no válida<br>";
-    die("Debes iniciar sesión como docente");
+    echo "<p style='color: red;'>✗ vendor/autoload.php NO existe</p>";
+    echo "<p>Ejecuta: composer install</p>";
 }
 
-echo "<hr>";
+// Verificar modelos
+echo "<h3>2. Verificando modelos:</h3>";
+if (file_exists('modelos/conexion.modelo.php')) {
+    echo "<p style='color: green;'>✓ conexion.modelo.php existe</p>";
+    require_once 'modelos/conexion.modelo.php';
+} else {
+    echo "<p style='color: red;'>✗ conexion.modelo.php NO existe</p>";
+}
 
-// 2. Verificar conexión y datos
-require_once 'modelos/conexion.modelo.php';
-require_once 'modelos/calificacion.modelo.php';
+if (file_exists('modelos/calificacion.modelo.php')) {
+    echo "<p style='color: green;'>✓ calificacion.modelo.php existe</p>";
+    require_once 'modelos/calificacion.modelo.php';
+} else {
+    echo "<p style='color: red;'>✗ calificacion.modelo.php NO existe</p>";
+}
 
-echo "<h3>2. Obtener Datos del Docente</h3>";
-
+// Obtener datos del docente
+echo "<h3>3. Obteniendo datos del docente:</h3>";
 try {
     $pdo = Conexion::Conectar();
-    $usuario = $_SESSION['Usuario'] ?? '';
-
-    echo "Buscando docente con CI: $usuario<br><br>";
 
     $stmt = $pdo->prepare("
         SELECT
@@ -47,123 +70,83 @@ try {
         AND Estado = 1
         LIMIT 1
     ");
-    $stmt->bindParam(":ci", $usuario, PDO::PARAM_STR);
+    $stmt->bindParam(":ci", $_SESSION['Usuario'], PDO::PARAM_STR);
     $stmt->execute();
     $docente = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($docente) {
-        echo "✓ Docente encontrado:<br>";
-        echo "<pre>";
-        print_r($docente);
-        echo "</pre>";
+        echo "<p style='color: green;'>✓ Docente encontrado:</p>";
+        echo "<ul>";
+        echo "<li>ID: " . $docente['DocenteID'] . "</li>";
+        echo "<li>Nombre: " . $docente['Nombre'] . ' ' . $docente['Apaterno'] . ' ' . $docente['Amaterno'] . "</li>";
+        echo "</ul>";
 
-        $docenteID = $docente['DocenteID'];
-        $docenteNombre = $docente['Nombre'] . ' ' . $docente['Apaterno'] . ' ' . $docente['Amaterno'];
+        // Obtener módulos
+        echo "<h3>4. Obteniendo módulos del docente:</h3>";
+        $modulos = CalificacionModelo::ObtenerAsignacionesDocenteModelo($docente['DocenteID']);
 
-        echo "<hr>";
-        echo "<h3>3. Obtener Asignaciones del Docente</h3>";
-
-        $modulos = CalificacionModelo::ObtenerAsignacionesDocenteModelo($docenteID);
-
-        echo "Número de módulos encontrados: " . count($modulos) . "<br><br>";
-
-        if (count($modulos) > 0) {
-            echo "✓ Módulos encontrados:<br>";
-            echo "<table border='1' cellpadding='5'>";
-            echo "<tr><th>Idmodulo</th><th>Nombre</th><th>Código</th><th>ProgramaID</th><th>Programa</th><th>Inscritos</th><th>Calificados</th></tr>";
-            foreach ($modulos as $mod) {
-                echo "<tr>";
-                echo "<td>" . $mod['Idmodulo'] . "</td>";
-                echo "<td>" . $mod['nombremodulo'] . "</td>";
-                echo "<td>" . $mod['codigomodulo'] . "</td>";
-                echo "<td>" . ($mod['ProgramaID'] ?? 'NULL') . "</td>";
-                echo "<td>" . ($mod['NombrePrograma'] ?? 'NULL') . "</td>";
-                echo "<td>" . ($mod['TotalEstudiantes'] ?? '0') . "</td>";
-                echo "<td>" . ($mod['TotalCalificados'] ?? '0') . "</td>";
-                echo "</tr>";
-            }
-            echo "</table>";
-
-            echo "<hr>";
-            echo "<h3>4. Verificar Estudiantes del Primer Módulo</h3>";
-
-            $primerModulo = $modulos[0];
-            $moduloID = $primerModulo['Idmodulo'];
-            $programaID = $primerModulo['ProgramaID'] ?? null;
-
-            if ($programaID) {
-                $estudiantes = CalificacionModelo::ObtenerEstudiantesPorModuloModelo($moduloID, $programaID);
-
-                echo "Estudiantes en módulo '" . $primerModulo['nombremodulo'] . "': " . count($estudiantes) . "<br><br>";
-
-                if (count($estudiantes) > 0) {
-                    echo "<table border='1' cellpadding='5'>";
-                    echo "<tr><th>Estudiante</th><th>CI</th><th>Nota</th></tr>";
-                    foreach (array_slice($estudiantes, 0, 5) as $est) {
-                        echo "<tr>";
-                        echo "<td>" . $est['Nombre'] . " " . $est['Apaterno'] . "</td>";
-                        echo "<td>" . $est['Ci'] . "</td>";
-                        echo "<td>" . ($est['Nota'] ?? 'Sin calificar') . "</td>";
-                        echo "</tr>";
-                    }
-                    echo "</table>";
-                    if (count($estudiantes) > 5) {
-                        echo "<p><em>... y " . (count($estudiantes) - 5) . " más</em></p>";
-                    }
-                } else {
-                    echo "⚠ No hay estudiantes en este módulo<br>";
-                }
-            } else {
-                echo "✗ ProgramaID es NULL para el primer módulo<br>";
-            }
-
-            echo "<hr>";
-            echo "<h3>5. Probar Generación de PDF</h3>";
-            echo "<p>Datos disponibles para generar PDF:</p>";
+        if (!empty($modulos)) {
+            echo "<p style='color: green;'>✓ Módulos encontrados: " . count($modulos) . "</p>";
             echo "<ul>";
-            echo "<li>Docente: $docenteNombre</li>";
-            echo "<li>Módulos: " . count($modulos) . "</li>";
-            echo "<li>Estudiantes en primer módulo: " . (isset($estudiantes) ? count($estudiantes) : 0) . "</li>";
+            foreach ($modulos as $modulo) {
+                echo "<li>" . $modulo['nombremodulo'] . " (" . $modulo['codigomodulo'] . ") - ";
+                echo "Programa: " . $modulo['NombrePrograma'] . "</li>";
+
+                // Obtener estudiantes del módulo
+                $estudiantes = CalificacionModelo::ObtenerEstudiantesPorModuloModelo($modulo['Idmodulo'], $modulo['ProgramaID']);
+                echo "<ul><li>Estudiantes: " . count($estudiantes) . "</li></ul>";
+            }
             echo "</ul>";
 
-            echo "<br>";
-            echo "<a href='tcpdf/pdf/reporte-completo-docente.php' target='_blank' class='btn btn-primary'>";
-            echo "Intentar Generar PDF Completo</a>";
-            echo "<br><br>";
-            echo "<a href='tcpdf/pdf/generar-calificaciones-pdf.php?moduloID=$moduloID&programaID=$programaID' target='_blank' class='btn btn-primary'>";
-            echo "Intentar Generar PDF del Primer Módulo (GET)</a>";
+            // Probar generación de PDF simple
+            echo "<h3>5. Probando generación de PDF simple:</h3>";
+            try {
+                $pdf = new TCPDF('P', 'mm', 'LETTER', true, 'UTF-8', false);
+                $pdf->SetCreator('Test');
+                $pdf->SetAuthor('Test');
+                $pdf->SetTitle('Test PDF');
+                $pdf->setPrintHeader(false);
+                $pdf->setPrintFooter(false);
+                $pdf->SetMargins(15, 15, 15);
+                $pdf->SetAutoPageBreak(true, 15);
+                $pdf->AddPage();
+                $pdf->SetFont('helvetica', 'B', 14);
+                $pdf->Cell(0, 10, 'PRUEBA DE PDF', 0, 1, 'C');
+
+                echo "<p style='color: green;'>✓ PDF de prueba creado correctamente</p>";
+
+            } catch (Exception $e) {
+                echo "<p style='color: red;'>✗ Error al crear PDF: " . $e->getMessage() . "</p>";
+            }
 
         } else {
-            echo "✗ No se encontraron módulos asignados<br>";
-            echo "<br><strong>PROBLEMA:</strong> El docente no tiene módulos asignados o hay un problema con la consulta SQL.";
+            echo "<p style='color: red;'>✗ No se encontraron módulos</p>";
         }
 
     } else {
-        echo "✗ No se encontró docente con CI: $usuario<br>";
+        echo "<p style='color: red;'>✗ No se encontró el docente con CI: " . $_SESSION['Usuario'] . "</p>";
     }
 
 } catch (Exception $e) {
-    echo "✗ Error: " . $e->getMessage() . "<br>";
-    echo "<pre>";
-    echo $e->getTraceAsString();
-    echo "</pre>";
+    echo "<p style='color: red;'>✗ Error: " . $e->getMessage() . "</p>";
+}
+
+echo "<h3>6. Verificando archivos PDF:</h3>";
+if (file_exists('tcpdf/pdf/generar-calificaciones-pdf.php')) {
+    echo "<p style='color: green;'>✓ generar-calificaciones-pdf.php existe</p>";
+} else {
+    echo "<p style='color: red;'>✗ generar-calificaciones-pdf.php NO existe</p>";
+}
+
+if (file_exists('tcpdf/pdf/reporte-completo-docente.php')) {
+    echo "<p style='color: green;'>✓ reporte-completo-docente.php existe</p>";
+    echo "<p><a href='tcpdf/pdf/reporte-completo-docente.php' target='_blank' style='padding: 10px 20px; background: #dc3545; color: white; text-decoration: none; border-radius: 5px; display: inline-block;'>PROBAR REPORTE COMPLETO</a></p>";
+} else {
+    echo "<p style='color: red;'>✗ reporte-completo-docente.php NO existe</p>";
 }
 
 echo "<hr>";
-echo "<p><a href='index.php?ruta=reportecalificaciones'>Volver a Reporte Calificaciones</a></p>";
+echo "<h3>CONCLUSIÓN:</h3>";
+echo "<p>Si aparece el botón rojo arriba, haz clic para probar el PDF directamente.</p>";
+echo "<p>Si no funciona, verifica los errores en el navegador (pestaña de red en F12).</p>";
 ?>
-
-<style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    table { border-collapse: collapse; margin: 10px 0; }
-    th { background: #667eea; color: white; }
-    .btn-primary {
-        background: #667eea;
-        color: white;
-        padding: 10px 20px;
-        text-decoration: none;
-        border-radius: 5px;
-        display: inline-block;
-        margin: 5px;
-    }
-</style>

@@ -147,7 +147,7 @@ $(document).ready(function() {
             html: '<p>Módulo: <strong>' + moduloNombre + '</strong></p>' +
                   '<label for="fechaPlanillaPDF" style="font-weight: bold; display: block; margin-top: 15px;">Fecha de la planilla:</label>' +
                   '<input type="date" id="fechaPlanillaPDF" class="swal2-input" style="width: 80%; margin-top: 5px;" required>',
-            icon: 'question',
+            type: 'question',
             showCancelButton: true,
             confirmButtonText: '<i class="fa fa-print"></i> Generar PDF',
             cancelButtonText: 'Cancelar',
