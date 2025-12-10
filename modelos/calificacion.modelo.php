@@ -199,6 +199,19 @@ class CalificacionModelo
                 // Log para debug
                 error_log("Guardando calificación: EstudianteID=$estudianteID, ProgramaID=$programaID, ModuloID=$moduloID, Nota=$nota");
 
+                // Verificar si ya existe la calificación para determinar si es INSERT o UPDATE
+                $stmtCheck = $pdo->prepare(
+                    "SELECT CalificacionID FROM calificacion
+                    WHERE EstudianteID = :estudianteID
+                    AND ProgramaId = :programaID
+                    AND Idmodulo = :moduloID"
+                );
+                $stmtCheck->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+                $stmtCheck->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+                $stmtCheck->bindParam(":moduloID", $moduloID, PDO::PARAM_INT);
+                $stmtCheck->execute();
+                $existeCalificacion = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
                 // Preparar statement individual para cada calificación
                 $stmt = $pdo->prepare(
                     "INSERT INTO calificacion
@@ -207,8 +220,8 @@ class CalificacionModelo
                     ON DUPLICATE KEY UPDATE
                     Nota = VALUES(Nota),
                     estado = VALUES(estado),
-                    FechaRegistro = VALUES(FechaRegistro),
-                    UsuarioRegistroID = VALUES(UsuarioRegistroID)"
+                    UsuarioModificacionID = :usuarioModificacionID,
+                    FechaModificacion = NOW()"
                 );
 
                 $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
@@ -223,6 +236,13 @@ class CalificacionModelo
                     $stmt->bindValue(":usuarioRegistroID", null, PDO::PARAM_NULL);
                 } else {
                     $stmt->bindParam(":usuarioRegistroID", $usuarioRegistroID, PDO::PARAM_INT);
+                }
+
+                // Bind para UsuarioModificacionID (solo se usa en UPDATE)
+                if ($usuarioRegistroID === null) {
+                    $stmt->bindValue(":usuarioModificacionID", null, PDO::PARAM_NULL);
+                } else {
+                    $stmt->bindParam(":usuarioModificacionID", $usuarioRegistroID, PDO::PARAM_INT);
                 }
 
                 try {

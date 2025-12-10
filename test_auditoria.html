@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Auditoría</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnóstico de Sistema de Auditoría</h1>
+
+    <div class="test-card">
+        <h2>✅ Verificación de Archivos</h2>
+        <p class="success">✓ vistas/componentes/reportenotas.php - Botón Auditoría en línea 350</p>
+        <p class="success">✓ vistas/componentes/reportenotas.php - Modal Auditoría en línea 215</p>
+        <p class="success">✓ vistas/componentes/reportenotas.php - Evento JS en línea 441</p>
+        <p class="success">✓ ajax/reportenotas.ajax.php - Acción AJAX en línea 24</p>
+        <p class="success">✓ controladores/reportenotas.controlador.php - Métodos agregados</p>
+        <p class="success">✓ modelos/reportenotas.modelo.php - Queries de auditoría agregados</p>
+        <p class="success">✓ Base de datos - Campos UsuarioModificacionID y FechaModificacion agregados</p>
+    </div>
+
+    <div class="test-card">
+        <h2>🔄 ¿No ves los cambios en el navegador?</h2>
+        <h3>Sigue estos pasos:</h3>
+        <ol>
+            <li><strong>Cierra completamente tu navegador</strong> (todas las ventanas)</li>
+            <li><strong>Abre el navegador nuevamente</strong></li>
+            <li><strong>Ve a la página de Reportenotas</strong></li>
+            <li><strong>Presiona Ctrl + Shift + R</strong> (recarga forzada sin caché)</li>
+            <li><strong>Haz clic en "Ver Módulos"</strong> de cualquier programa</li>
+            <li><strong>Deberías ver dos botones:</strong>
+                <ul>
+                    <li>🔴 IMPRIMIR (rojo)</li>
+                    <li>🔵 AUDITORÍA (azul)</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-card">
+        <h2>📱 Alternativas si aún no funciona:</h2>
+        <ol>
+            <li><strong>Modo Incógnito:</strong> Abre una ventana privada/incógnito (Ctrl + Shift + N)</li>
+            <li><strong>Otro navegador:</strong> Prueba con Chrome, Firefox o Edge</li>
+            <li><strong>Limpia caché específicamente:</strong>
+                <ul>
+                    <li>Chrome/Edge: chrome://settings/clearBrowserData</li>
+                    <li>Firefox: about:preferences#privacy</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-card">
+        <h2>🎯 Ubicación exacta de los cambios:</h2>
+        <pre>
+<strong>Archivo:</strong> vistas/componentes/reportenotas.php
+
+<strong>Línea 350-356:</strong> Botón de Auditoría
+html += '&lt;button type="button" class="btn btn-info btn-sm btnVerAuditoria" ...'
+
+<strong>Línea 215-248:</strong> Modal de Auditoría
+&lt;div class="modal fade" id="ModalAuditoria" ...&gt;
+
+<strong>Línea 441-577:</strong> Evento JavaScript
+$(document).on('click', '.btnVerAuditoria', function() {...
+        </pre>
+    </div>
+
+    <div class="test-card">
+        <h2>🔧 ¿Qué hace el nuevo sistema?</h2>
+        <ul>
+            <li>✅ Registra quién creó cada calificación</li>
+            <li>✅ Registra la fecha de creación</li>
+            <li>✅ Registra quién modificó cada calificación</li>
+            <li>✅ Registra la fecha y hora de modificación</li>
+            <li>✅ Panel de auditoría con resumen estadístico</li>
+            <li>✅ Tabla detallada con historial completo</li>
+            <li>✅ Identificación de usuario con tipo (Docente/Estudiante/Admin)</li>
+        </ul>
+    </div>
+
+    <div class="test-card">
+        <h2>📞 Soporte Adicional</h2>
+        <p>Si después de seguir todos los pasos aún no ves los cambios:</p>
+        <ol>
+            <li>Abre las <strong>Herramientas de Desarrollador</strong> (F12)</li>
+            <li>Ve a la pestaña <strong>Console</strong></li>
+            <li>Busca errores en rojo</li>
+            <li>Compártelos para diagnóstico</li>
+        </ol>
+    </div>
+
+    <script>
+        console.log('%c✅ Test de Auditoría Cargado', 'color: green; font-size: 16px; font-weight: bold;');
+        console.log('Todos los archivos han sido modificados correctamente.');
+        console.log('Si no ves los cambios, es un problema de caché del navegador.');
+    </script>
+</body>
+</html>

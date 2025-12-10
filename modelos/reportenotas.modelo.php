@@ -107,16 +107,41 @@ class ReporteNotasModelo
                     e.Amaterno,
                     c.Nota,
                     c.FechaRegistro,
+                    c.FechaModificacion,
+                    c.UsuarioRegistroID,
+                    c.UsuarioModificacionID,
                     CASE
                         WHEN c.Nota >= 51 THEN 'APROBADO'
                         WHEN c.Nota IS NULL THEN 'PENDIENTE'
                         ELSE 'REPROBADO'
-                    END as Estado
+                    END as Estado,
+                    -- Información del usuario que registró
+                    CASE
+                        WHEN ureg.DocenteID IS NOT NULL THEN CONCAT(dreg.Nombre, ' ', dreg.Apaterno)
+                        WHEN ureg.EstudianteID IS NOT NULL THEN CONCAT(ereg.Nombre, ' ', ereg.Apaterno)
+                        ELSE ureg.Usuario
+                    END as UsuarioRegistro,
+                    ureg.Tipo as TipoUsuarioRegistro,
+                    -- Información del usuario que modificó
+                    CASE
+                        WHEN umod.DocenteID IS NOT NULL THEN CONCAT(dmod.Nombre, ' ', dmod.Apaterno)
+                        WHEN umod.EstudianteID IS NOT NULL THEN CONCAT(emod.Nombre, ' ', emod.Apaterno)
+                        ELSE umod.Usuario
+                    END as UsuarioModificacion,
+                    umod.Tipo as TipoUsuarioModificacion
                 FROM estudianteprograma ep
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 LEFT JOIN calificacion c ON e.EstudianteID = c.EstudianteID
                     AND c.Idmodulo = :moduloID
                     AND c.ProgramaId = :programaID
+                -- Joins para usuario de registro
+                LEFT JOIN usuario ureg ON c.UsuarioRegistroID = ureg.ID
+                LEFT JOIN docente dreg ON ureg.DocenteID = dreg.DocenteID
+                LEFT JOIN estudiante ereg ON ureg.EstudianteID = ereg.EstudianteID
+                -- Joins para usuario de modificación
+                LEFT JOIN usuario umod ON c.UsuarioModificacionID = umod.ID
+                LEFT JOIN docente dmod ON umod.DocenteID = dmod.DocenteID
+                LEFT JOIN estudiante emod ON umod.EstudianteID = emod.EstudianteID
                 WHERE ep.ProgramaID = :programaID
                 AND ep.Estado = 'ACTIVO'
                 ORDER BY e.Apaterno, e.Amaterno, e.Nombre ASC
@@ -233,6 +258,99 @@ class ReporteNotasModelo
         }
 
         return (string)$nota;
+    }
+
+    /**
+     * Obtener auditoría completa de un módulo
+     * @param int $moduloID
+     * @param int $programaID
+     * @return array
+     */
+    public static function ObtenerAuditoriaModuloModelo($moduloID, $programaID)
+    {
+        try {
+            $conexion = Conexion::Conectar();
+
+            $stmt = $conexion->prepare("
+                SELECT
+                    e.EstudianteID,
+                    CONCAT(e.Nombre, ' ', e.Apaterno, ' ', e.Amaterno) as NombreEstudiante,
+                    c.Nota,
+                    c.FechaRegistro,
+                    c.FechaModificacion,
+                    -- Usuario que registró
+                    CASE
+                        WHEN ureg.DocenteID IS NOT NULL THEN CONCAT(dreg.Nombre, ' ', dreg.Apaterno, ' ', dreg.Amaterno)
+                        WHEN ureg.EstudianteID IS NOT NULL THEN CONCAT(ereg.Nombre, ' ', ereg.Apaterno, ' ', ereg.Amaterno)
+                        ELSE ureg.Usuario
+                    END as UsuarioRegistro,
+                    ureg.Tipo as TipoUsuarioRegistro,
+                    -- Usuario que modificó
+                    CASE
+                        WHEN umod.DocenteID IS NOT NULL THEN CONCAT(dmod.Nombre, ' ', dmod.Apaterno, ' ', dmod.Amaterno)
+                        WHEN umod.EstudianteID IS NOT NULL THEN CONCAT(emod.Nombre, ' ', emod.Apaterno, ' ', emod.Amaterno)
+                        ELSE umod.Usuario
+                    END as UsuarioModificacion,
+                    umod.Tipo as TipoUsuarioModificacion,
+                    -- Determinar si fue modificado
+                    CASE
+                        WHEN c.FechaModificacion IS NOT NULL THEN 'SÍ'
+                        ELSE 'NO'
+                    END as FueModificado
+                FROM calificacion c
+                INNER JOIN estudiante e ON c.EstudianteID = e.EstudianteID
+                LEFT JOIN usuario ureg ON c.UsuarioRegistroID = ureg.ID
+                LEFT JOIN docente dreg ON ureg.DocenteID = dreg.DocenteID
+                LEFT JOIN estudiante ereg ON ureg.EstudianteID = ereg.EstudianteID
+                LEFT JOIN usuario umod ON c.UsuarioModificacionID = umod.ID
+                LEFT JOIN docente dmod ON umod.DocenteID = dmod.DocenteID
+                LEFT JOIN estudiante emod ON umod.EstudianteID = emod.EstudianteID
+                WHERE c.Idmodulo = :moduloID
+                AND c.ProgramaId = :programaID
+                ORDER BY c.FechaModificacion DESC, c.FechaRegistro DESC
+            ");
+            $stmt->bindParam(":moduloID", $moduloID, PDO::PARAM_INT);
+            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerAuditoriaModuloModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener resumen de auditoría de un módulo
+     * @param int $moduloID
+     * @param int $programaID
+     * @return array
+     */
+    public static function ObtenerResumenAuditoriaModelo($moduloID, $programaID)
+    {
+        try {
+            $conexion = Conexion::Conectar();
+
+            $stmt = $conexion->prepare("
+                SELECT
+                    COUNT(*) as TotalCalificaciones,
+                    SUM(CASE WHEN FechaModificacion IS NOT NULL THEN 1 ELSE 0 END) as TotalModificadas,
+                    COUNT(DISTINCT UsuarioRegistroID) as TotalUsuariosRegistraron,
+                    COUNT(DISTINCT UsuarioModificacionID) as TotalUsuariosModificaron,
+                    MIN(FechaRegistro) as PrimeraFechaRegistro,
+                    MAX(FechaRegistro) as UltimaFechaRegistro,
+                    MAX(FechaModificacion) as UltimaModificacion
+                FROM calificacion
+                WHERE Idmodulo = :moduloID
+                AND ProgramaId = :programaID
+            ");
+            $stmt->bindParam(":moduloID", $moduloID, PDO::PARAM_INT);
+            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerResumenAuditoriaModelo: " . $e->getMessage());
+            return null;
+        }
     }
 }
 ?>

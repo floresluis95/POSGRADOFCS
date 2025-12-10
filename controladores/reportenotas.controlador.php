@@ -102,5 +102,60 @@ class ReporteNotasControlador
             ]);
         }
     }
+
+    /**
+     * Obtener auditoría completa de un módulo (AJAX)
+     */
+    public function ObtenerAuditoriaModuloControlador()
+    {
+        if (isset($_POST['moduloID']) && isset($_POST['programaID'])) {
+            $moduloID = intval($_POST['moduloID']);
+            $programaID = intval($_POST['programaID']);
+
+            $auditoria = ReporteNotasModelo::ObtenerAuditoriaModuloModelo($moduloID, $programaID);
+            $resumen = ReporteNotasModelo::ObtenerResumenAuditoriaModelo($moduloID, $programaID);
+
+            echo json_encode([
+                'status' => 'success',
+                'data' => $auditoria,
+                'resumen' => $resumen
+            ]);
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Parámetros incompletos'
+            ]);
+        }
+    }
+
+    /**
+     * Obtener resumen de auditoría (AJAX)
+     */
+    public function ObtenerResumenAuditoriaControlador()
+    {
+        if (isset($_POST['moduloID']) && isset($_POST['programaID'])) {
+            $moduloID = intval($_POST['moduloID']);
+            $programaID = intval($_POST['programaID']);
+
+            $resumen = ReporteNotasModelo::ObtenerResumenAuditoriaModelo($moduloID, $programaID);
+
+            if ($resumen) {
+                echo json_encode([
+                    'status' => 'success',
+                    'data' => $resumen
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'No se pudo obtener el resumen de auditoría'
+                ]);
+            }
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Parámetros incompletos'
+            ]);
+        }
+    }
 }
 ?>

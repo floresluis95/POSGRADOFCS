@@ -21,6 +21,16 @@ if (isset($_POST['action'])) {
             $controller->ObtenerEstudiantesConNotasControlador();
             break;
 
+        case 'obtenerAuditoria':
+            $controller = new ReporteNotasControlador();
+            $controller->ObtenerAuditoriaModuloControlador();
+            break;
+
+        case 'obtenerResumenAuditoria':
+            $controller = new ReporteNotasControlador();
+            $controller->ObtenerResumenAuditoriaControlador();
+            break;
+
         default:
             echo json_encode([
                 'status' => 'error',

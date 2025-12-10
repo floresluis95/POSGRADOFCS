@@ -91,7 +91,7 @@ try {
 }
 
 // Configurar información del documento
-$pdf->SetCreator('Universidad Técnica de Oruro');
+$pdf->SetCreator('UNIVERSIDAD TECNICA DE ORURO');
 $pdf->SetAuthor('Facultad de Ciencias de la Salud - Postgrado');
 $pdf->SetTitle('Lista de Asistencia - ' . $moduloNombre);
 $pdf->SetSubject('Lista de Asistencia');
@@ -119,11 +119,17 @@ $pdf->SetFont('helvetica', '', 9);
 // ========================================
 $pdf->SetFillColor(102, 126, 234); // Color #667eea
 $pdf->SetTextColor(255, 255, 255);
-$pdf->SetFont('helvetica', 'B', 16);
-$pdf->Cell(0, 8, 'LISTA DE ASISTENCIA', 0, 1, 'C', true);
+$pdf->SetFont('helvetica', 'B', 12);
+$pdf->Cell(0, 8, 'UNIVERSIDAD TECNICA DE ORURO', 0, 1, 'C', true);
+$pdf->Cell(0, 8, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C', true);
+$pdf->Cell(0, 6, 'COORDINACION DE POSGRADO - ODONTOLOGIA', 0, 1, 'C', true);
 
 $pdf->SetFont('helvetica', 'B', 10);
-$pdf->Cell(0, 6, 'Universidad Técnica de Oruro - Facultad de Ciencias de la Salud', 0, 1, 'C', true);
+$pdf->Cell(0, 6, 'Av. Del Minero Edificio San Agustin II (Ex Almacenes COMIBOL) Telefonos: 5237317 - Fax: 5247110', 0, 1, 'C', true);
+
+$pdf->SetFont('helvetica', 'B', 10);
+$pdf->Cell(0, 6, 'Oruro - Bolivia', 0, 1, 'C', true);
+
 
 $pdf->Ln(3);
 
@@ -131,6 +137,7 @@ $pdf->Ln(3);
 // INFORMACIÓN DEL MÓDULO
 // ========================================
 $pdf->SetTextColor(70, 78, 95);
+
 $pdf->SetFont('helvetica', 'B', 9);
 
 // Fila 1: Programa y Grado
