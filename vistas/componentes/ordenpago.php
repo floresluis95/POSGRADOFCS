@@ -156,15 +156,15 @@
                 </div>
 
                 <!-- Mensaje inicial -->
-               <div id="mensaje_inicial_v3" class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+               <div id="mensaje_inicial" class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
                     <div class="alert alert-secondary text-center p-4 w-100" role="alert" style="max-width: 450px; border: 1px solid #dee2e6; border-radius: 12px; background-color: #f8f9fa;">
-                        
+
                         <i class="fas fa-list-alt fa-3x mb-3" style="color: #adb5bd;"></i>
-                        
+
                         <h5 class="fw-bold" style="color: #495057;">
                             Listado de Estudiantes
                         </h5>
-                        
+
                         <p class="mb-0 text-muted">
                             Por favor, elija un nombre de la lista para cargar sus datos y revisar los pagos correspondientes a los módulos.
                         </p>
@@ -275,13 +275,15 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label><strong>VERSIÓN</strong> <span style="color: red;">*</span></label>
-                                            <input type="text" class="form-control" id="version" name="version" placeholder="Ingrese versión">
+                                            <input type="text" class="form-control" id="version" name="version" placeholder="Ej: V-1" readonly>
+                                            <small class="form-text text-muted">Se obtiene del programa</small>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label><strong>CUENTA AUXILIAR</strong> <span style="color: red;">*</span></label>
-                                            <input type="text" class="form-control" id="cuenta_auxiliar" name="cuentaAuxiliar" placeholder="Ingrese cuenta auxiliar">
+                                            <label><strong>N° DE TRÁMITE (CUENTA AUXILIAR)</strong> <span style="color: red;">*</span></label>
+                                            <input type="text" class="form-control" id="numero_tramite" name="numeroTramite" placeholder="Ej: 2024-001" readonly>
+                                            <small class="form-text text-muted">Se obtiene del programa - Este es el número de cuenta auxiliar</small>
                                         </div>
                                     </div>
                                 </div>

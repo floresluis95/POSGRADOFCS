@@ -160,7 +160,9 @@ private static function GenerarCodigo($sede, $grado, $fechaInicio)
                 Sede = :sede,
                 Costo = :costo,
                 CostoMatricula = :costomatricula,
-                Detalle = :detalle
+                Detalle = :detalle,
+                Version = :version,
+                NumeroTramite = :numerotramite
             WHERE ProgramaID = :id
         ");
 
@@ -174,6 +176,8 @@ private static function GenerarCodigo($sede, $grado, $fechaInicio)
         $stmt->bindParam(":costo", $datos["Costo"], PDO::PARAM_STR);
         $stmt->bindParam(":costomatricula", $datos["CostoMatricula"], PDO::PARAM_STR);
         $stmt->bindParam(":detalle", $datos["Detalle"], PDO::PARAM_STR);
+        $stmt->bindParam(":version", $datos["Version"], PDO::PARAM_STR);
+        $stmt->bindParam(":numerotramite", $datos["NumeroTramite"], PDO::PARAM_STR);
 
         if ($stmt->execute()) {
             return "exitoso";

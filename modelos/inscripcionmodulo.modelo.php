@@ -31,7 +31,9 @@ class InscripcionModuloModelos
                     e.Celular,
                     p.NombrePrograma,
                     p.GradoAcademico,
-                    p.Codigo as CodigoPrograma
+                    p.Codigo as CodigoPrograma,
+                    p.Version,
+                    p.NumeroTramite
                 FROM estudianteprograma ep
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
@@ -149,32 +151,35 @@ class InscripcionModuloModelos
 
     /**
      * Listar módulos inscritos de un estudiante con información del docente y calificación
-     * @param int $estudianteID
+     * @param int $estudianteID - ID del estudiante
+     * @param int|null $programaID - ID del programa (opcional, para filtrar por programa específico)
+     * @param int|null $idInscripcion - ID de la inscripción (opcional, para filtrar por inscripción específica)
      * @return array
      */
-    public static function ObtenerModulosInscritosEstudianteModelo($estudianteID)
+    public static function ObtenerModulosInscritosEstudianteModelo($estudianteID, $programaID = null, $idInscripcion = null)
     {
         try {
-            // Primero obtener el programa del estudiante
-            $stmtPrograma = Conexion::Conectar()->prepare(
-                "SELECT ProgramaID FROM estudianteprograma
-                 WHERE EstudianteID = :estudianteID
-                 AND Estado = 'ACTIVO'
-                 LIMIT 1"
-            );
-            $stmtPrograma->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
-            $stmtPrograma->execute();
-            $programa = $stmtPrograma->fetch(PDO::FETCH_ASSOC);
+            // Si no se proporciona programaID ni idInscripcion, obtener el programa del estudiante (comportamiento antiguo)
+            if ($programaID === null && $idInscripcion === null) {
+                $stmtPrograma = Conexion::Conectar()->prepare(
+                    "SELECT ProgramaID FROM estudianteprograma
+                     WHERE EstudianteID = :estudianteID
+                     AND Estado = 'ACTIVO'
+                     LIMIT 1"
+                );
+                $stmtPrograma->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+                $stmtPrograma->execute();
+                $programa = $stmtPrograma->fetch(PDO::FETCH_ASSOC);
 
-            if (!$programa) {
-                return [];
+                if (!$programa) {
+                    return [];
+                }
+
+                $programaID = $programa['ProgramaID'];
             }
 
-            $programaID = $programa['ProgramaID'];
-
-            // Consultar módulos pagados (de la tabla pagomodulo)
-            $stmt = Conexion::Conectar()->prepare(
-                "SELECT
+            // Construir la consulta SQL con filtros opcionales
+            $sql = "SELECT
                     pm.Idpagomodulo,
                     pm.fechapago as FechaInscripcion,
                     pm.costomodulo,
@@ -199,11 +204,23 @@ class InscripcionModuloModelos
                     AND c.Idmodulo = m.Idmodulo
                     AND c.ProgramaId = :programaID
                 WHERE ep.EstudianteID = :estudianteID
-                AND pm.Estado != 'ANULADO'
-                ORDER BY pm.fechapago DESC"
-            );
+                AND pm.Estado != 'ANULADO'";
+
+            // Agregar filtro por idInscripcion si se proporciona
+            if ($idInscripcion !== null) {
+                $sql .= " AND ep.idInscripcion = :idInscripcion";
+            }
+
+            $sql .= " ORDER BY pm.fechapago DESC";
+
+            $stmt = Conexion::Conectar()->prepare($sql);
             $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
             $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+
+            if ($idInscripcion !== null) {
+                $stmt->bindParam(":idInscripcion", $idInscripcion, PDO::PARAM_INT);
+            }
+
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -214,10 +231,10 @@ class InscripcionModuloModelos
 
     /**
      * Obtener datos completos del estudiante matriculado para PDF
-     * @param int $estudianteID
+     * @param int $idInscripcion - ID de la inscripción específica
      * @return array|null
      */
-    public static function ObtenerDatosCompletosEstudianteModelo($estudianteID)
+    public static function ObtenerDatosCompletosEstudianteModelo($idInscripcion)
     {
         try {
             $stmt = Conexion::Conectar()->prepare(
@@ -248,17 +265,17 @@ class InscripcionModuloModelos
                     p.Codigo as CodigoPrograma,
                     p.DuracionMeses,
                     p.Modulos,
-                    p.Costo
+                    p.Costo,
+                    p.Version,
+                    p.NumeroTramite
                 FROM estudianteprograma ep
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
                 LEFT JOIN profesion prof ON e.IdProfesion = prof.IdProfesion
-                WHERE ep.EstudianteID = :estudianteID
-                AND ep.Estado = 'ACTIVO'
-                ORDER BY ep.FechaInscripcion DESC, ep.idInscripcion DESC
-                LIMIT 1"
+                WHERE ep.idInscripcion = :idInscripcion
+                AND ep.Estado = 'ACTIVO'"
             );
-            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmt->bindParam(":idInscripcion", $idInscripcion, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {

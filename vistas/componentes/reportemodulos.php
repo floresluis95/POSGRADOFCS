@@ -68,36 +68,20 @@ date_default_timezone_set("America/La_Paz");
                                 </div>
                             </div>
 
-                            <!-- Tabla de Programas y Módulos -->
+                            <!-- Programas y Módulos Categorizados -->
                             <div class="kt-portlet mb-4">
                                 <div class="kt-portlet__head" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
                                     <div class="kt-portlet__head-label">
                                         <h3 style="color: white; margin: 0;">
-                                            <i class="fa fa-list-alt"></i> Programas y Módulos del Sistema
+                                            <i class="fa fa-th-large"></i> Programas y Módulos del Sistema
                                         </h3>
                                     </div>
                                 </div>
-                                <div class="kt-portlet__body">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-hover table-bordered">
-                                            <thead class="thead-dark">
-                                                <tr>
-                                                    <th style="width: 100px;">Código</th>
-                                                    <th>Nombre del Programa</th>
-                                                    <th class="text-center" style="width: 150px;">Grado</th>
-                                                    <th class="text-center" style="width: 150px;">Total Módulos</th>
-                                                    <th class="text-center" style="width: 150px;">Inscritos</th>
-                                                    <th class="text-center" style="width: 120px;">Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php
-                                                $tablaProgramas = new ReporteModulosControlador();
-                                                $tablaProgramas->MostrarTablaProgramasConModulosControlador();
-                                                ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                <div class="kt-portlet__body" style="padding: 0;">
+                                    <?php
+                                    $tablaProgramas = new ReporteModulosControlador();
+                                    $tablaProgramas->MostrarTablaProgramasConModulosControlador();
+                                    ?>
                                 </div>
                             </div>
 
@@ -106,7 +90,7 @@ date_default_timezone_set("America/La_Paz");
                                 <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                                     <div class="kt-portlet__head-label">
                                         <h3 style="color: white; margin: 0;">
-                                            <i class="fa fa-chart-bar"></i> Generador de Reportes de Inscritos
+                                            <i class="fa fa-chart-bar"></i> Generador de Reportes de Estudiantes Inscritos
                                         </h3>
                                     </div>
                                 </div>

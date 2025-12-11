@@ -103,6 +103,8 @@ class ProgramasControladores
             data-costo="'.$programa['Costo'].'"
             data-costomatricula="'.(isset($programa['CostoMatricula']) ? $programa['CostoMatricula'] : '').'"
             data-detalle="'.htmlspecialchars($programa['Detalle']).'"
+            data-version="'.(isset($programa['Version']) ? $programa['Version'] : 'V-1').'"
+            data-numerotramite="'.(isset($programa['NumeroTramite']) ? $programa['NumeroTramite'] : '').'"
             data-toggle="modal" data-target="#modalEditarPrograma">
             <i class="fa fa-edit"></i>
         </button>
@@ -243,7 +245,9 @@ class ProgramasControladores
                 "Sede" => htmlspecialchars(trim($_POST['SedeEditar'])),
                 "Costo" => (float)$_POST['CostoEditar'],
                 "CostoMatricula" => (float)$_POST['CostoMatriculaEditar'],
-                "Detalle" => htmlspecialchars(trim($_POST['DetalleEditar']))
+                "Detalle" => htmlspecialchars(trim($_POST['DetalleEditar'])),
+                "Version" => htmlspecialchars(trim($_POST['VersionEditar'] ?? 'V-1')),
+                "NumeroTramite" => htmlspecialchars(trim($_POST['NumeroTramiteEditar'] ?? ''))
             );
 
             $resultado = ProgramasModelos::ActualizarProgramaModelo($datosPrograma);

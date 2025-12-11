@@ -51,6 +51,10 @@ switch ($accion) {
         obtenerModulosPagados();
         break;
 
+    case 'registrarOrdenPago':
+        registrarOrdenPago();
+        break;
+
     default:
         echo json_encode([
             'success' => false,
@@ -224,17 +228,34 @@ function obtenerModulosPagados()
                 pm.costomodulo,
                 pm.fechapago,
                 pm.Estado,
+                pm.idinscripcion,
                 m.codigomodulo,
                 m.nombremodulo,
+                p.ProgramaID,
                 p.NombrePrograma,
-                p.GradoAcademico
+                p.GradoAcademico,
+                p.Codigo as CodigoPrograma,
+                p.Version,
+                p.NumeroTramite,
+                (SELECT op.IdOrdenPago
+                 FROM ordenpago op
+                 WHERE FIND_IN_SET(pm.Idpagomodulo, op.ListaPagosModulo) > 0
+                 LIMIT 1) as OrdenPagoID,
+                (SELECT op.NumeroOrden
+                 FROM ordenpago op
+                 WHERE FIND_IN_SET(pm.Idpagomodulo, op.ListaPagosModulo) > 0
+                 LIMIT 1) as NumeroOrden,
+                (SELECT op.FechaGeneracion
+                 FROM ordenpago op
+                 WHERE FIND_IN_SET(pm.Idpagomodulo, op.ListaPagosModulo) > 0
+                 LIMIT 1) as FechaOrdenGenerada
             FROM pagomodulo pm
             INNER JOIN estudianteprograma ep ON pm.idinscripcion = ep.idInscripcion
             INNER JOIN modulos m ON pm.IdModulo = m.Idmodulo
             INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
             WHERE ep.EstudianteID = :estudianteID
             AND pm.Estado != 'ANULADO'
-            ORDER BY pm.fechapago DESC, pm.Idpagomodulo DESC
+            ORDER BY p.NombrePrograma, pm.fechapago DESC, pm.Idpagomodulo DESC
         ");
         $stmt->bindParam(':estudianteID', $estudianteID, PDO::PARAM_INT);
         $stmt->execute();
@@ -249,6 +270,82 @@ function obtenerModulosPagados()
         echo json_encode([
             'success' => false,
             'mensaje' => 'Error al obtener los módulos pagados'
+        ]);
+    }
+}
+
+/**
+ * Registrar orden de pago generada
+ */
+function registrarOrdenPago()
+{
+    if (!isset($_POST['estudianteID']) || !isset($_POST['idinscripcion']) ||
+        !isset($_POST['programaID']) || !isset($_POST['listaPagosModulo']) ||
+        !isset($_POST['montoTotal'])) {
+        echo json_encode([
+            'success' => false,
+            'mensaje' => 'Faltan datos requeridos'
+        ]);
+        return;
+    }
+
+    try {
+        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        $conexion = Conexion::Conectar();
+
+        $estudianteID = (int)$_POST['estudianteID'];
+        $idinscripcion = (int)$_POST['idinscripcion'];
+        $programaID = (int)$_POST['programaID'];
+        $listaPagosModulo = $_POST['listaPagosModulo']; // Ya viene como string separado por comas
+        $montoTotal = (float)$_POST['montoTotal'];
+        $responsable = isset($_POST['responsable']) ? $_POST['responsable'] : '';
+        $nombreFactura = isset($_POST['nombreFactura']) ? $_POST['nombreFactura'] : '';
+        $nitCiFactura = isset($_POST['nitCiFactura']) ? $_POST['nitCiFactura'] : '';
+
+        // Generar número de orden único
+        $numeroOrden = 'ORD-' . str_pad($estudianteID, 4, '0', STR_PAD_LEFT) . '-' .
+                       str_pad($programaID, 3, '0', STR_PAD_LEFT) . '-' .
+                       date('YmdHis');
+
+        // Insertar registro de orden de pago
+        $stmt = $conexion->prepare("
+            INSERT INTO ordenpago
+            (EstudianteID, idinscripcion, ProgramaID, ListaPagosModulo, MontoTotal,
+             ResponsableGeneracion, NombreFactura, NitCiFactura, NumeroOrden, FechaGeneracion)
+            VALUES
+            (:estudianteID, :idinscripcion, :programaID, :listaPagosModulo, :montoTotal,
+             :responsable, :nombreFactura, :nitCiFactura, :numeroOrden, NOW())
+        ");
+
+        $stmt->bindParam(':estudianteID', $estudianteID, PDO::PARAM_INT);
+        $stmt->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
+        $stmt->bindParam(':programaID', $programaID, PDO::PARAM_INT);
+        $stmt->bindParam(':listaPagosModulo', $listaPagosModulo, PDO::PARAM_STR);
+        $stmt->bindParam(':montoTotal', $montoTotal);
+        $stmt->bindParam(':responsable', $responsable, PDO::PARAM_STR);
+        $stmt->bindParam(':nombreFactura', $nombreFactura, PDO::PARAM_STR);
+        $stmt->bindParam(':nitCiFactura', $nitCiFactura, PDO::PARAM_STR);
+        $stmt->bindParam(':numeroOrden', $numeroOrden, PDO::PARAM_STR);
+
+        if ($stmt->execute()) {
+            echo json_encode([
+                'success' => true,
+                'mensaje' => 'Orden de pago registrada exitosamente',
+                'numeroOrden' => $numeroOrden,
+                'idOrdenPago' => $conexion->lastInsertId()
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'mensaje' => 'Error al registrar la orden de pago'
+            ]);
+        }
+
+    } catch (Exception $e) {
+        error_log("Error en registrarOrdenPago: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'mensaje' => 'Error al registrar la orden de pago: ' . $e->getMessage()
         ]);
     }
 }

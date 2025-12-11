@@ -6,12 +6,14 @@
 
 require_once "../modelos/inscripcionmodulo.modelo.php";
 
-// Obtener módulos inscritos por estudiante
+// Obtener módulos inscritos por estudiante (filtrado por inscripción específica)
 if (isset($_POST["accion"]) && $_POST["accion"] === "obtenerModulosInscritos" && isset($_POST["estudianteID"])) {
     $estudianteID = (int)$_POST["estudianteID"];
+    $idInscripcion = isset($_POST["idInscripcion"]) ? (int)$_POST["idInscripcion"] : null;
+    $programaID = isset($_POST["programaID"]) ? (int)$_POST["programaID"] : null;
 
     try {
-        $modulos = InscripcionModuloModelos::ObtenerModulosInscritosEstudianteModelo($estudianteID);
+        $modulos = InscripcionModuloModelos::ObtenerModulosInscritosEstudianteModelo($estudianteID, $programaID, $idInscripcion);
 
         // Formatear los datos para la respuesta
         $resultado = array_map(function($modulo) {
@@ -104,14 +106,17 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
                             </a>
                             <a class="dropdown-item btn-ver-modulos" href="#"
                                data-estudiante-id="' . $estudiante['EstudianteID'] . '"
-                               data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '">
+                               data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
+                               data-idinscripcion="' . $estudiante['idInscripcion'] . '"
+                               data-programa-id="' . $estudiante['ProgramaID'] . '"
+                               data-programa-nombre="' . htmlspecialchars($estudiante['NombrePrograma']) . '">
                                 <i class="fa fa-list text-success"></i> Ver Módulos Inscritos
                             </a>
                             <div class="dropdown-divider"></div>
                             <a class="dropdown-item" href="vistas/componentes/recibo-pago-modulos.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
                                 <i class="fa fa-file-text text-success"></i> Ver Recibo de Pagos
                             </a>
-                            <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfestudiante.php?id=' . $estudiante['EstudianteID'] . '" target="_blank">
+                            <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfestudiante.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
                                 <i class="fa fa-print text-warning"></i> Imprimir Información
                             </a>
                         </div>

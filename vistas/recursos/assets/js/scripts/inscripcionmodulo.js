@@ -265,11 +265,15 @@ $(document).ready(function() {
 
         const estudianteID = $(this).data('estudiante-id');
         const estudianteNombre = $(this).data('estudiante-nombre');
+        const idInscripcion = $(this).data('idinscripcion');
+        const programaID = $(this).data('programa-id');
+        const programaNombre = $(this).data('programa-nombre');
 
         console.log('Cargando módulos inscritos para estudiante:', estudianteID);
+        console.log('Inscripción:', idInscripcion, 'Programa:', programaID);
 
-        // Actualizar título del modal
-        $('#modulosEstudianteNombre').text(estudianteNombre);
+        // Actualizar título del modal con nombre del estudiante y programa
+        $('#modulosEstudianteNombre').text(estudianteNombre + ' - ' + programaNombre);
 
         // Mostrar modal con loader
         $('#contenidoModulos').html(`
@@ -286,7 +290,9 @@ $(document).ready(function() {
             method: 'POST',
             data: {
                 accion: 'obtenerModulosInscritos',
-                estudianteID: estudianteID
+                estudianteID: estudianteID,
+                idInscripcion: idInscripcion,
+                programaID: programaID
             },
             dataType: 'json',
             success: function(response) {

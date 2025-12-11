@@ -232,45 +232,113 @@ class ReporteModulosControlador
     }
 
     /**
-     * Mostrar tabla de programas con conteo de módulos e inscritos
+     * Mostrar programas categorizados por grado académico en bloques
      */
     public static function MostrarTablaProgramasConModulosControlador()
     {
         $programas = ReporteModulosModelo::ObtenerConteoModulosPorProgramaModelo();
 
         if (empty($programas)) {
-            echo '<tr><td colspan="6" class="text-center">No hay programas registrados</td></tr>';
+            echo '<div class="alert alert-warning text-center">No hay programas registrados</div>';
             return;
         }
 
+        // Agrupar por grado académico
+        $porGrado = [];
         foreach ($programas as $programa) {
-            echo '<tr>
-                <td><strong>' . htmlspecialchars($programa['Codigo']) . '</strong></td>
-                <td>' . htmlspecialchars($programa['NombrePrograma']) . '</td>
-                <td class="text-center">
-                    <span class="badge badge-secondary" style="font-size: 12px; padding: 6px 10px;">
-                        ' . htmlspecialchars($programa['GradoAcademico']) . '
-                    </span>
-                </td>
-                <td class="text-center">
-                    <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 13px; padding: 8px 12px; border-radius: 20px;">
-                        <i class="flaticon2-file-1"></i> ' . $programa['TotalModulos'] . ' módulos
-                    </span>
-                </td>
-                <td class="text-center">
-                    <span class="badge" style="background: linear-gradient(135deg, #fd397a 0%, #e91e63 100%); color: white; font-size: 13px; padding: 8px 12px; border-radius: 20px;">
-                        <i class="flaticon2-group"></i> ' . $programa['TotalInscritos'] . ' inscritos
-                    </span>
-                </td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-info ver-modulos-programa"
-                            data-programa-id="' . $programa['ProgramaID'] . '"
-                            data-programa-nombre="' . htmlspecialchars($programa['NombrePrograma']) . '"
-                            style="border-radius: 20px; padding: 6px 15px;">
-                        <i class="flaticon2-eye"></i> Ver Módulos
-                    </button>
-                </td>
-            </tr>';
+            $grado = $programa['GradoAcademico'];
+            if (!isset($porGrado[$grado])) {
+                $porGrado[$grado] = [];
+            }
+            $porGrado[$grado][] = $programa;
+        }
+
+        // Colores por grado
+        $coloresGrado = [
+            'MAESTRIA' => [
+                'bg' => 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'border' => '#667eea',
+                'icon' => 'fas fa-user-graduate'
+            ],
+            'DIPLOMADO' => [
+                'bg' => 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'border' => '#4facfe',
+                'icon' => 'fas fa-certificate'
+            ],
+            'ESPECIALIDAD' => [
+                'bg' => 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'border' => '#f093fb',
+                'icon' => 'fas fa-graduation-cap'
+            ],
+            'CURSO' => [
+                'bg' => 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'border' => '#43e97b',
+                'icon' => 'fas fa-book-reader'
+            ]
+        ];
+
+        // Mostrar cada categoría
+        foreach ($porGrado as $grado => $programasGrado) {
+            $color = isset($coloresGrado[$grado]) ? $coloresGrado[$grado] : $coloresGrado['MAESTRIA'];
+
+            echo '
+            <div class="categoria-grado mb-4">
+                <div class="categoria-header" style="background: ' . $color['bg'] . '; padding: 12px 20px; border-radius: 10px 10px 0 0; margin-bottom: 0;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 style="color: white; margin: 0; font-weight: 700; font-size: 16px;">
+                            <i class="' . $color['icon'] . '"></i> ' . htmlspecialchars($grado) . '
+                        </h4>
+                        <span class="badge badge-light" style="font-size: 13px; padding: 6px 12px;">
+                            ' . count($programasGrado) . ' programa(s)
+                        </span>
+                    </div>
+                </div>
+                <div class="programas-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; padding: 20px; background: #f8f9fa; border-radius: 0 0 10px 10px;">';
+
+            foreach ($programasGrado as $programa) {
+                echo '
+                    <div class="programa-card" style="background: white; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid ' . $color['border'] . '; transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.transform=\'translateY(-3px)\'; this.style.boxShadow=\'0 5px 15px rgba(102,126,234,0.2)\';" onmouseout="this.style.transform=\'translateY(0)\'; this.style.boxShadow=\'0 2px 8px rgba(0,0,0,0.08)\';">
+                        <div class="programa-codigo mb-2">
+                            <span style="background: ' . $color['bg'] . '; color: white; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 700;">
+                                ' . htmlspecialchars($programa['Codigo']) . '
+                            </span>
+                        </div>
+
+                        <h5 class="programa-nombre mb-3" style="color: #464E5F; font-weight: 600; font-size: 14px; line-height: 1.4; min-height: 40px;">
+                            ' . htmlspecialchars($programa['NombrePrograma']) . '
+                        </h5>
+
+                        <div class="programa-stats mb-3" style="display: flex; gap: 10px; justify-content: space-between;">
+                            <div class="stat-item" style="flex: 1; text-align: center; background: #f1f3f4; padding: 8px; border-radius: 8px;">
+                                <div style="color: #667eea; font-size: 18px; font-weight: 700;">
+                                    ' . $programa['TotalModulos'] . '
+                                </div>
+                                <div style="color: #B5B5C3; font-size: 10px; text-transform: uppercase; font-weight: 600;">
+                                    Módulos
+                                </div>
+                            </div>
+                            <div class="stat-item" style="flex: 1; text-align: center; background: #f1f3f4; padding: 8px; border-radius: 8px;">
+                                <div style="color: #fd397a; font-size: 18px; font-weight: 700;">
+                                    ' . $programa['TotalInscritos'] . '
+                                </div>
+                                <div style="color: #B5B5C3; font-size: 10px; text-transform: uppercase; font-weight: 600;">
+                                    Inscritos
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-sm btn-block ver-modulos-programa"
+                                data-programa-id="' . $programa['ProgramaID'] . '"
+                                data-programa-nombre="' . htmlspecialchars($programa['NombrePrograma']) . '"
+                                style="background: ' . $color['bg'] . '; color: white; border: none; border-radius: 8px; padding: 8px; font-size: 12px; font-weight: 600; transition: all 0.3s ease;">
+                            <i class="flaticon2-eye"></i> Ver Módulos Detallados
+                        </button>
+                    </div>';
+            }
+
+            echo '
+                </div>
+            </div>';
         }
     }
 

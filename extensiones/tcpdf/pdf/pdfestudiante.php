@@ -14,15 +14,15 @@ $baseDir = realpath(__DIR__ . '/../../../');
 require_once $baseDir . '/vendor/autoload.php';
 require_once $baseDir . '/modelos/inscripcionmodulo.modelo.php';
 
-// Validar ID del estudiante
-if (!isset($_GET['id']) || empty($_GET['id'])) {
-    die('Error: ID de estudiante no especificado');
+// Validar ID de inscripción
+if (!isset($_GET['idinscripcion']) || empty($_GET['idinscripcion'])) {
+    die('Error: ID de inscripción no especificado');
 }
 
-$estudianteID = intval($_GET['id']);
+$idInscripcion = intval($_GET['idinscripcion']);
 
-// Obtener datos del estudiante
-$estudiante = InscripcionModuloModelos::ObtenerDatosCompletosEstudianteModelo($estudianteID);
+// Obtener datos del estudiante por inscripción específica
+$estudiante = InscripcionModuloModelos::ObtenerDatosCompletosEstudianteModelo($idInscripcion);
 
 if (!$estudiante) {
     die('Error: No se encontró información del estudiante');
@@ -318,5 +318,5 @@ $pdf->Cell(0, 4, 'Fecha de emisión: ' . date('d/m/Y H:i'), 0, 1, 'C');
 $pdf->Cell(0, 4, 'Este documento es un registro oficial del Sistema de Gestión de Posgrado FCS', 0, 1, 'C');
 
 // Generar PDF
-$pdf->Output('Ficha_Inscripcion_' . $estudianteID . '_' . date('Ymd') . '.pdf', 'I');
+$pdf->Output('Ficha_Inscripcion_' . $idInscripcion . '_' . date('Ymd') . '.pdf', 'I');
 ?>

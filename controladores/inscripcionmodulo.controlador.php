@@ -69,14 +69,17 @@ class InscripcionModuloControladores
                                 </a>
                                 <a class="dropdown-item btn-ver-modulos" href="#"
                                    data-estudiante-id="' . $estudiante['EstudianteID'] . '"
-                                   data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '">
+                                   data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
+                                   data-idinscripcion="' . $estudiante['idInscripcion'] . '"
+                                   data-programa-id="' . $estudiante['ProgramaID'] . '"
+                                   data-programa-nombre="' . htmlspecialchars($estudiante['NombrePrograma']) . '">
                                     <i class="fa fa-list text-success"></i> Ver Módulos Inscritos
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="vistas/componentes/recibo-pago-modulos.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
                                     <i class="fa fa-file-text text-success"></i> Ver Recibo de Pagos
                                 </a>
-                                <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfestudiante.php?id=' . $estudiante['EstudianteID'] . '" target="_blank">
+                                <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfestudiante.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
                                     <i class="fa fa-print text-warning"></i> Imprimir Información
                                 </a>
                             </div>

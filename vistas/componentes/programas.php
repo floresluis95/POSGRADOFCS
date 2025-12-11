@@ -676,6 +676,31 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
               <input type="number" class="form-control" id="ModulosEditar" name="ModulosEditar" required>
             </div>
           </div>
+
+          <div class="col-md-4">
+            <div class="modal-body">
+              <label>VERSIÓN</label>
+              <select class="form-control" id="VersionEditar" name="VersionEditar">
+                <option value="V-1">V-1</option>
+                <option value="V-2">V-2</option>
+                <option value="V-3">V-3</option>
+                <option value="V-4">V-4</option>
+                <option value="V-5">V-5</option>
+                <option value="V-6">V-6</option>
+                <option value="V-7">V-7</option>
+                <option value="V-8">V-8</option>
+                <option value="V-9">V-9</option>
+                <option value="V-10">V-10</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="modal-body">
+              <label>NÚMERO DE TRÁMITE</label>
+              <input type="text" class="form-control" id="NumeroTramiteEditar" name="NumeroTramiteEditar" placeholder="Ej: 2024-001">
+            </div>
+          </div>
         </div>
 
         <div class="row">
@@ -805,6 +830,8 @@ $(document).on('click', '.btnEditarPrograma', function() {
     var costo = $(this).data('costo');
     var costomatricula = $(this).data('costomatricula');
     var detalle = $(this).data('detalle');
+    var version = $(this).data('version');
+    var numerotramite = $(this).data('numerotramite');
 
     // Formatear costos a 2 decimales
     var costoFormateado = parseFloat(costo).toFixed(2);
@@ -820,6 +847,8 @@ $(document).on('click', '.btnEditarPrograma', function() {
     $('#CostoEditar').val(costoFormateado);
     $('#CostoMatriculaEditar').val(costoMatriculaFormateado);
     $('#DetalleEditar').val(detalle);
+    $('#VersionEditar').val(version || 'V-1');
+    $('#NumeroTramiteEditar').val(numerotramite || '');
 });
 
 // JavaScript para modal de subir programa

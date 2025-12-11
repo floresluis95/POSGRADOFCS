@@ -49,7 +49,9 @@ $(document).ready(function() {
         const moduloNombre = $(this).data('modulo-nombre');
         const programaNombre = $(this).data('programa-nombre');
         const monto = $(this).data('monto');
-        abrirModalAdicionarDatos(pagoID, moduloNombre, programaNombre, monto);
+        const version = $(this).data('version');
+        const numeroTramite = $(this).data('numero-tramite');
+        abrirModalAdicionarDatos(pagoID, moduloNombre, programaNombre, monto, version, numeroTramite);
     });
 
     $(document).on('click', '.btn-imprimir-orden', function() {
@@ -238,115 +240,297 @@ function cargarDetallePagos(estudianteID) {
 }
 
 /**
- * Mostrar tabla de detalle de pagos
+ * Mostrar tabla de detalle de pagos agrupada por programa
  */
 function mostrarTablaPagos(modulos) {
-    let totalPagado = 0;
-
-    let html = `
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered" style="margin-bottom: 0;">
-                <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                    <tr>
-                        <th style="width: 50px; text-align: center;">#</th>
-                        <th>PROGRAMA</th>
-                        <th style="width: 120px;">CÓDIGO</th>
-                        <th>NOMBRE DEL MÓDULO</th>
-                        <th style="width: 130px; text-align: right;">COSTO (Bs.)</th>
-                        <th style="width: 130px; text-align: center;">FECHA PAGO</th>
-                        <th style="width: 120px; text-align: center;">ESTADO</th>
-                        <th style="width: 150px; text-align: center;">ADICIONAR DATOS</th>
-                        <th style="width: 150px; text-align: center;">ORDEN DE PAGO</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-
-    modulos.forEach(function(modulo, index) {
-        const estadoBadge = modulo.Estado === 'PAGADO'
-            ? '<span class="badge-pagado"><i class="fa fa-check-circle"></i> PAGADO</span>'
-            : '<span class="badge-pendiente"><i class="fa fa-clock"></i> PENDIENTE</span>';
-
-        const fechaPago = modulo.fechapago ? formatearFecha(modulo.fechapago) : '-';
-        const costo = parseFloat(modulo.costomodulo || 0);
-
-        if (modulo.Estado === 'PAGADO') {
-            totalPagado += costo;
+    // Agrupar módulos por programa
+    const programas = {};
+    modulos.forEach(modulo => {
+        const key = modulo.ProgramaID;
+        if (!programas[key]) {
+            programas[key] = {
+                programaID: modulo.ProgramaID,
+                nombrePrograma: modulo.NombrePrograma,
+                gradoAcademico: modulo.GradoAcademico,
+                codigoPrograma: modulo.CodigoPrograma,
+                version: modulo.Version,
+                numeroTramite: modulo.NumeroTramite,
+                idinscripcion: modulo.idinscripcion,
+                modulos: []
+            };
         }
+        programas[key].modulos.push(modulo);
+    });
+
+    let html = '';
+
+    // Generar HTML para cada programa
+    Object.values(programas).forEach(programa => {
+        let totalPrograma = 0;
+        let modulosConOrden = 0;
+        let modulosSinOrden = 0;
 
         html += `
-            <tr style="transition: background 0.3s;">
-                <td class="text-center" style="font-weight: 700; color: #667eea;">${index + 1}</td>
-                <td style="color: #464E5F;">
-                    <strong>${modulo.GradoAcademico || ''}</strong><br>
-                    <small style="color: #B5B5C3;">${modulo.NombrePrograma || '-'}</small>
-                </td>
-                <td>
-                    <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px; border-radius: 15px; font-size: 11px; font-weight: 700;">
-                        ${modulo.codigomodulo || '-'}
-                    </span>
-                </td>
-                <td style="color: #464E5F; font-weight: 500;">${modulo.nombremodulo || '-'}</td>
-                <td class="text-right" style="font-size: 16px; font-weight: 700; color: #11998e;">Bs. ${costo.toFixed(2)}</td>
-                <td class="text-center" style="color: #B5B5C3;">${fechaPago}</td>
-                <td class="text-center">${estadoBadge}</td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-info btn-adicionar-datos"
-                            data-pago-id="${modulo.Idpagomodulo}"
-                            data-modulo-nombre="${modulo.nombremodulo}"
-                            data-programa-nombre="${modulo.GradoAcademico} - ${modulo.NombrePrograma}"
-                            data-monto="${costo}"
-                            style="border-radius: 20px; padding: 6px 15px;">
-                        <i class="fa fa-edit"></i> Adicionar
-                    </button>
-                </td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-primary btn-imprimir-orden"
-                            data-pago-id="${modulo.Idpagomodulo}"
-                            data-modulo-nombre="${modulo.nombremodulo}"
-                            style="border-radius: 20px; padding: 6px 15px;">
-                        <i class="fa fa-print"></i> Imprimir
-                    </button>
-                </td>
-            </tr>
+            <div class="programa-card" style="margin-bottom: 2rem; border-left: 4px solid #667eea; background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h4 style="color: #464E5F; margin: 0; font-weight: 700;">
+                            <span class="badge-programa" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px; border-radius: 15px; font-size: 11px;">
+                                ${programa.codigoPrograma}
+                            </span>
+                            ${programa.gradoAcademico}
+                        </h4>
+                        <p style="color: #B5B5C3; margin: 0.5rem 0 0 0;">${programa.nombrePrograma}</p>
+                        <small style="color: #999;">
+                            <i class="fa fa-info-circle"></i> Versión: ${programa.version || 'N/A'} |
+                            N° Trámite: ${programa.numeroTramite || 'N/A'}
+                        </small>
+                    </div>
+                    <div class="text-right">
+                        <button class="btn btn-success btn-generar-orden-multiple"
+                                data-programa-id="${programa.programaID}"
+                                data-idinscripcion="${programa.idinscripcion}"
+                                data-programa-nombre="${programa.gradoAcademico} - ${programa.nombrePrograma}"
+                                data-version="${programa.version || ''}"
+                                data-numero-tramite="${programa.numeroTramite || ''}"
+                                style="border-radius: 20px; padding: 8px 20px;">
+                            <i class="fa fa-file-invoice"></i> Generar Orden de Pago
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered" style="margin-bottom: 0;">
+                        <thead style="background: #f8f9fa; color: #464E5F;">
+                            <tr>
+                                <th style="width: 40px; text-align: center;">
+                                    <input type="checkbox" class="check-all-programa" data-programa-id="${programa.programaID}">
+                                </th>
+                                <th style="width: 50px;">#</th>
+                                <th style="width: 100px;">CÓDIGO</th>
+                                <th>MÓDULO</th>
+                                <th style="width: 120px; text-align: right;">COSTO</th>
+                                <th style="width: 110px; text-align: center;">FECHA PAGO</th>
+                                <th style="width: 100px; text-align: center;">ESTADO</th>
+                                <th style="width: 180px; text-align: center;">ORDEN GENERADA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        programa.modulos.forEach((modulo, index) => {
+            const costo = parseFloat(modulo.costomodulo || 0);
+            totalPrograma += costo;
+
+            const tieneOrden = modulo.OrdenPagoID != null;
+            if (tieneOrden) {
+                modulosConOrden++;
+            } else {
+                modulosSinOrden++;
+            }
+
+            const estadoBadge = modulo.Estado === 'PAGADO'
+                ? '<span class="badge-pagado"><i class="fa fa-check-circle"></i> PAGADO</span>'
+                : '<span class="badge-pendiente"><i class="fa fa-clock"></i> PENDIENTE</span>';
+
+            const fechaPago = modulo.fechapago ? formatearFecha(modulo.fechapago) : '-';
+
+            const ordenInfo = tieneOrden
+                ? `<span class="badge badge-success" style="font-size: 10px;">
+                       <i class="fa fa-check"></i> ${modulo.NumeroOrden}
+                   </span><br>
+                   <small style="font-size: 9px; color: #666;">
+                       ${formatearFecha(modulo.FechaOrdenGenerada)}
+                   </small>`
+                : '<span class="badge badge-warning" style="font-size: 10px;"><i class="fa fa-exclamation-triangle"></i> Sin orden</span>';
+
+            const checkboxDisabled = tieneOrden ? 'disabled' : '';
+            const rowStyle = tieneOrden ? 'background: #f0f9ff;' : '';
+
+            html += `
+                <tr style="${rowStyle}">
+                    <td class="text-center">
+                        <input type="checkbox"
+                               class="check-modulo"
+                               data-programa-id="${programa.programaID}"
+                               data-pago-id="${modulo.Idpagomodulo}"
+                               data-modulo-nombre="${modulo.nombremodulo}"
+                               data-costo="${costo}"
+                               ${checkboxDisabled}>
+                    </td>
+                    <td class="text-center">${index + 1}</td>
+                    <td><span style="background: #667eea; color: white; padding: 4px 8px; border-radius: 10px; font-size: 10px;">${modulo.codigomodulo}</span></td>
+                    <td style="font-weight: 500;">${modulo.nombremodulo}</td>
+                    <td class="text-right" style="font-weight: 700; color: #11998e;">Bs. ${costo.toFixed(2)}</td>
+                    <td class="text-center">${fechaPago}</td>
+                    <td class="text-center">${estadoBadge}</td>
+                    <td class="text-center">${ordenInfo}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                        </tbody>
+                        <tfoot style="background: #f8f9fa;">
+                            <tr>
+                                <td colspan="4" class="text-right" style="padding: 0.75rem; font-weight: 700;">TOTAL:</td>
+                                <td class="text-right" style="padding: 0.75rem; font-weight: 700; color: #11998e; font-size: 18px;">
+                                    Bs. ${totalPrograma.toFixed(2)}
+                                </td>
+                                <td colspan="3"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="mt-2" style="background: #f8f9fa; padding: 0.75rem; border-radius: 5px;">
+                    <small>
+                        <i class="fa fa-info-circle text-info"></i>
+                        <strong>${modulosConOrden}</strong> módulo(s) con orden generada |
+                        <strong>${modulosSinOrden}</strong> módulo(s) sin orden
+                    </small>
+                </div>
+            </div>
         `;
     });
 
-    html += `
-                </tbody>
-                <tfoot style="background: #f8f9fa;">
-                    <tr>
-                        <td colspan="4" class="text-right" style="padding: 1rem; font-weight: 700; font-size: 16px; color: #464E5F;">
-                            TOTAL PAGADO:
-                        </td>
-                        <td class="text-right" style="padding: 1rem; font-weight: 700; font-size: 20px; color: #11998e;">
-                            Bs. ${totalPagado.toFixed(2)}
-                        </td>
-                        <td colspan="4"></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-
-        <div class="mt-3" style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
-            <div class="row">
-                <div class="col-md-4">
-                    <strong style="color: #B5B5C3;">Total de Registros:</strong>
-                    <h5 style="color: #464E5F; margin: 0.5rem 0;">${modulos.length}</h5>
-                </div>
-                <div class="col-md-4">
-                    <strong style="color: #B5B5C3;">Módulos Pagados:</strong>
-                    <h5 style="color: #28a745; margin: 0.5rem 0;">${modulos.filter(m => m.Estado === 'PAGADO').length}</h5>
-                </div>
-                <div class="col-md-4">
-                    <strong style="color: #B5B5C3;">Módulos Pendientes:</strong>
-                    <h5 style="color: #ffc107; margin: 0.5rem 0;">${modulos.filter(m => m.Estado !== 'PAGADO').length}</h5>
-                </div>
-            </div>
-        </div>
-    `;
-
     $('#contenido_tabla_pagos').html(html);
+
+    // Agregar event listeners para checkboxes
+    agregarEventListenersCheckboxes();
+}
+
+/**
+ * Agregar event listeners para checkboxes
+ */
+function agregarEventListenersCheckboxes() {
+    // Checkbox "Seleccionar Todos" por programa
+    $(document).on('change', '.check-all-programa', function() {
+        const programaID = $(this).data('programa-id');
+        const isChecked = $(this).prop('checked');
+
+        $(`.check-modulo[data-programa-id="${programaID}"]:not(:disabled)`).prop('checked', isChecked);
+    });
+
+    // Verificar si todos están seleccionados cuando se marca uno individual
+    $(document).on('change', '.check-modulo', function() {
+        const programaID = $(this).data('programa-id');
+        const totalCheckboxes = $(`.check-modulo[data-programa-id="${programaID}"]:not(:disabled)`).length;
+        const checkedCheckboxes = $(`.check-modulo[data-programa-id="${programaID}"]:checked`).length;
+
+        $(`.check-all-programa[data-programa-id="${programaID}"]`).prop('checked', totalCheckboxes === checkedCheckboxes);
+    });
+
+    // Botón generar orden múltiple
+    $(document).on('click', '.btn-generar-orden-multiple', function() {
+        const programaID = $(this).data('programa-id');
+        const idinscripcion = $(this).data('idinscripcion');
+        const programaNombre = $(this).data('programa-nombre');
+        const version = $(this).data('version');
+        const numeroTramite = $(this).data('numero-tramite');
+
+        // Obtener módulos seleccionados
+        const modulosSeleccionados = [];
+        let montoTotal = 0;
+
+        $(`.check-modulo[data-programa-id="${programaID}"]:checked`).each(function() {
+            const pagoID = $(this).data('pago-id');
+            const moduloNombre = $(this).data('modulo-nombre');
+            const costo = parseFloat($(this).data('costo'));
+
+            modulosSeleccionados.push({
+                Idpagomodulo: pagoID,
+                nombremodulo: moduloNombre,
+                costo: costo
+            });
+
+            montoTotal += costo;
+        });
+
+        if (modulosSeleccionados.length === 0) {
+            swal({
+                title: 'Sin selección',
+                text: 'Debe seleccionar al menos un módulo para generar la orden de pago',
+                icon: 'warning',
+                button: 'Aceptar'
+            });
+            return;
+        }
+
+        // Abrir modal con datos de múltiples módulos
+        abrirModalOrdenMultiple(programaID, idinscripcion, programaNombre, version, numeroTramite, modulosSeleccionados, montoTotal);
+    });
+}
+
+/**
+ * Abrir modal para orden de pago con múltiples módulos
+ */
+function abrirModalOrdenMultiple(programaID, idinscripcion, programaNombre, version, numeroTramite, modulos, montoTotal) {
+    console.log('Generar orden para', modulos.length, 'módulos');
+
+    // Limpiar formulario
+    $('#form_adicionar_datos')[0].reset();
+
+    // Establecer datos en el modal
+    $('#modal_programa_nombre').text(programaNombre);
+    $('#version').val(version || 'V-1');
+    $('#numero_tramite').val(numeroTramite || '');
+
+    // Crear lista de módulos
+    let listaModulos = '<ul style="margin: 0; padding-left: 20px;">';
+    modulos.forEach(modulo => {
+        listaModulos += `<li>${modulo.nombremodulo} - Bs. ${modulo.costo.toFixed(2)}</li>`;
+    });
+    listaModulos += '</ul>';
+    $('#modal_modulo_nombre').html(listaModulos);
+
+    // Monto total
+    $('#modal_monto_numeral').text('Bs. ' + montoTotal.toFixed(2));
+    $('#modal_monto_literal').text(numeroALetras(montoTotal));
+
+    // Obtener datos del estudiante
+    const estudianteID = $('#select_estudiante').val();
+
+    if (estudianteID) {
+        $.ajax({
+            url: 'ajax/ordenpago.ajax.php',
+            method: 'POST',
+            dataType: 'json',
+            data: {
+                accion: 'obtenerDatosEstudiante',
+                estudianteID: estudianteID
+            },
+            success: function(response) {
+                if (response.success && response.estudiante) {
+                    const est = response.estudiante;
+
+                    $('#modal_estudiante_apaterno').text(est.Apaterno || '-');
+                    $('#modal_estudiante_amaterno').text(est.Amaterno || '-');
+                    $('#modal_estudiante_nombres').text(est.Nombre || '-');
+                    $('#modal_estudiante_correo').text(est.Correo || '-');
+
+                    let ciCompleto = est.Ci;
+                    if (est.Complemento) ciCompleto += '-' + est.Complemento;
+                    if (est.Exp) ciCompleto += ' ' + est.Exp;
+                    $('#modal_estudiante_ci').text(ciCompleto);
+
+                    $('#modal_estudiante_celular').text(est.Celular || '-');
+                }
+            }
+        });
+    }
+
+    // Guardar datos para el PDF
+    $('#modal_pago_id').val(JSON.stringify({
+        estudianteID: estudianteID,
+        programaID: programaID,
+        idinscripcion: idinscripcion,
+        modulos: modulos,
+        montoTotal: montoTotal
+    }));
+
+    // Abrir modal
+    $('#modalAdicionarDatos').modal('show');
 }
 
 /**
@@ -457,8 +641,8 @@ function numeroALetras(numero) {
 /**
  * Abrir modal para adicionar datos
  */
-function abrirModalAdicionarDatos(pagoID, moduloNombre, programaNombre, monto) {
-    console.log('Abrir modal adicionar datos - Pago ID:', pagoID, 'Módulo:', moduloNombre, 'Programa:', programaNombre, 'Monto:', monto);
+function abrirModalAdicionarDatos(pagoID, moduloNombre, programaNombre, monto, version, numeroTramite) {
+    console.log('Abrir modal adicionar datos - Pago ID:', pagoID, 'Módulo:', moduloNombre, 'Programa:', programaNombre, 'Monto:', monto, 'Version:', version, 'Numero Tramite:', numeroTramite);
 
     // Limpiar formulario
     $('#form_adicionar_datos')[0].reset();
@@ -467,6 +651,10 @@ function abrirModalAdicionarDatos(pagoID, moduloNombre, programaNombre, monto) {
     $('#modal_pago_id').val(pagoID);
     $('#modal_modulo_nombre').text(moduloNombre);
     $('#modal_programa_nombre').text(programaNombre);
+
+    // Establecer Version y Numero de Tramite
+    $('#version').val(version || 'V-1');
+    $('#numero_tramite').val(numeroTramite || '');
 
     // Monto en numeral
     const montoNumeral = parseFloat(monto || 0);
@@ -530,14 +718,25 @@ function imprimirOrdenPago(pagoID, moduloNombre) {
  * Generar PDF de Orden de Pago
  */
 function generarPDFOrdenPago() {
+    console.log('=== GENERAR PDF ORDEN DE PAGO ===');
+
     // Validar campos obligatorios
     const version = $('#version').val();
-    const cuentaAuxiliar = $('#cuenta_auxiliar').val();
+    const numeroTramite = $('#numero_tramite').val();
     const nombreFactura = $('#nombre_factura').val();
     const nitCiFactura = $('#nit_ci_factura').val();
     const responsable = $('#responsable').val();
 
-    if (!version || !cuentaAuxiliar || !nombreFactura || !nitCiFactura || !responsable) {
+    console.log('Validación de campos:', {
+        version: version,
+        numeroTramite: numeroTramite,
+        nombreFactura: nombreFactura,
+        nitCiFactura: nitCiFactura,
+        responsable: responsable
+    });
+
+    if (!version || !numeroTramite || !nombreFactura || !nitCiFactura || !responsable) {
+        console.warn('Campos incompletos detectados');
         swal({
             title: 'Campos incompletos',
             text: 'Por favor, complete todos los campos obligatorios marcados con *',
@@ -547,6 +746,165 @@ function generarPDFOrdenPago() {
         return;
     }
 
+    // Verificar si es orden múltiple o simple
+    const pagoIdValue = $('#modal_pago_id').val();
+    console.log('Valor de modal_pago_id:', pagoIdValue);
+
+    let esOrdenMultiple = false;
+    let datosOrdenMultiple = null;
+
+    try {
+        datosOrdenMultiple = JSON.parse(pagoIdValue);
+        esOrdenMultiple = datosOrdenMultiple && datosOrdenMultiple.modulos && datosOrdenMultiple.modulos.length > 0;
+        console.log('Es orden múltiple:', esOrdenMultiple);
+        console.log('Datos parseados:', datosOrdenMultiple);
+    } catch (e) {
+        // Es un ID simple (no JSON)
+        esOrdenMultiple = false;
+        console.log('Es orden simple (no JSON)');
+    }
+
+    if (esOrdenMultiple) {
+        console.log('Generando orden de pago múltiple...');
+        // Generar orden de pago múltiple
+        generarOrdenMultiple(datosOrdenMultiple, version, numeroTramite, nombreFactura, nitCiFactura, responsable);
+    } else {
+        console.log('Generando orden de pago simple...');
+        // Generar orden de pago simple (un solo módulo)
+        generarOrdenSimple(pagoIdValue, version, numeroTramite, nombreFactura, nitCiFactura, responsable);
+    }
+}
+
+/**
+ * Generar orden de pago con múltiples módulos
+ */
+function generarOrdenMultiple(datosOrden, version, numeroTramite, nombreFactura, nitCiFactura, responsable) {
+    console.log('=== GENERAR ORDEN MÚLTIPLE ===');
+    console.log('Datos de la orden:', datosOrden);
+
+    // Preparar lista de IDs de pagos módulo
+    const listaPagosModulo = datosOrden.modulos.map(m => m.Idpagomodulo).join(',');
+    console.log('Lista de IDs de pago módulo:', listaPagosModulo);
+
+    console.log('Enviando AJAX para registrar orden...');
+
+    // Primero registrar la orden en la base de datos
+    $.ajax({
+        url: 'ajax/ordenpago.ajax.php',
+        method: 'POST',
+        dataType: 'json',
+        data: {
+            accion: 'registrarOrdenPago',
+            estudianteID: datosOrden.estudianteID,
+            idinscripcion: datosOrden.idinscripcion,
+            programaID: datosOrden.programaID,
+            listaPagosModulo: listaPagosModulo,
+            montoTotal: datosOrden.montoTotal,
+            responsable: responsable,
+            nombreFactura: nombreFactura,
+            nitCiFactura: nitCiFactura
+        },
+        success: function(response) {
+            console.log('Respuesta del servidor:', response);
+
+            if (response.success) {
+                console.log('Orden registrada:', response.numeroOrden);
+
+                // Preparar datos para el PDF
+                const datos = {
+                    // Datos del estudiante
+                    apaterno: $('#modal_estudiante_apaterno').text(),
+                    amaterno: $('#modal_estudiante_amaterno').text(),
+                    nombres: $('#modal_estudiante_nombres').text(),
+                    correo: $('#modal_estudiante_correo').text(),
+                    ci: $('#modal_estudiante_ci').text(),
+                    celular: $('#modal_estudiante_celular').text(),
+
+                    // Datos del comprobante
+                    programa: $('#modal_programa_nombre').text(),
+                    modulo: 'Pago de módulos del programa',
+                    montoNumeral: $('#modal_monto_numeral').text(),
+                    montoLiteral: $('#modal_monto_literal').text(),
+
+                    // Datos del formulario
+                    version: version,
+                    numeroTramite: numeroTramite,
+                    cuentaAuxiliar: numeroTramite,
+                    nombreFactura: nombreFactura,
+                    nitCiFactura: nitCiFactura,
+                    responsable: responsable,
+                    firma: $('#firma').val() || '',
+
+                    // Datos de la orden múltiple
+                    esMultiple: 'true',
+                    modulosJSON: JSON.stringify(datosOrden.modulos),
+                    numeroOrden: response.numeroOrden
+                };
+
+                // Crear formulario temporal para enviar por POST
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'vistas/componentes/generar-orden-pago-pdf.php';
+                form.target = '_blank';
+
+                // Agregar campos al formulario
+                for (const key in datos) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = datos[key];
+                    form.appendChild(input);
+                }
+
+                // Enviar formulario
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+
+                // Cerrar modal y actualizar vista
+                setTimeout(function() {
+                    $('#modalAdicionarDatos').modal('hide');
+
+                    swal({
+                        title: 'Orden generada',
+                        text: 'La orden de pago se ha generado correctamente',
+                        icon: 'success',
+                        button: 'Aceptar'
+                    }).then(() => {
+                        // Recargar los datos del estudiante para actualizar la vista
+                        const estudianteID = $('#select_estudiante').val();
+                        if (estudianteID) {
+                            cargarDetallePagos(estudianteID);
+                        }
+                    });
+                }, 1000);
+
+            } else {
+                swal({
+                    title: 'Error',
+                    text: response.mensaje || 'No se pudo registrar la orden de pago',
+                    icon: 'error',
+                    button: 'Aceptar'
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al registrar orden:', error);
+            console.error('Respuesta completa:', xhr.responseText);
+            swal({
+                title: 'Error de Conexión',
+                text: 'No se pudo registrar la orden de pago. Intente nuevamente.',
+                icon: 'error',
+                button: 'Aceptar'
+            });
+        }
+    });
+}
+
+/**
+ * Generar orden de pago simple (un solo módulo)
+ */
+function generarOrdenSimple(pagoID, version, numeroTramite, nombreFactura, nitCiFactura, responsable) {
     // Recopilar todos los datos del formulario
     const datos = {
         // Datos del estudiante
@@ -565,11 +923,15 @@ function generarPDFOrdenPago() {
 
         // Datos del formulario
         version: version,
-        cuentaAuxiliar: cuentaAuxiliar,
+        numeroTramite: numeroTramite,
+        cuentaAuxiliar: numeroTramite, // La cuenta auxiliar ES el número de trámite
         nombreFactura: nombreFactura,
         nitCiFactura: nitCiFactura,
         responsable: responsable,
-        firma: $('#firma').val()
+        firma: $('#firma').val() || '',
+
+        // Indicar que es simple
+        esMultiple: 'false'
     };
 
     // Crear formulario temporal para enviar por POST

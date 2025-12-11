@@ -17,7 +17,8 @@ try {
         SELECT e.EstudianteID,e.Nombre,e.Apaterno,e.Amaterno,e.Ci,e.Complemento,e.Exp,
                ep.idInscripcion,ep.ProgramaID,ep.FechaInscripcion,ep.costomatricula AS CostoMatriculaPagado,
                ep.nvauchermatricula AS VoucherMatricula,
-               p.NombrePrograma,p.Codigo AS CodigoPrograma,p.GradoAcademico,p.Costo AS CostoTotalPrograma,p.CostoMatricula
+               p.NombrePrograma,p.Codigo AS CodigoPrograma,p.GradoAcademico,p.Costo AS CostoTotalPrograma,p.CostoMatricula,
+               p.Version,p.NumeroTramite
         FROM estudianteprograma ep
         INNER JOIN estudiante e ON ep.EstudianteID=e.EstudianteID
         INNER JOIN programa p ON ep.ProgramaID=p.ProgramaID

@@ -1,6 +1,6 @@
 <?php
 /**
- * Generar Orden de Pago en PDF usando TCPDF
+ * Generar Orden de Pago en PDF usando TCPDF - Con Copia
  */
 
 // Iniciar sesión
@@ -33,11 +33,26 @@ $modulo = $_POST['modulo'] ?? '';
 $montoNumeral = $_POST['montoNumeral'] ?? '';
 $montoLiteral = $_POST['montoLiteral'] ?? '';
 $version = $_POST['version'] ?? '';
+$numeroTramite = $_POST['numeroTramite'] ?? '';
 $cuentaAuxiliar = $_POST['cuentaAuxiliar'] ?? '';
 $nombreFactura = $_POST['nombreFactura'] ?? '';
 $nitCiFactura = $_POST['nitCiFactura'] ?? '';
 $responsable = $_POST['responsable'] ?? '';
 $firma = $_POST['firma'] ?? '';
+
+// Verificar si es orden múltiple
+$esMultiple = isset($_POST['esMultiple']) && $_POST['esMultiple'] === 'true';
+$modulos = [];
+$numeroOrden = $_POST['numeroOrden'] ?? '';
+
+if ($esMultiple) {
+    // Decodificar JSON de módulos
+    $modulosJSON = $_POST['modulosJSON'] ?? '[]';
+    $modulos = json_decode($modulosJSON, true);
+    if (!is_array($modulos)) {
+        $modulos = [];
+    }
+}
 
 // Nombre completo del estudiante
 $nombreCompleto = trim("$apaterno $amaterno $nombres");
@@ -55,8 +70,8 @@ $pdf->SetAuthor('Facultad de Ciencias de la Salud - Postgrado');
 $pdf->SetTitle('Orden de Pago - ' . $nombreCompleto);
 $pdf->SetSubject('Orden de Pago de Módulo');
 
-// Configurar márgenes
-$pdf->SetMargins(15, 15, 15);
+// Configurar márgenes más pequeños
+$pdf->SetMargins(10, 10, 10);
 $pdf->SetHeaderMargin(5);
 $pdf->SetFooterMargin(10);
 
@@ -65,327 +80,277 @@ $pdf->setPrintHeader(false);
 $pdf->setPrintFooter(false);
 
 // Configurar auto page break
-$pdf->SetAutoPageBreak(TRUE, 15);
+$pdf->SetAutoPageBreak(FALSE);
 
 // Agregar página
 $pdf->AddPage();
 
-// Configurar fuente
-$pdf->SetFont('helvetica', '', 10);
+// Función para generar el contenido de la orden de pago
+function generarContenidoOrden($pdf, $yInicio, $esCopia = false) {
+    global $apaterno, $amaterno, $nombres, $correo, $ci, $celular;
+    global $programa, $modulo, $montoNumeral, $montoLiteral;
+    global $version, $numeroTramite, $cuentaAuxiliar;
+    global $nombreFactura, $nitCiFactura, $responsable, $firma;
+    global $fechaActual, $horaActual;
+    global $esMultiple, $modulos, $numeroOrden;
 
-// ========================================
-// HEADER DEL DOCUMENTO
-// ========================================
-// Asegúrate de que las rutas a las imágenes sean correctas
-$imagen_izquierda = '../../extensiones/imagenespdf/logouto.png';
-$imagen_derecha = '../../extensiones/imagenespdf/logofcs.png';
+    // Establecer posición Y inicial
+    $pdf->SetY($yInicio);
 
-// --- CONFIGURACIÓN DE COLORES Y FUENTE BASE (Solo el color del texto será negro) ---
-$pdf->SetTextColor(0, 0, 0); // Texto negro (RGB 0, 0, 0)
-$pdf->SetDrawColor(0, 0, 0); // Para bordes, si los hubiere
+    // Rutas a las imágenes
+    $imagen_izquierda = '../../extensiones/imagenespdf/logouto.png';
+    $imagen_derecha = '../../extensiones/imagenespdf/logofcs.png';
 
-// La altura de celda (el interlineado) se ajusta a 4 para ser muy compacto.
+    // Configuración de colores y fuente base
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetDrawColor(0, 0, 0);
 
-// --- 1. COLOCAR IMAGEN IZQUIERDA ---
-// $pdf->Image(ruta, X, Y, Ancho, Alto);
-// Ajusta las coordenadas X, Y, Ancho y Alto según el tamaño real de tu documento.
-$x_left = 10; // Posición X desde el borde izquierdo
-$y_top = 10;  // Posición Y desde el borde superior
-$width_img = 20; // Ancho de la imagen
-$height_img = 20; // Alto de la imagen
-$pdf->Image($imagen_izquierda, $x_left, $y_top, $width_img, $height_img);
+    // Imágenes del header
+    $x_left = 10;
+    $y_top = $yInicio;
+    $width_img = 15;
+    $height_img = 15;
+    $pdf->Image($imagen_izquierda, $x_left, $y_top, $width_img, $height_img);
 
+    $page_width = $pdf->GetPageWidth();
+    $margin_right = 10;
+    $x_right = $page_width - $margin_right - $width_img;
+    $pdf->Image($imagen_derecha, $x_right, $y_top, $width_img, $height_img);
 
-// --- 2. TEXTO CENTRADO (Con interlineado ajustado a 4) ---
+    // Texto del header (reducido)
+    $pdf->SetFont('helvetica', 'B', 8);
+    $pdf->Cell(0, 3, 'UNIVERSIDAD TECNICA DE ORURO', 0, 1, 'C', false);
 
-// UNIVERSIDAD TECNICA DE ORURO (Interlineado de 4)
-$pdf->SetFont('helvetica', 'B', 10);
-// NOTA: Se usa 'false' en el último parámetro para NO aplicar relleno de fondo
-$pdf->Cell(0, 4, 'UNIVERSIDAD TECNICA DE ORURO', 0, 1, 'C', false);
+    $pdf->SetFont('helvetica', 'B', 8);
+    $pdf->Cell(0, 3, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C', false);
 
-// FACULTAD DE CIENCIAS DE LA SALUD (Interlineado de 4)
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->Cell(0, 4, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C', false);
+    $pdf->SetFont('helvetica', '', 7);
+    $pdf->Cell(0, 3, 'COORDINACION DE POSGRADO - ODONTOLOGIA', 0, 1, 'C', false);
 
-// COORDINACION DE POSGRADO - ODONTOLOGIA (Interlineado de 4)
-$pdf->SetFont('helvetica', '', 10);
-$pdf->Cell(0, 4, 'COORDINACION DE POSGRADO - ODONTOLOGIA', 0, 1, 'C', false);
+    $pdf->SetFont('helvetica', '', 6);
+    $pdf->Cell(0, 2.5, 'Av. Del Minero Edificio San Agustin II (Ex Almacenes COMIBOL) Telefono: 5237317', 0, 1, 'C', false);
 
-// Dirección (Interlineado de 3.5, aún más compacto)
-$pdf->SetFont('helvetica', '', 8);
-$pdf->Cell(0, 3.5, 'Av. Del Minero Edificio San Agustin II (Ex Almacenes COMIBOL) Telefono: 5237317 - Fax: 5247110', 0, 1, 'C', false);
+    $pdf->SetFont('helvetica', '', 6);
+    $pdf->Cell(0, 2.5, 'Oruro - Bolivia', 0, 1, 'C', false);
 
-// Ciudad (Interlineado de 3.5)
-$pdf->SetFont('helvetica', '', 8);
-$pdf->Cell(0, 3.5, 'Oruro - Bolivia', 0, 1, 'C', false);
+    // Línea separadora
+    $pdf->SetDrawColor(102, 126, 234);
+    $pdf->SetLineWidth(0.3);
+    $pdf->Line(10, $pdf->GetY() + 1, $page_width - 10, $pdf->GetY() + 1);
 
+    $pdf->Ln(2);
 
-// --- 3. COLOCAR IMAGEN DERECHA ---
-// Necesitas calcular la posición X para que la imagen quede pegada al borde derecho.
-// Ancho Total del Documento (ej. A4 es 210mm) - Margen Derecho - Ancho de la Imagen
-$page_width = $pdf->GetPageWidth(); // Obtiene el ancho de la página actual
-$margin_right = 10; // Asumiendo un margen derecho de 10
-$x_right = $page_width - $margin_right - $width_img; 
+    // Fecha, Hora y texto COPIA
+    $pdf->SetTextColor(70, 78, 95);
+    $pdf->SetFont('helvetica', 'B', 7);
+    $y_fecha = $pdf->GetY();
+    $pdf->SetXY(10, $y_fecha);
+    $pdf->Cell(60, 3, 'Fecha: ' . $fechaActual, 0, 0, 'L');
+    $pdf->Cell(60, 3, 'Hora: ' . $horaActual, 0, 0, 'C');
+    if ($esCopia) {
+        $pdf->SetTextColor(255, 0, 0);
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell(0, 3, '** COPIA **', 0, 1, 'R');
+        $pdf->SetTextColor(70, 78, 95);
+    } else {
+        $pdf->Ln();
+    }
 
-$pdf->Image($imagen_derecha, $x_right, $y_top, $width_img, $height_img);
-// Línea separadora
-$pdf->SetDrawColor(102, 126, 234);
-$pdf->SetLineWidth(0.5);
-$pdf->Line(15, $pdf->GetY() + 2, 195, $pdf->GetY() + 2);
+    $pdf->Ln(1);
 
-$pdf->Ln(5);
+    // Título
+    $pdf->SetFillColor(174, 198, 207);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFont('helvetica', 'B', 8);
+    $pdf->Cell(0, 5, 'ORDEN DE PAGO EN CAJA DE POSGRADO', 0, 1, 'C', true);
 
-// Fecha y Hora
-$pdf->SetTextColor(70, 78, 95);
-$pdf->SetFont('helvetica', 'B', 9);
-$y = $pdf->GetY();
-$pdf->Cell(95, 5, 'Fecha: ' . $fechaActual, 0, 0, 'L');
-$pdf->Cell(95, 5, 'Hora: ' . $horaActual, 0, 1, 'R');
+    $pdf->Ln(1);
 
-$pdf->Ln(3);
+    // DATOS DEL ESTUDIANTE
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetTextColor(51, 51, 51);
 
-$pdf->SetFillColor(174, 198, 207); // Color #04126aff
-$pdf->SetTextColor(0, 0, 0);
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->Cell(0, 7, 'ORDEN DE PAGO EN CAJA DE POSGRADO', 0, 1, 'C', true);
+    $W_ENCABEZADO = 25;
+    $W_TOTAL_DATOS = 165;
+    $W_CELDA = $W_TOTAL_DATOS / 3;
+    $H_FILA_TITULO = 3.5;
+    $H_FILA_VALOR = 4;
+    $H_TOTAL = ($H_FILA_TITULO + $H_FILA_VALOR) * 2;
 
+    $x_inicio_bloque = $pdf->GetX();
+    $y_inicio_bloque = $pdf->GetY();
 
+    // Encabezado lateral
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFont('helvetica', 'B', 6);
+    $pdf->MultiCell($W_ENCABEZADO, $H_TOTAL, 'NOMBRE COMPLETO DEL POSGRADUANTE', 1, 'C', true, 0);
 
-// ====================================================================
-// SECCIÓN: DATOS DEL ESTUDIANTE (Posgraduante)
-// ====================================================================
+    // Tabla de datos
+    $pdf->SetXY($x_inicio_bloque + $W_ENCABEZADO, $y_inicio_bloque);
+    $x_inicio_tabla = $pdf->GetX();
+    $pdf->SetFillColor(248, 249, 250);
 
-// --- 1. CONFIGURACIÓN GENERAL ---
-// Color del borde de todas las celdas: Negro
-$pdf->SetDrawColor(0, 0, 0); 
-// Color general del texto para los datos (ej. un gris oscuro)
-$pdf->SetTextColor(51, 51, 51); // #333333
+    // Fila 1: Títulos
+    $pdf->SetFont('helvetica', 'B', 6);
+    $pdf->SetTextColor(255, 0, 0);
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO PATERNO', 1, 0, 'L', false);
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO MATERNO', 1, 0, 'L', false);
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'NOMBRES', 1, 1, 'L', false);
 
-// --- 2. DEFINICIÓN DE DIMENSIONES Y CONTENIDO ---
-$W_ENCABEZADO = 30; // Ancho del encabezado lateral (30mm)
-$W_TOTAL_DATOS = 160; // Ancho total de la tabla de datos
-$W_CELDA = $W_TOTAL_DATOS / 3; // Ancho de cada celda de datos (160 / 3)
+    // Fila 2: Valores
+    $pdf->SetX($x_inicio_tabla);
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor(51, 51, 51);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $apaterno, 1, 0, 'L', true);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $amaterno, 1, 0, 'L', true);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $nombres, 1, 1, 'L', true);
 
-// Altura calculada: Suma de las alturas de las 4 filas de datos.
-// Fila 1 (Título) + Fila 2 (Valor) + Fila 3 (Título) + Fila 4 (Valor)
-$H_FILA_TITULO = 4.5;
-$H_FILA_VALOR = 5.5;
-$H_TOTAL = ($H_FILA_TITULO + $H_FILA_VALOR) * 2; // (4.5 + 5.5) * 2 = 20mm. 
-// NOTA: El código original tenía H_TOTAL=27, lo cual es innecesario. 
-// Usaremos la suma de las 4 alturas reales (20mm).
+    // Fila 3: Títulos
+    $pdf->SetX($x_inicio_tabla);
+    $pdf->SetFont('helvetica', 'B', 6);
+    $pdf->SetTextColor(255, 0, 0);
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'CORREO ELECTRÓNICO', 1, 0, 'L', false);
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'C.I.', 1, 0, 'L', false);
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'N° CELULAR', 1, 1, 'L', false);
 
-// --- 3. INICIO DE BLOQUE ---
-$x_inicio_bloque = $pdf->GetX();
-$y_inicio_bloque = $pdf->GetY();
+    // Fila 4: Valores
+    $pdf->SetX($x_inicio_tabla);
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor(51, 51, 51);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $correo, 1, 0, 'L', true);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $ci, 1, 0, 'L', true);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $celular, 1, 1, 'L', true);
 
-// ====================================================================
-// A. ENCABEZADO LATERAL: 'NOMBRE COMPLETO DEL POSGRADUANTE'
-// ====================================================================
+    $pdf->Ln(2);
 
-// Configuración de estilo del encabezado
-$pdf->SetFillColor(255, 255, 255); // Fondo BLANCO (anula el #11998e original)
-$pdf->SetTextColor(0, 0, 0);// Texto: Blanco (MEJORADO: No usar rojo aquí, es confuso)
-$pdf->SetFont('helvetica', 'B', 8);
+    // DATOS PARA EMISIÓN DE COMPROBANTE
+    $pdf->SetFillColor(174, 198, 207);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->Cell(0, 5, 'DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO', 0, 1, 'C', true);
 
-// Usar MultiCell con la altura TOTAL del bloque para asegurar alineación vertical
-// El parámetro 'h' (altura de línea) del MultiCell se ajusta a H_TOTAL / (número de líneas necesarias).
-// En este caso, simplemente usamos la altura total del bloque (20mm) como altura mínima.
-// El '1' indica el borde, 'C' centra el texto, 'true' rellena el fondo.
-$pdf->MultiCell(
-    $W_ENCABEZADO, 
-    $H_TOTAL, 
-    'NOMBRE COMPLETO DEL POSGRADUANTE', 
-    1, 
-    'C', 
-    true, 
-    0 // Importante: 0 para continuar en la misma línea (a la derecha)
-);
+    $pdf->SetTextColor(70, 78, 95);
 
-// ====================================================================
-// B. BLOQUE DE DATOS (Tabla de 2x3)
-// ====================================================================
+    // PROGRAMA
+    $pdf->SetFont('helvetica', 'B', 6);
+    $pdf->SetTextColor(255, 0, 0);
+    $pdf->Cell(0, 3, 'PROGRAMA', 1, 1, 'L');
 
-// 1. Posicionar el cursor a la derecha del MultiCell, volviendo a Y inicial.
-$pdf->SetXY($x_inicio_bloque + $W_ENCABEZADO, $y_inicio_bloque);
-$x_inicio_tabla = $pdf->GetX(); // Guardar X inicial de la tabla
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor(51, 51, 51);
+    $pdf->MultiCell(0, 4, $programa, 1, 'L', false, 1);
 
-// 2. Definir estilos generales para las celdas de datos
-$pdf->SetFillColor(248, 249, 250); // Fondo de las celdas de valor: Gris muy claro #F8F9FA
+    // VERSIÓN y N° TRÁMITE (CUENTA AUXILIAR) en una fila
+    $pdf->SetFont('helvetica', 'B', 6);
+    $pdf->SetTextColor(255, 0, 0);
+    $pdf->Cell(40, 3, 'VERSIÓN', 1, 0, 'L');
+    $pdf->Cell(0, 3, 'N° DE TRÁMITE (CUENTA AUXILIAR)', 1, 1, 'L');
 
-// --- Fila 1: Títulos APELLIDOS/NOMBRES (en ROJO) ---
-$pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(255, 0, 0); // Títulos en ROJO
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor(51, 51, 51);
+    $pdf->Cell(40, 4, $version, 1, 0, 'L');
+    $pdf->Cell(0, 4, $numeroTramite, 1, 1, 'L');
 
-$pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO PATERNO', 1, 0, 'L', false); // false: sin relleno
-$pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO MATERNO', 1, 0, 'L', false);
-$pdf->Cell($W_CELDA, $H_FILA_TITULO, 'NOMBRES', 1, 1, 'L', false); // 1: Salto de línea
+    $pdf->Ln(1);
 
-// --- Fila 2: Valores APELLIDOS/NOMBRES ---
-$pdf->SetX($x_inicio_tabla); // Volver a la X de inicio de la tabla
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(51, 51, 51); // Texto de valor: Gris oscuro
+    // MONTO
+    $pdf->SetFont('helvetica', 'B', 6);
+    $pdf->SetTextColor(255, 0, 0);
+    $pdf->Cell(50, 3, 'MONTO (NUMERAL)', 1, 0, 'L');
+    $pdf->Cell(0, 3, 'MONTO (LITERAL)', 1, 1, 'L');
 
-$pdf->Cell($W_CELDA, $H_FILA_VALOR, $apaterno, 1, 0, 'L', true); // true: con relleno
-$pdf->Cell($W_CELDA, $H_FILA_VALOR, $amaterno, 1, 0, 'L', true);
-$pdf->Cell($W_CELDA, $H_FILA_VALOR, $nombres, 1, 1, 'L', true); // 1: Salto de línea
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor(51, 51, 51);
+    $pdf->Cell(50, 5, $montoNumeral, 1, 0, 'L');
+    $pdf->MultiCell(0, 5, $montoLiteral, 1, 'L');
 
-// --- Fila 3: Títulos CORREO/CI/CELULAR (en ROJO) ---
-$pdf->SetX($x_inicio_tabla); // Volver a la X de inicio de la tabla
-$pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(255, 0, 0); // Títulos en ROJO
+    $pdf->Ln(2);
 
-$pdf->Cell($W_CELDA, $H_FILA_TITULO, 'CORREO ELECTRÓNICO', 1, 0, 'L', false);
-$pdf->Cell($W_CELDA, $H_FILA_TITULO, 'C.I.', 1, 0, 'L', false);
-$pdf->Cell($W_CELDA, $H_FILA_TITULO, 'N° CELULAR', 1, 1, 'L', false); // 1: Salto de línea
+    // DATOS PARA EMISIÓN DE FACTURA
+    $pdf->SetFillColor(174, 198, 207);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->Cell(0, 5, 'DATOS PARA LA EMISIÓN DE FACTURA', 0, 1, 'C', true);
 
-// --- Fila 4: Valores CORREO/CI/CELULAR ---
-$pdf->SetX($x_inicio_tabla); // Volver a la X de inicio de la tabla
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(51, 51, 51); // Texto de valor: Gris oscuro
+    $pdf->SetFont('helvetica', 'B', 6);
+    $pdf->SetTextColor(255, 0, 0);
+    $pdf->Cell(95, 3, 'NOMBRE DE LA FACTURA', 1, 0, 'L');
+    $pdf->Cell(0, 3, 'NIT O CI', 1, 1, 'L');
 
-$pdf->Cell($W_CELDA, $H_FILA_VALOR, $correo, 1, 0, 'L', true);
-$pdf->Cell($W_CELDA, $H_FILA_VALOR, $ci, 1, 0, 'L', true);
-$pdf->Cell($W_CELDA, $H_FILA_VALOR, $celular, 1, 1, 'L', true); // 1: Salto de línea
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor(51, 51, 51);
+    $pdf->Cell(95, 4, $nombreFactura, 1, 0, 'L');
+    $pdf->Cell(0, 4, $nitCiFactura, 1, 1, 'L');
 
-// --- 4. SALTO DE LÍNEA ---
-$pdf->Ln(4); // Separación con la siguiente sección
+    $pdf->Ln(2);
 
-// ========================================
-// SECCIÓN: DATOS PARA EMISIÓN DE COMPROBANTE
-// ========================================
-$pdf->SetFillColor(174, 198, 207); // Color #a5a5a5ff
-$pdf->SetTextColor(0, 0, 0);
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->Cell(0, 7, 'DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO', 0, 1, 'C', true);
+    // DENOMINACIÓN DE LA CUENTA
+    $pdf->SetFillColor(248, 249, 250);
+    $pdf->SetDrawColor(102, 126, 234);
+    $pdf->SetLineWidth(0.3);
+    $pdf->Rect($pdf->GetX(), $pdf->GetY(), $page_width - 20, 12, 'D');
 
-$pdf->SetTextColor(70, 78, 95);
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor(102, 126, 234);
+    $pdf->Cell(0, 4, 'DENOMINACIÓN DE LA CUENTA', 0, 1, 'L');
 
-// --- Sección 1: PROGRAMA, VERSIÓN y CUENTA AUXILIAR (Anchos Ajustados y Bordes) ---
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor(70, 78, 95);
+    $pdf->Cell(0, 3, 'UTO - APORTES EXTRAORDINARIOS - N° CUENTA 10000006050938', 0, 1, 'L');
 
-// Definir estilo de las Etiquetas/Títulos (Rojo, 7pt)
-$pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(255, 0, 0); // Color de texto: ROJO
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor(17, 153, 142);
+    $pdf->Cell(0, 3, 'NIT: 120129022', 0, 1, 'L');
 
-// --- TÍTULOS ---
-// Anchos ajustados: 80, 40, 0 (resto)
-$pdf->Cell(80, 5, 'PROGRAMA', 1, 0, 'L'); // 80 ancho, Borde 1, no salta línea (0)
-$pdf->Cell(40, 5, 'VERSIÓN', 1, 0, 'L');  // 40 ancho (más pequeño), Borde 1, no salta línea (0)
-$pdf->Cell(0, 5, 'CUENTA AUXILIAR', 1, 1, 'L'); // Resto del ancho (automático), Borde 1, salta línea (1)
+    $pdf->Ln(3);
 
-// Definir estilo de los Valores (Gris Oscuro, 9pt)
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(51, 51, 51); // Gris Oscuro (#333333)
+    // RESPONSABLE Y FIRMA
+    $pdf->SetDrawColor(226, 229, 236);
+    $pdf->SetLineWidth(0.2);
+    $pdf->Line(10, $pdf->GetY(), $page_width - 10, $pdf->GetY());
 
-// --- VALORES ---
-// NOTA: MultiCell para el programa (si es largo). Usar 'false, 0' para evitar salto de línea.
-$pdf->MultiCell(80, 5, $programa, 1, 'L', false, 0); // Ancho 80, Borde 1, no salta línea (0)
-$pdf->Cell(40, 5, $version, 1, 0, 'L');             // Ancho 40, Borde 1, no salta línea (0)
-$pdf->Cell(0, 5, $cuentaAuxiliar, 1, 1, 'L');        // Resto del ancho, Borde 1, salta línea (1)
+    $pdf->Ln(1);
 
-$pdf->Ln(3); // Espacio
+    $pdf->SetFont('helvetica', 'B', 6);
+    $pdf->SetTextColor(153, 153, 153);
+    $pdf->Cell(95, 3, 'RESPONSABLE', 0, 0, 'L');
+    $pdf->Cell(0, 3, 'FIRMA', 0, 1, 'L');
 
-// --- Sección 3: MONTO (NUMERAL y LITERAL) (Bordes y Títulos Rojos) ---
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor(51, 51, 51);
+    $pdf->Cell(95, 4, $responsable, 0, 0, 'L');
+    $pdf->Cell(0, 4, !empty($firma) ? $firma : '____________________', 0, 1, 'L');
 
-// Definir estilo de las Etiquetas/Títulos (Rojo, 7pt)
-$pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(255, 0, 0); // Color de texto: ROJO
+    $pdf->Ln(3);
 
-// Etiquetas (Con borde: 1)
-$pdf->Cell(90, 5, 'MONTO (NUMERAL)', 1, 0, 'L'); // 90 ancho, Borde 1, no salta línea (0)
-$pdf->Cell(90, 5, 'MONTO (LITERAL)', 1, 1, 'L'); // 90 ancho, Borde 1, salta línea (1)
+    // Línea para firma
+    $pdf->SetLineWidth(0.2);
+    $pdf->Line(80, $pdf->GetY(), 130, $pdf->GetY());
+    $pdf->Ln(1);
 
-// Valor Numeral (Izquierda)
-$pdf->SetFont('helvetica', 'B', 8);
-$pdf->SetTextColor(51, 51, 51);
-$pdf->Cell(90, 8, $montoNumeral, 1, 0, 'L'); // 90 ancho, Borde 1, no salta línea (0)
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor(51, 51, 51);
+    $pdf->Cell(0, 3, 'Firma del Responsable', 0, 1, 'C');
+}
 
-// Valor Literal (Derecha)
-$pdf->SetFont('helvetica', 'B', 8); // Cursiva, 8pt
-$pdf->SetTextColor(51, 51, 51); // Gris Azulado (#464E5F)
-$pdf->MultiCell(0, 8, $montoLiteral, 1, 0, 'L'); // Resto del ancho (0), Borde 1, salta línea
+// Generar el ORIGINAL (primera mitad de la página)
+generarContenidoOrden($pdf, 10, false);
 
-$pdf->Ln(5);
-// Subsección: Datos para Emisión de Factura
+// Línea divisoria punteada
+$pdf->SetY(137);
+$pdf->SetDrawColor(150, 150, 150);
+$pdf->SetLineStyle(array('width' => 0.2, 'dash' => 2));
+$pdf->Line(10, 137, $pdf->GetPageWidth() - 10, 137);
 
+// Generar la COPIA (segunda mitad de la página)
+generarContenidoOrden($pdf, 140, true);
 
-
-$pdf->SetFillColor(174, 198, 207); // Color #a5a5a5ff
-$pdf->SetTextColor(0, 0, 0);
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->Cell(0, 7, 'DATOS PARA LA EMISIÓN DE FACTURA', 0, 1, 'C', true);
-
-$pdf->SetTextColor(70, 78, 95);
-
-$pdf->SetFont('helvetica', 'B', 7);
+// Pie de página al final
+$pdf->SetY(270);
+$pdf->SetFont('helvetica', 'I', 6);
 $pdf->SetTextColor(153, 153, 153);
-$pdf->Cell(90, 5, 'NOMBRE DE LA FACTURA', 0, 0, 'L');
-$pdf->Cell(90, 5, 'NIT O CI', 0, 1, 'L');
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(51, 51, 51);
-$pdf->Cell(90, 6, $nombreFactura, 0, 0, 'L');
-$pdf->Cell(90, 6, $nitCiFactura, 0, 1, 'L');
-
-$pdf->Ln(5);
-
-// ========================================
-// DENOMINACIÓN DE LA CUENTA
-// ========================================
-$pdf->SetFillColor(248, 249, 250);
-$pdf->SetDrawColor(102, 126, 234);
-$pdf->SetLineWidth(0.5);
-$pdf->Rect($pdf->GetX(), $pdf->GetY(), 180, 18, 'D');
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(102, 126, 234);
-$pdf->Cell(0, 6, 'DENOMINACIÓN DE LA CUENTA', 0, 1, 'L');
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(70, 78, 95);
-$pdf->Cell(0, 5, 'UTO - APORTES EXTRAORDINARIOS - NÚMERO DE CUENTA 10000006050938', 0, 1, 'L');
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(17, 153, 142);
-$pdf->Cell(0, 5, 'NIT: 120129022', 0, 1, 'L');
-
-$pdf->Ln(8);
-
-// ========================================
-// RESPONSABLE Y FIRMA
-// ========================================
-$pdf->SetDrawColor(226, 229, 236);
-$pdf->SetLineWidth(0.3);
-$pdf->Line(15, $pdf->GetY(), 195, $pdf->GetY());
-
-$pdf->Ln(3);
-
-$pdf->SetFont('helvetica', 'B', 7);
-$pdf->SetTextColor(153, 153, 153);
-$pdf->Cell(90, 5, 'RESPONSABLE', 0, 0, 'L');
-$pdf->Cell(90, 5, 'FIRMA', 0, 1, 'L');
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(51, 51, 51);
-$pdf->Cell(90, 6, $responsable, 0, 0, 'L');
-$pdf->Cell(90, 6, !empty($firma) ? $firma : '____________________', 0, 1, 'L');
-
-$pdf->Ln(15);
-
-// Línea para firma del responsable
-$pdf->SetLineWidth(0.3);
-$pdf->Line(80, $pdf->GetY(), 130, $pdf->GetY());
-$pdf->Ln(2);
-
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->SetTextColor(51, 51, 51);
-$pdf->Cell(0, 5, 'Firma del Responsable', 0, 1, 'C');
-
-$pdf->Ln(5);
-
-// Pie de página
-$pdf->SetFont('helvetica', 'I', 8);
-$pdf->SetTextColor(153, 153, 153);
-$pdf->Cell(0, 5, 'Este documento fue generado electrónicamente el ' . $fechaActual . ' a las ' . $horaActual, 0, 1, 'C');
+$pdf->Cell(0, 3, 'Documento generado electrónicamente el ' . $fechaActual . ' a las ' . $horaActual, 0, 1, 'C');
 
 // ========================================
 // SALIDA DEL PDF
@@ -395,7 +360,7 @@ ob_end_clean();
 
 // Generar el PDF
 $nombreArchivo = 'Orden_Pago_' . str_replace(' ', '_', $nombreCompleto) . '_' . date('YmdHis') . '.pdf';
-$pdf->Output($nombreArchivo, 'I'); // I = inline (mostrar en navegador), D = descargar
+$pdf->Output($nombreArchivo, 'I');
 
 exit;
 ?>

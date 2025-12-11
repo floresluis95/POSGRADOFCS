@@ -18,7 +18,7 @@ class ReporteModulosModelo
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT DISTINCT GradoAcademico
                 FROM programa
-                WHERE Estado = 'ACTIVO'
+                WHERE Estado = 1
                 ORDER BY GradoAcademico ASC"
             );
             $stmt->execute();
@@ -45,7 +45,7 @@ class ReporteModulosModelo
                     GradoAcademico
                 FROM programa
                 WHERE GradoAcademico = :grado
-                AND Estado = 'ACTIVO'
+                AND Estado = 1
                 ORDER BY NombrePrograma ASC"
             );
             $stmt->bindParam(":grado", $grado, PDO::PARAM_STR);
@@ -144,7 +144,7 @@ class ReporteModulosModelo
             $conexion = Conexion::Conectar();
 
             // Contar programas activos
-            $stmtProgramas = $conexion->prepare("SELECT COUNT(*) as total FROM programa WHERE Estado = 'ACTIVO'");
+            $stmtProgramas = $conexion->prepare("SELECT COUNT(*) as total FROM programa WHERE Estado = 1");
             $stmtProgramas->execute();
             $totalProgramas = $stmtProgramas->fetch(PDO::FETCH_ASSOC)['total'];
 
@@ -204,8 +204,8 @@ class ReporteModulosModelo
                     COUNT(DISTINCT ep.EstudianteID) as TotalInscritos
                 FROM programa p
                 LEFT JOIN modulos m ON p.ProgramaID = m.ProgramaId AND m.estadomodulo = 'ACTIVO'
-                LEFT JOIN estudianteprograma ep ON p.ProgramaID = ep.ProgramaID AND ep.Estado = 'ACTIVO'
-                WHERE p.Estado = 'ACTIVO'
+                LEFT JOIN estudianteprograma ep ON p.ProgramaID = ep.ProgramaID
+                WHERE p.Estado = 1
                 GROUP BY p.ProgramaID, p.NombrePrograma, p.Codigo, p.GradoAcademico
                 ORDER BY p.GradoAcademico ASC, p.NombrePrograma ASC"
             );
@@ -261,7 +261,7 @@ class ReporteModulosModelo
                     COUNT(*) as TotalProgramas,
                     COUNT(DISTINCT GradoAcademico) as TiposGrado
                 FROM programa
-                WHERE Estado = 'ACTIVO'
+                WHERE Estado = 1
                 GROUP BY Sede
                 ORDER BY TotalProgramas DESC, Sede ASC"
             );
@@ -287,15 +287,14 @@ class ReporteModulosModelo
                     (SELECT COUNT(DISTINCT ep.EstudianteID)
                      FROM estudianteprograma ep
                      INNER JOIN programa p2 ON ep.ProgramaID = p2.ProgramaID
-                     WHERE p2.GradoAcademico = p.GradoAcademico
-                     AND ep.Estado = 'ACTIVO') as TotalEstudiantes,
+                     WHERE p2.GradoAcademico = p.GradoAcademico) as TotalEstudiantes,
                     (SELECT COUNT(*)
                      FROM modulos m
                      INNER JOIN programa p3 ON m.ProgramaId = p3.ProgramaID
                      WHERE p3.GradoAcademico = p.GradoAcademico
                      AND m.estadomodulo = 'ACTIVO') as TotalModulos
                 FROM programa p
-                WHERE Estado = 'ACTIVO'
+                WHERE Estado = 1
                 GROUP BY GradoAcademico
                 ORDER BY GradoAcademico ASC"
             );

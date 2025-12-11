@@ -102,7 +102,7 @@ class MatriculaModelos
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT i.idInscripcion, i.FechaInscripcion, i.costomatricula, i.nvauchermatricula, i.Estado,
                         e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Ci,
-                        p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Sede
+                        p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Sede, p.Version, p.NumeroTramite
                  FROM estudianteprograma i
                  INNER JOIN estudiante e ON i.EstudianteID = e.EstudianteID
                  INNER JOIN programa p ON i.ProgramaID = p.ProgramaID
@@ -127,7 +127,7 @@ class MatriculaModelos
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT i.*,
                         e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Correo, e.Celular,
-                        p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Costo, p.Sede
+                        p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Costo, p.Sede, p.Version, p.NumeroTramite
                  FROM estudianteprograma i
                  INNER JOIN estudiante e ON i.EstudianteID = e.EstudianteID
                  INNER JOIN programa p ON i.ProgramaID = p.ProgramaID
