@@ -15,6 +15,7 @@ class DocentesControlador
         // Verificar si tiene usuario
         $tieneUsuario = !empty($Docente['Usuario']);
         $estadoUsuarioBadge = '';
+        $passwordDisplay = '';
         $botonUsuario = '';
 
         if ($tieneUsuario) {
@@ -22,9 +23,23 @@ class DocentesControlador
             $estadoUsuarioBadge = $estadoActivo
                 ? '<span class="badge badge-success"><i class="fa fa-check"></i> ' . htmlspecialchars($Docente['Usuario']) . '</span>'
                 : '<span class="badge badge-danger"><i class="fa fa-times"></i> ' . htmlspecialchars($Docente['Usuario']) . ' (Inactivo)</span>';
+
+            // Mostrar contraseña si existe
+            if (!empty($Docente['PasswordTexto'])) {
+                $passwordDisplay = '<span class="badge badge-warning" style="font-size: 12px; font-family: monospace; cursor: pointer;"
+                                          title="Contraseña asignada"
+                                          onclick="copyToClipboard(\'' . htmlspecialchars($Docente['PasswordTexto']) . '\', this)">
+                                        <i class="fa fa-key"></i> ' . htmlspecialchars($Docente['PasswordTexto']) . '
+                                    </span>';
+            } else {
+                $passwordDisplay = '<span class="badge badge-secondary" title="Contraseña no disponible">
+                                        <i class="fa fa-lock"></i> Oculta
+                                    </span>';
+            }
             $botonUsuario = '';
         } else {
             $estadoUsuarioBadge = '<span class="badge badge-warning"><i class="fa fa-exclamation-triangle"></i> Sin usuario</span>';
+            $passwordDisplay = '<span class="badge badge-secondary"><i class="fa fa-minus"></i> N/A</span>';
             $botonUsuario = '<button
                                 data-toggle="modal"
                                 data-target="#ModalAsignarUsuarioDocente"
@@ -49,6 +64,7 @@ class DocentesControlador
                 <td>' . htmlspecialchars($Docente['Correo'] ? $Docente['Correo'] : 'No registrado') . '</td>
                 <td>' . htmlspecialchars($Docente['Especialidad']) . '</td>
                 <td class="text-center">' . $estadoUsuarioBadge . '</td>
+                <td class="text-center">' . $passwordDisplay . '</td>
                 <td class="text-center">
                     ' . $botonUsuario . '
                     <button type="button"
@@ -89,19 +105,19 @@ class DocentesControlador
         
         // **IMPORTANTE:** Se unifican las claves del array $DatosEstudiante con los 'name' del formulario.
         $DatosDocente = array(
-            "Ci"                => htmlspecialchars(trim($_POST['Ci'])), 
-            "Complemento"       => htmlspecialchars(trim($_POST['Complemento'])),
-            "Exp"               => htmlspecialchars(trim($_POST['Exp'])),
-            "Nombre"            => htmlspecialchars(trim($_POST['Nombre'])), 
-            "Apaterno"          => htmlspecialchars(trim($_POST['Apaterno'])),
-            "Amaterno"          => htmlspecialchars(trim($_POST['Amaterno'])),
+            "Ci"                => htmlspecialchars(trim($_POST['Ci'])),
+            "Complemento"       => strtoupper(htmlspecialchars(trim($_POST['Complemento']))),
+            "Exp"               => strtoupper(htmlspecialchars(trim($_POST['Exp']))),
+            "Nombre"            => strtoupper(htmlspecialchars(trim($_POST['Nombre']))),
+            "Apaterno"          => strtoupper(htmlspecialchars(trim($_POST['Apaterno']))),
+            "Amaterno"          => strtoupper(htmlspecialchars(trim($_POST['Amaterno']))),
             "FechaNacimiento"   => htmlspecialchars(trim($_POST['FechaNacimiento'])),
-            "CedulaProfesional" => htmlspecialchars(trim($_POST['CedulaProfesional'])),
-            "Especialidad"      => htmlspecialchars(trim($_POST['Especialidad'])),
-            "Direccion"         => htmlspecialchars(trim($_POST['Direccion'])),
-            "Correo"            => htmlspecialchars(trim($_POST['Correo'])),
-            "Tel"          => htmlspecialchars(trim($_POST['Tel'])), 
-            "Cel"           => htmlspecialchars(trim($_POST['Cel'])), 
+            "CedulaProfesional" => strtoupper(htmlspecialchars(trim($_POST['CedulaProfesional']))),
+            "Especialidad"      => strtoupper(htmlspecialchars(trim($_POST['Especialidad']))),
+            "Direccion"         => strtoupper(htmlspecialchars(trim($_POST['Direccion']))),
+            "Correo"            => htmlspecialchars(trim($_POST['Correo'])), // Correo en minúsculas
+            "Tel"          => htmlspecialchars(trim($_POST['Tel'])),
+            "Cel"           => htmlspecialchars(trim($_POST['Cel'])),
         );
         
         
@@ -160,16 +176,16 @@ class DocentesControlador
         if (isset($_POST["editarDocente"])) {
             $DatosDocente = array(
                 "Ci"                => htmlspecialchars(trim($_POST['editCi'])),
-                "Complemento"       => htmlspecialchars(trim($_POST['editComplemento'])),
-                "Exp"               => htmlspecialchars(trim($_POST['editExp'])),
-                "Nombre"            => htmlspecialchars(trim($_POST['editNombre'])),
-                "Apaterno"          => htmlspecialchars(trim($_POST['editApaterno'])),
-                "Amaterno"          => htmlspecialchars(trim($_POST['editAmaterno'])),
+                "Complemento"       => strtoupper(htmlspecialchars(trim($_POST['editComplemento']))),
+                "Exp"               => strtoupper(htmlspecialchars(trim($_POST['editExp']))),
+                "Nombre"            => strtoupper(htmlspecialchars(trim($_POST['editNombre']))),
+                "Apaterno"          => strtoupper(htmlspecialchars(trim($_POST['editApaterno']))),
+                "Amaterno"          => strtoupper(htmlspecialchars(trim($_POST['editAmaterno']))),
                 "FechaNacimiento"   => htmlspecialchars(trim($_POST['editFechaNacimiento'])),
-                "CedulaProfesional" => htmlspecialchars(trim($_POST['editCedulaProfesional'])),
-                "Especialidad"      => htmlspecialchars(trim($_POST['editEspecialidad'])),
-                "Direccion"         => htmlspecialchars(trim($_POST['editDireccion'])),
-                "Correo"            => htmlspecialchars(trim($_POST['editCorreo'])),
+                "CedulaProfesional" => strtoupper(htmlspecialchars(trim($_POST['editCedulaProfesional']))),
+                "Especialidad"      => strtoupper(htmlspecialchars(trim($_POST['editEspecialidad']))),
+                "Direccion"         => strtoupper(htmlspecialchars(trim($_POST['editDireccion']))),
+                "Correo"            => htmlspecialchars(trim($_POST['editCorreo'])), // Correo en minúsculas
                 "Tel"               => htmlspecialchars(trim($_POST['editTel'])),
                 "Cel"               => htmlspecialchars(trim($_POST['editCel']))
             );

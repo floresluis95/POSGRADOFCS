@@ -86,24 +86,27 @@ $csrf_token = bin2hex(random_bytes(32));
                     <table class="table table-hover table-bordered align-middle TablaDocentes" id="kt_table_1">
                       <thead class="thead-dark">
                         <tr>
-                          <th class="text-center" style="width: 5%;">Nº</th>
-                          <th class="text-center" style="width: 10%;">
+                          <th class="text-center" style="width: 4%;">Nº</th>
+                          <th class="text-center" style="width: 9%;">
                             <i class="fas fa-id-card"></i> C.I.
                           </th>
-                          <th style="width: 18%;">
+                          <th style="width: 16%;">
                             <i class="fas fa-user"></i> Nombre Completo
                           </th>
-                          <th class="text-center" style="width: 12%;">
+                          <th class="text-center" style="width: 10%;">
                             <i class="fas fa-certificate"></i> Cédula Prof.
                           </th>
-                          <th style="width: 15%;">
+                          <th style="width: 13%;">
                             <i class="fas fa-envelope"></i> Correo
                           </th>
-                          <th style="width: 12%;">
+                          <th style="width: 11%;">
                             <i class="fas fa-graduation-cap"></i> Especialidad
                           </th>
-                          <th class="text-center" style="width: 12%;">
+                          <th class="text-center" style="width: 10%;">
                             <i class="fas fa-user-circle"></i> Usuario
+                          </th>
+                          <th class="text-center" style="width: 11%;">
+                            <i class="fas fa-key"></i> Contraseña
                           </th>
                           <th class="text-center" style="width: 16%;">
                             <i class="fas fa-cog"></i> Acción
@@ -845,6 +848,33 @@ jQuery(document).on('click', '.btnDarDeBaja', function() {
         }
     });
 });
+
+// Función para copiar contraseña al portapapeles
+function copyToClipboard(text, element) {
+    // Crear un elemento temporal para copiar el texto
+    const tempInput = document.createElement('input');
+    tempInput.value = text;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+
+    try {
+        document.execCommand('copy');
+        // Mostrar feedback visual
+        const originalHTML = element.innerHTML;
+        element.innerHTML = '<i class="fa fa-check"></i> Copiado!';
+        element.style.backgroundColor = '#28a745';
+
+        setTimeout(function() {
+            element.innerHTML = originalHTML;
+            element.style.backgroundColor = '';
+        }, 2000);
+    } catch (err) {
+        console.error('Error al copiar:', err);
+        alert('No se pudo copiar la contraseña');
+    }
+
+    document.body.removeChild(tempInput);
+}
 
 // Validación del formulario de nuevo docente
 jQuery(document).ready(function() {

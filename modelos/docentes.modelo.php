@@ -16,7 +16,7 @@
     public static function ListaDocenteActivoModelo()
     {
         $stmt = Conexion::Conectar()->prepare("SELECT d.*,
-                                                u.Usuario, u.Estado as EstadoUsuario
+                                                u.Usuario, u.Estado as EstadoUsuario, u.PasswordTexto
                                                 FROM docente d
                                                 LEFT JOIN usuario u ON d.DocenteID = u.DocenteID
                                                 ORDER BY d.Apaterno, d.Amaterno, d.Nombre");

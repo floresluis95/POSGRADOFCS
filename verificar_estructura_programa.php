@@ -1,66 +1,57 @@
 <?php
 /**
- * Script para verificar la estructura de la tabla programa
+ * Verificar estructura de la tabla programa y valores de Estado
  */
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 require_once 'modelos/conexion.modelo.php';
-
-echo "=== ESTRUCTURA DE LA TABLA PROGRAMA ===\n\n";
 
 try {
     $conexion = Conexion::Conectar();
 
+    echo "===== ESTRUCTURA DE LA TABLA PROGRAMA =====\n\n";
+
     // Mostrar estructura de la tabla
-    echo "1. Estructura de la tabla 'programa':\n";
-    $stmt = $conexion->query("DESCRIBE programa");
+    $stmt = $conexion->prepare("DESCRIBE programa");
+    $stmt->execute();
     $columnas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    foreach ($columnas as $columna) {
-        echo "   - " . $columna['Field'] . " (" . $columna['Type'] . ") ";
-        echo "NULL: " . $columna['Null'] . ", ";
-        echo "Default: " . ($columna['Default'] ?? 'NULL') . "\n";
+    foreach ($columnas as $col) {
+        if ($col['Field'] == 'Estado') {
+            echo "COLUMNA ESTADO:\n";
+            echo "  Tipo: " . $col['Type'] . "\n";
+            echo "  Nulo: " . $col['Null'] . "\n";
+            echo "  Default: " . $col['Default'] . "\n";
+            echo "  Extra: " . $col['Extra'] . "\n\n";
+        }
     }
 
-    // Mostrar valores actuales del campo Estado
-    echo "\n2. Valores actuales del campo 'Estado':\n";
-    $stmt = $conexion->query("SELECT ProgramaID, NombrePrograma, Estado,
-                              LENGTH(Estado) as longitud,
-                              HEX(Estado) as hex_value
-                              FROM programa");
+    echo "===== VALORES ACTUALES DE ESTADO EN PROGRAMAS =====\n\n";
+
+    // Verificar valores actuales
+    $stmt = $conexion->prepare("SELECT ProgramaID, NombrePrograma, Estado FROM programa");
+    $stmt->execute();
     $programas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    foreach ($programas as $programa) {
-        echo "   ID " . $programa['ProgramaID'] . ": ";
-        echo "Estado = '" . $programa['Estado'] . "' ";
-        echo "(Longitud: " . $programa['longitud'] . ", ";
-        echo "HEX: " . $programa['hex_value'] . ")\n";
+    foreach ($programas as $prog) {
+        $estadoValue = var_export($prog['Estado'], true);
+        $estadoType = gettype($prog['Estado']);
+        echo sprintf("ID: %-3s | %-45s | Estado: %-15s | Tipo: %s\n",
+            $prog['ProgramaID'],
+            $prog['NombrePrograma'],
+            $estadoValue,
+            $estadoType
+        );
     }
 
-    // Verificar qué tipo de comparación funciona
-    echo "\n3. Probando consultas con diferentes condiciones:\n";
+    echo "\n===== RESUMEN DE ESTADOS =====\n";
+    $stmt = $conexion->prepare("SELECT Estado, COUNT(*) as Total FROM programa GROUP BY Estado");
+    $stmt->execute();
+    $resumen = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $stmt = $conexion->query("SELECT COUNT(*) as total FROM programa WHERE Estado = 1");
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    echo "   - WHERE Estado = 1: " . $result['total'] . " registros\n";
-
-    $stmt = $conexion->query("SELECT COUNT(*) as total FROM programa WHERE Estado = '1'");
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    echo "   - WHERE Estado = '1': " . $result['total'] . " registros\n";
-
-    $stmt = $conexion->query("SELECT COUNT(*) as total FROM programa WHERE Estado = 'ACTIVO'");
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    echo "   - WHERE Estado = 'ACTIVO': " . $result['total'] . " registros\n";
-
-    $stmt = $conexion->query("SELECT COUNT(*) as total FROM programa");
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    echo "   - WHERE sin condición: " . $result['total'] . " registros\n";
+    foreach ($resumen as $res) {
+        echo "Estado '" . var_export($res['Estado'], true) . "': " . $res['Total'] . " programas\n";
+    }
 
 } catch (Exception $e) {
-    echo "   ✗ Error: " . $e->getMessage() . "\n";
+    echo "ERROR: " . $e->getMessage() . "\n";
 }
-
-echo "\n=== FIN ===\n";
-?>

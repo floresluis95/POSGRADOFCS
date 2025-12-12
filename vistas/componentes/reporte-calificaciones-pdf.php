@@ -31,6 +31,60 @@ $estudiantes = CalificacionModelo::ObtenerEstudiantesPorModuloModelo($moduloID, 
 // Fecha actual
 date_default_timezone_set("America/La_Paz");
 $fechaImpresion = date('d/m/Y H:i:s');
+
+/**
+ * Convierte un número a su representación literal en español
+ * @param float $numero - Número a convertir (puede tener decimales)
+ * @return string - Representación en letras
+ */
+function numeroALetras($numero) {
+    $entero = intval($numero); // Convertir a entero (sin decimales)
+
+    $unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
+    $decenas = ['', 'DIEZ', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
+    $especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+    $veintenas = ['VEINTE', 'VEINTIUNO', 'VEINTIDOS', 'VEINTITRES', 'VEINTICUATRO', 'VEINTICINCO', 'VEINTISEIS', 'VEINTISIETE', 'VEINTIOCHO', 'VEINTINUEVE'];
+
+    if ($entero == 0) {
+        $literal = 'CERO';
+    } elseif ($entero == 100) {
+        $literal = 'CIEN';
+    } elseif ($entero > 100) {
+        $literal = 'CIENTO ';
+        $resto = $entero - 100;
+
+        if ($resto >= 10 && $resto < 20) {
+            $literal .= $especiales[$resto - 10];
+        } elseif ($resto >= 20 && $resto < 30) {
+            $literal .= $veintenas[$resto - 20];
+        } elseif ($resto >= 30) {
+            $dec = floor($resto / 10);
+            $uni = $resto % 10;
+            $literal .= $decenas[$dec];
+            if ($uni > 0) {
+                $literal .= ' Y ' . $unidades[$uni];
+            }
+        } else {
+            $literal .= $unidades[$resto];
+        }
+    } elseif ($entero >= 10 && $entero < 20) {
+        $literal = $especiales[$entero - 10];
+    } elseif ($entero >= 20 && $entero < 30) {
+        $literal = $veintenas[$entero - 20];
+    } else {
+        $dec = floor($entero / 10);
+        $uni = $entero % 10;
+        $literal = $decenas[$dec];
+        if ($uni > 0) {
+            if ($dec > 0) {
+                $literal .= ' Y ';
+            }
+            $literal .= $unidades[$uni];
+        }
+    }
+
+    return trim($literal);
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -449,14 +503,16 @@ th {
                         $estadoClase = 'badge-pendiente';
                         $estadoTexto = 'Pendiente';
                         $notaMostrar = '-';
+                        $notaLiteral = '-';
                         $pendientes++;
                     } else {
-                        $notaFloat = floatval($nota);
-                        $notaMostrar = number_format($notaFloat, 2);
+                        $notaInt = intval($nota);
+                        $notaMostrar = $notaInt;
+                        $notaLiteral = numeroALetras($notaInt);
                         $totalNotas++;
-                        $sumaNotas += $notaFloat;
+                        $sumaNotas += $notaInt;
 
-                        if ($notaFloat >= 51) {
+                        if ($notaInt >= 76) {
                             $estadoClase = 'badge-aprobado';
                             $estadoTexto = 'Aprobado';
                             $aprobados++;
@@ -473,8 +529,7 @@ th {
                 <td class="col-estudiante"></td>
                 <td class="col-estudiante"><?php echo $moduloCodigo; ?></td>
                 <td class="col-nota"><?php echo $notaMostrar; ?></td>
-             
-                
+                <td class="col-literal"><?php echo $notaLiteral; ?></td>
             </tr>
             <?php
                 endforeach;

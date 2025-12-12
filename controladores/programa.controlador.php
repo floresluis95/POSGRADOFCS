@@ -156,17 +156,17 @@ class ProgramasControladores
         {
 
                 $datosPrograma =array(
-                "NombrePrograma" => htmlspecialchars(trim($_POST['NombrePrograma'])), // Sanitizar texto
-                "GradoAcademico" => htmlspecialchars(trim($_POST['GradoAcademico'])),
+                "NombrePrograma" => strtoupper(htmlspecialchars(trim($_POST['NombrePrograma']))), // Sanitizar y convertir a mayúsculas
+                "GradoAcademico" => strtoupper(htmlspecialchars(trim($_POST['GradoAcademico']))),
                 "DuracionMeses" => (int)$_POST['DuracionMeses'],
                 "Modulos" => (int)$_POST['Modulos'], // Forzar tipo entero
                 "FechaInicio" => htmlspecialchars(trim($_POST['FechaInicio'])),
-                "Sede" => htmlspecialchars(trim($_POST['Sede'])),
+                "Sede" => strtoupper(htmlspecialchars(trim($_POST['Sede']))),
                 "Costo" => (float)$_POST['Costo'], // Forzar tipo flotante/decimal
                 "CostoMatricula" => (float)$_POST['CostoMatricula'], // Costo de matrícula
-                "Detalle" => htmlspecialchars(trim($_POST['Detalle'])),
-                "Version" => htmlspecialchars(trim($_POST['Version'] ?? 'V-1')), // Versión del programa
-                "NumeroTramite" => htmlspecialchars(trim($_POST['NumeroTramite'] ?? '')) // Número de trámite
+                "Detalle" => strtoupper(htmlspecialchars(trim($_POST['Detalle']))),
+                "Version" => strtoupper(htmlspecialchars(trim($_POST['Version'] ?? 'V-1'))), // Versión del programa
+                "NumeroTramite" => strtoupper(htmlspecialchars(trim($_POST['NumeroTramite'] ?? ''))) // Número de trámite
                 );
                 $nombreprograma = $_POST['NombrePrograma'];
                 $existe = ProgramasModelos::Buscarprogramamodelo($nombreprograma);
@@ -237,17 +237,17 @@ class ProgramasControladores
         {
             $datosPrograma = array(
                 "ProgramaID" => (int)$_POST['ProgramaIDEditar'],
-                "NombrePrograma" => htmlspecialchars(trim($_POST['NombreProgramaEditar'])),
-                "GradoAcademico" => htmlspecialchars(trim($_POST['GradoAcademicoEditar'])),
+                "NombrePrograma" => strtoupper(htmlspecialchars(trim($_POST['NombreProgramaEditar']))),
+                "GradoAcademico" => strtoupper(htmlspecialchars(trim($_POST['GradoAcademicoEditar']))),
                 "DuracionMeses" => (int)$_POST['DuracionMesesEditar'],
                 "Modulos" => (int)$_POST['ModulosEditar'],
                 "FechaInicio" => htmlspecialchars(trim($_POST['FechaInicioEditar'])),
-                "Sede" => htmlspecialchars(trim($_POST['SedeEditar'])),
+                "Sede" => strtoupper(htmlspecialchars(trim($_POST['SedeEditar']))),
                 "Costo" => (float)$_POST['CostoEditar'],
                 "CostoMatricula" => (float)$_POST['CostoMatriculaEditar'],
-                "Detalle" => htmlspecialchars(trim($_POST['DetalleEditar'])),
-                "Version" => htmlspecialchars(trim($_POST['VersionEditar'] ?? 'V-1')),
-                "NumeroTramite" => htmlspecialchars(trim($_POST['NumeroTramiteEditar'] ?? ''))
+                "Detalle" => strtoupper(htmlspecialchars(trim($_POST['DetalleEditar']))),
+                "Version" => strtoupper(htmlspecialchars(trim($_POST['VersionEditar'] ?? 'V-1'))),
+                "NumeroTramite" => strtoupper(htmlspecialchars(trim($_POST['NumeroTramiteEditar'] ?? '')))
             );
 
             $resultado = ProgramasModelos::ActualizarProgramaModelo($datosPrograma);

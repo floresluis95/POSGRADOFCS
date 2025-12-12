@@ -398,6 +398,35 @@
             }
         }
 
+        /**
+         * Genera una contraseña compleja y segura
+         * Formato: Primeras 2 letras + CI + 4 caracteres aleatorios + símbolo
+         * Ejemplo: Ju1234567xK9p@
+         */
+        private function GenerarPasswordCompleja($nombre, $ci)
+        {
+            // Obtener primeras 2 letras del nombre (primera mayúscula, segunda minúscula)
+            $primerLetra = strtoupper(substr($nombre, 0, 1));
+            $segundaLetra = strtolower(substr($nombre, 1, 1));
+            $prefijo = $primerLetra . $segundaLetra;
+
+            // Generar 4 caracteres aleatorios (mezcla de mayúsculas, minúsculas y números)
+            $caracteres = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            $aleatorios = '';
+            for ($i = 0; $i < 4; $i++) {
+                $aleatorios .= $caracteres[random_int(0, strlen($caracteres) - 1)];
+            }
+
+            // Seleccionar un símbolo especial aleatorio
+            $simbolos = '@#$%&*';
+            $simbolo = $simbolos[random_int(0, strlen($simbolos) - 1)];
+
+            // Construir la contraseña: Primeras2Letras + CI + 4Aleatorios + Símbolo
+            $password = $prefijo . $ci . $aleatorios . $simbolo;
+
+            return $password;
+        }
+
         public function CrearUsuarioDocenteControlador()
         {
             // Debug: Registrar todos los datos POST recibidos
@@ -432,7 +461,7 @@
                 // Usuario será el número de carnet (CI)
                 $usuario = $ci;
 
-                // Contraseña será: primera letra del nombre + número de carnet
+                // Obtener nombre del docente
                 $nombre = isset($_POST['docente_nombre']) ? $_POST['docente_nombre'] : '';
                 error_log("Nombre recibido: " . $nombre);
 
@@ -449,8 +478,8 @@
                     return;
                 }
 
-                $primeraLetra = strtoupper(substr($nombre, 0, 1));
-                $passwordTexto = $primeraLetra . $ci;
+                // Generar contraseña compleja
+                $passwordTexto = $this->GenerarPasswordCompleja($nombre, $ci);
                 $password = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
 
                 error_log("Credenciales generadas - Usuario: " . $usuario . ", Password texto: " . $passwordTexto);
@@ -459,6 +488,7 @@
                     "DocenteID" => $docenteID,
                     "Usuario" => $usuario,
                     "Password" => $password,
+                    "PasswordTexto" => $passwordTexto,
                     "Tipo" => "DOC"
                 );
 
@@ -475,7 +505,7 @@
                     <script>
                     swal({
                         title: "EXITOSO!",
-                        text: "Usuario: '.$usuario.'\\nContraseña: '.$passwordTexto.'",
+                        text: "Usuario: '.$usuario.'\\nContraseña: '.$passwordTexto.'\\n\\n⚠️ IMPORTANTE: Guarde esta contraseña, es la única vez que se mostrará en texto plano.",
                         icon: "success",
                         button: "Aceptar"
                     })

@@ -187,8 +187,8 @@ if (empty($estudiantes)) {
     $contador = 1;
     foreach ($estudiantes as $estudiante) {
         $nombreCompleto = strtoupper(trim($estudiante['Apaterno'] . ' ' . $estudiante['Amaterno'] . ' ' . $estudiante['Nombre']));
-        $nota = $estudiante['Nota'] !== null ? number_format(floatval($estudiante['Nota']), 0) : '';
-        $notaLiteral = $estudiante['Nota'] !== null ? convertirNotaALiteral(floatval($estudiante['Nota'])) : '';
+        $nota = $estudiante['Nota'] !== null ? intval($estudiante['Nota']) : '';
+        $notaLiteral = $estudiante['Nota'] !== null ? convertirNotaALiteral(intval($estudiante['Nota'])) : '';
 
         // Dibujar fila
         $pdf->Cell(10, 6, $contador, 1, 0, 'C', false);

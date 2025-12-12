@@ -5,7 +5,7 @@ class ProgramasModelos
 {
     public static function ListaProgramaModelo()
     {
-        $stmt = Conexion::Conectar()->prepare("SELECT * FROM programa ORDER BY FechaInicio DESC");
+        $stmt = Conexion::Conectar()->prepare("SELECT * FROM programa WHERE Estado = 1 ORDER BY FechaInicio DESC");
         $stmt -> execute();
         return $stmt -> fetchAll();
         $stmt =null;
@@ -14,7 +14,7 @@ class ProgramasModelos
     // Buscar programas con filtros
     public static function BuscarProgramasConFiltros($grado = null, $fechaInicio = null, $fechaFin = null)
     {
-        $sql = "SELECT * FROM programa WHERE 1=1";
+        $sql = "SELECT * FROM programa WHERE Estado = 1";
         $params = array();
 
         // Filtro por grado académico
@@ -58,7 +58,7 @@ class ProgramasModelos
 
     $stmt = Conexion::conectar()->prepare("
         INSERT INTO programa (NombrePrograma, GradoAcademico, Codigo, DuracionMeses, Modulos, FechaInicio, Sede, Costo, CostoMatricula, Detalle, Estado, Version, NumeroTramite)
-        VALUES (:nombre, :grado, :codigo, :duracionmeses, :modulos, :fecha, :sede, :costo, :costomatricula, :detalle, 'ACTIVO', :version, :numerotramite)
+        VALUES (:nombre, :grado, :codigo, :duracionmeses, :modulos, :fecha, :sede, :costo, :costomatricula, :detalle, '1', :version, :numerotramite)
     ");
 
     $stmt->bindParam(":nombre", $datos["NombrePrograma"], PDO::PARAM_STR);
@@ -203,7 +203,7 @@ class ProgramaEstadoModelo
 {
   public static function SubirProgramaModelo($id)
 {
-    $stmt = Conexion::conectar()->prepare("UPDATE programa SET Estado = 'ACTIVO' WHERE ProgramaID = :id");
+    $stmt = Conexion::conectar()->prepare("UPDATE programa SET Estado = '1' WHERE ProgramaID = :id");
     $stmt->bindParam(":id", $id, PDO::PARAM_INT);
 
     if ($stmt->execute()) {
@@ -218,7 +218,7 @@ class ProgramaEstadoModelo
 }
 
     public static function BajarProgramaModelo($id) {
-        $stmt = Conexion::conectar()->prepare("UPDATE programa SET Estado = 'INACTIVO' WHERE ProgramaID = :id");
+        $stmt = Conexion::conectar()->prepare("UPDATE programa SET Estado = '0' WHERE ProgramaID = :id");
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
 
         if ($stmt->execute()) {

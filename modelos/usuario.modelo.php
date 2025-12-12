@@ -190,12 +190,13 @@
                 $conexion->beginTransaction();
 
                 // Insertar en tabla usuario (DocenteID para docentes, IdPersonal y EstudianteID NULL)
-                $stmt = $conexion->prepare("INSERT INTO `usuario` (`IdPersonal`, `EstudianteID`, `DocenteID`, `Usuario`, `Password`, `Tipo`, `Estado`)
-                                           VALUES (NULL, NULL, :DocenteID, :Usuario, :Password, :Tipo, '1')");
+                $stmt = $conexion->prepare("INSERT INTO `usuario` (`IdPersonal`, `EstudianteID`, `DocenteID`, `Usuario`, `Password`, `PasswordTexto`, `Tipo`, `Estado`)
+                                           VALUES (NULL, NULL, :DocenteID, :Usuario, :Password, :PasswordTexto, :Tipo, '1')");
 
                 $stmt->bindParam(":DocenteID", $DatosModelo['DocenteID'], PDO::PARAM_INT);
                 $stmt->bindParam(":Usuario", $DatosModelo['Usuario'], PDO::PARAM_STR);
                 $stmt->bindParam(":Password", $DatosModelo['Password'], PDO::PARAM_STR);
+                $stmt->bindParam(":PasswordTexto", $DatosModelo['PasswordTexto'], PDO::PARAM_STR);
                 $stmt->bindParam(":Tipo", $DatosModelo['Tipo'], PDO::PARAM_STR);
 
                 if ($stmt->execute()) {

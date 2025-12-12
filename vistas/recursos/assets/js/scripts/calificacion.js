@@ -370,7 +370,7 @@ function mostrarFormularioCalificaciones(estudiantes) {
 
     estudiantes.forEach(function(estudiante, index) {
         const nombreCompleto = `${estudiante.Nombre} ${estudiante.Apaterno} ${estudiante.Amaterno}`;
-        const notaActual = estudiante.Nota !== null ? parseFloat(estudiante.Nota) : '';
+        const notaActual = estudiante.Nota !== null ? parseInt(estudiante.Nota) : '';
         const estadoClass = getEstadoClass(notaActual);
         const estadoTexto = getEstadoTexto(notaActual);
         const notaInputClass = getNotaInputClass(notaActual);
@@ -387,10 +387,10 @@ function mostrarFormularioCalificaciones(estudiantes) {
                         value="${notaActual}"
                         min="0"
                         max="100"
-                        step="0.01"
+                        step="1"
                         data-estudiante-id="${estudiante.EstudianteID}"
                         onchange="validarNota(this)"
-                        placeholder="0.00"
+                        placeholder="0"
                         required
                     >
                 </td>
@@ -421,21 +421,21 @@ function mostrarFormularioCalificaciones(estudiantes) {
 
 function getEstadoClass(nota) {
     if (nota === '' || nota === null) return 'kt-badge--secondary';
-    return parseFloat(nota) >= 51 ? 'kt-badge--success' : 'kt-badge--danger';
+    return parseInt(nota) >= 76 ? 'kt-badge--success' : 'kt-badge--danger';
 }
 
 function getEstadoTexto(nota) {
     if (nota === '' || nota === null) return 'Pendiente';
-    return parseFloat(nota) >= 51 ? 'Aprobado' : 'Reprobado';
+    return parseInt(nota) >= 76 ? 'Aprobado' : 'Reprobado';
 }
 
 function getNotaInputClass(nota) {
     if (nota === '' || nota === null) return '';
-    return parseFloat(nota) >= 51 ? 'is-valid' : 'is-invalid';
+    return parseInt(nota) >= 76 ? 'is-valid' : 'is-invalid';
 }
 
 function validarNota(input) {
-    const nota = parseFloat(input.value);
+    const nota = parseInt(input.value);
     const estudianteID = $(input).data('estudiante-id');
     const estadoBadge = $(`.kt-badge[data-estudiante-id="${estudianteID}"]`);
 
@@ -451,8 +451,8 @@ function validarNota(input) {
         return;
     }
 
-    // Validar aprobado/reprobado (nota mínima 51)
-    if (nota >= 51) {
+    // Validar aprobado/reprobado (nota mínima 76)
+    if (nota >= 76) {
         $(input).addClass('is-valid');
         estadoBadge.removeClass('kt-badge--danger kt-badge--warning kt-badge--secondary')
                    .addClass('kt-badge--success')
@@ -478,7 +478,7 @@ function guardarCalificaciones() {
 
     $('.input-nota').each(function() {
         const estudianteID = $(this).data('estudiante-id');
-        const nota = parseFloat($(this).val());
+        const nota = parseInt($(this).val());
 
         // Validar que tenga nota
         if ($(this).val() === '' || isNaN(nota)) {

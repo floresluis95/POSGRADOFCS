@@ -38,7 +38,7 @@ class ModuloControlador
                 $codigoKey = 'codigomodulo_' . $i;
 
                 if (isset($_POST[$nombreKey]) && isset($_POST[$codigoKey])) {
-                    $nombremodulo = htmlspecialchars(trim($_POST[$nombreKey]));
+                    $nombremodulo = strtoupper(htmlspecialchars(trim($_POST[$nombreKey])));
                     $codigomodulo = (int)$_POST[$codigoKey];
 
                     if (!empty($nombremodulo) && $codigomodulo > 0) {
@@ -165,11 +165,11 @@ class ModuloControlador
                 $costoKey = 'costomodulo_' . $i;
 
                 if (isset($_POST[$codigoKey])) {
-                    $codigomodulo = htmlspecialchars(trim($_POST[$codigoKey]));
+                    $codigomodulo = strtoupper(htmlspecialchars(trim($_POST[$codigoKey])));
 
                     // El nombre es opcional, si está vacío usar el código como nombre
                     $nombremodulo = isset($_POST[$nombreKey]) && !empty(trim($_POST[$nombreKey]))
-                        ? htmlspecialchars(trim($_POST[$nombreKey]))
+                        ? strtoupper(htmlspecialchars(trim($_POST[$nombreKey])))
                         : $codigomodulo;
 
                     $docenteID = isset($_POST[$docenteKey]) && !empty($_POST[$docenteKey])
@@ -329,8 +329,8 @@ class ModuloControlador
 
             $idmodulo = (int)$_POST['idmodulo'];
             $programaID = (int)$_POST['programaID'];
-            $nombremodulo = htmlspecialchars(trim($_POST['nombremodulo']));
-            $codigomodulo = htmlspecialchars(trim($_POST['codigomodulo']));
+            $nombremodulo = strtoupper(htmlspecialchars(trim($_POST['nombremodulo'])));
+            $codigomodulo = strtoupper(htmlspecialchars(trim($_POST['codigomodulo'])));
             $docenteID = isset($_POST['docenteID']) && !empty($_POST['docenteID']) ? (int)$_POST['docenteID'] : null;
             $costomodulo = isset($_POST['costomodulo']) && !empty($_POST['costomodulo']) ? (float)$_POST['costomodulo'] : 0;
 
