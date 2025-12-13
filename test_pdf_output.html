@@ -1,0 +1,84 @@
+<!DOCTYPE html><html><head><title>Test PDF Calificaciones</title><style>
+    body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+    .box { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+    .info { color: blue; font-weight: bold; }
+    .warning { color: orange; font-weight: bold; }
+    pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+    table th, table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    table th { background: #667eea; color: white; }
+</style></head><body><h1>🧪 Test de Generación de PDF de Calificaciones</h1><div class='box'><h2>1. Verificar Archivo PDF</h2><p class='success'>✅ Archivo existe: reporte-calificaciones-pdf.php</p><p><strong>Ruta:</strong> <code>C:\xampp\htdocs\POSGRADOFCS/vistas/componentes/reporte-calificaciones-pdf.php</code></p><p><strong>Tamaño:</strong> 19513 bytes</p><p><strong>Última modificación:</strong> 2025-12-13 02:12:16</p></div><div class='box'><h2>2. Módulos con Calificaciones</h2><p class='error'>❌ Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'p.IdPrograma' in 'field list'</p></div><div class='box'><h2>3. Test Directo con Parámetros de Ejemplo</h2><p class='warning'>⚠️ No hay módulos disponibles para probar</p></div><div class='box'><h2>4. Test del Formulario JavaScript</h2><p class='info'>💡 Prueba el formulario de fechas aquí:</p><button id='testFormulario' style='background:#1dc9b7;color:white;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;'>
+    📅 Probar Formulario de Fechas
+</button></div><div class='box'><h2>5. Verificar Imágenes del PDF</h2><table><tr><th>Imagen</th><th>Estado</th><th>Ruta</th></tr><tr><td>Logo UTO</td><td class='success'>✅ Existe</td><td><code>C:\xampp\htdocs\POSGRADOFCS/extensiones/imagenespdf/logouto.png</code></td></tr><tr><td>Logo FCS</td><td class='success'>✅ Existe</td><td><code>C:\xampp\htdocs\POSGRADOFCS/extensiones/imagenespdf/logofcs.png</code></td></tr></table></div><div class='box'><h2>6. Instrucciones de Uso</h2><ol style='line-height: 2em;'><li><strong>Test desde este script:</strong> Usa los botones 'Ver PDF' de la tabla de arriba</li><li><strong>Test desde la aplicación:</strong><ul><li>Ve a <a href='index.php?ruta=rnotasestudiante'>rnotasestudiante</a></li><li>Selecciona un docente</li><li>Click en 'Ver Módulos Cerrados'</li><li>Click en botón 'Imprimir' (solo en módulos cerrados)</li><li>Completa el formulario de fechas</li><li>Click en 'Generar PDF'</li></ul></li><li><strong>Solución de problemas:</strong><ul><li>Si no abre el PDF, verifica que no haya bloqueador de pop-ups</li><li>Si muestra error, revisa la consola del navegador (F12)</li><li>Si el PDF está en blanco, verifica que haya calificaciones registradas</li></ul></li></ol></div><script src='https://code.jquery.com/jquery-3.6.0.min.js'></script><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><script>
+$('#testFormulario').on('click', function() {
+    Swal.fire({
+        title: '<i class="la la-calendar"></i> Fechas del Módulo',
+        html: `
+            <div style="text-align: left; padding: 20px;">
+                <h5 style="color: #5867dd; margin-bottom: 15px;">
+                    📚 Módulo de Prueba
+                </h5>
+                <p style="margin-bottom: 20px; color: #666;">
+                    <strong>Código:</strong> TEST-001<br>
+                    <strong>Programa:</strong> Programa de Prueba
+                </p>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="fechaInicio" style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">
+                        Fecha de Inicio:
+                    </label>
+                    <input type="date" id="fechaInicio" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="fechaFin" style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">
+                        Fecha de Finalización:
+                    </label>
+                    <input type="date" id="fechaFin" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;">
+                </div>
+
+                <p style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-left: 3px solid #5867dd; font-size: 13px; color: #555;">
+                    ℹ️ Estas fechas se mostrarán en el reporte PDF de calificaciones.
+                </p>
+            </div>
+        `,
+        width: '600px',
+        showCancelButton: true,
+        confirmButtonColor: '#5867dd',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '🖨️ Generar PDF',
+        cancelButtonText: 'Cancelar',
+        focusConfirm: false,
+        preConfirm: () => {
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+
+            if (!fechaInicio || !fechaFin) {
+                Swal.showValidationMessage('Por favor, ingrese ambas fechas');
+                return false;
+            }
+
+            if (fechaInicio > fechaFin) {
+                Swal.showValidationMessage('La fecha de inicio debe ser anterior o igual a la fecha de finalización');
+                return false;
+            }
+
+            return { fechaInicio: fechaInicio, fechaFin: fechaFin };
+        }
+    }).then((result) => {
+        if (result.isConfirmed && result.value) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Fechas Válidas',
+                html: `
+                    <p><strong>Fecha Inicio:</strong> ${result.value.fechaInicio}</p>
+                    <p><strong>Fecha Fin:</strong> ${result.value.fechaFin}</p>
+                    <p style="margin-top:15px;color:#666;">En la aplicación real, ahora se generaría el PDF</p>
+                `
+            });
+        }
+    });
+});
+</script></body></html>

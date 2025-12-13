@@ -20,6 +20,26 @@ $moduloCodigo = isset($_GET['moduloCodigo']) ? $_GET['moduloCodigo'] : '';
 $programaNombre = isset($_GET['programaNombre']) ? $_GET['programaNombre'] : '';
 $gradoAcademico = isset($_GET['gradoAcademico']) ? $_GET['gradoAcademico'] : '';
 $docenteNombre = isset($_GET['docenteNombre']) ? $_GET['docenteNombre'] : '';
+$fechaInicio = isset($_GET['fechaInicio']) ? $_GET['fechaInicio'] : '';
+$fechaFin = isset($_GET['fechaFin']) ? $_GET['fechaFin'] : '';
+
+// Formatear fechas al formato español
+$fechaInicioFormateada = '';
+$fechaFinFormateada = '';
+
+if ($fechaInicio) {
+    $fecha = DateTime::createFromFormat('Y-m-d', $fechaInicio);
+    if ($fecha) {
+        $fechaInicioFormateada = $fecha->format('d/m/Y');
+    }
+}
+
+if ($fechaFin) {
+    $fecha = DateTime::createFromFormat('Y-m-d', $fechaFin);
+    if ($fecha) {
+        $fechaFinFormateada = $fecha->format('d/m/Y');
+    }
+}
 
 // Incluir modelo
 require_once '../../modelos/conexion.modelo.php';
@@ -464,7 +484,10 @@ th {
     </tr>
      <tr>
         <td style="border: 1px solid black; padding: 8px;">FECHA:</td>
-        <td style="border: 1px solid black; padding: 8px;" colspan="2"> <input type="date">  <input type="date"> </td>
+        <td style="border: 1px solid black; padding: 8px;" colspan="2">
+            <strong>Inicio:</strong> <?php echo $fechaInicioFormateada ? $fechaInicioFormateada : '_____________'; ?> &nbsp;&nbsp;&nbsp;
+            <strong>Finalización:</strong> <?php echo $fechaFinFormateada ? $fechaFinFormateada : '_____________'; ?>
+        </td>
     </tr>
 </table>
     </div>

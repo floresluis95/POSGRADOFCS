@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test AJAX desde Navegador</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .box {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 400px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover { background: #5568d3; }
+        #log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .log-entry { margin: 5px 0; }
+        .log-error { color: #f48771; }
+        .log-success { color: #89d185; }
+        .log-info { color: #6cb6ff; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test AJAX - Notasdocente</h1>
+
+    <div class="box">
+        <h2>Instrucciones:</h2>
+        <ol>
+            <li><strong>IMPORTANTE:</strong> Primero debes iniciar sesión como docente en el sistema</li>
+            <li>Luego haz clic en el botón "Test AJAX obtenerDocente"</li>
+            <li>Revisa el log para ver qué sucede</li>
+        </ol>
+    </div>
+
+    <div class="box">
+        <h2>Pruebas:</h2>
+        <button onclick="testObtenerDocente()">🔍 Test AJAX: obtenerDocente</button>
+        <button onclick="testObtenerAsignaciones()">📚 Test AJAX: obtenerAsignaciones</button>
+        <button onclick="limpiarLog()">🧹 Limpiar Log</button>
+    </div>
+
+    <div class="box">
+        <h2>Estado:</h2>
+        <div id="estado">Esperando prueba...</div>
+    </div>
+
+    <div class="box">
+        <h2>Log de Eventos:</h2>
+        <div id="log"></div>
+    </div>
+
+    <div class="box">
+        <h2>Respuesta JSON:</h2>
+        <pre id="respuesta">-</pre>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry log-' + type;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function limpiarLog() {
+            document.getElementById('log').innerHTML = '';
+            document.getElementById('respuesta').textContent = '-';
+            document.getElementById('estado').innerHTML = 'Log limpiado';
+        }
+
+        function testObtenerDocente() {
+            log('=== Iniciando test obtenerDocente ===', 'info');
+            document.getElementById('estado').innerHTML = '⏳ Enviando petición...';
+
+            const url = 'ajax/calificacion.ajax.php';
+            log('URL: ' + url, 'info');
+            log('Acción: obtenerDocente', 'info');
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: {
+                    accion: 'obtenerDocente'
+                },
+                dataType: 'json',
+                beforeSend: function(xhr) {
+                    log('beforeSend: Enviando petición...', 'info');
+                },
+                success: function(response) {
+                    log('✅ SUCCESS: Respuesta recibida', 'success');
+                    log('Status: ' + response.status, 'success');
+
+                    document.getElementById('estado').innerHTML = '<span class="success">✅ Éxito</span>';
+                    document.getElementById('respuesta').textContent = JSON.stringify(response, null, 2);
+
+                    if (response.status === 'success') {
+                        log('Docente: ' + response.data.NombreCompleto, 'success');
+                        log('CI: ' + response.data.CICompleto, 'success');
+                    } else {
+                        log('Mensaje de error: ' + response.message, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    log('❌ ERROR en la petición', 'error');
+                    log('Status: ' + status, 'error');
+                    log('Error: ' + error, 'error');
+                    log('HTTP Code: ' + xhr.status, 'error');
+                    log('Response Text (primeros 500 chars):', 'error');
+                    log(xhr.responseText.substring(0, 500), 'error');
+
+                    document.getElementById('estado').innerHTML = '<span class="error">❌ Error de conexión</span>';
+                    document.getElementById('respuesta').textContent =
+                        'HTTP Status: ' + xhr.status + '\n' +
+                        'Status: ' + status + '\n' +
+                        'Error: ' + error + '\n\n' +
+                        'Response Text:\n' + xhr.responseText;
+                }
+            });
+        }
+
+        function testObtenerAsignaciones() {
+            log('=== Iniciando test obtenerAsignaciones ===', 'info');
+            document.getElementById('estado').innerHTML = '⏳ Enviando petición...';
+
+            // Primero obtener el docente
+            $.ajax({
+                url: 'ajax/calificacion.ajax.php',
+                method: 'POST',
+                data: { accion: 'obtenerDocente' },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.status === 'success') {
+                        const docenteID = response.data.DocenteID;
+                        log('DocenteID obtenido: ' + docenteID, 'success');
+
+                        // Ahora obtener asignaciones
+                        $.ajax({
+                            url: 'ajax/calificacion.ajax.php',
+                            method: 'POST',
+                            data: {
+                                accion: 'obtenerAsignaciones',
+                                docenteID: docenteID
+                            },
+                            dataType: 'json',
+                            success: function(response2) {
+                                log('✅ Asignaciones obtenidas', 'success');
+                                log('Total: ' + response2.data.length, 'success');
+
+                                document.getElementById('estado').innerHTML = '<span class="success">✅ Éxito</span>';
+                                document.getElementById('respuesta').textContent = JSON.stringify(response2, null, 2);
+                            },
+                            error: function(xhr, status, error) {
+                                log('❌ ERROR al obtener asignaciones', 'error');
+                                log('Error: ' + error, 'error');
+                                document.getElementById('estado').innerHTML = '<span class="error">❌ Error</span>';
+                            }
+                        });
+                    } else {
+                        log('❌ No se pudo obtener docente: ' + response.message, 'error');
+                        document.getElementById('estado').innerHTML = '<span class="error">❌ Error</span>';
+                    }
+                },
+                error: function(xhr, status, error) {
+                    log('❌ ERROR al obtener docente', 'error');
+                    log('Error: ' + error, 'error');
+                    document.getElementById('estado').innerHTML = '<span class="error">❌ Error</span>';
+                }
+            });
+        }
+
+        // Log inicial
+        log('Página cargada. Lista para pruebas.', 'success');
+        log('IMPORTANTE: Asegúrate de haber iniciado sesión primero', 'info');
+    </script>
+</body>
+</html>

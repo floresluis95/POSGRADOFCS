@@ -6,6 +6,10 @@ date_default_timezone_set("America/La_Paz");
 // Incluir modelos y controladores necesarios
 require_once 'controladores/calificacion.controlador.php';
 require_once 'modelos/calificacion.modelo.php';
+
+// Obtener tipo de usuario para JavaScript
+$tipoUsuario = $_SESSION["Tipo"] ?? '';
+$esAdministrador = ($tipoUsuario === 'ADM');
 ?>
 
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
@@ -206,7 +210,16 @@ require_once 'modelos/calificacion.modelo.php';
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="vistas/recursos/assets/js/scripts/calificacion.js"></script>
+
+<!-- Pasar variables PHP a JavaScript -->
+<script>
+    // Variable global para verificar si el usuario es administrador
+    const esAdministrador = <?php echo $esAdministrador ? 'true' : 'false'; ?>;
+    const tipoUsuario = '<?php echo $tipoUsuario; ?>';
+    console.log('Usuario tipo:', tipoUsuario, '| Es Admin:', esAdministrador);
+</script>
+
+<script src="vistas/recursos/assets/js/scripts/calificacion.js?v=7.0"></script>
 
 <style>
 .form-control:focus {

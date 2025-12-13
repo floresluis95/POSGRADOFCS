@@ -4,6 +4,8 @@
  * Gestiona las acciones relacionadas con las calificaciones finales
  */
 
+require_once __DIR__ . '/../modelos/conexion.modelo.php';
+
 class CalificacionControlador
 {
     /**
@@ -180,7 +182,7 @@ class CalificacionControlador
      */
     public function ObtenerDocenteLogueadoControlador()
     {
-        if (!session_id()) {
+        if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
@@ -297,7 +299,7 @@ class CalificacionControlador
      */
     public function ObtenerEstudianteLogueadoControlador()
     {
-        if (!session_id()) {
+        if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
@@ -339,7 +341,7 @@ class CalificacionControlador
      */
     public function ObtenerProgramasEstudianteControlador()
     {
-        if (!session_id()) {
+        if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
@@ -383,7 +385,7 @@ class CalificacionControlador
      */
     public function ObtenerCalificacionesEstudianteProgramaControlador()
     {
-        if (!session_id()) {
+        if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
@@ -419,6 +421,140 @@ class CalificacionControlador
             echo json_encode([
                 'status' => 'error',
                 'message' => 'ID de programa no especificado'
+            ]);
+        }
+    }
+
+    /**
+     * Validar y cerrar un módulo (AJAX)
+     */
+    public function ValidarCerrarModuloControlador()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (isset($_POST['moduloID'])) {
+            $moduloID = intval($_POST['moduloID']);
+
+            // Obtener el ID del usuario actual
+            if (isset($_SESSION['Usuario'])) {
+                $pdo = Conexion::Conectar();
+                $stmt = $pdo->prepare("SELECT ID FROM usuario WHERE Usuario = :usuario LIMIT 1");
+                $stmt->bindParam(":usuario", $_SESSION['Usuario'], PDO::PARAM_STR);
+                $stmt->execute();
+                $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($userRow) {
+                    $usuarioID = $userRow['ID'];
+                    $resultado = CalificacionModelo::ValidarCerrarModuloModelo($moduloID, $usuarioID);
+                    echo json_encode($resultado);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Usuario no encontrado'
+                    ]);
+                }
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Sesión no válida'
+                ]);
+            }
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'ID de módulo no especificado'
+            ]);
+        }
+    }
+
+    /**
+     * Reabrir un módulo validado (AJAX)
+     * Solo administradores
+     */
+    public function ReabrirModuloControlador()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (isset($_POST['moduloID'])) {
+            $moduloID = intval($_POST['moduloID']);
+
+            // Obtener el ID del usuario actual
+            if (isset($_SESSION['Usuario'])) {
+                $pdo = Conexion::Conectar();
+                $stmt = $pdo->prepare("SELECT ID FROM usuario WHERE Usuario = :usuario LIMIT 1");
+                $stmt->bindParam(":usuario", $_SESSION['Usuario'], PDO::PARAM_STR);
+                $stmt->execute();
+                $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($userRow) {
+                    $usuarioID = $userRow['ID'];
+                    $resultado = CalificacionModelo::ReabrirModuloModelo($moduloID, $usuarioID);
+                    echo json_encode($resultado);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Usuario no encontrado'
+                    ]);
+                }
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Sesión no válida'
+                ]);
+            }
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'ID de módulo no especificado'
+            ]);
+        }
+    }
+
+    /**
+     * Verificar permiso de edición para un módulo (AJAX)
+     */
+    public function VerificarPermisoEdicionControlador()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (isset($_POST['moduloID'])) {
+            $moduloID = intval($_POST['moduloID']);
+
+            // Obtener el ID del usuario actual
+            if (isset($_SESSION['Usuario'])) {
+                $pdo = Conexion::Conectar();
+                $stmt = $pdo->prepare("SELECT ID, Tipo FROM usuario WHERE Usuario = :usuario LIMIT 1");
+                $stmt->bindParam(":usuario", $_SESSION['Usuario'], PDO::PARAM_STR);
+                $stmt->execute();
+                $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($userRow) {
+                    $usuarioID = $userRow['ID'];
+                    $resultado = CalificacionModelo::VerificarPermisoEdicionModelo($moduloID, $usuarioID);
+                    $resultado['tipoUsuario'] = $userRow['Tipo'];
+                    echo json_encode($resultado);
+                } else {
+                    echo json_encode([
+                        'permitido' => false,
+                        'mensaje' => 'Usuario no encontrado'
+                    ]);
+                }
+            } else {
+                echo json_encode([
+                    'permitido' => false,
+                    'mensaje' => 'Sesión no válida'
+                ]);
+            }
+        } else {
+            echo json_encode([
+                'permitido' => false,
+                'mensaje' => 'ID de módulo no especificado'
             ]);
         }
     }

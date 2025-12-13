@@ -202,7 +202,7 @@ require_once 'modelos/calificacion.modelo.php';
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="vistas/recursos/assets/js/scripts/calificacion-docente.js"></script>
+<script src="vistas/recursos/assets/js/scripts/calificacion-docente.js?v=2.0"></script>
 
 <style>
 .form-control:focus {

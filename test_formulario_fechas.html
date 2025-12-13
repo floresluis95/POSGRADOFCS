@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Formulario de Fechas</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .btn:hover {
+            background: #5867dd;
+        }
+        #resultado {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test de Formulario de Fechas</h1>
+
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            Este test verifica que el formulario de SweetAlert2 funcione correctamente
+        </p>
+
+        <button class="btn" onclick="testFormularioSimple()">
+            📅 Test Formulario Simple
+        </button>
+
+        <button class="btn" onclick="testFormularioCompleto()">
+            📋 Test Formulario Completo (Como en la App)
+        </button>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        function testFormularioSimple() {
+            console.log('=== TEST FORMULARIO SIMPLE ===');
+
+            Swal.fire({
+                title: 'Test de Fechas',
+                html: `
+                    <div>
+                        <label>Fecha Inicio:</label>
+                        <input type="date" id="fechaInicio" class="swal2-input">
+                        <br><br>
+                        <label>Fecha Fin:</label>
+                        <input type="date" id="fechaFin" class="swal2-input">
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Aceptar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const fechaInicio = document.getElementById('fechaInicio').value;
+                    const fechaFin = document.getElementById('fechaFin').value;
+
+                    if (!fechaInicio || !fechaFin) {
+                        Swal.showValidationMessage('Por favor, ingrese ambas fechas');
+                        return false;
+                    }
+
+                    if (fechaInicio > fechaFin) {
+                        Swal.showValidationMessage('Fecha inicio debe ser menor o igual a fecha fin');
+                        return false;
+                    }
+
+                    return { fechaInicio, fechaFin };
+                }
+            }).then((result) => {
+                const resultadoDiv = document.getElementById('resultado');
+                resultadoDiv.style.display = 'block';
+
+                if (result.isConfirmed && result.value) {
+                    resultadoDiv.innerHTML = `
+                        <h3 style="color: green;">✅ Formulario Completado</h3>
+                        <p><strong>Fecha Inicio:</strong> ${result.value.fechaInicio}</p>
+                        <p><strong>Fecha Fin:</strong> ${result.value.fechaFin}</p>
+                    `;
+                    console.log('Resultado:', result.value);
+                } else if (result.isDismissed) {
+                    resultadoDiv.innerHTML = `
+                        <h3 style="color: orange;">⚠️ Formulario Cancelado</h3>
+                        <p>Razón: ${result.dismiss}</p>
+                    `;
+                    console.log('Cancelado:', result.dismiss);
+                }
+            });
+        }
+
+        function testFormularioCompleto() {
+            console.log('=== TEST FORMULARIO COMPLETO ===');
+
+            Swal.fire({
+                title: '<i class="la la-calendar"></i> Fechas del Módulo',
+                html: `
+                    <div style="text-align: left; padding: 20px;">
+                        <h5 style="color: #5867dd; margin-bottom: 15px;">
+                            📚 Módulo de Prueba
+                        </h5>
+                        <p style="margin-bottom: 20px; color: #666;">
+                            <strong>Código:</strong> TEST-001<br>
+                            <strong>Programa:</strong> Programa de Prueba
+                        </p>
+
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label for="fechaInicio" style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">
+                                Fecha de Inicio:
+                            </label>
+                            <input type="date" id="fechaInicio" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label for="fechaFin" style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">
+                                Fecha de Finalización:
+                            </label>
+                            <input type="date" id="fechaFin" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;">
+                        </div>
+
+                        <p style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-left: 3px solid #5867dd; font-size: 13px; color: #555;">
+                            ℹ️ Estas fechas se mostrarán en el reporte PDF de calificaciones.
+                        </p>
+                    </div>
+                `,
+                width: '600px',
+                showCancelButton: true,
+                confirmButtonColor: '#5867dd',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '🖨️ Generar PDF',
+                cancelButtonText: 'Cancelar',
+                focusConfirm: false,
+                preConfirm: () => {
+                    console.log('preConfirm ejecutado');
+                    const fechaInicio = document.getElementById('fechaInicio').value;
+                    const fechaFin = document.getElementById('fechaFin').value;
+
+                    console.log('Fecha Inicio:', fechaInicio);
+                    console.log('Fecha Fin:', fechaFin);
+
+                    if (!fechaInicio || !fechaFin) {
+                        console.log('Validación fallida: campos vacíos');
+                        Swal.showValidationMessage('Por favor, ingrese ambas fechas');
+                        return false;
+                    }
+
+                    if (fechaInicio > fechaFin) {
+                        console.log('Validación fallida: fecha inicio > fecha fin');
+                        Swal.showValidationMessage('La fecha de inicio debe ser anterior o igual a la fecha de finalización');
+                        return false;
+                    }
+
+                    console.log('Validación exitosa');
+                    return { fechaInicio: fechaInicio, fechaFin: fechaFin };
+                }
+            }).then((result) => {
+                const resultadoDiv = document.getElementById('resultado');
+                resultadoDiv.style.display = 'block';
+
+                console.log('Then ejecutado');
+                console.log('result:', result);
+
+                if (result.isConfirmed && result.value) {
+                    resultadoDiv.innerHTML = `
+                        <h3 style="color: green;">✅ PDF Generado</h3>
+                        <p><strong>Fecha Inicio:</strong> ${result.value.fechaInicio}</p>
+                        <p><strong>Fecha Fin:</strong> ${result.value.fechaFin}</p>
+                        <p style="margin-top: 15px; color: #666;">
+                            En la aplicación real, ahora se abriría una nueva pestaña con el PDF
+                        </p>
+                    `;
+                    console.log('Formulario confirmado:', result.value);
+                } else if (result.isDismissed) {
+                    resultadoDiv.innerHTML = `
+                        <h3 style="color: orange;">⚠️ Formulario Cancelado</h3>
+                        <p><strong>Razón:</strong> ${result.dismiss}</p>
+                        <ul>
+                            <li>backdrop = Click fuera del modal</li>
+                            <li>cancel = Click en botón Cancelar</li>
+                            <li>esc = Tecla ESC</li>
+                            <li>close = Click en X</li>
+                        </ul>
+                    `;
+                    console.log('Formulario cancelado:', result.dismiss);
+                } else {
+                    resultadoDiv.innerHTML = `
+                        <h3 style="color: red;">❌ Sin Datos</h3>
+                        <p>El formulario no retornó datos válidos</p>
+                    `;
+                    console.log('Sin datos:', result);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

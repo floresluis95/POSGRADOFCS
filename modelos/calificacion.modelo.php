@@ -319,6 +319,9 @@ class CalificacionModelo
                     m.nombremodulo,
                     m.codigomodulo,
                     m.DocenteID,
+                    m.estadomodulo as EstadoModulo,
+                    m.ValidadoPor,
+                    m.FechaValidacion,
                     p.ProgramaID,
                     p.NombrePrograma,
                     p.GradoAcademico,
@@ -361,11 +364,14 @@ class CalificacionModelo
                      WHERE c.Idmodulo = m.Idmodulo
                      AND c.ProgramaId = p.ProgramaID
                      AND c.UsuarioRegistroID IS NOT NULL
-                     LIMIT 1) as TipoUsuarioRegistro
+                     LIMIT 1) as TipoUsuarioRegistro,
+                    (SELECT CONCAT(d2.Nombre, ' ', d2.Apaterno)
+                     FROM docente d2
+                     WHERE d2.DocenteID = m.ValidadoPor
+                     LIMIT 1) as NombreValidador
                 FROM modulos m
                 INNER JOIN programa p ON m.ProgramaId = p.ProgramaID
                 WHERE m.DocenteID = :docenteID
-                AND m.estadomodulo = 'ACTIVO'
                 ORDER BY p.GradoAcademico, p.NombrePrograma, m.codigomodulo"
             );
             $stmt->bindParam(":docenteID", $docenteID, PDO::PARAM_INT);
@@ -841,6 +847,233 @@ class CalificacionModelo
             }
         } catch (PDOException $e) {
             error_log("Error al verificar índice único: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Validar y cerrar un módulo
+     * Cambia el estado del módulo a VALIDADO para que ya no se pueda editar
+     * @param int $moduloID
+     * @param int $usuarioID - ID del usuario que valida (normalmente el docente)
+     * @return array
+     */
+    public static function ValidarCerrarModuloModelo($moduloID, $usuarioID)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+            $pdo->beginTransaction();
+
+            // Obtener el DocenteID del usuario si es docente
+            $docenteID = null;
+            $stmtUser = $pdo->prepare(
+                "SELECT DocenteID FROM usuario WHERE ID = :usuarioID LIMIT 1"
+            );
+            $stmtUser->bindParam(":usuarioID", $usuarioID, PDO::PARAM_INT);
+            $stmtUser->execute();
+            $userRow = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            if ($userRow && $userRow['DocenteID']) {
+                $docenteID = $userRow['DocenteID'];
+            }
+
+            // Verificar que el módulo existe y pertenece al docente
+            $stmtCheck = $pdo->prepare(
+                "SELECT Idmodulo, DocenteID, estadomodulo
+                FROM modulos
+                WHERE Idmodulo = :moduloID"
+            );
+            $stmtCheck->bindParam(":moduloID", $moduloID, PDO::PARAM_INT);
+            $stmtCheck->execute();
+            $modulo = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+            if (!$modulo) {
+                $pdo->rollBack();
+                return [
+                    'status' => 'error',
+                    'message' => 'Módulo no encontrado'
+                ];
+            }
+
+            // Verificar que el docente es el propietario del módulo (opcional, se puede comentar si el admin debe poder validar cualquier módulo)
+            // if ($docenteID && $modulo['DocenteID'] != $docenteID) {
+            //     $pdo->rollBack();
+            //     return [
+            //         'status' => 'error',
+            //         'message' => 'No tiene permisos para validar este módulo'
+            //     ];
+            // }
+
+            // Verificar que el módulo no esté ya validado o cerrado
+            if ($modulo['estadomodulo'] == 'VALIDADO' || $modulo['estadomodulo'] == 'CERRADO') {
+                $pdo->rollBack();
+                return [
+                    'status' => 'warning',
+                    'message' => 'El módulo ya está validado o cerrado'
+                ];
+            }
+
+            // Actualizar el estado del módulo a VALIDADO
+            $stmt = $pdo->prepare(
+                "UPDATE modulos
+                SET estadomodulo = 'VALIDADO',
+                    ValidadoPor = :usuarioID,
+                    FechaValidacion = NOW()
+                WHERE Idmodulo = :moduloID"
+            );
+            $stmt->bindParam(":usuarioID", $usuarioID, PDO::PARAM_INT);
+            $stmt->bindParam(":moduloID", $moduloID, PDO::PARAM_INT);
+
+            if ($stmt->execute()) {
+                $pdo->commit();
+                return [
+                    'status' => 'success',
+                    'message' => 'Módulo validado y cerrado exitosamente'
+                ];
+            } else {
+                $pdo->rollBack();
+                return [
+                    'status' => 'error',
+                    'message' => 'Error al validar el módulo'
+                ];
+            }
+
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("Error en ValidarCerrarModuloModelo: " . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => 'Error al validar el módulo: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Reabrir un módulo validado
+     * Solo puede hacerlo un administrador
+     * @param int $moduloID
+     * @param int $usuarioID
+     * @return array
+     */
+    public static function ReabrirModuloModelo($moduloID, $usuarioID)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+            $pdo->beginTransaction();
+
+            // Verificar que el usuario es administrador
+            $stmtUser = $pdo->prepare(
+                "SELECT Tipo FROM usuario WHERE ID = :usuarioID LIMIT 1"
+            );
+            $stmtUser->bindParam(":usuarioID", $usuarioID, PDO::PARAM_INT);
+            $stmtUser->execute();
+            $userRow = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            if (!$userRow || $userRow['Tipo'] != 'Administrador') {
+                $pdo->rollBack();
+                return [
+                    'status' => 'error',
+                    'message' => 'Solo los administradores pueden reabrir módulos validados'
+                ];
+            }
+
+            // Reabrir el módulo
+            $stmt = $pdo->prepare(
+                "UPDATE modulos
+                SET estadomodulo = 'ACTIVO',
+                    ValidadoPor = NULL,
+                    FechaValidacion = NULL
+                WHERE Idmodulo = :moduloID"
+            );
+            $stmt->bindParam(":moduloID", $moduloID, PDO::PARAM_INT);
+
+            if ($stmt->execute()) {
+                $pdo->commit();
+                return [
+                    'status' => 'success',
+                    'message' => 'Módulo reabierto exitosamente'
+                ];
+            } else {
+                $pdo->rollBack();
+                return [
+                    'status' => 'error',
+                    'message' => 'Error al reabrir el módulo'
+                ];
+            }
+
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("Error en ReabrirModuloModelo: " . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => 'Error al reabrir el módulo: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Verificar si un usuario puede editar calificaciones de un módulo
+     * @param int $moduloID
+     * @param int $usuarioID
+     * @return array
+     */
+    public static function VerificarPermisoEdicionModelo($moduloID, $usuarioID)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+
+            // Obtener estado del módulo
+            $stmtModulo = $pdo->prepare(
+                "SELECT estadomodulo FROM modulos WHERE Idmodulo = :moduloID LIMIT 1"
+            );
+            $stmtModulo->bindParam(":moduloID", $moduloID, PDO::PARAM_INT);
+            $stmtModulo->execute();
+            $modulo = $stmtModulo->fetch(PDO::FETCH_ASSOC);
+
+            if (!$modulo) {
+                return [
+                    'permitido' => false,
+                    'mensaje' => 'Módulo no encontrado'
+                ];
+            }
+
+            // Si el módulo está activo, permitir edición
+            if ($modulo['estadomodulo'] == 'ACTIVO') {
+                return [
+                    'permitido' => true,
+                    'mensaje' => 'Módulo abierto para edición'
+                ];
+            }
+
+            // Si el módulo está validado o cerrado, verificar si es administrador
+            $stmtUser = $pdo->prepare(
+                "SELECT Tipo FROM usuario WHERE ID = :usuarioID LIMIT 1"
+            );
+            $stmtUser->bindParam(":usuarioID", $usuarioID, PDO::PARAM_INT);
+            $stmtUser->execute();
+            $usuario = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            if ($usuario && $usuario['Tipo'] == 'Administrador') {
+                return [
+                    'permitido' => true,
+                    'mensaje' => 'Permitido por privilegios de administrador'
+                ];
+            }
+
+            return [
+                'permitido' => false,
+                'mensaje' => 'El módulo está cerrado. Solo un administrador puede editar.'
+            ];
+
+        } catch (PDOException $e) {
+            error_log("Error en VerificarPermisoEdicionModelo: " . $e->getMessage());
+            return [
+                'permitido' => false,
+                'mensaje' => 'Error al verificar permisos'
+            ];
         }
     }
 }

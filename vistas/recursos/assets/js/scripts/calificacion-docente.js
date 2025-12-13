@@ -159,95 +159,169 @@ function mostrarAsignaciones(asignaciones) {
     $('#docente-especialidad').text(docenteSeleccionado.especialidad);
     $('#total-asignaciones').text(asignaciones.length);
 
-    // Renderizar tabla de asignaciones
-    let html = `
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover table-calificaciones">
-                <thead>
-                    <tr>
-                        <th style="width: 5%;">#</th>
-                        <th style="width: 15%;">Grado Académico</th>
-                        <th>Programa</th>
-                        <th>Módulo</th>
-                        <th style="width: 10%;">Código</th>
-                        <th style="width: 10%;">Estudiantes</th>
-                        <th style="width: 12%;">Estado</th>
-                        <th style="width: 12%;">Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-
-    asignaciones.forEach(function(asig, index) {
-        // Determinar estado de calificación
-        const totalCalificados = parseInt(asig.TotalCalificados) || 0;
-        const totalEstudiantes = parseInt(asig.TotalEstudiantes) || 0;
-
-        let estadoBadge = '';
-        let estadoTexto = '';
-        let estadoIcono = '';
-
-        if (totalCalificados === 0) {
-            // Sin calificar
-            estadoBadge = 'kt-badge--secondary';
-            estadoTexto = 'SIN CALIFICAR';
-            estadoIcono = 'la-clock-o';
-        } else if (totalCalificados < totalEstudiantes) {
-            // Parcialmente calificado
-            estadoBadge = 'kt-badge--warning';
-            estadoTexto = `PARCIAL (${totalCalificados}/${totalEstudiantes})`;
-            estadoIcono = 'la-exclamation-triangle';
-        } else {
-            // Completamente calificado
-            estadoBadge = 'kt-badge--success';
-            estadoTexto = 'CALIFICADO';
-            estadoIcono = 'la-check-circle';
+    // Categorizar asignaciones por grado académico
+    const asignacionesPorGrado = {};
+    asignaciones.forEach(function(asig) {
+        const grado = asig.GradoAcademico || 'Sin Grado';
+        if (!asignacionesPorGrado[grado]) {
+            asignacionesPorGrado[grado] = [];
         }
-
-        html += `
-            <tr class="asignacion-row">
-                <td class="text-center">${index + 1}</td>
-                <td>
-                    <span class="kt-badge kt-badge--inline kt-badge--primary">${asig.GradoAcademico}</span>
-                </td>
-                <td>
-                    <strong>${asig.NombrePrograma}</strong>
-                    <br><small class="text-muted">${asig.CodigoPrograma}</small>
-                </td>
-                <td>${asig.nombremodulo}</td>
-                <td class="text-center">
-                    <span class="kt-badge kt-badge--dark kt-badge--inline">${asig.codigomodulo}</span>
-                </td>
-                <td class="text-center">
-                    <span class="kt-badge kt-badge--${asig.TotalEstudiantes > 0 ? 'success' : 'secondary'} kt-badge--inline kt-badge--bold">
-                        ${asig.TotalEstudiantes}
-                    </span>
-                </td>
-                <td class="text-center">
-                    <span class="kt-badge ${estadoBadge} kt-badge--inline kt-badge--bold">
-                        <i class="la ${estadoIcono}"></i> ${estadoTexto}
-                    </span>
-                </td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-brand btn-evaluar"
-                            data-modulo-id="${asig.Idmodulo}"
-                            data-programa-id="${asig.ProgramaID}"
-                            data-modulo-nombre="${asig.nombremodulo}"
-                            data-modulo-codigo="${asig.codigomodulo}"
-                            data-programa-nombre="${asig.NombrePrograma}"
-                            data-grado="${asig.GradoAcademico}">
-                        <i class="la la-edit"></i> Registrar Calificaciones
-                    </button>
-                </td>
-            </tr>
-        `;
+        asignacionesPorGrado[grado].push(asig);
     });
 
-    html += `
-                </tbody>
-            </table>
-        </div>
-    `;
+    // Renderizar tablas categorizadas por grado académico
+    let html = '';
+
+    Object.keys(asignacionesPorGrado).sort().forEach(function(grado) {
+        const asignacionesGrado = asignacionesPorGrado[grado];
+
+        html += `
+            <div class="card mb-4" style="border-left: 4px solid #5867dd;">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fa fa-graduation-cap"></i> ${grado}
+                        <span class="kt-badge kt-badge--light kt-badge--inline ml-2">${asignacionesGrado.length} módulos</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-calificaciones mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 5%;">#</th>
+                                    <th>Programa</th>
+                                    <th>Módulo</th>
+                                    <th style="width: 10%;">Código</th>
+                                    <th style="width: 10%;">Estudiantes</th>
+                                    <th style="width: 12%;">Estado Módulo</th>
+                                    <th style="width: 12%;">Calificaciones</th>
+                                    <th style="width: 15%;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
+
+        asignacionesGrado.forEach(function(asig, index) {
+            // Determinar estado de calificación
+            const totalCalificados = parseInt(asig.TotalCalificados) || 0;
+            const totalEstudiantes = parseInt(asig.TotalEstudiantes) || 0;
+
+            let estadoBadge = '';
+            let estadoTexto = '';
+            let estadoIcono = '';
+
+            if (totalCalificados === 0) {
+                estadoBadge = 'kt-badge--secondary';
+                estadoTexto = 'SIN CALIFICAR';
+                estadoIcono = 'la-clock-o';
+            } else if (totalCalificados < totalEstudiantes) {
+                estadoBadge = 'kt-badge--warning';
+                estadoTexto = `PARCIAL (${totalCalificados}/${totalEstudiantes})`;
+                estadoIcono = 'la-exclamation-triangle';
+            } else {
+                estadoBadge = 'kt-badge--success';
+                estadoTexto = 'CALIFICADO';
+                estadoIcono = 'la-check-circle';
+            }
+
+            // Determinar estado del módulo (ACTIVO, VALIDADO, CERRADO)
+            const estadoModulo = asig.EstadoModulo || 'ACTIVO';
+            let moduloBadge = '';
+            let moduloTexto = '';
+            let moduloIcono = '';
+            let botonValidar = '';
+
+            if (estadoModulo === 'ACTIVO') {
+                moduloBadge = 'kt-badge--success';
+                moduloTexto = 'ABIERTO';
+                moduloIcono = 'la-unlock';
+                // Mostrar botón de validar solo si hay calificaciones
+                if (totalCalificados > 0) {
+                    botonValidar = `
+                        <button class="btn btn-sm btn-warning btn-validar-modulo mt-1"
+                                data-modulo-id="${asig.Idmodulo}"
+                                data-modulo-nombre="${asig.nombremodulo}"
+                                title="Validar y cerrar módulo">
+                            <i class="la la-lock"></i> Validar y Cerrar
+                        </button>
+                    `;
+                }
+            } else if (estadoModulo === 'VALIDADO' || estadoModulo === 'CERRADO') {
+                moduloBadge = 'kt-badge--danger';
+                moduloTexto = 'VALIDADO';
+                moduloIcono = 'la-lock';
+
+                // Información de quién validó
+                let infoValidacion = '';
+                if (asig.NombreValidador) {
+                    infoValidacion = `<br><small class="text-muted">Por: ${asig.NombreValidador}</small>`;
+                }
+                if (asig.FechaValidacion) {
+                    infoValidacion += `<br><small class="text-muted">${asig.FechaValidacion}</small>`;
+                }
+
+                botonValidar = `
+                    <button class="btn btn-sm btn-info btn-reabrir-modulo mt-1"
+                            data-modulo-id="${asig.Idmodulo}"
+                            data-modulo-nombre="${asig.nombremodulo}"
+                            title="Reabrir módulo (Solo Admin)">
+                        <i class="la la-unlock"></i> Reabrir
+                    </button>
+                    ${infoValidacion}
+                `;
+            }
+
+            html += `
+                <tr class="asignacion-row">
+                    <td class="text-center">${index + 1}</td>
+                    <td>
+                        <strong>${asig.NombrePrograma}</strong>
+                        <br><small class="text-muted">${asig.CodigoPrograma}</small>
+                    </td>
+                    <td>${asig.nombremodulo}</td>
+                    <td class="text-center">
+                        <span class="kt-badge kt-badge--dark kt-badge--inline">${asig.codigomodulo}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="kt-badge kt-badge--${asig.TotalEstudiantes > 0 ? 'success' : 'secondary'} kt-badge--inline kt-badge--bold">
+                            ${asig.TotalEstudiantes}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="kt-badge ${moduloBadge} kt-badge--inline kt-badge--bold">
+                            <i class="la ${moduloIcono}"></i> ${moduloTexto}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="kt-badge ${estadoBadge} kt-badge--inline kt-badge--bold">
+                            <i class="la ${estadoIcono}"></i> ${estadoTexto}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-brand btn-evaluar"
+                                data-modulo-id="${asig.Idmodulo}"
+                                data-programa-id="${asig.ProgramaID}"
+                                data-modulo-nombre="${asig.nombremodulo}"
+                                data-modulo-codigo="${asig.codigomodulo}"
+                                data-programa-nombre="${asig.NombrePrograma}"
+                                data-grado="${asig.GradoAcademico}"
+                                data-estado-modulo="${estadoModulo}">
+                            <i class="la la-edit"></i> ${estadoModulo === 'ACTIVO' ? 'Registrar' : 'Ver'}
+                        </button>
+                        ${botonValidar}
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
 
     $('#asignaciones-container').html(html);
 
@@ -256,6 +330,7 @@ function mostrarAsignaciones(asignaciones) {
         console.log('>>> Botón Evaluar clickeado');
         const moduloID = $(this).data('modulo-id');
         const programaID = $(this).data('programa-id');
+        const estadoModulo = $(this).data('estado-modulo');
 
         asignacionSeleccionada = {
             moduloID: moduloID,
@@ -263,12 +338,29 @@ function mostrarAsignaciones(asignaciones) {
             moduloNombre: $(this).data('modulo-nombre'),
             moduloCodigo: $(this).data('modulo-codigo'),
             programaNombre: $(this).data('programa-nombre'),
-            grado: $(this).data('grado')
+            grado: $(this).data('grado'),
+            estadoModulo: estadoModulo
         };
 
         console.log('>>> Asignación establecida:', asignacionSeleccionada);
 
         cargarEstudiantes(moduloID, programaID);
+    });
+
+    // Event handler para validar y cerrar módulo
+    $(document).off('click', '.btn-validar-modulo').on('click', '.btn-validar-modulo', function(e) {
+        e.stopPropagation();
+        const moduloID = $(this).data('modulo-id');
+        const moduloNombre = $(this).data('modulo-nombre');
+        validarCerrarModulo(moduloID, moduloNombre);
+    });
+
+    // Event handler para reabrir módulo
+    $(document).off('click', '.btn-reabrir-modulo').on('click', '.btn-reabrir-modulo', function(e) {
+        e.stopPropagation();
+        const moduloID = $(this).data('modulo-id');
+        const moduloNombre = $(this).data('modulo-nombre');
+        reabrirModulo(moduloID, moduloNombre);
     });
 }
 
@@ -334,6 +426,26 @@ function mostrarFormularioCalificaciones(estudiantes) {
     $('#programa-nombre').text(asignacionSeleccionada.programaNombre);
     $('#grado-nombre').text(asignacionSeleccionada.grado);
 
+    // Verificar permisos de edición
+    verificarPermisoEdicion(asignacionSeleccionada.moduloID, function(permisoData) {
+        const puedeEditar = permisoData.permitido;
+        const esModuloCerrado = asignacionSeleccionada.estadoModulo !== 'ACTIVO';
+
+        // Mostrar advertencia si el módulo está cerrado
+        if (esModuloCerrado) {
+            const mensaje = puedeEditar
+                ? '<div class="alert alert-warning mt-3"><i class="la la-warning"></i> <strong>Módulo Validado:</strong> Este módulo está cerrado. Usted puede editarlo porque tiene permisos de administrador.</div>'
+                : '<div class="alert alert-danger mt-3"><i class="la la-lock"></i> <strong>Módulo Validado:</strong> Este módulo está cerrado y no puede ser editado. Solo un administrador puede modificar las calificaciones.</div>';
+
+            $('.alert.alert-info').after(mensaje);
+        }
+
+        mostrarFormularioEstudiantesInterno(estudiantes, puedeEditar);
+    });
+}
+
+function mostrarFormularioEstudiantesInterno(estudiantes, puedeEditar) {
+
     // Renderizar tabla de estudiantes
     if (estudiantes.length === 0) {
         $('#estudiantes-container').html(`
@@ -344,6 +456,9 @@ function mostrarFormularioCalificaciones(estudiantes) {
         $('#footer-guardar').hide();
         return;
     }
+
+    const inputDisabled = !puedeEditar ? 'disabled readonly' : '';
+    const inputStyle = !puedeEditar ? 'background-color: #f4f5f8; cursor: not-allowed;' : '';
 
     let html = `
         <div class="table-responsive">
@@ -383,6 +498,8 @@ function mostrarFormularioCalificaciones(estudiantes) {
                         data-estudiante-id="${estudiante.EstudianteID}"
                         onchange="validarNota(this)"
                         placeholder="0.00"
+                        style="${inputStyle}"
+                        ${inputDisabled}
                         required
                     >
                 </td>
@@ -402,8 +519,44 @@ function mostrarFormularioCalificaciones(estudiantes) {
     `;
 
     $('#estudiantes-container').html(html);
-    $('#footer-guardar').slideDown();
+
+    // Mostrar u ocultar botón de guardar según permisos
+    if (puedeEditar) {
+        $('#footer-guardar').slideDown();
+    } else {
+        $('#footer-guardar').hide();
+    }
+
     $('#pdf-section').slideDown();
+}
+
+/**
+ * Verificar permisos de edición para un módulo
+ */
+function verificarPermisoEdicion(moduloID, callback) {
+    $.ajax({
+        url: 'ajax/calificacion.ajax.php',
+        method: 'POST',
+        data: {
+            accion: 'verificarPermisoEdicion',
+            moduloID: moduloID
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (callback) {
+                callback(response);
+            }
+        },
+        error: function() {
+            // En caso de error, denegar permiso por seguridad
+            if (callback) {
+                callback({
+                    permitido: false,
+                    mensaje: 'Error al verificar permisos'
+                });
+            }
+        }
+    });
 }
 
 /**
@@ -632,6 +785,152 @@ function volverPaso1() {
     $('#paso1-container').slideDown();
     asignacionSeleccionada = null;
     estudiantesActuales = [];
+}
+
+/**
+ * ================================================================
+ * VALIDAR/CERRAR Y REABRIR MÓDULOS
+ * ================================================================
+ */
+
+function validarCerrarModulo(moduloID, moduloNombre) {
+    Swal.fire({
+        title: '¿Validar y cerrar módulo?',
+        html: `
+            <p>Está a punto de <strong>validar y cerrar</strong> el módulo:</p>
+            <p class="text-primary"><strong>${moduloNombre}</strong></p>
+            <p class="text-danger">
+                <i class="la la-warning"></i> Una vez cerrado, solo un administrador podrá modificar las calificaciones.
+            </p>
+            <p>¿Desea continuar?</p>
+        `,
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, validar y cerrar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#f4516c',
+        cancelButtonColor: '#34bfa3'
+    }).then((result) => {
+        if (result.value) {
+            $.ajax({
+                url: 'ajax/calificacion.ajax.php',
+                method: 'POST',
+                data: {
+                    accion: 'validarCerrarModulo',
+                    moduloID: moduloID
+                },
+                dataType: 'json',
+                beforeSend: function() {
+                    Swal.fire({
+                        title: 'Procesando...',
+                        text: 'Validando y cerrando módulo',
+                        allowOutsideClick: false,
+                        onOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        Swal.fire({
+                            type: 'success',
+                            title: 'Módulo validado',
+                            text: response.message,
+                            timer: 2000
+                        }).then(() => {
+                            // Recargar asignaciones para mostrar el nuevo estado
+                            if (docenteSeleccionado && docenteSeleccionado.id) {
+                                cargarAsignacionesDocente(docenteSeleccionado.id);
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            type: response.status === 'warning' ? 'warning' : 'error',
+                            title: response.status === 'warning' ? 'Advertencia' : 'Error',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        type: 'error',
+                        title: 'Error de conexión',
+                        text: 'No se pudo validar el módulo. Por favor, intente nuevamente.'
+                    });
+                }
+            });
+        }
+    });
+}
+
+function reabrirModulo(moduloID, moduloNombre) {
+    Swal.fire({
+        title: '¿Reabrir módulo?',
+        html: `
+            <p>Está a punto de <strong>reabrir</strong> el módulo:</p>
+            <p class="text-primary"><strong>${moduloNombre}</strong></p>
+            <p class="text-warning">
+                <i class="la la-info-circle"></i> Esta acción solo está disponible para administradores.
+            </p>
+            <p>El módulo volverá a estar abierto para edición.</p>
+        `,
+        type: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, reabrir',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#5867dd',
+        cancelButtonColor: '#f4516c'
+    }).then((result) => {
+        if (result.value) {
+            $.ajax({
+                url: 'ajax/calificacion.ajax.php',
+                method: 'POST',
+                data: {
+                    accion: 'reabrirModulo',
+                    moduloID: moduloID
+                },
+                dataType: 'json',
+                beforeSend: function() {
+                    Swal.fire({
+                        title: 'Procesando...',
+                        text: 'Reabriendo módulo',
+                        allowOutsideClick: false,
+                        onOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        Swal.fire({
+                            type: 'success',
+                            title: 'Módulo reabierto',
+                            text: response.message,
+                            timer: 2000
+                        }).then(() => {
+                            // Recargar asignaciones para mostrar el nuevo estado
+                            if (docenteSeleccionado && docenteSeleccionado.id) {
+                                cargarAsignacionesDocente(docenteSeleccionado.id);
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            type: 'error',
+                            title: 'Error',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        type: 'error',
+                        title: 'Error de conexión',
+                        text: 'No se pudo reabrir el módulo. Por favor, intente nuevamente.'
+                    });
+                }
+            });
+        }
+    });
 }
 
 /**
