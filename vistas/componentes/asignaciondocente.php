@@ -2,6 +2,26 @@
 $Validar = new FuncionesControladores();
 $Validar->ValidarSessionControlador();
 date_default_timezone_set("America/La_Paz");
+
+// Verificar tipo de usuario
+$tipoUsuario = isset($_SESSION['Tipo']) ? $_SESSION['Tipo'] : '';
+$esDocente = ($tipoUsuario === 'DOC');
+$esAdministrador = ($tipoUsuario === 'ADM');
+
+// Si es docente, obtener su DocenteID
+$docenteIDLogueado = null;
+if ($esDocente && isset($_SESSION['IdUsuario'])) {
+    require_once 'modelos/conexion.modelo.php';
+    $stmtDocente = Conexion::Conectar()->prepare("
+        SELECT DocenteID FROM docente WHERE UsuarioID = :usuarioID
+    ");
+    $stmtDocente->bindParam(':usuarioID', $_SESSION['IdUsuario'], PDO::PARAM_INT);
+    $stmtDocente->execute();
+    $resultDocente = $stmtDocente->fetch(PDO::FETCH_ASSOC);
+    if ($resultDocente) {
+        $docenteIDLogueado = $resultDocente['DocenteID'];
+    }
+}
 ?>
 
 <style>
@@ -172,12 +192,12 @@ date_default_timezone_set("America/La_Paz");
                         <div class="kt-subheader kt-grid__item" id="kt_subheader">
                             <div class="kt-container">
                                 <div class="kt-subheader__main">
-                                    <h2 class="">ASIGNACIÓN DE DOCENTES</h2>
+                                    <h2 class=""><?php echo $esDocente ? 'MIS MÓDULOS ASIGNADOS' : 'ASIGNACIÓN DE DOCENTES'; ?></h2>
                                     <span class="kt-subheader__separator kt-hidden"></span>
                                     <div class="kt-subheader__breadcrumbs">
                                         <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
                                         <span class="kt-subheader__breadcrumbs-separator"></span>
-                                        <h4>MÓDULOS VIGENTES</h4>
+                                        <h4><?php echo $esDocente ? 'CONSULTA DE ASIGNACIONES' : 'MÓDULOS VIGENTES'; ?></h4>
                                     </div>
                                 </div>
                                 <div class="kt-subheader__toolbar">
@@ -196,6 +216,12 @@ date_default_timezone_set("America/La_Paz");
                             require_once 'modelos/conexion.modelo.php';
                             $anioActual = date('Y');
 
+                            // Construir consulta según tipo de usuario
+                            $sqlWhere = "m.estadomodulo = 'ACTIVO' AND p.Estado = 1 AND p.Codigo LIKE :anioActual";
+                            if ($esDocente && $docenteIDLogueado) {
+                                $sqlWhere .= " AND m.DocenteID = :docenteID";
+                            }
+
                             $stmtModulos = Conexion::Conectar()->prepare("
                                 SELECT
                                     m.Idmodulo,
@@ -213,12 +239,13 @@ date_default_timezone_set("America/La_Paz");
                                 FROM modulos m
                                 INNER JOIN programa p ON m.ProgramaId = p.ProgramaID
                                 LEFT JOIN docente d ON m.DocenteID = d.DocenteID
-                                WHERE m.estadomodulo = 'ACTIVO'
-                                AND p.Estado = 1
-                                AND p.Codigo LIKE :anioActual
+                                WHERE " . $sqlWhere . "
                                 ORDER BY p.GradoAcademico, p.NombrePrograma, m.codigomodulo
                             ");
                             $stmtModulos->bindValue(':anioActual', '%-' . $anioActual, PDO::PARAM_STR);
+                            if ($esDocente && $docenteIDLogueado) {
+                                $stmtModulos->bindValue(':docenteID', $docenteIDLogueado, PDO::PARAM_INT);
+                            }
                             $stmtModulos->execute();
                             $modulos = $stmtModulos->fetchAll(PDO::FETCH_ASSOC);
 

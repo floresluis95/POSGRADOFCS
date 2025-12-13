@@ -95,6 +95,57 @@ date_default_timezone_set("America/La_Paz");
                     </div>
                     <!-- FIN DEL CONTENIDO PRINCIPAL -->
 
+<!-- MODAL PARA SELECCIONAR FECHAS DEL PDF -->
+<div class="modal fade" id="modalFechasPDF" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fa fa-calendar"></i> Seleccionar Fechas para el PDF
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-3">
+                    <i class="fa fa-book"></i> <strong>Módulo:</strong> <span id="modal-modulo-nombre"></span>
+                </div>
+                <div class="form-group">
+                    <label for="sigla-modulo-pdf-reporte" class="font-weight-bold">
+                        <i class="fa fa-tag"></i> Sigla del Módulo:
+                    </label>
+                    <input type="text" class="form-control" id="sigla-modulo-pdf-reporte" placeholder="Ej: ODO-01, EST-02, etc." maxlength="20">
+                    <small class="form-text text-muted">Opcional: Identificador corto del módulo</small>
+                </div>
+                <div class="form-group">
+                    <label for="fecha-inicio-pdf-reporte" class="font-weight-bold">
+                        <i class="fa fa-calendar-alt"></i> Fecha de Inicio:
+                    </label>
+                    <input type="date" class="form-control" id="fecha-inicio-pdf-reporte" required>
+                </div>
+                <div class="form-group">
+                    <label for="fecha-fin-pdf-reporte" class="font-weight-bold">
+                        <i class="fa fa-calendar-check"></i> Fecha de Fin:
+                    </label>
+                    <input type="date" class="form-control" id="fecha-fin-pdf-reporte" required>
+                </div>
+                <div class="alert alert-light mt-3">
+                    <i class="fa fa-info-circle"></i> Las fechas y la sigla se incluirán en el PDF generado.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="btn-confirmar-pdf-reporte">
+                    <i class="fa fa-print"></i> Generar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
                     <?php $Footer = new FuncionesControladores(); $Footer->FooterControlador(); ?>
                 </div>
             </div>
@@ -149,6 +200,7 @@ date_default_timezone_set("America/La_Paz");
 
 <script>
 let docenteData = null;
+let moduloParaPDF = null;
 
 $(document).ready(function() {
     // Cargar módulos del docente
@@ -161,6 +213,11 @@ $(document).ready(function() {
     // Botón reporte completo
     $('#btn-reporte-completo').on('click', function() {
         generarReporteCompleto();
+    });
+
+    // Event listener para confirmar PDF con fechas
+    $('#btn-confirmar-pdf-reporte').on('click', function() {
+        generarPDFConFechas();
     });
 });
 
@@ -246,11 +303,12 @@ function mostrarTablaModulos(modulos) {
                 <thead>
                     <tr>
                         <th class="text-center" style="width: 5%;">N�</th>
-                        <th style="width: 15%;">C�digo</th>
-                        <th style="width: 25%;">M�dulo</th>
-                        <th style="width: 20%;">Programa</th>
-                        <th class="text-center" style="width: 10%;">Inscritos</th>
+                        <th style="width: 12%;">C�digo</th>
+                        <th style="width: 20%;">M�dulo</th>
+                        <th style="width: 18%;">Programa</th>
+                        <th class="text-center" style="width: 8%;">Inscritos</th>
                         <th class="text-center" style="width: 10%;">Calificados</th>
+                        <th class="text-center" style="width: 12%;">Estado M�dulo</th>
                         <th class="text-center" style="width: 15%;">Acciones</th>
                     </tr>
                 </thead>
@@ -271,6 +329,19 @@ function mostrarTablaModulos(modulos) {
             estadoBadge = '<span class="badge badge-success badge-modulo">Completo 100%</span>';
         }
 
+        // Determinar estado del módulo
+        const estadoModulo = modulo.EstadoModulo || 'ACTIVO';
+        let estadoModuloBadge = '';
+        let estadoModuloIcono = '';
+
+        if (estadoModulo === 'VALIDADO' || estadoModulo === 'CERRADO') {
+            estadoModuloBadge = 'kt-badge--danger';
+            estadoModuloIcono = 'la-lock';
+        } else {
+            estadoModuloBadge = 'kt-badge--success';
+            estadoModuloIcono = 'la-unlock';
+        }
+
         html += `
             <tr>
                 <td class="text-center">${index + 1}</td>
@@ -283,6 +354,11 @@ function mostrarTablaModulos(modulos) {
                 <td class="text-center">
                     <span class="kt-badge kt-badge--primary kt-badge--inline">${calificados}</span>
                     ${estadoBadge}
+                </td>
+                <td class="text-center">
+                    <span class="kt-badge ${estadoModuloBadge} kt-badge--inline kt-badge--bold">
+                        <i class="la ${estadoModuloIcono}"></i> ${estadoModulo}
+                    </span>
                 </td>
                 <td class="text-center">
         `;
@@ -318,48 +394,113 @@ function mostrarTablaModulos(modulos) {
 }
 
 function generarPlanillaPDF(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, grado) {
-    Swal.fire({
-        title: 'Imprimir Planilla de Calificaciones',
-        html: '<p>Modulo: <strong>' + moduloNombre + '</strong></p>' +
-              '<label for="fechaPlanillaPDF" style="font-weight: bold; display: block; margin-top: 15px;">Fecha de la planilla:</label>' +
-              '<input type="date" id="fechaPlanillaPDF" class="swal2-input" style="width: 80%; margin-top: 5px;" required>',
-        type: 'question',
-        showCancelButton: true,
-        confirmButtonText: '<i class="fa fa-print"></i> Generar PDF',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#dc3545',
-        cancelButtonColor: '#6c757d',
-        preConfirm: () => {
-            const fecha = document.getElementById('fechaPlanillaPDF').value;
-            if (!fecha) {
-                Swal.showValidationMessage('Por favor seleccione una fecha');
-                return false;
-            }
-            return fecha;
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const fecha = result.value;
+    console.log('>>> Abrir modal para generar PDF');
 
-            // Crear formulario para enviar por POST
-            const form = $('<form>', {
-                action: 'tcpdf/pdf/generar-calificaciones-pdf.php',
-                method: 'POST',
-                target: '_blank'
-            });
+    // Guardar datos del módulo
+    moduloParaPDF = {
+        moduloID: moduloID,
+        programaID: programaID,
+        moduloNombre: moduloNombre,
+        moduloCodigo: moduloCodigo,
+        programaNombre: programaNombre,
+        grado: grado
+    };
 
-            form.append($('<input>', { type: 'hidden', name: 'programaNombre', value: programaNombre }));
-            form.append($('<input>', { type: 'hidden', name: 'moduloNombre', value: moduloNombre }));
-            form.append($('<input>', { type: 'hidden', name: 'moduloCodigo', value: moduloCodigo }));
-            form.append($('<input>', { type: 'hidden', name: 'docenteNombre', value: docenteData.NombreCompleto }));
-            form.append($('<input>', { type: 'hidden', name: 'fechaPlanilla', value: fecha }));
-            form.append($('<input>', { type: 'hidden', name: 'moduloID', value: moduloID }));
-            form.append($('<input>', { type: 'hidden', name: 'programaID', value: programaID }));
-            form.append($('<input>', { type: 'hidden', name: 'grado', value: grado }));
+    // Mostrar nombre del módulo en el modal
+    $('#modal-modulo-nombre').text(moduloNombre);
 
-            form.appendTo('body').submit().remove();
-        }
+    // Limpiar campos del formulario
+    $('#sigla-modulo-pdf-reporte').val('');
+    $('#fecha-inicio-pdf-reporte').val('');
+    $('#fecha-fin-pdf-reporte').val('');
+
+    // Abrir modal
+    $('#modalFechasPDF').modal('show');
+}
+
+function generarPDFConFechas() {
+    console.log('>>> Generando PDF con fechas');
+
+    // Validar que hay datos del módulo
+    if (!moduloParaPDF) {
+        Swal.fire({
+            type: 'error',
+            title: 'Error',
+            text: 'No hay datos del módulo seleccionado'
+        });
+        return;
+    }
+
+    // Obtener datos del formulario
+    const siglaModulo = $('#sigla-modulo-pdf-reporte').val().trim();
+    const fechaInicio = $('#fecha-inicio-pdf-reporte').val();
+    const fechaFin = $('#fecha-fin-pdf-reporte').val();
+
+    // Validar fechas
+    if (!fechaInicio || !fechaFin) {
+        Swal.fire({
+            type: 'warning',
+            title: 'Fechas requeridas',
+            text: 'Por favor ingrese ambas fechas (inicio y fin)'
+        });
+        return;
+    }
+
+    // Validar que fecha inicio sea menor o igual a fecha fin
+    if (new Date(fechaInicio) > new Date(fechaFin)) {
+        Swal.fire({
+            type: 'error',
+            title: 'Fechas inválidas',
+            text: 'La fecha de inicio debe ser menor o igual a la fecha de fin'
+        });
+        return;
+    }
+
+    console.log('>>> Datos para el PDF:');
+    console.log('>>> Módulo:', moduloParaPDF);
+    console.log('>>> Docente:', docenteData);
+    console.log('>>> Sigla:', siglaModulo);
+    console.log('>>> Fecha Inicio:', fechaInicio);
+    console.log('>>> Fecha Fin:', fechaFin);
+
+    // Cerrar modal
+    $('#modalFechasPDF').modal('hide');
+
+    // Crear formulario dinámico para POST
+    const form = $('<form>', {
+        action: 'tcpdf/pdf/generar-calificaciones-pdf.php',
+        method: 'POST',
+        target: '_blank'
     });
+
+    // Agregar campos al formulario
+    form.append($('<input>', { type: 'hidden', name: 'programaNombre', value: moduloParaPDF.programaNombre }));
+    form.append($('<input>', { type: 'hidden', name: 'moduloNombre', value: moduloParaPDF.moduloNombre }));
+    form.append($('<input>', { type: 'hidden', name: 'moduloCodigo', value: moduloParaPDF.moduloCodigo }));
+    form.append($('<input>', { type: 'hidden', name: 'docenteNombre', value: docenteData.NombreCompleto }));
+    form.append($('<input>', { type: 'hidden', name: 'siglaModulo', value: siglaModulo }));
+    form.append($('<input>', { type: 'hidden', name: 'fechaInicio', value: fechaInicio }));
+    form.append($('<input>', { type: 'hidden', name: 'fechaFin', value: fechaFin }));
+    form.append($('<input>', { type: 'hidden', name: 'moduloID', value: moduloParaPDF.moduloID }));
+    form.append($('<input>', { type: 'hidden', name: 'programaID', value: moduloParaPDF.programaID }));
+    form.append($('<input>', { type: 'hidden', name: 'grado', value: moduloParaPDF.grado }));
+
+    // Agregar formulario al body, enviarlo y eliminarlo
+    form.appendTo('body').submit().remove();
+
+    console.log('>>> Formulario enviado para generar PDF con fechas y sigla');
+
+    // Mostrar mensaje de éxito
+    Swal.fire({
+        type: 'success',
+        title: 'PDF generado',
+        text: 'El PDF se está generando en una nueva pestaña',
+        timer: 2000,
+        showConfirmButton: false
+    });
+
+    // Limpiar datos temporales
+    moduloParaPDF = null;
 }
 
 function mostrarSinModulos() {

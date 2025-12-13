@@ -20,6 +20,7 @@ $moduloCodigo = isset($_GET['moduloCodigo']) ? $_GET['moduloCodigo'] : '';
 $programaNombre = isset($_GET['programaNombre']) ? $_GET['programaNombre'] : '';
 $gradoAcademico = isset($_GET['gradoAcademico']) ? $_GET['gradoAcademico'] : '';
 $docenteNombre = isset($_GET['docenteNombre']) ? $_GET['docenteNombre'] : '';
+$siglaModulo = isset($_GET['siglaModulo']) ? $_GET['siglaModulo'] : '';
 $fechaInicio = isset($_GET['fechaInicio']) ? $_GET['fechaInicio'] : '';
 $fechaFin = isset($_GET['fechaFin']) ? $_GET['fechaFin'] : '';
 
@@ -189,25 +190,42 @@ $pdf->Ln(2);
 // TABLA DE CALIFICACIONES
 $pdf->SetFont('helvetica', '', 8);
 
-// Encabezado de tabla
-$html = '
-<table border="1" cellpadding="3">
-    <thead>
-        <tr style="background-color:#667eea; color:#ffffff; font-weight:bold;">
-            <th width="4%" align="center">#</th>
-            <th width="30%" align="center">NOMBRE COMPLETO</th>
-            <th width="10%" align="center">SIGLA</th>
-            <th width="12%" align="center">MÓDULO</th>
-            <th width="8%" align="center">NUM.</th>
-            <th width="36%" align="center">LITERAL</th>
-        </tr>
-    </thead>
-    <tbody>';
+// Definir anchos de columnas (total debe ser 185mm = ancho útil de la página)
+$w1 = 70;  // NOMBRE COMPLETO
+$w2 = 25;  // SIGLA
+$w3 = 30;  // MÓDULO
+$w4 = 20;  // NUM.
+$w5 = 40;  // LITERAL
 
-if (count($estudiantes) > 0) {
-    foreach ($estudiantes as $index => $est) {
-        $nombreCompleto = htmlspecialchars($est['Nombre'] . ' ' . $est['Apaterno'] . ' ' . $est['Amaterno']);
-        $nota = $est['Nota'];
+// Encabezados de la tabla
+$pdf->SetFillColor(102, 126, 234); // Color morado #667eea
+$pdf->SetTextColor(255, 255, 255); // Texto blanco
+$pdf->SetFont('helvetica', 'B', 9);
+
+$pdf->Cell($w1, 7, 'NOMBRE COMPLETO', 1, 0, 'C', true);
+$pdf->Cell($w2, 7, 'SIGLA', 1, 0, 'C', true);
+$pdf->Cell($w3, 7, 'MÓDULO', 1, 0, 'C', true);
+$pdf->Cell($w4, 7, 'NUM.', 1, 0, 'C', true);
+$pdf->Cell($w5, 7, 'LITERAL', 1, 1, 'C', true);
+
+// Restaurar colores para el contenido
+$pdf->SetTextColor(0, 0, 0);
+$pdf->SetFont('helvetica', '', 8);
+
+// Verificar si hay estudiantes
+if (empty($estudiantes) || count($estudiantes) === 0) {
+    $pdf->SetFont('helvetica', 'I', 9);
+    $pdf->Cell($w1 + $w2 + $w3 + $w4 + $w5, 10, 'No hay estudiantes inscritos en este módulo', 1, 1, 'C');
+} else {
+    // Iterar sobre los estudiantes
+    foreach ($estudiantes as $index => $estudiante) {
+        // Obtener datos del estudiante
+        $nombre = isset($estudiante['Nombre']) ? $estudiante['Nombre'] : '';
+        $apaterno = isset($estudiante['Apaterno']) ? $estudiante['Apaterno'] : '';
+        $amaterno = isset($estudiante['Amaterno']) ? $estudiante['Amaterno'] : '';
+        $nombreCompleto = trim($nombre . ' ' . $apaterno . ' ' . $amaterno);
+
+        $nota = isset($estudiante['Nota']) ? $estudiante['Nota'] : null;
 
         if ($nota === null || $nota === '') {
             $notaMostrar = '-';
@@ -218,32 +236,26 @@ if (count($estudiantes) > 0) {
             $notaLiteral = numeroALetras($notaInt);
         }
 
-        $bgcolor = ($index % 2 == 0) ? '#ffffff' : '#f8f9fa';
+        // Alternar color de fondo
+        if ($index % 2 == 0) {
+            $pdf->SetFillColor(255, 255, 255); // Blanco
+        } else {
+            $pdf->SetFillColor(248, 249, 250); // Gris claro
+        }
 
-        $html .= '
-        <tr style="background-color:' . $bgcolor . ';">
-            <td align="center">' . ($index + 1) . '</td>
-            <td>' . $nombreCompleto . '</td>
-            <td align="center"></td>
-            <td align="center">' . htmlspecialchars($moduloCodigo) . '</td>
-            <td align="center"><strong>' . $notaMostrar . '</strong></td>
-            <td>' . $notaLiteral . '</td>
-        </tr>';
+        // Dibujar fila
+        $pdf->Cell($w1, 6, $nombreCompleto, 1, 0, 'L', true);
+        $pdf->Cell($w2, 6, $siglaModulo, 1, 0, 'C', true);
+        $pdf->Cell($w3, 6, $moduloCodigo, 1, 0, 'C', true);
+
+        // Nota numérica en negrita
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell($w4, 6, $notaMostrar, 1, 0, 'C', true);
+        $pdf->SetFont('helvetica', '', 8);
+
+        $pdf->Cell($w5, 6, $notaLiteral, 1, 1, 'L', true);
     }
-} else {
-    $html .= '
-    <tr>
-        <td colspan="6" align="center" style="color:#999; font-style:italic;">
-            No hay estudiantes inscritos en este módulo
-        </td>
-    </tr>';
 }
-
-$html .= '
-    </tbody>
-</table>';
-
-$pdf->writeHTML($html, true, false, false, false, '');
 
 // PIE DE PÁGINA
 $pdf->Ln(15);

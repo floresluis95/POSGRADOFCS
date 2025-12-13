@@ -190,6 +190,54 @@ require_once 'modelos/calificacion.modelo.php';
                     </div>
                     <!-- FIN DEL CONTENIDO PRINCIPAL -->
 
+<!-- MODAL PARA SELECCIONAR FECHAS DEL PDF -->
+<div class="modal fade" id="modalFechasPDF" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fa fa-calendar"></i> Seleccionar Fechas para el PDF
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="sigla-modulo-pdf" class="font-weight-bold">
+                        <i class="fa fa-tag"></i> Sigla del Módulo:
+                    </label>
+                    <input type="text" class="form-control" id="sigla-modulo-pdf" placeholder="Ej: ODO-01, EST-02, etc." maxlength="20">
+                    <small class="form-text text-muted">Opcional: Identificador corto del módulo</small>
+                </div>
+                <div class="form-group">
+                    <label for="fecha-inicio-pdf" class="font-weight-bold">
+                        <i class="fa fa-calendar-o"></i> Fecha de Inicio:
+                    </label>
+                    <input type="date" class="form-control" id="fecha-inicio-pdf" required>
+                </div>
+                <div class="form-group">
+                    <label for="fecha-fin-pdf" class="font-weight-bold">
+                        <i class="fa fa-calendar-check-o"></i> Fecha de Fin:
+                    </label>
+                    <input type="date" class="form-control" id="fecha-fin-pdf" required>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <i class="fa fa-info-circle"></i> Las fechas y la sigla se incluirán en el PDF generado.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="la la-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="btn-confirmar-pdf">
+                    <i class="fa fa-print"></i> Generar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
                     <?php $Footer = new FuncionesControladores(); $Footer->FooterControlador(); ?>
                 </div>
             </div>

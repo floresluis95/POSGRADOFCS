@@ -21,6 +21,12 @@ $(document).ready(function() {
     $(document).on('click', '#btn-generar-pdf', function() {
         generarPDF();
     });
+
+    // Event listener para confirmar PDF con fechas
+    $(document).on('click', '#btn-confirmar-pdf', function() {
+        console.log('>>> Botón Confirmar PDF clickeado');
+        generarPDFConFechas();
+    });
 });
 
 /**
@@ -308,6 +314,16 @@ function mostrarAsignaciones(asignaciones) {
                                 data-estado-modulo="${estadoModulo}">
                             <i class="la la-edit"></i> ${estadoModulo === 'ACTIVO' ? 'Registrar' : 'Ver'}
                         </button>
+                        <button class="btn btn-sm btn-danger btn-imprimir-pdf ml-1"
+                                data-modulo-id="${asig.Idmodulo}"
+                                data-programa-id="${asig.ProgramaID}"
+                                data-modulo-nombre="${asig.nombremodulo}"
+                                data-modulo-codigo="${asig.codigomodulo}"
+                                data-programa-nombre="${asig.NombrePrograma}"
+                                data-grado="${asig.GradoAcademico}"
+                                title="Imprimir PDF">
+                            <i class="fa fa-print"></i>
+                        </button>
                         ${botonValidar}
                     </td>
                 </tr>
@@ -345,6 +361,29 @@ function mostrarAsignaciones(asignaciones) {
         console.log('>>> Asignación establecida:', asignacionSeleccionada);
 
         cargarEstudiantes(moduloID, programaID);
+    });
+
+    // Event delegation para botón de imprimir PDF
+    $(document).off('click', '.btn-imprimir-pdf').on('click', '.btn-imprimir-pdf', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        console.log('>>> Botón Imprimir PDF clickeado');
+
+        // Guardar datos del módulo para el PDF
+        const moduloData = {
+            moduloID: $(this).data('modulo-id'),
+            programaID: $(this).data('programa-id'),
+            moduloNombre: $(this).data('modulo-nombre'),
+            moduloCodigo: $(this).data('modulo-codigo'),
+            programaNombre: $(this).data('programa-nombre'),
+            grado: $(this).data('grado')
+        };
+
+        console.log('>>> Datos del módulo para PDF:', moduloData);
+
+        // Abrir modal para seleccionar fechas
+        abrirModalFechasPDF(moduloData);
     });
 
     // Event handler para validar y cerrar módulo
@@ -935,10 +974,123 @@ function reabrirModulo(moduloID, moduloNombre) {
 
 /**
  * ================================================================
- * GENERACIÓN DE PDF
+ * GENERACIÓN DE PDF CON MODAL DE FECHAS
  * ================================================================
  */
 
+// Variable temporal para almacenar datos del módulo durante la generación del PDF
+let moduloParaPDF = null;
+
+/**
+ * Abrir modal para seleccionar fechas del PDF
+ */
+function abrirModalFechasPDF(moduloData) {
+    console.log('>>> Abriendo modal de fechas para PDF');
+    console.log('>>> Datos del módulo:', moduloData);
+
+    // Guardar datos del módulo
+    moduloParaPDF = moduloData;
+
+    // Limpiar campos del modal
+    $('#sigla-modulo-pdf').val('');
+    $('#fecha-inicio-pdf').val('');
+    $('#fecha-fin-pdf').val('');
+
+    // Abrir modal
+    $('#modalFechasPDF').modal('show');
+}
+
+/**
+ * Generar PDF con fechas seleccionadas
+ */
+function generarPDFConFechas() {
+    console.log('>>> Generando PDF con fechas');
+
+    // Validar que hay datos del módulo
+    if (!moduloParaPDF) {
+        Swal.fire({
+            type: 'error',
+            title: 'Error',
+            text: 'No hay datos del módulo seleccionado'
+        });
+        return;
+    }
+
+    // Obtener datos del formulario
+    const siglaModulo = $('#sigla-modulo-pdf').val().trim();
+    const fechaInicio = $('#fecha-inicio-pdf').val();
+    const fechaFin = $('#fecha-fin-pdf').val();
+
+    // Validar fechas
+    if (!fechaInicio || !fechaFin) {
+        Swal.fire({
+            type: 'warning',
+            title: 'Fechas requeridas',
+            text: 'Por favor ingrese ambas fechas (inicio y fin)'
+        });
+        return;
+    }
+
+    // Validar que fecha inicio sea menor o igual a fecha fin
+    if (new Date(fechaInicio) > new Date(fechaFin)) {
+        Swal.fire({
+            type: 'error',
+            title: 'Fechas inválidas',
+            text: 'La fecha de inicio debe ser menor o igual a la fecha de fin'
+        });
+        return;
+    }
+
+    console.log('>>> Datos para el PDF:');
+    console.log('>>> Módulo:', moduloParaPDF);
+    console.log('>>> Docente:', docenteSeleccionado);
+    console.log('>>> Sigla:', siglaModulo);
+    console.log('>>> Fecha Inicio:', fechaInicio);
+    console.log('>>> Fecha Fin:', fechaFin);
+
+    // Cerrar modal
+    $('#modalFechasPDF').modal('hide');
+
+    // Crear formulario dinámico para POST
+    const form = $('<form>', {
+        action: 'tcpdf/pdf/generar-calificaciones-pdf.php',
+        method: 'POST',
+        target: '_blank'
+    });
+
+    // Agregar campos al formulario
+    form.append($('<input>', { type: 'hidden', name: 'programaNombre', value: moduloParaPDF.programaNombre }));
+    form.append($('<input>', { type: 'hidden', name: 'moduloNombre', value: moduloParaPDF.moduloNombre }));
+    form.append($('<input>', { type: 'hidden', name: 'moduloCodigo', value: moduloParaPDF.moduloCodigo }));
+    form.append($('<input>', { type: 'hidden', name: 'docenteNombre', value: docenteSeleccionado.nombre }));
+    form.append($('<input>', { type: 'hidden', name: 'siglaModulo', value: siglaModulo }));
+    form.append($('<input>', { type: 'hidden', name: 'fechaInicio', value: fechaInicio }));
+    form.append($('<input>', { type: 'hidden', name: 'fechaFin', value: fechaFin }));
+    form.append($('<input>', { type: 'hidden', name: 'moduloID', value: moduloParaPDF.moduloID }));
+    form.append($('<input>', { type: 'hidden', name: 'programaID', value: moduloParaPDF.programaID }));
+    form.append($('<input>', { type: 'hidden', name: 'grado', value: moduloParaPDF.grado }));
+
+    // Agregar formulario al body, enviarlo y eliminarlo
+    form.appendTo('body').submit().remove();
+
+    console.log('>>> Formulario enviado para generar PDF con fechas y sigla');
+
+    // Mostrar mensaje de éxito
+    Swal.fire({
+        type: 'success',
+        title: 'PDF generado',
+        text: 'El PDF se está generando en una nueva pestaña',
+        timer: 2000,
+        showConfirmButton: false
+    });
+
+    // Limpiar datos temporales
+    moduloParaPDF = null;
+}
+
+/**
+ * Función legacy de generación de PDF (por compatibilidad)
+ */
 function generarPDF() {
     console.log('>>> Iniciando generarPDF()');
 
@@ -952,42 +1104,13 @@ function generarPDF() {
         return;
     }
 
-    // Validar fecha
-    const fechaPlanilla = $('#fecha-planilla').val();
-
-    if (!fechaPlanilla) {
-        Swal.fire({
-            type: 'warning',
-            title: 'Fecha requerida',
-            text: 'Por favor ingrese la fecha de la planilla'
-        });
-        return;
-    }
-
-    console.log('>>> Datos para el PDF:');
-    console.log('>>> Asignación:', asignacionSeleccionada);
-    console.log('>>> Docente:', docenteSeleccionado);
-    console.log('>>> Fecha Planilla:', fechaPlanilla);
-
-    // Crear formulario dinámico para POST
-    const form = $('<form>', {
-        action: 'tcpdf/pdf/generar-calificaciones-pdf.php',
-        method: 'POST',
-        target: '_blank'
+    // Usar el nuevo sistema de modal
+    abrirModalFechasPDF({
+        moduloID: asignacionSeleccionada.moduloID,
+        programaID: asignacionSeleccionada.programaID,
+        moduloNombre: asignacionSeleccionada.moduloNombre,
+        moduloCodigo: asignacionSeleccionada.moduloCodigo,
+        programaNombre: asignacionSeleccionada.programaNombre,
+        grado: asignacionSeleccionada.grado
     });
-
-    // Agregar campos al formulario
-    form.append($('<input>', { type: 'hidden', name: 'programaNombre', value: asignacionSeleccionada.programaNombre }));
-    form.append($('<input>', { type: 'hidden', name: 'moduloNombre', value: asignacionSeleccionada.moduloNombre }));
-    form.append($('<input>', { type: 'hidden', name: 'moduloCodigo', value: asignacionSeleccionada.moduloCodigo }));
-    form.append($('<input>', { type: 'hidden', name: 'docenteNombre', value: docenteSeleccionado.nombre }));
-    form.append($('<input>', { type: 'hidden', name: 'fechaPlanilla', value: fechaPlanilla }));
-    form.append($('<input>', { type: 'hidden', name: 'moduloID', value: asignacionSeleccionada.moduloID }));
-    form.append($('<input>', { type: 'hidden', name: 'programaID', value: asignacionSeleccionada.programaID }));
-    form.append($('<input>', { type: 'hidden', name: 'grado', value: asignacionSeleccionada.grado }));
-
-    // Agregar formulario al body, enviarlo y eliminarlo
-    form.appendTo('body').submit().remove();
-
-    console.log('>>> Formulario enviado para generar PDF');
 }

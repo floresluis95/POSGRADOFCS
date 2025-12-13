@@ -970,7 +970,7 @@ class CalificacionModelo
             $stmtUser->execute();
             $userRow = $stmtUser->fetch(PDO::FETCH_ASSOC);
 
-            if (!$userRow || $userRow['Tipo'] != 'Administrador') {
+            if (!$userRow || $userRow['Tipo'] != 'ADM') {
                 $pdo->rollBack();
                 return [
                     'status' => 'error',
@@ -1056,7 +1056,7 @@ class CalificacionModelo
             $stmtUser->execute();
             $usuario = $stmtUser->fetch(PDO::FETCH_ASSOC);
 
-            if ($usuario && $usuario['Tipo'] == 'Administrador') {
+            if ($usuario && $usuario['Tipo'] == 'ADM') {
                 return [
                     'permitido' => true,
                     'mensaje' => 'Permitido por privilegios de administrador'
