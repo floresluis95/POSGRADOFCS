@@ -102,11 +102,22 @@
                     ? '<span class="badge badge-success"><i class="fa fa-check"></i> Activo</span>'
                     : '<span class="badge badge-danger"><i class="fa fa-times"></i> Inactivo</span>';
 
+                // Determinar la contraseña a mostrar
+                $passwordMostrar = '';
+                if (!empty($Usuario['PasswordTexto'])) {
+                    // Si existe PasswordTexto, mostrarlo
+                    $passwordMostrar = $Usuario['PasswordTexto'];
+                } else {
+                    // Si no existe, la contraseña inicial es el CI
+                    $passwordMostrar = $Usuario['CedulaIdentidad'];
+                }
+
                 echo '<tr>
                     <td class="text-center">'.$contador.'</td>
                     <td class="text-center"><strong>'.$Usuario["CedulaIdentidad"].'</strong></td>
                     <td>'.$Usuario['ApellidoPaterno'].' '.$Usuario["ApellidoMaterno"].' '.$Usuario["Nombres"].'</td>
                     <td><strong>'.$Usuario['Usuario'].'</strong></td>
+                    <td class="text-center"><span class="badge badge-dark">'.$passwordMostrar.'</span></td>
                     <td>'.$Usuario['Celular'].'</td>
                     <td class="text-center">'.date('d/m/Y', strtotime($Usuario['FechaIngreso'])).'</td>
                     <td class="text-center">'.$tipoBadge.'</td>

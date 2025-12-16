@@ -83,8 +83,11 @@
                           <th style="width: 25%;">
                             <i class="fas fa-user"></i> Nombre Completo
                           </th>
-                          <th class="text-center" style="width: 12%;">
+                          <th class="text-center" style="width: 10%;">
                             <i class="fas fa-user-circle"></i> Usuario
+                          </th>
+                          <th class="text-center" style="width: 10%;">
+                            <i class="fas fa-key"></i> Contraseña
                           </th>
                           <th class="text-center" style="width: 10%;">
                             <i class="fas fa-phone"></i> Celular
