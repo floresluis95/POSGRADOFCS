@@ -110,6 +110,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                         <th class="text-center" style="color: white; width: 120px;">GRADO</th>
                                         <th class="text-center" style="color: white; width: 100px;">CÓDIGO</th>
                                         <th class="text-center" style="color: white; width: 120px;">COSTO MATRÍCULA</th>
+                                        <th class="text-center" style="color: white; width: 150px;">TIPO DE PAGO</th>
                                         <th class="text-center" style="color: white; width: 120px;">N° VOUCHER</th>
                                         <th class="text-center" style="color: white; width: 120px;">FECHA INSCRIPCIÓN</th>
                                         <th class="text-center" style="color: white; width: 150px;">ACCIONES</th>

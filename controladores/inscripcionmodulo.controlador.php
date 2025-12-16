@@ -30,6 +30,23 @@ class InscripcionModuloControladores
             // Determinar color del estado
             $colorEstado = $estudiante['Estado'] == 'ACTIVO' ? 'success' : 'danger';
 
+            // Determinar tipo de pago
+            $pagoCompleto = isset($estudiante['pagoCompleto']) ? (int)$estudiante['pagoCompleto'] : 0;
+            $montoPagado = isset($estudiante['montoPagado']) ? floatval($estudiante['montoPagado']) : 0;
+
+            if ($pagoCompleto == 1) {
+                $tipoPago = '<span class="badge badge-success" style="font-size: 11px; padding: 6px 12px;">
+                                <i class="fa fa-check-circle"></i> PAGO COMPLETO
+                            </span><br>
+                            <small class="text-muted">Inscrito en todos los módulos</small><br>
+                            <strong class="text-success">Bs. ' . number_format($montoPagado, 2) . '</strong>';
+            } else {
+                $tipoPago = '<span class="badge badge-warning" style="font-size: 11px; padding: 6px 12px;">
+                                <i class="fa fa-credit-card"></i> SOLO MATRÍCULA
+                            </span><br>
+                            <small class="text-muted">Debe inscribirse a módulos</small>';
+            }
+
             echo '<tr>
                     <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
                     <td><strong>' . $nombreCompleto . '</strong></td>
@@ -38,6 +55,7 @@ class InscripcionModuloControladores
                     <td class="text-center"><span class="badge badge-info">' . $estudiante['GradoAcademico'] . '</span></td>
                     <td class="text-center"><span class="badge badge-primary">' . $estudiante['CodigoPrograma'] . '</span></td>
                     <td class="text-center"><strong>Bs. ' . number_format($estudiante['costomatricula'], 2) . '</strong></td>
+                    <td class="text-center">' . $tipoPago . '</td>
                     <td class="text-center">' . $estudiante['nvauchermatricula'] . '</td>
                     <td class="text-center">' . $fechaFormateada . '</td>
                     <td class="text-center">

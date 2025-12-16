@@ -21,6 +21,8 @@ class InscripcionModuloModelos
                     ep.ProgramaID,
                     ep.FechaInscripcion,
                     ep.costomatricula,
+                    ep.montoPagado,
+                    ep.pagoCompleto,
                     ep.nvauchermatricula,
                     ep.Estado,
                     e.Nombre,

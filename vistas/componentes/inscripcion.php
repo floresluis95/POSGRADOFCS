@@ -178,6 +178,28 @@ kt-aside--fixed kt-page--loading">
                                 </div>
                               </div>
                             </div>
+
+                            <!-- Opción de Pago Completo -->
+                            <div class="row mt-3">
+                              <div class="col-lg-12">
+                                <div class="card" style="border: 2px solid #28a745; background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%); border-radius: 10px;">
+                                  <div class="card-body">
+                                    <div class="custom-control custom-checkbox">
+                                      <input type="checkbox" class="custom-control-input" id="pagoCompleto" name="pagoCompleto" value="1">
+                                      <label class="custom-control-label" for="pagoCompleto" style="font-size: 1.1rem; font-weight: 600; color: #28a745; cursor: pointer;">
+                                        <i class="flaticon2-check-mark"></i>
+                                        <strong>PAGO COMPLETO DEL PROGRAMA</strong>
+                                      </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-2" style="padding-left: 24px;">
+                                      <i class="flaticon2-information"></i>
+                                      Al marcar esta opción, el estudiante paga el costo total del programa y queda inscrito automáticamente en todos los módulos.
+                                      <strong>No se cobrará matrícula.</strong>
+                                    </small>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
 
@@ -191,19 +213,20 @@ kt-aside--fixed kt-page--loading">
                           <div class="card-body" style="background-color: #f8f9fa; padding: 2rem;">
                             <div class="row">
                               <div class="col-lg-4 mb-3">
-                                <label class="font-weight-bold mb-2" style="color: #3f4254; font-size: 0.95rem;">
-                                  <i class="flaticon2-piggy-bank text-warning"></i> Monto de Matrícula *
+                                <label class="font-weight-bold mb-2" style="color: #3f4254; font-size: 0.95rem;" id="labelMonto">
+                                  <i class="flaticon2-piggy-bank text-warning"></i> <span id="textoMonto">Monto de Matrícula</span> *
                                 </label>
                                 <div class="input-group input-group-lg">
                                   <div class="input-group-prepend">
                                     <span class="input-group-text" style="background: #667eea; color: white; border: none;">Bs.</span>
                                   </div>
-                                  <input type="number" class="form-control" name="montoMatricula"
+                                  <input type="number" class="form-control" name="montoMatricula" id="montoMatricula"
                                          placeholder="0.00" min="0" step="0.01"
                                          style="border: 2px solid #e1e3ea; border-left: none;" required>
+                                  <input type="hidden" name="costoTotalPrograma" id="costoTotalPrograma" value="0">
                                 </div>
-                                <small class="form-text text-muted">
-                                  <i class="flaticon2-information"></i> Pago inicial de inscripción
+                                <small class="form-text text-muted" id="infoMonto">
+                                  <i class="flaticon2-information"></i> <span id="textoInfoMonto">Pago inicial de inscripción</span>
                                 </small>
                               </div>
 
@@ -601,6 +624,34 @@ $(document).ready(function() {
 
     actualizarFecha();
     setInterval(actualizarFecha, 60000); // Actualiza cada minuto
+
+    // Manejar checkbox de pago completo
+    $('#pagoCompleto').on('change', function() {
+        if ($(this).is(':checked')) {
+            // Pago completo activado
+            const costoTotal = parseFloat($('#costoTotalPrograma').val()) || 0;
+
+            $('#montoMatricula').val(costoTotal.toFixed(2));
+            $('#montoMatricula').prop('readonly', true);
+            $('#montoMatricula').css('background-color', '#e9ecef');
+
+            $('#textoMonto').html('Monto Total del Programa');
+            $('#textoInfoMonto').html('Pago completo - Sin matrícula - Inscripción automática a todos los módulos');
+            $('#infoMonto').removeClass('text-muted').addClass('text-success');
+            $('#labelMonto').find('i').removeClass('text-warning').addClass('text-success');
+
+        } else {
+            // Pago completo desactivado
+            $('#montoMatricula').val('');
+            $('#montoMatricula').prop('readonly', false);
+            $('#montoMatricula').css('background-color', '#ffffff');
+
+            $('#textoMonto').html('Monto de Matrícula');
+            $('#textoInfoMonto').html('Pago inicial de inscripción');
+            $('#infoMonto').removeClass('text-success').addClass('text-muted');
+            $('#labelMonto').find('i').removeClass('text-success').addClass('text-warning');
+        }
+    });
 });
 </script>
 

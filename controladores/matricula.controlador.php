@@ -37,6 +37,20 @@ class MatriculaControladores
                 return;
             }
 
+            // Verificar si es pago completo
+            $pagoCompleto = isset($_POST['pagoCompleto']) && $_POST['pagoCompleto'] == '1' ? 1 : 0;
+            $costoTotalPrograma = isset($_POST['costoTotalPrograma']) ? floatval($_POST['costoTotalPrograma']) : 0;
+
+            // Si es pago completo, el monto de matrícula es 0 (no se cobra)
+            // El monto total pagado es el costo del programa
+            if ($pagoCompleto) {
+                $montoMatricula = 0; // No se cobra matrícula
+                $montoPagado = $costoTotalPrograma; // Se paga el programa completo
+            } else {
+                $montoMatricula = floatval($_POST['montoMatricula']);
+                $montoPagado = $montoMatricula; // Solo paga la matrícula
+            }
+
             // Procesar imagen (opcional)
             $imagenBlob = null;
             if (isset($_FILES['comprobanteImagen']) && $_FILES['comprobanteImagen']['error'] == UPLOAD_ERR_OK) {
@@ -78,11 +92,15 @@ class MatriculaControladores
             $datosMatricula = array(
                 "EstudianteID" => (int)$_POST['idcliente'],
                 "ProgramaID" => (int)$_POST['programa'],
-                "costomatricula" => (int)$_POST['montoMatricula'],
+                "costomatricula" => $montoMatricula,
+                "montoPagado" => $montoPagado,
+                "pagoCompleto" => $pagoCompleto,
                 "nvauchermatricula" => (int)$_POST['numeroVaucher'],
                 "FechaInscripcion" => htmlspecialchars(trim($_POST['fechaInscripcion'])),
                 "foto" => $imagenBlob
             );
+
+            error_log("Datos de matrícula preparados: " . print_r($datosMatricula, true));
 
             // Registrar en la base de datos
             $resultado = MatriculaModelos::RegistrarMatriculaModelo($datosMatricula);

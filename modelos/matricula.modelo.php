@@ -37,25 +37,60 @@ class MatriculaModelos
             // Insertar la inscripción
             $stmt = $pdo->prepare(
                 "INSERT INTO estudianteprograma
-                (EstudianteID, ProgramaID, costomatricula, nvauchermatricula, FechaInscripcion, foto, Estado)
-                VALUES (:estudianteID, :programaID, :costomatricula, :nvaucher, :fechaInscripcion, :foto, 'ACTIVO')"
+                (EstudianteID, ProgramaID, costomatricula, montoPagado, pagoCompleto, nvauchermatricula, FechaInscripcion, foto, Estado)
+                VALUES (:estudianteID, :programaID, :costomatricula, :montoPagado, :pagoCompleto, :nvaucher, :fechaInscripcion, :foto, 'ACTIVO')"
             );
 
             $stmt->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
             $stmt->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
-            $stmt->bindParam(":costomatricula", $datos['costomatricula'], PDO::PARAM_INT);
+            $stmt->bindParam(":costomatricula", $datos['costomatricula']);
+            $stmt->bindParam(":montoPagado", $datos['montoPagado']);
+            $stmt->bindParam(":pagoCompleto", $datos['pagoCompleto'], PDO::PARAM_INT);
             $stmt->bindParam(":nvaucher", $datos['nvauchermatricula'], PDO::PARAM_INT);
             $stmt->bindParam(":fechaInscripcion", $datos['FechaInscripcion'], PDO::PARAM_STR);
             $stmt->bindParam(":foto", $datos['foto'], PDO::PARAM_LOB);
 
-            if ($stmt->execute()) {
-                $pdo->commit();
-                return "exitoso";
-            } else {
+            if (!$stmt->execute()) {
                 $pdo->rollBack();
                 error_log("Error al ejecutar INSERT: " . print_r($stmt->errorInfo(), true));
                 return "error";
             }
+
+            // Obtener el ID de la inscripción recién creada
+            $inscripcionID = $pdo->lastInsertId();
+
+            // Si es pago completo, inscribir automáticamente en todos los módulos del programa
+            if ($datos['pagoCompleto'] == 1) {
+                // Obtener todos los módulos del programa
+                $stmtModulos = $pdo->prepare(
+                    "SELECT ModuloID FROM modulo WHERE ProgramaID = :programaID AND Estado = 'ACTIVO'"
+                );
+                $stmtModulos->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
+                $stmtModulos->execute();
+                $modulos = $stmtModulos->fetchAll(PDO::FETCH_ASSOC);
+
+                // Inscribir al estudiante en cada módulo
+                $stmtInscribirModulo = $pdo->prepare(
+                    "INSERT INTO estudiantemodulo
+                    (EstudianteID, ModuloID, FechaInscripcionModulo, Estado)
+                    VALUES (:estudianteID, :moduloID, NOW(), 'ACTIVO')"
+                );
+
+                foreach ($modulos as $modulo) {
+                    $stmtInscribirModulo->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
+                    $stmtInscribirModulo->bindParam(":moduloID", $modulo['ModuloID'], PDO::PARAM_INT);
+
+                    if (!$stmtInscribirModulo->execute()) {
+                        error_log("Error al inscribir en módulo: " . print_r($stmtInscribirModulo->errorInfo(), true));
+                        // Continuar con los demás módulos aunque uno falle
+                    }
+                }
+
+                error_log("Estudiante {$datos['EstudianteID']} inscrito en " . count($modulos) . " módulos del programa {$datos['ProgramaID']}");
+            }
+
+            $pdo->commit();
+            return "exitoso";
 
         } catch (PDOException $e) {
             if ($pdo->inTransaction()) {

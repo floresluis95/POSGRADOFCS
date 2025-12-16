@@ -341,9 +341,8 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                     <div class="row">
                       <div class="col-md-6">
                         <div class="modal-body">
-                          <?php $fecha_minima = date('Y-m-d'); ?>
                           <label>FECHA DE INICIO</label>
-                          <input type="date" class="form-control" name="FechaInicio" min="<?php echo $fecha_minima; ?>" required>
+                          <input type="date" class="form-control" id="FechaInicioNuevo" name="FechaInicio" required>
                         </div>
                       </div>
 
@@ -449,6 +448,105 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
   .form-control:focus {
     border-color: #667eea;
     box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+
+  /* Estilos para input type="date" */
+  input[type="date"] {
+    background-color: #ffffff !important;
+    color: #495057 !important;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    position: relative;
+    cursor: pointer;
+    pointer-events: auto !important;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer !important;
+    filter: invert(0.5);
+    font-size: 18px;
+    padding: 5px;
+    position: relative;
+    z-index: 10;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+  }
+
+  input[type="date"]::-webkit-datetime-edit {
+    color: #495057 !important;
+    background-color: transparent !important;
+    padding: 2px;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-text {
+    color: #495057 !important;
+    padding: 0 4px;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-month-field {
+    color: #495057 !important;
+    font-weight: 600;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    background-color: transparent;
+    padding: 2px 4px;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-month-field:hover,
+  input[type="date"]::-webkit-datetime-edit-month-field:focus {
+    background-color: #e9ecef;
+    border-radius: 3px;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-day-field {
+    color: #495057 !important;
+    font-weight: 600;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    background-color: transparent;
+    padding: 2px 4px;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-day-field:hover,
+  input[type="date"]::-webkit-datetime-edit-day-field:focus {
+    background-color: #e9ecef;
+    border-radius: 3px;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-year-field {
+    color: #495057 !important;
+    font-weight: 600;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    background-color: transparent;
+    padding: 2px 4px;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-year-field:hover,
+  input[type="date"]::-webkit-datetime-edit-year-field:focus {
+    background-color: #e9ecef;
+    border-radius: 3px;
+  }
+
+  /* Para Firefox */
+  input[type="date"]::-moz-placeholder {
+    color: #6c757d !important;
+  }
+
+  /* Cuando el input está vacío */
+  input[type="date"]:invalid {
+    color: #6c757d;
+  }
+
+  /* Asegurar que el modal no bloquee el date picker */
+  .modal-body input[type="date"] {
+    z-index: 1;
+    position: relative;
   }
 
   /* Portlet mejorado */

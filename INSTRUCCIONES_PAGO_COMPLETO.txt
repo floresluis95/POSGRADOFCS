@@ -1,0 +1,94 @@
+================================================================================
+  FUNCIONALIDAD DE PAGO COMPLETO DEL PROGRAMA - INSTRUCCIONES
+================================================================================
+
+DESCRIPCIÓN:
+-----------
+Se ha implementado una nueva funcionalidad en el módulo de inscripción que
+permite registrar cuando un estudiante paga el costo total del programa.
+
+CARACTERÍSTICAS:
+---------------
+✓ Checkbox "PAGO COMPLETO DEL PROGRAMA" en el formulario de inscripción
+✓ Si se marca el checkbox:
+  - El estudiante paga el costo total del programa
+  - NO se cobra matrícula (costo matrícula = 0)
+  - Se inscribe AUTOMÁTICAMENTE en TODOS los módulos del programa
+✓ En la tabla de matriculados se muestra el tipo de pago con un badge:
+  - Verde: "PAGO COMPLETO" (inscrito en todos los módulos)
+  - Amarillo: "SOLO MATRÍCULA" (debe inscribirse a módulos)
+
+INSTALACIÓN:
+-----------
+PASO 1: Ejecutar el script SQL
+   - Abrir phpMyAdmin (http://localhost/phpmyadmin)
+   - Seleccionar la base de datos "sistemadeposgrado"
+   - Ir a la pestaña "SQL"
+   - Copiar y pegar el contenido del archivo: agregar_campos_pago_completo.sql
+   - Hacer clic en "Continuar"
+   - Verificar que aparezca el mensaje "Columnas agregadas correctamente"
+
+PASO 2: Verificar los archivos modificados
+   Los siguientes archivos fueron modificados:
+
+   VISTAS:
+   ✓ vistas/componentes/inscripcion.php
+   ✓ vistas/componentes/matriculados.php
+
+   CONTROLADORES:
+   ✓ controladores/matricula.controlador.php
+   ✓ controladores/inscripcionmodulo.controlador.php
+
+   MODELOS:
+   ✓ modelos/matricula.modelo.php
+   ✓ modelos/inscripcionmodulo.modelo.php
+
+   JAVASCRIPT:
+   ✓ vistas/recursos/assets/js/scripts/programa.js
+
+MODO DE USO:
+-----------
+1. Ir a "Inscripción" en el menú del sistema
+2. Seleccionar el estudiante
+3. Seleccionar el grado académico y programa
+4. Ver los detalles del programa (costo total, módulos, etc.)
+5. Si el estudiante pagará todo el programa:
+   - Marcar el checkbox "PAGO COMPLETO DEL PROGRAMA"
+   - El monto se actualizará automáticamente al costo total del programa
+   - El campo quedará bloqueado
+6. Ingresar el número de voucher y fecha
+7. Adjuntar comprobante de pago (opcional)
+8. Guardar la matriculación
+
+RESULTADO:
+---------
+- El estudiante quedará inscrito en el programa
+- Si marcó "PAGO COMPLETO":
+  * Se inscribirá automáticamente en TODOS los módulos del programa
+  * En la tabla de matriculados aparecerá con badge verde "PAGO COMPLETO"
+  * Mostrará "Inscrito en todos los módulos"
+  * Mostrará el monto total pagado
+- Si NO marcó "PAGO COMPLETO":
+  * Solo se inscribe en el programa
+  * Debe inscribirse manualmente en cada módulo
+  * Aparecerá con badge amarillo "SOLO MATRÍCULA"
+  * Mostrará "Debe inscribirse a módulos"
+
+NOTAS IMPORTANTES:
+-----------------
+⚠ Los registros antiguos (antes de esta actualización) aparecerán como
+  "SOLO MATRÍCULA" ya que no tienen el campo pagoCompleto activado
+
+⚠ Si un estudiante con pago completo necesita ajustes en sus módulos,
+  puede hacerse directamente en la tabla "estudiantemodulo"
+
+⚠ El script SQL usa "IF NOT EXISTS" para evitar errores si ya se ejecutó
+
+SOPORTE:
+-------
+Si tiene problemas con la funcionalidad:
+1. Verificar que el script SQL se haya ejecutado correctamente
+2. Revisar los logs de errores en: error_log de PHP
+3. Verificar que los archivos modificados no tengan errores de sintaxis
+
+================================================================================
