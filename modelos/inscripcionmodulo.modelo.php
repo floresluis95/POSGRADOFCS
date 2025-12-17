@@ -23,6 +23,8 @@ class InscripcionModuloModelos
                     ep.costomatricula,
                     ep.montoPagado,
                     ep.pagoCompleto,
+                    ep.porcentajeDescuento,
+                    ep.montoDescuento,
                     ep.nvauchermatricula,
                     ep.Estado,
                     e.Nombre,

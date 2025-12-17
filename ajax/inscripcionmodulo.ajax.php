@@ -72,7 +72,15 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
         $badgeTipoPago = '';
         if (isset($estudiante['pagoCompleto']) && $estudiante['pagoCompleto'] == 1) {
             $tipoPago = 'PAGO COMPLETO';
-            $badgeTipoPago = '<span class="badge badge-success" style="font-size: 11px; padding: 6px 12px;"><i class="fa fa-check-circle"></i> PAGO COMPLETO</span>';
+            $porcentajeDesc = isset($estudiante['porcentajeDescuento']) ? floatval($estudiante['porcentajeDescuento']) : 0;
+
+            // Agregar info del descuento si existe
+            $infoDescuento = '';
+            if ($porcentajeDesc > 0) {
+                $infoDescuento = '<br><small style="font-size: 9px;"><i class="fa fa-percent"></i> Descuento: ' . number_format($porcentajeDesc, 1) . '%</small>';
+            }
+
+            $badgeTipoPago = '<span class="badge badge-success" style="font-size: 11px; padding: 6px 12px;"><i class="fa fa-check-circle"></i> PAGO COMPLETO' . $infoDescuento . '</span>';
         } else {
             $tipoPago = 'SOLO MATRÍCULA';
             $badgeTipoPago = '<span class="badge badge-warning" style="font-size: 11px; padding: 6px 12px;"><i class="fa fa-money"></i> SOLO MATRÍCULA</span>';

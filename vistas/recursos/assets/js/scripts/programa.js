@@ -64,12 +64,23 @@ $(document).ready(function() {
           var costoTotal = respuesta.Costo ? parseFloat(respuesta.Costo) : 0;
           $('#costoTotalPrograma').val(costoTotal);
 
+          // Guardar el costo de matrícula en campo oculto
+          $('#costoMatriculaPrograma').val(costoMatricula);
+
+          // DEBUG: Verificar valores guardados
+          console.log('=== PROGRAMA SELECCIONADO ===');
+          console.log('Costo Total Programa:', costoTotal);
+          console.log('Costo Matrícula:', costoMatricula);
+          console.log('Valor en campo hidden costoTotalPrograma:', $('#costoTotalPrograma').val());
+          console.log('Valor en campo hidden costoMatriculaPrograma:', $('#costoMatriculaPrograma').val());
+
           // Autocompletar el campo de pago matrícula (solo si no está marcado pago completo)
           if (!$('#pagoCompleto').is(':checked')) {
             $('input[name="montoMatricula"]').val(costoMatricula.toFixed(2));
           } else {
-            // Si pago completo está marcado, usar costo total
-            $('input[name="montoMatricula"]').val(costoTotal.toFixed(2));
+            // Si pago completo está marcado, usar costo total + matrícula
+            var totalConMatricula = costoTotal + costoMatricula;
+            $('input[name="montoMatricula"]').val(totalConMatricula.toFixed(2));
           }
 
           $('#detalle-sede').text(respuesta.Sede);

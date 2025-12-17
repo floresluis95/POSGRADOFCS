@@ -1042,19 +1042,27 @@ jQuery(document).ready(function() {
         actualizarFecha();
         setInterval(actualizarFecha, 60000);
     }
+});
 
-    // ========================================
-    // FUNCIONALIDAD DOCENTE EXTRANJERO
-    // ========================================
+// ========================================
+// FUNCIONALIDAD DOCENTE EXTRANJERO
+// ========================================
+jQuery(document).ready(function() {
+    console.log('>>> Inicializando funcionalidad de docente extranjero');
+
     jQuery('#checkExtranjero').on('change', function() {
         const isChecked = jQuery(this).is(':checked');
         const $camposExtranjero = jQuery('#camposExtranjero');
         const $selectPais = jQuery('#selectPais');
         const $inputRegion = jQuery('#inputRegion');
 
+        console.log('>>> Checkbox extranjero cambiado. Marcado:', isChecked);
+        console.log('>>> Campos encontrados:', $camposExtranjero.length);
+
         if (isChecked) {
             // Mostrar campos de país y región
-            $camposExtranjero.slideDown(300);
+            console.log('>>> Mostrando campos de extranjero');
+            $camposExtranjero.show(); // Usar show() en lugar de slideDown() para depuración
             $selectPais.prop('required', true);
             $inputRegion.prop('required', true);
 
@@ -1063,12 +1071,13 @@ jQuery(document).ready(function() {
             jQuery('#selectExpedido').removeClass('is-invalid');
         } else {
             // Ocultar campos y limpiar valores
-            $camposExtranjero.slideUp(300);
+            console.log('>>> Ocultando campos de extranjero');
+            $camposExtranjero.hide(); // Usar hide() en lugar de slideUp() para depuración
             $selectPais.prop('required', false).val('');
             $inputRegion.prop('required', false).val('');
 
             // Habilitar validación de CI boliviano
-            jQuery('#selectExpedito').prop('required', true);
+            jQuery('#selectExpedido').prop('required', true);
         }
     });
 
@@ -1080,19 +1089,26 @@ jQuery(document).ready(function() {
     // ========================================
     // EDITAR: FUNCIONALIDAD DOCENTE EXTRANJERO
     // ========================================
+    console.log('>>> Inicializando funcionalidad de docente extranjero (EDITAR)');
+
     jQuery('#editCheckExtranjero').on('change', function() {
         const isChecked = jQuery(this).is(':checked');
         const $camposExtranjero = jQuery('#editCamposExtranjero');
         const $selectPais = jQuery('#editSelectPais');
         const $inputRegion = jQuery('#editInputRegion');
 
+        console.log('>>> Checkbox EDITAR extranjero cambiado. Marcado:', isChecked);
+        console.log('>>> Campos EDITAR encontrados:', $camposExtranjero.length);
+
         if (isChecked) {
-            $camposExtranjero.slideDown(300);
+            console.log('>>> Mostrando campos EDITAR de extranjero');
+            $camposExtranjero.show();
             $selectPais.prop('required', true);
             $inputRegion.prop('required', true);
             jQuery('#editExp').prop('required', false);
         } else {
-            $camposExtranjero.slideUp(300);
+            console.log('>>> Ocultando campos EDITAR de extranjero');
+            $camposExtranjero.hide();
             $selectPais.prop('required', false).val('');
             $inputRegion.prop('required', false).val('');
             jQuery('#editExp').prop('required', true);

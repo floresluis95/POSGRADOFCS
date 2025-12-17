@@ -224,6 +224,9 @@ kt-aside--fixed kt-page--loading">
                                          placeholder="0.00" min="0" step="0.01"
                                          style="border: 2px solid #e1e3ea; border-left: none;" required>
                                   <input type="hidden" name="costoTotalPrograma" id="costoTotalPrograma" value="0">
+                                  <input type="hidden" name="costoMatriculaPrograma" id="costoMatriculaPrograma" value="0">
+                                  <input type="hidden" name="porcentajeDescuento" id="porcentajeDescuento" value="0">
+                                  <input type="hidden" name="montoDescuento" id="montoDescuento" value="0">
                                 </div>
                                 <small class="form-text text-muted" id="infoMonto">
                                   <i class="flaticon2-information"></i> <span id="textoInfoMonto">Pago inicial de inscripción</span>
@@ -626,19 +629,45 @@ $(document).ready(function() {
     setInterval(actualizarFecha, 60000); // Actualiza cada minuto
 
     // Manejar checkbox de pago completo
+    // Variables globales para el modal de descuento
+    let costoTotalSinDescuento = 0;
+    let descuentoAplicado = 0;
+
     $('#pagoCompleto').on('change', function() {
         if ($(this).is(':checked')) {
-            // Pago completo activado
-            const costoTotal = parseFloat($('#costoTotalPrograma').val()) || 0;
+            // Pago completo activado - Abrir modal de descuento
+            const costoPrograma = parseFloat($('#costoTotalPrograma').val()) || 0;
+            const costoMatricula = parseFloat($('#costoMatriculaPrograma').val()) || 0;
 
-            $('#montoMatricula').val(costoTotal.toFixed(2));
-            $('#montoMatricula').prop('readonly', true);
-            $('#montoMatricula').css('background-color', '#e9ecef');
+            // DEBUG: Ver valores al abrir modal
+            console.log('=== MODAL DE DESCUENTO ===');
+            console.log('Costo Programa obtenido:', costoPrograma);
+            console.log('Costo Matrícula obtenido:', costoMatricula);
 
-            $('#textoMonto').html('Monto Total del Programa');
-            $('#textoInfoMonto').html('Pago completo - Sin matrícula - Inscripción automática a todos los módulos');
-            $('#infoMonto').removeClass('text-muted').addClass('text-success');
-            $('#labelMonto').find('i').removeClass('text-warning').addClass('text-success');
+            // Sumar costo del programa + costo de matrícula
+            costoTotalSinDescuento = costoPrograma + costoMatricula;
+            console.log('Total sin descuento (Programa + Matrícula):', costoTotalSinDescuento);
+
+            if (costoTotalSinDescuento <= 0) {
+                swal("Atención", "Primero debe seleccionar un programa con costo válido", "warning");
+                $(this).prop('checked', false);
+                return;
+            }
+
+            // Obtener nombre del programa
+            const nombrePrograma = $('#programa option:selected').text() || 'No seleccionado';
+
+            // Llenar datos del modal con desglose
+            $('#modalNombrePrograma').text(nombrePrograma);
+            $('#modalCostoPrograma').text(costoPrograma.toFixed(2));
+            $('#modalCostoMatricula').text(costoMatricula.toFixed(2));
+            $('#modalCostoTotal').text(costoTotalSinDescuento.toFixed(2));
+            $('#inputPorcentajeDescuento').val(0);
+            $('#montoDescuento').text('0.00');
+            $('#totalAPagar').text(costoTotalSinDescuento.toFixed(2));
+
+            // Mostrar modal
+            $('#modalDescuentoPagoCompleto').modal('show');
 
         } else {
             // Pago completo desactivado
@@ -650,9 +679,250 @@ $(document).ready(function() {
             $('#textoInfoMonto').html('Pago inicial de inscripción');
             $('#infoMonto').removeClass('text-success').addClass('text-muted');
             $('#labelMonto').find('i').removeClass('text-success').addClass('text-warning');
+
+            descuentoAplicado = 0;
         }
+    });
+
+    // Cálculo automático del descuento
+    $('#inputPorcentajeDescuento').on('input', function() {
+        let porcentaje = parseFloat($(this).val()) || 0;
+
+        // Validar que esté entre 0 y 100
+        if (porcentaje < 0) {
+            porcentaje = 0;
+            $(this).val(0);
+        }
+        if (porcentaje > 100) {
+            porcentaje = 100;
+            $(this).val(100);
+        }
+
+        // Calcular descuento y total
+        const montoDesc = (costoTotalSinDescuento * porcentaje) / 100;
+        const totalFinal = costoTotalSinDescuento - montoDesc;
+
+        // Actualizar visualización
+        $('#montoDescuento').text(montoDesc.toFixed(2));
+        $('#totalAPagar').text(totalFinal.toFixed(2));
+    });
+
+    // Botón Aceptar Descuento
+    $('#btnAceptarDescuento').on('click', function() {
+        const porcentaje = parseFloat($('#inputPorcentajeDescuento').val()) || 0;
+        const montoDescuentoCalculado = parseFloat($('#montoDescuento').text()) || 0;
+        const totalFinal = parseFloat($('#totalAPagar').text());
+
+        descuentoAplicado = porcentaje;
+
+        // Guardar valores del descuento en campos hidden para enviar al servidor
+        $('#porcentajeDescuento').val(porcentaje.toFixed(2));
+        $('#montoDescuento').val(montoDescuentoCalculado.toFixed(2));
+
+        console.log('=== DESCUENTO APLICADO ===');
+        console.log('Porcentaje:', porcentaje + '%');
+        console.log('Monto Descuento:', montoDescuentoCalculado);
+        console.log('Total Final:', totalFinal);
+        console.log('Campos hidden actualizados');
+
+        // Aplicar el monto final con descuento
+        $('#montoMatricula').val(totalFinal.toFixed(2));
+        $('#montoMatricula').prop('readonly', true);
+        $('#montoMatricula').css('background-color', '#e9ecef');
+
+        // Actualizar etiquetas
+        let textoDescuento = '';
+        if (porcentaje > 0) {
+            textoDescuento = ` <span class="badge badge-success">${porcentaje}% DESC</span>`;
+        }
+
+        $('#textoMonto').html('Monto Total del Programa' + textoDescuento);
+        $('#textoInfoMonto').html('Pago completo - Sin matrícula - Inscripción automática a todos los módulos' + (porcentaje > 0 ? ' - Descuento aplicado: ' + porcentaje + '%' : ''));
+        $('#infoMonto').removeClass('text-muted').addClass('text-success');
+        $('#labelMonto').find('i').removeClass('text-warning').addClass('text-success');
+
+        // Cerrar modal
+        $('#modalDescuentoPagoCompleto').modal('hide');
+
+        // Mostrar mensaje de confirmación
+        if (porcentaje > 0) {
+            swal({
+                title: "¡Descuento Aplicado!",
+                text: "Se ha aplicado un descuento del " + porcentaje + "%. Total a pagar: Bs. " + totalFinal.toFixed(2),
+                icon: "success",
+                timer: 3000
+            });
+        }
+    });
+
+    // Botón Cancelar Descuento
+    $('#btnCancelarDescuento, #btnCerrarModalDescuento').on('click', function() {
+        // Desmarcar el checkbox de pago completo
+        $('#pagoCompleto').prop('checked', false);
+
+        // Cerrar modal
+        $('#modalDescuentoPagoCompleto').modal('hide');
+
+        // Resetear campos
+        $('#montoMatricula').val('');
+        $('#montoMatricula').prop('readonly', false);
+        $('#montoMatricula').css('background-color', '#ffffff');
+
+        $('#textoMonto').html('Monto de Matrícula');
+        $('#textoInfoMonto').html('Pago inicial de inscripción');
+        $('#infoMonto').removeClass('text-success').addClass('text-muted');
+        $('#labelMonto').find('i').removeClass('text-success').addClass('text-warning');
     });
 });
 </script>
+
+<!-- Modal de Descuento para Pago Completo -->
+<div class="modal fade" id="modalDescuentoPagoCompleto" tabindex="-1" role="dialog" aria-labelledby="modalDescuentoLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+
+            <!-- Header del Modal -->
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0; padding: 1.5rem;">
+                <h4 class="modal-title" id="modalDescuentoLabel" style="font-weight: 600; margin: 0;">
+                    <i class="flaticon2-percentage"></i> Aplicar Descuento - Pago Completo
+                </h4>
+                <button type="button" class="close text-white" id="btnCerrarModalDescuento" style="opacity: 1; text-shadow: none;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- Body del Modal -->
+            <div class="modal-body" style="padding: 2rem; background: #f8f9fa;">
+
+                <!-- Información del Programa -->
+                <div class="alert alert-info" style="border-left: 4px solid #3699ff; background: linear-gradient(135deg, rgba(54, 153, 255, 0.1) 0%, rgba(54, 153, 255, 0.05) 100%); border-radius: 8px;">
+                    <div class="d-flex align-items-center">
+                        <i class="flaticon2-information" style="font-size: 2rem; color: #3699ff; margin-right: 15px;"></i>
+                        <div>
+                            <strong style="font-size: 1.1rem; color: #181c32;">Programa Seleccionado:</strong>
+                            <p id="modalNombrePrograma" class="mb-0" style="font-size: 1rem; color: #3f4254; margin-top: 5px;">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desglose de Costos -->
+                <div class="card mb-4" style="border: 2px solid #e1e3ea; border-radius: 10px; background: white;">
+                    <div class="card-body" style="padding: 1.5rem;">
+                        <h5 class="mb-3" style="font-weight: 600; color: #3f4254;">
+                            <i class="flaticon2-list-2 text-primary"></i> Desglose de Costos
+                        </h5>
+
+                        <!-- Costo del Programa -->
+                        <div class="row align-items-center mb-2 pb-2" style="border-bottom: 1px solid #e1e3ea;">
+                            <div class="col-8">
+                                <span style="font-size: 1rem; color: #7e8299;">Costo del Programa:</span>
+                            </div>
+                            <div class="col-4 text-right">
+                                <span style="font-size: 1.1rem; font-weight: 600; color: #3f4254;">
+                                    Bs. <span id="modalCostoPrograma">0.00</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Costo de Matrícula -->
+                        <div class="row align-items-center mb-2 pb-2" style="border-bottom: 1px solid #e1e3ea;">
+                            <div class="col-8">
+                                <span style="font-size: 1rem; color: #7e8299;">Costo de Matrícula:</span>
+                            </div>
+                            <div class="col-4 text-right">
+                                <span style="font-size: 1.1rem; font-weight: 600; color: #3f4254;">
+                                    Bs. <span id="modalCostoMatricula">0.00</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Total -->
+                        <div class="row align-items-center mt-3">
+                            <div class="col-md-6">
+                                <label class="mb-0" style="font-size: 1.2rem; font-weight: 700; color: #181c32;">
+                                    <i class="flaticon2-crisp-icons text-warning" style="font-size: 1.5rem;"></i>
+                                    TOTAL:
+                                </label>
+                            </div>
+                            <div class="col-md-6 text-right">
+                                <div class="d-inline-block" style="background: linear-gradient(135deg, #fff4de 0%, #ffb822 100%); padding: 12px 24px; border-radius: 8px;">
+                                    <span style="font-size: 0.9rem; color: #181c32; font-weight: 500;">Bs.</span>
+                                    <span id="modalCostoTotal" style="font-size: 1.8rem; font-weight: 700; color: #181c32;">0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campo de Descuento -->
+                <div class="card mb-4" style="border: 2px solid #1bc5bd; border-radius: 10px; background: linear-gradient(135deg, rgba(27, 197, 189, 0.1) 0%, rgba(27, 197, 189, 0.05) 100%);">
+                    <div class="card-body" style="padding: 1.5rem;">
+                        <label class="mb-3" style="font-size: 1.1rem; font-weight: 600; color: #181c32;">
+                            <i class="flaticon2-percentage text-success" style="font-size: 1.3rem;"></i>
+                            Porcentaje de Descuento:
+                        </label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="input-group input-group-lg">
+                                    <input type="number" class="form-control" id="inputPorcentajeDescuento"
+                                           placeholder="0" min="0" max="100" step="0.01" value="0"
+                                           style="border: 2px solid #1bc5bd; border-radius: 8px 0 0 8px; font-size: 1.3rem; text-align: center; font-weight: 600;">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text" style="background: #1bc5bd; color: white; border: 2px solid #1bc5bd; border-left: none; border-radius: 0 8px 8px 0; font-size: 1.3rem; font-weight: 600;">
+                                            %
+                                        </span>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted mt-2">
+                                    <i class="flaticon2-information"></i> Ingrese un porcentaje entre 0% y 100%
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-center" style="background: white; padding: 15px; border-radius: 8px; border: 2px solid #e1e3ea;">
+                                    <small style="font-size: 0.85rem; color: #7e8299; text-transform: uppercase; font-weight: 600;">Descuento en Bs.</small>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #1bc5bd; margin-top: 5px;">
+                                        Bs. <span id="montoDescuento">0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total a Pagar -->
+                <div class="card" style="border: 3px solid #28a745; border-radius: 10px; background: linear-gradient(135deg, rgba(40, 167, 69, 0.15) 0%, rgba(40, 167, 69, 0.05) 100%);">
+                    <div class="card-body" style="padding: 1.5rem;">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <label class="mb-0" style="font-size: 1.2rem; font-weight: 700; color: #181c32;">
+                                    <i class="flaticon2-check-mark text-success" style="font-size: 1.5rem;"></i>
+                                    TOTAL A PAGAR:
+                                </label>
+                            </div>
+                            <div class="col-md-6 text-right">
+                                <div class="d-inline-block" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 15px 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);">
+                                    <span style="font-size: 1rem; color: white; font-weight: 500;">Bs.</span>
+                                    <span id="totalAPagar" style="font-size: 2rem; font-weight: 700; color: white;">0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer del Modal -->
+            <div class="modal-footer" style="background: #f8f9fa; border-top: 2px solid #e1e3ea; padding: 1.5rem; border-radius: 0 0 15px 15px;">
+                <button type="button" class="btn btn-secondary btn-lg" id="btnCancelarDescuento" style="padding: 12px 30px; border-radius: 8px; font-weight: 600;">
+                    <i class="flaticon2-delete"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-success btn-lg" id="btnAceptarDescuento" style="padding: 12px 30px; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);">
+                    <i class="flaticon2-check-mark"></i> Aplicar Descuento
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
 
 </body>

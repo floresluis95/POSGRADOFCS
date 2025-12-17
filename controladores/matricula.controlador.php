@@ -88,6 +88,10 @@ class MatriculaControladores
                 $imagenBlob = file_get_contents($_FILES['comprobanteImagen']['tmp_name']);
             }
 
+            // Obtener descuento aplicado (si existe)
+            $porcentajeDescuento = isset($_POST['porcentajeDescuento']) ? floatval($_POST['porcentajeDescuento']) : 0;
+            $montoDescuentoAplicado = isset($_POST['montoDescuento']) ? floatval($_POST['montoDescuento']) : 0;
+
             // Preparar datos para insertar
             $datosMatricula = array(
                 "EstudianteID" => (int)$_POST['idcliente'],
@@ -95,6 +99,8 @@ class MatriculaControladores
                 "costomatricula" => $montoMatricula,
                 "montoPagado" => $montoPagado,
                 "pagoCompleto" => $pagoCompleto,
+                "porcentajeDescuento" => $porcentajeDescuento,
+                "montoDescuento" => $montoDescuentoAplicado,
                 "nvauchermatricula" => htmlspecialchars(trim($_POST['numeroVaucher'])),
                 "FechaInscripcion" => htmlspecialchars(trim($_POST['fechaInscripcion'])),
                 "foto" => $imagenBlob

@@ -37,8 +37,8 @@ class MatriculaModelos
             // Insertar la inscripción
             $stmt = $pdo->prepare(
                 "INSERT INTO estudianteprograma
-                (EstudianteID, ProgramaID, costomatricula, montoPagado, pagoCompleto, nvauchermatricula, FechaInscripcion, foto, Estado)
-                VALUES (:estudianteID, :programaID, :costomatricula, :montoPagado, :pagoCompleto, :nvaucher, :fechaInscripcion, :foto, 'ACTIVO')"
+                (EstudianteID, ProgramaID, costomatricula, montoPagado, pagoCompleto, porcentajeDescuento, montoDescuento, nvauchermatricula, FechaInscripcion, foto, Estado)
+                VALUES (:estudianteID, :programaID, :costomatricula, :montoPagado, :pagoCompleto, :porcentajeDescuento, :montoDescuento, :nvaucher, :fechaInscripcion, :foto, 'ACTIVO')"
             );
 
             $stmt->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
@@ -46,6 +46,8 @@ class MatriculaModelos
             $stmt->bindParam(":costomatricula", $datos['costomatricula']);
             $stmt->bindParam(":montoPagado", $datos['montoPagado']);
             $stmt->bindParam(":pagoCompleto", $datos['pagoCompleto'], PDO::PARAM_INT);
+            $stmt->bindParam(":porcentajeDescuento", $datos['porcentajeDescuento']);
+            $stmt->bindParam(":montoDescuento", $datos['montoDescuento']);
             $stmt->bindParam(":nvaucher", $datos['nvauchermatricula'], PDO::PARAM_STR);
             $stmt->bindParam(":fechaInscripcion", $datos['FechaInscripcion'], PDO::PARAM_STR);
             $stmt->bindParam(":foto", $datos['foto'], PDO::PARAM_LOB);
@@ -160,7 +162,7 @@ class MatriculaModelos
     {
         try {
             $stmt = Conexion::Conectar()->prepare(
-                "SELECT i.idInscripcion, i.FechaInscripcion, i.costomatricula, i.montoPagado, i.pagoCompleto, i.nvauchermatricula, i.Estado,
+                "SELECT i.idInscripcion, i.FechaInscripcion, i.costomatricula, i.montoPagado, i.pagoCompleto, i.porcentajeDescuento, i.montoDescuento, i.nvauchermatricula, i.Estado,
                         e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Ci,
                         p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Sede, p.Version, p.NumeroTramite
                  FROM estudianteprograma i
