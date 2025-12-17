@@ -117,21 +117,40 @@ $pdf->SetFont('helvetica', '', 9);
 // ========================================
 // HEADER DEL DOCUMENTO
 // ========================================
-$pdf->SetFillColor(102, 126, 234); // Color #667eea
-$pdf->SetTextColor(255, 255, 255);
-$pdf->SetFont('helvetica', 'B', 12);
-$pdf->Cell(0, 8, 'UNIVERSIDAD TECNICA DE ORURO', 0, 1, 'C', true);
-$pdf->Cell(0, 8, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C', true);
-$pdf->Cell(0, 6, 'COORDINACION DE POSGRADO - ODONTOLOGIA', 0, 1, 'C', true);
-
+// --- CONFIGURACIÓN DE COLORES Y FUENTE ---
+// --- CONFIGURACIÓN DE COLORES Y FUENTE ---
+$pdf->SetTextColor(0, 0, 0); 
 $pdf->SetFont('helvetica', 'B', 10);
-$pdf->Cell(0, 6, 'Av. Del Minero Edificio San Agustin II (Ex Almacenes COMIBOL) Telefonos: 5237317 - Fax: 5247110', 0, 1, 'C', true);
+$anchoLogo = 22; // Reducido un poco para que no se vea tan tosco con texto apretado
+$altoLogo = 22;
+$yPos = 10;
 
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->Cell(0, 6, 'Oruro - Bolivia', 0, 1, 'C', true);
+// --- LOGOS ---
+$pdf->Image('../../extensiones/imagenespdf/logouto.png', 10, $yPos, $anchoLogo, $altoLogo);
+$pdf->Image('../../extensiones/imagenespdf/logofcs.png', 247.4, $yPos, $anchoLogo, $altoLogo);
 
+// --- ENCABEZADO CON INTERLINEADO REDUCIDO ---
+// Reducimos de 7 a 4 o 5 para que el texto esté más pegado
+$pdf->Cell(0, 4, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C', false);
+$pdf->Cell(0, 4, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C', false);
+$pdf->Cell(0, 4, 'COORDINACIÓN DE POSGRADO - ODONTOLOGÍA', 0, 1, 'C', false);
 
-$pdf->Ln(3);
+$pdf->SetFont('helvetica', '', 8); // Fuente ligeramente más pequeña para datos de contacto
+$pdf->Cell(0, 3.5, 'Av. Del Minero Edificio San Agustín II (Ex Almacenes COMIBOL) Teléfonos: 5237317 - Fax: 5247110', 0, 1, 'C', false);
+$pdf->Cell(0, 3.5, 'Oruro - Bolivia', 0, 1, 'C', false);
+
+$pdf->Ln(2); // Salto pequeño antes de la línea
+
+// --- LÍNEA DIVISORIA ---
+$pdf->SetLineWidth(0.5);
+$pdf->Line(10, $pdf->GetY(), 269.4, $pdf->GetY()); 
+
+$pdf->Ln(4); // Espacio antes del título
+
+// --- TÍTULO DEL DOCUMENTO ---
+$pdf->SetFont('helvetica', 'B', 12); 
+$pdf->Cell(0, 6, 'LISTA DE ASISTENCIA', 0, 1, 'C');
+$pdf->Ln(2);
 
 // ========================================
 // INFORMACIÓN DEL MÓDULO

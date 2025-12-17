@@ -39,7 +39,10 @@
                 `Direccion`,
                 `Correo`,
                 `Tel`,
-                `Cel`
+                `Cel`,
+                `EsExtranjero`,
+                `Pais`,
+                `Region`
             )
             VALUES (
                 :Ci,
@@ -54,7 +57,10 @@
                 :Direccion,
                 :Correo,
                 :Tel,
-                :Cel
+                :Cel,
+                :EsExtranjero,
+                :Pais,
+                :Region
                 )");
                 $stmt->bindParam(":Ci",                $DatosDocentes['Ci'],                PDO::PARAM_STR);
                 $stmt->bindParam(":Complemento",       $DatosDocentes['Complemento'],       PDO::PARAM_STR);
@@ -63,12 +69,15 @@
                 $stmt->bindParam(":Apaterno",          $DatosDocentes['Apaterno'],          PDO::PARAM_STR);
                 $stmt->bindParam(":Amaterno",          $DatosDocentes['Amaterno'],          PDO::PARAM_STR);
                 $stmt->bindParam(":FechaNacimiento",   $DatosDocentes['FechaNacimiento'],   PDO::PARAM_STR);
-                $stmt->bindParam(":CedulaProfesional",   $DatosDocentes['CedulaProfesional'],   PDO::PARAM_STR);
-                $stmt->bindParam(":Especialidad",   $DatosDocentes['Especialidad'],   PDO::PARAM_STR);
-                $stmt->bindParam(":Direccion",            $DatosDocentes['Direccion'],            PDO::PARAM_STR);
-                $stmt->bindParam(":Correo",         $DatosDocentes['Correo'],         PDO::PARAM_STR);
-                $stmt->bindParam(":Tel",          $DatosDocentes['Tel'],          PDO::PARAM_STR);
-                $stmt->bindParam(":Cel",           $DatosDocentes['Cel'],           PDO::PARAM_STR);
+                $stmt->bindParam(":CedulaProfesional", $DatosDocentes['CedulaProfesional'], PDO::PARAM_STR);
+                $stmt->bindParam(":Especialidad",      $DatosDocentes['Especialidad'],      PDO::PARAM_STR);
+                $stmt->bindParam(":Direccion",         $DatosDocentes['Direccion'],         PDO::PARAM_STR);
+                $stmt->bindParam(":Correo",            $DatosDocentes['Correo'],            PDO::PARAM_STR);
+                $stmt->bindParam(":Tel",               $DatosDocentes['Tel'],               PDO::PARAM_STR);
+                $stmt->bindParam(":Cel",               $DatosDocentes['Cel'],               PDO::PARAM_STR);
+                $stmt->bindParam(":EsExtranjero",      $DatosDocentes['EsExtranjero'],      PDO::PARAM_INT);
+                $stmt->bindParam(":Pais",              $DatosDocentes['Pais'],              PDO::PARAM_STR);
+                $stmt->bindParam(":Region",            $DatosDocentes['Region'],            PDO::PARAM_STR);
 
         if ($stmt->execute()) {
             return 'exitoso';
@@ -101,7 +110,10 @@
             `Direccion` = :Direccion,
             `Correo` = :Correo,
             `Tel` = :Tel,
-            `Cel` = :Cel
+            `Cel` = :Cel,
+            `EsExtranjero` = :EsExtranjero,
+            `Pais` = :Pais,
+            `Region` = :Region
             WHERE `Ci` = :Ci");
 
         $stmt->bindParam(":Ci", $DatosDocente['Ci'], PDO::PARAM_STR);
@@ -117,6 +129,9 @@
         $stmt->bindParam(":Correo", $DatosDocente['Correo'], PDO::PARAM_STR);
         $stmt->bindParam(":Tel", $DatosDocente['Tel'], PDO::PARAM_STR);
         $stmt->bindParam(":Cel", $DatosDocente['Cel'], PDO::PARAM_STR);
+        $stmt->bindParam(":EsExtranjero", $DatosDocente['EsExtranjero'], PDO::PARAM_INT);
+        $stmt->bindParam(":Pais", $DatosDocente['Pais'], PDO::PARAM_STR);
+        $stmt->bindParam(":Region", $DatosDocente['Region'], PDO::PARAM_STR);
 
         if ($stmt->execute()) {
             return 'exitoso';

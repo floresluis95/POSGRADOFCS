@@ -46,7 +46,7 @@ class MatriculaModelos
             $stmt->bindParam(":costomatricula", $datos['costomatricula']);
             $stmt->bindParam(":montoPagado", $datos['montoPagado']);
             $stmt->bindParam(":pagoCompleto", $datos['pagoCompleto'], PDO::PARAM_INT);
-            $stmt->bindParam(":nvaucher", $datos['nvauchermatricula'], PDO::PARAM_INT);
+            $stmt->bindParam(":nvaucher", $datos['nvauchermatricula'], PDO::PARAM_STR);
             $stmt->bindParam(":fechaInscripcion", $datos['FechaInscripcion'], PDO::PARAM_STR);
             $stmt->bindParam(":foto", $datos['foto'], PDO::PARAM_LOB);
 
@@ -60,33 +60,58 @@ class MatriculaModelos
             $inscripcionID = $pdo->lastInsertId();
 
             // Si es pago completo, inscribir automáticamente en todos los módulos del programa
+            // y registrar los pagos correspondientes
             if ($datos['pagoCompleto'] == 1) {
-                // Obtener todos los módulos del programa
+                // Obtener todos los módulos del programa (usando tabla 'modulos' con 's')
                 $stmtModulos = $pdo->prepare(
-                    "SELECT ModuloID FROM modulo WHERE ProgramaID = :programaID AND Estado = 'ACTIVO'"
+                    "SELECT Idmodulo, nombremodulo, costomodulo
+                     FROM modulos
+                     WHERE ProgramaId = :programaID AND estadomodulo = 'ACTIVO'"
                 );
                 $stmtModulos->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
                 $stmtModulos->execute();
                 $modulos = $stmtModulos->fetchAll(PDO::FETCH_ASSOC);
 
-                // Inscribir al estudiante en cada módulo
-                $stmtInscribirModulo = $pdo->prepare(
-                    "INSERT INTO estudiantemodulo
-                    (EstudianteID, ModuloID, FechaInscripcionModulo, Estado)
-                    VALUES (:estudianteID, :moduloID, NOW(), 'ACTIVO')"
-                );
+                if (count($modulos) > 0) {
+                    // Calcular costo por módulo si es necesario
+                    // Si los módulos no tienen costo, distribuir el monto pagado entre ellos
+                    $totalModulos = count($modulos);
+                    $costoPorModulo = $datos['montoPagado'] / $totalModulos;
 
-                foreach ($modulos as $modulo) {
-                    $stmtInscribirModulo->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
-                    $stmtInscribirModulo->bindParam(":moduloID", $modulo['ModuloID'], PDO::PARAM_INT);
+                    // Preparar statement para registrar pagos de módulos
+                    $stmtPagoModulo = $pdo->prepare(
+                        "INSERT INTO pagomodulo
+                        (idinscripcion, IdModulo, costomodulo, fechapago, nvaucher, Estado)
+                        VALUES (:idinscripcion, :idModulo, :costomodulo, :fechapago, :nvaucher, 'PAGADO')"
+                    );
 
-                    if (!$stmtInscribirModulo->execute()) {
-                        error_log("Error al inscribir en módulo: " . print_r($stmtInscribirModulo->errorInfo(), true));
-                        // Continuar con los demás módulos aunque uno falle
+                    $modulosInscritos = 0;
+                    $pagosFechaInscripcion = $datos['FechaInscripcion'];
+
+                    foreach ($modulos as $modulo) {
+                        // Determinar el costo del módulo
+                        $costoModulo = !empty($modulo['costomodulo']) && floatval($modulo['costomodulo']) > 0
+                            ? floatval($modulo['costomodulo'])
+                            : $costoPorModulo;
+
+                        // Registrar pago del módulo
+                        $stmtPagoModulo->bindParam(":idinscripcion", $inscripcionID, PDO::PARAM_INT);
+                        $stmtPagoModulo->bindParam(":idModulo", $modulo['Idmodulo'], PDO::PARAM_INT);
+                        $stmtPagoModulo->bindParam(":costomodulo", $costoModulo, PDO::PARAM_STR);
+                        $stmtPagoModulo->bindParam(":fechapago", $pagosFechaInscripcion, PDO::PARAM_STR);
+                        $stmtPagoModulo->bindParam(":nvaucher", $datos['nvauchermatricula'], PDO::PARAM_STR);
+
+                        if ($stmtPagoModulo->execute()) {
+                            $modulosInscritos++;
+                        } else {
+                            error_log("Error al registrar pago de módulo: " . print_r($stmtPagoModulo->errorInfo(), true));
+                        }
                     }
-                }
 
-                error_log("Estudiante {$datos['EstudianteID']} inscrito en " . count($modulos) . " módulos del programa {$datos['ProgramaID']}");
+                    error_log("PAGO COMPLETO: Estudiante {$datos['EstudianteID']} inscrito y pagado en {$modulosInscritos} de {$totalModulos} módulos del programa {$datos['ProgramaID']}");
+                } else {
+                    error_log("ADVERTENCIA: Programa {$datos['ProgramaID']} no tiene módulos activos para pago completo");
+                }
             }
 
             $pdo->commit();
@@ -135,7 +160,7 @@ class MatriculaModelos
     {
         try {
             $stmt = Conexion::Conectar()->prepare(
-                "SELECT i.idInscripcion, i.FechaInscripcion, i.costomatricula, i.nvauchermatricula, i.Estado,
+                "SELECT i.idInscripcion, i.FechaInscripcion, i.costomatricula, i.montoPagado, i.pagoCompleto, i.nvauchermatricula, i.Estado,
                         e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Ci,
                         p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Sede, p.Version, p.NumeroTramite
                  FROM estudianteprograma i
@@ -208,7 +233,7 @@ class MatriculaModelos
     {
         try {
             $stmt = Conexion::Conectar()->prepare(
-                "SELECT i.idInscripcion, i.FechaInscripcion, i.costomatricula, i.Estado,
+                "SELECT i.idInscripcion, i.FechaInscripcion, i.costomatricula, i.montoPagado, i.pagoCompleto, i.Estado,
                         p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Sede
                  FROM estudianteprograma i
                  INNER JOIN programa p ON i.ProgramaID = p.ProgramaID

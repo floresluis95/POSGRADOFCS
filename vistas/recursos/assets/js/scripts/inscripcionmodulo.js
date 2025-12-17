@@ -183,10 +183,15 @@ $(document).ready(function() {
                     if (contadorPendientes === 0) {
                         $('#contenedorModulos').append(`
                             <div class="col-12">
-                                <div class="alert alert-success text-center mt-3">
-                                    <i class="fa fa-check-circle fa-2x mb-2"></i>
-                                    <h5>¡Todos los módulos están pagados!</h5>
-                                    <p>Este estudiante ha completado el pago de todos los módulos del programa.</p>
+                                <div class="alert alert-success text-center mt-3" style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.15) 0%, rgba(40, 167, 69, 0.05) 100%); border: 2px solid #28a745;">
+                                    <i class="fa fa-check-circle fa-3x mb-3 text-success"></i>
+                                    <h4 class="text-success mb-3">¡Todos los módulos están pagados!</h4>
+                                    <p class="mb-2"><i class="fa fa-info-circle"></i> Este estudiante ha completado el pago de todos los módulos del programa.</p>
+                                    <hr style="border-color: #28a745;">
+                                    <p class="mb-0"><strong><i class="fa fa-graduation-cap"></i> Total de módulos pagados:</strong> ${contadorPagados}</p>
+                                    <small class="text-muted d-block mt-2">
+                                        <i class="fa fa-lightbulb-o"></i> El estudiante puede ver sus módulos inscritos en la opción "Ver Módulos Inscritos"
+                                    </small>
                                 </div>
                             </div>
                         `);

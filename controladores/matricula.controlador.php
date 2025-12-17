@@ -95,7 +95,7 @@ class MatriculaControladores
                 "costomatricula" => $montoMatricula,
                 "montoPagado" => $montoPagado,
                 "pagoCompleto" => $pagoCompleto,
-                "nvauchermatricula" => (int)$_POST['numeroVaucher'],
+                "nvauchermatricula" => htmlspecialchars(trim($_POST['numeroVaucher'])),
                 "FechaInscripcion" => htmlspecialchars(trim($_POST['fechaInscripcion'])),
                 "foto" => $imagenBlob
             );
@@ -157,13 +157,24 @@ class MatriculaControladores
             // Determinar color del estado
             $colorEstado = $inscripcion['Estado'] == 'ACTIVO' ? 'success' : 'danger';
 
+            // Badge de pago completo
+            $badgePagoCompleto = '';
+            if (isset($inscripcion['pagoCompleto']) && $inscripcion['pagoCompleto'] == 1) {
+                $badgePagoCompleto = '<br><span class="badge badge-success" style="font-size: 10px;"><i class="fa fa-check-circle"></i> PAGO COMPLETO</span>';
+            }
+
+            // Mostrar monto: si es pago completo, mostrar montoPagado, sino costomatricula
+            $montoMostrar = isset($inscripcion['pagoCompleto']) && $inscripcion['pagoCompleto'] == 1
+                ? $inscripcion['montoPagado']
+                : $inscripcion['costomatricula'];
+
             echo '<tr>
                     <td class="text-center">' . $inscripcion['idInscripcion'] . '</td>
                     <td>' . $nombreCompleto . '</td>
                     <td class="text-center">' . $inscripcion['Ci'] . '</td>
-                    <td>' . $inscripcion['NombrePrograma'] . '</td>
+                    <td>' . $inscripcion['NombrePrograma'] . $badgePagoCompleto . '</td>
                     <td class="text-center">' . $inscripcion['GradoAcademico'] . '</td>
-                    <td class="text-center">Bs. ' . number_format($inscripcion['costomatricula'], 2) . '</td>
+                    <td class="text-center">Bs. ' . number_format($montoMostrar, 2) . '</td>
                     <td class="text-center">' . $fechaFormateada . '</td>
                     <td class="text-center">
                         <span class="badge badge-' . $colorEstado . '">' . $inscripcion['Estado'] . '</span>

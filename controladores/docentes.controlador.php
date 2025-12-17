@@ -85,7 +85,10 @@ class DocentesControlador
                             data-direccion="' . htmlspecialchars($Docente['Direccion']) . '"
                             data-correo="' . htmlspecialchars($Docente['Correo']) . '"
                             data-tel="' . htmlspecialchars($Docente['Tel']) . '"
-                            data-cel="' . htmlspecialchars($Docente['Cel']) . '">
+                            data-cel="' . htmlspecialchars($Docente['Cel']) . '"
+                            data-es-extranjero="' . (isset($Docente['EsExtranjero']) ? $Docente['EsExtranjero'] : '0') . '"
+                            data-pais="' . htmlspecialchars(isset($Docente['Pais']) ? $Docente['Pais'] : '') . '"
+                            data-region="' . htmlspecialchars(isset($Docente['Region']) ? $Docente['Region'] : '') . '">
                         <i class="bi bi-pencil-fill"></i>
                     </button>
                     <button type="button"
@@ -116,8 +119,11 @@ class DocentesControlador
             "Especialidad"      => strtoupper(htmlspecialchars(trim($_POST['Especialidad']))),
             "Direccion"         => strtoupper(htmlspecialchars(trim($_POST['Direccion']))),
             "Correo"            => htmlspecialchars(trim($_POST['Correo'])), // Correo en minúsculas
-            "Tel"          => htmlspecialchars(trim($_POST['Tel'])),
-            "Cel"           => htmlspecialchars(trim($_POST['Cel'])),
+            "Tel"               => htmlspecialchars(trim($_POST['Tel'])),
+            "Cel"               => htmlspecialchars(trim($_POST['Cel'])),
+            "EsExtranjero"      => isset($_POST['EsExtranjero']) && $_POST['EsExtranjero'] == '1' ? 1 : 0,
+            "Pais"              => isset($_POST['Pais']) ? strtoupper(htmlspecialchars(trim($_POST['Pais']))) : null,
+            "Region"            => isset($_POST['Region']) ? strtoupper(htmlspecialchars(trim($_POST['Region']))) : null,
         );
         
         
@@ -187,7 +193,10 @@ class DocentesControlador
                 "Direccion"         => strtoupper(htmlspecialchars(trim($_POST['editDireccion']))),
                 "Correo"            => htmlspecialchars(trim($_POST['editCorreo'])), // Correo en minúsculas
                 "Tel"               => htmlspecialchars(trim($_POST['editTel'])),
-                "Cel"               => htmlspecialchars(trim($_POST['editCel']))
+                "Cel"               => htmlspecialchars(trim($_POST['editCel'])),
+                "EsExtranjero"      => isset($_POST['editEsExtranjero']) && $_POST['editEsExtranjero'] == '1' ? 1 : 0,
+                "Pais"              => isset($_POST['editPais']) ? strtoupper(htmlspecialchars(trim($_POST['editPais']))) : null,
+                "Region"            => isset($_POST['editRegion']) ? strtoupper(htmlspecialchars(trim($_POST['editRegion']))) : null
             );
 
             $resultado = DocentesModelo::EditarDocenteModelo($DatosDocente);

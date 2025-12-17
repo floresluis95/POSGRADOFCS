@@ -348,7 +348,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
 
                       <div class="col-md-6">
                         <div class="modal-body">
-                          <label>COSTO TOTAL DEL MODULO</label>
+                          <label>COSTO TOTAL DEL PROGRAMA</label>
                           <input type="number" class="form-control" name="Costo" step="0.01" required>
                         </div>
                       </div>

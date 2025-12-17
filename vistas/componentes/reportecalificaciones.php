@@ -70,7 +70,7 @@ date_default_timezone_set("America/La_Paz");
                                     <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                                         <span class="sr-only">Cargando...</span>
                                     </div>
-                                    <p class="mt-3">Cargando m�dulos asignados...</p>
+                                    <p class="mt-3">Cargando modulos asignados...</p>
                                 </div>
 
                                 <!-- INFORMACI�N DEL DOCENTE -->
@@ -81,6 +81,7 @@ date_default_timezone_set("America/La_Paz");
                                             <p class="mb-0"><strong><i class="fa fa-id-card"></i> C.I.:</strong> <span id="docente-ci"></span></p>
                                         </div>
                                         <div class="col-md-6">
+                                            
                                             <p class="mb-1"><strong><i class="fa fa-graduation-cap"></i> Especialidad:</strong> <span id="docente-especialidad"></span></p>
                                             <p class="mb-0"><strong><i class="fa fa-book"></i> Total Modulos:</strong> <span id="total-modulos" class="kt-badge kt-badge--brand kt-badge--inline"></span></p>
                                         </div>
@@ -291,7 +292,7 @@ function cargarAsignaciones(docenteID) {
         },
         error: function() {
             $('#loading-modulos').hide();
-            mostrarError('Error al cargar los m�dulos asignados');
+            mostrarError('Error al cargar los modulos asignados');
         }
     });
 }
@@ -302,13 +303,13 @@ function mostrarTablaModulos(modulos) {
             <table class="table table-bordered table-hover table-modulos">
                 <thead>
                     <tr>
-                        <th class="text-center" style="width: 5%;">N�</th>
-                        <th style="width: 12%;">C�digo</th>
-                        <th style="width: 20%;">M�dulo</th>
+                        <th class="text-center" style="width: 5%;">Nro</th>
+                        <th style="width: 12%;">Codigo</th>
+                        <th style="width: 20%;">Modulo</th>
                         <th style="width: 18%;">Programa</th>
                         <th class="text-center" style="width: 8%;">Inscritos</th>
                         <th class="text-center" style="width: 10%;">Calificados</th>
-                        <th class="text-center" style="width: 12%;">Estado M�dulo</th>
+                        <th class="text-center" style="width: 12%;">Estado Modulo</th>
                         <th class="text-center" style="width: 15%;">Acciones</th>
                     </tr>
                 </thead>

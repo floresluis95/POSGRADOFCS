@@ -67,6 +67,22 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
         // Determinar color del estado
         $colorEstado = $estudiante['Estado'] == 'ACTIVO' ? 'success' : 'danger';
 
+        // Determinar tipo de pago y badge
+        $tipoPago = '';
+        $badgeTipoPago = '';
+        if (isset($estudiante['pagoCompleto']) && $estudiante['pagoCompleto'] == 1) {
+            $tipoPago = 'PAGO COMPLETO';
+            $badgeTipoPago = '<span class="badge badge-success" style="font-size: 11px; padding: 6px 12px;"><i class="fa fa-check-circle"></i> PAGO COMPLETO</span>';
+        } else {
+            $tipoPago = 'SOLO MATRÍCULA';
+            $badgeTipoPago = '<span class="badge badge-warning" style="font-size: 11px; padding: 6px 12px;"><i class="fa fa-money"></i> SOLO MATRÍCULA</span>';
+        }
+
+        // Mostrar monto: si es pago completo, mostrar montoPagado, sino costomatricula
+        $montoMostrar = isset($estudiante['pagoCompleto']) && $estudiante['pagoCompleto'] == 1
+            ? $estudiante['montoPagado']
+            : $estudiante['costomatricula'];
+
         echo '<tr>
                 <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
                 <td><strong>' . htmlspecialchars($nombreCompleto) . '</strong></td>
@@ -74,7 +90,8 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
                 <td>' . htmlspecialchars($estudiante['NombrePrograma']) . '</td>
                 <td class="text-center"><span class="badge badge-info">' . htmlspecialchars($estudiante['GradoAcademico']) . '</span></td>
                 <td class="text-center"><span class="badge badge-primary">' . htmlspecialchars($estudiante['CodigoPrograma']) . '</span></td>
-                <td class="text-center"><strong>Bs. ' . number_format($estudiante['costomatricula'], 2) . '</strong></td>
+                <td class="text-center"><strong>Bs. ' . number_format($montoMostrar, 2) . '</strong></td>
+                <td class="text-center">' . $badgeTipoPago . '</td>
                 <td class="text-center">' . htmlspecialchars($estudiante['nvauchermatricula']) . '</td>
                 <td class="text-center">' . $fechaFormateada . '</td>
                 <td class="text-center">

@@ -337,6 +337,62 @@ $csrf_token = bin2hex(random_bytes(32));
                     </div>
 
                     <h4 class="form-section">
+                        <i class="fas fa-globe mr-2"></i> Nacionalidad
+                    </h4>
+
+                    <!-- Checkbox de Docente Extranjero -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <div class="custom-control custom-checkbox custom-control-inline" style="padding: 15px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-radius: 8px; border: 2px solid #667eea;">
+                                    <input type="checkbox" class="custom-control-input" id="checkExtranjero" name="EsExtranjero" value="1">
+                                    <label class="custom-control-label" for="checkExtranjero" style="font-size: 1.1rem; font-weight: 600; color: #667eea; cursor: pointer;">
+                                        <i class="fas fa-passport mr-2"></i> El docente es extranjero
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle"></i> Si el docente no es boliviano, marque esta opción y complete los datos adicionales.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos de País y Región (ocultos por defecto) -->
+                    <div class="row" id="camposExtranjero" style="display: none;">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="selectPais"><i class="fas fa-flag text-primary"></i> País de Origen *</label>
+                                <select class="form-control" id="selectPais" name="Pais">
+                                    <option value="" selected>Seleccione un país...</option>
+                                    <option value="Argentina">Argentina</option>
+                                    <option value="Brasil">Brasil</option>
+                                    <option value="Chile">Chile</option>
+                                    <option value="Colombia">Colombia</option>
+                                    <option value="Ecuador">Ecuador</option>
+                                    <option value="España">España</option>
+                                    <option value="Estados Unidos">Estados Unidos</option>
+                                    <option value="México">México</option>
+                                    <option value="Paraguay">Paraguay</option>
+                                    <option value="Perú">Perú</option>
+                                    <option value="Uruguay">Uruguay</option>
+                                    <option value="Venezuela">Venezuela</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                                <div class="invalid-feedback">Seleccione el país de origen.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="inputRegion"><i class="fas fa-map-marked-alt text-primary"></i> Región/Departamento *</label>
+                                <input type="text" id="inputRegion" name="Region" class="form-control text-uppercase"
+                                       placeholder="Ej: Buenos Aires, California, etc." maxlength="100">
+                                <small class="text-muted">Estado, provincia o departamento del país</small>
+                                <div class="invalid-feedback">Ingrese la región o departamento.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="form-section">
                         <i class="fas fa-phone mr-2"></i> Información de Contacto
                     </h4>
 
@@ -612,6 +668,57 @@ $csrf_token = bin2hex(random_bytes(32));
                     </div>
 
                     <h4 class="form-section">
+                        <i class="fas fa-globe mr-2"></i> Nacionalidad
+                    </h4>
+
+                    <!-- Checkbox de Docente Extranjero (Editar) -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <div class="custom-control custom-checkbox custom-control-inline" style="padding: 15px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-radius: 8px; border: 2px solid #667eea;">
+                                    <input type="checkbox" class="custom-control-input" id="editCheckExtranjero" name="editEsExtranjero" value="1">
+                                    <label class="custom-control-label" for="editCheckExtranjero" style="font-size: 1.1rem; font-weight: 600; color: #667eea; cursor: pointer;">
+                                        <i class="fas fa-passport mr-2"></i> El docente es extranjero
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos de País y Región para Editar (ocultos por defecto) -->
+                    <div class="row" id="editCamposExtranjero" style="display: none;">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editSelectPais"><i class="fas fa-flag text-primary"></i> País de Origen *</label>
+                                <select class="form-control" id="editSelectPais" name="editPais">
+                                    <option value="">Seleccione un país...</option>
+                                    <option value="Argentina">Argentina</option>
+                                    <option value="Brasil">Brasil</option>
+                                    <option value="Chile">Chile</option>
+                                    <option value="Colombia">Colombia</option>
+                                    <option value="Ecuador">Ecuador</option>
+                                    <option value="España">España</option>
+                                    <option value="Estados Unidos">Estados Unidos</option>
+                                    <option value="México">México</option>
+                                    <option value="Paraguay">Paraguay</option>
+                                    <option value="Perú">Perú</option>
+                                    <option value="Uruguay">Uruguay</option>
+                                    <option value="Venezuela">Venezuela</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editInputRegion"><i class="fas fa-map-marked-alt text-primary"></i> Región/Departamento *</label>
+                                <input type="text" id="editInputRegion" name="editRegion" class="form-control text-uppercase"
+                                       placeholder="Ej: Buenos Aires, California, etc." maxlength="100">
+                                <small class="text-muted">Estado, provincia o departamento del país</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="form-section">
                         <i class="fas fa-phone mr-2"></i> Información de Contacto
                     </h4>
 
@@ -769,9 +876,12 @@ jQuery(document).on('click', '.btnEditarDocente', function() {
     const correo = jQuery(this).attr('data-correo');
     const tel = jQuery(this).attr('data-tel');
     const cel = jQuery(this).attr('data-cel');
+    const esExtranjero = jQuery(this).attr('data-es-extranjero');
+    const pais = jQuery(this).attr('data-pais');
+    const region = jQuery(this).attr('data-region');
 
     console.log('Datos del docente:', {
-        docenteID, ci, nombre, apaterno, amaterno
+        docenteID, ci, nombre, apaterno, amaterno, esExtranjero, pais, region
     });
 
     // Llenar el formulario del modal
@@ -789,6 +899,21 @@ jQuery(document).on('click', '.btnEditarDocente', function() {
     jQuery('#editCorreo').val(correo);
     jQuery('#editTel').val(tel);
     jQuery('#editCel').val(cel);
+
+    // Manejar datos de extranjero
+    if (esExtranjero == '1') {
+        jQuery('#editCheckExtranjero').prop('checked', true);
+        jQuery('#editCamposExtranjero').show();
+        jQuery('#editSelectPais').val(pais).prop('required', true);
+        jQuery('#editInputRegion').val(region).prop('required', true);
+        jQuery('#editExp').prop('required', false);
+    } else {
+        jQuery('#editCheckExtranjero').prop('checked', false);
+        jQuery('#editCamposExtranjero').hide();
+        jQuery('#editSelectPais').val('').prop('required', false);
+        jQuery('#editInputRegion').val('').prop('required', false);
+        jQuery('#editExp').prop('required', true);
+    }
 
     console.log('✓ Modal de edición llenado con datos del docente');
 });
@@ -917,6 +1042,66 @@ jQuery(document).ready(function() {
         actualizarFecha();
         setInterval(actualizarFecha, 60000);
     }
+
+    // ========================================
+    // FUNCIONALIDAD DOCENTE EXTRANJERO
+    // ========================================
+    jQuery('#checkExtranjero').on('change', function() {
+        const isChecked = jQuery(this).is(':checked');
+        const $camposExtranjero = jQuery('#camposExtranjero');
+        const $selectPais = jQuery('#selectPais');
+        const $inputRegion = jQuery('#inputRegion');
+
+        if (isChecked) {
+            // Mostrar campos de país y región
+            $camposExtranjero.slideDown(300);
+            $selectPais.prop('required', true);
+            $inputRegion.prop('required', true);
+
+            // Deshabilitar validación de CI boliviano si es necesario
+            jQuery('#selectExpedido').prop('required', false);
+            jQuery('#selectExpedido').removeClass('is-invalid');
+        } else {
+            // Ocultar campos y limpiar valores
+            $camposExtranjero.slideUp(300);
+            $selectPais.prop('required', false).val('');
+            $inputRegion.prop('required', false).val('');
+
+            // Habilitar validación de CI boliviano
+            jQuery('#selectExpedito').prop('required', true);
+        }
+    });
+
+    // Convertir región a mayúsculas
+    jQuery('#inputRegion').on('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+
+    // ========================================
+    // EDITAR: FUNCIONALIDAD DOCENTE EXTRANJERO
+    // ========================================
+    jQuery('#editCheckExtranjero').on('change', function() {
+        const isChecked = jQuery(this).is(':checked');
+        const $camposExtranjero = jQuery('#editCamposExtranjero');
+        const $selectPais = jQuery('#editSelectPais');
+        const $inputRegion = jQuery('#editInputRegion');
+
+        if (isChecked) {
+            $camposExtranjero.slideDown(300);
+            $selectPais.prop('required', true);
+            $inputRegion.prop('required', true);
+            jQuery('#editExp').prop('required', false);
+        } else {
+            $camposExtranjero.slideUp(300);
+            $selectPais.prop('required', false).val('');
+            $inputRegion.prop('required', false).val('');
+            jQuery('#editExp').prop('required', true);
+        }
+    });
+
+    jQuery('#editInputRegion').on('input', function() {
+        this.value = this.value.toUpperCase();
+    });
 });
 </script>
 
