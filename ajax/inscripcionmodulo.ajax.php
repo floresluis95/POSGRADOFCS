@@ -53,7 +53,7 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
     if (empty($estudiantes)) {
         $mensaje = $programaID ? ' para este programa' : '';
         echo '<tr>
-                <td colspan="10" class="text-center text-muted">
+                <td colspan="12" class="text-center text-muted">
                     <i class="fa fa-info-circle"></i> No hay estudiantes matriculados' . $mensaje . '
                 </td>
               </tr>';
@@ -72,24 +72,26 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
         $badgeTipoPago = '';
         if (isset($estudiante['pagoCompleto']) && $estudiante['pagoCompleto'] == 1) {
             $tipoPago = 'PAGO COMPLETO';
-            $porcentajeDesc = isset($estudiante['porcentajeDescuento']) ? floatval($estudiante['porcentajeDescuento']) : 0;
-
-            // Agregar info del descuento si existe
-            $infoDescuento = '';
-            if ($porcentajeDesc > 0) {
-                $infoDescuento = '<br><small style="font-size: 9px;"><i class="fa fa-percent"></i> Descuento: ' . number_format($porcentajeDesc, 1) . '%</small>';
-            }
-
-            $badgeTipoPago = '<span class="badge badge-success" style="font-size: 11px; padding: 6px 12px;"><i class="fa fa-check-circle"></i> PAGO COMPLETO' . $infoDescuento . '</span>';
+            $badgeTipoPago = '<span class="badge badge-success" style="font-size: 11px; padding: 6px 12px;"><i class="fa fa-check-circle"></i> PAGO COMPLETO</span>';
         } else {
             $tipoPago = 'SOLO MATRÍCULA';
             $badgeTipoPago = '<span class="badge badge-warning" style="font-size: 11px; padding: 6px 12px;"><i class="fa fa-money"></i> SOLO MATRÍCULA</span>';
         }
 
-        // Mostrar monto: si es pago completo, mostrar montoPagado, sino costomatricula
-        $montoMostrar = isset($estudiante['pagoCompleto']) && $estudiante['pagoCompleto'] == 1
-            ? $estudiante['montoPagado']
-            : $estudiante['costomatricula'];
+        // Mostrar monto: si es pago completo y tiene montoPagado válido, mostrarlo, sino costomatricula
+        $montoMostrar = $estudiante['costomatricula']; // Por defecto
+        if (isset($estudiante['pagoCompleto']) && $estudiante['pagoCompleto'] == 1 && isset($estudiante['montoPagado']) && $estudiante['montoPagado'] > 0) {
+            $montoMostrar = $estudiante['montoPagado'];
+        }
+
+        // Mostrar descuento
+        $montoDescuento = isset($estudiante['montoDescuento']) ? floatval($estudiante['montoDescuento']) : 0;
+        $descuentoHTML = '';
+        if ($montoDescuento > 0) {
+            $descuentoHTML = '<span style="color: #28a745; font-weight: bold;">Bs. ' . number_format($montoDescuento, 2) . '</span>';
+        } else {
+            $descuentoHTML = '<span style="color: #999;">-</span>';
+        }
 
         echo '<tr>
                 <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
@@ -99,6 +101,7 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
                 <td class="text-center"><span class="badge badge-info">' . htmlspecialchars($estudiante['GradoAcademico']) . '</span></td>
                 <td class="text-center"><span class="badge badge-primary">' . htmlspecialchars($estudiante['CodigoPrograma']) . '</span></td>
                 <td class="text-center"><strong>Bs. ' . number_format($montoMostrar, 2) . '</strong></td>
+                <td class="text-center">' . $descuentoHTML . '</td>
                 <td class="text-center">' . $badgeTipoPago . '</td>
                 <td class="text-center">' . htmlspecialchars($estudiante['nvauchermatricula']) . '</td>
                 <td class="text-center">' . $fechaFormateada . '</td>
@@ -142,8 +145,18 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
                                 <i class="fa fa-file-text text-success"></i> Ver Recibo de Pagos
                             </a>
                             <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfestudiante.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
-                                <i class="fa fa-print text-warning"></i> Imprimir Información
-                            </a>
+                                <i class="fa fa-print text-warning"></i> Imprimir Ficha
+                            </a>';
+
+        // Agregar opción de comprobante de pago completo solo si pagoCompleto = 1
+        if (isset($estudiante['pagoCompleto']) && $estudiante['pagoCompleto'] == 1) {
+            echo '
+                            <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfpagocompletoprograma.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank" style="background-color: #e7f3ff;">
+                                <i class="fa fa-file-pdf-o text-primary"></i> <strong>Comprobante Pago Completo</strong>
+                            </a>';
+        }
+
+        echo '
                         </div>
                     </div>
                 </td>

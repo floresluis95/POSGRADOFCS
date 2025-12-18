@@ -212,9 +212,56 @@ kt-aside--fixed kt-page--loading">
                           </div>
                           <div class="card-body" style="background-color: #f8f9fa; padding: 2rem;">
                             <div class="row">
+                              <!-- Monto Original del Programa (si es pago completo) -->
+                              <div class="col-lg-4 mb-3" id="divMontoOriginal" style="display: none;">
+                                <label class="font-weight-bold mb-2" style="color: #3f4254; font-size: 0.95rem;">
+                                  <i class="flaticon2-shopping-cart-1 text-primary"></i> Costo Original del Programa
+                                </label>
+                                <div class="input-group input-group-lg">
+                                  <div class="input-group-prepend">
+                                    <span class="input-group-text" style="background: #e1e3ea; color: #3f4254; border: none;">Bs.</span>
+                                  </div>
+                                  <input type="text" class="form-control" id="montoOriginalDisplay"
+                                         placeholder="0.00" readonly
+                                         style="border: 2px solid #e1e3ea; border-left: none; background-color: #f8f9fa;">
+                                </div>
+                                <small class="form-text text-muted">
+                                  <i class="flaticon2-information"></i> Costo total antes del descuento
+                                </small>
+                              </div>
+
+                              <!-- Descuento -->
+                              <div class="col-lg-4 mb-3" id="divDescuento" style="display: none;">
+                                <label class="font-weight-bold mb-2" style="color: #3f4254; font-size: 0.95rem;">
+                                  <i class="flaticon2-percentage text-success"></i> Descuento (opcional)
+                                </label>
+                                <div class="input-group input-group-lg">
+                                  <input type="number" class="form-control" id="inputDescuento"
+                                         placeholder="0.00" min="0" step="0.01"
+                                         style="border: 2px solid #e1e3ea; border-radius: 6px 0 0 6px;">
+                                  <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                                            id="tipoDescuentoBtn" style="border: 2px solid #e1e3ea; border-left: none;">
+                                      Bs.
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                      <a class="dropdown-item" href="#" data-tipo="monto">Bs. (Bolivianos)</a>
+                                      <a class="dropdown-item" href="#" data-tipo="porcentaje">% (Porcentaje)</a>
+                                    </div>
+                                  </div>
+                                  <input type="hidden" name="porcentajeDescuento" id="porcentajeDescuento" value="0">
+                                  <input type="hidden" name="montoDescuento" id="montoDescuento" value="0">
+                                </div>
+                                <small class="form-text text-muted">
+                                  <i class="flaticon2-information"></i> <span id="textoDescuento">Ingrese el descuento en Bs.</span>
+                                </small>
+                              </div>
+
+                              <!-- Monto a Pagar (Final) -->
                               <div class="col-lg-4 mb-3">
                                 <label class="font-weight-bold mb-2" style="color: #3f4254; font-size: 0.95rem;" id="labelMonto">
-                                  <i class="flaticon2-piggy-bank text-warning"></i> <span id="textoMonto">Monto de Matrícula</span> *
+                                  <i class="flaticon2-piggy-bank text-warning"></i> <span id="textoMonto">Monto a Pagar</span> *
                                 </label>
                                 <div class="input-group input-group-lg">
                                   <div class="input-group-prepend">
@@ -222,14 +269,12 @@ kt-aside--fixed kt-page--loading">
                                   </div>
                                   <input type="number" class="form-control" name="montoMatricula" id="montoMatricula"
                                          placeholder="0.00" min="0" step="0.01"
-                                         style="border: 2px solid #e1e3ea; border-left: none;" required>
+                                         style="border: 2px solid #e1e3ea; border-left: none; font-weight: bold;" required>
                                   <input type="hidden" name="costoTotalPrograma" id="costoTotalPrograma" value="0">
                                   <input type="hidden" name="costoMatriculaPrograma" id="costoMatriculaPrograma" value="0">
-                                  <input type="hidden" name="porcentajeDescuento" id="porcentajeDescuento" value="0">
-                                  <input type="hidden" name="montoDescuento" id="montoDescuento" value="0">
                                 </div>
                                 <small class="form-text text-muted" id="infoMonto">
-                                  <i class="flaticon2-information"></i> <span id="textoInfoMonto">Pago inicial de inscripción</span>
+                                  <i class="flaticon2-information"></i> <span id="textoInfoMonto">Monto final después del descuento</span>
                                 </small>
                               </div>
 
@@ -629,149 +674,126 @@ $(document).ready(function() {
     setInterval(actualizarFecha, 60000); // Actualiza cada minuto
 
     // Manejar checkbox de pago completo
-    // Variables globales para el modal de descuento
-    let costoTotalSinDescuento = 0;
-    let descuentoAplicado = 0;
+    let tipoDescuento = 'monto'; // 'monto' o 'porcentaje'
 
     $('#pagoCompleto').on('change', function() {
         if ($(this).is(':checked')) {
-            // Pago completo activado - Abrir modal de descuento
+            // Pago completo activado
             const costoPrograma = parseFloat($('#costoTotalPrograma').val()) || 0;
-            const costoMatricula = parseFloat($('#costoMatriculaPrograma').val()) || 0;
 
-            // DEBUG: Ver valores al abrir modal
-            console.log('=== MODAL DE DESCUENTO ===');
-            console.log('Costo Programa obtenido:', costoPrograma);
-            console.log('Costo Matrícula obtenido:', costoMatricula);
-
-            // Sumar costo del programa + costo de matrícula
-            costoTotalSinDescuento = costoPrograma + costoMatricula;
-            console.log('Total sin descuento (Programa + Matrícula):', costoTotalSinDescuento);
-
-            if (costoTotalSinDescuento <= 0) {
+            if (costoPrograma <= 0) {
                 swal("Atención", "Primero debe seleccionar un programa con costo válido", "warning");
                 $(this).prop('checked', false);
                 return;
             }
 
-            // Obtener nombre del programa
-            const nombrePrograma = $('#programa option:selected').text() || 'No seleccionado';
+            // Mostrar campos de descuento
+            $('#divMontoOriginal').show();
+            $('#divDescuento').show();
 
-            // Llenar datos del modal con desglose
-            $('#modalNombrePrograma').text(nombrePrograma);
-            $('#modalCostoPrograma').text(costoPrograma.toFixed(2));
-            $('#modalCostoMatricula').text(costoMatricula.toFixed(2));
-            $('#modalCostoTotal').text(costoTotalSinDescuento.toFixed(2));
-            $('#inputPorcentajeDescuento').val(0);
-            $('#montoDescuento').text('0.00');
-            $('#totalAPagar').text(costoTotalSinDescuento.toFixed(2));
+            // Mostrar costo original
+            $('#montoOriginalDisplay').val(costoPrograma.toFixed(2));
 
-            // Mostrar modal
-            $('#modalDescuentoPagoCompleto').modal('show');
+            // Establecer monto a pagar inicial (sin descuento)
+            $('#montoMatricula').val(costoPrograma.toFixed(2));
+
+            // Actualizar etiquetas
+            $('#textoMonto').html('Monto a Pagar');
+            $('#textoInfoMonto').html('Pago completo del programa - Inscripción automática a todos los módulos');
+            $('#infoMonto').removeClass('text-muted').addClass('text-success');
+            $('#labelMonto').find('i').removeClass('text-warning').addClass('text-success');
 
         } else {
             // Pago completo desactivado
+            $('#divMontoOriginal').hide();
+            $('#divDescuento').hide();
+            $('#inputDescuento').val('');
             $('#montoMatricula').val('');
-            $('#montoMatricula').prop('readonly', false);
-            $('#montoMatricula').css('background-color', '#ffffff');
+            $('#porcentajeDescuento').val('0');
+            $('#montoDescuento').val('0');
 
             $('#textoMonto').html('Monto de Matrícula');
             $('#textoInfoMonto').html('Pago inicial de inscripción');
             $('#infoMonto').removeClass('text-success').addClass('text-muted');
             $('#labelMonto').find('i').removeClass('text-success').addClass('text-warning');
-
-            descuentoAplicado = 0;
         }
     });
 
-    // Cálculo automático del descuento
-    $('#inputPorcentajeDescuento').on('input', function() {
-        let porcentaje = parseFloat($(this).val()) || 0;
+    // Dropdown para cambiar tipo de descuento
+    $('.dropdown-menu a[data-tipo]').on('click', function(e) {
+        e.preventDefault();
+        tipoDescuento = $(this).data('tipo');
 
-        // Validar que esté entre 0 y 100
-        if (porcentaje < 0) {
-            porcentaje = 0;
-            $(this).val(0);
+        if (tipoDescuento === 'porcentaje') {
+            $('#tipoDescuentoBtn').text('%');
+            $('#textoDescuento').text('Ingrese el descuento en %');
+            $('#inputDescuento').attr('max', '100');
+            $('#inputDescuento').attr('placeholder', '0.00 %');
+        } else {
+            $('#tipoDescuentoBtn').text('Bs.');
+            $('#textoDescuento').text('Ingrese el descuento en Bs.');
+            const costoOriginal = parseFloat($('#montoOriginalDisplay').val()) || 0;
+            $('#inputDescuento').attr('max', costoOriginal);
+            $('#inputDescuento').attr('placeholder', '0.00 Bs.');
         }
-        if (porcentaje > 100) {
-            porcentaje = 100;
-            $(this).val(100);
-        }
 
-        // Calcular descuento y total
-        const montoDesc = (costoTotalSinDescuento * porcentaje) / 100;
-        const totalFinal = costoTotalSinDescuento - montoDesc;
-
-        // Actualizar visualización
-        $('#montoDescuento').text(montoDesc.toFixed(2));
-        $('#totalAPagar').text(totalFinal.toFixed(2));
+        // Recalcular al cambiar tipo
+        $('#inputDescuento').trigger('input');
     });
 
-    // Botón Aceptar Descuento
-    $('#btnAceptarDescuento').on('click', function() {
-        const porcentaje = parseFloat($('#inputPorcentajeDescuento').val()) || 0;
-        const montoDescuentoCalculado = parseFloat($('#montoDescuento').text()) || 0;
-        const totalFinal = parseFloat($('#totalAPagar').text());
+    // Cálculo automático del descuento cuando se ingresa
+    $('#inputDescuento').on('input', function() {
+        const costoOriginal = parseFloat($('#montoOriginalDisplay').val()) || 0;
+        let valorIngresado = parseFloat($(this).val()) || 0;
+        let montoDescuentoCalc = 0;
+        let porcentajeCalc = 0;
 
-        descuentoAplicado = porcentaje;
+        if (tipoDescuento === 'porcentaje') {
+            // Descuento por porcentaje
+            if (valorIngresado > 100) {
+                valorIngresado = 100;
+                $(this).val(100);
+            }
+            if (valorIngresado < 0) {
+                valorIngresado = 0;
+                $(this).val(0);
+            }
 
-        // Guardar valores del descuento en campos hidden para enviar al servidor
-        $('#porcentajeDescuento').val(porcentaje.toFixed(2));
-        $('#montoDescuento').val(montoDescuentoCalculado.toFixed(2));
+            porcentajeCalc = valorIngresado;
+            montoDescuentoCalc = (costoOriginal * valorIngresado) / 100;
 
-        console.log('=== DESCUENTO APLICADO ===');
-        console.log('Porcentaje:', porcentaje + '%');
-        console.log('Monto Descuento:', montoDescuentoCalculado);
-        console.log('Total Final:', totalFinal);
-        console.log('Campos hidden actualizados');
+        } else {
+            // Descuento por monto
+            if (valorIngresado > costoOriginal) {
+                valorIngresado = costoOriginal;
+                $(this).val(costoOriginal);
+            }
+            if (valorIngresado < 0) {
+                valorIngresado = 0;
+                $(this).val(0);
+            }
 
-        // Aplicar el monto final con descuento
-        $('#montoMatricula').val(totalFinal.toFixed(2));
-        $('#montoMatricula').prop('readonly', true);
-        $('#montoMatricula').css('background-color', '#e9ecef');
-
-        // Actualizar etiquetas
-        let textoDescuento = '';
-        if (porcentaje > 0) {
-            textoDescuento = ` <span class="badge badge-success">${porcentaje}% DESC</span>`;
+            montoDescuentoCalc = valorIngresado;
+            porcentajeCalc = costoOriginal > 0 ? (valorIngresado / costoOriginal) * 100 : 0;
         }
 
-        $('#textoMonto').html('Monto Total del Programa' + textoDescuento);
-        $('#textoInfoMonto').html('Pago completo - Sin matrícula - Inscripción automática a todos los módulos' + (porcentaje > 0 ? ' - Descuento aplicado: ' + porcentaje + '%' : ''));
-        $('#infoMonto').removeClass('text-muted').addClass('text-success');
-        $('#labelMonto').find('i').removeClass('text-warning').addClass('text-success');
+        // Calcular monto final
+        const montoFinal = costoOriginal - montoDescuentoCalc;
 
-        // Cerrar modal
-        $('#modalDescuentoPagoCompleto').modal('hide');
+        // Actualizar campos hidden
+        $('#montoDescuento').val(montoDescuentoCalc.toFixed(2));
+        $('#porcentajeDescuento').val(porcentajeCalc.toFixed(2));
 
-        // Mostrar mensaje de confirmación
-        if (porcentaje > 0) {
-            swal({
-                title: "¡Descuento Aplicado!",
-                text: "Se ha aplicado un descuento del " + porcentaje + "%. Total a pagar: Bs. " + totalFinal.toFixed(2),
-                icon: "success",
-                timer: 3000
-            });
-        }
-    });
+        // Actualizar monto a pagar
+        $('#montoMatricula').val(montoFinal.toFixed(2));
 
-    // Botón Cancelar Descuento
-    $('#btnCancelarDescuento, #btnCerrarModalDescuento').on('click', function() {
-        // Desmarcar el checkbox de pago completo
-        $('#pagoCompleto').prop('checked', false);
-
-        // Cerrar modal
-        $('#modalDescuentoPagoCompleto').modal('hide');
-
-        // Resetear campos
-        $('#montoMatricula').val('');
-        $('#montoMatricula').prop('readonly', false);
-        $('#montoMatricula').css('background-color', '#ffffff');
-
-        $('#textoMonto').html('Monto de Matrícula');
-        $('#textoInfoMonto').html('Pago inicial de inscripción');
-        $('#infoMonto').removeClass('text-success').addClass('text-muted');
-        $('#labelMonto').find('i').removeClass('text-success').addClass('text-warning');
+        console.log('=== CÁLCULO DE DESCUENTO ===');
+        console.log('Costo Original:', costoOriginal);
+        console.log('Tipo Descuento:', tipoDescuento);
+        console.log('Valor Ingresado:', valorIngresado);
+        console.log('Monto Descuento:', montoDescuentoCalc.toFixed(2));
+        console.log('Porcentaje:', porcentajeCalc.toFixed(2) + '%');
+        console.log('Monto Final:', montoFinal.toFixed(2));
     });
 });
 </script>

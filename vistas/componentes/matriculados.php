@@ -110,6 +110,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                         <th class="text-center" style="color: white; width: 120px;">GRADO</th>
                                         <th class="text-center" style="color: white; width: 100px;">CÓDIGO</th>
                                         <th class="text-center" style="color: white; width: 120px;">COSTO MATRÍCULA</th>
+                                        <th class="text-center" style="color: white; width: 100px;">DESCUENTO</th>
                                         <th class="text-center" style="color: white; width: 150px;">TIPO DE PAGO</th>
                                         <th class="text-center" style="color: white; width: 120px;">N° VOUCHER</th>
                                         <th class="text-center" style="color: white; width: 120px;">FECHA INSCRIPCIÓN</th>
@@ -788,7 +789,7 @@ $(document).ready(function() {
         }
 
         // Mostrar mensaje de carga
-        $('#tablaMatriculadosBody').html('<tr><td colspan="10" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando estudiantes...</td></tr>');
+        $('#tablaMatriculadosBody').html('<tr><td colspan="12" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando estudiantes...</td></tr>');
 
         // Petición AJAX
         $.ajax({
@@ -840,7 +841,7 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error('✗ Error al cargar estudiantes:', error);
-                $('#tablaMatriculadosBody').html('<tr><td colspan="10" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los estudiantes</td></tr>');
+                $('#tablaMatriculadosBody').html('<tr><td colspan="12" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los estudiantes</td></tr>');
             }
         });
     }
