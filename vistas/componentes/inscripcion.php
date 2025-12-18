@@ -272,6 +272,7 @@ kt-aside--fixed kt-page--loading">
                                          style="border: 2px solid #e1e3ea; border-left: none; font-weight: bold;" required>
                                   <input type="hidden" name="costoTotalPrograma" id="costoTotalPrograma" value="0">
                                   <input type="hidden" name="costoMatriculaPrograma" id="costoMatriculaPrograma" value="0">
+                                  <input type="hidden" name="costoTotalConMatricula" id="costoTotalConMatricula" value="0">
                                 </div>
                                 <small class="form-text text-muted" id="infoMonto">
                                   <i class="flaticon2-information"></i> <span id="textoInfoMonto">Monto final después del descuento</span>
@@ -680,6 +681,7 @@ $(document).ready(function() {
         if ($(this).is(':checked')) {
             // Pago completo activado
             const costoPrograma = parseFloat($('#costoTotalPrograma').val()) || 0;
+            const costoMatricula = parseFloat($('#costoMatriculaPrograma').val()) || 0;
 
             if (costoPrograma <= 0) {
                 swal("Atención", "Primero debe seleccionar un programa con costo válido", "warning");
@@ -687,21 +689,32 @@ $(document).ready(function() {
                 return;
             }
 
+            // IMPORTANTE: El monto TOTAL es la suma de Matrícula + Programa
+            const montoTotal = costoMatricula + costoPrograma;
+
+            // Guardar el monto total original (antes de descuento) en campo hidden
+            $('#costoTotalConMatricula').val(montoTotal.toFixed(2));
+
             // Mostrar campos de descuento
             $('#divMontoOriginal').show();
             $('#divDescuento').show();
 
-            // Mostrar costo original
-            $('#montoOriginalDisplay').val(costoPrograma.toFixed(2));
+            // Mostrar costo original (TOTAL = Matrícula + Programa)
+            $('#montoOriginalDisplay').val(montoTotal.toFixed(2));
 
             // Establecer monto a pagar inicial (sin descuento)
-            $('#montoMatricula').val(costoPrograma.toFixed(2));
+            $('#montoMatricula').val(montoTotal.toFixed(2));
 
             // Actualizar etiquetas
             $('#textoMonto').html('Monto a Pagar');
             $('#textoInfoMonto').html('Pago completo del programa - Inscripción automática a todos los módulos');
             $('#infoMonto').removeClass('text-muted').addClass('text-success');
             $('#labelMonto').find('i').removeClass('text-warning').addClass('text-success');
+
+            console.log('=== PAGO COMPLETO ACTIVADO ===');
+            console.log('Costo Matrícula:', costoMatricula.toFixed(2));
+            console.log('Costo Programa:', costoPrograma.toFixed(2));
+            console.log('TOTAL (Matrícula + Programa):', montoTotal.toFixed(2));
 
         } else {
             // Pago completo desactivado

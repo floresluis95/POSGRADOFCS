@@ -1,1 +1,51 @@
-<h2>DIAGNÓSTICO DEL SISTEMA DE MÓDULOS</h2><hr><h3>1. Docentes Activos:</h3><p><strong>Total de docentes activos:</strong> 3</p><table border='1' cellpadding='5'><tr><th>ID</th><th>Nombre Completo</th><th>CI</th><th>Especialidad</th></tr><tr><td>6</td><td>CARLOS UGARTE CARRILLO</td><td>1234578</td><td>ODONTOLOGO</td></tr><tr><td>5</td><td>JORGE AGUILAR PEREZ</td><td>12345678</td><td>ODONTOLOGO</td></tr><tr><td>4</td><td>JUAN LOPEZ PEREZ</td><td>12345678</td><td>ODONTOLOGO</td></tr></table><hr><h3>2. Programas Disponibles:</h3><p><strong>Total de programas:</strong> 7</p><table border='1' cellpadding='5'><tr><th>ID</th><th>Nombre</th><th>Código</th><th>Grado</th><th>Módulos</th></tr><tr><td>1</td><td>MESTRIA EN ORTODONCIA</td><td>ORU-MAE-1-2025</td><td>MAESTRIA</td><td><strong>12</strong></td></tr><tr><td>2</td><td>MAESTRIA EN ENDODONCIA</td><td>LPZ-MAE-2-2025</td><td>MAESTRIA</td><td><strong>12</strong></td></tr><tr><td>3</td><td>DIPLOMADO EN ENDODONCIA</td><td>ORU-DIP-3-2025</td><td>DIPLOMADO</td><td><strong>6</strong></td></tr><tr><td>5</td><td>ESPECIALIDAD EN ODONTO</td><td>LPZ-ESP-5-2025</td><td>ESPECIALIDAD</td><td><strong>12</strong></td></tr><tr><td>6</td><td>DIPLOMADO EN REHABILITACION V2</td><td>ORU-DIP-6-2025</td><td>DIPLOMADO</td><td><strong>6</strong></td></tr><tr><td>4</td><td>ESPECIALIDAD EN ARMONIZACION OROFACIAL</td><td>ORU-ESP-4-2025</td><td>ESPECIALIDAD</td><td><strong>12</strong></td></tr><tr><td>7</td><td>DIPLOMADO1</td><td>ORU-DIP-7-2025</td><td>DIPLOMADO</td><td><strong>2</strong></td></tr></table><hr><h3>3. Módulos Registrados por Programa:</h3><p><strong>Total de módulos registrados:</strong> 0</p><p style='color: orange;'>ℹ NO HAY MÓDULOS REGISTRADOS AÚN</p><p>Esto es normal si acabas de instalar el sistema. Usa la interfaz para registrar módulos.</p><hr><h3>4. Estructura de la Tabla 'modulos':</h3><table border='1' cellpadding='5'><tr><th>Campo</th><th>Tipo</th><th>Null</th><th>Key</th><th>Default</th></tr><tr><td><strong>Idmodulo</strong></td><td>int(11)</td><td>NO</td><td>PRI</td><td>NULL</td></tr><tr><td><strong>ProgramaId</strong></td><td>int(11)</td><td>NO</td><td>MUL</td><td>NULL</td></tr><tr><td><strong>nombremodulo</strong></td><td>varchar(100)</td><td>NO</td><td></td><td>NULL</td></tr><tr><td><strong>codigomodulo</strong></td><td>varchar(50)</td><td>NO</td><td></td><td>NULL</td></tr><tr><td><strong>estadomodulo</strong></td><td>varchar(15)</td><td>NO</td><td></td><td>ACTIVO</td></tr><tr><td><strong>DocenteID</strong></td><td>int(11)</td><td>YES</td><td>MUL</td><td>NULL</td></tr></table><hr><p><a href='index.php?ruta=modulos'>← Volver al sistema de módulos</a></p>
+<!DOCTYPE html><html><head><meta charset='UTF-8'><style>
+body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+.container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+h1 { color: #333; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+h2 { color: #667eea; margin-top: 30px; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
+th { background: #667eea; color: white; }
+tr:nth-child(even) { background: #f8f9fa; }
+.ok { color: #28a745; font-weight: bold; }
+.error { color: #dc3545; font-weight: bold; }
+.warning { color: #ffc107; font-weight: bold; }
+.info { background: #e7f3ff; padding: 15px; border-left: 4px solid #3699ff; margin: 20px 0; }
+</style></head><body><div class='container'><h1>🔍 Diagnóstico de Monto Pagado</h1><p><strong>Fecha:</strong> 18/12/2025 13:58:04</p><h2>📊 Registros con PAGO COMPLETO</h2><div class='info'><strong>Nota:</strong> Cuando es pago completo, el campo <code>montoPagado</code> debe contener el monto FINAL pagado (con descuento aplicado si lo hay).</div><table><tr>
+                <th>ID</th>
+                <th>Estudiante</th>
+                <th>Programa</th>
+                <th>Costo Original</th>
+                <th>Descuento</th>
+                <th>Monto Esperado</th>
+                <th>Monto Pagado<br>(BD)</th>
+                <th>Estado</th>
+              </tr><tr><td>6</td><td>NINETTE LOZA GUTIERREZ</td>PHP Warning:  Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 103
+
+Warning: Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 103
+<td></td><td>Bs. 32,400.00</td><td>Bs. 6,880.00 (20.0%)</td><td>Bs. 25,520.00</td><td>Bs. 32,400.00</td><td><span class='error'>✗ INCORRECTO<br>(Diferencia: Bs. 6,880.00)</span></td></tr><tr><td>7</td><td>JUAN BENITO CASTELLON FLORES</td>PHP Warning:  Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 103
+
+Warning: Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 103
+<td></td><td>Bs. 32,400.00</td><td>Bs. 6,480.00 (20.0%)</td><td>Bs. 25,920.00</td><td>Bs. 32,400.00</td><td><span class='error'>✗ INCORRECTO<br>(Diferencia: Bs. 6,480.00)</span></td></tr><tr><td>4</td><td>GABRIELA NICOLE PACO TORRICO</td>PHP Warning:  Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 103
+
+Warning: Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 103
+<td></td><td>Bs. 32,400.00</td><td>Bs. 6,880.00 (20.0%)</td><td>Bs. 25,520.00</td><td>Bs. 32,400.00</td><td><span class='error'>✗ INCORRECTO<br>(Diferencia: Bs. 6,880.00)</span></td></tr></table><div class='info'><h3>Resumen:</h3><p><span class='ok'>✓ Correctos:</span> 0 registros</p><p><span class='error'>✗ Incorrectos:</span> 3 registros</p><p class='warning'><strong>⚠ Acción requerida:</strong> Hay 3 registros con datos incorrectos. Estos registros se crearon antes de la corrección y pueden necesitar ajuste manual.</p></div><h2>📊 Registros con SOLO MATRÍCULA</h2><div class='info'><strong>Nota:</strong> Cuando es solo matrícula, el campo <code>montoPagado</code> debe ser igual a <code>costomatricula</code>.</div><table><tr>
+                <th>ID</th>
+                <th>Estudiante</th>
+                <th>Programa</th>
+                <th>Costo Matrícula</th>
+                <th>Monto Pagado<br>(BD)</th>
+                <th>Estado</th>
+              </tr><tr><td>5</td><td>ILSEN ARIANA ALA VALDIVIA</td>PHP Warning:  Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 194
+
+Warning: Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 194
+<td></td><td>Bs. 2,000.00</td><td>Bs. 2,000.00</td><td><span class='ok'>✓ CORRECTO</span></td></tr><tr><td>2</td><td>KAREN DUVINKA TOCO MACIAS</td>PHP Warning:  Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 194
+
+Warning: Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 194
+<td></td><td>Bs. 2,000.00</td><td>Bs. 2,000.00</td><td><span class='ok'>✓ CORRECTO</span></td></tr><tr><td>1</td><td>DIEGO MARCELO PEREZ JIMENEZ</td>PHP Warning:  Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 194
+
+Warning: Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 194
+<td></td><td>Bs. 2,000.00</td><td>Bs. 2,000.00</td><td><span class='ok'>✓ CORRECTO</span></td></tr><tr><td>3</td><td>ADRIANA SARAI TRUJILLO ALCONINI</td>PHP Warning:  Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 194
+
+Warning: Undefined array key "Programa" in C:\xampp\htdocs\POSGRADOFCS\diagnostico_monto_pagado.php on line 194
+<td></td><td>Bs. 2,000.00</td><td>Bs. 2,000.00</td><td><span class='ok'>✓ CORRECTO</span></td></tr></table><div class='info'><h3>Resumen:</h3><p><span class='ok'>✓ Correctos:</span> 4 registros</p><p><span class='error'>✗ Incorrectos:</span> 0 registros</p></div><h2>📝 Explicación Técnica</h2><div class='info'><h3>Cómo funciona ahora el sistema:</h3><ol><li><strong>Formulario de inscripción:</strong> Cuando se marca 'Pago Completo' y se aplica un descuento, el campo <code>montoMatricula</code> del formulario contiene el monto FINAL (después del descuento).</li><li><strong>Controlador:</strong> El controlador ahora toma el valor de <code>$_POST['montoMatricula']</code> y lo asigna a <code>montoPagado</code>.</li><li><strong>Modelo:</strong> El modelo distribuye el <code>montoPagado</code> entre todos los módulos del programa.</li></ol><h3>Ejemplo:</h3><ul><li>Costo del programa: Bs. 10,000.00</li><li>Descuento aplicado: 10% (Bs. 1,000.00)</li><li>Monto pagado (registrado en BD): <strong>Bs. 9,000.00</strong> ✓</li><li>Monto descuento (registrado en BD): <strong>Bs. 1,000.00</strong> ✓</li><li>Porcentaje descuento (registrado en BD): <strong>10.00%</strong> ✓</li></ul></div></div></body></html>

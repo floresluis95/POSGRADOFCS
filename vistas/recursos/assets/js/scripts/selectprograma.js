@@ -58,10 +58,24 @@ $(document).ready(function() {
 
           // Mostrar y autocompletar costo de matrícula
           var costoMatricula = respuesta.CostoMatricula ? parseFloat(respuesta.CostoMatricula) : 0;
+          var costoPrograma = parseFloat(respuesta.Costo);
           $('#detalle-costo-matricula').text('Bs. ' + costoMatricula.toFixed(2));
+
+          // Guardar valores en campos hidden para uso posterior
+          // IMPORTANTE: costoTotalPrograma = Costo del Programa (SIN matrícula)
+          // Para pago completo, se sumará: costoMatriculaPrograma + costoTotalPrograma
+          $('#costoTotalPrograma').val(costoPrograma.toFixed(2));
+          $('#costoMatriculaPrograma').val(costoMatricula.toFixed(2));
 
           // Autocompletar el campo de pago matrícula
           $('input[name="montoMatricula"]').val(costoMatricula.toFixed(2));
+
+          // ORDEN DE PAGO: Si NO está marcado pago completo, establecer matrícula automáticamente
+          if ($('#pagoCompleto').length && !$('#pagoCompleto').is(':checked')) {
+              $('#montoAPagar').val(costoMatricula.toFixed(2));
+              $('#montoAPagar').prop('readonly', true);
+              console.log('ORDEN DE PAGO: Matrícula automática establecida:', costoMatricula.toFixed(2));
+          }
 
           $('#detalle-sede').text(respuesta.Sede);
           $('#detalle-inicio').text(respuesta.FechaInicio);

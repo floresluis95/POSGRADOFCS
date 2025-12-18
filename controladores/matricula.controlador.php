@@ -41,14 +41,21 @@ class MatriculaControladores
             $pagoCompleto = isset($_POST['pagoCompleto']) && $_POST['pagoCompleto'] == '1' ? 1 : 0;
             $costoTotalPrograma = isset($_POST['costoTotalPrograma']) ? floatval($_POST['costoTotalPrograma']) : 0;
 
-            // Si es pago completo, el monto de matrícula es 0 (no se cobra)
-            // El monto total pagado es el costo del programa
+            // Obtener el monto que viene del formulario
+            // Este campo contiene:
+            // - Si es pago completo: el monto TOTAL del programa DESPUÉS del descuento
+            // - Si es solo matrícula: el monto de la matrícula
+            $montoDesdeFormulario = floatval($_POST['montoMatricula']);
+
             if ($pagoCompleto) {
-                $montoMatricula = 0; // No se cobra matrícula
-                $montoPagado = $costoTotalPrograma; // Se paga el programa completo
+                // Pago completo: no se cobra matrícula separada
+                $montoMatricula = 0;
+                // montoPagado debe ser el monto FINAL pagado (ya incluye el descuento si lo hay)
+                $montoPagado = $montoDesdeFormulario;
             } else {
-                $montoMatricula = floatval($_POST['montoMatricula']);
-                $montoPagado = $montoMatricula; // Solo paga la matrícula
+                // Solo matrícula: se cobra solo la matrícula
+                $montoMatricula = $montoDesdeFormulario;
+                $montoPagado = $montoDesdeFormulario;
             }
 
             // Procesar imagen (opcional)

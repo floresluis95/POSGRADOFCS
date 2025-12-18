@@ -45,10 +45,28 @@ try {
     $pagoCompleto = isset($estudiante['pagoCompleto']) ? intval($estudiante['pagoCompleto']) : 0;
     $montoPagado = isset($estudiante['montoPagado']) ? floatval($estudiante['montoPagado']) : 0;
     $montoDescuento = isset($estudiante['montoDescuento']) ? floatval($estudiante['montoDescuento']) : 0;
-    $costoMatricula = floatval($estudiante['costomatricula']);
+    $porcentajeDescuento = isset($estudiante['porcentajeDescuento']) ? floatval($estudiante['porcentajeDescuento']) : 0;
+    $costoMatriculaBD = floatval($estudiante['CostoMatricula']); // Costo de matrícula del programa (BD)
+    $costoProgramaBD = floatval($estudiante['CostoTotalPrograma']); // Costo del programa (BD)
 
-    // Si es pago completo y tiene montoPagado, usar ese, sino usar costomatricula
-    $costoMatriculaPagado = ($pagoCompleto == 1 && $montoPagado > 0) ? $montoPagado : $costoMatricula;
+    // Si es pago completo y tiene montoPagado, usar ese, sino usar el costo guardado en costomatricula
+    $costoMatriculaPagado = ($pagoCompleto == 1 && $montoPagado > 0) ? $montoPagado : floatval($estudiante['costomatricula']);
+
+    // Calcular el costo original TOTAL (antes del descuento)
+    // Cuando es pago completo: TOTAL = Matrícula + Programa
+    // El montoPagado + montoDescuento también nos da el total original
+    if ($pagoCompleto == 1) {
+        // Usar el cálculo más preciso: montoPagado + montoDescuento
+        $costoOriginal = $montoPagado + $montoDescuento;
+        // Verificar con la suma de matrícula + programa (debe coincidir)
+        $totalDesdePrograma = $costoMatriculaBD + $costoProgramaBD;
+        // Si hay diferencia significativa, usar el total desde programa
+        if (abs($costoOriginal - $totalDesdePrograma) > 0.01) {
+            $costoOriginal = $totalDesdePrograma;
+        }
+    } else {
+        $costoOriginal = floatval($estudiante['costomatricula']);
+    }
 
     $totalPagadoModulos=array_sum(array_column($modulosPagados,'CostoPagado'));
     $totalPendiente=array_sum(array_column($modulosPendientes,'Costo'));
@@ -181,26 +199,43 @@ body{
 
 <?php if($costoMatriculaPagado>0): ?>
 <div class="seccion">
-<div class="seccion-titulo" style="background:#667eea">✓ MATRÍCULA CANCELADA</div>
+<div class="seccion-titulo" style="background:#667eea">✓ <?php echo $pagoCompleto == 1 ? 'PAGO COMPLETO REGISTRADO' : 'MATRÍCULA CANCELADA'; ?></div>
 <table class="tabla-modulos"><thead>
 <tr><th>#</th><th>Concepto</th><th>Monto</th><th>Fecha</th><th>Voucher</th></tr>
 </thead><tbody>
+<?php if($pagoCompleto == 1): ?>
+<!-- Desglose para Pago Completo -->
+<tr style="background:#e7f3ff">
+<td>1</td><td><strong>Matrícula - <?php echo $estudiante['NombrePrograma']; ?></strong></td>
+<td>Bs. <?php echo number_format($costoMatriculaBD,2); ?></td>
+<td rowspan="<?php echo $montoDescuento > 0 ? 5 : 3; ?>"><?php echo date('d/m/Y',strtotime($estudiante['FechaInscripcion'])); ?></td>
+<td rowspan="<?php echo $montoDescuento > 0 ? 5 : 3; ?>"><?php echo $estudiante['VoucherMatricula'] ?: '-'; ?></td>
+</tr>
+<tr style="background:#e7f3ff">
+<td>2</td><td><strong>Costo del Programa</strong></td>
+<td>Bs. <?php echo number_format($costoProgramaBD,2); ?></td>
+</tr>
+<tr style="background:#fff3cd">
+<td colspan="2"><strong>Subtotal (Matrícula + Programa)</strong></td>
+<td><strong>Bs. <?php echo number_format($costoOriginal,2); ?></strong></td>
+</tr>
+<?php if($montoDescuento > 0): ?>
+<tr style="background:#d4edda">
+<td colspan="2"><strong>Descuento Aplicado (<?php echo number_format($porcentajeDescuento,1); ?>%)</strong></td>
+<td style="color:#28a745"><strong>- Bs. <?php echo number_format($montoDescuento,2); ?></strong></td>
+</tr>
+<tr style="background:#c3e6cb; font-weight:bold">
+<td colspan="2"><strong>TOTAL PAGADO</strong></td>
+<td><strong>Bs. <?php echo number_format($montoPagado,2); ?></strong></td>
+</tr>
+<?php endif; ?>
+<?php else: ?>
+<!-- Solo Matrícula -->
 <tr>
 <td>1</td><td>Matrícula - <?php echo $estudiante['NombrePrograma']; ?></td>
 <td>Bs. <?php echo number_format($costoMatriculaPagado,2); ?></td>
 <td><?php echo date('d/m/Y',strtotime($estudiante['FechaInscripcion'])); ?></td>
 <td><?php echo $estudiante['VoucherMatricula'] ?: '-'; ?></td>
-</tr>
-<?php if($montoDescuento > 0): ?>
-<tr style="background:#d4edda">
-<td colspan="2"><strong>Descuento Aplicado (<?php echo number_format($estudiante['porcentajeDescuento'],1); ?>%)</strong></td>
-<td style="color:#28a745"><strong>- Bs. <?php echo number_format($montoDescuento,2); ?></strong></td>
-<td colspan="2">-</td>
-</tr>
-<tr style="background:#fff3cd">
-<td colspan="2"><strong>Costo Original del Programa</strong></td>
-<td><strong>Bs. <?php echo number_format($costoMatriculaPagado + $montoDescuento,2); ?></strong></td>
-<td colspan="2">-</td>
 </tr>
 <?php endif; ?>
 </tbody></table></div>
@@ -243,10 +278,12 @@ body{
 
 <div class="resumen"><table>
 <?php if($montoDescuento > 0): ?>
-<tr style="background:#e7f3ff"><td>Costo Original Programa:</td><td>Bs. <?php echo number_format($costoMatriculaPagado + $montoDescuento,2); ?></td></tr>
-<tr style="background:#d4edda"><td>Descuento Aplicado:</td><td style="color:#28a745"><strong>- Bs. <?php echo number_format($montoDescuento,2); ?></strong></td></tr>
-<?php endif; ?>
+<tr style="background:#e7f3ff"><td><strong>Costo Original del Programa:</strong></td><td><strong>Bs. <?php echo number_format($costoOriginal,2); ?></strong></td></tr>
+<tr style="background:#d4edda"><td>Descuento Aplicado (<?php echo number_format($porcentajeDescuento,1); ?>%):</td><td style="color:#28a745"><strong>- Bs. <?php echo number_format($montoDescuento,2); ?></strong></td></tr>
+<tr style="background:#fff"><td><strong>Monto Pagado (con descuento):</strong></td><td><strong>Bs. <?php echo number_format($costoMatriculaPagado,2); ?></strong></td></tr>
+<?php else: ?>
 <tr><td>Matrícula Pagada:</td><td>Bs. <?php echo number_format($costoMatriculaPagado,2); ?></td></tr>
+<?php endif; ?>
 <tr><td>Costo Programa:</td><td>Bs. <?php echo number_format($totalPrograma,2); ?></td></tr>
 <tr><td>Pagado Módulos:</td><td>Bs. <?php echo number_format($totalPagadoModulos,2); ?></td></tr>
 <tr><td>Pendiente:</td><td>Bs. <?php echo number_format($totalPendiente,2); ?></td></tr>

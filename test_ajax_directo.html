@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test AJAX Directo - Estudiantes</title>
+    <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #resultado {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test AJAX Directo - Estudiantes</h1>
+
+        <div class="test-section">
+            <h3>Configuración del Test</h3>
+            <p><strong>URL del AJAX:</strong> ajax/estudiantes.ajax.php</p>
+            <p><strong>ID del Estudiante:</strong>
+                <input type="number" id="estudianteId" value="1" style="padding: 5px; width: 100px;">
+            </p>
+            <button onclick="probarAjax()">🚀 Probar AJAX</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Resultado del Test</h3>
+            <div id="status">Esperando...</div>
+            <div id="resultado"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Consola de Debug</h3>
+            <div id="console" style="max-height: 300px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <script>
+        function log(mensaje, tipo = 'info') {
+            const consoleDiv = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = tipo === 'error' ? 'red' : tipo === 'success' ? 'green' : 'blue';
+            consoleDiv.innerHTML += `<div style="color: ${color};">[${timestamp}] ${mensaje}</div>`;
+            console.log(mensaje);
+        }
+
+        function probarAjax() {
+            const estudianteId = document.getElementById('estudianteId').value;
+            const statusDiv = document.getElementById('status');
+            const resultadoDiv = document.getElementById('resultado');
+
+            // Limpiar
+            document.getElementById('console').innerHTML = '';
+            resultadoDiv.innerHTML = '';
+            statusDiv.innerHTML = '⏳ Realizando petición AJAX...';
+
+            log('Iniciando petición AJAX...');
+            log('ID del estudiante: ' + estudianteId);
+            log('URL: ajax/estudiantes.ajax.php');
+
+            $.ajax({
+                url: 'ajax/estudiantes.ajax.php',
+                type: 'POST',
+                data: { idestudiante: estudianteId },
+                dataType: 'json',
+                success: function(response) {
+                    log('✅ Respuesta recibida exitosamente', 'success');
+                    log('Tipo de respuesta: ' + typeof response, 'success');
+
+                    statusDiv.innerHTML = '<span class="success">✅ AJAX EXITOSO</span>';
+                    resultadoDiv.innerHTML = JSON.stringify(response, null, 2);
+
+                    // Verificar campos
+                    if (response.EstudianteID) {
+                        log('✅ Campo EstudianteID encontrado: ' + response.EstudianteID, 'success');
+                    }
+                    if (response.Nombre) {
+                        log('✅ Campo Nombre encontrado: ' + response.Nombre, 'success');
+                    }
+                    if (response.error) {
+                        log('⚠️ Respuesta contiene error: ' + response.error, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    log('❌ Error en la petición AJAX', 'error');
+                    log('Status: ' + status, 'error');
+                    log('Error: ' + error, 'error');
+                    log('Código HTTP: ' + xhr.status, 'error');
+                    log('Respuesta del servidor:', 'error');
+                    log(xhr.responseText, 'error');
+
+                    statusDiv.innerHTML = '<span class="error">❌ ERROR EN AJAX</span>';
+                    resultadoDiv.innerHTML = 'Error: ' + error + '\n\nRespuesta del servidor:\n' + xhr.responseText;
+                }
+            });
+        }
+
+        // Probar automáticamente al cargar
+        $(document).ready(function() {
+            log('jQuery cargado correctamente', 'success');
+            log('Versión de jQuery: ' + $.fn.jquery, 'success');
+            log('Listo para probar el AJAX');
+        });
+    </script>
+</body>
+</html>

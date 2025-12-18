@@ -58,13 +58,19 @@ $pagoCompleto = intval($estudiante['pagoCompleto']);
 $montoPagado = floatval($estudiante['montoPagado']);
 $montoDescuento = floatval($estudiante['montoDescuento']);
 $porcentajeDescuento = floatval($estudiante['porcentajeDescuento']);
-$costoTotalPrograma = floatval($estudiante['CostoTotalPrograma']);
+$costoMatriculaBD = floatval($estudiante['CostoMatricula']); // Costo de matrícula del programa
+$costoProgramaBD = floatval($estudiante['CostoTotalPrograma']); // Costo del programa
 
-// Verificar coherencia: costoTotalPrograma - montoDescuento debería ser igual a montoPagado
-// Si no coincide, usar el cálculo inverso como referencia
-if (abs(($costoTotalPrograma - $montoDescuento) - $montoPagado) > 0.01) {
-    // Hay inconsistencia, usar montoPagado + montoDescuento como costo original
-    $costoTotalPrograma = $montoPagado + $montoDescuento;
+// El costo TOTAL original es: Matrícula + Programa
+// Este es el monto ANTES del descuento
+$costoTotalOriginal = $costoMatriculaBD + $costoProgramaBD;
+
+// Verificación de coherencia: costoTotalOriginal - montoDescuento debe ser igual a montoPagado
+// Si hay una diferencia mayor a 0.01, usar montoPagado + montoDescuento como referencia
+$diferencia = abs(($costoTotalOriginal - $montoDescuento) - $montoPagado);
+if ($diferencia > 0.01) {
+    // Si hay inconsistencia, recalcular el costo original sumando monto pagado + descuento
+    $costoTotalOriginal = $montoPagado + $montoDescuento;
 }
 
 // Crear PDF
@@ -223,24 +229,47 @@ $pdf->Cell(0, 8, 'DETALLE DEL PAGO COMPLETO', 0, 1, 'L');
 $y += 12;
 
 // Tabla de desglose
-$pdf->SetFillColor(255, 255, 255);
+$pdf->SetFillColor(231, 243, 255); // Fondo azul claro
 $pdf->SetDrawColor(200, 200, 200);
 $pdf->SetLineWidth(0.2);
 
-// Costo Original del Programa
+// 1. Costo de Matrícula
 $pdf->SetFont('helvetica', 'B', 10);
 $pdf->SetTextColor(60, 60, 60);
 $pdf->SetXY(15, $y);
-$pdf->Cell(130, 8, 'COSTO TOTAL DEL PROGRAMA:', 1, 0, 'L', true);
+$pdf->Cell(130, 8, '1. MATRÍCULA DEL PROGRAMA:', 1, 0, 'L', true);
 $pdf->SetFont('helvetica', '', 10);
 $pdf->SetTextColor(0, 0, 0);
-$pdf->Cell(50, 8, 'Bs. ' . number_format($costoTotalPrograma, 2), 1, 1, 'R', true);
+$pdf->Cell(50, 8, 'Bs. ' . number_format($costoMatriculaBD, 2), 1, 1, 'R', true);
 
 $y += 8;
 
-// Descuento aplicado (si existe)
+// 2. Costo del Programa
+$pdf->SetFont('helvetica', 'B', 10);
+$pdf->SetTextColor(60, 60, 60);
+$pdf->SetXY(15, $y);
+$pdf->Cell(130, 8, '2. COSTO DEL PROGRAMA:', 1, 0, 'L', true);
+$pdf->SetFont('helvetica', '', 10);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(50, 8, 'Bs. ' . number_format($costoProgramaBD, 2), 1, 1, 'R', true);
+
+$y += 8;
+
+// 3. Subtotal (Matrícula + Programa)
+$pdf->SetFillColor(255, 243, 205); // Fondo amarillo claro
+$pdf->SetFont('helvetica', 'B', 10);
+$pdf->SetTextColor(60, 60, 60);
+$pdf->SetXY(15, $y);
+$pdf->Cell(130, 8, 'SUBTOTAL (MATRÍCULA + PROGRAMA):', 1, 0, 'L', true);
+$pdf->SetFont('helvetica', 'B', 10);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(50, 8, 'Bs. ' . number_format($costoTotalOriginal, 2), 1, 1, 'R', true);
+
+$y += 8;
+
+// 4. Descuento aplicado (si existe)
 if ($montoDescuento > 0) {
-    $pdf->SetFillColor(212, 237, 218);
+    $pdf->SetFillColor(212, 237, 218); // Fondo verde claro
     $pdf->SetFont('helvetica', 'B', 10);
     $pdf->SetTextColor(40, 167, 69);
     $pdf->SetXY(15, $y);
