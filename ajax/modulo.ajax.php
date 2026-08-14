@@ -45,12 +45,14 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaModulos") {
 
     if (empty($modulos)) {
         echo '<tr>
-                <td colspan="7" class="text-center text-muted">
+                <td colspan="9" class="text-center text-muted">
                     <i class="fa fa-info-circle"></i> No hay módulos registrados' . ($programaID ? ' para este programa' : '') . '
                 </td>
               </tr>';
         exit();
     }
+
+    $hoy = date('Y-m-d');
 
     foreach ($modulos as $key => $modulo) {
         $estadoBadge = $modulo['estadomodulo'] == 'ACTIVO' ? 'badge-success' : 'badge-secondary';
@@ -64,6 +66,33 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaModulos") {
             }
         }
 
+        // Columna de fechas del módulo
+        if (!empty($modulo['FechaInicio']) && !empty($modulo['FechaFinal'])) {
+            $fechaInicioFmt = date('d/m/Y', strtotime($modulo['FechaInicio']));
+            $fechaFinFmt = date('d/m/Y', strtotime($modulo['FechaFinal']));
+            $fechasInfo = '<i class="fa fa-calendar"></i> ' . $fechaInicioFmt .
+                          '<br><i class="fa fa-calendar-check-o"></i> ' . $fechaFinFmt;
+        } else {
+            $fechasInfo = '<span class="text-muted"><em>Sin definir</em></span>';
+        }
+
+        // Estado del módulo según el rango de fechas (curso / cerrado / culminado)
+        if (!empty($modulo['FechaInicio']) && !empty($modulo['FechaFinal'])) {
+            if ($hoy < $modulo['FechaInicio']) {
+                $estadoFechaTexto = 'CERRADO';
+                $estadoFechaBadge = 'badge-secondary';
+            } elseif ($hoy > $modulo['FechaFinal']) {
+                $estadoFechaTexto = 'CULMINADO';
+                $estadoFechaBadge = 'badge-info';
+            } else {
+                $estadoFechaTexto = 'EN CURSO';
+                $estadoFechaBadge = 'badge-success';
+            }
+        } else {
+            $estadoFechaTexto = 'SIN FECHAS';
+            $estadoFechaBadge = 'badge-secondary';
+        }
+
         // Datos para el botón de editar (en JSON para pasar al modal)
         $datosModulo = htmlspecialchars(json_encode([
             'idmodulo' => $modulo['Idmodulo'],
@@ -73,8 +102,8 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaModulos") {
             'costomodulo' => $modulo['costomodulo'],
             'docenteID' => $modulo['DocenteID'],
             'nombrePrograma' => $modulo['NombrePrograma'],
-            
-            
+            'fechaInicio' => $modulo['FechaInicio'],
+            'fechaFinal' => $modulo['FechaFinal']
         ]), ENT_QUOTES, 'UTF-8');
 
         echo '<tr>
@@ -82,6 +111,10 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaModulos") {
                 <td class="text-center"><span class="badge badge-primary">' . htmlspecialchars($modulo['codigomodulo']) . '</span></td>
                 <td><strong>' . htmlspecialchars($modulo['nombremodulo']) . '</strong></td>
                 <td>' . htmlspecialchars($modulo['NombrePrograma']) . '</td>
+                <td class="text-center">' . $fechasInfo . '</td>
+                <td class="text-center">
+                    <span class="badge ' . $estadoFechaBadge . '">' . $estadoFechaTexto . '</span>
+                </td>
                 <td>' . $docenteInfo . '</td>
                 <td class="text-center">
                     <span class="badge ' . $estadoBadge . '">' . htmlspecialchars($modulo['estadomodulo']) . '</span>

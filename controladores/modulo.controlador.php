@@ -163,6 +163,8 @@ class ModuloControlador
                 $codigoKey = 'codigomodulo_' . $i;
                 $docenteKey = 'docentemodulo_' . $i;
                 $costoKey = 'costomodulo_' . $i;
+                $fechaInicioKey = 'fechainicio_' . $i;
+                $fechaFinKey = 'fechafin_' . $i;
 
                 if (isset($_POST[$codigoKey])) {
                     $codigomodulo = strtoupper(htmlspecialchars(trim($_POST[$codigoKey])));
@@ -180,12 +182,22 @@ class ModuloControlador
                         ? (float)$_POST[$costoKey]
                         : 0;
 
+                    $fechainicio = isset($_POST[$fechaInicioKey]) && !empty($_POST[$fechaInicioKey])
+                        ? trim($_POST[$fechaInicioKey])
+                        : null;
+
+                    $fechafin = isset($_POST[$fechaFinKey]) && !empty($_POST[$fechaFinKey])
+                        ? trim($_POST[$fechaFinKey])
+                        : null;
+
                     if (!empty($codigomodulo)) {
                         $modulos[] = [
                             'nombremodulo' => $nombremodulo,
                             'codigomodulo' => $codigomodulo,
                             'docenteID' => $docenteID,
-                            'costomodulo' => $costomodulo
+                            'costomodulo' => $costomodulo,
+                            'fechainicio' => $fechainicio,
+                            'fechafin' => $fechafin
                         ];
                     }
                 }

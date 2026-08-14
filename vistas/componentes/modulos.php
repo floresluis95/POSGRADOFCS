@@ -237,7 +237,9 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                                         <th class="text-center" style="color: white; width: 50px;">#</th>
                                         <th class="text-center" style="color: white; width: 120px;">CÓDIGO</th>
                                         <th style="color: white; min-width: 180px;">NOMBRE MÓDULO</th>
-                                        <th style="color: white; min-width: 180px;">PROGRAMA</th>      
+                                        <th style="color: white; min-width: 180px;">PROGRAMA</th>
+                                        <th class="text-center" style="color: white; width: 130px;">FECHAS</th>
+                                        <th class="text-center" style="color: white; width: 110px;">ESTADO MÓDULO</th>
                                         <th style="color: white; min-width: 150px;">DOCENTE ASIGNADO</th>
                                         <th class="text-center" style="color: white; width: 100px;">ESTADO</th>
                                         <th class="text-center" style="color: white; width: 120px;">ACCIONES</th>
@@ -245,7 +247,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                                 </thead>
                                 <tbody id="tablaModulosBody">
                                     <tr>
-                                        <td colspan="7" class="text-center text-muted">
+                                        <td colspan="9" class="text-center text-muted">
                                             <i class="fa fa-hand-pointer-o"></i> Seleccione un programa para ver los módulos registrados
                                         </td>
                                     </tr>
@@ -382,8 +384,20 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                         </div>
                     </div>
 
-                    
+                    <div class="row">
+    <!-- Columna 1: Fecha Inicio -->
+                        <div class="col-md-6 form-group">
+                            <label><strong><i class="fa fa-book"></i> Fecha del Inicio:</strong> <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="fechainicio" id="editFechaInicio">
+                        </div>
 
+                        <!-- Columna 2: Fecha Final -->
+                        <div class="col-md-6 form-group">
+                            <label><strong><i class="fa fa-book"></i> Fecha Final:</strong> <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="fechafin" id="editFechaFinal">
+                        </div>
+                    </div>
+                 
                     <div class="form-group">
                         <label><strong><i class="fa fa-user-tie"></i> Docente Asignado:</strong></label>
                         <select class="form-control select2-docente-edit"
@@ -705,7 +719,7 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error('✗ Error al cargar módulos:', error);
-                $('#tablaModulosBody').html('<tr><td colspan="8" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los módulos</td></tr>');
+                $('#tablaModulosBody').html('<tr><td colspan="9" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los módulos</td></tr>');
             }
         });
     }

@@ -233,8 +233,8 @@ class ModuloModelo
             // Insertar cada módulo
             $stmt = $pdo->prepare(
                 "INSERT INTO modulos
-                (ProgramaId, nombremodulo, codigomodulo, costomodulo, estadomodulo, DocenteID)
-                VALUES (:programaID, :nombremodulo, :codigomodulo, :costomodulo, 'ACTIVO', :docenteID)"
+                (ProgramaId, nombremodulo, codigomodulo, costomodulo, estadomodulo, DocenteID, FechaInicio, FechaFinal)
+                VALUES (:programaID, :nombremodulo, :codigomodulo, :costomodulo, 'ACTIVO', :docenteID, :fechainicio, :fechafin)"
             );
 
             $insertados = 0;
@@ -252,6 +252,10 @@ class ModuloModelo
                 // Costo del módulo (puede ser 0 si no se especifica)
                 $costomodulo = isset($modulo['costomodulo']) && !empty($modulo['costomodulo']) ? (float)$modulo['costomodulo'] : 0.0;
 
+                // Fechas del módulo (pueden ser NULL si no se especifican)
+                $fechainicio = !empty($modulo['fechainicio']) ? $modulo['fechainicio'] : null;
+                $fechafin = !empty($modulo['fechafin']) ? $modulo['fechafin'] : null;
+
                 $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
                 $stmt->bindParam(":nombremodulo", $nombremodulo, PDO::PARAM_STR);
                 $stmt->bindParam(":codigomodulo", $modulo['codigomodulo'], PDO::PARAM_STR);
@@ -262,6 +266,18 @@ class ModuloModelo
                     $stmt->bindValue(":docenteID", null, PDO::PARAM_NULL);
                 } else {
                     $stmt->bindValue(":docenteID", $docenteID, PDO::PARAM_INT);
+                }
+
+                if ($fechainicio === null) {
+                    $stmt->bindValue(":fechainicio", null, PDO::PARAM_NULL);
+                } else {
+                    $stmt->bindValue(":fechainicio", $fechainicio, PDO::PARAM_STR);
+                }
+
+                if ($fechafin === null) {
+                    $stmt->bindValue(":fechafin", null, PDO::PARAM_NULL);
+                } else {
+                    $stmt->bindValue(":fechafin", $fechafin, PDO::PARAM_STR);
                 }
 
                 if ($stmt->execute()) {
@@ -330,6 +346,8 @@ class ModuloModelo
                     m.nombremodulo,
                     m.codigomodulo,
                     m.costomodulo,
+                    m.FechaInicio,
+                    m.FechaFinal,
                     m.estadomodulo,
                     m.DocenteID,
                     p.NombrePrograma,
