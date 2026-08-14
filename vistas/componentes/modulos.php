@@ -25,21 +25,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
 <div class="kt-content kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
     <div class="kt-container kt-container--fluid kt-grid__item kt-grid__item--fluid">
 
-        <!-- Título de la Página -->
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="kt-portlet">
-                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <div class="kt-portlet__head-label">
-                            <h3 class="kt-portlet__head-title" style="color: white;">
-                                <i class="fa fa-book"></i> GESTIÓN DE MÓDULOS POR PROGRAMA
-                            </h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+      
         <!-- Sección de Selección de Programa -->
         <div class="row">
             <div class="col-lg-12">
@@ -91,21 +77,16 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                      
 
 <style>
-    /* Animación suave para resaltar */
-    @keyframes pulseGlow {
-        0% { box-shadow: 0 0 12px rgba(25,135,84,0.4); }
-        50% { box-shadow: 0 0 20px rgba(25,135,84,0.7); }
-        100% { box-shadow: 0 0 12px rgba(25,135,84,0.4); }
-    }
-
+    
+  
     /* Chip destacado */
     .modulo-highlight {
-        background: linear-gradient(135deg, #2adf7f 0%, #1fb765 100%);
+        background: linear-gradient(135deg, #07204c 0%, #474dbd 100%);
         color: white !important;
         padding: 14px 32px;
         border-radius: 60px;
         font-size: 2rem;
-        font-weight: 800;
+        font-weight: 600;
         display: inline-block;
         animation: pulseGlow 2.8s infinite ease-in-out;
         border: 1px solid rgba(255,255,255,0.3);
@@ -188,6 +169,14 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                 <div class="value-modern text-primary" id="infoGradoPrograma">
                     [Grado]
                 </div>
+                <div class="label-modern d-flex align-items-center mb-1">
+                    <i class="bi bi-mortarboard fs-4 me-2 text-primary"></i>
+                    Codigo del programa
+                </div>
+                <div class="value-modern text-primary" id="infoCodigoPrograma">
+                    [0]
+                </div>
+               
             </div>
 
             <!-- Número de módulos resaltado -->
@@ -199,6 +188,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                 <span id="infoNumModulosPrograma" class="modulo-highlight">
                     [0]
                 </span>
+                
             </div>
 
             <!-- Costo Total del Programa -->
@@ -247,9 +237,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                                         <th class="text-center" style="color: white; width: 50px;">#</th>
                                         <th class="text-center" style="color: white; width: 120px;">CÓDIGO</th>
                                         <th style="color: white; min-width: 180px;">NOMBRE MÓDULO</th>
-                                        <th class="text-center" style="color: white; width: 120px;">COSTO (Bs.)</th>
-                                        <th style="color: white; min-width: 180px;">PROGRAMA</th>
-                                        <th class="text-center" style="color: white; width: 120px;">COD. PROGRAMA</th>
+                                        <th style="color: white; min-width: 180px;">PROGRAMA</th>      
                                         <th style="color: white; min-width: 150px;">DOCENTE ASIGNADO</th>
                                         <th class="text-center" style="color: white; width: 100px;">ESTADO</th>
                                         <th class="text-center" style="color: white; width: 120px;">ACCIONES</th>
@@ -257,7 +245,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                                 </thead>
                                 <tbody id="tablaModulosBody">
                                     <tr>
-                                        <td colspan="9" class="text-center text-muted">
+                                        <td colspan="7" class="text-center text-muted">
                                             <i class="fa fa-hand-pointer-o"></i> Seleccione un programa para ver los módulos registrados
                                         </td>
                                     </tr>
@@ -350,19 +338,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
 
             <form method="POST" id="formEditarModulo">
                 <div class="modal-body">
-                    <!-- Información del Programa -->
-                    <div class="alert alert-info">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong><i class="fa fa-graduation-cap"></i> Programa:</strong>
-                                <span id="editNombrePrograma"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <strong><i class="fa fa-barcode"></i> Código:</strong>
-                                <span id="editCodigoPrograma"></span>
-                            </div>
-                        </div>
-                    </div>
+                    
 
                     <!-- Campos ocultos -->
                     <input type="hidden" name="idmodulo" id="editIdmodulo">
@@ -406,23 +382,7 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label><strong><i class="fa fa-money"></i> Costo del Módulo (Bs.):</strong></label>
-                                <input type="number"
-                                       class="form-control"
-                                       name="costomodulo"
-                                       id="editCostoModulo"
-                                       placeholder="Ej: 500"
-                                       min="0"
-                                       step="1">
-                                <small class="form-text text-muted">
-                                    <i class="fa fa-info-circle"></i> Ingrese el costo en bolivianos (0 si no aplica)
-                                </small>
-                            </div>
-                        </div>
-                    </div>
+                    
 
                     <div class="form-group">
                         <label><strong><i class="fa fa-user-tie"></i> Docente Asignado:</strong></label>
@@ -570,6 +530,7 @@ $(document).ready(function() {
             // Actualizar información en la interfaz
             $('#infoNombrePrograma').text(nombrePrograma || 'N/A');
             $('#infoGradoPrograma').text(gradoPrograma || 'N/A');
+            $('#infoCodigoPrograma').text(codigoPrograma || 'N/A')
             $('#infoNumModulosPrograma').text(numModulos);
             $('#infoCostoPrograma').text('Bs. ' + costoTotal.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
 
@@ -612,7 +573,7 @@ $(document).ready(function() {
         $('#btnAbrirModalModulos').prop('disabled', true);
 
         // Limpiar tabla y volver al mensaje inicial
-        $('#tablaModulosBody').html('<tr><td colspan="9" class="text-center text-muted"><i class="fa fa-hand-pointer-o"></i> Seleccione un programa para ver los módulos registrados</td></tr>');
+        $('#tablaModulosBody').html('<tr><td colspan="7" class="text-center text-muted"><i class="fa fa-hand-pointer-o"></i> Seleccione un programa para ver los módulos registrados</td></tr>');
 
         // Destruir DataTable si existe
         if ($.fn.DataTable.isDataTable('#tablaModulos')) {
@@ -688,7 +649,7 @@ $(document).ready(function() {
         }
 
         // Mostrar mensaje de carga
-        $('#tablaModulosBody').html('<tr><td colspan="9" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando módulos...</td></tr>');
+        $('#tablaModulosBody').html('<tr><td colspan="7" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando módulos...</td></tr>');
 
         // Petición AJAX
         $.ajax({
@@ -744,7 +705,7 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error('✗ Error al cargar módulos:', error);
-                $('#tablaModulosBody').html('<tr><td colspan="9" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los módulos</td></tr>');
+                $('#tablaModulosBody').html('<tr><td colspan="8" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los módulos</td></tr>');
             }
         });
     }
@@ -878,17 +839,39 @@ $(document).ready(function() {
                             </div>
                             <div class="form-group">
                                 <label class="mb-1"><strong>Costo del Módulo (Bs.):</strong></label>
-                                <input type="number"
+                                <input type="label"
                                        class="form-control form-control-sm"
                                        name="costomodulo_${i}"
                                        value="${costoPorModulo}"
                                        placeholder="Ej: 500"
                                        min="0"
-                                       step="1">
+                                       step="1"
+                                       readonly>
                                 <small class="form-text text-muted">
-                                    <i class="fa fa-money"></i> Costo calculado automáticamente (puede modificar)
+                                    <i class="fa fa-money"></i> Costo calculado automáticamente 
                                 </small>
                             </div>
+
+                        <div class="row">
+                           
+                            <div class="col-md-6 form-group mb-3">
+                                <label class="mb-1"><strong>Fecha de inicio:</strong></label>
+                                <input type="date"
+                                    class="form-control form-control-sm"
+                                    name="fechainicio_${i}"
+                                    id="fechainicio_${i}">
+                            </div>
+
+                           
+                            <div class="col-md-6 form-group mb-3">
+                                <label class="mb-1"><strong>Fecha final:</strong></label>
+                                <input type="date"
+                                    class="form-control form-control-sm"
+                                    name="fechafin_${i}"
+                                    id="fechafin_${i}">
+                            </div>
+                        </div>
+
                             <div class="form-group mb-0">
                                 <label class="mb-1"><strong>Docente Asignado:</strong></label>
                                 <select class="form-control form-control-sm select2-docente"
@@ -900,7 +883,7 @@ $(document).ready(function() {
                                 <small class="form-text text-muted">
                                     <i class="fa fa-info-circle"></i> Puede asignar un docente al módulo (opcional)
                                 </small>
-                            </div>
+                            </div>                             
                         </div>
                     </div>
                 </div>

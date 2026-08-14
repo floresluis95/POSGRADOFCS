@@ -28,7 +28,8 @@
                 $enlace == 'historialreciboestudiante'||
                 $enlace == 'ordenpago'||
                 $enlace == 'asignaciondocente'||
-                $enlace == 'reportecalificaciones'
+                $enlace == 'reportecalificaciones'||
+                $enlace == 'opagos'
                 
                 )
             {

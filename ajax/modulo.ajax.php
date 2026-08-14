@@ -45,7 +45,7 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaModulos") {
 
     if (empty($modulos)) {
         echo '<tr>
-                <td colspan="9" class="text-center text-muted">
+                <td colspan="7" class="text-center text-muted">
                     <i class="fa fa-info-circle"></i> No hay módulos registrados' . ($programaID ? ' para este programa' : '') . '
                 </td>
               </tr>';
@@ -73,16 +73,15 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaModulos") {
             'costomodulo' => $modulo['costomodulo'],
             'docenteID' => $modulo['DocenteID'],
             'nombrePrograma' => $modulo['NombrePrograma'],
-            'codigoPrograma' => $modulo['CodigoPrograma']
+            
+            
         ]), ENT_QUOTES, 'UTF-8');
 
         echo '<tr>
                 <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
                 <td class="text-center"><span class="badge badge-primary">' . htmlspecialchars($modulo['codigomodulo']) . '</span></td>
                 <td><strong>' . htmlspecialchars($modulo['nombremodulo']) . '</strong></td>
-                <td class="text-center"><strong class="text-success">Bs. ' . number_format($modulo['costomodulo'], 2) . '</strong></td>
                 <td>' . htmlspecialchars($modulo['NombrePrograma']) . '</td>
-                <td class="text-center"><span class="badge badge-info">' . htmlspecialchars($modulo['CodigoPrograma']) . '</span></td>
                 <td>' . $docenteInfo . '</td>
                 <td class="text-center">
                     <span class="badge ' . $estadoBadge . '">' . htmlspecialchars($modulo['estadomodulo']) . '</span>

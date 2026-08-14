@@ -40,6 +40,15 @@ if ($_SESSION["Tipo"] == "ADM") {
                   </h4>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="opagos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-add-1" style="color: #1dc9b7;"></i>
+                    <span class="kt-menu__link-text">Nuevo registro</span>
+                    <span class="kt-menu__link-badge">
+                      <span class="kt-badge kt-badge--success kt-badge--dot"></span>
+                    </span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="inscripcion" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-add-1" style="color: #1dc9b7;"></i>
                     <span class="kt-menu__link-text">Nueva Inscripción</span>
