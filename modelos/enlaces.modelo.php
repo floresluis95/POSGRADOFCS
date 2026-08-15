@@ -29,8 +29,8 @@
                 $enlace == 'ordenpago'||
                 $enlace == 'asignaciondocente'||
                 $enlace == 'reportecalificaciones'||
-                $enlace == 'opagos'
-                
+                $enlace == 'preregistro'
+
                 )
             {
                 $ruta = "vistas/componentes/".$enlace.".php";

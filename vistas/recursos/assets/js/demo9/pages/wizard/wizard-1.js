@@ -158,9 +158,20 @@ var KTWizard1 = function () {
 		// public functions
 		init: function() {
 			wizardEl = KTUtil.get('kt_wizard_v1');
+
+			// Este widget de demo asume que la página actual contiene el wizard
+			// #kt_wizard_v1. En páginas que no lo usan, wizardEl es null y
+			// KTWizard(...).on(...) revienta con "wizard.on is not a function",
+			// lo que interrumpe el resto de los handlers $(document).ready()
+			// registrados después de este script (por ejemplo, los de las
+			// vistas que cargan tablas vía AJAX al iniciar).
+			if (!wizardEl) {
+				return;
+			}
+
 			formEl = $('#kt_form');
 
-			initWizard(); 
+			initWizard();
 			initValidation();
 			initSubmit();
 		}

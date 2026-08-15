@@ -20,6 +20,14 @@ class OrdenPagoControladores
         if (isset($_POST["registrarOrdenPago"])) {
             error_log("POST registrarOrdenPago detectado");
 
+            // Página a la que se debe regresar tras procesar el formulario (por defecto 'ordenpago')
+            $paginaRedirect = isset($_POST['paginaRedirect'])
+                ? preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['paginaRedirect'])
+                : 'ordenpago';
+            if ($paginaRedirect === '') {
+                $paginaRedirect = 'ordenpago';
+            }
+
             // Validar datos requeridos
             if (empty($_POST['idcliente']) || empty($_POST['programa']) ||
                 empty($_POST['montoAPagar']) || empty($_POST['fechaInscripcion'])) {
@@ -29,7 +37,7 @@ class OrdenPagoControladores
                 <script>
                 swal("ERROR!", "Todos los campos son obligatorios", "error")
                 .then(function () {
-                    location.href="ordenpago";
+                    location.href="' . $paginaRedirect . '";
                 });
                 </script>';
                 return;
@@ -87,7 +95,7 @@ class OrdenPagoControladores
                     timer: 2000
                 }).then(function () {
                     window.open("vistas/componentes/orden-pago-pdf.php?idinscripcion=' . $idInscripcion . '", "_blank");
-                    location.href="ordenpago";
+                    location.href="' . $paginaRedirect . '";
                 });
                 </script>';
             } elseif ($resultado['status'] == 'duplicado') {
@@ -96,7 +104,7 @@ class OrdenPagoControladores
                 <script>
                 swal("ERROR!", "El estudiante ya está inscrito en este programa", "error")
                 .then(function () {
-                    location.href="ordenpago";
+                    location.href="' . $paginaRedirect . '";
                 });
                 </script>';
             } else {
@@ -105,7 +113,7 @@ class OrdenPagoControladores
                 <script>
                 swal("ERROR!", "No se pudo registrar la orden de pago: ' . $resultado['mensaje'] . '", "error")
                 .then(function () {
-                    location.href="ordenpago";
+                    location.href="' . $paginaRedirect . '";
                 });
                 </script>';
             }

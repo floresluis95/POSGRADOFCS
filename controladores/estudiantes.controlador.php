@@ -151,12 +151,20 @@ class EstudiantesControladores
   
     if (isset($_POST["Ci"])) {
 
+        // Página a la que se debe regresar tras procesar el formulario (por defecto 'inscripcion')
+        $paginaRedirect = isset($_POST['paginaRedirect'])
+            ? preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['paginaRedirect'])
+            : 'inscripcion';
+        if ($paginaRedirect === '') {
+            $paginaRedirect = 'inscripcion';
+        }
+
         // Validaciones mínimas
         if (empty($_POST["IdProfesion"]) || !is_numeric($_POST["IdProfesion"])) {
             echo '<script src="vistas/recursos/sweetalert.min.js"></script>
                   <script>
                   swal("ERROR!", "Seleccione una profesión válida", "error")
-                  .then(function () { location.href="inscripcion"; });
+                  .then(function () { location.href="' . $paginaRedirect . '"; });
                   </script>';
             return;
         }
@@ -186,7 +194,7 @@ class EstudiantesControladores
             echo '<script src="vistas/recursos/sweetalert.min.js"></script>
                   <script>
                   swal("ERROR!", "El estudiante ya esta registrado en el sistema", "error")
-                  .then(function () { location.href="inscripcion"; });
+                  .then(function () { location.href="' . $paginaRedirect . '"; });
                   </script>';
             return;
         }
@@ -197,7 +205,7 @@ class EstudiantesControladores
             echo '<script src="vistas/recursos/sweetalert.min.js"></script>
                   <script>
                   swal("ERROR!", "Profesión no válida (no existe)", "error")
-                  .then(function () { location.href="inscripcion"; });
+                  .then(function () { location.href="' . $paginaRedirect . '"; });
                   </script>';
             return;
         }
@@ -205,10 +213,13 @@ class EstudiantesControladores
         $resultado = EstudiantesModelos::RegistrarEstudianteModelo($DatosEstudiante);
 
         if ($resultado === 'exitoso') {
+            // Se incluye el CI en la URL de retorno para que la página de origen
+            // pueda preseleccionar automáticamente al estudiante recién creado.
+            $redirectUrl = $paginaRedirect . '?nuevoEstudianteCi=' . urlencode($DatosEstudiante['Ci']);
             echo '<script src="vistas/recursos/sweetalert.min.js"></script>
                   <script>
                   swal("EXITOSO!", "Se registro al estudiante", "success")
-                  .then(function () { location.href="inscripcion"; });
+                  .then(function () { location.href="' . $redirectUrl . '"; });
                   </script>';
         } else {
             // Si $resultado trae mensaje de error, mostrarlo (útil para debugging)
@@ -216,7 +227,7 @@ class EstudiantesControladores
             echo '<script src="vistas/recursos/sweetalert.min.js"></script>
                   <script>
                   swal("ERROR!", "No se registro al estudiante: ' . $msg . '", "error")
-                  .then(function () { location.href="inscripcion"; });
+                  .then(function () { location.href="' . $paginaRedirect . '"; });
                   </script>';
         }
     }

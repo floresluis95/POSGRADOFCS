@@ -11,6 +11,14 @@ class ProgramasModelos
         $stmt =null;
     }
 
+    // Listar sedes distintas registradas en programas activos
+    public static function ListarSedesModelo()
+    {
+        $stmt = Conexion::Conectar()->prepare("SELECT DISTINCT Sede FROM programa WHERE Estado = 1 AND Sede IS NOT NULL AND Sede <> '' ORDER BY Sede ASC");
+        $stmt -> execute();
+        return $stmt -> fetchAll(PDO::FETCH_COLUMN);
+    }
+
     // Buscar programas con filtros
     public static function BuscarProgramasConFiltros($grado = null, $fechaInicio = null, $fechaFin = null)
     {

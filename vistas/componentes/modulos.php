@@ -7,6 +7,9 @@ date_default_timezone_set("America/La_Paz");
 
 // Obtener lista de docentes activos para el select
 $docentes = ModuloModelo::ListarDocentesActivosModelo();
+
+// Obtener lista de sedes para el select de filtro
+$sedes = ProgramasModelos::ListarSedesModelo();
 ?>
  <?php
           $NavBar = new FuncionesControladores();
@@ -40,6 +43,21 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
 
                     <div class="kt-portlet__body">
                         <div class="form-group row">
+                            <label class="col-lg-3 col-form-label"><strong>FILTRAR POR SEDE:</strong></label>
+                            <div class="col-lg-7">
+                                <select class="form-control" id="selectSede" style="width: 100%;">
+                                    <option value="">Todas las sedes</option>
+                                    <?php
+                                    foreach ($sedes as $sede) {
+                                        $sedeVal = htmlspecialchars($sede, ENT_QUOTES);
+                                        echo '<option value="' . $sedeVal . '">' . $sedeVal . '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
                             <label class="col-lg-3 col-form-label"><strong>SELECCIONAR PROGRAMA:</strong></label>
                             <div class="col-lg-7">
                                 <select class="form-control select2-programa" id="selectPrograma" style="width: 100%;">
@@ -53,14 +71,16 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
                                         $grado = htmlspecialchars($prog['GradoAcademico'] ?? '', ENT_QUOTES);
                                         $modulos = htmlspecialchars($prog['Modulos'] ?? 0, ENT_QUOTES);
                                         $costo = htmlspecialchars($prog['Costo'] ?? 0, ENT_QUOTES);
+                                        $sedePrograma = htmlspecialchars($prog['Sede'] ?? '', ENT_QUOTES);
 
                                         echo '<option value="' . $programaID . '"
                                                     data-nombre="' . $nombrePrograma . '"
                                                     data-codigo="' . $codigo . '"
                                                     data-grado="' . $grado . '"
                                                     data-modulos="' . $modulos . '"
-                                                    data-costo="' . $costo . '">';
-                                        echo $nombrePrograma . ' - ' . $grado . ' (' . $codigo . ')';
+                                                    data-costo="' . $costo . '"
+                                                    data-sede="' . $sedePrograma . '">';
+                                        echo $nombrePrograma . ' - ' . $grado . ' (' . $codigo . ') - ' . $sedePrograma;
                                         echo '</option>';
                                     }
                                     ?>
@@ -487,6 +507,35 @@ $(document).ready(function() {
     }
 
     // ========================================
+    // FILTRO DE PROGRAMAS POR SEDE (usado por Select2)
+    // ========================================
+    function filtrarProgramaPorSede(params, data) {
+        // Opción placeholder ("Buscar programa...") siempre visible
+        if (!data.id) {
+            return data;
+        }
+
+        const sedeSeleccionada = $('#selectSede').val();
+        const sedeOpcion = $(data.element).data('sede');
+
+        // Si hay una sede elegida, ocultar los programas que no pertenezcan a ella
+        if (sedeSeleccionada && sedeSeleccionada !== '' && String(sedeOpcion) !== String(sedeSeleccionada)) {
+            return null;
+        }
+
+        // Filtro de texto normal de Select2
+        if ($.trim(params.term) === '') {
+            return data;
+        }
+
+        if (data.text.toUpperCase().indexOf(params.term.toUpperCase()) > -1) {
+            return data;
+        }
+
+        return null;
+    }
+
+    // ========================================
     // INICIALIZAR SELECT2 PARA PROGRAMAS
     // ========================================
     console.log('Inicializando Select2 para programas...');
@@ -494,6 +543,7 @@ $(document).ready(function() {
         $('.select2-programa').select2({
             placeholder: 'Buscar programa...',
             allowClear: true,
+            matcher: filtrarProgramaPorSede,
             language: {
                 noResults: function() {
                     return "No se encontraron resultados";
@@ -507,6 +557,24 @@ $(document).ready(function() {
     } catch (error) {
         console.error('✗ Error al inicializar Select2:', error);
     }
+
+    // ========================================
+    // EVENTO: CAMBIO DE SEDE (filtra los programas)
+    // ========================================
+    $('#selectSede').on('change', function() {
+        const sedeSeleccionada = $(this).val();
+        console.log('>>> Sede seleccionada:', sedeSeleccionada || '(todas)');
+
+        // Si el programa actualmente elegido no pertenece a la sede filtrada, limpiarlo
+        const opcionActual = $('#selectPrograma').find('option:selected');
+        const sedeProgramaActual = opcionActual.data('sede');
+
+        if (sedeSeleccionada && $('#selectPrograma').val() && String(sedeProgramaActual) !== String(sedeSeleccionada)) {
+            $('#selectPrograma').val('').trigger('change');
+            $('#infoProgramaSeleccionadoNuevo').hide();
+            $('#btnAbrirModalModulos').prop('disabled', true);
+        }
+    });
 
     // ========================================
     // FUNCIÓN PARA MANEJAR LA SELECCIÓN DE PROGRAMA

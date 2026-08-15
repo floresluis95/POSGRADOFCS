@@ -250,10 +250,12 @@ class OrdenPagoModelos
                     e.Celular,
                     p.NombrePrograma,
                     p.GradoAcademico,
-                    p.Codigo as CodigoPrograma
+                    p.Codigo as CodigoPrograma,
+                    op.NumeroOrden
                 FROM estudianteprograma ep
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
+                LEFT JOIN ordenpago op ON op.idInscripcion = ep.idInscripcion
                 WHERE ep.Estado = 'PENDIENTE'
                 ORDER BY ep.FechaInscripcion DESC"
             );
@@ -262,6 +264,140 @@ class OrdenPagoModelos
         } catch (PDOException $e) {
             error_log("Error en ListarPreregistrosModelo: " . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Obtener un preregistro puntual (para precargar el modal de edición)
+     * @param int $idInscripcion
+     * @return array|null
+     */
+    public static function ObtenerPreregistroModelo($idInscripcion)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    ep.idInscripcion,
+                    ep.EstudianteID,
+                    ep.ProgramaID,
+                    ep.FechaInscripcion,
+                    ep.costomatricula,
+                    ep.montoPagado,
+                    ep.pagoCompleto,
+                    ep.porcentajeDescuento,
+                    ep.montoDescuento,
+                    ep.Estado
+                FROM estudianteprograma ep
+                WHERE ep.idInscripcion = :idInscripcion AND ep.Estado = 'PENDIENTE'"
+            );
+            $stmt->bindParam(":idInscripcion", $idInscripcion, PDO::PARAM_INT);
+            $stmt->execute();
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $fila ?: null;
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerPreregistroModelo: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Actualizar el monto/descuento/fecha de un preregistro (solo si sigue PENDIENTE)
+     * @param array $datos
+     * @return array
+     */
+    public static function ActualizarPreregistroModelo($datos)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+            $pdo->beginTransaction();
+
+            $stmt = $pdo->prepare(
+                "UPDATE estudianteprograma
+                 SET costomatricula = :costomatricula,
+                     montoPagado = :montoPagado,
+                     porcentajeDescuento = :porcentajeDescuento,
+                     montoDescuento = :montoDescuento,
+                     FechaInscripcion = :fechaInscripcion
+                 WHERE idInscripcion = :idInscripcion AND Estado = 'PENDIENTE'"
+            );
+            $stmt->bindParam(":costomatricula", $datos['costomatricula']);
+            $stmt->bindParam(":montoPagado", $datos['montoPagado']);
+            $stmt->bindParam(":porcentajeDescuento", $datos['porcentajeDescuento']);
+            $stmt->bindParam(":montoDescuento", $datos['montoDescuento']);
+            $stmt->bindParam(":fechaInscripcion", $datos['FechaInscripcion'], PDO::PARAM_STR);
+            $stmt->bindParam(":idInscripcion", $datos['idInscripcion'], PDO::PARAM_INT);
+            $stmt->execute();
+
+            if ($stmt->rowCount() === 0) {
+                $pdo->rollBack();
+                return ['status' => 'error', 'mensaje' => 'El preregistro ya no está pendiente o no existe'];
+            }
+
+            // Mantener sincronizada la tabla ordenpago (si existe el registro)
+            $stmtOrden = $pdo->prepare(
+                "UPDATE ordenpago
+                 SET MontoDescuento = :montoDescuento,
+                     PorcentajeDescuento = :porcentajeDescuento,
+                     MontoFinal = :montoPagado
+                 WHERE idInscripcion = :idInscripcion AND Estado = 'PENDIENTE'"
+            );
+            $stmtOrden->bindParam(":montoDescuento", $datos['montoDescuento']);
+            $stmtOrden->bindParam(":porcentajeDescuento", $datos['porcentajeDescuento']);
+            $stmtOrden->bindParam(":montoPagado", $datos['montoPagado']);
+            $stmtOrden->bindParam(":idInscripcion", $datos['idInscripcion'], PDO::PARAM_INT);
+            $stmtOrden->execute();
+
+            $pdo->commit();
+            return ['status' => 'exitoso', 'mensaje' => 'Preregistro actualizado correctamente'];
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("Error en ActualizarPreregistroModelo: " . $e->getMessage());
+            return ['status' => 'error', 'mensaje' => 'Error en el servidor: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Anular (cancelar) un preregistro pendiente. No se elimina físicamente:
+     * se marca como ANULADO para conservar historial/auditoría.
+     * @param int $idInscripcion
+     * @return array
+     */
+    public static function AnularPreregistroModelo($idInscripcion)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+            $pdo->beginTransaction();
+
+            $stmt = $pdo->prepare(
+                "UPDATE estudianteprograma SET Estado = 'ANULADO'
+                 WHERE idInscripcion = :idInscripcion AND Estado = 'PENDIENTE'"
+            );
+            $stmt->bindParam(":idInscripcion", $idInscripcion, PDO::PARAM_INT);
+            $stmt->execute();
+
+            if ($stmt->rowCount() === 0) {
+                $pdo->rollBack();
+                return ['status' => 'error', 'mensaje' => 'El preregistro ya no está pendiente o no existe'];
+            }
+
+            $pdo->prepare(
+                "UPDATE ordenpago SET Estado = 'ANULADO' WHERE idInscripcion = :idInscripcion"
+            )->execute([':idInscripcion' => $idInscripcion]);
+
+            $pdo->prepare(
+                "UPDATE pagomodulo SET Estado = 'ANULADO' WHERE idinscripcion = :idInscripcion AND Estado = 'PENDIENTE'"
+            )->execute([':idInscripcion' => $idInscripcion]);
+
+            $pdo->commit();
+            return ['status' => 'exitoso', 'mensaje' => 'Preregistro anulado correctamente'];
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("Error en AnularPreregistroModelo: " . $e->getMessage());
+            return ['status' => 'error', 'mensaje' => 'Error en el servidor: ' . $e->getMessage()];
         }
     }
 }

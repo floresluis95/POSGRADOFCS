@@ -10,6 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../modelos/estudiantes.modelo.php';
 require_once __DIR__ . '/../modelos/pagomodulo.modelo.php';
+require_once __DIR__ . '/../modelos/ordenpago.modelo.php';
 
 // Configurar cabecera JSON
 header('Content-Type: application/json; charset=utf-8');
@@ -53,6 +54,22 @@ switch ($accion) {
 
     case 'registrarOrdenPago':
         registrarOrdenPago();
+        break;
+
+    case 'listarPreregistros':
+        listarPreregistros();
+        break;
+
+    case 'obtenerPreregistro':
+        obtenerPreregistro();
+        break;
+
+    case 'actualizarPreregistro':
+        actualizarPreregistro();
+        break;
+
+    case 'anularPreregistro':
+        anularPreregistro();
         break;
 
     default:
@@ -348,5 +365,87 @@ function registrarOrdenPago()
             'mensaje' => 'Error al registrar la orden de pago: ' . $e->getMessage()
         ]);
     }
+}
+
+/**
+ * Listar preregistros (CRUD - Read) para refrescar la tabla sin recargar la página
+ */
+function listarPreregistros()
+{
+    try {
+        $preregistros = OrdenPagoModelos::ListarPreregistrosModelo();
+        echo json_encode([
+            'success' => true,
+            'preregistros' => $preregistros
+        ]);
+    } catch (Exception $e) {
+        error_log("Error en listarPreregistros: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'mensaje' => 'Error al listar los preregistros'
+        ]);
+    }
+}
+
+/**
+ * Obtener un preregistro puntual (para precargar el modal de edición)
+ */
+function obtenerPreregistro()
+{
+    if (empty($_POST['idInscripcion'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El ID del preregistro es requerido']);
+        return;
+    }
+
+    $preregistro = OrdenPagoModelos::ObtenerPreregistroModelo((int)$_POST['idInscripcion']);
+
+    if ($preregistro) {
+        echo json_encode(['success' => true, 'preregistro' => $preregistro]);
+    } else {
+        echo json_encode(['success' => false, 'mensaje' => 'No se encontró el preregistro (o ya no está pendiente)']);
+    }
+}
+
+/**
+ * Actualizar (CRUD - Update) monto/descuento/fecha de un preregistro pendiente
+ */
+function actualizarPreregistro()
+{
+    if (empty($_POST['idInscripcion']) || !isset($_POST['montoPagado']) || empty($_POST['fechaInscripcion'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'Faltan datos requeridos']);
+        return;
+    }
+
+    $datos = [
+        'idInscripcion'       => (int)$_POST['idInscripcion'],
+        'costomatricula'      => isset($_POST['pagoCompleto']) && $_POST['pagoCompleto'] == '1' ? 0 : floatval($_POST['montoPagado']),
+        'montoPagado'         => floatval($_POST['montoPagado']),
+        'porcentajeDescuento' => isset($_POST['porcentajeDescuento']) ? floatval($_POST['porcentajeDescuento']) : 0,
+        'montoDescuento'      => isset($_POST['montoDescuento']) ? floatval($_POST['montoDescuento']) : 0,
+        'FechaInscripcion'    => htmlspecialchars(trim($_POST['fechaInscripcion'])),
+    ];
+
+    $resultado = OrdenPagoModelos::ActualizarPreregistroModelo($datos);
+    echo json_encode([
+        'success' => $resultado['status'] === 'exitoso',
+        'mensaje' => $resultado['mensaje']
+    ]);
+}
+
+/**
+ * Anular (CRUD - Delete lógico) un preregistro pendiente
+ */
+function anularPreregistro()
+{
+    if (empty($_POST['idInscripcion'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El ID del preregistro es requerido']);
+        return;
+    }
+
+    $resultado = OrdenPagoModelos::AnularPreregistroModelo((int)$_POST['idInscripcion']);
+    echo json_encode([
+        'success' => $resultado['status'] === 'exitoso',
+        'mensaje' => $resultado['mensaje']
+    ]);
 }
 ?>
