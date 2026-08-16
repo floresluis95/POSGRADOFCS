@@ -8,9 +8,9 @@ require_once 'conexion.modelo.php';
 class OrdenPagoModelos
 {
     /**
-     * Registrar preregistro (orden de pago) sin voucher
-     * @param array $datos - Datos del preregistro
-     * @return array - ['status' => 'exitoso'/'duplicado'/'error', 'idInscripcion' => ID, 'numeroOrden' => NUM]
+     * Registrar orden de pago (sin tocar estudianteprograma)
+     * @param array $datos - Datos de la orden de pago
+     * @return array - ['status' => 'exitoso'/'duplicado'/'error', 'idOrdenPago' => ID, 'numeroOrden' => NUM]
      */
     public static function RegistrarPreregistroModelo($datos)
     {
@@ -18,12 +18,13 @@ class OrdenPagoModelos
             $pdo = Conexion::Conectar();
             $pdo->beginTransaction();
 
-            // Verificar si el estudiante ya está inscrito en el mismo programa
+            // Verificar si el estudiante ya está inscrito ACTIVAMENTE en el mismo programa
+            // NOTA: Solo verificamos contra inscripciones ACTIVAS en estudianteprograma
             $stmtCheck = $pdo->prepare(
                 "SELECT idInscripcion FROM estudianteprograma
                  WHERE EstudianteID = :estudianteID
                  AND ProgramaID = :programaID
-                 AND Estado != 'ANULADO'"
+                 AND Estado IN ('ACTIVO', 'CONFIRMADO')"
             );
             $stmtCheck->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
             $stmtCheck->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
@@ -33,29 +34,30 @@ class OrdenPagoModelos
                 $pdo->rollBack();
                 return [
                     'status' => 'duplicado',
-                    'mensaje' => 'El estudiante ya está inscrito en este programa'
+                    'mensaje' => 'El estudiante ya tiene una inscripción activa en este programa'
                 ];
             }
 
+            // Obtener el costo de matrícula del programa
+            $stmtPrograma = $pdo->prepare(
+                "SELECT CostoMatricula FROM programa WHERE ProgramaID = :programaID"
+            );
+            $stmtPrograma->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
+            $stmtPrograma->execute();
+            $programa = $stmtPrograma->fetch(PDO::FETCH_ASSOC);
+
+            if (!$programa) {
+                $pdo->rollBack();
+                return [
+                    'status' => 'error',
+                    'mensaje' => 'Programa no encontrado'
+                ];
+            }
+
+            $costoMatriculaPrograma = floatval($programa['CostoMatricula']);
+
             // VALIDACIÓN: Si NO es pago completo, validar que el monto corresponda a la matrícula
             if ($datos['pagoCompleto'] != 1) {
-                // Obtener el costo de matrícula del programa
-                $stmtPrograma = $pdo->prepare(
-                    "SELECT CostoMatricula FROM programa WHERE ProgramaID = :programaID"
-                );
-                $stmtPrograma->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
-                $stmtPrograma->execute();
-                $programa = $stmtPrograma->fetch(PDO::FETCH_ASSOC);
-
-                if (!$programa) {
-                    $pdo->rollBack();
-                    return [
-                        'status' => 'error',
-                        'mensaje' => 'Programa no encontrado'
-                    ];
-                }
-
-                $costoMatriculaPrograma = floatval($programa['CostoMatricula']);
                 $montoPagado = floatval($datos['montoPagado']);
 
                 // Validar que el monto pagado coincida con la matrícula (con pequeña tolerancia para redondeos)
@@ -72,77 +74,40 @@ class OrdenPagoModelos
                 }
             }
 
-            // Insertar el preregistro (orden de pago)
-            // Estado = 'PENDIENTE' porque aún no hay pago confirmado
-            $stmt = $pdo->prepare(
-                "INSERT INTO estudianteprograma
-                (EstudianteID, ProgramaID, costomatricula, montoPagado, pagoCompleto,
-                 porcentajeDescuento, montoDescuento, nvauchermatricula, FechaInscripcion, Estado)
-                VALUES
-                (:estudianteID, :programaID, :costomatricula, :montoPagado, :pagoCompleto,
-                 :porcentajeDescuento, :montoDescuento, :nvaucher, :fechaInscripcion, 'PENDIENTE')"
-            );
+            // Generar número de orden único ANTES de insertar
+            // Usar timestamp para garantizar unicidad
+            $numeroOrden = 'ORD-' . date('YmdHis') . '-' . rand(1000, 9999);
 
-            $stmt->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
-            $stmt->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
-            $stmt->bindParam(":costomatricula", $datos['costomatricula']);
-            $stmt->bindParam(":montoPagado", $datos['montoPagado']);
-            $stmt->bindParam(":pagoCompleto", $datos['pagoCompleto'], PDO::PARAM_INT);
-            $stmt->bindParam(":porcentajeDescuento", $datos['porcentajeDescuento']);
-            $stmt->bindParam(":montoDescuento", $datos['montoDescuento']);
-
-            // El voucher se deja como "PENDIENTE" para orden de pago
-            $voucherPendiente = "ORDEN-PAGO-PENDIENTE";
-            $stmt->bindParam(":nvaucher", $voucherPendiente, PDO::PARAM_STR);
-            $stmt->bindParam(":fechaInscripcion", $datos['FechaInscripcion'], PDO::PARAM_STR);
-
-            if (!$stmt->execute()) {
-                $pdo->rollBack();
-                error_log("Error al ejecutar INSERT: " . print_r($stmt->errorInfo(), true));
-                return ['status' => 'error', 'mensaje' => 'Error al registrar el preregistro'];
-            }
-
-            // Obtener el ID de la inscripción recién creada
-            $inscripcionID = $pdo->lastInsertId();
-
-            // Generar número de orden único
-            $numeroOrden = 'ORD-' . str_pad($inscripcionID, 6, '0', STR_PAD_LEFT) . '-' . date('Ymd');
-
-            // IMPORTANTE: También guardar en la tabla `ordenpago` para tracking adicional
             // Calcular montos para la tabla ordenpago
-            $montoTotal = 0;
             $montoDescuento = floatval($datos['montoDescuento']);
             $porcentajeDescuento = floatval($datos['porcentajeDescuento']);
             $montoFinal = floatval($datos['montoPagado']);
+            $costoMatricula = $datos['pagoCompleto'] == 1 ? 0 : floatval($datos['costomatricula']);
 
-            if ($datos['pagoCompleto'] == 1) {
-                // Si es pago completo, montoTotal = montoFinal + descuento
-                $montoTotal = $montoFinal + $montoDescuento;
-            } else {
-                // Si es solo matrícula, el montoTotal es igual al monto final (sin descuento)
-                $montoTotal = $montoFinal;
-            }
+            // MontoTotal = Monto que debería pagar sin descuento
+            $montoTotal = $montoFinal + $montoDescuento;
 
             // Obtener responsable (usuario de sesión si existe)
-            session_start();
+            // La sesión ya está iniciada desde plantilla.php
             $responsable = isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
                 ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
                 : null;
 
-            // Insertar en tabla ordenpago
+            // INSERTAR SOLO EN ORDENPAGO - NO tocar estudianteprograma
             $stmtOrden = $pdo->prepare(
                 "INSERT INTO ordenpago
                 (NumeroOrden, idInscripcion, EstudianteID, ProgramaID,
                  MontoTotal, MontoDescuento, PorcentajeDescuento, MontoFinal,
-                 PagoCompleto, FechaGeneracion, ResponsableGeneracion, Estado)
+                 PagoCompleto, CostoMatricula, FechaGeneracion,
+                 NombreFactura, NitCiFactura, ResponsableGeneracion, Firma, Estado)
                 VALUES
-                (:numeroOrden, :idInscripcion, :estudianteID, :programaID,
+                (:numeroOrden, NULL, :estudianteID, :programaID,
                  :montoTotal, :montoDescuento, :porcentajeDescuento, :montoFinal,
-                 :pagoCompleto, NOW(), :responsable, 'PENDIENTE')"
+                 :pagoCompleto, :costoMatricula, NOW(),
+                 :nombreFactura, :nitCiFactura, :responsable, :firma, 'PENDIENTE')"
             );
 
             $stmtOrden->bindParam(":numeroOrden", $numeroOrden, PDO::PARAM_STR);
-            $stmtOrden->bindParam(":idInscripcion", $inscripcionID, PDO::PARAM_INT);
             $stmtOrden->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
             $stmtOrden->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
             $stmtOrden->bindParam(":montoTotal", $montoTotal);
@@ -150,7 +115,11 @@ class OrdenPagoModelos
             $stmtOrden->bindParam(":porcentajeDescuento", $porcentajeDescuento);
             $stmtOrden->bindParam(":montoFinal", $montoFinal);
             $stmtOrden->bindParam(":pagoCompleto", $datos['pagoCompleto'], PDO::PARAM_INT);
+            $stmtOrden->bindParam(":costoMatricula", $costoMatricula);
+            $stmtOrden->bindParam(":nombreFactura", $datos['NombreFactura'], PDO::PARAM_STR);
+            $stmtOrden->bindParam(":nitCiFactura", $datos['NitCiFactura'], PDO::PARAM_STR);
             $stmtOrden->bindParam(":responsable", $responsable, PDO::PARAM_STR);
+            $stmtOrden->bindParam(":firma", $datos['Firma'], PDO::PARAM_STR);
 
             if (!$stmtOrden->execute()) {
                 $pdo->rollBack();
@@ -161,57 +130,13 @@ class OrdenPagoModelos
             $idOrdenPago = $pdo->lastInsertId();
             error_log("ORDEN DE PAGO REGISTRADA: ID={$idOrdenPago}, Número={$numeroOrden}");
 
-            // Si es pago completo, crear registros en pagomodulo con estado PENDIENTE
-            if ($datos['pagoCompleto'] == 1) {
-                // Obtener todos los módulos del programa
-                $stmtModulos = $pdo->prepare(
-                    "SELECT Idmodulo, nombremodulo, costomodulo
-                     FROM modulos
-                     WHERE ProgramaId = :programaID AND estadomodulo = 'ACTIVO'"
-                );
-                $stmtModulos->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
-                $stmtModulos->execute();
-                $modulos = $stmtModulos->fetchAll(PDO::FETCH_ASSOC);
-
-                if (count($modulos) > 0) {
-                    $totalModulos = count($modulos);
-                    $costoPorModulo = $datos['montoPagado'] / $totalModulos;
-
-                    // Preparar statement para registrar módulos con estado PENDIENTE
-                    $stmtPagoModulo = $pdo->prepare(
-                        "INSERT INTO pagomodulo
-                        (idinscripcion, IdModulo, costomodulo, fechapago, nvaucher, Estado)
-                        VALUES (:idinscripcion, :idModulo, :costomodulo, :fechapago, :nvaucher, 'PENDIENTE')"
-                    );
-
-                    $pagosFechaInscripcion = $datos['FechaInscripcion'];
-                    $voucherPendiente = "PENDIENTE-ORD-" . $numeroOrden;
-
-                    foreach ($modulos as $modulo) {
-                        $costoModulo = !empty($modulo['costomodulo']) && floatval($modulo['costomodulo']) > 0
-                            ? floatval($modulo['costomodulo'])
-                            : $costoPorModulo;
-
-                        $stmtPagoModulo->bindParam(":idinscripcion", $inscripcionID, PDO::PARAM_INT);
-                        $stmtPagoModulo->bindParam(":idModulo", $modulo['Idmodulo'], PDO::PARAM_INT);
-                        $stmtPagoModulo->bindParam(":costomodulo", $costoModulo, PDO::PARAM_STR);
-                        $stmtPagoModulo->bindParam(":fechapago", $pagosFechaInscripcion, PDO::PARAM_STR);
-                        $stmtPagoModulo->bindParam(":nvaucher", $voucherPendiente, PDO::PARAM_STR);
-
-                        $stmtPagoModulo->execute();
-                    }
-
-                    error_log("PREREGISTRO PAGO COMPLETO: {$totalModulos} módulos con estado PENDIENTE para inscripción {$inscripcionID}");
-                }
-            }
-
             $pdo->commit();
 
             return [
                 'status' => 'exitoso',
-                'idInscripcion' => $inscripcionID,
+                'idOrdenPago' => $idOrdenPago,
                 'numeroOrden' => $numeroOrden,
-                'mensaje' => 'Preregistro creado exitosamente'
+                'mensaje' => 'Orden de pago creada exitosamente'
             ];
 
         } catch (PDOException $e) {

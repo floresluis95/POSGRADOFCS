@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verificar Submit</title>
+    <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
+</head>
+<body>
+    <h1>Test de Submit del Formulario</h1>
+    <p>Presiona F12 y ve a la pestaña Network antes de hacer clic</p>
+
+    <form id="testForm" method="POST" action="index.php?action=ordenpago">
+        <input type="hidden" name="registrarOrdenPago" value="true">
+        <input type="hidden" name="idcliente" value="1">
+        <input type="hidden" name="programa" value="1">
+        <input type="hidden" name="montoAPagar" value="250.50">
+        <input type="hidden" name="fechaInscripcion" value="<?php echo date('Y-m-d'); ?>">
+        <input type="hidden" name="nombreFactura" value="TEST">
+        <input type="hidden" name="nitCiFactura" value="12345678">
+        <input type="hidden" name="responsable" value="TEST">
+        <input type="hidden" name="firma" value="TEST">
+        <input type="hidden" name="pagoCompleto" value="0">
+        <input type="hidden" name="porcentajeDescuento" value="0">
+        <input type="hidden" name="montoDescuento" value="0">
+
+        <button type="submit">Enviar Formulario de Prueba</button>
+    </form>
+
+    <h3>Instrucciones:</h3>
+    <ol>
+        <li>Abre las herramientas de desarrollador (F12)</li>
+        <li>Ve a la pestaña "Network" o "Red"</li>
+        <li>Haz clic en el botón de arriba</li>
+        <li>Mira qué respuesta devuelve el servidor</li>
+        <li>Busca si hay un formulario con id="formPDF" en la respuesta</li>
+    </ol>
+</body>
+</html>

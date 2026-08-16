@@ -166,8 +166,14 @@ ob_start();
   <script src="vistas/recursos/assets/vendors/general/waypoints/lib/jquery.waypoints.js" type="text/javascript"></script>
   <script src="vistas/recursos/assets/vendors/general/counterup/jquery.counterup.js" type="text/javascript"></script>
   <script src="vistas/recursos/assets/vendors/general/es6-promise-polyfill/promise.min.js" type="text/javascript"></script>
+  <?php
+  // No cargar SweetAlert2 en páginas que usan SweetAlert v1
+  $action = isset($_GET['action']) ? $_GET['action'] : '';
+  if ($action !== 'ordenpago' && $action !== 'orden-generada'):
+  ?>
   <script src="vistas/recursos/assets/vendors/general/sweetalert2/dist/sweetalert2.min.js" type="text/javascript"></script>
   <script src="vistas/recursos/assets/vendors/custom/js/vendors/sweetalert2.init.js" type="text/javascript"></script>
+  <?php endif; ?>
   <script src="vistas/recursos/assets/vendors/general/jquery.repeater/src/lib.js" type="text/javascript"></script>
   <script src="vistas/recursos/assets/vendors/general/jquery.repeater/src/jquery.input.js" type="text/javascript"></script>
   <script src="vistas/recursos/assets/vendors/general/jquery.repeater/srca/repeater.js" type="text/javascript"></script>
@@ -218,8 +224,10 @@ var KTAppOptions = {"colors":{"state":{"brand":"#591df1","light":"#ffffff","dark
                         <script src="vistas/recursos/assets/js/scripts/usuarios.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/demo9/pages/crud/forms/widgets/bootstrap-datepicker.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/demo9/pages/crud/forms/widgets/bootstrap-touchspin.js" type="text/javascript"></script>
-                        <script src="vistas/recursos/assets/js/demo9/scripts.bundle.js" type="text/javascript"></script>  
+                        <script src="vistas/recursos/assets/js/demo9/scripts.bundle.js" type="text/javascript"></script>
+                        <?php if ($action !== 'ordenpago' && $action !== 'orden-generada'): ?>
                         <script src="vistas/recursos/assets/js/demo9/pages/components/extended/sweetalert2.js" type="text/javascript"></script>
+                        <?php endif; ?>
                         <script src="vistas/recursos/assets/js/demo9/pages/components/extended/filtrar.select.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/demo9/pages/components/extended/canvasjs.min.js" type="text/javascript"></script>
 

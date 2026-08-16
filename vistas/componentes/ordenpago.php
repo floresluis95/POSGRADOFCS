@@ -372,6 +372,133 @@ kt-aside--fixed kt-page--loading">
                         <input type="hidden" name="montoDescuento" id="montoDescuento" value="0">
                         <input type="hidden" name="pagoCompleto" id="pagoCompleto" value="0">
 
+                      </div>
+                    </div>
+
+                    <!-- PASO 4: DATOS ADICIONALES DE FACTURACIÓN -->
+                    <div class="kt-portlet kt-portlet--height-fluid mb-4" id="seccionDatosAdicionales" style="display: none;">
+                      <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="kt-portlet__head-label">
+                          <h3 class="kt-portlet__head-title" style="color: white;">
+                            <i class="flaticon2-document"></i> PASO 4: DATOS ADICIONALES DE FACTURACIÓN
+                          </h3>
+                        </div>
+                      </div>
+                      <div class="kt-portlet__body">
+
+                        <div class="alert alert-info">
+                          <h5><i class="flaticon2-information"></i> Información de Facturación y Cuenta Bancaria</h5>
+                          <p class="mb-0">Complete los siguientes datos para generar la orden de pago.</p>
+                        </div>
+
+                        <!-- Datos de Facturación -->
+                        <h5 class="font-weight-bold mb-3 mt-4">
+                          <i class="flaticon2-file"></i> Datos de Facturación
+                        </h5>
+                        <div class="row">
+                          <div class="col-lg-6">
+                            <div class="form-group">
+                              <label class="font-weight-bold">Nombre para Factura: <span class="text-danger">*</span></label>
+                              <input type="text" class="form-control" name="nombreFactura" id="nombreFactura"
+                                     placeholder="Ingrese el nombre a quien se emitirá la factura" required>
+                              <small class="text-muted">
+                                <i class="flaticon2-information"></i> Nombre completo o razón social para la factura
+                              </small>
+                            </div>
+                          </div>
+                          <div class="col-lg-6">
+                            <div class="form-group">
+                              <label class="font-weight-bold">NIT o CI: <span class="text-danger">*</span></label>
+                              <input type="text" class="form-control" name="nitCiFactura" id="nitCiFactura"
+                                     placeholder="Ingrese NIT o CI" required>
+                              <small class="text-muted">
+                                <i class="flaticon2-information"></i> Número de identificación tributaria o cédula de identidad
+                              </small>
+                            </div>
+                          </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Información Bancaria -->
+                        <h5 class="font-weight-bold mb-3">
+                          <i class="flaticon2-analytics-2"></i> Información Bancaria
+                        </h5>
+                        <div class="card border border-primary mb-3">
+                          <div class="card-body" style="background-color: #f8f9ff;">
+                            <div class="row">
+                              <div class="col-lg-12 mb-3">
+                                <label class="font-weight-bold" style="color: #667eea;">Denominación de la Cuenta:</label>
+                                <div class="input-group input-group-lg">
+                                  <div class="input-group-prepend">
+                                    <span class="input-group-text bg-primary text-white">
+                                      <i class="flaticon2-list-2"></i>
+                                    </span>
+                                  </div>
+                                  <input type="text" class="form-control font-weight-bold"
+                                         value="UTO - APORTES EXTRAORDINARIOS" readonly
+                                         style="background-color: white; font-size: 16px;">
+                                </div>
+                              </div>
+                              <div class="col-lg-6">
+                                <label class="font-weight-bold" style="color: #667eea;">Número de Cuenta:</label>
+                                <div class="input-group input-group-lg">
+                                  <div class="input-group-prepend">
+                                    <span class="input-group-text bg-success text-white">
+                                      <i class="flaticon2-crisp-icons"></i>
+                                    </span>
+                                  </div>
+                                  <input type="text" class="form-control font-weight-bold"
+                                         value="10000006050938" readonly
+                                         style="background-color: white; font-size: 18px; color: #11998e;">
+                                </div>
+                              </div>
+                              <div class="col-lg-6">
+                                <label class="font-weight-bold" style="color: #667eea;">NIT:</label>
+                                <div class="input-group input-group-lg">
+                                  <div class="input-group-prepend">
+                                    <span class="input-group-text bg-warning text-white">
+                                      <i class="flaticon2-user"></i>
+                                    </span>
+                                  </div>
+                                  <input type="text" class="form-control font-weight-bold"
+                                         value="120129022" readonly
+                                         style="background-color: white; font-size: 18px; color: #ffb822;">
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Responsable y Firma -->
+                        <h5 class="font-weight-bold mb-3">
+                          <i class="flaticon2-user-outline-symbol"></i> Responsable de Generación
+                        </h5>
+                        <div class="row">
+                          <div class="col-lg-6">
+                            <div class="form-group">
+                              <label class="font-weight-bold">Responsable: <span class="text-danger">*</span></label>
+                              <input type="text" class="form-control" name="responsable" id="responsable"
+                                     placeholder="Nombre del responsable que genera la orden" required>
+                              <small class="text-muted">
+                                <i class="flaticon2-user"></i> Persona que genera y autoriza esta orden de pago
+                              </small>
+                            </div>
+                          </div>
+                          <div class="col-lg-6">
+                            <div class="form-group">
+                              <label class="font-weight-bold">Firma:</label>
+                              <input type="text" class="form-control" name="firma" id="firma"
+                                     placeholder="Firma digital o nombre completo">
+                              <small class="text-muted">
+                                <i class="flaticon2-edit"></i> Firma o confirmación del responsable (opcional)
+                              </small>
+                            </div>
+                          </div>
+                        </div>
+
                         <!-- Botones -->
                         <hr class="my-4">
                         <div class="row">
@@ -408,11 +535,22 @@ kt-aside--fixed kt-page--loading">
 <!-- TODO: Agregar modal de insertar estudiante si se require -->
 <?php // include 'vistas/modales/insertar-estudiante.php'; ?>
 
-<!-- Scripts adicionales (después de cargar jQuery desde Footer) -->
-<script src="vistas/recursos/assets/vendors/general/select2/dist/js/select2.full.js"></script>
-<script src="vistas/recursos/sweetalert.min.js"></script>
+<!-- Scripts necesarios -->
+<!-- jQuery (requerido) -->
+<script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js" type="text/javascript"></script>
+
+<!-- Select2 (requerido para el selector de estudiantes) -->
+<script src="vistas/recursos/assets/vendors/general/select2/dist/js/select2.full.js" type="text/javascript"></script>
+
+<!-- SweetAlert v1 (necesario aquí porque se ejecuta antes que los scripts de plantilla.php) -->
+<script src="vistas/recursos/sweetalert.min.js" type="text/javascript"></script>
 
 <script>
+// Verificar que todo se cargó correctamente
+console.log('jQuery cargado:', typeof jQuery !== 'undefined' ? 'SÍ' : 'NO');
+console.log('Select2 cargado:', typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined' ? 'SÍ' : 'NO');
+console.log('SweetAlert cargado:', typeof swal !== 'undefined' ? 'SÍ' : 'NO');
+
 $(document).ready(function() {
 
     console.log('=== INICIANDO ORDEN DE PAGO ===');
@@ -426,7 +564,72 @@ $(document).ready(function() {
     // PASO 1: SELECCIONAR ESTUDIANTE
     // ============================================
 
-    // IMPORTANTE: Inicializar Select2 DESPUÉS de definir el evento change
+    // IMPORTANTE: Primero registrar el evento, LUEGO inicializar Select2
+    // Función para cargar datos del estudiante
+    function cargarDatosEstudiante(estudianteID) {
+        console.log('=== CARGANDO DATOS DEL ESTUDIANTE ===');
+        console.log('Estudiante ID:', estudianteID);
+
+        if (!estudianteID) {
+            console.log('ID vacío - ocultando secciones');
+            $('#tablaEstudiante').slideUp();
+            $('#seccionPrograma').slideUp();
+            $('#seccionPago').slideUp();
+            $('#seccionDatosAdicionales').slideUp();
+            return;
+        }
+
+        console.log('Iniciando llamada AJAX a ajax/estudiantes.ajax.php');
+
+        // Obtener datos del estudiante
+        $.ajax({
+            url: 'ajax/estudiantes.ajax.php',
+            type: 'POST',
+            data: { idestudiante: estudianteID },
+            dataType: 'json',
+            beforeSend: function() {
+                console.log('→ Petición AJAX enviada');
+            },
+            success: function(response) {
+                console.log('✓ Respuesta recibida del servidor:', response);
+
+                if (response && !response.error) {
+                    // Llenar tabla de datos
+                    const nombreCompleto = (response.Apaterno || '') + ' ' + (response.Amaterno || '') + ' ' + (response.Nombre || '');
+                    const ci = (response.Ci || '') + (response.Complemento ? '-' + response.Complemento : '') + ' ' + (response.Exp || '');
+
+                    console.log('Nombre completo:', nombreCompleto.trim());
+                    console.log('CI:', ci);
+
+                    $('#datosNombre').text(nombreCompleto.trim());
+                    $('#datosCI').text(ci);
+                    $('#datosCorreo').text(response.Correo || '-');
+                    $('#datosCelular').text(response.Celular || '-');
+
+                    console.log('✓ Datos llenados en los campos');
+
+                    // Mostrar tabla y siguiente sección
+                    console.log('→ Mostrando tabla con slideDown()');
+                    $('#tablaEstudiante').slideDown();
+                    $('#seccionPrograma').slideDown();
+                    console.log('✓ Tabla mostrada');
+                } else {
+                    console.error('Error en respuesta:', response.error);
+                    swal("Error", response.error || "No se encontraron datos del estudiante", "error");
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('✗ Error AJAX:', {
+                    status: status,
+                    error: error,
+                    responseText: xhr.responseText
+                });
+                swal("Error", "No se pudieron obtener los datos del estudiante: " + error, "error");
+            }
+        });
+    }
+
+    // Inicializar Select2
     $('.kt-select2-general').select2({
         placeholder: "Buscar por cédula de identidad...",
         allowClear: true
@@ -436,52 +639,18 @@ $(document).ready(function() {
     console.log('ID del select de estudiante:', $('#selectEstudiante').attr('id'));
     console.log('Tiene clase kt-select2-general:', $('#selectEstudiante').hasClass('kt-select2-general'));
 
-    // Manejar cambio con Select2 (usar 'select2:select' en lugar de 'change')
-    $('#selectEstudiante').on('select2:select change', function(e) {
+    // Manejar evento de selección con Select2
+    $('#selectEstudiante').on('select2:select', function(e) {
         const estudianteID = $(this).val();
-
-        console.log('=== EVENTO DISPARADO ===');
-        console.log('Tipo de evento:', e.type);
+        console.log('=== EVENTO SELECT2:SELECT DISPARADO ===');
         console.log('Estudiante ID seleccionado:', estudianteID);
-        console.log('Valor del select:', $('#selectEstudiante').val());
+        cargarDatosEstudiante(estudianteID);
+    });
 
-        if (estudianteID) {
-            // Obtener datos del estudiante
-            $.ajax({
-                url: 'ajax/estudiantes.ajax.php',
-                type: 'POST',
-                data: { idestudiante: estudianteID },
-                dataType: 'json',
-                success: function(response) {
-                    console.log('Respuesta del servidor:', response);
-
-                    if (response && !response.error) {
-                        // Llenar tabla de datos
-                        const nombreCompleto = (response.Apaterno || '') + ' ' + (response.Amaterno || '') + ' ' + (response.Nombre || '');
-                        const ci = (response.Ci || '') + (response.Complemento ? '-' + response.Complemento : '') + ' ' + (response.Exp || '');
-
-                        $('#datosNombre').text(nombreCompleto.trim());
-                        $('#datosCI').text(ci);
-                        $('#datosCorreo').text(response.Correo || '-');
-                        $('#datosCelular').text(response.Celular || '-');
-
-                        // Mostrar tabla y siguiente sección
-                        $('#tablaEstudiante').slideDown();
-                        $('#seccionPrograma').slideDown();
-                    } else {
-                        swal("Error", response.error || "No se encontraron datos del estudiante", "error");
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error AJAX:', xhr.responseText);
-                    swal("Error", "No se pudieron obtener los datos del estudiante: " + error, "error");
-                }
-            });
-        } else {
-            $('#tablaEstudiante').slideUp();
-            $('#seccionPrograma').slideUp();
-            $('#seccionPago').slideUp();
-        }
+    // También manejar cuando se limpia la selección
+    $('#selectEstudiante').on('select2:clear', function(e) {
+        console.log('=== EVENTO SELECT2:CLEAR DISPARADO ===');
+        cargarDatosEstudiante(null);
     });
 
     // ============================================
@@ -492,6 +661,7 @@ $(document).ready(function() {
 
         $('#tablaPrograma').slideUp();
         $('#seccionPago').slideUp();
+        $('#seccionDatosAdicionales').slideUp();
 
         if (grado) {
             $.ajax({
@@ -545,9 +715,10 @@ $(document).ready(function() {
                     $('#costoMatriculaPrograma').val(costoMatricula.toFixed(2));
                     $('#costoTotalPrograma').val(costoPrograma.toFixed(2));
 
-                    // Mostrar tabla y siguiente sección
+                    // Mostrar tabla y siguientes secciones
                     $('#tablaPrograma').slideDown();
                     $('#seccionPago').slideDown();
+                    $('#seccionDatosAdicionales').slideDown();
 
                     // Establecer monto de solo matrícula
                     $('#montoSoloMatricula').val(costoMatricula.toFixed(2));
@@ -567,6 +738,7 @@ $(document).ready(function() {
         } else {
             $('#tablaPrograma').slideUp();
             $('#seccionPago').slideUp();
+            $('#seccionDatosAdicionales').slideUp();
         }
     });
 

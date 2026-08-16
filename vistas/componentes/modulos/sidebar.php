@@ -57,6 +57,13 @@ if ($_SESSION["Tipo"] == "ADM") {
                     </span>
                   </a>
                 </li>
+               
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="ordenpago" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-file-2" style="color: #c49bbb;"></i>
+                    <span class="kt-menu__link-text">ORDEN DE PAGO</span>
+                  </a>
+                </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="matriculados" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-group" style="color: #1dc9b7;"></i>

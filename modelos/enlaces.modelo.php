@@ -27,9 +27,14 @@
                 $enlace == 'historialmodulosestudiante'||
                 $enlace == 'historialreciboestudiante'||
                 $enlace == 'ordenpago'||
+                $enlace == 'orden-generada'||
                 $enlace == 'asignaciondocente'||
+<<<<<<< Updated upstream
                 $enlace == 'reportecalificaciones'||
                 $enlace == 'preregistro'
+=======
+                $enlace == 'reportecalificaciones'
+>>>>>>> Stashed changes
 
                 )
             {

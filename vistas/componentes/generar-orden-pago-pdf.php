@@ -10,13 +10,18 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Validar sesión
 if (!isset($_SESSION['Validar']) || !$_SESSION['Validar']) {
-    die('Acceso denegado');
+    error_log("PDF: Acceso denegado - sesión no válida");
+    die('Acceso denegado - Por favor inicie sesión nuevamente');
 }
 
 // Verificar que se recibieron los datos
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    die('Método no permitido');
+    error_log("PDF: Método no permitido - Se esperaba POST");
+    die('Método no permitido - Se esperaba POST');
 }
+
+// Log de datos recibidos para debugging
+error_log("PDF: Datos POST recibidos: " . print_r($_POST, true));
 
 // Incluir TCPDF
 require_once __DIR__ . '/../../vendor/tecnickcom/tcpdf/tcpdf.php';
@@ -356,7 +361,9 @@ $pdf->Cell(0, 3, 'Documento generado electrónicamente el ' . $fechaActual . ' a
 // SALIDA DEL PDF
 // ========================================
 // Limpiar cualquier salida previa
-ob_end_clean();
+if (ob_get_level()) {
+    ob_end_clean();
+}
 
 // Generar el PDF
 $nombreArchivo = 'Orden_Pago_' . str_replace(' ', '_', $nombreCompleto) . '_' . date('YmdHis') . '.pdf';
