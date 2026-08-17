@@ -44,6 +44,14 @@ switch ($accion) {
         obtenerDatosEstudiante();
         break;
 
+    case 'buscarEstudiantePorCi':
+        buscarEstudiantePorCi();
+        break;
+
+    case 'registrarEstudianteRapido':
+        registrarEstudianteRapido();
+        break;
+
     case 'obtenerProgramasEstudiante':
         obtenerProgramasEstudiante();
         break;
@@ -173,6 +181,133 @@ function obtenerDatosEstudiante()
         echo json_encode([
             'success' => false,
             'mensaje' => 'Error al obtener datos del estudiante'
+        ]);
+    }
+}
+
+/**
+ * Buscar un estudiante por CI exacto (búsqueda manual del preregistro).
+ * Si existe, se devuelven sus datos completos para autocompletar el formulario.
+ */
+function buscarEstudiantePorCi()
+{
+    if (!isset($_POST['ci']) || trim($_POST['ci']) === '') {
+        echo json_encode([
+            'success' => false,
+            'mensaje' => 'El CI a buscar es requerido'
+        ]);
+        return;
+    }
+
+    $ci = trim($_POST['ci']);
+
+    try {
+        $estudiante = EstudiantesModelos::BuscarEstudianteModelo($ci);
+
+        if ($estudiante) {
+            echo json_encode([
+                'success' => true,
+                'encontrado' => true,
+                'estudiante' => $estudiante
+            ]);
+        } else {
+            echo json_encode([
+                'success' => true,
+                'encontrado' => false
+            ]);
+        }
+    } catch (Exception $e) {
+        error_log("Error en buscarEstudiantePorCi: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'mensaje' => 'Error al buscar el estudiante'
+        ]);
+    }
+}
+
+/**
+ * Registrar un estudiante nuevo directamente desde el formulario de preregistro
+ * (cuando la búsqueda manual por CI no encontró datos existentes).
+ */
+function registrarEstudianteRapido()
+{
+    $camposRequeridos = ['Ci', 'Exp', 'Nombre', 'Apaterno', 'FechaNacimiento', 'Edad', 'Lugarn', 'Correo', 'IdProfesion', 'Celular'];
+    foreach ($camposRequeridos as $campo) {
+        if (!isset($_POST[$campo]) || trim((string)$_POST[$campo]) === '') {
+            echo json_encode([
+                'success' => false,
+                'mensaje' => 'Faltan datos obligatorios del estudiante'
+            ]);
+            return;
+        }
+    }
+
+    if (!is_numeric($_POST['IdProfesion'])) {
+        echo json_encode([
+            'success' => false,
+            'mensaje' => 'Seleccione una profesión válida'
+        ]);
+        return;
+    }
+
+    try {
+        $DatosEstudiante = array(
+            "Ci"              => htmlspecialchars(trim($_POST['Ci'])),
+            "Complemento"     => strtoupper(htmlspecialchars(trim($_POST['Complemento'] ?? ''))),
+            "Exp"             => strtoupper(htmlspecialchars(trim($_POST['Exp']))),
+            "Nombre"          => strtoupper(htmlspecialchars(trim($_POST['Nombre']))),
+            "Apaterno"        => strtoupper(htmlspecialchars(trim($_POST['Apaterno']))),
+            "Amaterno"        => strtoupper(htmlspecialchars(trim($_POST['Amaterno'] ?? ''))),
+            "FechaNacimiento" => htmlspecialchars(trim($_POST['FechaNacimiento'])),
+            "Edad"            => (int)$_POST['Edad'],
+            "Lugarn"          => strtoupper(htmlspecialchars(trim($_POST['Lugarn']))),
+            "Correo"          => htmlspecialchars(trim($_POST['Correo'])),
+            "IdProfesion"     => (int)$_POST['IdProfesion'],
+            "Trabajo"         => strtoupper(htmlspecialchars(trim($_POST['Trabajo'] ?? ''))),
+            "Direccion"       => strtoupper(htmlspecialchars(trim($_POST['Direccion'] ?? ''))),
+            "Telefono"        => htmlspecialchars(trim($_POST['Telefono'] ?? '')),
+            "Celular"         => htmlspecialchars(trim($_POST['Celular'])),
+        );
+
+        $existe = EstudiantesModelos::BuscarEstudianteModelo($DatosEstudiante['Ci']);
+        if ($existe) {
+            echo json_encode([
+                'success' => true,
+                'estudianteID' => (int)$existe['EstudianteID'],
+                'mensaje' => 'El estudiante ya estaba registrado, se usaron sus datos existentes'
+            ]);
+            return;
+        }
+
+        $existeProf = ProfesionModelos::ObtenerPorId($DatosEstudiante['IdProfesion']);
+        if (!$existeProf) {
+            echo json_encode([
+                'success' => false,
+                'mensaje' => 'Profesión no válida (no existe)'
+            ]);
+            return;
+        }
+
+        $resultado = EstudiantesModelos::RegistrarEstudianteModelo($DatosEstudiante);
+
+        if ($resultado === 'exitoso') {
+            $nuevo = EstudiantesModelos::BuscarEstudianteModelo($DatosEstudiante['Ci']);
+            echo json_encode([
+                'success' => true,
+                'estudianteID' => (int)$nuevo['EstudianteID'],
+                'mensaje' => 'Estudiante registrado exitosamente'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'mensaje' => 'No se pudo registrar al estudiante'
+            ]);
+        }
+    } catch (Exception $e) {
+        error_log("Error en registrarEstudianteRapido: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'mensaje' => 'Error al registrar el estudiante'
         ]);
     }
 }

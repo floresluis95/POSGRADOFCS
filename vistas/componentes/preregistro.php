@@ -10,47 +10,15 @@ require_once 'controladores/ordenpago.controlador.php';
 $ordenPago = new OrdenPagoControladores();
 $ordenPago->RegistrarOrdenPagoControlador();
 
-// Si venimos de crear un estudiante nuevo (modal), lo preseleccionamos automáticamente
-$estudianteIDPrecargado = 0;
-if (!empty($_GET['nuevoEstudianteCi'])) {
-    $ciBuscado = trim($_GET['nuevoEstudianteCi']);
-    $estudianteEncontrado = EstudiantesModelos::BuscarEstudianteModelo($ciBuscado);
-    if ($estudianteEncontrado) {
-        $estudianteIDPrecargado = (int)$estudianteEncontrado['EstudianteID'];
-    }
-}
-
 // Cargar la tabla de preregistros pendientes directamente desde el servidor,
 // para que se vea de una vez aunque el AJAX del navegador falle por algún motivo.
 $listaPreregistrosInicial = (new OrdenPagoControladores())->ListarPreregistrosControlador();
 
-// Estudiantes ya registrados en la tabla `estudiante`, para poder elegir uno
-// existente en el PASO 1 en vez de crear siempre uno nuevo.
-// Se muestran del más reciente al más antiguo (EstudianteID DESC).
-$listaEstudiantesInicial = EstudiantesModelos::ListaEstudianteActivoModelo();
-usort($listaEstudiantesInicial, function ($a, $b) {
-    return (int)$b['EstudianteID'] - (int)$a['EstudianteID'];
-});
-
 // Sedes disponibles, para filtrar el select de programa en el PASO 2
 $sedesDisponibles = ProgramasModelos::ListarSedesModelo();
 
-function PintarFilaEstudiante($est)
-{
-    $nombreCompleto = trim(($est['Apaterno'] ?? '') . ' ' . ($est['Amaterno'] ?? '') . ' ' . ($est['Nombre'] ?? ''));
-    $ciCompleto = trim(($est['Ci'] ?? '') . ($est['Complemento'] ? '-' . $est['Complemento'] : '') . ' ' . ($est['Exp'] ?? ''));
-
-    $html = '<tr>';
-    $html .= '<td>' . htmlspecialchars($ciCompleto) . '</td>';
-    $html .= '<td>' . htmlspecialchars($nombreCompleto) . '</td>';
-    $html .= '<td>' . htmlspecialchars($est['Correo'] ?? '-') . '</td>';
-    $html .= '<td>' . htmlspecialchars($est['Celular'] ?? '-') . '</td>';
-    $html .= '<td class="text-center">';
-    $html .= '<button type="button" class="btn btn-sm btn-primary btn-seleccionar-estudiante" data-id="' . (int)$est['EstudianteID'] . '"><i class="flaticon2-check-mark"></i> Seleccionar</button>';
-    $html .= '</td></tr>';
-
-    return $html;
-}
+// Profesiones disponibles, para el formulario de datos del estudiante en el PASO 1
+$listaProfesionesInicial = ProfesionModelos::ListaprofesionModelos();
 
 function PintarFilaPreregistro($pr)
 {
@@ -161,58 +129,138 @@ kt-aside--fixed kt-page--loading">
                   <div class="kt-portlet kt-portlet--height-fluid mb-3 preregistro-compacta">
                     <div class="kt-portlet__body py-3">
 
-                      <!-- PASO 1: SELECCIONAR ESTUDIANTE -->
+                      <!-- PASO 1: BUSCAR / REGISTRAR ESTUDIANTE -->
                       <div class="preregistro-step">
                         <div class="step-title"><span class="step-num">1</span> Estudiante</div>
 
                         <input type="hidden" name="idcliente" id="selectedEstudianteID" value="">
 
-                        <div id="bloqueNuevoEstudiante">
-                          <div class="d-flex justify-content-between align-items-center flex-wrap mb-2" style="gap: 10px;">
-                            <input type="text" class="form-control form-control-sm" id="buscarEstudianteExistente"
-                                   style="max-width: 320px;" placeholder="Buscar por CI, nombre o apellido...">
-                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#ModalInsertarEstudiante">
-                              <i class="flaticon2-plus"></i> Nuevo Estudiante
-                            </button>
+                        <!-- Búsqueda manual por CI -->
+                        <div class="d-flex align-items-end flex-wrap mb-2" style="gap: 10px;">
+                          <div class="form-group mb-0">
+                            <label class="small font-weight-bold mb-1">Buscar estudiante por CI</label>
+                            <input type="text" class="form-control form-control-sm" id="buscarPorCi"
+                                   style="max-width: 220px;" placeholder="Ingrese el CI..." maxlength="12">
                           </div>
-
-                          <div class="table-responsive" style="max-height: 180px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px;">
-                            <table class="table table-sm table-hover mb-0" id="tablaEstudiantesExistentes">
-                              <thead style="background: #f4f4f4; position: sticky; top: 0;">
-                                <tr>
-                                  <th style="width: 15%;">CI</th>
-                                  <th>Nombre Completo</th>
-                                  <th style="width: 22%;">Correo</th>
-                                  <th style="width: 12%;">Celular</th>
-                                  <th class="text-center" style="width: 90px;">Acción</th>
-                                </tr>
-                              </thead>
-                              <tbody id="tablaEstudiantesExistentesBody">
-                                <?php
-                                  if (empty($listaEstudiantesInicial)) {
-                                      echo '<tr><td colspan="5" class="text-center text-muted">No hay estudiantes registrados</td></tr>';
-                                  } else {
-                                      foreach ($listaEstudiantesInicial as $est) {
-                                          echo PintarFilaEstudiante($est);
-                                      }
-                                  }
-                                ?>
-                              </tbody>
-                            </table>
-                          </div>
+                          <button type="button" class="btn btn-sm btn-primary" id="btnBuscarPorCi">
+                            <i class="flaticon2-search"></i> Buscar
+                          </button>
+                          <button type="button" class="btn btn-sm btn-secondary" id="btnLimpiarBusquedaCi">
+                            <i class="flaticon2-reload"></i> Limpiar
+                          </button>
+                          <span id="estadoBusquedaEstudiante" class="ml-2"></span>
                         </div>
 
-                        <!-- Resumen del estudiante seleccionado -->
-                        <div id="tablaEstudiante" class="chip-summary" style="display: none;">
-                          <div class="chip-summary-row">
-                            <span><i class="flaticon2-user-outline-symbol"></i> <strong id="datosNombre"></strong></span>
-                            <span>CI: <span id="datosCI"></span></span>
-                            <span id="datosCorreo"></span>
-                            <span id="datosCelular"></span>
-                            <button type="button" class="btn btn-xs btn-outline-secondary ml-auto" id="btnCambiarEstudiante">
-                              <i class="flaticon2-cross"></i> Cambiar
-                            </button>
+                        <!-- Datos del estudiante (se autocompletan si el CI ya existe; si no, se llenan aquí para registrarlo) -->
+                        <div id="datosEstudianteForm">
+
+                          <div class="row">
+                            <div class="col-md-3">
+                              <label for="inputCi" class="small font-weight-bold mb-1">C.I. <span class="text-danger">*</span></label>
+                              <input type="text" id="inputCi" name="Ci" class="form-control form-control-sm"
+                                     placeholder="1234567" required pattern="[0-9]{6,12}" maxlength="12">
+                            </div>
+                            <div class="col-md-3">
+                              <label for="inputComplemento" class="small font-weight-bold mb-1">Complemento</label>
+                              <input type="text" id="inputComplemento" name="Complemento"
+                                     class="form-control form-control-sm text-uppercase" pattern="[A-Za-z0-9]{1,5}">
+                            </div>
+                            <div class="col-md-3">
+                              <label for="selectExpedido" class="small font-weight-bold mb-1">Expedido <span class="text-danger">*</span></label>
+                              <select class="form-control form-control-sm" id="selectExpedido" name="Exp" required>
+                                <option value="" disabled selected>Seleccione...</option>
+                                <option value="LP">La Paz</option>
+                                <option value="CB">Cochabamba</option>
+                                <option value="SC">Santa Cruz</option>
+                                <option value="OR">Oruro</option>
+                                <option value="PT">Potosí</option>
+                                <option value="CH">Chuquisaca</option>
+                                <option value="TJ">Tarija</option>
+                                <option value="BN">Beni</option>
+                                <option value="PD">Pando</option>
+                                <option value="OTR">Otro</option>
+                              </select>
+                            </div>
+                            <div class="col-md-3">
+                              <label for="fechaNacimiento" class="small font-weight-bold mb-1">Fecha Nacimiento <span class="text-danger">*</span></label>
+                              <input type="date" id="fechaNacimiento" name="FechaNacimiento" class="form-control form-control-sm" required
+                                     max="<?php echo date('Y-m-d'); ?>"
+                                     min="<?php echo date('Y-m-d', strtotime('-100 years')); ?>">
+                            </div>
                           </div>
+
+                          <div class="row mt-2">
+                            <div class="col-md-3">
+                              <label for="inputNombres" class="small font-weight-bold mb-1">Nombre(s) <span class="text-danger">*</span></label>
+                              <input type="text" id="inputNombres" name="Nombre" class="form-control form-control-sm"
+                                     required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}">
+                            </div>
+                            <div class="col-md-3">
+                              <label for="apaterno" class="small font-weight-bold mb-1">Apellido Paterno <span class="text-danger">*</span></label>
+                              <input type="text" id="apaterno" name="Apaterno" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-md-3">
+                              <label for="amaterno" class="small font-weight-bold mb-1">Apellido Materno</label>
+                              <input type="text" id="amaterno" name="Amaterno" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-3">
+                              <label for="Edad" class="small font-weight-bold mb-1">Edad <span class="text-danger">*</span></label>
+                              <input type="number" id="Edad" name="Edad" class="form-control form-control-sm" required>
+                            </div>
+                          </div>
+
+                          <div class="row mt-2">
+                            <div class="col-md-3">
+                              <label for="Lugarn" class="small font-weight-bold mb-1">Lugar de nacimiento <span class="text-danger">*</span></label>
+                              <select class="form-control form-control-sm" id="Lugarn" name="Lugarn" required>
+                                <option value="" disabled selected>Seleccione...</option>
+                                <option value="La Paz">La Paz</option>
+                                <option value="Cochabamba">Cochabamba</option>
+                                <option value="Santa Cruz">Santa Cruz</option>
+                                <option value="Oruro">Oruro</option>
+                                <option value="Potosí">Potosí</option>
+                                <option value="Chuquisaca">Chuquisaca</option>
+                                <option value="Tarija">Tarija</option>
+                                <option value="Beni">Beni</option>
+                                <option value="Pando">Pando</option>
+                                <option value="Otro">Otro</option>
+                              </select>
+                            </div>
+                            <div class="col-md-3">
+                              <label for="emailInput" class="small font-weight-bold mb-1">Correo <span class="text-danger">*</span></label>
+                              <input type="email" id="emailInput" name="Correo" class="form-control form-control-sm" required maxlength="100">
+                            </div>
+                            <div class="col-md-3">
+                              <label for="inputTelefono" class="small font-weight-bold mb-1">Teléfono</label>
+                              <input type="tel" id="inputTelefono" name="Telefono" class="form-control form-control-sm" pattern="[0-9]{7,8}">
+                            </div>
+                            <div class="col-md-3">
+                              <label for="inputCelular" class="small font-weight-bold mb-1">Celular <span class="text-danger">*</span></label>
+                              <input type="tel" id="inputCelular" name="Celular" class="form-control form-control-sm"
+                                     required pattern="[6-7][0-9]{7}">
+                            </div>
+                          </div>
+
+                          <div class="row mt-2">
+                            <div class="col-md-6">
+                              <label for="IdProfesion" class="small font-weight-bold mb-1">Profesión <span class="text-danger">*</span></label>
+                              <select class="form-control form-control-sm" id="IdProfesion" name="IdProfesion" required>
+                                <option value="">Seleccione una profesión...</option>
+                                <?php foreach ($listaProfesionesInicial as $prof): ?>
+                                  <option value="<?php echo (int)$prof['IdProfesion']; ?>"><?php echo htmlspecialchars($prof['NombreProfesion']); ?></option>
+                                <?php endforeach; ?>
+                              </select>
+                            </div>
+                            <div class="col-md-3">
+                              <label for="Trabajo" class="small font-weight-bold mb-1">Trabajo actual</label>
+                              <input type="text" id="Trabajo" name="Trabajo" class="form-control form-control-sm" maxlength="100">
+                            </div>
+                            <div class="col-md-3">
+                              <label for="direccionInput" class="small font-weight-bold mb-1">Dirección domiciliaria</label>
+                              <input type="text" id="direccionInput" name="Direccion" class="form-control form-control-sm" maxlength="100">
+                            </div>
+                          </div>
+
                         </div>
                       </div>
 
@@ -388,188 +436,6 @@ kt-aside--fixed kt-page--loading">
     </div>
   </div>
 
-  <!-- Modal: Nuevo Estudiante -->
-  <div class="modal fade" id="ModalInsertarEstudiante" tabindex="-1" role="dialog"
-       aria-labelledby="modalNuevoEstudianteLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document" style="max-width: 900px;">
-      <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px 15px 0 0; padding: 1.5rem;">
-          <h4 class="modal-title text-white" id="modalNuevoEstudianteLabel" style="font-weight: 600;">
-            <i class="flaticon2-user-outline-symbol"></i> Nuevo Registro de Estudiante
-          </h4>
-          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar" style="opacity: 1;">
-            <span aria-hidden="true" style="font-size: 2rem;">&times;</span>
-          </button>
-        </div>
-
-        <form method="post" id="formNuevoEstudiante" enctype="multipart/form-data" class="needs-validation" novalidate>
-          <input type="hidden" name="paginaRedirect" value="preregistro">
-
-          <div class="modal-body" style="padding: 2rem; background-color: #fafafa;">
-
-            <div class="mb-4 p-3" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-left: 4px solid #667eea; border-radius: 8px;">
-              <h5 class="mb-0" style="color: #667eea; font-weight: 600;">
-                <i class="flaticon2-user"></i> DATOS PERSONALES
-              </h5>
-            </div>
-
-            <!-- C.I. y complementos -->
-            <div class="row">
-              <div class="col-md-4">
-                <label for="inputCi">C.I. <span class="text-danger">*</span></label>
-                <input type="text" id="inputCi" name="Ci" class="form-control"
-                       placeholder="1234567" required pattern="[0-9]{6,12}" maxlength="12">
-                <div class="invalid-feedback">Ingrese un CI válido.</div>
-              </div>
-              <div class="col-md-4">
-                <label for="inputComplemento">Complemento</label>
-                <input type="text" id="inputComplemento" name="Complemento"
-                       class="form-control text-uppercase" pattern="[A-Za-z0-9]{1,5}">
-              </div>
-              <div class="col-md-4">
-                <label for="selectExpedido">Expedido <span class="text-danger">*</span></label>
-                <select class="form-control" id="selectExpedido" name="Exp" required>
-                  <option value="" disabled selected>Seleccione departamento</option>
-                  <option value="LP">La Paz</option>
-                  <option value="CB">Cochabamba</option>
-                  <option value="SC">Santa Cruz</option>
-                  <option value="OR">Oruro</option>
-                  <option value="PT">Potosí</option>
-                  <option value="CH">Chuquisaca</option>
-                  <option value="TJ">Tarija</option>
-                  <option value="BN">Beni</option>
-                  <option value="PD">Pando</option>
-                  <option value="OTR">Otro</option>
-                </select>
-                <div class="invalid-feedback">Seleccione el lugar de expedición.</div>
-              </div>
-            </div>
-
-            <!-- Nombre y fecha -->
-            <div class="row mt-2">
-              <div class="col-md-3">
-                <label for="inputNombres">Nombre(s) <span class="text-danger">*</span></label>
-                <input type="text" id="inputNombres" name="Nombre" class="form-control"
-                       required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}">
-                <div class="invalid-feedback">Ingrese un nombre válido.</div>
-              </div>
-              <div class="col-md-3">
-                <label for="apaterno">Apellido Paterno <span class="text-danger">*</span></label>
-                <input type="text" id="apaterno" name="Apaterno" class="form-control" required>
-              </div>
-              <div class="col-md-3">
-                <label for="amaterno">Apellido Materno</label>
-                <input type="text" id="amaterno" name="Amaterno" class="form-control">
-              </div>
-              <div class="col-md-3">
-                <label for="fechaNacimiento">Fecha Nacimiento <span class="text-danger">*</span></label>
-                <input type="date" id="fechaNacimiento" name="FechaNacimiento" class="form-control" required
-                       max="<?php echo date('Y-m-d'); ?>"
-                       min="<?php echo date('Y-m-d', strtotime('-100 years')); ?>">
-              </div>
-            </div>
-
-            <div class="row mt-2">
-              <div class="col-md-3">
-                <label for="Edad">Edad <span class="text-danger">*</span></label>
-                <input type="number" id="Edad" name="Edad" class="form-control" required>
-                <div class="invalid-feedback">Ingrese una edad válida.</div>
-              </div>
-
-              <div class="col-md-4">
-                <label for="selectLugarn">Lugar de nacimiento <span class="text-danger">*</span></label>
-                <select class="form-control" id="Lugarn" name="Lugarn" required>
-                  <option value="" disabled selected>Seleccione departamento</option>
-                  <option value="La Paz">La Paz</option>
-                  <option value="Cochabamba">Cochabamba</option>
-                  <option value="Santa Cruz">Santa Cruz</option>
-                  <option value="Oruro">Oruro</option>
-                  <option value="Potosí">Potosí</option>
-                  <option value="Chuquisaca">Chuquisaca</option>
-                  <option value="Tarija">Tarija</option>
-                  <option value="Beni">Beni</option>
-                  <option value="Pando">Pando</option>
-                  <option value="Otro">Otro</option>
-                </select>
-                <div class="invalid-feedback">Seleccione el lugar de nacimiento.</div>
-              </div>
-            </div>
-
-            <div class="mb-4 mt-4 p-3" style="background: linear-gradient(135deg, rgba(29, 201, 183, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%); border-left: 4px solid #1dc9b7; border-radius: 8px;">
-              <h5 class="mb-0" style="color: #1dc9b7; font-weight: 600;">
-                <i class="flaticon2-phone"></i> OTROS DATOS
-              </h5>
-            </div>
-            <div class="row">
-
-              <div class="col-md-4">
-                <label for="emailInput">Correo <span class="text-danger">*</span></label>
-                <input type="email" id="emailInput" name="Correo" class="form-control" required maxlength="100">
-              </div>
-
-              <div class="col-md-6">
-                <label for="IdProfesion">Profesión <span class="text-danger">*</span></label>
-                <select class="form-control" id="IdProfesion" name="IdProfesion" required>
-                  <option value="">Seleccione una profesión...</option>
-                  <?php
-                    $ListaProfesion = new ProfesionControlador();
-                    $ListaProfesion->ListaProfesionControlador();
-                  ?>
-                </select>
-                <div class="invalid-feedback">Seleccione la profesión.</div>
-              </div>
-              <div class="col-md-6">
-                <label for="trabajoInput">Trabajo actual</label>
-                <input type="text" id="Trabajo" name="Trabajo" class="form-control" maxlength="100">
-              </div>
-
-              <div class="col-md-6">
-                <label for="direccionInput">Dirección domiciliaria</label>
-                <input type="text" id="direccionInput" name="Direccion" class="form-control" maxlength="100">
-              </div>
-
-              <div class="col-md-4">
-                <label for="inputTelefono">Teléfono</label>
-                <input type="tel" id="inputTelefono" name="Telefono" class="form-control" pattern="[0-9]{7,8}">
-              </div>
-
-              <div class="col-md-4">
-                <label for="inputCelular">Celular <span class="text-danger">*</span></label>
-                <input type="tel" id="inputCelular" name="Celular" class="form-control"
-                       required pattern="[6-7][0-9]{7}">
-                <div class="invalid-feedback">Celular inválido (8 dígitos, empieza con 6 o 7).</div>
-              </div>
-
-              <div class="col-md-12">
-                <div class="alert mt-3" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%); border: 2px solid #667eea; border-radius: 8px;">
-                  <i class="flaticon2-information"></i> <strong>Importante:</strong> Los campos marcados con
-                  <span class="text-danger font-weight-bold">*</span> son obligatorios.
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <div class="modal-footer" style="background-color: #f5f5f5; padding: 1.5rem; border-radius: 0 0 15px 15px;">
-            <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal"
-                    style="padding: 0.75rem 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-              <i class="flaticon2-cancel"></i> Cancelar
-            </button>
-            <button type="submit" class="btn btn-success btn-lg"
-                    style="padding: 0.75rem 2rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(29, 201, 183, 0.4);">
-              <i class="flaticon2-check-mark"></i> Guardar Estudiante
-            </button>
-          </div>
-
-          <?php
-            $DatosEstudiante = new EstudiantesControladores();
-            $DatosEstudiante->RegistarEstudianteControlador2();
-          ?>
-        </form>
-      </div>
-    </div>
-  </div>
-
   <!-- Modal: Editar Preregistro (CRUD - Update) -->
   <div class="modal fade" id="ModalEditarPreregistro" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -649,8 +515,6 @@ kt-aside--fixed kt-page--loading">
 <script src="vistas/recursos/sweetalert.min.js"></script>
 
 <script>
-const estudianteIDPrecargado = <?php echo (int)$estudianteIDPrecargado; ?>;
-
 // IMPORTANTE: se usa un listener nativo de DOMContentLoaded (en vez de $(document).ready)
 // a propósito. Varios scripts globales del tema (cargados en vistas/plantilla.php en TODAS
 // las páginas, ej. wizard-1.js) asumen elementos que no existen aquí y lanzan errores dentro
@@ -664,66 +528,98 @@ function iniciarPreregistro() {
     console.log('Select2 disponible:', typeof $.fn.select2);
 
     // ============================================
-    // PASO 1: ESTUDIANTE (solo vía botón "Nuevo Estudiante")
+    // PASO 1: BUSCAR ESTUDIANTE POR CI (autocompleta si existe, o habilita el
+    // formulario para registrarlo ahí mismo si no existe)
     // ============================================
 
-    // Carga los datos del estudiante y lo deja seleccionado en el formulario
-    function cargarEstudianteSeleccionado(estudianteID) {
+    // Hasta que se haga una búsqueda, el formulario de datos permanece bloqueado
+    function habilitarCamposEstudiante(habilitar) {
+        $('#datosEstudianteForm input, #datosEstudianteForm select').prop('disabled', !habilitar);
+    }
+    habilitarCamposEstudiante(false);
+
+    function autocompletarEstudiante(est) {
+        $('#inputCi').val(est.Ci || '');
+        $('#inputComplemento').val(est.Complemento || '');
+        $('#selectExpedido').val(est.Exp || '');
+        $('#inputNombres').val(est.Nombre || '');
+        $('#apaterno').val(est.Apaterno || '');
+        $('#amaterno').val(est.Amaterno || '');
+        $('#fechaNacimiento').val(est.FechaNacimiento ? est.FechaNacimiento.substring(0, 10) : '');
+        $('#Edad').val(est.Edad || '');
+        $('#Lugarn').val(est.Lugarn || '');
+        $('#emailInput').val(est.Correo || '');
+        $('#inputTelefono').val(est.Telefono || '');
+        $('#inputCelular').val(est.Celular || '');
+        $('#IdProfesion').val(est.IdProfesion || '');
+        $('#Trabajo').val(est.Trabajo || '');
+        $('#direccionInput').val(est.Direccion || '');
+    }
+
+    function limpiarCamposEstudiante(ciPrellenado) {
+        $('#datosEstudianteForm input[type="text"], #datosEstudianteForm input[type="email"], #datosEstudianteForm input[type="tel"], #datosEstudianteForm input[type="number"], #datosEstudianteForm input[type="date"]').val('');
+        $('#datosEstudianteForm select').val('');
+        $('#inputCi').val(ciPrellenado || '');
+    }
+
+    function buscarEstudiantePorCi() {
+        const ci = $('#buscarPorCi').val().trim();
+
+        if (!ci) {
+            swal("Atención", "Ingrese un CI para buscar", "warning");
+            return;
+        }
+
+        $('#estadoBusquedaEstudiante').html('<i class="fa fa-spinner fa-spin"></i> Buscando...');
+
         $.ajax({
-            url: 'ajax/estudiantes.ajax.php',
+            url: 'ajax/ordenpago.ajax.php',
             type: 'POST',
-            data: { idestudiante: estudianteID },
+            data: { accion: 'buscarEstudiantePorCi', ci: ci },
             dataType: 'json',
-            success: function(response) {
-                if (response && !response.error) {
-                    const nombreCompleto = (response.Apaterno || '') + ' ' + (response.Amaterno || '') + ' ' + (response.Nombre || '');
-                    const ci = (response.Ci || '') + (response.Complemento ? '-' + response.Complemento : '') + ' ' + (response.Exp || '');
-
-                    $('#selectedEstudianteID').val(estudianteID);
-                    $('#datosNombre').text(nombreCompleto.trim());
-                    $('#datosCI').text(ci);
-                    $('#datosCorreo').text(response.Correo || '-');
-                    $('#datosCelular').text(response.Celular || '-');
-
-                    $('#bloqueNuevoEstudiante').hide();
-                    $('#tablaEstudiante').slideDown();
-                    $('#seccionPrograma').slideDown();
-                } else {
-                    swal("Error", response.error || "No se encontraron datos del estudiante", "error");
+            success: function(resp) {
+                if (!resp.success) {
+                    $('#estadoBusquedaEstudiante').html('<span class="text-danger">Error al buscar</span>');
+                    swal("Error", resp.mensaje || "No se pudo buscar el estudiante", "error");
+                    return;
                 }
+
+                if (resp.encontrado) {
+                    autocompletarEstudiante(resp.estudiante);
+                    habilitarCamposEstudiante(false);
+                    $('#selectedEstudianteID').val(resp.estudiante.EstudianteID);
+                    $('#estadoBusquedaEstudiante').html('<span class="badge badge-success"><i class="fa fa-check"></i> Estudiante encontrado, datos autocompletados</span>');
+                } else {
+                    limpiarCamposEstudiante(ci);
+                    habilitarCamposEstudiante(true);
+                    $('#selectedEstudianteID').val('');
+                    $('#estadoBusquedaEstudiante').html('<span class="badge badge-warning"><i class="fa fa-info-circle"></i> No existe, complete los datos para registrarlo</span>');
+                }
+
+                $('#seccionPrograma').slideDown();
             },
-            error: function(xhr, status, error) {
-                console.error('Error AJAX:', xhr.responseText);
-                swal("Error", "No se pudieron obtener los datos del estudiante: " + error, "error");
+            error: function() {
+                $('#estadoBusquedaEstudiante').html('<span class="text-danger">Error al buscar</span>');
+                swal("Error", "No se pudo buscar el estudiante", "error");
             }
         });
     }
 
-    // Si venimos de guardar un estudiante nuevo, se preselecciona automáticamente
-    if (estudianteIDPrecargado > 0) {
-        cargarEstudianteSeleccionado(estudianteIDPrecargado);
-    }
+    $('#btnBuscarPorCi').on('click', buscarEstudiantePorCi);
 
-    // Seleccionar un estudiante ya registrado desde la tabla
-    $(document).on('click', '.btn-seleccionar-estudiante', function() {
-        const estudianteID = $(this).data('id');
-        cargarEstudianteSeleccionado(estudianteID);
+    $('#buscarPorCi').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            buscarEstudiantePorCi();
+        }
     });
 
-    // Filtro en vivo de la tabla de estudiantes registrados (por CI, nombre o apellido)
-    $('#buscarEstudianteExistente').on('keyup', function() {
-        const texto = $(this).val().toLowerCase().trim();
-        $('#tablaEstudiantesExistentesBody tr').each(function() {
-            const fila = $(this).text().toLowerCase();
-            $(this).toggle(fila.indexOf(texto) > -1);
-        });
-    });
-
-    // Permitir quitar la selección y registrar otro estudiante
-    $('#btnCambiarEstudiante').on('click', function() {
+    $('#btnLimpiarBusquedaCi').on('click', function() {
+        $('#buscarPorCi').val('');
         $('#selectedEstudianteID').val('');
-        $('#tablaEstudiante').slideUp();
-        $('#bloqueNuevoEstudiante').show();
+        limpiarCamposEstudiante('');
+        habilitarCamposEstudiante(false);
+        $('#estadoBusquedaEstudiante').html('');
         $('#seccionPrograma').slideUp();
         $('#seccionPago').slideUp();
     });
@@ -860,27 +756,34 @@ function iniciarPreregistro() {
     // ============================================
     // VALIDACIÓN Y ENVÍO DEL FORMULARIO
     // ============================================
+    const formPreregistroEl = document.getElementById('formPreregistro');
+    const btnRegistrarOrdenPago = document.querySelector('#formPreregistro button[name="registrarOrdenPago"]');
+    let envioEnCurso = false;
+
+    // Dispara el envío real haciendo click en el botón (así el navegador sí incluye
+    // su name="registrarOrdenPago" en el POST; form.submit() por script NO lo haría).
+    function enviarFormularioPreregistro() {
+        envioEnCurso = true;
+        btnRegistrarOrdenPago.click();
+    }
+
     $('#formPreregistro').on('submit', function(e) {
+
+        if (envioEnCurso) {
+            // Reenvío nativo ya autorizado tras crear al estudiante (ver más abajo)
+            return true;
+        }
+
+        e.preventDefault();
 
         const fechaMatricula = $('input[name="fechaInscripcion"]').val();
         if (!fechaMatricula) {
-            e.preventDefault();
             swal("Error", "Por favor seleccione la fecha de orden", "error");
             return false;
         }
 
-        // Validar que se haya seleccionado estudiante y programa
-        const estudianteID = $('#selectedEstudianteID').val();
         const programaID = $('#programa').val();
-
-        if (!estudianteID) {
-            e.preventDefault();
-            swal("Error", "Por favor registre al estudiante con el botón \"Nuevo Estudiante\"", "error");
-            return false;
-        }
-
         if (!programaID) {
-            e.preventDefault();
             swal("Error", "Por favor seleccione un programa", "error");
             return false;
         }
@@ -888,13 +791,61 @@ function iniciarPreregistro() {
         // Validar que el monto de matrícula sea mayor a 0
         const montoAPagar = parseFloat($('#montoAPagar').val()) || 0;
         if (montoAPagar <= 0) {
-            e.preventDefault();
             swal("Error", "El monto de matrícula debe ser mayor a 0", "error");
             return false;
         }
 
-        // Permitir que el formulario se envíe
-        return true;
+        const estudianteID = $('#selectedEstudianteID').val();
+
+        if (estudianteID) {
+            // Estudiante ya existente: se envía el formulario tal cual
+            enviarFormularioPreregistro();
+            return false;
+        }
+
+        // Estudiante nuevo: se deben haber completado sus datos en el PASO 1
+        if (!formPreregistroEl.checkValidity()) {
+            formPreregistroEl.reportValidity();
+            return false;
+        }
+
+        // Se registra primero al estudiante (vía AJAX) y recién con su ID se envía la orden
+        $.ajax({
+            url: 'ajax/ordenpago.ajax.php',
+            type: 'POST',
+            data: {
+                accion: 'registrarEstudianteRapido',
+                Ci: $('#inputCi').val(),
+                Complemento: $('#inputComplemento').val(),
+                Exp: $('#selectExpedido').val(),
+                Nombre: $('#inputNombres').val(),
+                Apaterno: $('#apaterno').val(),
+                Amaterno: $('#amaterno').val(),
+                FechaNacimiento: $('#fechaNacimiento').val(),
+                Edad: $('#Edad').val(),
+                Lugarn: $('#Lugarn').val(),
+                Correo: $('#emailInput').val(),
+                IdProfesion: $('#IdProfesion').val(),
+                Trabajo: $('#Trabajo').val(),
+                Direccion: $('#direccionInput').val(),
+                Telefono: $('#inputTelefono').val(),
+                Celular: $('#inputCelular').val()
+            },
+            dataType: 'json',
+            success: function(resp) {
+                if (resp.success) {
+                    $('#selectedEstudianteID').val(resp.estudianteID);
+                    enviarFormularioPreregistro();
+                } else {
+                    swal("Error", resp.mensaje || "No se pudo registrar al estudiante", "error");
+                }
+            },
+            error: function() {
+                swal("Error", "No se pudo registrar al estudiante", "error");
+            }
+        });
+
+        return false;
     });
 
     // ============================================
@@ -903,19 +854,6 @@ function iniciarPreregistro() {
     $('button[type="reset"]').on('click', function() {
         location.reload();
     });
-
-    // ============================================
-    // MODAL: NUEVO ESTUDIANTE
-    // ============================================
-    const formNuevoEstudiante = document.getElementById('formNuevoEstudiante');
-
-    formNuevoEstudiante.addEventListener('submit', function(event) {
-        if (!formNuevoEstudiante.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        formNuevoEstudiante.classList.add('was-validated');
-    }, false);
 
     // Convertir texto a mayúsculas automáticamente
     $('#inputComplemento, #inputNombres, #apaterno, #amaterno').on('input', function() {
@@ -954,12 +892,6 @@ function iniciarPreregistro() {
         } else {
             $('#Edad').val(edad);
         }
-    });
-
-    // Limpiar el formulario y su validación cada vez que se abre el modal
-    $('#ModalInsertarEstudiante').on('show.bs.modal', function() {
-        formNuevoEstudiante.reset();
-        formNuevoEstudiante.classList.remove('was-validated');
     });
 
     // ============================================
