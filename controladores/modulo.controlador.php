@@ -293,6 +293,8 @@ class ModuloControlador
                 'codigomodulo' => $modulo['codigomodulo'],
                 'costomodulo' => $modulo['costomodulo'],
                 'docenteID' => $modulo['DocenteID'],
+                'fechainicio' => $modulo['FechaInicio'],
+                'fechafin' => $modulo['FechaFinal'],
                 'nombrePrograma' => $modulo['NombrePrograma'],
                 'codigoPrograma' => $modulo['CodigoPrograma']
             ]), ENT_QUOTES, 'UTF-8');
@@ -345,6 +347,8 @@ class ModuloControlador
             $codigomodulo = strtoupper(htmlspecialchars(trim($_POST['codigomodulo'])));
             $docenteID = isset($_POST['docenteID']) && !empty($_POST['docenteID']) ? (int)$_POST['docenteID'] : null;
             $costomodulo = isset($_POST['costomodulo']) && !empty($_POST['costomodulo']) ? (float)$_POST['costomodulo'] : 0;
+            $fechainicio = isset($_POST['fechainicio']) && !empty($_POST['fechainicio']) ? trim($_POST['fechainicio']) : null;
+            $fechafin = isset($_POST['fechafin']) && !empty($_POST['fechafin']) ? trim($_POST['fechafin']) : null;
 
             // Preparar datos para el modelo
             $datosModulo = [
@@ -353,7 +357,9 @@ class ModuloControlador
                 'nombremodulo' => $nombremodulo,
                 'codigomodulo' => $codigomodulo,
                 'docenteID' => $docenteID,
-                'costomodulo' => $costomodulo
+                'costomodulo' => $costomodulo,
+                'fechainicio' => $fechainicio,
+                'fechafin' => $fechafin
             ];
 
             // Actualizar en la base de datos

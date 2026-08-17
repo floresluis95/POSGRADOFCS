@@ -209,6 +209,23 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
             font-weight: 500;
         }
 
+        .factura-input {
+            width: 100%;
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+            border: 1px solid #d9dffa;
+            border-radius: 6px;
+            padding: 6px 10px;
+            background: #fff;
+        }
+
+        .factura-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
         .amount-box {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -346,18 +363,31 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
             </div>
         </div>
 
-        <!-- Información de Facturación -->
+        <!-- Datos para la Factura (editables antes de generar la boleta) -->
         <h3 style="margin-bottom: 20px; margin-top: 30px; color: #667eea;">
-            <i class="flaticon2-document"></i> Información de Facturación
+            <i class="flaticon2-document"></i> Datos para la Factura
         </h3>
         <div class="info-grid">
             <div class="info-item">
                 <div class="info-label">Nombre para Factura</div>
-                <div class="info-value"><?php echo $orden['NombreFactura']; ?></div>
+                <input type="text" id="inputNombreFactura" class="factura-input"
+                       value="<?php echo htmlspecialchars($orden['NombreFactura']); ?>">
             </div>
             <div class="info-item">
                 <div class="info-label">NIT/CI</div>
-                <div class="info-value"><?php echo $orden['NitCiFactura']; ?></div>
+                <input type="text" id="inputNitCiFactura" class="factura-input"
+                       value="<?php echo htmlspecialchars($orden['NitCiFactura']); ?>">
+            </div>
+            <div class="info-item">
+                <div class="info-label">Responsable</div>
+                <input type="text" id="inputResponsable" class="factura-input"
+                       value="<?php echo htmlspecialchars($orden['ResponsableGeneracion']); ?>">
+            </div>
+            <div class="info-item">
+                <div class="info-label">Firma</div>
+                <input type="text" id="inputFirma" class="factura-input"
+                       placeholder="(opcional)"
+                       value="<?php echo htmlspecialchars($orden['Firma']); ?>">
             </div>
         </div>
 
@@ -379,7 +409,7 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
 
         <!-- Botones de Acción -->
         <div class="action-buttons">
-            <form method="POST" action="vistas/componentes/generar-orden-pago-pdf.php" target="_blank" style="margin: 0;">
+            <form method="POST" action="vistas/componentes/generar-orden-pago-pdf.php" target="_blank" style="margin: 0;" id="formDescargarOrden">
                 <input type="hidden" name="apaterno" value="<?php echo htmlspecialchars($orden['Apaterno']); ?>">
                 <input type="hidden" name="amaterno" value="<?php echo htmlspecialchars($orden['Amaterno']); ?>">
                 <input type="hidden" name="nombres" value="<?php echo htmlspecialchars($orden['Nombre']); ?>">
@@ -393,10 +423,10 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
                 <input type="hidden" name="version" value="<?php echo htmlspecialchars($orden['Version']); ?>">
                 <input type="hidden" name="numeroTramite" value="<?php echo htmlspecialchars($orden['NumeroTramite']); ?>">
                 <input type="hidden" name="cuentaAuxiliar" value="">
-                <input type="hidden" name="nombreFactura" value="<?php echo htmlspecialchars($orden['NombreFactura']); ?>">
-                <input type="hidden" name="nitCiFactura" value="<?php echo htmlspecialchars($orden['NitCiFactura']); ?>">
-                <input type="hidden" name="responsable" value="<?php echo htmlspecialchars($orden['ResponsableGeneracion']); ?>">
-                <input type="hidden" name="firma" value="<?php echo htmlspecialchars($orden['Firma']); ?>">
+                <input type="hidden" name="nombreFactura" id="hiddenNombreFactura" value="<?php echo htmlspecialchars($orden['NombreFactura']); ?>">
+                <input type="hidden" name="nitCiFactura" id="hiddenNitCiFactura" value="<?php echo htmlspecialchars($orden['NitCiFactura']); ?>">
+                <input type="hidden" name="responsable" id="hiddenResponsable" value="<?php echo htmlspecialchars($orden['ResponsableGeneracion']); ?>">
+                <input type="hidden" name="firma" id="hiddenFirma" value="<?php echo htmlspecialchars($orden['Firma']); ?>">
                 <input type="hidden" name="numeroOrden" value="<?php echo htmlspecialchars($orden['NumeroOrden']); ?>">
 
                 <button type="submit" class="btn-download">
@@ -425,6 +455,35 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('formDescargarOrden').addEventListener('submit', function() {
+    const nombreFactura = document.getElementById('inputNombreFactura').value.trim();
+    const nitCiFactura = document.getElementById('inputNitCiFactura').value.trim();
+    const responsable = document.getElementById('inputResponsable').value.trim();
+    const firma = document.getElementById('inputFirma').value.trim();
+
+    // Volcar los datos editados a los campos ocultos que se envían al generador del PDF
+    document.getElementById('hiddenNombreFactura').value = nombreFactura;
+    document.getElementById('hiddenNitCiFactura').value = nitCiFactura;
+    document.getElementById('hiddenResponsable').value = responsable;
+    document.getElementById('hiddenFirma').value = firma;
+
+    // Guardar los datos de facturación en la orden (no bloquea la descarga del PDF)
+    fetch('ajax/ordenpago.ajax.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+            accion: 'actualizarFacturacion',
+            idOrdenPago: '<?php echo (int)$orden['IdOrdenPago']; ?>',
+            nombreFactura: nombreFactura,
+            nitCiFactura: nitCiFactura,
+            responsable: responsable,
+            firma: firma
+        })
+    }).catch(function() { /* no bloquea la generación del PDF si falla */ });
+});
+</script>
 
 </body>
 </html>

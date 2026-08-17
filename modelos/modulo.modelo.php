@@ -393,7 +393,9 @@ class ModuloModelo
                 SET nombremodulo = :nombremodulo,
                     codigomodulo = :codigomodulo,
                     costomodulo = :costomodulo,
-                    DocenteID = :docenteID
+                    DocenteID = :docenteID,
+                    FechaInicio = :fechainicio,
+                    FechaFinal = :fechafin
                 WHERE Idmodulo = :idmodulo AND ProgramaId = :programaID"
             );
             $stmt->bindParam(":idmodulo", $datos['idmodulo'], PDO::PARAM_INT);
@@ -408,6 +410,18 @@ class ModuloModelo
                 $stmt->bindParam(":docenteID", $datos['docenteID'], PDO::PARAM_INT);
             } else {
                 $stmt->bindValue(":docenteID", null, PDO::PARAM_NULL);
+            }
+
+            if (!empty($datos['fechainicio'])) {
+                $stmt->bindParam(":fechainicio", $datos['fechainicio'], PDO::PARAM_STR);
+            } else {
+                $stmt->bindValue(":fechainicio", null, PDO::PARAM_NULL);
+            }
+
+            if (!empty($datos['fechafin'])) {
+                $stmt->bindParam(":fechafin", $datos['fechafin'], PDO::PARAM_STR);
+            } else {
+                $stmt->bindValue(":fechafin", null, PDO::PARAM_NULL);
             }
 
             return $stmt->execute();

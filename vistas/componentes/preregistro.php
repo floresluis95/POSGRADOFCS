@@ -26,7 +26,14 @@ $listaPreregistrosInicial = (new OrdenPagoControladores())->ListarPreregistrosCo
 
 // Estudiantes ya registrados en la tabla `estudiante`, para poder elegir uno
 // existente en el PASO 1 en vez de crear siempre uno nuevo.
+// Se muestran del más reciente al más antiguo (EstudianteID DESC).
 $listaEstudiantesInicial = EstudiantesModelos::ListaEstudianteActivoModelo();
+usort($listaEstudiantesInicial, function ($a, $b) {
+    return (int)$b['EstudianteID'] - (int)$a['EstudianteID'];
+});
+
+// Sedes disponibles, para filtrar el select de programa en el PASO 2
+$sedesDisponibles = ProgramasModelos::ListarSedesModelo();
 
 function PintarFilaEstudiante($est)
 {
@@ -52,17 +59,20 @@ function PintarFilaPreregistro($pr)
         ? '<span class="badge badge-success">Programa Completo</span>'
         : '<span class="badge badge-primary">Solo Matrícula</span>';
 
+    $fechaCorta = !empty($pr['FechaGeneracion']) ? date('d/m/Y', strtotime($pr['FechaGeneracion'])) : '';
+
     $html = '<tr>';
-    $html .= '<td class="text-center">' . (int)$pr['idInscripcion'] . '</td>';
+    $html .= '<td class="text-center">' . (int)$pr['IdOrdenPago'] . '</td>';
     $html .= '<td>' . htmlspecialchars($nombreCompleto) . '</td>';
     $html .= '<td>' . htmlspecialchars($pr['Ci'] ?? '') . '</td>';
     $html .= '<td>' . htmlspecialchars($pr['NombrePrograma'] . ' (' . $pr['CodigoPrograma'] . ')') . '</td>';
     $html .= '<td>' . $tipo . '</td>';
-    $html .= '<td>' . htmlspecialchars($pr['FechaInscripcion'] ?? '') . '</td>';
+    $html .= '<td>' . htmlspecialchars($fechaCorta) . '</td>';
     $html .= '<td class="text-center">';
-    $html .= '<button type="button" class="btn btn-sm btn-info btn-ver-pdf" data-id="' . (int)$pr['idInscripcion'] . '" title="Ver Orden de Pago"><i class="fa fa-file-pdf-o"></i></button> ';
-    $html .= '<button type="button" class="btn btn-sm btn-warning btn-editar-preregistro" data-id="' . (int)$pr['idInscripcion'] . '" data-pagocompleto="' . (int)($pr['pagoCompleto'] ?? 0) . '" title="Editar"><i class="fa fa-edit"></i></button> ';
-    $html .= '<button type="button" class="btn btn-sm btn-danger btn-anular-preregistro" data-id="' . (int)$pr['idInscripcion'] . '" title="Anular"><i class="fa fa-trash"></i></button>';
+    $html .= '<button type="button" class="btn btn-sm btn-success btn-validar-voucher" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Validar Voucher e Inscribir"><i class="fa fa-check-circle"></i></button> ';
+    $html .= '<button type="button" class="btn btn-sm btn-info btn-ver-pdf" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Ver Orden de Pago"><i class="fa fa-file-pdf-o"></i></button> ';
+    $html .= '<button type="button" class="btn btn-sm btn-warning btn-editar-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" data-pagocompleto="' . (int)($pr['pagoCompleto'] ?? 0) . '" title="Editar"><i class="fa fa-edit"></i></button> ';
+    $html .= '<button type="button" class="btn btn-sm btn-danger btn-anular-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Anular"><i class="fa fa-trash"></i></button>';
     $html .= '</td></tr>';
 
     return $html;
@@ -148,39 +158,33 @@ kt-aside--fixed kt-page--loading">
 
                   <form method="POST" id="formPreregistro">
 
-                    <!-- PASO 1: SELECCIONAR ESTUDIANTE -->
-                    <div class="kt-portlet kt-portlet--height-fluid mb-4">
-                      <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <div class="kt-portlet__head-label">
-                          <h3 class="kt-portlet__head-title" style="color: white;">
-                            <i class="flaticon2-user-outline-symbol"></i> PASO 1: SELECCIONAR ESTUDIANTE
-                          </h3>
-                        </div>
-                      </div>
-                      <div class="kt-portlet__body">
+                  <div class="kt-portlet kt-portlet--height-fluid mb-3 preregistro-compacta">
+                    <div class="kt-portlet__body py-3">
+
+                      <!-- PASO 1: SELECCIONAR ESTUDIANTE -->
+                      <div class="preregistro-step">
+                        <div class="step-title"><span class="step-num">1</span> Estudiante</div>
+
                         <input type="hidden" name="idcliente" id="selectedEstudianteID" value="">
 
-                        <div id="bloqueNuevoEstudiante" class="py-3">
-                          <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
-                            <div class="form-group mb-0" style="min-width: 280px;">
-                              <label class="font-weight-bold mb-1">Buscar estudiante registrado:</label>
-                              <input type="text" class="form-control" id="buscarEstudianteExistente"
-                                     placeholder="Buscar por CI, nombre o apellido...">
-                            </div>
-                            <button type="button" class="btn btn-primary btn-lg mt-2" data-toggle="modal" data-target="#ModalInsertarEstudiante">
+                        <div id="bloqueNuevoEstudiante">
+                          <div class="d-flex justify-content-between align-items-center flex-wrap mb-2" style="gap: 10px;">
+                            <input type="text" class="form-control form-control-sm" id="buscarEstudianteExistente"
+                                   style="max-width: 320px;" placeholder="Buscar por CI, nombre o apellido...">
+                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#ModalInsertarEstudiante">
                               <i class="flaticon2-plus"></i> Nuevo Estudiante
                             </button>
                           </div>
 
-                          <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
-                            <table class="table table-striped table-bordered table-hover mb-0" id="tablaEstudiantesExistentes">
+                          <div class="table-responsive" style="max-height: 180px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px;">
+                            <table class="table table-sm table-hover mb-0" id="tablaEstudiantesExistentes">
                               <thead style="background: #f4f4f4; position: sticky; top: 0;">
                                 <tr>
                                   <th style="width: 15%;">CI</th>
                                   <th>Nombre Completo</th>
-                                  <th style="width: 20%;">Correo</th>
+                                  <th style="width: 22%;">Correo</th>
                                   <th style="width: 12%;">Celular</th>
-                                  <th class="text-center" style="width: 15%;">Acción</th>
+                                  <th class="text-center" style="width: 90px;">Acción</th>
                                 </tr>
                               </thead>
                               <tbody id="tablaEstudiantesExistentesBody">
@@ -196,169 +200,131 @@ kt-aside--fixed kt-page--loading">
                               </tbody>
                             </table>
                           </div>
-                          <small class="text-muted d-block mt-2">
-                            <i class="flaticon2-information"></i> Seleccione un estudiante de la lista o registre uno nuevo para continuar con el pre-registro.
-                          </small>
                         </div>
 
-                        <!-- Tabla de datos del estudiante -->
-                        <div id="tablaEstudiante" style="display: none; margin-top: 20px;">
-                          <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="font-weight-bold mb-0">
-                              <i class="flaticon2-information"></i> Estudiante Seleccionado
-                            </h5>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnCambiarEstudiante">
-                              <i class="flaticon2-cross"></i> Quitar / Registrar otro
+                        <!-- Resumen del estudiante seleccionado -->
+                        <div id="tablaEstudiante" class="chip-summary" style="display: none;">
+                          <div class="chip-summary-row">
+                            <span><i class="flaticon2-user-outline-symbol"></i> <strong id="datosNombre"></strong></span>
+                            <span>CI: <span id="datosCI"></span></span>
+                            <span id="datosCorreo"></span>
+                            <span id="datosCelular"></span>
+                            <button type="button" class="btn btn-xs btn-outline-secondary ml-auto" id="btnCambiarEstudiante">
+                              <i class="flaticon2-cross"></i> Cambiar
                             </button>
                           </div>
-                          <div class="table-responsive">
-                            <table class="table table-bordered table-hover">
-                              <tbody>
-                                <tr>
-                                  <th width="25%" style="background-color: #f8f9fa;">Nombre Completo:</th>
-                                  <td id="datosNombre"></td>
-                                  <th width="20%" style="background-color: #f8f9fa;">CI:</th>
-                                  <td id="datosCI"></td>
-                                </tr>
-                                <tr>
-                                  <th style="background-color: #f8f9fa;">Correo:</th>
-                                  <td id="datosCorreo"></td>
-                                  <th style="background-color: #f8f9fa;">Celular:</th>
-                                  <td id="datosCelular"></td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <!-- PASO 2: SELECCIONAR PROGRAMA -->
-                    <div class="kt-portlet kt-portlet--height-fluid mb-4" id="seccionPrograma" style="display: none;">
-                      <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <div class="kt-portlet__head-label">
-                          <h3 class="kt-portlet__head-title" style="color: white;">
-                            <i class="flaticon2-writing"></i> PASO 2: SELECCIONAR PROGRAMA
-                          </h3>
-                        </div>
-                      </div>
-                      <div class="kt-portlet__body">
+                      <hr class="step-divider">
+
+                      <!-- PASO 2: SELECCIONAR PROGRAMA -->
+                      <div class="preregistro-step" id="seccionPrograma" style="display: none;">
+                        <div class="step-title"><span class="step-num">2</span> Programa</div>
+
                         <div class="row">
-                          <div class="col-lg-4">
-                            <label class="font-weight-bold">Grado Académico:</label>
-                            <select class="form-control" id="gradoAcademico" name="gradoAcademico" required>
+                          <div class="col-lg-3 form-group mb-2">
+                            <label class="small font-weight-bold mb-1">Sede</label>
+                            <select class="form-control form-control-sm" id="sedePrograma" name="sedePrograma">
+                              <option value="">Todas las sedes</option>
+                              <?php foreach ($sedesDisponibles as $sedeOpcion): ?>
+                                <option value="<?php echo htmlspecialchars($sedeOpcion, ENT_QUOTES); ?>"><?php echo htmlspecialchars($sedeOpcion); ?></option>
+                              <?php endforeach; ?>
+                            </select>
+                          </div>
+                          <div class="col-lg-3 form-group mb-2">
+                            <label class="small font-weight-bold mb-1">Grado Académico</label>
+                            <select class="form-control form-control-sm" id="gradoAcademico" name="gradoAcademico" required>
                               <option value="">Seleccione el grado...</option>
                               <option value="DIPLOMADO">DIPLOMADO</option>
                               <option value="MAESTRIA">MAESTRÍA</option>
                               <option value="ESPECIALIDAD">ESPECIALIDAD</option>
                             </select>
                           </div>
-                          <div class="col-lg-8">
-                            <label class="font-weight-bold">Programa:</label>
-                            <select class="form-control" id="programa" name="programa" required>
+                          <div class="col-lg-6 form-group mb-2">
+                            <label class="small font-weight-bold mb-1">Programa</label>
+                            <select class="form-control form-control-sm" id="programa" name="programa" required>
                               <option value="">Seleccione un programa...</option>
                             </select>
                           </div>
                         </div>
 
-                        <!-- Tabla de datos del programa -->
-                        <div id="tablaPrograma" style="display: none; margin-top: 20px;">
-                          <h5 class="font-weight-bold mb-3">
-                            <i class="flaticon2-document"></i> Datos del Programa Seleccionado
-                          </h5>
-                          <div class="table-responsive">
-                            <table class="table table-bordered table-hover">
-                              <tbody>
-                                <tr>
-                                  <th width="25%" style="background-color: #f8f9fa;">Programa:</th>
-                                  <td id="proNombre"></td>
-                                  <th width="20%" style="background-color: #f8f9fa;">Código:</th>
-                                  <td id="proCodigo"></td>
-                                </tr>
-                                <tr>
-                                  <th style="background-color: #f8f9fa;">Grado:</th>
-                                  <td id="proGrado"></td>
-                                  <th style="background-color: #f8f9fa;">Duración:</th>
-                                  <td id="proDuracion"></td>
-                                </tr>
-                                <tr>
-                                  <th style="background-color: #f8f9fa;">Costo Matrícula:</th>
-                                  <td id="proMatricula" class="font-weight-bold text-primary"></td>
-                                  <th style="background-color: #f8f9fa;">Costo Programa:</th>
-                                  <td id="proPrograma" class="font-weight-bold text-primary"></td>
-                                </tr>
-                                <tr>
-                                  <th style="background-color: #f8f9fa;">Módulos:</th>
-                                  <td id="proModulos"></td>
-                                  <th style="background-color: #f8f9fa;">Sede:</th>
-                                  <td id="proSede"></td>
-                                </tr>
-                              </tbody>
-                            </table>
+                        <!-- Resumen del programa seleccionado -->
+                        <div id="tablaPrograma" class="chip-summary" style="display: none;">
+                          <div class="chip-summary-row flex-wrap">
+                            <span><strong id="proNombre"></strong> (<span id="proCodigo"></span>)</span>
+                            <span>Grado: <span id="proGrado"></span></span>
+                            <span>Duración: <span id="proDuracion"></span></span>
+                            <span>Matrícula: <strong class="text-primary" id="proMatricula"></strong></span>
+                            <span>Programa: <strong class="text-primary" id="proPrograma"></strong></span>
+                            <span>Módulos: <span id="proModulos"></span></span>
+                            <span>Sede: <span id="proSede"></span></span>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    <!-- PASO 3: ORDEN DE PAGO DE MATRÍCULA -->
-                    <div class="kt-portlet kt-portlet--height-fluid mb-4" id="seccionPago" style="display: none;">
-                      <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <div class="kt-portlet__head-label">
-                          <h3 class="kt-portlet__head-title" style="color: white;">
-                            <i class="flaticon2-crisp-icons"></i> PASO 3: ORDEN DE PAGO DE MATRÍCULA
-                          </h3>
-                        </div>
-                      </div>
-                      <div class="kt-portlet__body">
+                      <hr class="step-divider">
 
-                        <div class="alert alert-info">
-                            <h5><i class="flaticon2-information"></i> Pre-Registro: Orden de Pago de Matrícula</h5>
-                            <p class="mb-0">
-                                El pre-registro solo genera la orden de pago de la <strong>matrícula</strong> del programa seleccionado.
-                                El estudiante queda <strong>PENDIENTE</strong>; recién cuando cancele la matrícula se le podrá
-                                matricular formalmente en el programa (módulos, pago del programa, etc.).
-                            </p>
-                        </div>
+                      <!-- PASO 3: ORDEN DE PAGO DE MATRÍCULA -->
+                      <div class="preregistro-step" id="seccionPago" style="display: none;">
+                        <div class="step-title"><span class="step-num">3</span> Orden de Pago de Matrícula</div>
+
+                        <small class="text-muted d-block mb-2">
+                          <i class="flaticon2-information"></i> Solo se genera la orden de pago de la <strong>matrícula</strong>; el estudiante queda <strong>PENDIENTE</strong> hasta presentar el voucher.
+                        </small>
+
                         <div class="row">
-                            <div class="col-lg-4">
-                              <label class="font-weight-bold">Monto de Matrícula:</label>
-                              <div class="input-group input-group-lg">
+                            <div class="col-lg-4 form-group mb-2">
+                              <label class="small font-weight-bold mb-1">Tipo de Pago</label>
+                              <select class="form-control form-control-sm" id="tipoPago">
+                                <option value="REGULAR">Plan Regular (sin descuento)</option>
+                                <option value="CONTADO">Plan al Contado (con descuento)</option>
+                                <option value="GRUPAL">Plan Grupal (2+ inscritos)</option>
+                              </select>
+                            </div>
+                            <div class="col-lg-2 form-group mb-2" id="grupoDescuentoManual" style="display: none;">
+                              <label class="small font-weight-bold mb-1">% Descuento</label>
+                              <input type="number" class="form-control form-control-sm" id="porcentajeDescuentoInput" min="0" max="100" step="0.01" value="0">
+                            </div>
+                            <div class="col-lg-3 form-group mb-2">
+                              <label class="small font-weight-bold mb-1">Monto de Matrícula</label>
+                              <div class="input-group input-group-sm">
                                 <div class="input-group-prepend">
                                   <span class="input-group-text">Bs.</span>
                                 </div>
                                 <input type="text" class="form-control font-weight-bold" id="montoSoloMatricula" readonly>
                               </div>
                             </div>
-                            <div class="col-lg-4">
-                              <label class="font-weight-bold">Fecha de Orden:</label>
-                              <input type="date" class="form-control" name="fechaInscripcion" value="<?php echo date('Y-m-d'); ?>" required>
+                            <div class="col-lg-3 form-group mb-2">
+                              <label class="small font-weight-bold mb-1">Fecha de Orden</label>
+                              <input type="date" class="form-control form-control-sm" name="fechaInscripcion" value="<?php echo date('Y-m-d'); ?>" required>
                             </div>
                         </div>
+                        <small class="text-success font-weight-bold" id="chipDescuentoInfo" style="display: none;"></small>
 
                         <!-- Campos hidden -->
                         <input type="hidden" name="costoTotalPrograma" id="costoTotalPrograma" value="0">
                         <input type="hidden" name="costoMatriculaPrograma" id="costoMatriculaPrograma" value="0">
                         <input type="hidden" name="montoAPagar" id="montoAPagar" value="0">
-                        <input type="hidden" name="porcentajeDescuento" value="0">
-                        <input type="hidden" name="montoDescuento" value="0">
+                        <input type="hidden" name="porcentajeDescuento" id="porcentajeDescuentoHidden" value="0">
+                        <input type="hidden" name="montoDescuento" id="montoDescuentoHidden" value="0">
+                        <input type="hidden" name="tipoPago" id="tipoPagoHidden" value="PLAN REGULAR">
                         <input type="hidden" name="pagoCompleto" value="0">
                         <input type="hidden" name="paginaRedirect" value="preregistro">
 
                         <!-- Botones -->
-                        <hr class="my-4">
-                        <div class="row">
-                          <div class="col-lg-12 text-right">
-                            <button type="reset" class="btn btn-secondary btn-lg">
-                              <i class="flaticon2-reload"></i> Limpiar
-                            </button>
-                            <button type="submit" name="registrarOrdenPago" class="btn btn-success btn-lg">
-                              <i class="flaticon2-check-mark"></i> Registrar Pre-Registro
-                            </button>
-                          </div>
+                        <div class="text-right mt-2">
+                          <button type="reset" class="btn btn-sm btn-secondary">
+                            <i class="flaticon2-reload"></i> Limpiar
+                          </button>
+                          <button type="submit" name="registrarOrdenPago" class="btn btn-sm btn-success">
+                            <i class="flaticon2-check-mark"></i> Registrar Pre-Registro
+                          </button>
                         </div>
-
                       </div>
+
                     </div>
+                  </div>
 
                   </form>
 
@@ -615,7 +581,7 @@ kt-aside--fixed kt-page--loading">
           </button>
         </div>
         <form id="formEditarPreregistro">
-          <input type="hidden" name="idInscripcion" id="editIdInscripcion">
+          <input type="hidden" name="idOrdenPago" id="editIdOrdenPago">
           <input type="hidden" name="pagoCompleto" id="editPagoCompleto">
           <div class="modal-body">
             <div class="form-group">
@@ -641,6 +607,38 @@ kt-aside--fixed kt-page--loading">
           <div class="modal-footer" style="background-color: #f5f5f5; border-radius: 0 0 15px 15px;">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-success"><i class="flaticon2-check-mark"></i> Guardar Cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Validar Voucher de Matrícula (inscribe formalmente al estudiante) -->
+  <div class="modal fade" id="ModalValidarVoucher" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+        <div class="modal-header" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius: 15px 15px 0 0;">
+          <h5 class="modal-title"><i class="fa fa-check-circle"></i> Validar Voucher de Matrícula</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form id="formValidarVoucher">
+          <input type="hidden" name="idOrdenPago" id="validarIdOrdenPago">
+          <div class="modal-body">
+            <div class="alert alert-warning">
+              <i class="fa fa-exclamation-triangle"></i>
+              Verifique que la matrícula ya fue cancelada en caja antes de validar. Esta acción
+              <strong>inscribe formalmente</strong> al estudiante en el programa y no se puede deshacer desde aquí.
+            </div>
+            <div class="form-group">
+              <label class="font-weight-bold">N° de Voucher / Comprobante de Matrícula <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="numeroVoucher" id="validarNumeroVoucher" maxlength="25" required>
+            </div>
+          </div>
+          <div class="modal-footer" style="background-color: #f5f5f5; border-radius: 0 0 15px 15px;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> Validar e Inscribir</button>
           </div>
         </form>
       </div>
@@ -731,37 +729,87 @@ function iniciarPreregistro() {
     });
 
     // ============================================
-    // PASO 2: SELECCIONAR GRADO Y PROGRAMA
+    // PASO 2: SELECCIONAR SEDE, GRADO Y PROGRAMA
     // ============================================
-    $('#gradoAcademico').on('change', function() {
-        const grado = $(this).val();
+    function cargarProgramasPorSedeYGrado() {
+        const grado = $('#gradoAcademico').val();
+        const sede = $('#sedePrograma').val();
 
         $('#tablaPrograma').slideUp();
         $('#seccionPago').slideUp();
 
-        if (grado) {
-            $.ajax({
-                url: 'ajax/programa.ajax.php',
-                type: 'POST',
-                data: { grado: grado },
-                dataType: 'json',
-                success: function(response) {
-                    $('#programa').empty().append('<option value="">Seleccione un programa</option>');
-
-                    if (response.length > 0) {
-                        response.forEach(function(p) {
-                            $('#programa').append('<option value="' + p.ProgramaID + '">' + p.Codigo + ' - ' + p.NombrePrograma + '</option>');
-                        });
-                    }
-                },
-                error: function() {
-                    swal("Error", "No se pudieron obtener los programas", "error");
-                }
-            });
-        } else {
+        if (!grado) {
             $('#programa').empty().append('<option value="">Seleccione un grado primero</option>');
+            return;
         }
+
+        $.ajax({
+            url: 'ajax/programa.ajax.php',
+            type: 'POST',
+            data: { grado: grado, sede: sede },
+            dataType: 'json',
+            success: function(response) {
+                $('#programa').empty().append('<option value="">Seleccione un programa</option>');
+
+                if (response.length > 0) {
+                    response.forEach(function(p) {
+                        $('#programa').append('<option value="' + p.ProgramaID + '">' + p.Codigo + ' - ' + p.NombrePrograma + ' (' + (p.Sede || '') + ')</option>');
+                    });
+                }
+            },
+            error: function() {
+                swal("Error", "No se pudieron obtener los programas", "error");
+            }
+        });
+    }
+
+    $('#gradoAcademico').on('change', cargarProgramasPorSedeYGrado);
+    $('#sedePrograma').on('change', cargarProgramasPorSedeYGrado);
+
+    // ============================================
+    // PASO 3: TIPO DE PAGO (Regular / Contado / Grupal) Y DESCUENTO
+    // ============================================
+    function recalcularMontoMatricula() {
+        const costoBase = parseFloat($('#costoMatriculaPrograma').val()) || 0;
+        const tipoPago = $('#tipoPago').val();
+        let porcentaje = 0;
+
+        if (tipoPago === 'CONTADO' || tipoPago === 'GRUPAL') {
+            porcentaje = parseFloat($('#porcentajeDescuentoInput').val()) || 0;
+            if (porcentaje < 0) porcentaje = 0;
+            if (porcentaje > 100) porcentaje = 100;
+        }
+
+        const montoDescuento = Math.round((costoBase * porcentaje / 100) * 100) / 100;
+        const montoFinal = Math.round((costoBase - montoDescuento) * 100) / 100;
+
+        $('#montoSoloMatricula').val(montoFinal.toFixed(2));
+        $('#montoAPagar').val(montoFinal.toFixed(2));
+        $('#porcentajeDescuentoHidden').val(porcentaje.toFixed(2));
+        $('#montoDescuentoHidden').val(montoDescuento.toFixed(2));
+        $('#tipoPagoHidden').val($('#tipoPago option:selected').text());
+
+        if (montoDescuento > 0) {
+            $('#chipDescuentoInfo')
+                .text('Descuento aplicado: Bs. ' + montoDescuento.toFixed(2) + ' (' + porcentaje.toFixed(2) + '%)')
+                .show();
+        } else {
+            $('#chipDescuentoInfo').hide();
+        }
+    }
+
+    $('#tipoPago').on('change', function() {
+        const tipoPago = $(this).val();
+        if (tipoPago === 'CONTADO' || tipoPago === 'GRUPAL') {
+            $('#grupoDescuentoManual').show();
+        } else {
+            $('#grupoDescuentoManual').hide();
+            $('#porcentajeDescuentoInput').val(0);
+        }
+        recalcularMontoMatricula();
     });
+
+    $('#porcentajeDescuentoInput').on('input', recalcularMontoMatricula);
 
     $('#programa').on('change', function() {
         const programaId = $(this).val();
@@ -796,8 +844,8 @@ function iniciarPreregistro() {
                     $('#seccionPago').slideDown();
 
                     // El pre-registro SIEMPRE es orden de pago de matrícula (nunca programa completo)
-                    $('#montoSoloMatricula').val(costoMatricula.toFixed(2));
-                    $('#montoAPagar').val(costoMatricula.toFixed(2));
+                    // El monto final se recalcula según el plan de pago elegido (Regular/Contado/Grupal)
+                    recalcularMontoMatricula();
                 },
                 error: function() {
                     swal("Error", "No se pudieron obtener los detalles del programa", "error");
@@ -931,17 +979,20 @@ function iniciarPreregistro() {
                 ? '<span class="badge badge-success">Programa Completo</span>'
                 : '<span class="badge badge-primary">Solo Matrícula</span>';
 
+            const fechaCorta = pr.FechaGeneracion ? pr.FechaGeneracion.substring(0, 10).split('-').reverse().join('/') : '';
+
             html += '<tr>' +
                 '<td class="text-center">' + (idx + 1) + '</td>' +
                 '<td>' + nombreCompleto + '</td>' +
                 '<td>' + (pr.Ci || '') + '</td>' +
                 '<td>' + pr.NombrePrograma + ' (' + pr.CodigoPrograma + ')</td>' +
                 '<td>' + tipo + '</td>' +
-                '<td>' + pr.FechaInscripcion + '</td>' +
+                '<td>' + fechaCorta + '</td>' +
                 '<td class="text-center">' +
-                    '<button type="button" class="btn btn-sm btn-info btn-ver-pdf" data-id="' + pr.idInscripcion + '" title="Ver Orden de Pago"><i class="fa fa-file-pdf-o"></i></button> ' +
-                    '<button type="button" class="btn btn-sm btn-warning btn-editar-preregistro" data-id="' + pr.idInscripcion + '" data-pagocompleto="' + pr.pagoCompleto + '" title="Editar"><i class="fa fa-edit"></i></button> ' +
-                    '<button type="button" class="btn btn-sm btn-danger btn-anular-preregistro" data-id="' + pr.idInscripcion + '" title="Anular"><i class="fa fa-trash"></i></button>' +
+                    '<button type="button" class="btn btn-sm btn-success btn-validar-voucher" data-id="' + pr.IdOrdenPago + '" title="Validar Voucher e Inscribir"><i class="fa fa-check-circle"></i></button> ' +
+                    '<button type="button" class="btn btn-sm btn-info btn-ver-pdf" data-id="' + pr.IdOrdenPago + '" title="Ver Orden de Pago"><i class="fa fa-file-pdf-o"></i></button> ' +
+                    '<button type="button" class="btn btn-sm btn-warning btn-editar-preregistro" data-id="' + pr.IdOrdenPago + '" data-pagocompleto="' + pr.pagoCompleto + '" title="Editar"><i class="fa fa-edit"></i></button> ' +
+                    '<button type="button" class="btn btn-sm btn-danger btn-anular-preregistro" data-id="' + pr.IdOrdenPago + '" title="Anular"><i class="fa fa-trash"></i></button>' +
                 '</td>' +
             '</tr>';
         });
@@ -977,7 +1028,48 @@ function iniciarPreregistro() {
     // Ver PDF de la orden de pago
     $(document).on('click', '.btn-ver-pdf', function() {
         const id = $(this).data('id');
-        window.open('vistas/componentes/orden-pago-pdf.php?idinscripcion=' + id, '_blank');
+        window.open('vistas/componentes/orden-pago-pdf.php?idordenpago=' + id, '_blank');
+    });
+
+    // Abrir modal para validar el voucher de matrícula
+    $(document).on('click', '.btn-validar-voucher', function() {
+        const id = $(this).data('id');
+        $('#validarIdOrdenPago').val(id);
+        $('#validarNumeroVoucher').val('');
+        $('#ModalValidarVoucher').modal('show');
+    });
+
+    // Confirmar validación del voucher: inscribe formalmente y pasa a elegir
+    // el plan de pago del resto del programa
+    $('#formValidarVoucher').on('submit', function(e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: 'ajax/ordenpago.ajax.php',
+            type: 'POST',
+            data: $(this).serialize() + '&accion=validarVoucherMatricula',
+            dataType: 'json',
+            success: function(resp) {
+                if (resp.success) {
+                    $('#ModalValidarVoucher').modal('hide');
+                    swal({
+                        title: '¡Voucher validado!',
+                        text: 'El estudiante quedó inscrito formalmente. A continuación elija el plan de pago del resto del programa.',
+                        icon: 'success',
+                        buttons: false,
+                        timer: 2200
+                    }).then(function() {
+                        window.location.href = 'ordenpago?estudianteID=' + resp.estudianteID +
+                            '&programaID=' + resp.programaID + '&pagoCompleto=1';
+                    });
+                } else {
+                    swal('Error', resp.mensaje, 'error');
+                }
+            },
+            error: function() {
+                swal('Error', 'No se pudo validar el voucher', 'error');
+            }
+        });
     });
 
     // Abrir modal de edición precargado con los datos del preregistro
@@ -987,17 +1079,17 @@ function iniciarPreregistro() {
         $.ajax({
             url: 'ajax/ordenpago.ajax.php',
             type: 'POST',
-            data: { accion: 'obtenerPreregistro', idInscripcion: id },
+            data: { accion: 'obtenerPreregistro', idOrdenPago: id },
             dataType: 'json',
             success: function(resp) {
                 if (resp.success) {
                     const p = resp.preregistro;
-                    $('#editIdInscripcion').val(p.idInscripcion);
-                    $('#editPagoCompleto').val(p.pagoCompleto);
-                    $('#editMontoPagado').val(parseFloat(p.montoPagado).toFixed(2));
-                    $('#editPorcentajeDescuento').val(p.porcentajeDescuento || 0);
-                    $('#editMontoDescuento').val(p.montoDescuento || 0);
-                    $('#editFechaInscripcion').val(p.FechaInscripcion);
+                    $('#editIdOrdenPago').val(p.IdOrdenPago);
+                    $('#editPagoCompleto').val(p.PagoCompleto);
+                    $('#editMontoPagado').val(parseFloat(p.MontoFinal).toFixed(2));
+                    $('#editPorcentajeDescuento').val(p.PorcentajeDescuento || 0);
+                    $('#editMontoDescuento').val(p.MontoDescuento || 0);
+                    $('#editFechaInscripcion').val(p.FechaGeneracion ? p.FechaGeneracion.substring(0, 10) : '');
                     $('#ModalEditarPreregistro').modal('show');
                 } else {
                     swal('Error', resp.mensaje || 'No se pudo cargar el preregistro', 'error');
@@ -1048,7 +1140,7 @@ function iniciarPreregistro() {
                 $.ajax({
                     url: 'ajax/ordenpago.ajax.php',
                     type: 'POST',
-                    data: { accion: 'anularPreregistro', idInscripcion: id },
+                    data: { accion: 'anularPreregistro', idOrdenPago: id },
                     dataType: 'json',
                     success: function(resp) {
                         if (resp.success) {
@@ -1098,6 +1190,59 @@ if (document.readyState === 'loading') {
 .custom-control-label {
     cursor: pointer;
     width: 100%;
+}
+
+/* Formulario compacto de pre-registro */
+.preregistro-step {
+    padding: 6px 0;
+}
+
+.step-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #3b3f5c;
+    margin-bottom: 10px;
+}
+
+.step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    font-size: 12px;
+    margin-right: 6px;
+}
+
+.step-divider {
+    margin: 12px 0;
+    border-top: 1px dashed #dfe1ea;
+}
+
+.chip-summary {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #f4f6fb;
+    border-left: 3px solid #667eea;
+    border-radius: 6px;
+}
+
+.chip-summary-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 13px;
+    color: #444;
+}
+
+.btn-xs {
+    padding: 2px 8px;
+    font-size: 11px;
+    line-height: 1.5;
 }
 </style>
 

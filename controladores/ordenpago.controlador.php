@@ -14,13 +14,8 @@ class OrdenPagoControladores
      */
     public function RegistrarOrdenPagoControlador()
     {
-        error_log("=== RegistrarOrdenPagoControlador ejecutado ===");
-        error_log("POST data: " . print_r($_POST, true));
-
         if (isset($_POST["registrarOrdenPago"])) {
-            error_log("POST registrarOrdenPago detectado");
 
-<<<<<<< Updated upstream
             // Página a la que se debe regresar tras procesar el formulario (por defecto 'ordenpago')
             $paginaRedirect = isset($_POST['paginaRedirect'])
                 ? preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['paginaRedirect'])
@@ -30,27 +25,16 @@ class OrdenPagoControladores
             }
 
             // Validar datos requeridos
-=======
-            // Validar datos requeridos (incluyendo nuevos campos)
->>>>>>> Stashed changes
             if (empty($_POST['idcliente']) || empty($_POST['programa']) ||
-                empty($_POST['montoAPagar']) || empty($_POST['fechaInscripcion']) ||
-                empty($_POST['nombreFactura']) || empty($_POST['nitCiFactura']) ||
-                empty($_POST['responsable'])) {
+                empty($_POST['montoAPagar']) || empty($_POST['fechaInscripcion'])) {
 
                 echo '
                 <script>
-<<<<<<< Updated upstream
-                swal("ERROR!", "Todos los campos son obligatorios", "error")
-                .then(function () {
-                    location.href="' . $paginaRedirect . '";
-=======
                 window.addEventListener("load", function() {
                     swal("ERROR!", "Todos los campos obligatorios deben ser completados", "error")
                     .then(function () {
-                        location.href="ordenpago";
+                        location.href="' . $paginaRedirect . '";
                     });
->>>>>>> Stashed changes
                 });
                 </script>';
                 return;
@@ -59,7 +43,7 @@ class OrdenPagoControladores
             // Verificar si es pago completo
             $pagoCompleto = isset($_POST['pagoCompleto']) && $_POST['pagoCompleto'] == '1' ? 1 : 0;
 
-            // Obtener el monto que viene del formulario
+            // Obtener el monto que viene del formulario (ya con el descuento del plan de pago aplicado)
             $montoDesdeFormulario = floatval($_POST['montoAPagar']);
 
             if ($pagoCompleto) {
@@ -73,19 +57,41 @@ class OrdenPagoControladores
                 $montoPagado = $montoDesdeFormulario;
             }
 
-            // Obtener descuento aplicado (si existe)
+            // Obtener descuento aplicado (si existe), según el plan de pago elegido
             $porcentajeDescuento = isset($_POST['porcentajeDescuento']) ? floatval($_POST['porcentajeDescuento']) : 0;
             $montoDescuentoAplicado = isset($_POST['montoDescuento']) ? floatval($_POST['montoDescuento']) : 0;
+            $tipoPago = isset($_POST['tipoPago']) ? htmlspecialchars(trim($_POST['tipoPago'])) : 'PLAN REGULAR';
 
-            // Capturar campos de facturación
-            $nombreFactura = htmlspecialchars(trim($_POST['nombreFactura']));
-            $nitCiFactura = htmlspecialchars(trim($_POST['nitCiFactura']));
-            $responsable = htmlspecialchars(trim($_POST['responsable']));
+            $estudianteID = (int)$_POST['idcliente'];
+
+            // Campos de facturación: si el formulario no los envía (el pre-registro no los pide),
+            // se derivan de los datos del propio estudiante.
+            $nombreFactura = !empty($_POST['nombreFactura']) ? htmlspecialchars(trim($_POST['nombreFactura'])) : '';
+            $nitCiFactura = !empty($_POST['nitCiFactura']) ? htmlspecialchars(trim($_POST['nitCiFactura'])) : '';
+
+            if ($nombreFactura === '' || $nitCiFactura === '') {
+                $pdo = Conexion::Conectar();
+                $stmtEst = $pdo->prepare("SELECT Nombre, Apaterno, Amaterno, Ci, Complemento FROM estudiante WHERE EstudianteID = :id");
+                $stmtEst->bindParam(':id', $estudianteID, PDO::PARAM_INT);
+                $stmtEst->execute();
+                $est = $stmtEst->fetch(PDO::FETCH_ASSOC);
+
+                if ($est) {
+                    if ($nombreFactura === '') {
+                        $nombreFactura = trim($est['Apaterno'] . ' ' . $est['Amaterno'] . ' ' . $est['Nombre']);
+                    }
+                    if ($nitCiFactura === '') {
+                        $nitCiFactura = $est['Ci'] . (!empty($est['Complemento']) ? '-' . $est['Complemento'] : '');
+                    }
+                }
+            }
+
+            $responsable = isset($_POST['responsable']) ? htmlspecialchars(trim($_POST['responsable'])) : '';
             $firma = isset($_POST['firma']) ? htmlspecialchars(trim($_POST['firma'])) : '';
 
             // Preparar datos para insertar
             $datosOrdenPago = array(
-                "EstudianteID" => (int)$_POST['idcliente'],
+                "EstudianteID" => $estudianteID,
                 "ProgramaID" => (int)$_POST['programa'],
                 "costomatricula" => $montoMatricula,
                 "montoPagado" => $montoPagado,
@@ -96,69 +102,43 @@ class OrdenPagoControladores
                 "NombreFactura" => $nombreFactura,
                 "NitCiFactura" => $nitCiFactura,
                 "Responsable" => $responsable,
-                "Firma" => $firma
+                "Firma" => $firma,
+                "Observaciones" => $tipoPago
             );
-
-            error_log("Datos de orden de pago preparados: " . print_r($datosOrdenPago, true));
 
             // Registrar en la base de datos
             $resultado = OrdenPagoModelos::RegistrarPreregistroModelo($datosOrdenPago);
 
             if ($resultado['status'] == 'exitoso') {
-                // Redirigir a la vista de orden generada
                 $idOrdenPago = $resultado['idOrdenPago'];
 
                 echo '
                 <script>
-<<<<<<< Updated upstream
-                swal({
-                    title: "EXITOSO!",
-                    text: "Orden de Pago registrada. Se generará el PDF automáticamente.",
-                    icon: "success",
-                    buttons: false,
-                    timer: 2000
-                }).then(function () {
-                    window.open("vistas/componentes/orden-pago-pdf.php?idinscripcion=' . $idInscripcion . '", "_blank");
-                    location.href="' . $paginaRedirect . '";
-=======
                 window.addEventListener("load", function() {
-                    swal("EXITOSO!", "Orden de Pago registrada correctamente", "success")
+                    swal("¡Pre-registro exitoso!", "La orden de pago de matrícula se generó correctamente.", "success")
                     .then(function () {
-                        window.location.href = "orden-generada&id=' . $idOrdenPago . '";
+                        window.location.href = "orden-generada?id=' . $idOrdenPago . '";
                     });
->>>>>>> Stashed changes
                 });
                 </script>';
             } elseif ($resultado['status'] == 'duplicado') {
                 echo '
                 <script>
-<<<<<<< Updated upstream
-                swal("ERROR!", "El estudiante ya está inscrito en este programa", "error")
-                .then(function () {
-                    location.href="' . $paginaRedirect . '";
-=======
                 window.addEventListener("load", function() {
-                    swal("ERROR!", "El estudiante ya está inscrito en este programa", "error")
+                    swal("ERROR!", "' . addslashes($resultado['mensaje']) . '", "error")
                     .then(function () {
-                        location.href="ordenpago";
+                        location.href="' . $paginaRedirect . '";
                     });
->>>>>>> Stashed changes
                 });
                 </script>';
             } else {
                 echo '
                 <script>
-<<<<<<< Updated upstream
-                swal("ERROR!", "No se pudo registrar la orden de pago: ' . $resultado['mensaje'] . '", "error")
-                .then(function () {
-                    location.href="' . $paginaRedirect . '";
-=======
                 window.addEventListener("load", function() {
-                    swal("ERROR!", "No se pudo registrar la orden de pago: ' . $resultado['mensaje'] . '", "error")
+                    swal("ERROR!", "No se pudo registrar la orden de pago: ' . addslashes($resultado['mensaje']) . '", "error")
                     .then(function () {
-                        location.href="ordenpago";
+                        location.href="' . $paginaRedirect . '";
                     });
->>>>>>> Stashed changes
                 });
                 </script>';
             }
@@ -249,11 +229,5 @@ class OrdenPagoControladores
 
         return trim($resultado);
     }
-}
-
-// Ejecutar controlador si viene de POST
-if (isset($_POST["registrarOrdenPago"])) {
-    $ordenPago = new OrdenPagoControladores();
-    $ordenPago->RegistrarOrdenPagoControlador();
 }
 ?>

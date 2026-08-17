@@ -20,7 +20,7 @@ class ProgramasModelos
     }
 
     // Buscar programas con filtros
-    public static function BuscarProgramasConFiltros($grado = null, $fechaInicio = null, $fechaFin = null)
+    public static function BuscarProgramasConFiltros($grado = null, $fechaInicio = null, $fechaFin = null, $sede = null)
     {
         $sql = "SELECT * FROM programa WHERE Estado = 1";
         $params = array();
@@ -29,6 +29,12 @@ class ProgramasModelos
         if ($grado !== null && $grado !== '') {
             $sql .= " AND GradoAcademico = :grado";
             $params[':grado'] = $grado;
+        }
+
+        // Filtro por sede
+        if ($sede !== null && $sede !== '') {
+            $sql .= " AND Sede = :sede";
+            $params[':sede'] = $sede;
         }
 
         // Filtro por fecha inicio (desde)

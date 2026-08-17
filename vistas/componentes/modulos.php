@@ -1042,6 +1042,8 @@ $(document).ready(function() {
         $('#editCodigoModulo').val(datosModulo.codigomodulo);
         $('#editNombreModulo').val(datosModulo.nombremodulo);
         $('#editCostoModulo').val(datosModulo.costomodulo || 0);
+        $('#editFechaInicio').val(datosModulo.fechainicio || '');
+        $('#editFechaFinal').val(datosModulo.fechafin || '');
         $('#editNombrePrograma').text(datosModulo.nombrePrograma);
         $('#editCodigoPrograma').text(datosModulo.codigoPrograma);
 

@@ -10,10 +10,10 @@ if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
     die('Acceso denegado');
 }
 
-// Verificar ID de inscripción
-$idinscripcion = isset($_GET['idinscripcion']) ? intval($_GET['idinscripcion']) : 0;
-if ($idinscripcion === 0) {
-    die('ID de inscripción inválido');
+// Verificar ID de la orden de pago
+$idOrdenPago = isset($_GET['idordenpago']) ? intval($_GET['idordenpago']) : 0;
+if ($idOrdenPago === 0) {
+    die('ID de orden de pago inválido');
 }
 
 require_once '../../modelos/conexion.modelo.php';
@@ -24,20 +24,21 @@ date_default_timezone_set("America/La_Paz");
 try {
     $pdo = Conexion::Conectar();
 
-    // Obtener datos del preregistro
+    // Obtener datos del preregistro (tabla ordenpago; no depende de estudianteprograma)
     $stmt = $pdo->prepare("
         SELECT
             e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Complemento, e.Exp, e.Correo, e.Celular,
-            ep.idInscripcion, ep.ProgramaID, ep.FechaInscripcion, ep.costomatricula,
-            ep.montoPagado, ep.montoDescuento, ep.porcentajeDescuento, ep.pagoCompleto,
+            op.IdOrdenPago, op.NumeroOrden, op.ProgramaID, op.FechaGeneracion, op.CostoMatricula as costomatricula,
+            op.MontoFinal as montoPagado, op.MontoDescuento as montoDescuento,
+            op.PorcentajeDescuento as porcentajeDescuento, op.PagoCompleto as pagoCompleto,
             p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico,
             p.Costo AS CostoTotalPrograma, p.CostoMatricula, p.Version, p.NumeroTramite, p.Sede, p.FechaInicio
-        FROM estudianteprograma ep
-        INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
-        INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
-        WHERE ep.idInscripcion = :idinscripcion
+        FROM ordenpago op
+        INNER JOIN estudiante e ON op.EstudianteID = e.EstudianteID
+        INNER JOIN programa p ON op.ProgramaID = p.ProgramaID
+        WHERE op.IdOrdenPago = :idordenpago
     ");
-    $stmt->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
+    $stmt->bindParam(':idordenpago', $idOrdenPago, PDO::PARAM_INT);
     $stmt->execute();
     $datos = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -64,8 +65,8 @@ try {
         $costoOriginal = $costoMatriculaBD;
     }
 
-    // Número de orden
-    $numeroOrden = 'ORD-' . str_pad($idinscripcion, 6, '0', STR_PAD_LEFT) . '-' . date('Ymd');
+    // Número de orden (el generado al crear la orden)
+    $numeroOrden = $datos['NumeroOrden'];
 
     // Crear PDF
     $pdf = new TCPDF('P', 'mm', 'LETTER', true, 'UTF-8', false);

@@ -72,6 +72,14 @@ switch ($accion) {
         anularPreregistro();
         break;
 
+    case 'actualizarFacturacion':
+        actualizarFacturacion();
+        break;
+
+    case 'validarVoucherMatricula':
+        validarVoucherMatricula();
+        break;
+
     default:
         echo json_encode([
             'success' => false,
@@ -392,12 +400,12 @@ function listarPreregistros()
  */
 function obtenerPreregistro()
 {
-    if (empty($_POST['idInscripcion'])) {
+    if (empty($_POST['idOrdenPago'])) {
         echo json_encode(['success' => false, 'mensaje' => 'El ID del preregistro es requerido']);
         return;
     }
 
-    $preregistro = OrdenPagoModelos::ObtenerPreregistroModelo((int)$_POST['idInscripcion']);
+    $preregistro = OrdenPagoModelos::ObtenerPreregistroModelo((int)$_POST['idOrdenPago']);
 
     if ($preregistro) {
         echo json_encode(['success' => true, 'preregistro' => $preregistro]);
@@ -411,14 +419,14 @@ function obtenerPreregistro()
  */
 function actualizarPreregistro()
 {
-    if (empty($_POST['idInscripcion']) || !isset($_POST['montoPagado']) || empty($_POST['fechaInscripcion'])) {
+    if (empty($_POST['idOrdenPago']) || !isset($_POST['montoPagado']) || empty($_POST['fechaInscripcion'])) {
         echo json_encode(['success' => false, 'mensaje' => 'Faltan datos requeridos']);
         return;
     }
 
     $datos = [
-        'idInscripcion'       => (int)$_POST['idInscripcion'],
-        'costomatricula'      => isset($_POST['pagoCompleto']) && $_POST['pagoCompleto'] == '1' ? 0 : floatval($_POST['montoPagado']),
+        'idOrdenPago'         => (int)$_POST['idOrdenPago'],
+        'pagoCompleto'        => isset($_POST['pagoCompleto']) ? (int)$_POST['pagoCompleto'] : 0,
         'montoPagado'         => floatval($_POST['montoPagado']),
         'porcentajeDescuento' => isset($_POST['porcentajeDescuento']) ? floatval($_POST['porcentajeDescuento']) : 0,
         'montoDescuento'      => isset($_POST['montoDescuento']) ? floatval($_POST['montoDescuento']) : 0,
@@ -437,15 +445,62 @@ function actualizarPreregistro()
  */
 function anularPreregistro()
 {
-    if (empty($_POST['idInscripcion'])) {
+    if (empty($_POST['idOrdenPago'])) {
         echo json_encode(['success' => false, 'mensaje' => 'El ID del preregistro es requerido']);
         return;
     }
 
-    $resultado = OrdenPagoModelos::AnularPreregistroModelo((int)$_POST['idInscripcion']);
+    $resultado = OrdenPagoModelos::AnularPreregistroModelo((int)$_POST['idOrdenPago']);
     echo json_encode([
         'success' => $resultado['status'] === 'exitoso',
         'mensaje' => $resultado['mensaje']
+    ]);
+}
+
+/**
+ * Actualizar los datos de facturación de una orden ya generada (pantalla "orden-generada")
+ */
+function actualizarFacturacion()
+{
+    if (empty($_POST['idOrdenPago'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El ID de la orden es requerido']);
+        return;
+    }
+
+    $datos = [
+        'idOrdenPago'  => (int)$_POST['idOrdenPago'],
+        'nombreFactura' => isset($_POST['nombreFactura']) ? htmlspecialchars(trim($_POST['nombreFactura'])) : '',
+        'nitCiFactura'  => isset($_POST['nitCiFactura']) ? htmlspecialchars(trim($_POST['nitCiFactura'])) : '',
+        'responsable'   => isset($_POST['responsable']) ? htmlspecialchars(trim($_POST['responsable'])) : '',
+        'firma'         => isset($_POST['firma']) ? htmlspecialchars(trim($_POST['firma'])) : '',
+    ];
+
+    $ok = OrdenPagoModelos::ActualizarFacturacionOrdenModelo($datos);
+    echo json_encode([
+        'success' => $ok,
+        'mensaje' => $ok ? 'Datos de facturación actualizados' : 'No se pudieron actualizar los datos de facturación'
+    ]);
+}
+
+/**
+ * Validar el voucher de la matrícula ya cancelada e inscribir formalmente al estudiante
+ * (única escritura en estudianteprograma en todo el flujo de preregistro).
+ */
+function validarVoucherMatricula()
+{
+    if (empty($_POST['idOrdenPago']) || empty($_POST['numeroVoucher'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El N° de voucher es requerido']);
+        return;
+    }
+
+    $numeroVoucher = htmlspecialchars(trim($_POST['numeroVoucher']));
+    $resultado = OrdenPagoModelos::ValidarVoucherMatriculaModelo((int)$_POST['idOrdenPago'], $numeroVoucher);
+
+    echo json_encode([
+        'success' => $resultado['status'] === 'exitoso',
+        'mensaje' => $resultado['mensaje'],
+        'estudianteID' => $resultado['estudianteID'] ?? null,
+        'programaID' => $resultado['programaID'] ?? null
     ]);
 }
 ?>

@@ -9,10 +9,11 @@ $rutaBase = dirname(__DIR__);
 require_once $rutaBase . "/controladores/programa.controlador.php";
 require_once $rutaBase . "/modelos/programa.modelo.php";
 
-// Filtrar programas por grado académico
+// Filtrar programas por grado académico (y opcionalmente por sede)
 if(isset($_POST["grado"])) {
     $grado = $_POST["grado"];
-    $respuesta = ProgramasModelos::BuscarProgramasConFiltros($grado);
+    $sede = isset($_POST["sede"]) ? $_POST["sede"] : null;
+    $respuesta = ProgramasModelos::BuscarProgramasConFiltros($grado, null, null, $sede);
 
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode($respuesta);
