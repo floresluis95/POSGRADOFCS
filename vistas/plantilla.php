@@ -169,7 +169,7 @@ ob_start();
   <?php
   // No cargar SweetAlert2 en páginas que usan SweetAlert v1
   $action = isset($_GET['action']) ? $_GET['action'] : '';
-  if ($action !== 'ordenpago' && $action !== 'orden-generada' && $action !== 'preregistro'):
+  if ($action !== 'ordenpago' && $action !== 'orden-generada' && $action !== 'preregistro' && $action !== 'inscripcion'):
   ?>
   <script src="vistas/recursos/assets/vendors/general/sweetalert2/dist/sweetalert2.min.js" type="text/javascript"></script>
   <script src="vistas/recursos/assets/vendors/custom/js/vendors/sweetalert2.init.js" type="text/javascript"></script>
@@ -225,7 +225,7 @@ var KTAppOptions = {"colors":{"state":{"brand":"#591df1","light":"#ffffff","dark
                         <script src="vistas/recursos/assets/js/demo9/pages/crud/forms/widgets/bootstrap-datepicker.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/demo9/pages/crud/forms/widgets/bootstrap-touchspin.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/demo9/scripts.bundle.js" type="text/javascript"></script>
-                        <?php if ($action !== 'ordenpago' && $action !== 'orden-generada' && $action !== 'preregistro'): ?>
+                        <?php if ($action !== 'ordenpago' && $action !== 'orden-generada' && $action !== 'preregistro' && $action !== 'inscripcion'): ?>
                         <script src="vistas/recursos/assets/js/demo9/pages/components/extended/sweetalert2.js" type="text/javascript"></script>
                         <?php endif; ?>
                         <script src="vistas/recursos/assets/js/demo9/pages/components/extended/filtrar.select.js" type="text/javascript"></script>

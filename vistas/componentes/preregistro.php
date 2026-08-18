@@ -23,9 +23,6 @@ $listaProfesionesInicial = ProfesionModelos::ListaprofesionModelos();
 function PintarFilaPreregistro($pr)
 {
     $nombreCompleto = trim(($pr['Apaterno'] ?? '') . ' ' . ($pr['Amaterno'] ?? '') . ' ' . ($pr['Nombre'] ?? ''));
-    $tipo = ((int)($pr['pagoCompleto'] ?? 0) === 1)
-        ? '<span class="badge badge-success">Programa Completo</span>'
-        : '<span class="badge badge-primary">Solo Matrícula</span>';
 
     $fechaCorta = !empty($pr['FechaGeneracion']) ? date('d/m/Y', strtotime($pr['FechaGeneracion'])) : '';
 
@@ -34,14 +31,12 @@ function PintarFilaPreregistro($pr)
     $html .= '<td>' . htmlspecialchars($nombreCompleto) . '</td>';
     $html .= '<td>' . htmlspecialchars($pr['Ci'] ?? '') . '</td>';
     $html .= '<td>' . htmlspecialchars($pr['NombrePrograma'] . ' (' . $pr['CodigoPrograma'] . ')') . '</td>';
-    $html .= '<td>' . $tipo . '</td>';
     $html .= '<td>' . htmlspecialchars($fechaCorta) . '</td>';
-    $html .= '<td class="text-center">';
-    $html .= '<button type="button" class="btn btn-sm btn-success btn-validar-voucher" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Validar Voucher e Inscribir"><i class="fa fa-check-circle"></i></button> ';
-    $html .= '<button type="button" class="btn btn-sm btn-info btn-ver-pdf" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Ver Orden de Pago"><i class="fa fa-file-pdf-o"></i></button> ';
-    $html .= '<button type="button" class="btn btn-sm btn-warning btn-editar-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" data-pagocompleto="' . (int)($pr['pagoCompleto'] ?? 0) . '" title="Editar"><i class="fa fa-edit"></i></button> ';
-    $html .= '<button type="button" class="btn btn-sm btn-danger btn-anular-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Anular"><i class="fa fa-trash"></i></button>';
-    $html .= '</td></tr>';
+    $html .= '<td class="text-center"><div class="acciones-preregistro">';
+    $html .= '<button type="button" class="btn btn-accion-texto btn-success btn-generar-orden" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Generar Orden de Pago"><i class="fa fa-file-invoice"></i> Generar Orden</button>';
+    $html .= '<button type="button" class="btn btn-accion btn-warning btn-editar-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" data-pagocompleto="' . (int)($pr['pagoCompleto'] ?? 0) . '" title="Editar"><i class="fa fa-edit"></i></button>';
+    $html .= '<button type="button" class="btn btn-accion btn-danger btn-anular-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Anular"><i class="fa fa-trash"></i></button>';
+    $html .= '</div></td></tr>';
 
     return $html;
 }
@@ -401,15 +396,14 @@ kt-aside--fixed kt-page--loading">
                               <th>Estudiante</th>
                               <th style="width: 110px;">CI</th>
                               <th>Programa</th>
-                              <th style="width: 140px;">Tipo</th>
                               <th style="width: 110px;">Fecha</th>
-                              <th class="text-center" style="width: 140px;">Acciones</th>
+                              <th class="text-center" style="width: 170px;">Acciones</th>
                             </tr>
                           </thead>
                           <tbody id="tablaPreregistrosBody">
                             <?php
                               if (empty($listaPreregistrosInicial)) {
-                                  echo '<tr><td colspan="7" class="text-center text-muted"><i class="flaticon2-information"></i> No hay preregistros pendientes</td></tr>';
+                                  echo '<tr><td colspan="6" class="text-center text-muted"><i class="flaticon2-information"></i> No hay preregistros pendientes</td></tr>';
                               } else {
                                   foreach ($listaPreregistrosInicial as $pr) {
                                       echo PintarFilaPreregistro($pr);
@@ -479,32 +473,49 @@ kt-aside--fixed kt-page--loading">
     </div>
   </div>
 
-  <!-- Modal: Validar Voucher de Matrícula (inscribe formalmente al estudiante) -->
-  <div class="modal fade" id="ModalValidarVoucher" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Modal: Generar Orden de Pago (datos para la factura) -->
+  <div class="modal fade" id="ModalGenerarOrdenPago" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
         <div class="modal-header" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius: 15px 15px 0 0;">
-          <h5 class="modal-title"><i class="fa fa-check-circle"></i> Validar Voucher de Matrícula</h5>
+          <h5 class="modal-title"><i class="fa fa-file-invoice"></i> Generar Orden de Pago</h5>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <form id="formValidarVoucher">
-          <input type="hidden" name="idOrdenPago" id="validarIdOrdenPago">
+        <form id="formGenerarOrdenPago" method="POST" target="_blank"
+              action="vistas/componentes/generar-orden-pago-pdf.php">
+          <input type="hidden" name="idOrdenPago" id="generarIdOrdenPago">
+          <input type="hidden" name="responsable" id="generarResponsable">
+          <input type="hidden" name="firma" id="generarFirma">
+          <!-- Datos que se completan automáticamente (estudiante, programa, monto) para el PDF -->
+          <input type="hidden" name="apaterno" id="generarApaterno">
+          <input type="hidden" name="amaterno" id="generarAmaterno">
+          <input type="hidden" name="nombres" id="generarNombres">
+          <input type="hidden" name="correo" id="generarCorreo">
+          <input type="hidden" name="ci" id="generarCi">
+          <input type="hidden" name="celular" id="generarCelular">
+          <input type="hidden" name="programa" id="generarPrograma">
+          <input type="hidden" name="montoNumeral" id="generarMontoNumeral">
+          <input type="hidden" name="montoLiteral" id="generarMontoLiteral">
+          <input type="hidden" name="version" id="generarVersion">
+          <input type="hidden" name="numeroTramite" id="generarNumeroTramite">
           <div class="modal-body">
-            <div class="alert alert-warning">
-              <i class="fa fa-exclamation-triangle"></i>
-              Verifique que la matrícula ya fue cancelada en caja antes de validar. Esta acción
-              <strong>inscribe formalmente</strong> al estudiante en el programa y no se puede deshacer desde aquí.
+            <small class="text-muted d-block mb-3">
+              <i class="flaticon2-information"></i> Estos datos se usarán para la factura de la orden de pago. El resto de los datos (estudiante, programa y monto) se completan automáticamente.
+            </small>
+            <div class="form-group">
+              <label class="font-weight-bold">Nombre para Factura <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="nombreFactura" id="generarNombreFactura" required>
             </div>
             <div class="form-group">
-              <label class="font-weight-bold">N° de Voucher / Comprobante de Matrícula <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" name="numeroVoucher" id="validarNumeroVoucher" maxlength="25" required>
+              <label class="font-weight-bold">NIT o C.I. <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="nitCiFactura" id="generarNitCiFactura" required>
             </div>
           </div>
           <div class="modal-footer" style="background-color: #f5f5f5; border-radius: 0 0 15px 15px;">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> Validar e Inscribir</button>
+            <button type="submit" class="btn btn-success"><i class="fa fa-file-invoice"></i> Generar Orden de Pago</button>
           </div>
         </form>
       </div>
@@ -900,17 +911,13 @@ function iniciarPreregistro() {
 
     function renderTablaPreregistros(lista) {
         if (!lista || lista.length === 0) {
-            $('#tablaPreregistrosBody').html('<tr><td colspan="7" class="text-center text-muted"><i class="flaticon2-information"></i> No hay preregistros pendientes</td></tr>');
+            $('#tablaPreregistrosBody').html('<tr><td colspan="6" class="text-center text-muted"><i class="flaticon2-information"></i> No hay preregistros pendientes</td></tr>');
             return;
         }
 
         let html = '';
         lista.forEach(function(pr, idx) {
             const nombreCompleto = ((pr.Apaterno || '') + ' ' + (pr.Amaterno || '') + ' ' + (pr.Nombre || '')).trim();
-            const tipo = (pr.pagoCompleto == 1)
-                ? '<span class="badge badge-success">Programa Completo</span>'
-                : '<span class="badge badge-primary">Solo Matrícula</span>';
-
             const fechaCorta = pr.FechaGeneracion ? pr.FechaGeneracion.substring(0, 10).split('-').reverse().join('/') : '';
 
             html += '<tr>' +
@@ -918,14 +925,12 @@ function iniciarPreregistro() {
                 '<td>' + nombreCompleto + '</td>' +
                 '<td>' + (pr.Ci || '') + '</td>' +
                 '<td>' + pr.NombrePrograma + ' (' + pr.CodigoPrograma + ')</td>' +
-                '<td>' + tipo + '</td>' +
                 '<td>' + fechaCorta + '</td>' +
-                '<td class="text-center">' +
-                    '<button type="button" class="btn btn-sm btn-success btn-validar-voucher" data-id="' + pr.IdOrdenPago + '" title="Validar Voucher e Inscribir"><i class="fa fa-check-circle"></i></button> ' +
-                    '<button type="button" class="btn btn-sm btn-info btn-ver-pdf" data-id="' + pr.IdOrdenPago + '" title="Ver Orden de Pago"><i class="fa fa-file-pdf-o"></i></button> ' +
-                    '<button type="button" class="btn btn-sm btn-warning btn-editar-preregistro" data-id="' + pr.IdOrdenPago + '" data-pagocompleto="' + pr.pagoCompleto + '" title="Editar"><i class="fa fa-edit"></i></button> ' +
-                    '<button type="button" class="btn btn-sm btn-danger btn-anular-preregistro" data-id="' + pr.IdOrdenPago + '" title="Anular"><i class="fa fa-trash"></i></button>' +
-                '</td>' +
+                '<td class="text-center"><div class="acciones-preregistro">' +
+                    '<button type="button" class="btn btn-accion-texto btn-success btn-generar-orden" data-id="' + pr.IdOrdenPago + '" title="Generar Orden de Pago"><i class="fa fa-file-invoice"></i> Generar Orden</button>' +
+                    '<button type="button" class="btn btn-accion btn-warning btn-editar-preregistro" data-id="' + pr.IdOrdenPago + '" data-pagocompleto="' + pr.pagoCompleto + '" title="Editar"><i class="fa fa-edit"></i></button>' +
+                    '<button type="button" class="btn btn-accion btn-danger btn-anular-preregistro" data-id="' + pr.IdOrdenPago + '" title="Anular"><i class="fa fa-trash"></i></button>' +
+                '</div></td>' +
             '</tr>';
         });
 
@@ -933,7 +938,7 @@ function iniciarPreregistro() {
     }
 
     function cargarPreregistros() {
-        $('#tablaPreregistrosBody').html('<tr><td colspan="7" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
+        $('#tablaPreregistrosBody').html('<tr><td colspan="6" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
 
         $.ajax({
             url: 'ajax/ordenpago.ajax.php',
@@ -944,11 +949,11 @@ function iniciarPreregistro() {
                 if (resp.success) {
                     renderTablaPreregistros(resp.preregistros);
                 } else {
-                    $('#tablaPreregistrosBody').html('<tr><td colspan="7" class="text-center text-danger">Error al cargar los preregistros</td></tr>');
+                    $('#tablaPreregistrosBody').html('<tr><td colspan="6" class="text-center text-danger">Error al cargar los preregistros</td></tr>');
                 }
             },
             error: function() {
-                $('#tablaPreregistrosBody').html('<tr><td colspan="7" class="text-center text-danger">Error al cargar los preregistros</td></tr>');
+                $('#tablaPreregistrosBody').html('<tr><td colspan="6" class="text-center text-danger">Error al cargar los preregistros</td></tr>');
             }
         });
     }
@@ -957,51 +962,67 @@ function iniciarPreregistro() {
     // así que aquí solo se usa cargarPreregistros() para refrescar (botón, tras editar/anular).
     $('#btnRefrescarPreregistros').on('click', cargarPreregistros);
 
-    // Ver PDF de la orden de pago
-    $(document).on('click', '.btn-ver-pdf', function() {
+    // Abrir modal para generar la orden de pago (pide datos de facturación; el resto
+    // de los datos necesarios para el PDF se traen y se guardan en campos ocultos)
+    $(document).on('click', '.btn-generar-orden', function() {
         const id = $(this).data('id');
-        window.open('vistas/componentes/orden-pago-pdf.php?idordenpago=' + id, '_blank');
-    });
-
-    // Abrir modal para validar el voucher de matrícula
-    $(document).on('click', '.btn-validar-voucher', function() {
-        const id = $(this).data('id');
-        $('#validarIdOrdenPago').val(id);
-        $('#validarNumeroVoucher').val('');
-        $('#ModalValidarVoucher').modal('show');
-    });
-
-    // Confirmar validación del voucher: inscribe formalmente y pasa a elegir
-    // el plan de pago del resto del programa
-    $('#formValidarVoucher').on('submit', function(e) {
-        e.preventDefault();
 
         $.ajax({
             url: 'ajax/ordenpago.ajax.php',
             type: 'POST',
-            data: $(this).serialize() + '&accion=validarVoucherMatricula',
+            data: { accion: 'obtenerPreregistro', idOrdenPago: id },
             dataType: 'json',
             success: function(resp) {
                 if (resp.success) {
-                    $('#ModalValidarVoucher').modal('hide');
-                    swal({
-                        title: '¡Voucher validado!',
-                        text: 'El estudiante quedó inscrito formalmente. A continuación elija el plan de pago del resto del programa.',
-                        icon: 'success',
-                        buttons: false,
-                        timer: 2200
-                    }).then(function() {
-                        window.location.href = 'ordenpago?estudianteID=' + resp.estudianteID +
-                            '&programaID=' + resp.programaID + '&pagoCompleto=1';
-                    });
+                    const p = resp.preregistro;
+                    $('#generarIdOrdenPago').val(p.IdOrdenPago);
+                    $('#generarNombreFactura').val(p.NombreFactura || (p.Apaterno + ' ' + p.Amaterno + ' ' + p.Nombre).trim());
+                    $('#generarNitCiFactura').val(p.NitCiFactura || p.CiCompleto);
+                    $('#generarResponsable').val(p.ResponsableGeneracion || '');
+                    $('#generarFirma').val(p.Firma || '');
+
+                    $('#generarApaterno').val(p.Apaterno || '');
+                    $('#generarAmaterno').val(p.Amaterno || '');
+                    $('#generarNombres').val(p.Nombre || '');
+                    $('#generarCorreo').val(p.Correo || '');
+                    $('#generarCi').val(p.CiCompleto || '');
+                    $('#generarCelular').val(p.Celular || '');
+                    $('#generarPrograma').val(p.ProgramaTexto || '');
+                    $('#generarMontoNumeral').val(parseFloat(p.MontoFinal).toFixed(2));
+                    $('#generarMontoLiteral').val(p.MontoLiteral || '');
+                    $('#generarVersion').val(p.Version || '');
+                    $('#generarNumeroTramite').val(p.NumeroTramite || '');
+
+                    $('#ModalGenerarOrdenPago').modal('show');
                 } else {
-                    swal('Error', resp.mensaje, 'error');
+                    swal('Error', resp.mensaje || 'No se pudo cargar el preregistro', 'error');
                 }
             },
             error: function() {
-                swal('Error', 'No se pudo validar el voucher', 'error');
+                swal('Error', 'No se pudo cargar el preregistro', 'error');
             }
         });
+    });
+
+    // Al enviar: guarda los datos de facturación por AJAX (en paralelo) y deja que el
+    // formulario haga su envío normal hacia el generador de PDF (target="_blank"),
+    // igual que en orden-generada.php, para que el navegador no bloquee la apertura.
+    $('#formGenerarOrdenPago').on('submit', function() {
+        $.ajax({
+            url: 'ajax/ordenpago.ajax.php',
+            type: 'POST',
+            data: {
+                accion: 'actualizarFacturacion',
+                idOrdenPago: $('#generarIdOrdenPago').val(),
+                nombreFactura: $('#generarNombreFactura').val(),
+                nitCiFactura: $('#generarNitCiFactura').val(),
+                responsable: $('#generarResponsable').val(),
+                firma: $('#generarFirma').val()
+            }
+        }).catch(function() { /* no bloquea la generación del PDF si falla */ });
+
+        $('#ModalGenerarOrdenPago').modal('hide');
+        // No se hace preventDefault: el formulario sigue su envío normal hacia el PDF
     });
 
     // Abrir modal de edición precargado con los datos del preregistro
@@ -1175,6 +1196,41 @@ if (document.readyState === 'loading') {
     padding: 2px 8px;
     font-size: 11px;
     line-height: 1.5;
+}
+
+.acciones-preregistro {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.btn-accion {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1;
+}
+
+.btn-accion-texto {
+    height: 30px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    color: #ffffff;
 }
 </style>
 

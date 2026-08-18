@@ -13,9 +13,11 @@ class OrdenPagoModelos
      * inscripción pasa a ser real. La orden de pago pasa a Estado = 'CONFIRMADO'.
      * @param int $idOrdenPago
      * @param string $numeroVoucher
+     * @param string|null $fechaInscripcion
+     * @param string|null $fotoVoucher Contenido binario de la imagen del voucher (opcional)
      * @return array
      */
-    public static function ValidarVoucherMatriculaModelo($idOrdenPago, $numeroVoucher)
+    public static function ValidarVoucherMatriculaModelo($idOrdenPago, $numeroVoucher, $fechaInscripcion = null, $fotoVoucher = null)
     {
         try {
             $pdo = Conexion::Conectar();
@@ -50,13 +52,15 @@ class OrdenPagoModelos
             }
 
             // Inscripción formal: única escritura en estudianteprograma
+            $fechaInscripcionFinal = !empty($fechaInscripcion) ? $fechaInscripcion : date('Y-m-d');
+
             $stmtInsert = $pdo->prepare(
                 "INSERT INTO estudianteprograma
                 (EstudianteID, ProgramaID, costomatricula, montoPagado, pagoCompleto,
-                 porcentajeDescuento, montoDescuento, nvauchermatricula, FechaInscripcion, Estado)
+                 porcentajeDescuento, montoDescuento, nvauchermatricula, FechaInscripcion, foto, Estado)
                 VALUES
                 (:estudianteID, :programaID, :costomatricula, :montoPagado, :pagoCompleto,
-                 :porcentajeDescuento, :montoDescuento, :nvauchermatricula, CURDATE(), 'ACTIVO')"
+                 :porcentajeDescuento, :montoDescuento, :nvauchermatricula, :fechaInscripcion, :foto, 'ACTIVO')"
             );
             $stmtInsert->bindParam(":estudianteID", $orden['EstudianteID'], PDO::PARAM_INT);
             $stmtInsert->bindParam(":programaID", $orden['ProgramaID'], PDO::PARAM_INT);
@@ -66,6 +70,8 @@ class OrdenPagoModelos
             $stmtInsert->bindParam(":porcentajeDescuento", $orden['PorcentajeDescuento']);
             $stmtInsert->bindParam(":montoDescuento", $orden['MontoDescuento']);
             $stmtInsert->bindParam(":nvauchermatricula", $numeroVoucher, PDO::PARAM_STR);
+            $stmtInsert->bindParam(":fechaInscripcion", $fechaInscripcionFinal, PDO::PARAM_STR);
+            $stmtInsert->bindParam(":foto", $fotoVoucher, PDO::PARAM_LOB);
 
             if (!$stmtInsert->execute()) {
                 $pdo->rollBack();
@@ -352,6 +358,59 @@ class OrdenPagoModelos
     }
 
     /**
+     * Buscar preregistros pendientes (para validar voucher en Inscripción) por CI,
+     * nombre o apellidos del estudiante.
+     * @param string $termino
+     * @return array
+     */
+    public static function BuscarPreregistrosPendientesModelo($termino)
+    {
+        try {
+            $like = '%' . $termino . '%';
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    op.IdOrdenPago,
+                    op.NumeroOrden,
+                    op.EstudianteID,
+                    op.ProgramaID,
+                    op.MontoFinal as montoPagado,
+                    op.PagoCompleto as pagoCompleto,
+                    op.Observaciones,
+                    op.FechaGeneracion,
+                    e.Nombre,
+                    e.Apaterno,
+                    e.Amaterno,
+                    e.Ci,
+                    p.NombrePrograma,
+                    p.Codigo as CodigoPrograma
+                FROM ordenpago op
+                INNER JOIN estudiante e ON op.EstudianteID = e.EstudianteID
+                INNER JOIN programa p ON op.ProgramaID = p.ProgramaID
+                WHERE op.Estado = 'PENDIENTE'
+                AND (
+                    e.Ci LIKE :like1
+                    OR e.Nombre LIKE :like2
+                    OR e.Apaterno LIKE :like3
+                    OR e.Amaterno LIKE :like4
+                    OR CONCAT(e.Apaterno, ' ', e.Amaterno, ' ', e.Nombre) LIKE :like5
+                )
+                ORDER BY op.FechaGeneracion DESC
+                LIMIT 30"
+            );
+            $stmt->bindParam(":like1", $like, PDO::PARAM_STR);
+            $stmt->bindParam(":like2", $like, PDO::PARAM_STR);
+            $stmt->bindParam(":like3", $like, PDO::PARAM_STR);
+            $stmt->bindParam(":like4", $like, PDO::PARAM_STR);
+            $stmt->bindParam(":like5", $like, PDO::PARAM_STR);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en BuscarPreregistrosPendientesModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Obtener un preregistro puntual (para precargar el modal de edición)
      * @param int $idOrdenPago
      * @return array|null
@@ -361,18 +420,40 @@ class OrdenPagoModelos
         try {
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT
-                    IdOrdenPago,
-                    EstudianteID,
-                    ProgramaID,
-                    FechaGeneracion,
-                    CostoMatricula,
-                    MontoFinal,
-                    PagoCompleto,
-                    PorcentajeDescuento,
-                    MontoDescuento,
-                    Estado
-                FROM ordenpago
-                WHERE IdOrdenPago = :idOrdenPago AND Estado = 'PENDIENTE'"
+                    op.IdOrdenPago,
+                    op.NumeroOrden,
+                    op.EstudianteID,
+                    op.ProgramaID,
+                    op.FechaGeneracion,
+                    op.CostoMatricula,
+                    op.MontoFinal,
+                    op.PagoCompleto,
+                    op.PorcentajeDescuento,
+                    op.MontoDescuento,
+                    op.NombreFactura,
+                    op.NitCiFactura,
+                    op.ResponsableGeneracion,
+                    op.Firma,
+                    op.Observaciones,
+                    op.Estado,
+                    e.Nombre,
+                    e.Apaterno,
+                    e.Amaterno,
+                    e.Ci,
+                    e.Complemento,
+                    e.Exp,
+                    e.Correo,
+                    e.Celular,
+                    p.NombrePrograma,
+                    p.Codigo AS CodigoPrograma,
+                    p.GradoAcademico,
+                    p.Sede,
+                    p.Version,
+                    p.NumeroTramite
+                FROM ordenpago op
+                INNER JOIN estudiante e ON op.EstudianteID = e.EstudianteID
+                INNER JOIN programa p ON op.ProgramaID = p.ProgramaID
+                WHERE op.IdOrdenPago = :idOrdenPago AND op.Estado = 'PENDIENTE'"
             );
             $stmt->bindParam(":idOrdenPago", $idOrdenPago, PDO::PARAM_INT);
             $stmt->execute();

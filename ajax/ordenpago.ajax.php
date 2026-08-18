@@ -88,6 +88,10 @@ switch ($accion) {
         validarVoucherMatricula();
         break;
 
+    case 'buscarPreregistrosPendientes':
+        buscarPreregistrosPendientes();
+        break;
+
     default:
         echo json_encode([
             'success' => false,
@@ -531,7 +535,7 @@ function listarPreregistros()
 }
 
 /**
- * Obtener un preregistro puntual (para precargar el modal de edición)
+ * Obtener un preregistro puntual (para precargar el modal de edición / generar la orden de pago)
  */
 function obtenerPreregistro()
 {
@@ -543,10 +547,77 @@ function obtenerPreregistro()
     $preregistro = OrdenPagoModelos::ObtenerPreregistroModelo((int)$_POST['idOrdenPago']);
 
     if ($preregistro) {
+        // Campos calculados para imprimir la Orden de Pago (formato oficial UTO)
+        $preregistro['CiCompleto'] = trim(
+            $preregistro['Ci'] . (!empty($preregistro['Complemento']) ? '-' . $preregistro['Complemento'] : '') .
+            ' ' . $preregistro['Exp']
+        );
+        $preregistro['MontoLiteral'] = numeroALetrasOrdenPago((float)$preregistro['MontoFinal']);
+        $preregistro['ProgramaTexto'] = 'PROGRAMA DE POSGRADO EN LA ' . strtoupper($preregistro['GradoAcademico']) .
+            ' EN ' . strtoupper($preregistro['NombrePrograma']) .
+            (!empty($preregistro['Version']) ? ' "' . strtoupper($preregistro['Version']) . '"' : '') .
+            ' ' . ((int)$preregistro['PagoCompleto'] === 1 ? 'PROGRAMA COMPLETO' : 'MATRICULA');
+
         echo json_encode(['success' => true, 'preregistro' => $preregistro]);
     } else {
         echo json_encode(['success' => false, 'mensaje' => 'No se encontró el preregistro (o ya no está pendiente)']);
     }
+}
+
+/**
+ * Convertir un monto numérico a su representación literal en bolivianos (para la Orden de Pago)
+ */
+function numeroALetrasOrdenPago($numero)
+{
+    $entero = (int)floor($numero);
+    $decimales = (int)round(($numero - $entero) * 100);
+
+    $unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
+    $decenas = ['', '', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
+    $especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+    $centenas = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
+
+    $convertirEntero = function ($num) use (&$convertirEntero, $unidades, $decenas, $especiales, $centenas) {
+        if ($num == 0) return 'CERO';
+        if ($num == 100) return 'CIEN';
+
+        $resultado = '';
+
+        if ($num >= 1000000) {
+            $millones = (int)floor($num / 1000000);
+            $resultado .= ($millones == 1) ? 'UN MILLON ' : $convertirEntero($millones) . ' MILLONES ';
+            $num %= 1000000;
+        }
+
+        if ($num >= 1000) {
+            $miles = (int)floor($num / 1000);
+            $resultado .= ($miles == 1) ? 'MIL ' : $convertirEntero($miles) . ' MIL ';
+            $num %= 1000;
+        }
+
+        if ($num >= 100) {
+            $resultado .= $centenas[(int)floor($num / 100)] . ' ';
+            $num %= 100;
+        }
+
+        if ($num >= 10 && $num < 20) {
+            $resultado .= $especiales[$num - 10] . ' ';
+        } elseif ($num >= 20) {
+            $resultado .= $decenas[(int)floor($num / 10)];
+            if ($num % 10 > 0) $resultado .= ' Y ' . $unidades[$num % 10];
+            $resultado .= ' ';
+        } elseif ($num > 0) {
+            $resultado .= $unidades[$num] . ' ';
+        }
+
+        return trim($resultado);
+    };
+
+    $letras = $convertirEntero($entero);
+
+    return $decimales > 0
+        ? strtoupper($letras . ' CON ' . $decimales . '/100 BOLIVIANOS')
+        : strtoupper($letras . ' 00/100 BOLIVIANOS');
 }
 
 /**
@@ -620,6 +691,7 @@ function actualizarFacturacion()
 /**
  * Validar el voucher de la matrícula ya cancelada e inscribir formalmente al estudiante
  * (única escritura en estudianteprograma en todo el flujo de preregistro).
+ * Se usa desde Inscripción; acepta opcionalmente una foto del voucher (multipart/form-data).
  */
 function validarVoucherMatricula()
 {
@@ -629,7 +701,32 @@ function validarVoucherMatricula()
     }
 
     $numeroVoucher = htmlspecialchars(trim($_POST['numeroVoucher']));
-    $resultado = OrdenPagoModelos::ValidarVoucherMatriculaModelo((int)$_POST['idOrdenPago'], $numeroVoucher);
+    $fechaInscripcion = !empty($_POST['fechaInscripcion']) ? htmlspecialchars(trim($_POST['fechaInscripcion'])) : null;
+
+    $fotoVoucher = null;
+    if (isset($_FILES['fotoVoucher']) && $_FILES['fotoVoucher']['error'] === UPLOAD_ERR_OK) {
+        $tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $tipoArchivo = $_FILES['fotoVoucher']['type'];
+        $tamanioMaximo = 5 * 1024 * 1024; // 5MB
+
+        if (!in_array($tipoArchivo, $tiposPermitidos)) {
+            echo json_encode(['success' => false, 'mensaje' => 'Formato de imagen no permitido. Solo JPG, PNG, GIF o WEBP']);
+            return;
+        }
+        if ($_FILES['fotoVoucher']['size'] > $tamanioMaximo) {
+            echo json_encode(['success' => false, 'mensaje' => 'La imagen es muy grande. Máximo 5MB']);
+            return;
+        }
+
+        $fotoVoucher = file_get_contents($_FILES['fotoVoucher']['tmp_name']);
+    }
+
+    $resultado = OrdenPagoModelos::ValidarVoucherMatriculaModelo(
+        (int)$_POST['idOrdenPago'],
+        $numeroVoucher,
+        $fechaInscripcion,
+        $fotoVoucher
+    );
 
     echo json_encode([
         'success' => $resultado['status'] === 'exitoso',
@@ -637,5 +734,22 @@ function validarVoucherMatricula()
         'estudianteID' => $resultado['estudianteID'] ?? null,
         'programaID' => $resultado['programaID'] ?? null
     ]);
+}
+
+/**
+ * Buscar preregistros pendientes por CI, nombre o apellidos (usado en Inscripción
+ * para localizar al estudiante cuyo voucher de matrícula se va a validar).
+ */
+function buscarPreregistrosPendientes()
+{
+    $termino = isset($_POST['termino']) ? trim($_POST['termino']) : '';
+
+    if ($termino === '' || mb_strlen($termino) < 2) {
+        echo json_encode(['success' => false, 'mensaje' => 'Ingrese al menos 2 caracteres para buscar']);
+        return;
+    }
+
+    $resultados = OrdenPagoModelos::BuscarPreregistrosPendientesModelo($termino);
+    echo json_encode(['success' => true, 'resultados' => $resultados]);
 }
 ?>

@@ -1,6 +1,7 @@
 <?php
 /**
- * Generar Orden de Pago en PDF usando TCPDF - Con Copia
+ * Generar Orden de Pago en PDF (formato oficial UTO - Coordinación de Posgrado)
+ * Se imprimen dos copias (ORIGINAL y COPIA) en una sola hoja carta.
  */
 
 // Iniciar sesión
@@ -20,9 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     die('Método no permitido - Se esperaba POST');
 }
 
-// Log de datos recibidos para debugging
-error_log("PDF: Datos POST recibidos: " . print_r($_POST, true));
-
 // Incluir TCPDF
 require_once __DIR__ . '/../../vendor/tecnickcom/tcpdf/tcpdf.php';
 
@@ -34,340 +32,300 @@ $correo = $_POST['correo'] ?? '';
 $ci = $_POST['ci'] ?? '';
 $celular = $_POST['celular'] ?? '';
 $programa = $_POST['programa'] ?? '';
-$modulo = $_POST['modulo'] ?? '';
 $montoNumeral = $_POST['montoNumeral'] ?? '';
 $montoLiteral = $_POST['montoLiteral'] ?? '';
 $version = $_POST['version'] ?? '';
 $numeroTramite = $_POST['numeroTramite'] ?? '';
-$cuentaAuxiliar = $_POST['cuentaAuxiliar'] ?? '';
 $nombreFactura = $_POST['nombreFactura'] ?? '';
 $nitCiFactura = $_POST['nitCiFactura'] ?? '';
-$responsable = $_POST['responsable'] ?? '';
-$firma = $_POST['firma'] ?? '';
 
-// Verificar si es orden múltiple
-$esMultiple = isset($_POST['esMultiple']) && $_POST['esMultiple'] === 'true';
-$modulos = [];
-$numeroOrden = $_POST['numeroOrden'] ?? '';
-
-if ($esMultiple) {
-    // Decodificar JSON de módulos
-    $modulosJSON = $_POST['modulosJSON'] ?? '[]';
-    $modulos = json_decode($modulosJSON, true);
-    if (!is_array($modulos)) {
-        $modulos = [];
-    }
-}
-
-// Nombre completo del estudiante
 $nombreCompleto = trim("$apaterno $amaterno $nombres");
 
-// Fecha y hora actual
-$fechaActual = date('d/m/Y');
-$horaActual = date('H:i:s');
+// Colores
+$colorEtiqueta = [214, 106, 20]; // naranja (etiquetas del formato oficial)
+$colorTexto = [30, 30, 30];
+
+/**
+ * Dibuja un bloque completo de la orden de pago (se usa dos veces: original y copia)
+ */
+function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $colorTexto)
+{
+    extract($datos);
+
+    $page_width = $pdf->GetPageWidth();
+    $margin = 10;
+    $x_left = $margin;
+    $content_width = $page_width - (2 * $margin);
+
+    $pdf->SetY($yInicio);
+
+    // ========================================
+    // CABECERA
+    // ========================================
+    $imagen_izquierda = '../../extensiones/imagenespdf/logouto.png';
+    $imagen_derecha = '../../extensiones/imagenespdf/logofcs.png';
+
+    $width_img = 13;
+    if (file_exists($imagen_izquierda)) {
+        $pdf->Image($imagen_izquierda, $x_left, $yInicio, $width_img);
+    }
+    if (file_exists($imagen_derecha)) {
+        $pdf->Image($imagen_derecha, $page_width - $margin - $width_img, $yInicio, $width_img);
+    }
+
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetY($yInicio);
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->SetX($x_left);
+    $pdf->Cell($content_width, 4.2, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
+
+    $pdf->SetFont('helvetica', 'B', 8);
+    $pdf->SetX($x_left);
+    $pdf->Cell($content_width, 3.8, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C');
+
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetX($x_left);
+    $pdf->Cell($content_width, 3.4, 'COORDINACION DE POSGRADO-ODONTOLOGIA', 0, 1, 'C');
+
+    $pdf->SetFont('helvetica', '', 6);
+    $pdf->SetX($x_left);
+    $pdf->Cell($content_width, 3, 'Av. Del Minero Edificio San Agustín II (Ex Almacenes COMIBOL) Telf: 5237317 - Fax 5247110 - Oruro - Bolivia', 0, 1, 'C');
+
+    if ($esCopia) {
+        // Se dibuja la etiqueta arriba a la derecha (junto al logo) sin perder la posición Y actual
+        $y_actual = $pdf->GetY();
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->SetTextColor(200, 0, 0);
+        $pdf->SetXY($page_width - $margin - 25, $yInicio);
+        $pdf->Cell(25, 3, '** COPIA **', 0, 0, 'R');
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->SetY($y_actual);
+    }
+
+    $pdf->SetLineWidth(0.5);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->Line($x_left, $pdf->GetY() + 0.8, $page_width - $margin, $pdf->GetY() + 0.8);
+    $pdf->Ln(1.6);
+
+    // ========================================
+    // TÍTULO
+    // ========================================
+    $pdf->SetX($x_left);
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Cell($content_width, 6, 'ORDEN DE PAGO EN CAJA DE POSGRADO', 1, 1, 'C');
+
+    // ========================================
+    // DATOS DEL POSGRADUANTE
+    // ========================================
+    $W_ENCABEZADO = 36;
+    $W_TOTAL_DATOS = $content_width - $W_ENCABEZADO;
+    $W_CELDA = $W_TOTAL_DATOS / 3;
+    $H_FILA_TITULO = 3.5;
+    $H_FILA_VALOR = 4.5;
+    $H_TOTAL = ($H_FILA_TITULO + $H_FILA_VALOR) * 2;
+
+    $y_bloque = $pdf->GetY();
+
+    $pdf->SetFont('helvetica', 'BI', 6.5);
+    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    $pdf->SetXY($x_left, $y_bloque);
+    $pdf->MultiCell($W_ENCABEZADO, $H_TOTAL, 'NOMBRE COMPLETO DEL POSGRADUANTE:', 1, 'L', false, 0, '', '', true, 0, false, true, $H_TOTAL, 'M');
+
+    $x_tabla = $x_left + $W_ENCABEZADO;
+
+    $pdf->SetXY($x_tabla, $y_bloque);
+    $pdf->SetFont('helvetica', 'BI', 6);
+    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO PATERNO', 1, 0, 'L');
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO MATERNO', 1, 0, 'L');
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'NOMBRE (S)', 1, 1, 'L');
+
+    $pdf->SetX($x_tabla);
+    $pdf->SetFont('helvetica', 'B', 7.5);
+    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $apaterno, 1, 0, 'L');
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $amaterno, 1, 0, 'L');
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $nombres, 1, 1, 'L');
+
+    $pdf->SetX($x_tabla);
+    $pdf->SetFont('helvetica', 'BI', 6);
+    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'CORREO ELECTRONICO', 1, 0, 'L');
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'C.I.', 1, 0, 'L');
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'N° DE CELULAR:', 1, 1, 'L');
+
+    $pdf->SetX($x_tabla);
+    $pdf->SetFont('helvetica', 'B', 7.5);
+    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $correo, 1, 0, 'L');
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $ci, 1, 0, 'L');
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $celular, 1, 1, 'L');
+
+    $pdf->SetY($y_bloque + $H_TOTAL);
+
+    // ========================================
+    // DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO
+    // ========================================
+    $pdf->SetX($x_left);
+    $pdf->SetFont('helvetica', 'B', 8.5);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Cell($content_width, 5.5, 'DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO', 1, 1, 'C');
+
+    $W_PROGRAMA = $content_width * 0.62;
+    $W_DERECHA = $content_width - $W_PROGRAMA;
+    $H_ROW_A = 4;
+    $H_ROW_B = 7;
+    $H_PROGRAMA = $H_ROW_A + $H_ROW_B;
+
+    $y_prog = $pdf->GetY();
+
+    // Fila A: etiqueta "PROGRAMA:" (izq) / "Versión y/o" + valor (der)
+    $pdf->SetXY($x_left, $y_prog);
+    $pdf->SetFont('helvetica', 'BI', 6);
+    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    $pdf->Cell($W_PROGRAMA, $H_ROW_A, 'PROGRAMA:', 1, 0, 'L');
+
+    $pdf->Cell($W_DERECHA * 0.42, $H_ROW_A, 'Versión y/o', 1, 0, 'L');
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
+    $pdf->Cell($W_DERECHA * 0.58, $H_ROW_A, $version, 1, 1, 'L');
+
+    // Fila B: texto del programa (izq, multilinea) / "Cuenta auxiliar" + valor (der)
+    $pdf->SetXY($x_left, $y_prog + $H_ROW_A);
+    $pdf->SetFont('helvetica', 'BI', 6.5);
+    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
+    $pdf->MultiCell($W_PROGRAMA, $H_ROW_B, $programa, 1, 'L', false, 0, '', '', true, 0, false, true, $H_ROW_B, 'M');
+
+    $pdf->SetXY($x_left + $W_PROGRAMA, $y_prog + $H_ROW_A);
+    $pdf->SetFont('helvetica', 'BI', 6);
+    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    $pdf->Cell($W_DERECHA * 0.42, $H_ROW_B, 'Cuenta auxiliar', 1, 0, 'L');
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
+    $pdf->Cell($W_DERECHA * 0.58, $H_ROW_B, $numeroTramite, 1, 1, 'L');
+
+    $pdf->SetY($y_prog + $H_PROGRAMA);
+
+    // Fila MONTO / LITERAL (en línea)
+    $pdf->SetX($x_left);
+    $pdf->SetFont('helvetica', 'BI', 6);
+    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    $pdf->Cell(18, 5.5, 'MONTO:', 1, 0, 'L');
+    $pdf->SetFont('helvetica', 'B', 7.5);
+    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
+    $pdf->Cell(28, 5.5, $montoNumeral, 1, 0, 'L');
+    $pdf->SetFont('helvetica', 'BI', 6);
+    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    $pdf->Cell(18, 5.5, 'LITERAL:', 1, 0, 'L');
+    $pdf->SetFont('helvetica', 'BI', 6.5);
+    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
+    $pdf->Cell($content_width - 18 - 28 - 18, 5.5, $montoLiteral, 1, 1, 'L');
+
+    // ========================================
+    // DATOS PARA LA EMISIÓN DE FACTURA
+    // ========================================
+    $pdf->SetX($x_left);
+    $pdf->SetFont('helvetica', 'B', 8.5);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Cell($content_width, 5.5, 'DATOS PARA LA EMISIÓN DE FACTURA', 1, 1, 'C');
+
+    $pdf->SetX($x_left);
+    $pdf->SetFont('helvetica', 'BI', 6);
+    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    $pdf->Cell(38, 5.5, 'NOMBRE DE LA FACTURA:', 1, 0, 'L');
+    $pdf->SetFont('helvetica', 'B', 7.5);
+    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
+    $pdf->Cell($content_width * 0.58 - 38, 5.5, $nombreFactura, 1, 0, 'L');
+    $pdf->SetFont('helvetica', 'BI', 6);
+    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    $pdf->Cell(20, 5.5, 'NIT Ó C.I.:', 1, 0, 'L');
+    $pdf->SetFont('helvetica', 'B', 7.5);
+    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
+    $pdf->Cell($content_width - ($content_width * 0.58) - 20, 5.5, $nitCiFactura, 1, 1, 'L');
+
+    // ========================================
+    // DATOS PARA DEPÓSITO EN BANCO UNIÓN
+    // ========================================
+    $pdf->SetX($x_left);
+    $pdf->SetFont('helvetica', 'B', 8.5);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Cell($content_width, 5.5, 'DATOS PARA DEPOSITO EN BANCO UNION', 1, 1, 'C');
+
+    $W_BANCO_IZQ = $content_width * 0.55;
+    $W_BANCO_DER = $content_width - $W_BANCO_IZQ;
+
+    $pdf->SetX($x_left);
+    $pdf->SetFillColor(253, 235, 208);
+    $pdf->SetFont('helvetica', 'BI', 6);
+    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    $pdf->Cell($W_BANCO_IZQ, 4.5, 'DENOMINACION DE LA CUENTA', 1, 0, 'L', true);
+    $pdf->Cell($W_BANCO_DER, 4.5, 'NUMERO DE CUENTA', 1, 1, 'L', true);
+
+    $y_cuenta = $pdf->GetY();
+    $pdf->SetFont('helvetica', 'B', 7.5);
+    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
+    $pdf->SetXY($x_left, $y_cuenta);
+    $pdf->MultiCell($W_BANCO_IZQ, 8, "UTO\nAPORTES EXTRAORDINARIOS", 1, 'L', true, 0, '', '', true, 0, false, true, 8, 'M');
+    $pdf->SetXY($x_left + $W_BANCO_IZQ, $y_cuenta);
+    $pdf->Cell($W_BANCO_DER, 8, '10000006050938', 1, 0, 'L', true);
+    $pdf->Ln(8);
+
+    $pdf->SetX($x_left);
+    $pdf->SetFont('helvetica', 'B', 7);
+    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    $pdf->Cell($content_width, 4.5, 'NIT: 120129022', 1, 1, 'L', true);
+
+    return $pdf->GetY() - $yInicio;
+}
+
+// Datos comunes para las dos copias
+$datos = compact(
+    'apaterno', 'amaterno', 'nombres', 'correo', 'ci', 'celular',
+    'programa', 'montoNumeral', 'montoLiteral', 'version', 'numeroTramite',
+    'nombreFactura', 'nitCiFactura'
+);
 
 // Crear instancia de TCPDF
 $pdf = new TCPDF('P', 'mm', 'LETTER', true, 'UTF-8', false);
 
-// Configurar información del documento
 $pdf->SetCreator('Universidad Técnica de Oruro');
 $pdf->SetAuthor('Facultad de Ciencias de la Salud - Postgrado');
 $pdf->SetTitle('Orden de Pago - ' . $nombreCompleto);
-$pdf->SetSubject('Orden de Pago de Módulo');
+$pdf->SetSubject('Orden de Pago en Caja de Posgrado');
 
-// Configurar márgenes más pequeños
-$pdf->SetMargins(10, 10, 10);
+$pdf->SetMargins(10, 8, 10);
 $pdf->SetHeaderMargin(5);
-$pdf->SetFooterMargin(10);
-
-// Quitar header y footer por defecto
+$pdf->SetFooterMargin(5);
 $pdf->setPrintHeader(false);
 $pdf->setPrintFooter(false);
+$pdf->SetAutoPageBreak(false);
 
-// Configurar auto page break
-$pdf->SetAutoPageBreak(FALSE);
+// Márgenes internos de celda (espacio entre el texto y los bordes) e interlineado compacto
+$pdf->setCellPaddings(1, 0.5, 1, 0.5);
+$pdf->setCellHeightRatio(1.05);
 
-// Agregar página
 $pdf->AddPage();
 
-// Función para generar el contenido de la orden de pago
-function generarContenidoOrden($pdf, $yInicio, $esCopia = false) {
-    global $apaterno, $amaterno, $nombres, $correo, $ci, $celular;
-    global $programa, $modulo, $montoNumeral, $montoLiteral;
-    global $version, $numeroTramite, $cuentaAuxiliar;
-    global $nombreFactura, $nitCiFactura, $responsable, $firma;
-    global $fechaActual, $horaActual;
-    global $esMultiple, $modulos, $numeroOrden;
+// ORIGINAL (mitad superior de la hoja)
+$alturaBloque = dibujarOrdenPago($pdf, 8, false, $datos, $colorEtiqueta, $colorTexto);
 
-    // Establecer posición Y inicial
-    $pdf->SetY($yInicio);
+// Línea divisoria punteada entre original y copia
+$y_divisoria = 8 + $alturaBloque + 6;
+$pdf->SetLineStyle(['width' => 0.2, 'dash' => 2, 'color' => [150, 150, 150]]);
+$pdf->Line(10, $y_divisoria, $pdf->GetPageWidth() - 10, $y_divisoria);
+$pdf->SetLineStyle(['dash' => 0]);
 
-    // Rutas a las imágenes
-    $imagen_izquierda = '../../extensiones/imagenespdf/logouto.png';
-    $imagen_derecha = '../../extensiones/imagenespdf/logofcs.png';
-
-    // Configuración de colores y fuente base
-    $pdf->SetTextColor(0, 0, 0);
-    $pdf->SetDrawColor(0, 0, 0);
-
-    // Imágenes del header
-    $x_left = 10;
-    $y_top = $yInicio;
-    $width_img = 15;
-    $height_img = 15;
-    $pdf->Image($imagen_izquierda, $x_left, $y_top, $width_img, $height_img);
-
-    $page_width = $pdf->GetPageWidth();
-    $margin_right = 10;
-    $x_right = $page_width - $margin_right - $width_img;
-    $pdf->Image($imagen_derecha, $x_right, $y_top, $width_img, $height_img);
-
-    // Texto del header (reducido)
-    $pdf->SetFont('helvetica', 'B', 8);
-    $pdf->Cell(0, 3, 'UNIVERSIDAD TECNICA DE ORURO', 0, 1, 'C', false);
-
-    $pdf->SetFont('helvetica', 'B', 8);
-    $pdf->Cell(0, 3, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C', false);
-
-    $pdf->SetFont('helvetica', '', 7);
-    $pdf->Cell(0, 3, 'COORDINACION DE POSGRADO - ODONTOLOGIA', 0, 1, 'C', false);
-
-    $pdf->SetFont('helvetica', '', 6);
-    $pdf->Cell(0, 2.5, 'Av. Del Minero Edificio San Agustin II (Ex Almacenes COMIBOL) Telefono: 5237317', 0, 1, 'C', false);
-
-    $pdf->SetFont('helvetica', '', 6);
-    $pdf->Cell(0, 2.5, 'Oruro - Bolivia', 0, 1, 'C', false);
-
-    // Línea separadora
-    $pdf->SetDrawColor(102, 126, 234);
-    $pdf->SetLineWidth(0.3);
-    $pdf->Line(10, $pdf->GetY() + 1, $page_width - 10, $pdf->GetY() + 1);
-
-    $pdf->Ln(2);
-
-    // Fecha, Hora y texto COPIA
-    $pdf->SetTextColor(70, 78, 95);
-    $pdf->SetFont('helvetica', 'B', 7);
-    $y_fecha = $pdf->GetY();
-    $pdf->SetXY(10, $y_fecha);
-    $pdf->Cell(60, 3, 'Fecha: ' . $fechaActual, 0, 0, 'L');
-    $pdf->Cell(60, 3, 'Hora: ' . $horaActual, 0, 0, 'C');
-    if ($esCopia) {
-        $pdf->SetTextColor(255, 0, 0);
-        $pdf->SetFont('helvetica', 'B', 8);
-        $pdf->Cell(0, 3, '** COPIA **', 0, 1, 'R');
-        $pdf->SetTextColor(70, 78, 95);
-    } else {
-        $pdf->Ln();
-    }
-
-    $pdf->Ln(1);
-
-    // Título
-    $pdf->SetFillColor(174, 198, 207);
-    $pdf->SetTextColor(0, 0, 0);
-    $pdf->SetFont('helvetica', 'B', 8);
-    $pdf->Cell(0, 5, 'ORDEN DE PAGO EN CAJA DE POSGRADO', 0, 1, 'C', true);
-
-    $pdf->Ln(1);
-
-    // DATOS DEL ESTUDIANTE
-    $pdf->SetDrawColor(0, 0, 0);
-    $pdf->SetTextColor(51, 51, 51);
-
-    $W_ENCABEZADO = 25;
-    $W_TOTAL_DATOS = 165;
-    $W_CELDA = $W_TOTAL_DATOS / 3;
-    $H_FILA_TITULO = 3.5;
-    $H_FILA_VALOR = 4;
-    $H_TOTAL = ($H_FILA_TITULO + $H_FILA_VALOR) * 2;
-
-    $x_inicio_bloque = $pdf->GetX();
-    $y_inicio_bloque = $pdf->GetY();
-
-    // Encabezado lateral
-    $pdf->SetFillColor(255, 255, 255);
-    $pdf->SetTextColor(0, 0, 0);
-    $pdf->SetFont('helvetica', 'B', 6);
-    $pdf->MultiCell($W_ENCABEZADO, $H_TOTAL, 'NOMBRE COMPLETO DEL POSGRADUANTE', 1, 'C', true, 0);
-
-    // Tabla de datos
-    $pdf->SetXY($x_inicio_bloque + $W_ENCABEZADO, $y_inicio_bloque);
-    $x_inicio_tabla = $pdf->GetX();
-    $pdf->SetFillColor(248, 249, 250);
-
-    // Fila 1: Títulos
-    $pdf->SetFont('helvetica', 'B', 6);
-    $pdf->SetTextColor(255, 0, 0);
-    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO PATERNO', 1, 0, 'L', false);
-    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO MATERNO', 1, 0, 'L', false);
-    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'NOMBRES', 1, 1, 'L', false);
-
-    // Fila 2: Valores
-    $pdf->SetX($x_inicio_tabla);
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->SetTextColor(51, 51, 51);
-    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $apaterno, 1, 0, 'L', true);
-    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $amaterno, 1, 0, 'L', true);
-    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $nombres, 1, 1, 'L', true);
-
-    // Fila 3: Títulos
-    $pdf->SetX($x_inicio_tabla);
-    $pdf->SetFont('helvetica', 'B', 6);
-    $pdf->SetTextColor(255, 0, 0);
-    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'CORREO ELECTRÓNICO', 1, 0, 'L', false);
-    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'C.I.', 1, 0, 'L', false);
-    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'N° CELULAR', 1, 1, 'L', false);
-
-    // Fila 4: Valores
-    $pdf->SetX($x_inicio_tabla);
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->SetTextColor(51, 51, 51);
-    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $correo, 1, 0, 'L', true);
-    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $ci, 1, 0, 'L', true);
-    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $celular, 1, 1, 'L', true);
-
-    $pdf->Ln(2);
-
-    // DATOS PARA EMISIÓN DE COMPROBANTE
-    $pdf->SetFillColor(174, 198, 207);
-    $pdf->SetTextColor(0, 0, 0);
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->Cell(0, 5, 'DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO', 0, 1, 'C', true);
-
-    $pdf->SetTextColor(70, 78, 95);
-
-    // PROGRAMA
-    $pdf->SetFont('helvetica', 'B', 6);
-    $pdf->SetTextColor(255, 0, 0);
-    $pdf->Cell(0, 3, 'PROGRAMA', 1, 1, 'L');
-
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->SetTextColor(51, 51, 51);
-    $pdf->MultiCell(0, 4, $programa, 1, 'L', false, 1);
-
-    // VERSIÓN y N° TRÁMITE (CUENTA AUXILIAR) en una fila
-    $pdf->SetFont('helvetica', 'B', 6);
-    $pdf->SetTextColor(255, 0, 0);
-    $pdf->Cell(40, 3, 'VERSIÓN', 1, 0, 'L');
-    $pdf->Cell(0, 3, 'N° DE TRÁMITE (CUENTA AUXILIAR)', 1, 1, 'L');
-
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->SetTextColor(51, 51, 51);
-    $pdf->Cell(40, 4, $version, 1, 0, 'L');
-    $pdf->Cell(0, 4, $numeroTramite, 1, 1, 'L');
-
-    $pdf->Ln(1);
-
-    // MONTO
-    $pdf->SetFont('helvetica', 'B', 6);
-    $pdf->SetTextColor(255, 0, 0);
-    $pdf->Cell(50, 3, 'MONTO (NUMERAL)', 1, 0, 'L');
-    $pdf->Cell(0, 3, 'MONTO (LITERAL)', 1, 1, 'L');
-
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->SetTextColor(51, 51, 51);
-    $pdf->Cell(50, 5, $montoNumeral, 1, 0, 'L');
-    $pdf->MultiCell(0, 5, $montoLiteral, 1, 'L');
-
-    $pdf->Ln(2);
-
-    // DATOS PARA EMISIÓN DE FACTURA
-    $pdf->SetFillColor(174, 198, 207);
-    $pdf->SetTextColor(0, 0, 0);
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->Cell(0, 5, 'DATOS PARA LA EMISIÓN DE FACTURA', 0, 1, 'C', true);
-
-    $pdf->SetFont('helvetica', 'B', 6);
-    $pdf->SetTextColor(255, 0, 0);
-    $pdf->Cell(95, 3, 'NOMBRE DE LA FACTURA', 1, 0, 'L');
-    $pdf->Cell(0, 3, 'NIT O CI', 1, 1, 'L');
-
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->SetTextColor(51, 51, 51);
-    $pdf->Cell(95, 4, $nombreFactura, 1, 0, 'L');
-    $pdf->Cell(0, 4, $nitCiFactura, 1, 1, 'L');
-
-    $pdf->Ln(2);
-
-    // DENOMINACIÓN DE LA CUENTA
-    $pdf->SetFillColor(248, 249, 250);
-    $pdf->SetDrawColor(102, 126, 234);
-    $pdf->SetLineWidth(0.3);
-    $pdf->Rect($pdf->GetX(), $pdf->GetY(), $page_width - 20, 12, 'D');
-
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->SetTextColor(102, 126, 234);
-    $pdf->Cell(0, 4, 'DENOMINACIÓN DE LA CUENTA', 0, 1, 'L');
-
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->SetTextColor(70, 78, 95);
-    $pdf->Cell(0, 3, 'UTO - APORTES EXTRAORDINARIOS - N° CUENTA 10000006050938', 0, 1, 'L');
-
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->SetTextColor(17, 153, 142);
-    $pdf->Cell(0, 3, 'NIT: 120129022', 0, 1, 'L');
-
-    $pdf->Ln(3);
-
-    // RESPONSABLE Y FIRMA
-    $pdf->SetDrawColor(226, 229, 236);
-    $pdf->SetLineWidth(0.2);
-    $pdf->Line(10, $pdf->GetY(), $page_width - 10, $pdf->GetY());
-
-    $pdf->Ln(1);
-
-    $pdf->SetFont('helvetica', 'B', 6);
-    $pdf->SetTextColor(153, 153, 153);
-    $pdf->Cell(95, 3, 'RESPONSABLE', 0, 0, 'L');
-    $pdf->Cell(0, 3, 'FIRMA', 0, 1, 'L');
-
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->SetTextColor(51, 51, 51);
-    $pdf->Cell(95, 4, $responsable, 0, 0, 'L');
-    $pdf->Cell(0, 4, !empty($firma) ? $firma : '____________________', 0, 1, 'L');
-
-    $pdf->Ln(3);
-
-    // Línea para firma
-    $pdf->SetLineWidth(0.2);
-    $pdf->Line(80, $pdf->GetY(), 130, $pdf->GetY());
-    $pdf->Ln(1);
-
-    $pdf->SetFont('helvetica', 'B', 7);
-    $pdf->SetTextColor(51, 51, 51);
-    $pdf->Cell(0, 3, 'Firma del Responsable', 0, 1, 'C');
-}
-
-// Generar el ORIGINAL (primera mitad de la página)
-generarContenidoOrden($pdf, 10, false);
-
-// Línea divisoria punteada
-$pdf->SetY(137);
-$pdf->SetDrawColor(150, 150, 150);
-$pdf->SetLineStyle(array('width' => 0.2, 'dash' => 2));
-$pdf->Line(10, 137, $pdf->GetPageWidth() - 10, 137);
-
-// Generar la COPIA (segunda mitad de la página)
-generarContenidoOrden($pdf, 140, true);
-
-// Pie de página al final
-$pdf->SetY(270);
-$pdf->SetFont('helvetica', 'I', 6);
-$pdf->SetTextColor(153, 153, 153);
-$pdf->Cell(0, 3, 'Documento generado electrónicamente el ' . $fechaActual . ' a las ' . $horaActual, 0, 1, 'C');
+// COPIA (mitad inferior de la hoja)
+dibujarOrdenPago($pdf, $y_divisoria + 6, true, $datos, $colorEtiqueta, $colorTexto);
 
 // ========================================
 // SALIDA DEL PDF
 // ========================================
-// Limpiar cualquier salida previa
 if (ob_get_level()) {
     ob_end_clean();
 }
 
-// Generar el PDF
 $nombreArchivo = 'Orden_Pago_' . str_replace(' ', '_', $nombreCompleto) . '_' . date('YmdHis') . '.pdf';
 $pdf->Output($nombreArchivo, 'I');
-
 exit;
-?>

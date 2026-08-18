@@ -31,6 +31,7 @@ try {
             op.IdOrdenPago, op.NumeroOrden, op.ProgramaID, op.FechaGeneracion, op.CostoMatricula as costomatricula,
             op.MontoFinal as montoPagado, op.MontoDescuento as montoDescuento,
             op.PorcentajeDescuento as porcentajeDescuento, op.PagoCompleto as pagoCompleto,
+            op.NombreFactura, op.NitCiFactura, op.ResponsableGeneracion,
             p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico,
             p.Costo AS CostoTotalPrograma, p.CostoMatricula, p.Version, p.NumeroTramite, p.Sede, p.FechaInicio
         FROM ordenpago op
@@ -219,6 +220,45 @@ try {
     $pdf->SetFont('helvetica', '', 10);
     $pdf->SetTextColor(0, 0, 0);
     $pdf->Cell(40, 7, $datos['CodigoPrograma'], 1, 1, 'L', true);
+
+    // ========================================
+    // DATOS DE FACTURACIÓN
+    // ========================================
+    $nombreFactura = !empty($datos['NombreFactura']) ? $datos['NombreFactura'] : $nombreCompleto;
+    $nitCiFactura = !empty($datos['NitCiFactura']) ? $datos['NitCiFactura'] : $ciCompleto;
+
+    $y += 15;
+
+    $pdf->SetFont('helvetica', 'B', 12);
+    $pdf->SetTextColor(102, 126, 234);
+    $pdf->SetXY(15, $y);
+    $pdf->Cell(0, 8, 'DATOS DE FACTURACIÓN', 0, 1, 'L');
+
+    $y += 12;
+
+    $pdf->SetFillColor(248, 249, 250);
+    $pdf->SetDrawColor(200, 200, 200);
+    $pdf->SetLineWidth(0.2);
+
+    $pdf->SetFont('helvetica', 'B', 10);
+    $pdf->SetTextColor(60, 60, 60);
+    $pdf->SetXY(15, $y);
+    $pdf->Cell(50, 7, 'Nombre / Razón Social:', 1, 0, 'L', true);
+
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Cell(130, 7, $nombreFactura, 1, 1, 'L', true);
+
+    $y += 7;
+
+    $pdf->SetFont('helvetica', 'B', 10);
+    $pdf->SetTextColor(60, 60, 60);
+    $pdf->SetXY(15, $y);
+    $pdf->Cell(50, 7, 'NIT / C.I.:', 1, 0, 'L', true);
+
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Cell(130, 7, $nitCiFactura, 1, 1, 'L', true);
 
     // ========================================
     // DETALLE DE PAGO

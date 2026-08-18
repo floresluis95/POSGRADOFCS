@@ -435,7 +435,7 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
                 </button>
             </form>
 
-            <a href="ordenpago" class="btn-download btn-secondary">
+            <a href="preregistro" class="btn-download btn-secondary">
                 <i class="flaticon2-back"></i>
                 Generar Nueva Orden
             </a>
