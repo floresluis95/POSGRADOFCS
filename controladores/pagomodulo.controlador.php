@@ -4,7 +4,7 @@
  * Gestiona el registro y consulta de pagos de módulos
  */
 
-require_once __DIR__ . '/../modelos/pagomodulo.modelo.php';
+require_once __DIR__ . '/../modelos/modulopagos_core.php';
 require_once __DIR__ . '/../modelos/conexion.modelo.php';
 
 class PagoModuloControlador
@@ -40,6 +40,19 @@ class PagoModuloControlador
             $fechaPago = htmlspecialchars(trim($_POST['fechaPago']));
             $numeroVaucher = htmlspecialchars(trim($_POST['numeroVaucher'] ?? ''));
             $costosModulos = $_POST['costos']; // Array: [IdModulo => costo]
+            $programaID = isset($_POST['programaID']) ? (int)$_POST['programaID'] : 0;
+
+            // Si este pago cubre TODOS los módulos que aún quedaban pendientes de la
+            // inscripción, se ajusta el monto del último módulo (por orden de código)
+            // para que la suma total pagada cierre exacto con el costo total del programa,
+            // cubriendo el faltante/sobrante por redondeo entre los costos de los módulos.
+            if ($programaID > 0) {
+                $costosModulos = PagoModuloModelo::AjustarUltimoModuloDelPagoAlTotalModelo(
+                    $programaID,
+                    $idinscripcion,
+                    $costosModulos
+                );
+            }
 
             // Procesar archivo de voucher (si existe) - mismo para todos
             $archivoVoucher = null;

@@ -37,7 +37,8 @@ class InscripcionModuloModelos
                     p.GradoAcademico,
                     p.Codigo as CodigoPrograma,
                     p.Version,
-                    p.NumeroTramite
+                    p.NumeroTramite,
+                    p.Costo as CostoPrograma
                 FROM estudianteprograma ep
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID

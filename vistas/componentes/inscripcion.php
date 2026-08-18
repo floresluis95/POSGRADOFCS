@@ -77,23 +77,21 @@ kt-aside--fixed kt-page--loading">
             <!-- Contenido principal -->
             <div class="kt-container kt-grid__item kt-grid__item--fluid">
               <div class="row justify-content-md-center">
-                <div class="col-lg-10">
+                <div class="col-lg-9">
 
                   <!-- BUSCAR ESTUDIANTE CON PREREGISTRO PENDIENTE -->
-                  <div class="kt-portlet" style="box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-radius: 10px;">
-                    <div class="kt-portlet__body" style="padding: 2rem;">
+                  <div class="kt-portlet inscripcion-portlet">
+                    <div class="kt-portlet__body py-3">
                       <div class="row align-items-end">
                         <div class="col-lg-8">
-                          <label class="font-weight-bold mb-2" style="color: #3f4254;">
+                          <label class="small font-weight-bold mb-1">
                             <i class="flaticon2-search text-primary"></i> Buscar estudiante con pre-registro pendiente
                           </label>
-                          <div class="input-group input-group-lg">
+                          <div class="input-group input-group-sm">
                             <input type="text" id="buscarTermino" class="form-control"
-                                   placeholder="C.I., nombre o apellido..." maxlength="60"
-                                   style="border: 2px solid #e1e3ea; border-radius: 6px 0 0 6px;">
+                                   placeholder="C.I., nombre o apellido..." maxlength="60">
                             <div class="input-group-append">
-                              <button type="button" id="btnBuscarPreregistro" class="btn btn-primary"
-                                      style="border-radius: 0 6px 6px 0;">
+                              <button type="button" id="btnBuscarPreregistro" class="btn btn-primary">
                                 <i class="flaticon2-search"></i> Buscar
                               </button>
                             </div>
@@ -102,9 +100,8 @@ kt-aside--fixed kt-page--loading">
                             <i class="flaticon2-information"></i> Solo se muestran estudiantes con una orden de pago de matrícula pendiente (generada en Pre-Registro).
                           </small>
                         </div>
-                        <div class="col-lg-4 text-lg-right mt-3 mt-lg-0">
-                          <a href="preregistro" class="btn btn-outline-primary btn-lg btn-block"
-                             style="border-radius: 6px;">
+                        <div class="col-lg-4 text-lg-right mt-2 mt-lg-0">
+                          <a href="preregistro" class="btn btn-sm btn-outline-primary btn-block">
                             <i class="flaticon2-plus"></i> Nuevo Estudiante
                           </a>
                         </div>
@@ -113,10 +110,10 @@ kt-aside--fixed kt-page--loading">
                   </div>
 
                   <!-- DETALLE DEL PREREGISTRO SELECCIONADO / VALIDACIÓN DEL VOUCHER -->
-                  <div class="kt-portlet mt-4" id="panelDetalle" style="display:none; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-radius: 10px;">
-                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                  <div class="kt-portlet mt-3 inscripcion-portlet" id="panelDetalle" style="display:none;">
+                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); min-height: 46px;">
                       <div class="kt-portlet__head-label">
-                        <h3 class="kt-portlet__head-title" style="color: white;">
+                        <h3 class="kt-portlet__head-title" style="color: white; font-size: 14px;">
                           <i class="fa fa-check-circle"></i> Validar Voucher de Matrícula
                         </h3>
                       </div>
@@ -126,12 +123,12 @@ kt-aside--fixed kt-page--loading">
                         </button>
                       </div>
                     </div>
-                    <div class="kt-portlet__body" style="padding: 2rem;">
+                    <div class="kt-portlet__body py-3">
 
                       <input type="hidden" id="detalleIdOrdenPago">
 
                       <!-- Datos del estudiante -->
-                      <div class="chip-summary mb-3">
+                      <div class="chip-summary mb-2">
                         <div class="chip-summary-row">
                           <span><i class="flaticon2-user-outline-symbol"></i> <strong id="detalleNombre"></strong></span>
                           <span>CI: <span id="detalleCi"></span></span>
@@ -141,42 +138,101 @@ kt-aside--fixed kt-page--loading">
                       </div>
 
                       <!-- Datos del programa -->
-                      <div class="chip-summary mb-3">
+                      <div class="chip-summary mb-2">
                         <div class="chip-summary-row flex-wrap">
                           <span><strong id="detallePrograma"></strong> (<span id="detalleCodigo"></span>)</span>
                           <span>Grado: <span id="detalleGrado"></span></span>
                           <span>Sede: <span id="detalleSede"></span></span>
                           <span>Modalidad de pago: <span class="badge badge-primary" id="detalleModalidad"></span></span>
+                          <span>Monto: <strong class="text-primary">Bs. <span id="detalleMonto">0.00</span></strong></span>
                         </div>
                       </div>
 
-                      <!-- Monto a cancelar -->
-                      <div class="text-center mb-4">
-                        <div class="d-inline-block" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
-                          <div style="font-size: 0.9rem; color: rgba(255,255,255,0.85);">MONTO DE MATRÍCULA A CANCELAR</div>
-                          <div style="font-size: 2rem; font-weight: 700; color: white;">Bs. <span id="detalleMonto">0.00</span></div>
-                        </div>
-                      </div>
-
-                      <hr>
+                      <hr class="my-2">
 
                       <!-- Formulario de validación del voucher -->
                       <form id="formValidarVoucher" enctype="multipart/form-data">
+
+                        <!-- PLAN DE PAGO DEL PROGRAMA (posgrado, aparte de la matrícula) -->
+                        <div class="plan-pago-programa mb-2">
+                          <div class="step-title" style="font-size:13px;">
+                            <i class="fa fa-money"></i> Plan de Pago del Programa
+                          </div>
+                          <small class="text-muted d-block mb-2">
+                            Defina cómo se cancelará el costo del programa (posgrado), aparte de la matrícula.
+                            Costo total del programa: <strong class="text-primary">Bs. <span id="planCostoTotal">0.00</span></strong>
+                          </small>
+
+                          <div class="row">
+                            <div class="col-lg-4 form-group mb-2">
+                              <label class="small font-weight-bold mb-1">Tipo de Plan</label>
+                              <select class="form-control form-control-sm" id="planTipoPago">
+                                <option value="REGULAR">Plan Regular (cuotas)</option>
+                                <option value="DESCUENTO">Plan al Contado (con descuento)</option>
+                              </select>
+                            </div>
+                            <div class="col-lg-4 form-group mb-2" id="grupoNumeroCuotas">
+                              <label class="small font-weight-bold mb-1">N° de Cuotas</label>
+                              <input type="number" class="form-control form-control-sm" id="planNumeroCuotas" min="1" max="36" value="1">
+                            </div>
+                            <div class="col-lg-4 form-group mb-2">
+                              <label class="small font-weight-bold mb-1">% Descuento</label>
+                              <input type="number" class="form-control form-control-sm" id="planPorcentajeDescuento" min="0" max="100" step="0.01" value="0">
+                            </div>
+                          </div>
+
+                          <small class="text-muted d-block mb-2">
+                            <i class="fa fa-users"></i> ¿Es un <strong>Plan Grupal</strong> (varios inscritos)? Ese plan se define
+                            desde <strong>Matriculados</strong> una vez que los integrantes del grupo estén matriculados,
+                            para poder seleccionarlos a todos juntos.
+                          </small>
+
+                          <div class="text-right mb-2">
+                            <button type="button" class="btn btn-xs btn-outline-primary" id="btnGenerarCuotas">
+                              <i class="fa fa-list-ol"></i> Redistribuir Cuotas
+                            </button>
+                          </div>
+
+                          <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-1" id="tablaCuotasPlan">
+                              <thead class="thead-light">
+                                <tr>
+                                  <th class="text-center" style="width:40px;">N°</th>
+                                  <th>Monto (Bs.)</th>
+                                </tr>
+                              </thead>
+                              <tbody id="tablaCuotasBody"></tbody>
+                            </table>
+                          </div>
+                          <small class="d-block text-right mb-2">
+                            Total cuotas: <strong>Bs. <span id="planTotalCuotas">0.00</span></strong>
+                            <span id="planCuotasEstadoSuma" class="ml-1"></span>
+                          </small>
+
+                          <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="planAceptaCancelacion">
+                            <label class="custom-control-label small" for="planAceptaCancelacion">
+                              Se acepta cancelar cada cuota <strong>antes de que inicie el módulo correspondiente</strong>,
+                              sin fijar una fecha exacta de vencimiento.
+                            </label>
+                          </div>
+                        </div>
+
+                        <hr class="my-2">
+
                         <div class="row">
-                          <div class="col-lg-4 mb-3">
-                            <label class="font-weight-bold mb-2"><i class="flaticon2-file-1"></i> Código de Voucher <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-lg" id="voucherNumero" maxlength="25" required
-                                   style="border: 2px solid #e1e3ea; border-radius: 6px;">
+                          <div class="col-lg-4 form-group mb-2">
+                            <label class="small font-weight-bold mb-1">Código de Voucher <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" id="voucherNumero" maxlength="25" required>
                           </div>
-                          <div class="col-lg-4 mb-3">
-                            <label class="font-weight-bold mb-2"><i class="flaticon2-calendar-8"></i> Fecha de Inscripción <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control form-control-lg" id="voucherFecha" required
-                                   max="<?php echo date('Y-m-d'); ?>"
-                                   style="border: 2px solid #e1e3ea; border-radius: 6px;">
+                          <div class="col-lg-4 form-group mb-2">
+                            <label class="small font-weight-bold mb-1">Fecha de Inscripción <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control form-control-sm" id="voucherFecha" required
+                                   max="<?php echo date('Y-m-d'); ?>">
                           </div>
-                          <div class="col-lg-4 mb-3">
-                            <label class="font-weight-bold mb-2"><i class="flaticon2-image-file"></i> Foto del Voucher</label>
-                            <div class="custom-file">
+                          <div class="col-lg-4 form-group mb-2">
+                            <label class="small font-weight-bold mb-1">Foto del Voucher</label>
+                            <div class="custom-file custom-file-sm">
                               <input type="file" class="custom-file-input" id="voucherFoto" accept="image/*">
                               <label class="custom-file-label" for="voucherFoto" id="voucherFotoLabel">Seleccionar imagen...</label>
                             </div>
@@ -184,18 +240,18 @@ kt-aside--fixed kt-page--loading">
                           </div>
                         </div>
 
-                        <div id="voucherFotoPreview" class="mb-3" style="display:none;">
-                          <img id="voucherFotoPreviewImg" src="" class="img-thumbnail" style="max-width: 220px;">
+                        <div id="voucherFotoPreview" class="mb-2" style="display:none;">
+                          <img id="voucherFotoPreviewImg" src="" class="img-thumbnail" style="max-width: 140px;">
                         </div>
 
-                        <div class="alert alert-warning">
+                        <small class="text-warning d-block mb-2">
                           <i class="fa fa-exclamation-triangle"></i>
                           Verifique que la matrícula ya fue cancelada en caja antes de validar. Esta acción
                           <strong>inscribe formalmente</strong> al estudiante en el programa y no se puede deshacer desde aquí.
-                        </div>
+                        </small>
 
-                        <div class="text-center">
-                          <button type="submit" class="btn btn-success btn-lg" style="padding: 0.9rem 3rem; border-radius: 8px; font-weight: 600;">
+                        <div class="text-right">
+                          <button type="submit" class="btn btn-sm btn-success">
                             <i class="fa fa-check-circle"></i> Validar Inscripción
                           </button>
                         </div>
@@ -243,6 +299,8 @@ kt-aside--fixed kt-page--loading">
 
   <script>
   function iniciarInscripcion() {
+
+      let costoTotalProgramaActual = 0;
 
       function actualizarFecha() {
           const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -356,6 +414,15 @@ kt-aside--fixed kt-page--loading">
                   $('#voucherFotoPreview').hide();
                   $('#voucherFotoPreviewImg').attr('src', '');
 
+                  // Reiniciar y precargar el plan de pago del programa con el costo del programa elegido
+                  costoTotalProgramaActual = parseFloat(p.CostoPrograma) || 0;
+                  $('#planCostoTotal').text(costoTotalProgramaActual.toFixed(2));
+                  $('#planTipoPago').val('REGULAR');
+                  $('#planNumeroCuotas').val(1);
+                  $('#planPorcentajeDescuento').val(0);
+                  $('#grupoNumeroCuotas').show();
+                  generarCuotasPlan();
+
                   $('#ModalResultadosBusqueda').modal('hide');
                   $('#panelDetalle').slideDown();
                   $('html, body').animate({ scrollTop: $('#panelDetalle').offset().top - 100 }, 400);
@@ -391,6 +458,103 @@ kt-aside--fixed kt-page--loading">
       });
 
       // ============================================
+      // PLAN DE PAGO DEL PROGRAMA (posgrado, aparte de la matrícula)
+      // Se define ANTES de validar el voucher; las cuotas se registran junto
+      // con la inscripción formal (misma transacción en el backend).
+      // ============================================
+      function generarCuotasPlan() {
+          const tipoPlan = $('#planTipoPago').val();
+          let porcentaje = parseFloat($('#planPorcentajeDescuento').val()) || 0;
+          if (porcentaje < 0) porcentaje = 0;
+          if (porcentaje > 100) porcentaje = 100;
+
+          const montoTotalPagar = Math.round((costoTotalProgramaActual * (1 - porcentaje / 100)) * 100) / 100;
+          const numeroCuotas = (tipoPlan === 'REGULAR') ? (parseInt($('#planNumeroCuotas').val(), 10) || 1) : 1;
+
+          let html = '';
+          let acumulado = 0;
+          for (let i = 1; i <= numeroCuotas; i++) {
+              let monto;
+              if (i < numeroCuotas) {
+                  monto = Math.round((montoTotalPagar / numeroCuotas) * 100) / 100;
+                  acumulado += monto;
+              } else {
+                  monto = Math.round((montoTotalPagar - acumulado) * 100) / 100;
+              }
+
+              html += '<tr>' +
+                  '<td class="text-center">' + i + '</td>' +
+                  '<td><input type="number" class="form-control form-control-sm cuota-monto" step="0.01" min="0" value="' + monto.toFixed(2) + '"></td>' +
+                  '</tr>';
+          }
+
+          $('#tablaCuotasBody').html(html);
+          recalcularSumaCuotas();
+      }
+
+      function recalcularSumaCuotas() {
+          let suma = 0;
+          $('.cuota-monto').each(function() {
+              suma += parseFloat($(this).val()) || 0;
+          });
+
+          let porcentaje = parseFloat($('#planPorcentajeDescuento').val()) || 0;
+          const montoTotalPagar = Math.round((costoTotalProgramaActual * (1 - porcentaje / 100)) * 100) / 100;
+
+          $('#planTotalCuotas').text(suma.toFixed(2));
+
+          if (Math.abs(suma - montoTotalPagar) <= 0.5) {
+              $('#planCuotasEstadoSuma').html('<span class="text-success"><i class="fa fa-check-circle"></i> Coincide con el monto a pagar (Bs. ' + montoTotalPagar.toFixed(2) + ')</span>');
+          } else {
+              $('#planCuotasEstadoSuma').html('<span class="text-danger"><i class="fa fa-exclamation-circle"></i> Debe sumar Bs. ' + montoTotalPagar.toFixed(2) + '</span>');
+          }
+      }
+
+      $('#planTipoPago').on('change', function() {
+          const tipoPlan = $(this).val();
+          $('#grupoNumeroCuotas').toggle(tipoPlan === 'REGULAR');
+          if (tipoPlan !== 'REGULAR') {
+              $('#planNumeroCuotas').val(1);
+          }
+          generarCuotasPlan();
+      });
+
+      $('#planNumeroCuotas, #planPorcentajeDescuento').on('change', generarCuotasPlan);
+      $('#btnGenerarCuotas').on('click', generarCuotasPlan);
+      $(document).on('input', '.cuota-monto', recalcularSumaCuotas);
+
+      function obtenerCuotasPlanValidas() {
+          if (!$('#planAceptaCancelacion').is(':checked')) {
+              return null;
+          }
+
+          const cuotas = [];
+          let valido = true;
+
+          $('#tablaCuotasBody tr').each(function() {
+              const monto = parseFloat($(this).find('.cuota-monto').val()) || 0;
+              if (monto <= 0) {
+                  valido = false;
+              }
+              cuotas.push({ monto: monto, fecha: null });
+          });
+
+          if (!valido || cuotas.length === 0) {
+              return null;
+          }
+
+          let porcentaje = parseFloat($('#planPorcentajeDescuento').val()) || 0;
+          const montoTotalPagar = Math.round((costoTotalProgramaActual * (1 - porcentaje / 100)) * 100) / 100;
+          const suma = cuotas.reduce((acc, c) => acc + c.monto, 0);
+
+          if (Math.abs(suma - montoTotalPagar) > 0.5) {
+              return null;
+          }
+
+          return cuotas;
+      }
+
+      // ============================================
       // VALIDAR EL VOUCHER (inscribe formalmente al estudiante)
       // ============================================
       $('#formValidarVoucher').on('submit', function(e) {
@@ -409,11 +573,28 @@ kt-aside--fixed kt-page--loading">
               return;
           }
 
+          if (!$('#planAceptaCancelacion').is(':checked')) {
+              swal('Atención', 'Marque la casilla para aceptar cancelar cada cuota antes de que inicie su módulo correspondiente', 'warning');
+              return;
+          }
+
+          const cuotasPlan = obtenerCuotasPlanValidas();
+          if (!cuotasPlan) {
+              swal('Atención', 'Revise el Plan de Pago del Programa: las cuotas deben tener un monto válido y su suma debe coincidir con el monto a pagar', 'warning');
+              return;
+          }
+
           const formData = new FormData();
           formData.append('accion', 'validarVoucherMatricula');
           formData.append('idOrdenPago', idOrdenPago);
           formData.append('numeroVoucher', numeroVoucher);
           formData.append('fechaInscripcion', fechaInscripcion);
+          formData.append('planPago', JSON.stringify({
+              TipoPlan: $('#planTipoPago').val(),
+              CostoTotalPrograma: costoTotalProgramaActual,
+              PorcentajeDescuento: parseFloat($('#planPorcentajeDescuento').val()) || 0,
+              Cuotas: cuotasPlan
+          }));
 
           const archivoFoto = $('#voucherFoto')[0].files[0];
           if (archivoFoto) {
@@ -466,8 +647,13 @@ kt-aside--fixed kt-page--loading">
   </script>
 
 <style>
+.inscripcion-portlet {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-radius: 6px;
+}
+
 .chip-summary {
-    padding: 10px 14px;
+    padding: 8px 12px;
     background: #f4f6fb;
     border-left: 3px solid #667eea;
     border-radius: 6px;
@@ -482,8 +668,44 @@ kt-aside--fixed kt-page--loading">
     color: #444;
 }
 
+.custom-file-sm .custom-file-label,
+.custom-file-sm .custom-file-input {
+    height: calc(1.5em + 0.5rem + 2px);
+    font-size: 0.775rem;
+}
+
+.custom-file-sm .custom-file-label {
+    padding: 0.25rem 0.5rem;
+    line-height: 1.5;
+}
+
+.custom-file-sm .custom-file-label::after {
+    height: calc(1.5em + 0.5rem);
+    padding: 0.25rem 0.5rem;
+    line-height: 1.5;
+}
+
 .card, .kt-portlet {
     transition: box-shadow 0.3s ease;
+}
+
+.plan-pago-programa {
+    padding: 10px 12px;
+    background: #fbfbfd;
+    border: 1px solid #e1e3ea;
+    border-radius: 6px;
+}
+
+.plan-pago-programa .step-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #3b3f5c;
+    margin-bottom: 4px;
+}
+
+#tablaCuotasPlan th, #tablaCuotasPlan td {
+    padding: 4px 6px;
+    vertical-align: middle;
 }
 </style>
 

@@ -142,6 +142,19 @@ $(document).ready(function() {
                                    style="position: absolute; top: 10px; left: 10px; width: 20px; height: 20px; cursor: pointer; z-index: 10;">
                         ` : '';
 
+                        // Si es el último módulo pendiente, su costo puede haberse ajustado
+                        // para completar exactamente el total del programa (falta o sobra por redondeo)
+                        let avisoAjuste = '';
+                        if (!esPagado && modulo.AjustadoAlTotal) {
+                            avisoAjuste = `
+                                <div class="modulo-card-pago-info">
+                                    <p class="mb-0"><i class="fa fa-info-circle"></i> Último módulo: monto ajustado a
+                                    Bs. ${parseFloat(modulo.Costo || 0).toFixed(2)} para completar el total del programa
+                                    (costo registrado: Bs. ${parseFloat(modulo.CostoOriginal || 0).toFixed(2)})</p>
+                                </div>
+                            `;
+                        }
+
                         tarjetasHTML += `
                             <div class="modulo-card ${claseEstado} ${!esPagado ? 'seleccionable' : ''}"
                                  data-moduloid="${modulo.ModuloID}"
@@ -164,6 +177,7 @@ $(document).ready(function() {
                                 ` : ''}
 
                                 ${infoPago}
+                                ${avisoAjuste}
                             </div>
                         `;
                     });

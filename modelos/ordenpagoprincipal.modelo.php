@@ -1,5 +1,6 @@
 <?php
 require_once 'conexion.modelo.php';
+require_once 'planpago.modelo.php';
 
 /**
  * Modelo de Orden de Pago (Preregistro)
@@ -11,13 +12,18 @@ class OrdenPagoModelos
      * Validar el voucher de la matrícula ya cancelada e inscribir formalmente al estudiante.
      * Este es el único punto donde se escribe en `estudianteprograma`: recién aquí la
      * inscripción pasa a ser real. La orden de pago pasa a Estado = 'CONFIRMADO'.
+     *
+     * Opcionalmente, en la misma transacción, registra el plan de pago del PROGRAMA
+     * (Regular/Descuento/Grupal) definido antes de validar el voucher.
+     *
      * @param int $idOrdenPago
      * @param string $numeroVoucher
      * @param string|null $fechaInscripcion
      * @param string|null $fotoVoucher Contenido binario de la imagen del voucher (opcional)
+     * @param array|null $planPago Datos del plan de pago del programa (opcional, ver PagoProgramaModelos)
      * @return array
      */
-    public static function ValidarVoucherMatriculaModelo($idOrdenPago, $numeroVoucher, $fechaInscripcion = null, $fotoVoucher = null)
+    public static function ValidarVoucherMatriculaModelo($idOrdenPago, $numeroVoucher, $fechaInscripcion = null, $fotoVoucher = null, $planPago = null)
     {
         try {
             $pdo = Conexion::Conectar();
@@ -89,6 +95,20 @@ class OrdenPagoModelos
             $stmtUpdate->bindParam(":idInscripcion", $idInscripcion, PDO::PARAM_INT);
             $stmtUpdate->bindParam(":idOrdenPago", $idOrdenPago, PDO::PARAM_INT);
             $stmtUpdate->execute();
+
+            // Si se definió un plan de pago del programa antes de validar, se registra
+            // aquí mismo (misma transacción) para que quede consistente con la matrícula.
+            if (!empty($planPago) && !empty($planPago['Cuotas'])) {
+                $planPago['idInscripcion'] = $idInscripcion;
+                $planPago['EstudianteID'] = $orden['EstudianteID'];
+                $planPago['ProgramaID'] = $orden['ProgramaID'];
+
+                $resultadoPlan = PagoProgramaModelos::InsertarPlanEnTransaccion($pdo, $planPago);
+                if ($resultadoPlan['status'] !== 'exitoso') {
+                    $pdo->rollBack();
+                    return $resultadoPlan;
+                }
+            }
 
             $pdo->commit();
 
@@ -449,7 +469,8 @@ class OrdenPagoModelos
                     p.GradoAcademico,
                     p.Sede,
                     p.Version,
-                    p.NumeroTramite
+                    p.NumeroTramite,
+                    p.Costo AS CostoPrograma
                 FROM ordenpago op
                 INNER JOIN estudiante e ON op.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON op.ProgramaID = p.ProgramaID
@@ -547,4 +568,3 @@ class OrdenPagoModelos
         }
     }
 }
-?>

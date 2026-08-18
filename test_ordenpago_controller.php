@@ -29,5 +29,5 @@ print_r($_POST);
 echo "</pre>";
 
 // Incluir el controlador
-require_once 'controladores/ordenpago.controlador.php';
+require_once 'controladores/procesarpreinscripcion.php';
 ?>

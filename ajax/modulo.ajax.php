@@ -3,7 +3,7 @@
  * AJAX para obtener módulos por programa
  */
 
-require_once "../modelos/pagomodulo.modelo.php";
+require_once "../modelos/modulopagos_core.php";
 require_once "../modelos/modulo.modelo.php";
 
 // Obtener módulos con estado de pago por inscripción

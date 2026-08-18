@@ -9,8 +9,9 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../modelos/estudiantes.modelo.php';
-require_once __DIR__ . '/../modelos/pagomodulo.modelo.php';
-require_once __DIR__ . '/../modelos/ordenpago.modelo.php';
+require_once __DIR__ . '/../modelos/modulopagos_core.php';
+require_once __DIR__ . '/../modelos/ordenpagoprincipal.modelo.php';
+require_once __DIR__ . '/../modelos/planpago.modelo.php';
 
 // Configurar cabecera JSON
 header('Content-Type: application/json; charset=utf-8');
@@ -90,6 +91,30 @@ switch ($accion) {
 
     case 'buscarPreregistrosPendientes':
         buscarPreregistrosPendientes();
+        break;
+
+    case 'obtenerPlanPagoPrograma':
+        obtenerPlanPagoPrograma();
+        break;
+
+    case 'registrarPlanPagoPrograma':
+        registrarPlanPagoPrograma();
+        break;
+
+    case 'obtenerCuotaPrograma':
+        obtenerCuotaPrograma();
+        break;
+
+    case 'registrarPagoCuota':
+        registrarPagoCuota();
+        break;
+
+    case 'listarMatriculadosSinPlan':
+        listarMatriculadosSinPlan();
+        break;
+
+    case 'registrarPlanGrupal':
+        registrarPlanGrupal();
         break;
 
     default:
@@ -721,11 +746,37 @@ function validarVoucherMatricula()
         $fotoVoucher = file_get_contents($_FILES['fotoVoucher']['tmp_name']);
     }
 
+    // Plan de pago del programa (opcional), definido antes de validar el voucher.
+    // Viene como JSON en el campo 'planPago' (mismo POST, multipart/form-data).
+    $planPago = null;
+    if (!empty($_POST['planPago'])) {
+        $planDecodificado = json_decode($_POST['planPago'], true);
+        if (is_array($planDecodificado) && !empty($planDecodificado['Cuotas'])) {
+            $planPago = [
+                'TipoPlan' => htmlspecialchars(trim($planDecodificado['TipoPlan'] ?? 'REGULAR')),
+                'CostoTotalPrograma' => floatval($planDecodificado['CostoTotalPrograma'] ?? 0),
+                'PorcentajeDescuento' => floatval($planDecodificado['PorcentajeDescuento'] ?? 0),
+                'CodigoGrupo' => !empty($planDecodificado['CodigoGrupo']) ? htmlspecialchars(trim($planDecodificado['CodigoGrupo'])) : null,
+                'CantidadInscritosGrupo' => (int)($planDecodificado['CantidadInscritosGrupo'] ?? 1),
+                'ResponsableGeneracion' => isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
+                    ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
+                    : null,
+                'Cuotas' => array_map(function ($c) {
+                    return [
+                        'monto' => floatval($c['monto'] ?? 0),
+                        'fecha' => htmlspecialchars(trim($c['fecha'] ?? ''))
+                    ];
+                }, $planDecodificado['Cuotas'])
+            ];
+        }
+    }
+
     $resultado = OrdenPagoModelos::ValidarVoucherMatriculaModelo(
         (int)$_POST['idOrdenPago'],
         $numeroVoucher,
         $fechaInscripcion,
-        $fotoVoucher
+        $fotoVoucher,
+        $planPago
     );
 
     echo json_encode([
@@ -733,6 +784,181 @@ function validarVoucherMatricula()
         'mensaje' => $resultado['mensaje'],
         'estudianteID' => $resultado['estudianteID'] ?? null,
         'programaID' => $resultado['programaID'] ?? null
+    ]);
+}
+
+/**
+ * Obtener el plan de pago del programa (y sus cuotas) de una inscripción, si existe.
+ * Se usa desde Matriculados para mostrar el estado de cuotas y generar órdenes de pago.
+ */
+function obtenerPlanPagoPrograma()
+{
+    if (empty($_POST['idInscripcion'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El ID de inscripción es requerido']);
+        return;
+    }
+
+    $plan = PagoProgramaModelos::ObtenerPlanPorInscripcionModelo((int)$_POST['idInscripcion']);
+
+    echo json_encode([
+        'success' => true,
+        'tienePlan' => $plan !== null,
+        'plan' => $plan
+    ]);
+}
+
+/**
+ * Registrar el plan de pago del programa cuando se define DESPUÉS de la matrícula
+ * (desde Matriculados), en vez de en el mismo momento de validar el voucher.
+ */
+function registrarPlanPagoPrograma()
+{
+    if (empty($_POST['idInscripcion']) || empty($_POST['estudianteID']) ||
+        empty($_POST['programaID']) || empty($_POST['costoTotalPrograma']) || empty($_POST['cuotas'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'Faltan datos requeridos del plan de pago']);
+        return;
+    }
+
+    $cuotas = json_decode($_POST['cuotas'], true);
+    if (!is_array($cuotas) || empty($cuotas)) {
+        echo json_encode(['success' => false, 'mensaje' => 'Debe definir al menos una cuota']);
+        return;
+    }
+
+    $datos = [
+        'idInscripcion' => (int)$_POST['idInscripcion'],
+        'EstudianteID' => (int)$_POST['estudianteID'],
+        'ProgramaID' => (int)$_POST['programaID'],
+        'CostoTotalPrograma' => floatval($_POST['costoTotalPrograma']),
+        'TipoPlan' => htmlspecialchars(trim($_POST['tipoPlan'] ?? 'REGULAR')),
+        'PorcentajeDescuento' => isset($_POST['porcentajeDescuento']) ? floatval($_POST['porcentajeDescuento']) : 0,
+        'CodigoGrupo' => !empty($_POST['codigoGrupo']) ? htmlspecialchars(trim($_POST['codigoGrupo'])) : null,
+        'CantidadInscritosGrupo' => isset($_POST['cantidadInscritosGrupo']) ? (int)$_POST['cantidadInscritosGrupo'] : 1,
+        'ResponsableGeneracion' => isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
+            ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
+            : null,
+        'Cuotas' => array_map(function ($c) {
+            return [
+                'monto' => floatval($c['monto'] ?? 0),
+                'fecha' => htmlspecialchars(trim($c['fecha'] ?? ''))
+            ];
+        }, $cuotas)
+    ];
+
+    $resultado = PagoProgramaModelos::RegistrarPlanModelo($datos);
+
+    echo json_encode([
+        'success' => $resultado['status'] === 'exitoso',
+        'mensaje' => $resultado['mensaje']
+    ]);
+}
+
+/**
+ * Obtener una cuota puntual (para precargar el modal de "Generar Orden de Pago" de esa cuota)
+ */
+function obtenerCuotaPrograma()
+{
+    if (empty($_POST['idCuota'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El ID de la cuota es requerido']);
+        return;
+    }
+
+    $cuota = PagoProgramaModelos::ObtenerCuotaModelo((int)$_POST['idCuota']);
+
+    if (!$cuota) {
+        echo json_encode(['success' => false, 'mensaje' => 'No se encontró la cuota']);
+        return;
+    }
+
+    $cuota['CiCompleto'] = trim(
+        $cuota['Ci'] . (!empty($cuota['Complemento']) ? '-' . $cuota['Complemento'] : '') .
+        ' ' . $cuota['Exp']
+    );
+    $cuota['MontoLiteral'] = numeroALetrasOrdenPago((float)$cuota['MontoCuota']);
+    $planTexto = [
+        'REGULAR' => 'PLAN REGULAR',
+        'DESCUENTO' => 'PLAN AL CONTADO CON DESCUENTO',
+        'GRUPAL' => 'PLAN GRUPAL (VARIOS INSCRITOS)'
+    ][$cuota['TipoPlan']] ?? $cuota['TipoPlan'];
+
+    $cuota['ProgramaTexto'] = 'PROGRAMA DE POSGRADO EN LA ' . strtoupper($cuota['GradoAcademico']) .
+        ' EN ' . strtoupper($cuota['NombrePrograma']) .
+        (!empty($cuota['Version']) ? ' "' . strtoupper($cuota['Version']) . '"' : '') .
+        ' - CUOTA ' . $cuota['NumeroCuota'] . '/' . $cuota['NumeroCuotas'] . ' (' . $planTexto . ')';
+
+    echo json_encode(['success' => true, 'cuota' => $cuota]);
+}
+
+/**
+ * Registrar el pago (voucher) de una cuota pendiente del plan de pago del programa.
+ */
+function registrarPagoCuota()
+{
+    if (empty($_POST['idCuota']) || empty($_POST['numeroVoucher'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El N° de voucher es requerido']);
+        return;
+    }
+
+    $fechaPago = !empty($_POST['fechaPago']) ? htmlspecialchars(trim($_POST['fechaPago'])) : null;
+
+    $fotoVoucher = null;
+    if (isset($_FILES['fotoVoucher']) && $_FILES['fotoVoucher']['error'] === UPLOAD_ERR_OK) {
+        $fotoVoucher = file_get_contents($_FILES['fotoVoucher']['tmp_name']);
+    }
+
+    $resultado = PagoProgramaModelos::RegistrarPagoCuotaModelo(
+        (int)$_POST['idCuota'],
+        htmlspecialchars(trim($_POST['numeroVoucher'])),
+        $fechaPago,
+        $fotoVoucher
+    );
+
+    echo json_encode([
+        'success' => $resultado['status'] === 'exitoso',
+        'mensaje' => $resultado['mensaje']
+    ]);
+}
+
+/**
+ * Listar estudiantes matriculados sin plan de pago del programa aún (candidatos a un Plan Grupal)
+ */
+function listarMatriculadosSinPlan()
+{
+    $programaID = !empty($_POST['programaID']) ? (int)$_POST['programaID'] : null;
+    $lista = PagoProgramaModelos::ListarMatriculadosSinPlanModelo($programaID);
+    echo json_encode(['success' => true, 'matriculados' => $lista]);
+}
+
+/**
+ * Registrar un Plan Grupal para varios estudiantes matriculados seleccionados a la vez
+ */
+function registrarPlanGrupal()
+{
+    if (empty($_POST['idsInscripcion']) || !isset($_POST['porcentajeDescuento']) || empty($_POST['fechaVencimiento'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'Faltan datos requeridos del plan grupal']);
+        return;
+    }
+
+    $ids = json_decode($_POST['idsInscripcion'], true);
+    if (!is_array($ids) || count($ids) < 2) {
+        echo json_encode(['success' => false, 'mensaje' => 'Seleccione al menos 2 estudiantes']);
+        return;
+    }
+
+    $responsable = isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
+        ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
+        : null;
+
+    $resultado = PagoProgramaModelos::RegistrarPlanGrupalModelo(
+        $ids,
+        floatval($_POST['porcentajeDescuento']),
+        htmlspecialchars(trim($_POST['fechaVencimiento'])),
+        $responsable
+    );
+
+    echo json_encode([
+        'success' => $resultado['status'] === 'exitoso',
+        'mensaje' => $resultado['mensaje']
     ]);
 }
 

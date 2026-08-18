@@ -33,7 +33,7 @@
     require_once 'modelos/reportes.modelo.php';
     require_once 'modelos/reportenotas.modelo.php';
     require_once 'modelos/calificacion.modelo.php';
-    require_once 'modelos/pagomodulo.modelo.php';
+    require_once 'modelos/modulopagos_core.php';
 
 
     // Llamar plantilla

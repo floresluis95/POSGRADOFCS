@@ -122,10 +122,195 @@ class PagoModuloModelo
             $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
             $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
             $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $modulos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            self::AjustarUltimoModuloPendienteAlTotal($modulos, $programaID);
+
+            return $modulos;
         } catch (PDOException $e) {
             error_log("Error en ObtenerModulosConEstadoPagoModelo: " . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Si queda un único módulo pendiente de pago, ajusta su costo (solo para mostrarlo
+     * en las tarjetas) para que la suma de todo lo pagado + este último módulo cierre
+     * exactamente el costo total del programa.
+     * @param array $modulos (por referencia) resultado de ObtenerModulosConEstadoPagoModelo
+     * @param int $programaID
+     * @return void
+     */
+    private static function AjustarUltimoModuloPendienteAlTotal(&$modulos, $programaID)
+    {
+        if (empty($modulos)) {
+            return;
+        }
+
+        $pendientes = [];
+        $sumaPagada = 0.0;
+
+        foreach ($modulos as $i => $modulo) {
+            if ((int)$modulo['Pagado'] === 1) {
+                $sumaPagada += floatval($modulo['CostoPagado']);
+            } else {
+                $pendientes[] = $i;
+            }
+        }
+
+        // Solo se ajusta cuando queda exactamente UN módulo pendiente: es el último
+        // que falta cancelar para completar el programa.
+        if (count($pendientes) !== 1) {
+            return;
+        }
+
+        try {
+            $stmtPrograma = Conexion::Conectar()->prepare(
+                "SELECT Costo FROM programa WHERE ProgramaID = :programaID"
+            );
+            $stmtPrograma->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmtPrograma->execute();
+            $programa = $stmtPrograma->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error al obtener costo del programa en AjustarUltimoModuloPendienteAlTotal: " . $e->getMessage());
+            return;
+        }
+
+        if (!$programa || $programa['Costo'] === null) {
+            return;
+        }
+
+        $costoTotalPrograma = floatval($programa['Costo']);
+        $montoRestante = round($costoTotalPrograma - $sumaPagada, 2);
+
+        if ($montoRestante < 0) {
+            $montoRestante = 0.0;
+        }
+
+        $idxUltimo = $pendientes[0];
+        $costoOriginal = floatval($modulos[$idxUltimo]['Costo']);
+
+        // Solo se marca como "ajustado" si realmente cambia el monto (falta o sobra algo)
+        if (abs($montoRestante - $costoOriginal) > 0.01) {
+            $modulos[$idxUltimo]['CostoOriginal'] = $costoOriginal;
+            $modulos[$idxUltimo]['Costo'] = $montoRestante;
+            $modulos[$idxUltimo]['AjustadoAlTotal'] = true;
+        } else {
+            $modulos[$idxUltimo]['AjustadoAlTotal'] = false;
+        }
+    }
+
+    /**
+     * Ajusta, dentro de un lote de pago de módulos que se está registrando, el monto del
+     * ÚLTIMO módulo (por orden de código) cuando ese lote termina de cubrir TODOS los
+     * módulos que le quedaban pendientes a la inscripción. Así la boleta/recibo de cada
+     * módulo pagado en el lote suma exacto al costo total del programa, sin importar si
+     * los costos cargados por módulo no cerraban exacto por redondeo.
+     *
+     * Si el lote no cubre todos los pendientes (quedará algo por pagar después), no se
+     * toca nada: se devuelven los costos tal como se enviaron.
+     *
+     * @param int $programaID
+     * @param int $idinscripcion
+     * @param array $costosModulos [IdModulo => costo] tal como llega del formulario
+     * @return array [IdModulo => costo] posiblemente con el último ajustado
+     */
+    public static function AjustarUltimoModuloDelPagoAlTotalModelo($programaID, $idinscripcion, $costosModulos)
+    {
+        if (empty($costosModulos)) {
+            return $costosModulos;
+        }
+
+        try {
+            $pdo = Conexion::Conectar();
+
+            // Módulos activos del programa, en el mismo orden que se muestran en las tarjetas.
+            // PDO devuelve las columnas como string por defecto: se castean a int para comparar bien.
+            $stmtModulos = $pdo->prepare(
+                "SELECT Idmodulo FROM modulos
+                 WHERE ProgramaId = :programaID AND estadomodulo = 'ACTIVO'
+                 ORDER BY codigomodulo ASC"
+            );
+            $stmtModulos->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmtModulos->execute();
+            $todosLosModulos = array_map('intval', array_column($stmtModulos->fetchAll(PDO::FETCH_ASSOC), 'Idmodulo'));
+
+            if (empty($todosLosModulos)) {
+                return $costosModulos;
+            }
+
+            // Módulos ya pagados (no anulados) de esta inscripción
+            $stmtPagados = $pdo->prepare(
+                "SELECT IdModulo, costomodulo FROM pagomodulo
+                 WHERE idinscripcion = :idinscripcion AND Estado != 'ANULADO'"
+            );
+            $stmtPagados->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
+            $stmtPagados->execute();
+            $pagados = $stmtPagados->fetchAll(PDO::FETCH_ASSOC);
+
+            $idsPagados = array_map('intval', array_column($pagados, 'IdModulo'));
+            $sumaYaPagada = array_sum(array_map('floatval', array_column($pagados, 'costomodulo')));
+
+            $pendientesAntes = array_values(array_diff($todosLosModulos, $idsPagados));
+            $idsEsteLote = array_map('intval', array_keys($costosModulos));
+
+            // Comparar como conjuntos: este lote debe cubrir EXACTAMENTE todo lo pendiente
+            sort($pendientesAntes);
+            $idsEsteLoteOrdenado = $idsEsteLote;
+            sort($idsEsteLoteOrdenado);
+
+            if ($pendientesAntes !== $idsEsteLoteOrdenado) {
+                // Este pago no cierra el programa (queda algo pendiente para después): no se ajusta
+                return $costosModulos;
+            }
+
+            // Obtener el costo total del programa
+            $stmtPrograma = $pdo->prepare("SELECT Costo FROM programa WHERE ProgramaID = :programaID");
+            $stmtPrograma->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmtPrograma->execute();
+            $programa = $stmtPrograma->fetch(PDO::FETCH_ASSOC);
+
+            if (!$programa || $programa['Costo'] === null) {
+                return $costosModulos;
+            }
+
+            $costoTotalPrograma = floatval($programa['Costo']);
+            $montoRestanteTotal = round($costoTotalPrograma - $sumaYaPagada, 2);
+            if ($montoRestanteTotal < 0) {
+                $montoRestanteTotal = 0.0;
+            }
+
+            // El "último" módulo del lote es el de mayor orden (codigomodulo) entre los que se están pagando ahora
+            $ultimoModuloID = null;
+            foreach ($todosLosModulos as $idModulo) {
+                if (in_array($idModulo, $idsEsteLote, true)) {
+                    $ultimoModuloID = $idModulo;
+                }
+            }
+
+            if ($ultimoModuloID === null) {
+                return $costosModulos;
+            }
+
+            // Sumar el resto del lote (todos menos el último) para calcular cuánto le toca al último
+            $sumaRestoDelLote = 0.0;
+            foreach ($costosModulos as $idModulo => $costo) {
+                if ((int)$idModulo !== $ultimoModuloID) {
+                    $sumaRestoDelLote += floatval($costo);
+                }
+            }
+
+            $montoUltimo = round($montoRestanteTotal - $sumaRestoDelLote, 2);
+            if ($montoUltimo < 0) {
+                $montoUltimo = 0.0;
+            }
+
+            $costosModulos[$ultimoModuloID] = $montoUltimo;
+
+            return $costosModulos;
+        } catch (PDOException $e) {
+            error_log("Error en AjustarUltimoModuloDelPagoAlTotalModelo: " . $e->getMessage());
+            return $costosModulos;
         }
     }
 
@@ -460,4 +645,3 @@ class PagoModuloModelo
         }
     }
 }
-?>

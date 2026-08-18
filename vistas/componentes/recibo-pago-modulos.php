@@ -5,7 +5,7 @@ $idinscripcion = isset($_GET['idinscripcion']) ? intval($_GET['idinscripcion']) 
 if ($idinscripcion === 0) die('ID de inscripción inválido');
 
 require_once '../../modelos/conexion.modelo.php';
-require_once '../../modelos/pagomodulo.modelo.php';
+require_once '../../modelos/modulopagos_core.php';
 
 date_default_timezone_set("America/La_Paz");
 $fechaGeneracion = date('d/m/Y H:i:s');

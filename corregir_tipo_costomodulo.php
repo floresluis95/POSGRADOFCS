@@ -37,7 +37,7 @@ try {
     $stmtProgramas = $pdo->query("SELECT ProgramaID, NombrePrograma FROM programa WHERE Estado = 'ACTIVO'");
     $programas = $stmtProgramas->fetchAll(PDO::FETCH_ASSOC);
 
-    require_once 'modelos/pagomodulo.modelo.php';
+    require_once 'modelos/modulopagos_core.php';
 
     foreach ($programas as $prog) {
         echo "   - Procesando: {$prog['NombrePrograma']} (ID: {$prog['ProgramaID']})\n";

@@ -91,6 +91,9 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                         </div>
                         <div class="kt-portlet__head-toolbar">
                             <div class="kt-portlet__head-wrapper">
+                                <button type="button" class="btn btn-sm btn-light mr-2" id="btnAbrirPlanGrupal">
+                                    <i class="fa fa-users"></i> Plan Grupal
+                                </button>
                                 <span style="color: white; font-size: 11px;">
                                     <i class="fa fa-users" style="color: #28a745;"></i> ACTIVOS
                                 </span>
@@ -399,6 +402,187 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     </div>
 </div>
 
+<!-- Modal: Plan de Pago del Programa (Regular / Descuento / Grupal, con sus cuotas) -->
+<div class="modal fade" id="modalPlanPago" tabindex="-1" role="dialog" aria-labelledby="modalPlanPagoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
+                <h5 class="modal-title" id="modalPlanPagoLabel">
+                    <i class="fa fa-credit-card"></i> Plan de Pago del Programa - <span id="planEstudianteNombre"></span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="planPagoContenido">
+                    <div class="text-center p-4">
+                        <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
+                        <p class="mt-2">Cargando plan de pago...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Plan Grupal (seleccionar a los estudiantes que entran en el plan) -->
+<div class="modal fade" id="modalPlanGrupal" tabindex="-1" role="dialog" aria-labelledby="modalPlanGrupalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="modalPlanGrupalLabel">
+                    <i class="fa fa-users"></i> Plan Grupal - Seleccionar Estudiantes
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <small class="text-muted d-block mb-3">
+                    <i class="fa fa-info-circle"></i> Seleccione a los estudiantes matriculados que cancelarán el programa
+                    juntos bajo este plan grupal. Solo se listan estudiantes que aún no tienen un plan de pago del programa registrado.
+                </small>
+
+                <div class="row">
+                    <div class="col-lg-6 form-group">
+                        <label class="small font-weight-bold mb-1">Filtrar por Programa</label>
+                        <select class="form-control form-control-sm" id="pgFiltroPrograma">
+                            <option value="">Todos los programas...</option>
+                            <?php foreach ($programas as $prog): ?>
+                                <option value="<?php echo (int)$prog['ProgramaID']; ?>">
+                                    <?php echo htmlspecialchars($prog['NombrePrograma'] . ' - ' . $prog['GradoAcademico']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 form-group">
+                        <label class="small font-weight-bold mb-1">% Descuento Grupal</label>
+                        <input type="number" class="form-control form-control-sm" id="pgPorcentajeDescuento" min="0" max="100" step="0.01" value="0">
+                    </div>
+                    <div class="col-lg-3 form-group">
+                        <label class="small font-weight-bold mb-1">Fecha de Vencimiento</label>
+                        <input type="date" class="form-control form-control-sm" id="pgFechaVencimiento">
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th class="text-center" style="width:36px;"></th>
+                                <th>Estudiante</th>
+                                <th>CI</th>
+                                <th>Programa</th>
+                                <th class="text-center">Costo Programa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pgListaEstudiantes">
+                            <tr><td colspan="5" class="text-center text-muted py-3">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <small class="d-block text-right mt-2">
+                    Seleccionados: <strong id="pgContadorSeleccionados">0</strong> &nbsp;|&nbsp;
+                    Monto por estudiante: <strong>Bs. <span id="pgMontoPorEstudiante">0.00</span></strong>
+                </small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="pgBtnCrearPlan"><i class="fa fa-save"></i> Crear Plan Grupal</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Generar Orden de Pago de una cuota del programa -->
+<div class="modal fade" id="modalGenerarOrdenCuota" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius: 15px 15px 0 0;">
+                <h5 class="modal-title"><i class="fa fa-file-invoice"></i> Generar Orden de Pago</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formGenerarOrdenCuota" method="POST" target="_blank"
+                  action="vistas/componentes/generar-orden-pago-pdf.php">
+                <input type="hidden" name="apaterno" id="ordenCuotaApaterno">
+                <input type="hidden" name="amaterno" id="ordenCuotaAmaterno">
+                <input type="hidden" name="nombres" id="ordenCuotaNombres">
+                <input type="hidden" name="correo" id="ordenCuotaCorreo">
+                <input type="hidden" name="ci" id="ordenCuotaCi">
+                <input type="hidden" name="celular" id="ordenCuotaCelular">
+                <input type="hidden" name="programa" id="ordenCuotaPrograma">
+                <input type="hidden" name="montoNumeral" id="ordenCuotaMontoNumeral">
+                <input type="hidden" name="montoLiteral" id="ordenCuotaMontoLiteral">
+                <input type="hidden" name="version" id="ordenCuotaVersion">
+                <input type="hidden" name="numeroTramite" id="ordenCuotaNumeroTramite">
+                <div class="modal-body">
+                    <small class="text-muted d-block mb-3">
+                        <i class="flaticon2-information"></i> Estos datos se usarán para la factura de la orden de pago de esta cuota.
+                    </small>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Nombre para Factura <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="nombreFactura" id="ordenCuotaNombreFactura" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">NIT o C.I. <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="nitCiFactura" id="ordenCuotaNitCiFactura" required>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background-color: #f5f5f5; border-radius: 0 0 15px 15px;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fa fa-file-invoice"></i> Generar Orden de Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Registrar Pago de una cuota del programa -->
+<div class="modal fade" id="modalPagoCuota" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
+                <h5 class="modal-title"><i class="fa fa-check-circle"></i> Registrar Pago de Cuota</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formPagoCuota" enctype="multipart/form-data">
+                <input type="hidden" name="idCuota" id="pagoCuotaId">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="font-weight-bold">N° Voucher <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="numeroVoucher" id="pagoCuotaVoucher" maxlength="25" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Fecha de Pago <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="fechaPago" id="pagoCuotaFecha" required
+                               max="<?php echo date('Y-m-d'); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Foto del Voucher</label>
+                        <input type="file" class="form-control-file" id="pagoCuotaFoto" accept="image/*">
+                        <small class="form-text text-muted">JPG, PNG, GIF o WEBP (opcional)</small>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background-color: #f5f5f5; border-radius: 0 0 15px 15px;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> Registrar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Scripts -->
 <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
 <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
@@ -406,6 +590,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="vistas/recursos/assets/js/scripts/inscripcionmodulo.js?v=<?php echo time(); ?>"></script>
+<script src="vistas/recursos/assets/js/scripts/planpago.js?v=<?php echo time(); ?>"></script>
 
 <style>
     /* Estilos modernos para la tabla de matriculados */

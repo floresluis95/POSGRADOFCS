@@ -9,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once 'modelos/conexion.modelo.php';
-require_once 'modelos/pagomodulo.modelo.php';
+require_once 'modelos/modulopagos_core.php';
 
 ?>
 <!DOCTYPE html>

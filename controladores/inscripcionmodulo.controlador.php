@@ -81,6 +81,16 @@ class InscripcionModuloControladores
                                    data-idinscripcion="' . $estudiante['idInscripcion'] . '">
                                     <i class="fa fa-book text-primary"></i> Inscribir a Módulo
                                 </a>
+                                <a class="dropdown-item btn-plan-pago-programa" href="#"
+                                   data-estudiante-id="' . $estudiante['EstudianteID'] . '"
+                                   data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
+                                   data-estudiante-ci="' . $estudiante['Ci'] . '"
+                                   data-programa-id="' . $estudiante['ProgramaID'] . '"
+                                   data-programa-nombre="' . htmlspecialchars($estudiante['NombrePrograma']) . '"
+                                   data-costo-programa="' . (float)($estudiante['CostoPrograma'] ?? 0) . '"
+                                   data-idinscripcion="' . $estudiante['idInscripcion'] . '">
+                                    <i class="fa fa-credit-card text-success"></i> Plan de Pago del Programa
+                                </a>
                                 <a class="dropdown-item btn-ver-detalles" href="#"
                                    data-estudiante-id="' . $estudiante['EstudianteID'] . '"
                                    data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
