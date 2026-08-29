@@ -4,7 +4,7 @@ $Validar->ValidarSessionControlador();
 date_default_timezone_set("America/La_Paz");
 
 // Incluir controlador
-require_once 'controladores/procesarpreinscripcion.php';
+require_once 'controladores/ordenpago.controlador.php';
 
 // Procesar formulario (usa el mismo backend de preregistro: Estado = PENDIENTE, sin voucher)
 $ordenPago = new OrdenPagoControladores();
