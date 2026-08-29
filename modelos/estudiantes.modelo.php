@@ -139,5 +139,55 @@ class ProfesionModelos {
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC); // false si no existe
     }
+
+    public static function BuscarPorNombreModelo($nombre)
+    {
+        $stmt = Conexion::Conectar()->prepare("SELECT * FROM profesion WHERE NombreProfesion = :nombre LIMIT 1");
+        $stmt->bindValue(":nombre", $nombre, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC); // false si no existe
+    }
+
+    /**
+     * Registrar una profesión nueva (usado desde el botón "+" del select de Profesión
+     * en Pre-Registro, cuando la profesión buscada no está en la lista).
+     * @param string $nombre
+     * @return array ['status' => 'exitoso'/'duplicado'/'error', 'profesion' => array|null]
+     */
+    public static function RegistrarProfesionModelo($nombre)
+    {
+        $nombre = trim($nombre);
+
+        if ($nombre === '') {
+            return ['status' => 'error', 'mensaje' => 'El nombre de la profesión es requerido'];
+        }
+
+        $existente = self::BuscarPorNombreModelo($nombre);
+        if ($existente) {
+            return ['status' => 'duplicado', 'mensaje' => 'Esa profesión ya existe', 'profesion' => $existente];
+        }
+
+        try {
+            $pdo = Conexion::Conectar();
+            $stmt = $pdo->prepare(
+                "INSERT INTO profesion (NombreProfesion, Detalle) VALUES (:nombre, '')"
+            );
+            $stmt->bindValue(":nombre", $nombre, PDO::PARAM_STR);
+
+            if (!$stmt->execute()) {
+                return ['status' => 'error', 'mensaje' => 'No se pudo registrar la profesión'];
+            }
+
+            $id = $pdo->lastInsertId();
+            return [
+                'status' => 'exitoso',
+                'mensaje' => 'Profesión registrada correctamente',
+                'profesion' => ['IdProfesion' => $id, 'NombreProfesion' => $nombre]
+            ];
+        } catch (PDOException $e) {
+            error_log("Error en RegistrarProfesionModelo: " . $e->getMessage());
+            return ['status' => 'error', 'mensaje' => 'Error en el servidor: ' . $e->getMessage()];
+        }
+    }
 }
 ?>

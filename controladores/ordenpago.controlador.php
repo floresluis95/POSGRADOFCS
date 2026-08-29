@@ -62,6 +62,12 @@ class OrdenPagoControladores
             $montoDescuentoAplicado = isset($_POST['montoDescuento']) ? floatval($_POST['montoDescuento']) : 0;
             $tipoPago = isset($_POST['tipoPago']) ? htmlspecialchars(trim($_POST['tipoPago'])) : 'PLAN REGULAR';
 
+            // Plan de pago del PROGRAMA que el estudiante propone (Regular/Contado/Grupal).
+            // Es solo una propuesta hasta que se valide el voucher en Inscripción.
+            $planPropuestoTipo = isset($_POST['tipoPagoCodigo']) && in_array($_POST['tipoPagoCodigo'], ['REGULAR', 'CONTADO', 'GRUPAL'], true)
+                ? $_POST['tipoPagoCodigo']
+                : 'REGULAR';
+
             $estudianteID = (int)$_POST['idcliente'];
 
             // Campos de facturación: si el formulario no los envía (el pre-registro no los pide),
@@ -103,7 +109,9 @@ class OrdenPagoControladores
                 "NitCiFactura" => $nitCiFactura,
                 "Responsable" => $responsable,
                 "Firma" => $firma,
-                "Observaciones" => $tipoPago
+                "Observaciones" => $tipoPago,
+                "PlanPropuestoTipo" => $planPropuestoTipo,
+                "PlanPropuestoPorcentaje" => $porcentajeDescuento
             );
 
             // Registrar en la base de datos
@@ -117,7 +125,7 @@ class OrdenPagoControladores
                 window.addEventListener("load", function() {
                     swal("¡Pre-registro exitoso!", "La orden de pago de matrícula se generó correctamente.", "success")
                     .then(function () {
-                        window.location.href = "orden-generada?id=' . $idOrdenPago . '";
+                        window.location.href = "preregistro?ordenGenerada=' . $idOrdenPago . '";
                     });
                 });
                 </script>';

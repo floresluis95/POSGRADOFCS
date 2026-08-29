@@ -49,6 +49,10 @@ switch ($accion) {
         buscarEstudiantePorCi();
         break;
 
+    case 'registrarProfesionRapida':
+        registrarProfesionRapida();
+        break;
+
     case 'registrarEstudianteRapido':
         registrarEstudianteRapido();
         break;
@@ -99,14 +103,6 @@ switch ($accion) {
 
     case 'registrarPlanPagoPrograma':
         registrarPlanPagoPrograma();
-        break;
-
-    case 'obtenerCuotaPrograma':
-        obtenerCuotaPrograma();
-        break;
-
-    case 'registrarPagoCuota':
-        registrarPagoCuota();
         break;
 
     case 'listarMatriculadosSinPlan':
@@ -251,6 +247,32 @@ function buscarEstudiantePorCi()
             'success' => false,
             'mensaje' => 'Error al buscar el estudiante'
         ]);
+    }
+}
+
+/**
+ * Registrar una profesión nueva desde el botón "+" del select de Profesión en
+ * Pre-Registro, cuando la profesión buscada no está en la lista.
+ */
+function registrarProfesionRapida()
+{
+    if (!isset($_POST['nombreProfesion']) || trim($_POST['nombreProfesion']) === '') {
+        echo json_encode(['success' => false, 'mensaje' => 'El nombre de la profesión es requerido']);
+        return;
+    }
+
+    $nombre = strtoupper(htmlspecialchars(trim($_POST['nombreProfesion'])));
+    $resultado = ProfesionModelos::RegistrarProfesionModelo($nombre);
+
+    if ($resultado['status'] === 'exitoso' || $resultado['status'] === 'duplicado') {
+        echo json_encode([
+            'success' => true,
+            'duplicado' => $resultado['status'] === 'duplicado',
+            'mensaje' => $resultado['mensaje'],
+            'profesion' => $resultado['profesion']
+        ]);
+    } else {
+        echo json_encode(['success' => false, 'mensaje' => $resultado['mensaje']]);
     }
 }
 
@@ -748,12 +770,14 @@ function validarVoucherMatricula()
 
     // Plan de pago del programa (opcional), definido antes de validar el voucher.
     // Viene como JSON en el campo 'planPago' (mismo POST, multipart/form-data).
+    // El pago en si se registra por modulo desde "Registrar Pago de Modulo"; aqui
+    // solo se guarda el tipo de plan y su % de descuento.
     $planPago = null;
     if (!empty($_POST['planPago'])) {
         $planDecodificado = json_decode($_POST['planPago'], true);
-        if (is_array($planDecodificado) && !empty($planDecodificado['Cuotas'])) {
+        if (is_array($planDecodificado) && !empty($planDecodificado['TipoPlan'])) {
             $planPago = [
-                'TipoPlan' => htmlspecialchars(trim($planDecodificado['TipoPlan'] ?? 'REGULAR')),
+                'TipoPlan' => htmlspecialchars(trim($planDecodificado['TipoPlan'])),
                 'CostoTotalPrograma' => floatval($planDecodificado['CostoTotalPrograma'] ?? 0),
                 'PorcentajeDescuento' => floatval($planDecodificado['PorcentajeDescuento'] ?? 0),
                 'CodigoGrupo' => !empty($planDecodificado['CodigoGrupo']) ? htmlspecialchars(trim($planDecodificado['CodigoGrupo'])) : null,
@@ -761,12 +785,6 @@ function validarVoucherMatricula()
                 'ResponsableGeneracion' => isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
                     ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
                     : null,
-                'Cuotas' => array_map(function ($c) {
-                    return [
-                        'monto' => floatval($c['monto'] ?? 0),
-                        'fecha' => htmlspecialchars(trim($c['fecha'] ?? ''))
-                    ];
-                }, $planDecodificado['Cuotas'])
             ];
         }
     }
@@ -810,18 +828,14 @@ function obtenerPlanPagoPrograma()
 /**
  * Registrar el plan de pago del programa cuando se define DESPUÉS de la matrícula
  * (desde Matriculados), en vez de en el mismo momento de validar el voucher.
+ * El pago en si se hace por modulo desde "Registrar Pago de Modulo"; aqui solo
+ * se define el tipo de plan y su % de descuento.
  */
 function registrarPlanPagoPrograma()
 {
     if (empty($_POST['idInscripcion']) || empty($_POST['estudianteID']) ||
-        empty($_POST['programaID']) || empty($_POST['costoTotalPrograma']) || empty($_POST['cuotas'])) {
+        empty($_POST['programaID']) || empty($_POST['costoTotalPrograma'])) {
         echo json_encode(['success' => false, 'mensaje' => 'Faltan datos requeridos del plan de pago']);
-        return;
-    }
-
-    $cuotas = json_decode($_POST['cuotas'], true);
-    if (!is_array($cuotas) || empty($cuotas)) {
-        echo json_encode(['success' => false, 'mensaje' => 'Debe definir al menos una cuota']);
         return;
     }
 
@@ -837,81 +851,9 @@ function registrarPlanPagoPrograma()
         'ResponsableGeneracion' => isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
             ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
             : null,
-        'Cuotas' => array_map(function ($c) {
-            return [
-                'monto' => floatval($c['monto'] ?? 0),
-                'fecha' => htmlspecialchars(trim($c['fecha'] ?? ''))
-            ];
-        }, $cuotas)
     ];
 
     $resultado = PagoProgramaModelos::RegistrarPlanModelo($datos);
-
-    echo json_encode([
-        'success' => $resultado['status'] === 'exitoso',
-        'mensaje' => $resultado['mensaje']
-    ]);
-}
-
-/**
- * Obtener una cuota puntual (para precargar el modal de "Generar Orden de Pago" de esa cuota)
- */
-function obtenerCuotaPrograma()
-{
-    if (empty($_POST['idCuota'])) {
-        echo json_encode(['success' => false, 'mensaje' => 'El ID de la cuota es requerido']);
-        return;
-    }
-
-    $cuota = PagoProgramaModelos::ObtenerCuotaModelo((int)$_POST['idCuota']);
-
-    if (!$cuota) {
-        echo json_encode(['success' => false, 'mensaje' => 'No se encontró la cuota']);
-        return;
-    }
-
-    $cuota['CiCompleto'] = trim(
-        $cuota['Ci'] . (!empty($cuota['Complemento']) ? '-' . $cuota['Complemento'] : '') .
-        ' ' . $cuota['Exp']
-    );
-    $cuota['MontoLiteral'] = numeroALetrasOrdenPago((float)$cuota['MontoCuota']);
-    $planTexto = [
-        'REGULAR' => 'PLAN REGULAR',
-        'DESCUENTO' => 'PLAN AL CONTADO CON DESCUENTO',
-        'GRUPAL' => 'PLAN GRUPAL (VARIOS INSCRITOS)'
-    ][$cuota['TipoPlan']] ?? $cuota['TipoPlan'];
-
-    $cuota['ProgramaTexto'] = 'PROGRAMA DE POSGRADO EN LA ' . strtoupper($cuota['GradoAcademico']) .
-        ' EN ' . strtoupper($cuota['NombrePrograma']) .
-        (!empty($cuota['Version']) ? ' "' . strtoupper($cuota['Version']) . '"' : '') .
-        ' - CUOTA ' . $cuota['NumeroCuota'] . '/' . $cuota['NumeroCuotas'] . ' (' . $planTexto . ')';
-
-    echo json_encode(['success' => true, 'cuota' => $cuota]);
-}
-
-/**
- * Registrar el pago (voucher) de una cuota pendiente del plan de pago del programa.
- */
-function registrarPagoCuota()
-{
-    if (empty($_POST['idCuota']) || empty($_POST['numeroVoucher'])) {
-        echo json_encode(['success' => false, 'mensaje' => 'El N° de voucher es requerido']);
-        return;
-    }
-
-    $fechaPago = !empty($_POST['fechaPago']) ? htmlspecialchars(trim($_POST['fechaPago'])) : null;
-
-    $fotoVoucher = null;
-    if (isset($_FILES['fotoVoucher']) && $_FILES['fotoVoucher']['error'] === UPLOAD_ERR_OK) {
-        $fotoVoucher = file_get_contents($_FILES['fotoVoucher']['tmp_name']);
-    }
-
-    $resultado = PagoProgramaModelos::RegistrarPagoCuotaModelo(
-        (int)$_POST['idCuota'],
-        htmlspecialchars(trim($_POST['numeroVoucher'])),
-        $fechaPago,
-        $fotoVoucher
-    );
 
     echo json_encode([
         'success' => $resultado['status'] === 'exitoso',
@@ -934,7 +876,7 @@ function listarMatriculadosSinPlan()
  */
 function registrarPlanGrupal()
 {
-    if (empty($_POST['idsInscripcion']) || !isset($_POST['porcentajeDescuento']) || empty($_POST['fechaVencimiento'])) {
+    if (empty($_POST['idsInscripcion']) || !isset($_POST['porcentajeDescuento'])) {
         echo json_encode(['success' => false, 'mensaje' => 'Faltan datos requeridos del plan grupal']);
         return;
     }
@@ -952,7 +894,6 @@ function registrarPlanGrupal()
     $resultado = PagoProgramaModelos::RegistrarPlanGrupalModelo(
         $ids,
         floatval($_POST['porcentajeDescuento']),
-        htmlspecialchars(trim($_POST['fechaVencimiento'])),
         $responsable
     );
 

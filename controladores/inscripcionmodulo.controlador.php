@@ -12,9 +12,9 @@ class InscripcionModuloControladores
     /**
      * Listar estudiantes matriculados en programas
      */
-    public function ListarEstudiantesMatriculadosControlador()
+    public function ListarEstudiantesMatriculadosControlador($programaID = null)
     {
-        $estudiantes = InscripcionModuloModelos::ListarEstudiantesMatriculadosModelo();
+        $estudiantes = InscripcionModuloModelos::ListarEstudiantesMatriculadosModelo($programaID);
 
         if (empty($estudiantes)) {
             echo '<tr>

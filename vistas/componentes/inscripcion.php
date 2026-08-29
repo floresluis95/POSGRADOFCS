@@ -145,6 +145,7 @@ kt-aside--fixed kt-page--loading">
                           <span>Sede: <span id="detalleSede"></span></span>
                           <span>Modalidad de pago: <span class="badge badge-primary" id="detalleModalidad"></span></span>
                           <span>Monto: <strong class="text-primary">Bs. <span id="detalleMonto">0.00</span></strong></span>
+                          <span>Plan del programa: <span class="badge badge-warning" id="detalleEstadoPlan"><i class="fa fa-clock-o"></i> Pendiente de confirmación</span></span>
                         </div>
                       </div>
 
@@ -159,23 +160,23 @@ kt-aside--fixed kt-page--loading">
                             <i class="fa fa-money"></i> Plan de Pago del Programa
                           </div>
                           <small class="text-muted d-block mb-2">
-                            Defina cómo se cancelará el costo del programa (posgrado), aparte de la matrícula.
-                            Costo total del programa: <strong class="text-primary">Bs. <span id="planCostoTotal">0.00</span></strong>
+                            Defina el tipo de plan para el costo del programa (posgrado), aparte de la matrícula.
+                            El pago de cada módulo se registra después, desde <strong>Matriculados → Inscribir a Módulo</strong>,
+                            aplicando este descuento automáticamente. Costo total del programa:
+                            <strong class="text-primary">Bs. <span id="planCostoTotal">0.00</span></strong>
                           </small>
 
+                          <div class="alert alert-light border py-2 px-3 mb-2" id="planPropuestaInfo" style="font-size:12px; display:none;"></div>
+
                           <div class="row">
-                            <div class="col-lg-4 form-group mb-2">
+                            <div class="col-lg-6 form-group mb-2">
                               <label class="small font-weight-bold mb-1">Tipo de Plan</label>
                               <select class="form-control form-control-sm" id="planTipoPago">
-                                <option value="REGULAR">Plan Regular (cuotas)</option>
+                                <option value="REGULAR">Plan Regular (paga cada módulo al iniciarlo)</option>
                                 <option value="DESCUENTO">Plan al Contado (con descuento)</option>
                               </select>
                             </div>
-                            <div class="col-lg-4 form-group mb-2" id="grupoNumeroCuotas">
-                              <label class="small font-weight-bold mb-1">N° de Cuotas</label>
-                              <input type="number" class="form-control form-control-sm" id="planNumeroCuotas" min="1" max="36" value="1">
-                            </div>
-                            <div class="col-lg-4 form-group mb-2">
+                            <div class="col-lg-6 form-group mb-2">
                               <label class="small font-weight-bold mb-1">% Descuento</label>
                               <input type="number" class="form-control form-control-sm" id="planPorcentajeDescuento" min="0" max="100" step="0.01" value="0">
                             </div>
@@ -186,36 +187,6 @@ kt-aside--fixed kt-page--loading">
                             desde <strong>Matriculados</strong> una vez que los integrantes del grupo estén matriculados,
                             para poder seleccionarlos a todos juntos.
                           </small>
-
-                          <div class="text-right mb-2">
-                            <button type="button" class="btn btn-xs btn-outline-primary" id="btnGenerarCuotas">
-                              <i class="fa fa-list-ol"></i> Redistribuir Cuotas
-                            </button>
-                          </div>
-
-                          <div class="table-responsive">
-                            <table class="table table-sm table-bordered mb-1" id="tablaCuotasPlan">
-                              <thead class="thead-light">
-                                <tr>
-                                  <th class="text-center" style="width:40px;">N°</th>
-                                  <th>Monto (Bs.)</th>
-                                </tr>
-                              </thead>
-                              <tbody id="tablaCuotasBody"></tbody>
-                            </table>
-                          </div>
-                          <small class="d-block text-right mb-2">
-                            Total cuotas: <strong>Bs. <span id="planTotalCuotas">0.00</span></strong>
-                            <span id="planCuotasEstadoSuma" class="ml-1"></span>
-                          </small>
-
-                          <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="planAceptaCancelacion">
-                            <label class="custom-control-label small" for="planAceptaCancelacion">
-                              Se acepta cancelar cada cuota <strong>antes de que inicie el módulo correspondiente</strong>,
-                              sin fijar una fecha exacta de vencimiento.
-                            </label>
-                          </div>
                         </div>
 
                         <hr class="my-2">
@@ -414,14 +385,37 @@ kt-aside--fixed kt-page--loading">
                   $('#voucherFotoPreview').hide();
                   $('#voucherFotoPreviewImg').attr('src', '');
 
-                  // Reiniciar y precargar el plan de pago del programa con el costo del programa elegido
+                  // Reiniciar y precargar el plan de pago del programa con el costo del programa elegido,
+                  // partiendo de la propuesta que el estudiante hizo en Pre-Registro (solo referencia:
+                  // el staff puede ajustarla antes de confirmar).
                   costoTotalProgramaActual = parseFloat(p.CostoPrograma) || 0;
                   $('#planCostoTotal').text(costoTotalProgramaActual.toFixed(2));
-                  $('#planTipoPago').val('REGULAR');
-                  $('#planNumeroCuotas').val(1);
-                  $('#planPorcentajeDescuento').val(0);
-                  $('#grupoNumeroCuotas').show();
-                  generarCuotasPlan();
+
+                  const planPropuestoTipo = p.PlanPropuestoTipo || 'REGULAR';
+                  const planPropuestoPorcentaje = parseFloat(p.PlanPropuestoPorcentaje) || 0;
+                  const nombresPlan = { REGULAR: 'Regular', CONTADO: 'al Contado', GRUPAL: 'Grupal' };
+
+                  if (planPropuestoTipo === 'GRUPAL') {
+                      $('#planPropuestaInfo').html(
+                          '<i class="fa fa-info-circle text-primary"></i> El estudiante propuso un <strong>Plan Grupal</strong>' +
+                          (planPropuestoPorcentaje > 0 ? ' (-' + planPropuestoPorcentaje.toFixed(2) + '%)' : '') +
+                          ' en Pre-Registro. Ese plan se define desde <strong>Matriculados</strong> una vez inscrito junto a sus compañeros de grupo; ' +
+                          'por ahora puede confirmar el voucher con un Plan Regular provisional.'
+                      ).show();
+                      $('#planTipoPago').val('REGULAR');
+                      $('#planPorcentajeDescuento').val(0);
+                  } else {
+                      $('#planPropuestaInfo').html(
+                          '<i class="fa fa-info-circle text-primary"></i> Propuesta del estudiante (Pre-Registro): <strong>Plan ' +
+                          nombresPlan[planPropuestoTipo] + '</strong>' +
+                          (planPropuestoPorcentaje > 0 ? ' con <strong>' + planPropuestoPorcentaje.toFixed(2) + '%</strong> de descuento' : '') +
+                          '. Revise y confirme, o ajuste si es necesario.'
+                      ).show();
+                      $('#planTipoPago').val(planPropuestoTipo === 'CONTADO' ? 'DESCUENTO' : 'REGULAR');
+                      $('#planPorcentajeDescuento').val(planPropuestoPorcentaje);
+                  }
+
+                  $('#detalleEstadoPlan').html('<i class="fa fa-clock-o"></i> Pendiente de confirmación');
 
                   $('#ModalResultadosBusqueda').modal('hide');
                   $('#panelDetalle').slideDown();
@@ -459,100 +453,16 @@ kt-aside--fixed kt-page--loading">
 
       // ============================================
       // PLAN DE PAGO DEL PROGRAMA (posgrado, aparte de la matrícula)
-      // Se define ANTES de validar el voucher; las cuotas se registran junto
-      // con la inscripción formal (misma transacción en el backend).
+      // Se define ANTES de validar el voucher; queda CONFIRMADO en la misma
+      // transacción en que se valida el voucher (backend). El pago en si de
+      // cada modulo se hace despues desde Matriculados -> Inscribir a Modulo,
+      // aplicando este % de descuento automaticamente.
       // ============================================
-      function generarCuotasPlan() {
-          const tipoPlan = $('#planTipoPago').val();
-          let porcentaje = parseFloat($('#planPorcentajeDescuento').val()) || 0;
-          if (porcentaje < 0) porcentaje = 0;
-          if (porcentaje > 100) porcentaje = 100;
-
-          const montoTotalPagar = Math.round((costoTotalProgramaActual * (1 - porcentaje / 100)) * 100) / 100;
-          const numeroCuotas = (tipoPlan === 'REGULAR') ? (parseInt($('#planNumeroCuotas').val(), 10) || 1) : 1;
-
-          let html = '';
-          let acumulado = 0;
-          for (let i = 1; i <= numeroCuotas; i++) {
-              let monto;
-              if (i < numeroCuotas) {
-                  monto = Math.round((montoTotalPagar / numeroCuotas) * 100) / 100;
-                  acumulado += monto;
-              } else {
-                  monto = Math.round((montoTotalPagar - acumulado) * 100) / 100;
-              }
-
-              html += '<tr>' +
-                  '<td class="text-center">' + i + '</td>' +
-                  '<td><input type="number" class="form-control form-control-sm cuota-monto" step="0.01" min="0" value="' + monto.toFixed(2) + '"></td>' +
-                  '</tr>';
-          }
-
-          $('#tablaCuotasBody').html(html);
-          recalcularSumaCuotas();
-      }
-
-      function recalcularSumaCuotas() {
-          let suma = 0;
-          $('.cuota-monto').each(function() {
-              suma += parseFloat($(this).val()) || 0;
-          });
-
-          let porcentaje = parseFloat($('#planPorcentajeDescuento').val()) || 0;
-          const montoTotalPagar = Math.round((costoTotalProgramaActual * (1 - porcentaje / 100)) * 100) / 100;
-
-          $('#planTotalCuotas').text(suma.toFixed(2));
-
-          if (Math.abs(suma - montoTotalPagar) <= 0.5) {
-              $('#planCuotasEstadoSuma').html('<span class="text-success"><i class="fa fa-check-circle"></i> Coincide con el monto a pagar (Bs. ' + montoTotalPagar.toFixed(2) + ')</span>');
-          } else {
-              $('#planCuotasEstadoSuma').html('<span class="text-danger"><i class="fa fa-exclamation-circle"></i> Debe sumar Bs. ' + montoTotalPagar.toFixed(2) + '</span>');
-          }
-      }
-
       $('#planTipoPago').on('change', function() {
-          const tipoPlan = $(this).val();
-          $('#grupoNumeroCuotas').toggle(tipoPlan === 'REGULAR');
-          if (tipoPlan !== 'REGULAR') {
-              $('#planNumeroCuotas').val(1);
+          if ($(this).val() !== 'DESCUENTO') {
+              $('#planPorcentajeDescuento').val(0);
           }
-          generarCuotasPlan();
       });
-
-      $('#planNumeroCuotas, #planPorcentajeDescuento').on('change', generarCuotasPlan);
-      $('#btnGenerarCuotas').on('click', generarCuotasPlan);
-      $(document).on('input', '.cuota-monto', recalcularSumaCuotas);
-
-      function obtenerCuotasPlanValidas() {
-          if (!$('#planAceptaCancelacion').is(':checked')) {
-              return null;
-          }
-
-          const cuotas = [];
-          let valido = true;
-
-          $('#tablaCuotasBody tr').each(function() {
-              const monto = parseFloat($(this).find('.cuota-monto').val()) || 0;
-              if (monto <= 0) {
-                  valido = false;
-              }
-              cuotas.push({ monto: monto, fecha: null });
-          });
-
-          if (!valido || cuotas.length === 0) {
-              return null;
-          }
-
-          let porcentaje = parseFloat($('#planPorcentajeDescuento').val()) || 0;
-          const montoTotalPagar = Math.round((costoTotalProgramaActual * (1 - porcentaje / 100)) * 100) / 100;
-          const suma = cuotas.reduce((acc, c) => acc + c.monto, 0);
-
-          if (Math.abs(suma - montoTotalPagar) > 0.5) {
-              return null;
-          }
-
-          return cuotas;
-      }
 
       // ============================================
       // VALIDAR EL VOUCHER (inscribe formalmente al estudiante)
@@ -573,17 +483,6 @@ kt-aside--fixed kt-page--loading">
               return;
           }
 
-          if (!$('#planAceptaCancelacion').is(':checked')) {
-              swal('Atención', 'Marque la casilla para aceptar cancelar cada cuota antes de que inicie su módulo correspondiente', 'warning');
-              return;
-          }
-
-          const cuotasPlan = obtenerCuotasPlanValidas();
-          if (!cuotasPlan) {
-              swal('Atención', 'Revise el Plan de Pago del Programa: las cuotas deben tener un monto válido y su suma debe coincidir con el monto a pagar', 'warning');
-              return;
-          }
-
           const formData = new FormData();
           formData.append('accion', 'validarVoucherMatricula');
           formData.append('idOrdenPago', idOrdenPago);
@@ -592,8 +491,7 @@ kt-aside--fixed kt-page--loading">
           formData.append('planPago', JSON.stringify({
               TipoPlan: $('#planTipoPago').val(),
               CostoTotalPrograma: costoTotalProgramaActual,
-              PorcentajeDescuento: parseFloat($('#planPorcentajeDescuento').val()) || 0,
-              Cuotas: cuotasPlan
+              PorcentajeDescuento: parseFloat($('#planPorcentajeDescuento').val()) || 0
           }));
 
           const archivoFoto = $('#voucherFoto')[0].files[0];
@@ -617,7 +515,7 @@ kt-aside--fixed kt-page--loading">
                   if (resp.success) {
                       swal({
                           title: '¡Voucher validado!',
-                          text: 'El estudiante quedó inscrito formalmente en el programa.',
+                          text: 'El estudiante quedó inscrito formalmente en el programa y su plan de pago quedó CONFIRMADO.',
                           icon: 'success',
                           buttons: false,
                           timer: 2200
@@ -701,11 +599,6 @@ kt-aside--fixed kt-page--loading">
     font-weight: 700;
     color: #3b3f5c;
     margin-bottom: 4px;
-}
-
-#tablaCuotasPlan th, #tablaCuotasPlan td {
-    padding: 4px 6px;
-    vertical-align: middle;
 }
 </style>
 

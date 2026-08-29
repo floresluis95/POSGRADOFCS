@@ -20,6 +20,17 @@ $sedesDisponibles = ProgramasModelos::ListarSedesModelo();
 // Profesiones disponibles, para el formulario de datos del estudiante en el PASO 1
 $listaProfesionesInicial = ProfesionModelos::ListaprofesionModelos();
 
+function EtiquetaPlanPropuesto($tipo, $porcentaje)
+{
+    $nombres = ['REGULAR' => 'Regular', 'CONTADO' => 'Contado', 'GRUPAL' => 'Grupal'];
+    $nombre = $nombres[$tipo] ?? 'Regular';
+    $porcentaje = (float)$porcentaje;
+    $detalle = $porcentaje > 0 ? ($nombre . ' -' . rtrim(rtrim(number_format($porcentaje, 2), '0'), '.') . '%') : $nombre;
+
+    return '<span class="badge badge-warning" title="Plan propuesto por el estudiante; se confirma al validar el voucher">'
+        . '<i class="fa fa-clock-o"></i> ' . htmlspecialchars($detalle) . '</span>';
+}
+
 function PintarFilaPreregistro($pr)
 {
     $nombreCompleto = trim(($pr['Apaterno'] ?? '') . ' ' . ($pr['Amaterno'] ?? '') . ' ' . ($pr['Nombre'] ?? ''));
@@ -31,8 +42,11 @@ function PintarFilaPreregistro($pr)
     $html .= '<td>' . htmlspecialchars($nombreCompleto) . '</td>';
     $html .= '<td>' . htmlspecialchars($pr['Ci'] ?? '') . '</td>';
     $html .= '<td>' . htmlspecialchars($pr['NombrePrograma'] . ' (' . $pr['CodigoPrograma'] . ')') . '</td>';
+    $html .= '<td>' . htmlspecialchars($pr['Sede'] ?? '') . '</td>';
     $html .= '<td>' . htmlspecialchars($fechaCorta) . '</td>';
+    $html .= '<td class="text-center">' . EtiquetaPlanPropuesto($pr['PlanPropuestoTipo'] ?? 'REGULAR', $pr['PlanPropuestoPorcentaje'] ?? 0) . '</td>';
     $html .= '<td class="text-center"><div class="acciones-preregistro">';
+    $html .= '<button type="button" class="btn btn-accion btn-info btn-ver-detalle-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Ver Detalle"><i class="fa fa-eye"></i></button>';
     $html .= '<button type="button" class="btn btn-accion-texto btn-success btn-generar-orden" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Generar Orden de Pago"><i class="fa fa-file-invoice"></i> Generar Orden</button>';
     $html .= '<button type="button" class="btn btn-accion btn-warning btn-editar-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" data-pagocompleto="' . (int)($pr['pagoCompleto'] ?? 0) . '" title="Editar"><i class="fa fa-edit"></i></button>';
     $html .= '<button type="button" class="btn btn-accion btn-danger btn-anular-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Anular"><i class="fa fa-trash"></i></button>';
@@ -239,12 +253,19 @@ kt-aside--fixed kt-page--loading">
                           <div class="row mt-2">
                             <div class="col-md-6">
                               <label for="IdProfesion" class="small font-weight-bold mb-1">Profesión <span class="text-danger">*</span></label>
-                              <select class="form-control form-control-sm" id="IdProfesion" name="IdProfesion" required>
-                                <option value="">Seleccione una profesión...</option>
-                                <?php foreach ($listaProfesionesInicial as $prof): ?>
-                                  <option value="<?php echo (int)$prof['IdProfesion']; ?>"><?php echo htmlspecialchars($prof['NombreProfesion']); ?></option>
-                                <?php endforeach; ?>
-                              </select>
+                              <div class="input-group input-group-sm">
+                                <select class="form-control form-control-sm" id="IdProfesion" name="IdProfesion" required>
+                                  <option value="">Seleccione una profesión...</option>
+                                  <?php foreach ($listaProfesionesInicial as $prof): ?>
+                                    <option value="<?php echo (int)$prof['IdProfesion']; ?>"><?php echo htmlspecialchars($prof['NombreProfesion']); ?></option>
+                                  <?php endforeach; ?>
+                                </select>
+                                <div class="input-group-append">
+                                  <button type="button" class="btn btn-outline-primary" id="btnNuevaProfesion" title="Agregar una profesión que no está en la lista">
+                                    <i class="fa fa-plus"></i>
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                             <div class="col-md-3">
                               <label for="Trabajo" class="small font-weight-bold mb-1">Trabajo actual</label>
@@ -316,16 +337,44 @@ kt-aside--fixed kt-page--loading">
                           <i class="flaticon2-information"></i> Solo se genera la orden de pago de la <strong>matrícula</strong>; el estudiante queda <strong>PENDIENTE</strong> hasta presentar el voucher.
                         </small>
 
-                        <div class="row">
-                            <div class="col-lg-4 form-group mb-2">
-                              <label class="small font-weight-bold mb-1">Tipo de Pago</label>
-                              <select class="form-control form-control-sm" id="tipoPago">
-                                <option value="REGULAR">Plan Regular (sin descuento)</option>
-                                <option value="CONTADO">Plan al Contado (con descuento)</option>
-                                <option value="GRUPAL">Plan Grupal (2+ inscritos)</option>
-                              </select>
+                        <div class="plan-pago-propuesta mb-2">
+                          <label class="small font-weight-bold mb-1">Plan de Pago (propuesta)</label>
+                          <small class="text-muted d-block mb-2">
+                            Esta elección es solo una <strong>propuesta</strong>: queda pendiente de confirmación hasta que se valide
+                            el voucher de matrícula en Inscripción.
+                          </small>
+                          <div class="row">
+                            <div class="col-lg-4 mb-2">
+                              <label class="plan-opcion-card" for="planOpcionRegular">
+                                <input type="radio" name="planOpcionRadio" id="planOpcionRegular" value="REGULAR" checked>
+                                <span class="plan-opcion-titulo">Plan Regular</span>
+                                <span class="plan-opcion-desc">Paga cada módulo al iniciarlo. Sin descuento (o el que se defina).</span>
+                              </label>
                             </div>
-                            <div class="col-lg-2 form-group mb-2" id="grupoDescuentoManual" style="display: none;">
+                            <div class="col-lg-4 mb-2">
+                              <label class="plan-opcion-card" for="planOpcionContado">
+                                <input type="radio" name="planOpcionRadio" id="planOpcionContado" value="CONTADO">
+                                <span class="plan-opcion-titulo">Plan al Contado</span>
+                                <span class="plan-opcion-desc">Paga todo de una vez. Tiene descuento.</span>
+                              </label>
+                            </div>
+                            <div class="col-lg-4 mb-2">
+                              <label class="plan-opcion-card" for="planOpcionGrupal">
+                                <input type="radio" name="planOpcionRadio" id="planOpcionGrupal" value="GRUPAL">
+                                <span class="plan-opcion-titulo">Plan Grupal</span>
+                                <span class="plan-opcion-desc">Se inscribe junto a 2 o más personas. Tiene descuento.</span>
+                              </label>
+                            </div>
+                          </div>
+                          <select class="d-none" id="tipoPago" name="tipoPagoCodigo">
+                            <option value="REGULAR">Plan Regular (sin descuento)</option>
+                            <option value="CONTADO">Plan al Contado (con descuento)</option>
+                            <option value="GRUPAL">Plan Grupal (2+ inscritos)</option>
+                          </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-3 form-group mb-2" id="grupoDescuentoManual" style="display: none;">
                               <label class="small font-weight-bold mb-1">% Descuento</label>
                               <input type="number" class="form-control form-control-sm" id="porcentajeDescuentoInput" min="0" max="100" step="0.01" value="0">
                             </div>
@@ -388,6 +437,36 @@ kt-aside--fixed kt-page--loading">
                       </div>
                     </div>
                     <div class="kt-portlet__body">
+
+                      <!-- Filtros de búsqueda -->
+                      <div class="row mb-3 align-items-end">
+                        <div class="col-md-3 form-group mb-2 mb-md-0">
+                          <label class="small font-weight-bold mb-1">CI</label>
+                          <input type="text" class="form-control form-control-sm" id="filtroPreregistroCi" placeholder="Buscar por CI...">
+                        </div>
+                        <div class="col-md-4 form-group mb-2 mb-md-0">
+                          <label class="small font-weight-bold mb-1">Programa</label>
+                          <select class="form-control form-control-sm" id="filtroPreregistroPrograma">
+                            <option value="">Todos los programas</option>
+                          </select>
+                        </div>
+                        <div class="col-md-3 form-group mb-2 mb-md-0">
+                          <label class="small font-weight-bold mb-1">Sede</label>
+                          <select class="form-control form-control-sm" id="filtroPreregistroSede">
+                            <option value="">Todas las sedes</option>
+                            <?php foreach ($sedesDisponibles as $sedeOpcion): ?>
+                              <option value="<?php echo htmlspecialchars($sedeOpcion, ENT_QUOTES); ?>"><?php echo htmlspecialchars($sedeOpcion); ?></option>
+                            <?php endforeach; ?>
+                          </select>
+                        </div>
+                        <div class="col-md-2 form-group mb-0">
+                          <button type="button" class="btn btn-sm btn-outline-secondary btn-block" id="btnLimpiarFiltrosPreregistro">
+                            <i class="fa fa-times"></i> Limpiar
+                          </button>
+                        </div>
+                      </div>
+                      <small class="text-muted d-block mb-2" id="contadorPreregistros"></small>
+
                       <div class="table-responsive">
                         <table class="table table-striped table-bordered table-hover" id="tablaPreregistros">
                           <thead style="background: #f4f4f4;">
@@ -396,14 +475,16 @@ kt-aside--fixed kt-page--loading">
                               <th>Estudiante</th>
                               <th style="width: 110px;">CI</th>
                               <th>Programa</th>
+                              <th style="width: 110px;">Sede</th>
                               <th style="width: 110px;">Fecha</th>
-                              <th class="text-center" style="width: 170px;">Acciones</th>
+                              <th class="text-center" style="width: 120px;">Plan Propuesto</th>
+                              <th class="text-center" style="width: 190px;">Acciones</th>
                             </tr>
                           </thead>
                           <tbody id="tablaPreregistrosBody">
                             <?php
                               if (empty($listaPreregistrosInicial)) {
-                                  echo '<tr><td colspan="6" class="text-center text-muted"><i class="flaticon2-information"></i> No hay preregistros pendientes</td></tr>';
+                                  echo '<tr><td colspan="8" class="text-center text-muted"><i class="flaticon2-information"></i> No hay preregistros pendientes</td></tr>';
                               } else {
                                   foreach ($listaPreregistrosInicial as $pr) {
                                       echo PintarFilaPreregistro($pr);
@@ -415,6 +496,8 @@ kt-aside--fixed kt-page--loading">
                       </div>
                     </div>
                   </div>
+
+                  <script id="datosPreregistrosIniciales" type="application/json"><?php echo json_encode($listaPreregistrosInicial, JSON_HEX_TAG | JSON_HEX_AMP); ?></script>
 
                 </div>
               </div>
@@ -469,6 +552,53 @@ kt-aside--fixed kt-page--loading">
             <button type="submit" class="btn btn-success"><i class="flaticon2-check-mark"></i> Guardar Cambios</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Agregar una profesión nueva al select -->
+  <div class="modal fade" id="ModalNuevaProfesion" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
+          <h5 class="modal-title"><i class="fa fa-plus"></i> Nueva Profesión</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form id="formNuevaProfesion">
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="font-weight-bold">Nombre de la Profesión <span class="text-danger">*</span></label>
+              <input type="text" class="form-control text-uppercase" id="inputNuevaProfesion" maxlength="25" required autofocus>
+              <small class="form-text text-muted">Se agregará al select y quedará seleccionada.</small>
+            </div>
+          </div>
+          <div class="modal-footer" style="background-color: #f5f5f5; border-radius: 0 0 15px 15px;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Agregar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Detalle de la solicitud de orden de pago -->
+  <div class="modal fade" id="ModalDetallePreregistro" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
+          <h5 class="modal-title"><i class="fa fa-eye"></i> Detalle de la Solicitud</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="detallePreregistroContenido">
+          <div class="text-center p-4"><i class="fa fa-spinner fa-spin fa-2x text-primary"></i></div>
+        </div>
+        <div class="modal-footer" style="background-color: #f5f5f5; border-radius: 0 0 15px 15px;">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -635,6 +765,57 @@ function iniciarPreregistro() {
         $('#seccionPago').slideUp();
     });
 
+    // Agregar una profesión que no está en el select (botón "+")
+    $('#btnNuevaProfesion').on('click', function() {
+        $('#formNuevaProfesion')[0].reset();
+        $('#ModalNuevaProfesion').modal('show');
+    });
+
+    $('#formNuevaProfesion').on('submit', function(e) {
+        e.preventDefault();
+
+        const nombre = $('#inputNuevaProfesion').val().trim();
+        if (!nombre) {
+            return;
+        }
+
+        const btnSubmit = $(this).find('button[type="submit"]');
+        btnSubmit.prop('disabled', true);
+
+        $.ajax({
+            url: 'ajax/ordenpago.ajax.php',
+            type: 'POST',
+            data: { accion: 'registrarProfesionRapida', nombreProfesion: nombre },
+            dataType: 'json',
+            success: function(resp) {
+                btnSubmit.prop('disabled', false);
+
+                if (!resp.success) {
+                    swal('Error', resp.mensaje || 'No se pudo agregar la profesión', 'error');
+                    return;
+                }
+
+                const prof = resp.profesion;
+                const yaExiste = $('#IdProfesion option[value="' + prof.IdProfesion + '"]').length > 0;
+                if (!yaExiste) {
+                    $('#IdProfesion').append(
+                        $('<option></option>').attr('value', prof.IdProfesion).text(prof.NombreProfesion)
+                    );
+                }
+                $('#IdProfesion').val(prof.IdProfesion);
+
+                $('#ModalNuevaProfesion').modal('hide');
+                if (resp.duplicado) {
+                    swal('Atención', 'Esa profesión ya existía, se seleccionó del listado', 'info');
+                }
+            },
+            error: function() {
+                btnSubmit.prop('disabled', false);
+                swal('Error', 'No se pudo agregar la profesión', 'error');
+            }
+        });
+    });
+
     // ============================================
     // PASO 2: SELECCIONAR SEDE, GRADO Y PROGRAMA
     // ============================================
@@ -704,6 +885,15 @@ function iniciarPreregistro() {
             $('#chipDescuentoInfo').hide();
         }
     }
+
+    // Las tarjetas de radio son la UI visible; sincronizan el <select> oculto
+    // #tipoPago, que es el que en verdad se envia con el formulario.
+    $('input[name="planOpcionRadio"]').on('change', function() {
+        $('.plan-opcion-card').removeClass('is-selected');
+        $(this).closest('.plan-opcion-card').addClass('is-selected');
+        $('#tipoPago').val($(this).val()).trigger('change');
+    });
+    $('.plan-opcion-card input:checked').closest('.plan-opcion-card').addClass('is-selected');
 
     $('#tipoPago').on('change', function() {
         const tipoPago = $(this).val();
@@ -909,9 +1099,18 @@ function iniciarPreregistro() {
     // TABLA DE PREREGISTROS PENDIENTES (CRUD)
     // ============================================
 
+    function etiquetaPlanPropuesto(tipo, porcentaje) {
+        const nombres = { REGULAR: 'Regular', CONTADO: 'Contado', GRUPAL: 'Grupal' };
+        const nombre = nombres[tipo] || 'Regular';
+        const pct = parseFloat(porcentaje) || 0;
+        const detalle = pct > 0 ? (nombre + ' -' + (pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(2)) + '%') : nombre;
+        return '<span class="badge badge-warning" title="Plan propuesto por el estudiante; se confirma al validar el voucher">' +
+            '<i class="fa fa-clock-o"></i> ' + detalle + '</span>';
+    }
+
     function renderTablaPreregistros(lista) {
         if (!lista || lista.length === 0) {
-            $('#tablaPreregistrosBody').html('<tr><td colspan="6" class="text-center text-muted"><i class="flaticon2-information"></i> No hay preregistros pendientes</td></tr>');
+            $('#tablaPreregistrosBody').html('<tr><td colspan="8" class="text-center text-muted"><i class="flaticon2-information"></i> No hay preregistros que coincidan con la búsqueda</td></tr>');
             return;
         }
 
@@ -925,8 +1124,11 @@ function iniciarPreregistro() {
                 '<td>' + nombreCompleto + '</td>' +
                 '<td>' + (pr.Ci || '') + '</td>' +
                 '<td>' + pr.NombrePrograma + ' (' + pr.CodigoPrograma + ')</td>' +
+                '<td>' + (pr.Sede || '') + '</td>' +
                 '<td>' + fechaCorta + '</td>' +
+                '<td class="text-center">' + etiquetaPlanPropuesto(pr.PlanPropuestoTipo, pr.PlanPropuestoPorcentaje) + '</td>' +
                 '<td class="text-center"><div class="acciones-preregistro">' +
+                    '<button type="button" class="btn btn-accion btn-info btn-ver-detalle-preregistro" data-id="' + pr.IdOrdenPago + '" title="Ver Detalle"><i class="fa fa-eye"></i></button>' +
                     '<button type="button" class="btn btn-accion-texto btn-success btn-generar-orden" data-id="' + pr.IdOrdenPago + '" title="Generar Orden de Pago"><i class="fa fa-file-invoice"></i> Generar Orden</button>' +
                     '<button type="button" class="btn btn-accion btn-warning btn-editar-preregistro" data-id="' + pr.IdOrdenPago + '" data-pagocompleto="' + pr.pagoCompleto + '" title="Editar"><i class="fa fa-edit"></i></button>' +
                     '<button type="button" class="btn btn-accion btn-danger btn-anular-preregistro" data-id="' + pr.IdOrdenPago + '" title="Anular"><i class="fa fa-trash"></i></button>' +
@@ -937,8 +1139,69 @@ function iniciarPreregistro() {
         $('#tablaPreregistrosBody').html(html);
     }
 
+    // Dataset completo en memoria (se filtra en el cliente). Se precarga desde el
+    // servidor para que los filtros funcionen de una vez, sin esperar un refresh.
+    let preregistrosData = [];
+    try {
+        const datosIniciales = document.getElementById('datosPreregistrosIniciales');
+        preregistrosData = datosIniciales ? (JSON.parse(datosIniciales.textContent) || []) : [];
+    } catch (e) {
+        preregistrosData = [];
+    }
+
+    function poblarFiltroProgramas() {
+        const seleccionActual = $('#filtroPreregistroPrograma').val();
+        const vistos = {};
+        let opciones = '<option value="">Todos los programas</option>';
+
+        preregistrosData.forEach(function(pr) {
+            const clave = pr.ProgramaID || (pr.NombrePrograma + '|' + pr.CodigoPrograma);
+            if (vistos[clave]) return;
+            vistos[clave] = true;
+            const etiqueta = (pr.NombrePrograma || '') + ' (' + (pr.CodigoPrograma || '') + ')';
+            opciones += '<option value="' + clave + '">' + etiqueta + '</option>';
+        });
+
+        $('#filtroPreregistroPrograma').html(opciones).val(seleccionActual || '');
+    }
+
+    function quitarAcentosPreregistro(texto) {
+        return (texto || '').toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    }
+
+    function aplicarFiltrosPreregistro() {
+        const ci = quitarAcentosPreregistro($('#filtroPreregistroCi').val().trim());
+        const programa = $('#filtroPreregistroPrograma').val();
+        const sede = $('#filtroPreregistroSede').val();
+
+        const filtrada = preregistrosData.filter(function(pr) {
+            if (ci && quitarAcentosPreregistro(pr.Ci).indexOf(ci) === -1) return false;
+            if (sede && (pr.Sede || '') !== sede) return false;
+            if (programa) {
+                const clave = pr.ProgramaID || (pr.NombrePrograma + '|' + pr.CodigoPrograma);
+                if (String(clave) !== String(programa)) return false;
+            }
+            return true;
+        });
+
+        renderTablaPreregistros(filtrada);
+        $('#contadorPreregistros').text(filtrada.length + ' de ' + preregistrosData.length + ' preregistro(s)');
+    }
+
+    $('#filtroPreregistroCi').on('input', aplicarFiltrosPreregistro);
+    $('#filtroPreregistroPrograma, #filtroPreregistroSede').on('change', aplicarFiltrosPreregistro);
+    $('#btnLimpiarFiltrosPreregistro').on('click', function() {
+        $('#filtroPreregistroCi').val('');
+        $('#filtroPreregistroPrograma').val('');
+        $('#filtroPreregistroSede').val('');
+        aplicarFiltrosPreregistro();
+    });
+
+    poblarFiltroProgramas();
+    aplicarFiltrosPreregistro();
+
     function cargarPreregistros() {
-        $('#tablaPreregistrosBody').html('<tr><td colspan="6" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
+        $('#tablaPreregistrosBody').html('<tr><td colspan="8" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
 
         $.ajax({
             url: 'ajax/ordenpago.ajax.php',
@@ -947,26 +1210,85 @@ function iniciarPreregistro() {
             dataType: 'json',
             success: function(resp) {
                 if (resp.success) {
-                    renderTablaPreregistros(resp.preregistros);
+                    preregistrosData = resp.preregistros || [];
+                    poblarFiltroProgramas();
+                    aplicarFiltrosPreregistro();
                 } else {
-                    $('#tablaPreregistrosBody').html('<tr><td colspan="6" class="text-center text-danger">Error al cargar los preregistros</td></tr>');
+                    $('#tablaPreregistrosBody').html('<tr><td colspan="8" class="text-center text-danger">Error al cargar los preregistros</td></tr>');
                 }
             },
             error: function() {
-                $('#tablaPreregistrosBody').html('<tr><td colspan="6" class="text-center text-danger">Error al cargar los preregistros</td></tr>');
+                $('#tablaPreregistrosBody').html('<tr><td colspan="8" class="text-center text-danger">Error al cargar los preregistros</td></tr>');
             }
         });
     }
 
-    // La tabla ya viene renderizada desde el servidor al cargar la página (ver PHP arriba),
-    // así que aquí solo se usa cargarPreregistros() para refrescar (botón, tras editar/anular).
     $('#btnRefrescarPreregistros').on('click', cargarPreregistros);
 
-    // Abrir modal para generar la orden de pago (pide datos de facturación; el resto
-    // de los datos necesarios para el PDF se traen y se guardan en campos ocultos)
-    $(document).on('click', '.btn-generar-orden', function() {
+    // Ver el detalle completo de la solicitud de orden de pago (estudiante, programa,
+    // montos, plan propuesto) sin tener que abrir el modal de generar/editar.
+    $(document).on('click', '.btn-ver-detalle-preregistro', function() {
         const id = $(this).data('id');
 
+        $('#detallePreregistroContenido').html('<div class="text-center p-4"><i class="fa fa-spinner fa-spin fa-2x text-primary"></i></div>');
+        $('#ModalDetallePreregistro').modal('show');
+
+        $.ajax({
+            url: 'ajax/ordenpago.ajax.php',
+            type: 'POST',
+            data: { accion: 'obtenerPreregistro', idOrdenPago: id },
+            dataType: 'json',
+            success: function(resp) {
+                if (!resp.success) {
+                    $('#detallePreregistroContenido').html('<div class="alert alert-danger">' + (resp.mensaje || 'No se pudo cargar el detalle') + '</div>');
+                    return;
+                }
+
+                const p = resp.preregistro;
+                const nombreCompleto = ((p.Apaterno || '') + ' ' + (p.Amaterno || '') + ' ' + (p.Nombre || '')).trim();
+                const fechaCorta = p.FechaGeneracion ? p.FechaGeneracion.substring(0, 10).split('-').reverse().join('/') : '';
+
+                const html = '' +
+                    '<div class="chip-summary mb-2">' +
+                        '<div class="chip-summary-row">' +
+                            '<span><i class="flaticon2-user-outline-symbol"></i> <strong>' + nombreCompleto + '</strong></span>' +
+                            '<span>CI: ' + (p.CiCompleto || '') + '</span>' +
+                            '<span>' + (p.Correo || '-') + '</span>' +
+                            '<span>' + (p.Celular || '-') + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="chip-summary mb-2">' +
+                        '<div class="chip-summary-row flex-wrap">' +
+                            '<span><strong>' + (p.NombrePrograma || '') + '</strong> (' + (p.CodigoPrograma || '') + ')</span>' +
+                            '<span>Grado: ' + (p.GradoAcademico || '') + '</span>' +
+                            '<span>Sede: ' + (p.Sede || '-') + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<table class="table table-sm table-bordered mb-2">' +
+                        '<tbody>' +
+                            '<tr><th style="width:45%;">N° de Orden</th><td>' + (p.NumeroOrden || '-') + '</td></tr>' +
+                            '<tr><th>Fecha de solicitud</th><td>' + fechaCorta + '</td></tr>' +
+                            '<tr><th>Monto de matrícula</th><td>Bs. ' + parseFloat(p.MontoFinal || 0).toFixed(2) + '</td></tr>' +
+                            '<tr><th>Descuento aplicado</th><td>' + parseFloat(p.PorcentajeDescuento || 0).toFixed(2) + '% (Bs. ' + parseFloat(p.MontoDescuento || 0).toFixed(2) + ')</td></tr>' +
+                            '<tr><th>Modalidad de pago (matrícula)</th><td>' + (p.Observaciones || '-') + '</td></tr>' +
+                            '<tr><th>Plan del programa propuesto</th><td>' + etiquetaPlanPropuesto(p.PlanPropuestoTipo, p.PlanPropuestoPorcentaje) + '</td></tr>' +
+                            '<tr><th>Estado</th><td><span class="badge badge-warning">' + (p.Estado || 'PENDIENTE') + '</span></td></tr>' +
+                        '</tbody>' +
+                    '</table>';
+
+                $('#detallePreregistroContenido').html(html);
+            },
+            error: function() {
+                $('#detallePreregistroContenido').html('<div class="alert alert-danger">No se pudo cargar el detalle</div>');
+            }
+        });
+    });
+
+    // Abrir modal para generar la orden de pago (pide datos de facturación; el resto
+    // de los datos necesarios para el PDF se traen y se guardan en campos ocultos).
+    // Se reutiliza tanto para el clic manual del botón "Generar Orden" como para el
+    // auto-abrir justo después de registrar un preregistro (ver ?ordenGenerada= abajo).
+    function abrirModalGenerarOrden(id) {
         $.ajax({
             url: 'ajax/ordenpago.ajax.php',
             type: 'POST',
@@ -1002,7 +1324,26 @@ function iniciarPreregistro() {
                 swal('Error', 'No se pudo cargar el preregistro', 'error');
             }
         });
+    }
+
+    $(document).on('click', '.btn-generar-orden', function() {
+        abrirModalGenerarOrden($(this).data('id'));
     });
+
+    // Justo después de registrar un preregistro, el controlador redirige de vuelta
+    // a esta misma vista con ?ordenGenerada=<id> (en vez de a una pantalla aparte):
+    // se abre directo el modal para generar el PDF de la orden recién creada.
+    (function abrirOrdenRecienGenerada() {
+        const params = new URLSearchParams(window.location.search);
+        const idGenerado = params.get('ordenGenerada');
+        if (idGenerado) {
+            abrirModalGenerarOrden(idGenerado);
+            params.delete('ordenGenerada');
+            const queryRestante = params.toString();
+            const nuevaUrl = window.location.pathname + (queryRestante ? '?' + queryRestante : '');
+            window.history.replaceState({}, document.title, nuevaUrl);
+        }
+    })();
 
     // Al enviar: guarda los datos de facturación por AJAX (en paralelo) y deja que el
     // formulario haga su envío normal hacia el generador de PDF (target="_blank"),
@@ -1171,6 +1512,44 @@ if (document.readyState === 'loading') {
 .custom-control-label {
     cursor: pointer;
     width: 100%;
+}
+
+/* Tarjetas seleccionables del plan de pago propuesto (Paso 3) */
+.plan-opcion-card {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1px solid #dfe1ea;
+    border-radius: 6px;
+    cursor: pointer;
+    height: 100%;
+    margin-bottom: 0;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.plan-opcion-card:hover {
+    border-color: #667eea;
+}
+
+.plan-opcion-card.is-selected {
+    border-color: #667eea;
+    background: #f4f6fb;
+}
+
+.plan-opcion-card input[type="radio"] {
+    margin-bottom: 4px;
+}
+
+.plan-opcion-titulo {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #3b3f5c;
+}
+
+.plan-opcion-desc {
+    font-size: 11px;
+    color: #74788d;
 }
 
 /* Formulario compacto de pre-registro */

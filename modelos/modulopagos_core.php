@@ -124,7 +124,20 @@ class PagoModuloModelo
             $stmt->execute();
             $modulos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            self::AjustarUltimoModuloPendienteAlTotal($modulos, $programaID);
+            // Si el estudiante tiene un Plan de Pago del Programa activo (Regular/Contado/Grupal,
+            // definido en Pre-Registro o Matriculados), su % de descuento se aplica automaticamente
+            // al costo de cada modulo aun no pagado. Los modulos ya pagados no se tocan.
+            $porcentajeDescuento = self::ObtenerPorcentajeDescuentoPlanModelo($idinscripcion);
+            if ($porcentajeDescuento > 0) {
+                foreach ($modulos as &$modulo) {
+                    if ((int)$modulo['Pagado'] === 0) {
+                        $modulo['Costo'] = round(floatval($modulo['Costo']) * (1 - $porcentajeDescuento / 100), 2);
+                    }
+                }
+                unset($modulo);
+            }
+
+            self::AjustarUltimoModuloPendienteAlTotal($modulos, $programaID, $porcentajeDescuento);
 
             return $modulos;
         } catch (PDOException $e) {
@@ -134,14 +147,38 @@ class PagoModuloModelo
     }
 
     /**
+     * Porcentaje de descuento del Plan de Pago del Programa activo de una inscripción
+     * (0 si no tiene plan o el plan no tiene descuento).
+     * @param int $idinscripcion
+     * @return float
+     */
+    private static function ObtenerPorcentajeDescuentoPlanModelo($idinscripcion)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT PorcentajeDescuento FROM pagoprograma
+                 WHERE idInscripcion = :idinscripcion AND Estado = 'ACTIVO' LIMIT 1"
+            );
+            $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
+            $stmt->execute();
+            $plan = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $plan ? floatval($plan['PorcentajeDescuento']) : 0.0;
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerPorcentajeDescuentoPlanModelo: " . $e->getMessage());
+            return 0.0;
+        }
+    }
+
+    /**
      * Si queda un único módulo pendiente de pago, ajusta su costo (solo para mostrarlo
      * en las tarjetas) para que la suma de todo lo pagado + este último módulo cierre
-     * exactamente el costo total del programa.
+     * exactamente el costo total del programa (con el descuento del plan, si tiene).
      * @param array $modulos (por referencia) resultado de ObtenerModulosConEstadoPagoModelo
      * @param int $programaID
+     * @param float $porcentajeDescuento
      * @return void
      */
-    private static function AjustarUltimoModuloPendienteAlTotal(&$modulos, $programaID)
+    private static function AjustarUltimoModuloPendienteAlTotal(&$modulos, $programaID, $porcentajeDescuento = 0)
     {
         if (empty($modulos)) {
             return;
@@ -181,6 +218,9 @@ class PagoModuloModelo
         }
 
         $costoTotalPrograma = floatval($programa['Costo']);
+        if ($porcentajeDescuento > 0) {
+            $costoTotalPrograma = round($costoTotalPrograma * (1 - $porcentajeDescuento / 100), 2);
+        }
         $montoRestante = round($costoTotalPrograma - $sumaPagada, 2);
 
         if ($montoRestante < 0) {

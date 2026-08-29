@@ -461,13 +461,9 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-lg-3 form-group">
+                    <div class="col-lg-6 form-group">
                         <label class="small font-weight-bold mb-1">% Descuento Grupal</label>
                         <input type="number" class="form-control form-control-sm" id="pgPorcentajeDescuento" min="0" max="100" step="0.01" value="0">
-                    </div>
-                    <div class="col-lg-3 form-group">
-                        <label class="small font-weight-bold mb-1">Fecha de Vencimiento</label>
-                        <input type="date" class="form-control form-control-sm" id="pgFechaVencimiento">
                     </div>
                 </div>
 
@@ -497,88 +493,6 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="pgBtnCrearPlan"><i class="fa fa-save"></i> Crear Plan Grupal</button>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Generar Orden de Pago de una cuota del programa -->
-<div class="modal fade" id="modalGenerarOrdenCuota" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius: 15px 15px 0 0;">
-                <h5 class="modal-title"><i class="fa fa-file-invoice"></i> Generar Orden de Pago</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form id="formGenerarOrdenCuota" method="POST" target="_blank"
-                  action="vistas/componentes/generar-orden-pago-pdf.php">
-                <input type="hidden" name="apaterno" id="ordenCuotaApaterno">
-                <input type="hidden" name="amaterno" id="ordenCuotaAmaterno">
-                <input type="hidden" name="nombres" id="ordenCuotaNombres">
-                <input type="hidden" name="correo" id="ordenCuotaCorreo">
-                <input type="hidden" name="ci" id="ordenCuotaCi">
-                <input type="hidden" name="celular" id="ordenCuotaCelular">
-                <input type="hidden" name="programa" id="ordenCuotaPrograma">
-                <input type="hidden" name="montoNumeral" id="ordenCuotaMontoNumeral">
-                <input type="hidden" name="montoLiteral" id="ordenCuotaMontoLiteral">
-                <input type="hidden" name="version" id="ordenCuotaVersion">
-                <input type="hidden" name="numeroTramite" id="ordenCuotaNumeroTramite">
-                <div class="modal-body">
-                    <small class="text-muted d-block mb-3">
-                        <i class="flaticon2-information"></i> Estos datos se usarán para la factura de la orden de pago de esta cuota.
-                    </small>
-                    <div class="form-group">
-                        <label class="font-weight-bold">Nombre para Factura <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="nombreFactura" id="ordenCuotaNombreFactura" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="font-weight-bold">NIT o C.I. <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="nitCiFactura" id="ordenCuotaNitCiFactura" required>
-                    </div>
-                </div>
-                <div class="modal-footer" style="background-color: #f5f5f5; border-radius: 0 0 15px 15px;">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success"><i class="fa fa-file-invoice"></i> Generar Orden de Pago</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Registrar Pago de una cuota del programa -->
-<div class="modal fade" id="modalPagoCuota" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
-                <h5 class="modal-title"><i class="fa fa-check-circle"></i> Registrar Pago de Cuota</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form id="formPagoCuota" enctype="multipart/form-data">
-                <input type="hidden" name="idCuota" id="pagoCuotaId">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label class="font-weight-bold">N° Voucher <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="numeroVoucher" id="pagoCuotaVoucher" maxlength="25" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="font-weight-bold">Fecha de Pago <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" name="fechaPago" id="pagoCuotaFecha" required
-                               max="<?php echo date('Y-m-d'); ?>">
-                    </div>
-                    <div class="form-group">
-                        <label class="font-weight-bold">Foto del Voucher</label>
-                        <input type="file" class="form-control-file" id="pagoCuotaFoto" accept="image/*">
-                        <small class="form-text text-muted">JPG, PNG, GIF o WEBP (opcional)</small>
-                    </div>
-                </div>
-                <div class="modal-footer" style="background-color: #f5f5f5; border-radius: 0 0 15px 15px;">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success"><i class="fa fa-check-circle"></i> Registrar Pago</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>

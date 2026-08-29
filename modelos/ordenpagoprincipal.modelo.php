@@ -98,7 +98,7 @@ class OrdenPagoModelos
 
             // Si se definió un plan de pago del programa antes de validar, se registra
             // aquí mismo (misma transacción) para que quede consistente con la matrícula.
-            if (!empty($planPago) && !empty($planPago['Cuotas'])) {
+            if (!empty($planPago) && !empty($planPago['TipoPlan'])) {
                 $planPago['idInscripcion'] = $idInscripcion;
                 $planPago['EstudianteID'] = $orden['EstudianteID'];
                 $planPago['ProgramaID'] = $orden['ProgramaID'];
@@ -278,17 +278,28 @@ class OrdenPagoModelos
 
             $observaciones = isset($datos['Observaciones']) ? $datos['Observaciones'] : null;
 
+            // Plan de pago del PROGRAMA que el estudiante propone en este momento
+            // (Regular/Contado/Grupal). Es solo una propuesta: recien se vuelve
+            // definitiva cuando se valida el voucher (ver ValidarVoucherMatriculaModelo),
+            // que crea el registro correspondiente en `pagoprograma`.
+            $planTipo = in_array($datos['PlanPropuestoTipo'] ?? null, ['REGULAR', 'CONTADO', 'GRUPAL'], true)
+                ? $datos['PlanPropuestoTipo']
+                : 'REGULAR';
+            $planPorcentaje = isset($datos['PlanPropuestoPorcentaje']) ? floatval($datos['PlanPropuestoPorcentaje']) : 0;
+
             // INSERTAR SOLO EN ORDENPAGO - NO tocar estudianteprograma
             $stmtOrden = $pdo->prepare(
                 "INSERT INTO ordenpago
                 (NumeroOrden, idInscripcion, EstudianteID, ProgramaID,
                  MontoTotal, MontoDescuento, PorcentajeDescuento, MontoFinal,
                  PagoCompleto, CostoMatricula, FechaGeneracion, Observaciones,
+                 PlanPropuestoTipo, PlanPropuestoPorcentaje,
                  NombreFactura, NitCiFactura, ResponsableGeneracion, Firma, Estado)
                 VALUES
                 (:numeroOrden, NULL, :estudianteID, :programaID,
                  :montoTotal, :montoDescuento, :porcentajeDescuento, :montoFinal,
                  :pagoCompleto, :costoMatricula, NOW(), :observaciones,
+                 :planTipo, :planPorcentaje,
                  :nombreFactura, :nitCiFactura, :responsable, :firma, 'PENDIENTE')"
             );
 
@@ -302,6 +313,8 @@ class OrdenPagoModelos
             $stmtOrden->bindParam(":pagoCompleto", $datos['pagoCompleto'], PDO::PARAM_INT);
             $stmtOrden->bindParam(":costoMatricula", $costoMatricula);
             $stmtOrden->bindParam(":observaciones", $observaciones, PDO::PARAM_STR);
+            $stmtOrden->bindParam(":planTipo", $planTipo, PDO::PARAM_STR);
+            $stmtOrden->bindParam(":planPorcentaje", $planPorcentaje);
             $stmtOrden->bindParam(":nombreFactura", $datos['NombreFactura'], PDO::PARAM_STR);
             $stmtOrden->bindParam(":nitCiFactura", $datos['NitCiFactura'], PDO::PARAM_STR);
             $stmtOrden->bindParam(":responsable", $responsable, PDO::PARAM_STR);
@@ -352,6 +365,8 @@ class OrdenPagoModelos
                     op.PagoCompleto as pagoCompleto,
                     op.PorcentajeDescuento as porcentajeDescuento,
                     op.MontoDescuento as montoDescuento,
+                    op.PlanPropuestoTipo,
+                    op.PlanPropuestoPorcentaje,
                     op.FechaGeneracion,
                     op.Estado,
                     e.Nombre,
@@ -362,7 +377,8 @@ class OrdenPagoModelos
                     e.Celular,
                     p.NombrePrograma,
                     p.GradoAcademico,
-                    p.Codigo as CodigoPrograma
+                    p.Codigo as CodigoPrograma,
+                    p.Sede
                 FROM ordenpago op
                 INNER JOIN estudiante e ON op.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON op.ProgramaID = p.ProgramaID
@@ -450,6 +466,8 @@ class OrdenPagoModelos
                     op.PagoCompleto,
                     op.PorcentajeDescuento,
                     op.MontoDescuento,
+                    op.PlanPropuestoTipo,
+                    op.PlanPropuestoPorcentaje,
                     op.NombreFactura,
                     op.NitCiFactura,
                     op.ResponsableGeneracion,
