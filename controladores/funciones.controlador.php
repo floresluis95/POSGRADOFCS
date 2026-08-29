@@ -28,4 +28,9 @@
         {
             include 'vistas/componentes/modulos/footer.php';
         }
+
+        public function FooterResumidoControlador()
+        {
+            include 'vistas/componentes/modulos/footer-resumido.php';
+        }
     }

@@ -156,7 +156,7 @@ date_default_timezone_set("America/La_Paz");
 
                         <?php
                         $Footer = new FuncionesControladores();
-                        $Footer->FooterControlador();
+                        $Footer->FooterResumidoControlador();
                         ?>
 
                     </div>

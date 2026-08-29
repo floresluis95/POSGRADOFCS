@@ -784,7 +784,7 @@ $csrf_token = bin2hex(random_bytes(32));
 
 <?php
   $Footer = new FuncionesControladores();
-  $Footer -> FooterControlador();
+  $Footer -> FooterResumidoControlador();
 ?>
 
 <!-- Scripts -->

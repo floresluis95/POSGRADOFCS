@@ -76,7 +76,7 @@
     
       <?php
       $Footer = new FuncionesControladores();
-      $Footer -> FooterControlador();
+      $Footer -> FooterResumidoControlador();
     ?>
       
 

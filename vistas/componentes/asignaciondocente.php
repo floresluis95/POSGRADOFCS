@@ -411,7 +411,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
 
                         <?php
                         $Footer = new FuncionesControladores();
-                        $Footer->FooterControlador();
+                        $Footer->FooterResumidoControlador();
                         ?>
 
                     </div>

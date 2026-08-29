@@ -381,7 +381,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
             
             <?php
               $Footer = new FuncionesControladores();
-              $Footer->FooterControlador();
+              $Footer->FooterResumidoControlador();
             ?>
           </div>
         </div>

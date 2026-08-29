@@ -372,7 +372,7 @@ kt-aside--fixed kt-page--loading">
                   </form>
 
                   <!-- TABLA DE PREREGISTROS PENDIENTES (Read + Update + Delete) -->
-                  <div class="kt-portlet kt-portlet--height-fluid mt-4">
+                  <div class="kt-portlet mt-4 kt-portlet-preregistros-pendientes">
                     <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1dc9b7 0%, #667eea 100%);">
                       <div class="kt-portlet__head-label">
                         <h3 class="kt-portlet__head-title" style="color: white;">
@@ -424,7 +424,7 @@ kt-aside--fixed kt-page--loading">
 
         <?php
           $Footer = new FuncionesControladores();
-          $Footer->FooterControlador();
+          $Footer->FooterResumidoControlador();
         ?>
       </div>
     </div>
@@ -1134,6 +1134,34 @@ if (document.readyState === 'loading') {
 
 .kt-portlet__head {
     border-radius: 4px 4px 0 0;
+}
+
+/* La tarjeta "PRE-REGISTROS PENDIENTES" se recorta a sus bordes redondeados:
+   sin esto, el fondo degradado del encabezado y la tabla ancha se salen del recuadro. */
+.kt-portlet-preregistros-pendientes {
+    overflow: hidden;
+}
+
+.kt-portlet-preregistros-pendientes .table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* El script de altura "stretched" del tema a veces falla en esta vista y deja
+   una altura fija incorrecta en estos contenedores. */
+#kt_body,
+#kt_content {
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+/* kt-portlet--height-fluid le da a la tarjeta una altura fija en base al
+   contenedor padre (calc(100% - 20px)), sin relacion con la cantidad de filas
+   de la tabla. Con muchos preregistros el contenido excede esa altura fija y
+   se dibuja encima del footer. Esta vista no necesita altura tipo dashboard,
+   así que la tarjeta debe crecer segun su contenido real. */
+.kt-portlet-preregistros-pendientes {
+    height: auto !important;
 }
 
 .table th {

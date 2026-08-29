@@ -268,7 +268,7 @@ kt-aside--fixed kt-page--loading">
 
         <?php
           $Footer = new FuncionesControladores();
-          $Footer->FooterControlador();
+          $Footer->FooterResumidoControlador();
         ?>
       </div>
     </div>

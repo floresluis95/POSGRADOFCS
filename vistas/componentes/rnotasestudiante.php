@@ -198,7 +198,7 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                     </div>
                     <!-- FIN DEL CONTENIDO PRINCIPAL -->
 
-                    <?php $Footer = new FuncionesControladores(); $Footer->FooterControlador(); ?>
+                    <?php $Footer = new FuncionesControladores(); $Footer->FooterResumidoControlador(); ?>
                 </div>
             </div>
         </div>

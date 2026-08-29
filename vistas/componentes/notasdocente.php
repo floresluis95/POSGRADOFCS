@@ -238,7 +238,7 @@ require_once 'modelos/calificacion.modelo.php';
     </div>
 </div>
 
-                    <?php $Footer = new FuncionesControladores(); $Footer->FooterControlador(); ?>
+                    <?php $Footer = new FuncionesControladores(); $Footer->FooterResumidoControlador(); ?>
                 </div>
             </div>
         </div>
