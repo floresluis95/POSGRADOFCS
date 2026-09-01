@@ -383,6 +383,7 @@ class OrdenPagoModelos
                 INNER JOIN estudiante e ON op.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON op.ProgramaID = p.ProgramaID
                 WHERE op.Estado = 'PENDIENTE'
+                AND op.idInscripcion IS NULL
                 ORDER BY op.FechaGeneracion DESC"
             );
             $stmt->execute();
@@ -423,6 +424,7 @@ class OrdenPagoModelos
                 INNER JOIN estudiante e ON op.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON op.ProgramaID = p.ProgramaID
                 WHERE op.Estado = 'PENDIENTE'
+                AND op.idInscripcion IS NULL
                 AND (
                     e.Ci LIKE :like1
                     OR e.Nombre LIKE :like2

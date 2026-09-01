@@ -73,23 +73,17 @@ class InscripcionModuloControladores
                                 <i class="fa fa-cog"></i> Acciones
                             </button>
                             <div class="dropdown-menu dropdown-menu-right">
-                                <a class="dropdown-item btn-inscribir-modulo" href="#"
-                                   data-estudiante-id="' . $estudiante['EstudianteID'] . '"
-                                   data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
-                                   data-programa-id="' . $estudiante['ProgramaID'] . '"
-                                   data-programa-nombre="' . htmlspecialchars($estudiante['NombrePrograma']) . '"
-                                   data-idinscripcion="' . $estudiante['idInscripcion'] . '">
-                                    <i class="fa fa-book text-primary"></i> Inscribir a Módulo
-                                </a>
-                                <a class="dropdown-item btn-plan-pago-programa" href="#"
+                                <a class="dropdown-item btn-gestionar-pagos" href="#"
                                    data-estudiante-id="' . $estudiante['EstudianteID'] . '"
                                    data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
                                    data-estudiante-ci="' . $estudiante['Ci'] . '"
                                    data-programa-id="' . $estudiante['ProgramaID'] . '"
                                    data-programa-nombre="' . htmlspecialchars($estudiante['NombrePrograma']) . '"
                                    data-costo-programa="' . (float)($estudiante['CostoPrograma'] ?? 0) . '"
+                                   data-version="' . htmlspecialchars($estudiante['Version'] ?? '') . '"
+                                   data-numero-tramite="' . htmlspecialchars($estudiante['NumeroTramite'] ?? '') . '"
                                    data-idinscripcion="' . $estudiante['idInscripcion'] . '">
-                                    <i class="fa fa-credit-card text-success"></i> Plan de Pago del Programa
+                                    <i class="fa fa-credit-card text-success"></i> Gestionar Pagos del Programa
                                 </a>
                                 <a class="dropdown-item btn-ver-detalles" href="#"
                                    data-estudiante-id="' . $estudiante['EstudianteID'] . '"

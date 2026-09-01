@@ -16,18 +16,22 @@ $(document).ready(function() {
     });
 
     // ========================================
-    // ABRIR MODAL DE INSCRIPCIÓN A MÓDULO (PAGO)
+    // ABRIR MODAL UNIFICADO: PLAN DE PAGO + PAGO DE MÓDULOS
     // ========================================
-    $(document).on('click', '.btn-inscribir-modulo', function(e) {
+    $(document).on('click', '.btn-gestionar-pagos', function(e) {
         e.preventDefault();
 
         const estudianteID = $(this).data('estudiante-id');
         const estudianteNombre = $(this).data('estudiante-nombre');
+        const estudianteCI = $(this).data('estudiante-ci');
         const programaID = $(this).data('programa-id');
         const programaNombre = $(this).data('programa-nombre');
+        const costoPrograma = $(this).data('costo-programa');
+        const version = $(this).data('version');
+        const numeroTramite = $(this).data('numero-tramite');
         const idinscripcion = $(this).data('idinscripcion');
 
-        console.log('Abriendo modal de pago de módulo para:', estudianteNombre);
+        console.log('Abriendo modal de gestión de pagos para:', estudianteNombre);
         console.log('ID Inscripción:', idinscripcion);
 
         // Llenar información del estudiante
@@ -62,11 +66,32 @@ $(document).ready(function() {
         const hoy = new Date().toISOString().split('T')[0];
         $('#fechaPago').val(hoy);
 
+        // Volver siempre a la pestaña "Plan de Pago" al abrir
+        $('#tab-plan-pago-link').tab('show');
+
         // Mostrar modal
         $('#modalInscribirModulo').modal('show');
 
-        // Cargar módulos disponibles del programa DESPUÉS de mostrar el modal
+        // Cargar plan de pago, módulos disponibles y orden de pago DESPUÉS de mostrar el modal
         setTimeout(function() {
+            const contexto = {
+                idInscripcion: idinscripcion,
+                estudianteID: estudianteID,
+                estudianteNombre: estudianteNombre,
+                estudianteCi: estudianteCI,
+                programaID: programaID,
+                programaNombre: programaNombre,
+                costoPrograma: parseFloat(costoPrograma) || 0,
+                version: version,
+                numeroTramite: numeroTramite
+            };
+
+            if (typeof window.abrirPlanPagoPrograma === 'function') {
+                window.abrirPlanPagoPrograma(contexto);
+            }
+            if (typeof window.cargarOrdenPagoModulos === 'function') {
+                window.cargarOrdenPagoModulos(contexto);
+            }
             cargarModulosDisponibles(programaID);
         }, 300);
     });
@@ -95,15 +120,38 @@ $(document).ready(function() {
 
         console.log('📡 Enviando petición AJAX...');
 
-        $.ajax({
-            url: 'ajax/modulo.ajax.php',
-            method: 'POST',
-            data: {
-                programaID: programaID,
-                idinscripcion: idinscripcion
-            },
-            dataType: 'json',
-            success: function(response) {
+        $.when(
+            $.ajax({
+                url: 'ajax/modulo.ajax.php',
+                method: 'POST',
+                data: {
+                    programaID: programaID,
+                    idinscripcion: idinscripcion
+                },
+                dataType: 'json'
+            }),
+            $.ajax({
+                url: 'ajax/ordenpago.ajax.php',
+                method: 'POST',
+                data: { accion: 'obtenerOrdenesModulosPendientes', idinscripcion: idinscripcion },
+                dataType: 'json'
+            })
+        ).done(function(respModulos, respOrdenes) {
+                const response = respModulos[0];
+                const ordenesResp = respOrdenes[0];
+                const ordenes = (ordenesResp && ordenesResp.success) ? (ordenesResp.ordenes || []) : [];
+
+                // Mapa ModuloID -> orden de pago pendiente que ya lo incluye. El pago de un
+                // módulo solo puede registrarse si ya tiene una orden generada (pestaña
+                // "Orden de Pago"), con el mismo formato que la orden de pago de matrícula.
+                const ordenPorModulo = {};
+                ordenes.forEach(function(orden) {
+                    (orden.ListaModulos || '').split(',').forEach(function(idMod) {
+                        idMod = idMod.trim();
+                        if (idMod) ordenPorModulo[idMod] = orden;
+                    });
+                });
+
                 console.log('✅ Respuesta AJAX recibida:', response);
                 console.log('📊 Total de módulos:', response ? response.length : 0);
 
@@ -114,6 +162,8 @@ $(document).ready(function() {
 
                     response.forEach(function(modulo) {
                         const esPagado = parseInt(modulo.Pagado) === 1;
+                        const orden = ordenPorModulo[String(modulo.ModuloID)];
+                        const tieneOrden = !esPagado && !!orden;
                         const claseEstado = esPagado ? 'pagado' : 'pendiente';
                         const textoEstado = esPagado ? 'PAGADO' : 'PENDIENTE';
 
@@ -136,11 +186,29 @@ $(document).ready(function() {
                             `;
                         }
 
-                        // Checkbox para módulos pendientes
-                        const checkbox = !esPagado ? `
+                        // Checkbox solo para módulos pendientes que ya tienen orden de pago emitida
+                        const checkbox = tieneOrden ? `
                             <input type="checkbox" class="modulo-checkbox"
                                    style="position: absolute; top: 10px; left: 10px; width: 20px; height: 20px; cursor: pointer; z-index: 10;">
                         ` : '';
+
+                        // Módulo pendiente sin orden de pago aún: no se puede seleccionar para
+                        // pagar, hay que generar primero la orden en la pestaña "Orden de Pago"
+                        let avisoSinOrden = '';
+                        if (!esPagado && !tieneOrden) {
+                            avisoSinOrden = `
+                                <div class="modulo-card-pago-info">
+                                    <p class="mb-0"><i class="fa fa-lock"></i> Requiere orden de pago.
+                                    <button type="button" class="btn btn-link btn-sm p-0 align-baseline btn-ir-orden-pago">Generarla ahora</button></p>
+                                </div>
+                            `;
+                        } else if (!esPagado && tieneOrden) {
+                            avisoSinOrden = `
+                                <div class="modulo-card-pago-info">
+                                    <p class="mb-0"><i class="fa fa-file-invoice"></i> Orden de pago N° ${orden.NumeroOrden} emitida</p>
+                                </div>
+                            `;
+                        }
 
                         // Si es el último módulo pendiente, su costo puede haberse ajustado
                         // para completar exactamente el total del programa (falta o sobra por redondeo)
@@ -156,7 +224,7 @@ $(document).ready(function() {
                         }
 
                         tarjetasHTML += `
-                            <div class="modulo-card ${claseEstado} ${!esPagado ? 'seleccionable' : ''}"
+                            <div class="modulo-card ${claseEstado} ${tieneOrden ? 'seleccionable' : ''}"
                                  data-moduloid="${modulo.ModuloID}"
                                  data-nombre="${modulo.NombreModulo}"
                                  data-codigo="${modulo.Codigo}"
@@ -177,6 +245,7 @@ $(document).ready(function() {
                                 ` : ''}
 
                                 ${infoPago}
+                                ${avisoSinOrden}
                                 ${avisoAjuste}
                             </div>
                         `;
@@ -222,11 +291,9 @@ $(document).ready(function() {
                         </div>
                     `);
                 }
-            },
-            error: function(xhr, status, error) {
+        }).fail(function(xhr, status, error) {
                 console.error('❌ ERROR AJAX:', error);
                 console.error('Status:', status);
-                console.error('Response:', xhr.responseText);
 
                 $('#contenedorModulos').html(`
                     <div class="alert alert-danger text-center">
@@ -238,9 +305,18 @@ $(document).ready(function() {
                 `);
 
                 console.error('No se pudieron cargar los módulos del programa. Error:', error);
-            }
         });
     }
+
+    // Botón "Generarla ahora" dentro de una tarjeta de módulo sin orden: salta a la
+    // pestaña "Orden de Pago" para que el usuario emita la orden antes de poder pagar.
+    $(document).on('click', '.btn-ir-orden-pago', function() {
+        $('#tab-orden-pago-link').tab('show');
+    });
+
+    // Exponer para que planpago.js pueda refrescar los costos de módulo
+    // tras guardar/editar el plan de pago (el descuento afecta el costo mostrado)
+    window.cargarModulosDisponibles = cargarModulosDisponibles;
 
     // ========================================
     // NOTA: La selección y validación de módulos múltiples

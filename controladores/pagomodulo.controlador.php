@@ -64,6 +64,7 @@ class PagoModuloControlador
             $exitosos = 0;
             $errores = 0;
             $duplicados = 0;
+            $sinOrden = 0;
             $modulosProcesados = array();
 
             foreach ($costosModulos as $idModulo => $costo) {
@@ -93,6 +94,8 @@ class PagoModuloControlador
                     $modulosProcesados[] = $idModulo;
                 } elseif ($resultado == 'duplicado') {
                     $duplicados++;
+                } elseif ($resultado == 'sin_orden') {
+                    $sinOrden++;
                 } else {
                     $errores++;
                 }
@@ -127,6 +130,7 @@ class PagoModuloControlador
                 // Algunos exitosos, algunos con errores
                 $mensaje = "Se registraron {$exitosos} de {$totalProcesados} módulos.";
                 if ($duplicados > 0) $mensaje .= " {$duplicados} ya estaban registrados.";
+                if ($sinOrden > 0) $mensaje .= " {$sinOrden} no tenían orden de pago generada.";
                 if ($errores > 0) $mensaje .= " {$errores} tuvieron errores.";
 
                 echo '
@@ -137,12 +141,22 @@ class PagoModuloControlador
                     location.href="matriculados";
                 });
                 </script>';
-            } elseif ($duplicados > 0 && $errores == 0) {
+            } elseif ($duplicados > 0 && $errores == 0 && $sinOrden == 0) {
                 // Todos eran duplicados
                 echo '
                 <script src="vistas/recursos/sweetalert.min.js"></script>
                 <script>
                 swal("ERROR!", "Todos los módulos seleccionados ya fueron registrados", "error")
+                .then(function () {
+                    location.href="matriculados";
+                });
+                </script>';
+            } elseif ($sinOrden > 0 && $errores == 0 && $duplicados == 0) {
+                // Todos sin orden de pago previa
+                echo '
+                <script src="vistas/recursos/sweetalert.min.js"></script>
+                <script>
+                swal("ERROR!", "Debe generar primero la orden de pago del módulo (pestaña \\"Orden de Pago\\") antes de registrar el pago", "error")
                 .then(function () {
                     location.href="matriculados";
                 });

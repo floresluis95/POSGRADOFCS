@@ -69,6 +69,14 @@ switch ($accion) {
         registrarOrdenPago();
         break;
 
+    case 'obtenerOrdenesModulosPendientes':
+        obtenerOrdenesModulosPendientes();
+        break;
+
+    case 'registrarOrdenPagoModulosPendientes':
+        registrarOrdenPagoModulosPendientes();
+        break;
+
     case 'listarPreregistros':
         listarPreregistros();
         break;
@@ -519,13 +527,17 @@ function registrarOrdenPago()
                        date('YmdHis');
 
         // Insertar registro de orden de pago
+        // Estado se marca como CONFIRMADO porque este comprobante se emite sobre modulos
+        // que ya fueron pagados (pagomodulo); si quedara en PENDIENTE (valor por defecto de
+        // la columna) apareceria mezclado con los preregistros de matricula aun sin pagar
+        // en la lista de "Preregistros Pendientes" de la vista Orden de Pago.
         $stmt = $conexion->prepare("
             INSERT INTO ordenpago
             (EstudianteID, idinscripcion, ProgramaID, ListaPagosModulo, MontoTotal,
-             ResponsableGeneracion, NombreFactura, NitCiFactura, NumeroOrden, FechaGeneracion)
+             ResponsableGeneracion, NombreFactura, NitCiFactura, NumeroOrden, FechaGeneracion, Estado)
             VALUES
             (:estudianteID, :idinscripcion, :programaID, :listaPagosModulo, :montoTotal,
-             :responsable, :nombreFactura, :nitCiFactura, :numeroOrden, NOW())
+             :responsable, :nombreFactura, :nitCiFactura, :numeroOrden, NOW(), 'CONFIRMADO')
         ");
 
         $stmt->bindParam(':estudianteID', $estudianteID, PDO::PARAM_INT);
@@ -554,6 +566,117 @@ function registrarOrdenPago()
 
     } catch (Exception $e) {
         error_log("Error en registrarOrdenPago: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'mensaje' => 'Error al registrar la orden de pago: ' . $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * Ordenes de pago de modulos PENDIENTES (generadas antes del pago) de una inscripcion.
+ * Se usan para saber que modulos ya tienen una orden emitida (y no ofrecer generar otra)
+ * y para poder reimprimir la orden.
+ */
+function obtenerOrdenesModulosPendientes()
+{
+    if (!isset($_POST['idinscripcion']) || empty($_POST['idinscripcion'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El ID de inscripción es requerido']);
+        return;
+    }
+
+    $idinscripcion = (int)$_POST['idinscripcion'];
+
+    try {
+        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        $conexion = Conexion::Conectar();
+
+        $stmt = $conexion->prepare("
+            SELECT IdOrdenPago, NumeroOrden, ListaModulos, MontoTotal, FechaGeneracion,
+                   Observaciones, NombreFactura, NitCiFactura
+            FROM ordenpago
+            WHERE idinscripcion = :idinscripcion
+            AND Estado = 'PENDIENTE'
+            AND ListaModulos IS NOT NULL
+            ORDER BY FechaGeneracion DESC
+        ");
+        $stmt->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
+        $stmt->execute();
+        $ordenes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode(['success' => true, 'ordenes' => $ordenes]);
+    } catch (Exception $e) {
+        error_log("Error en obtenerOrdenesModulosPendientes: " . $e->getMessage());
+        echo json_encode(['success' => false, 'mensaje' => 'Error al obtener las órdenes de pago pendientes']);
+    }
+}
+
+/**
+ * Registrar una orden de pago de modulos ANTES de que se paguen (Estado PENDIENTE).
+ * El estudiante debe presentar esta orden para pagar; el pago en si se registra
+ * despues, por separado, en "Pago de Modulos" (con su voucher).
+ */
+function registrarOrdenPagoModulosPendientes()
+{
+    if (!isset($_POST['estudianteID']) || !isset($_POST['idinscripcion']) ||
+        !isset($_POST['programaID']) || !isset($_POST['listaModulos']) ||
+        !isset($_POST['montoTotal'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'Faltan datos requeridos']);
+        return;
+    }
+
+    try {
+        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        $conexion = Conexion::Conectar();
+
+        $estudianteID = (int)$_POST['estudianteID'];
+        $idinscripcion = (int)$_POST['idinscripcion'];
+        $programaID = (int)$_POST['programaID'];
+        $listaModulos = $_POST['listaModulos']; // Idmodulo separados por coma
+        $montoTotal = (float)$_POST['montoTotal'];
+        $responsable = isset($_POST['responsable']) ? $_POST['responsable'] : '';
+        $nombreFactura = isset($_POST['nombreFactura']) ? $_POST['nombreFactura'] : '';
+        $nitCiFactura = isset($_POST['nitCiFactura']) ? $_POST['nitCiFactura'] : '';
+        // Detalle (codigo/nombre/costo por modulo) como snapshot para poder imprimir
+        // exactamente lo cotizado, aunque luego cambie el costo del modulo o el descuento
+        $detalleModulos = isset($_POST['detalleModulos']) ? $_POST['detalleModulos'] : null;
+
+        $numeroOrden = 'ORD-' . str_pad($estudianteID, 4, '0', STR_PAD_LEFT) . '-' .
+                       str_pad($programaID, 3, '0', STR_PAD_LEFT) . '-' .
+                       date('YmdHis');
+
+        $stmt = $conexion->prepare("
+            INSERT INTO ordenpago
+            (EstudianteID, idinscripcion, ProgramaID, ListaModulos, MontoTotal,
+             ResponsableGeneracion, NombreFactura, NitCiFactura, NumeroOrden, FechaGeneracion, Observaciones, Estado)
+            VALUES
+            (:estudianteID, :idinscripcion, :programaID, :listaModulos, :montoTotal,
+             :responsable, :nombreFactura, :nitCiFactura, :numeroOrden, NOW(), :detalleModulos, 'PENDIENTE')
+        ");
+
+        $stmt->bindParam(':estudianteID', $estudianteID, PDO::PARAM_INT);
+        $stmt->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
+        $stmt->bindParam(':programaID', $programaID, PDO::PARAM_INT);
+        $stmt->bindParam(':listaModulos', $listaModulos, PDO::PARAM_STR);
+        $stmt->bindParam(':montoTotal', $montoTotal);
+        $stmt->bindParam(':responsable', $responsable, PDO::PARAM_STR);
+        $stmt->bindParam(':nombreFactura', $nombreFactura, PDO::PARAM_STR);
+        $stmt->bindParam(':nitCiFactura', $nitCiFactura, PDO::PARAM_STR);
+        $stmt->bindParam(':numeroOrden', $numeroOrden, PDO::PARAM_STR);
+        $stmt->bindParam(':detalleModulos', $detalleModulos, PDO::PARAM_STR);
+
+        if ($stmt->execute()) {
+            echo json_encode([
+                'success' => true,
+                'mensaje' => 'Orden de pago registrada exitosamente',
+                'numeroOrden' => $numeroOrden,
+                'idOrdenPago' => $conexion->lastInsertId()
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'mensaje' => 'Error al registrar la orden de pago']);
+        }
+    } catch (Exception $e) {
+        error_log("Error en registrarOrdenPagoModulosPendientes: " . $e->getMessage());
         echo json_encode([
             'success' => false,
             'mensaje' => 'Error al registrar la orden de pago: ' . $e->getMessage()

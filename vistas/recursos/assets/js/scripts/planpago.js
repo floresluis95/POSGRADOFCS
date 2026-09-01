@@ -20,27 +20,16 @@ $(document).ready(function() {
     }
 
     // ========================================
-    // ABRIR MODAL: cargar plan existente o mostrar formulario para crearlo
+    // ABRIR PESTAÑA "PLAN DE PAGO": cargar plan existente o mostrar formulario para crearlo
+    // Invocado desde inscripcionmodulo.js al abrir el modal unificado de Gestión de Pagos
     // ========================================
-    $(document).on('click', '.btn-plan-pago-programa', function(e) {
-        e.preventDefault();
+    window.abrirPlanPagoPrograma = function(datos) {
+        planContexto = datos;
 
-        planContexto = {
-            idInscripcion: $(this).data('idinscripcion'),
-            estudianteID: $(this).data('estudiante-id'),
-            estudianteNombre: $(this).data('estudiante-nombre'),
-            estudianteCi: $(this).data('estudiante-ci'),
-            programaID: $(this).data('programa-id'),
-            programaNombre: $(this).data('programa-nombre'),
-            costoPrograma: parseFloat($(this).data('costo-programa')) || 0
-        };
-
-        $('#planEstudianteNombre').text(planContexto.estudianteNombre);
         $('#planPagoContenido').html('<div class="text-center p-4"><i class="fa fa-spinner fa-spin fa-2x text-primary"></i></div>');
-        $('#modalPlanPago').modal('show');
 
         cargarPlanPago();
-    });
+    };
 
     function cargarPlanPago() {
         $.ajax({
@@ -81,7 +70,7 @@ $(document).ready(function() {
             '</div>' +
             '<div class="alert alert-light border" style="font-size:13px;">' +
                 '<i class="fa fa-info-circle text-primary"></i> El descuento de este plan ya se aplica automáticamente al costo de cada módulo. ' +
-                'Para registrar los pagos, use <strong>Inscribir a Módulo</strong> en el menú de Acciones de este estudiante.' +
+                'Para registrar los pagos, use la pestaña <strong>Pago de Módulos</strong> de este mismo formulario.' +
             '</div>';
 
         $('#planPagoContenido').html(html);
@@ -143,6 +132,14 @@ $(document).ready(function() {
                 if (resp.success) {
                     Swal.fire({ icon: 'success', title: 'Plan registrado', text: resp.mensaje, timer: 1800, showConfirmButton: false });
                     cargarPlanPago();
+
+                    // El descuento del plan afecta el costo mostrado por módulo: refrescar esas pestañas
+                    if (typeof window.cargarModulosDisponibles === 'function') {
+                        window.cargarModulosDisponibles(planContexto.programaID);
+                    }
+                    if (typeof window.cargarOrdenPagoModulos === 'function') {
+                        window.cargarOrdenPagoModulos(planContexto);
+                    }
                 } else {
                     Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo registrar el plan' });
                 }

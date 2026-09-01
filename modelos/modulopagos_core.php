@@ -413,6 +413,14 @@ class PagoModuloModelo
                 return "duplicado";
             }
 
+            // El pago solo puede registrarse si antes se emitio una orden de pago
+            // para este modulo (pestaña "Orden de Pago"), con el mismo formato que
+            // la orden de pago de matricula.
+            if (!self::ExisteOrdenPagoPendienteModuloModelo($pdo, $datos['idinscripcion'], $datos['IdModulo'])) {
+                $pdo->rollBack();
+                return "sin_orden";
+            }
+
             // Preparar el archivo (si existe)
             $fmodulo = null;
             if (!empty($datos['fmodulo'])) {
@@ -435,6 +443,16 @@ class PagoModuloModelo
 
             if ($stmt->execute()) {
                 $pdo->commit();
+
+                // Si este modulo tenia una orden de pago pendiente (generada ANTES de pagar),
+                // se marca como confirmada porque el pago ya quedo registrado arriba.
+                // No es critico: si falla, el pago igual queda guardado correctamente.
+                try {
+                    self::ConfirmarOrdenPagoPendienteModuloModelo($pdo, $datos['idinscripcion'], $datos['IdModulo']);
+                } catch (Exception $e) {
+                    error_log("Aviso: no se pudo confirmar la orden de pago pendiente del módulo: " . $e->getMessage());
+                }
+
                 return "exitoso";
             } else {
                 $pdo->rollBack();
@@ -448,6 +466,67 @@ class PagoModuloModelo
             }
             error_log("Error en RegistrarPagoModuloModelo: " . $e->getMessage());
             return "error";
+        }
+    }
+
+    /**
+     * Busca la orden de pago PENDIENTE (emitida antes de pagar) que incluye a este
+     * modulo, si existe. Se usa tanto para exigirla antes de registrar el pago como
+     * para confirmarla una vez el pago queda registrado.
+     * @param PDO $pdo
+     * @param int $idinscripcion
+     * @param int $idModulo
+     * @return array|null fila de ordenpago (IdOrdenPago, ListaModulos) o null
+     */
+    private static function BuscarOrdenPagoPendienteModuloModelo($pdo, $idinscripcion, $idModulo)
+    {
+        $stmt = $pdo->prepare(
+            "SELECT IdOrdenPago, ListaModulos FROM ordenpago
+             WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND ListaModulos IS NOT NULL"
+        );
+        $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
+        $stmt->execute();
+        $ordenes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($ordenes as $orden) {
+            $modulosEnOrden = array_map('trim', explode(',', $orden['ListaModulos']));
+            if (in_array((string)$idModulo, $modulosEnOrden, true)) {
+                return $orden;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Verifica que exista una orden de pago pendiente para este modulo, requisito
+     * para poder registrar su pago (ver pestaña "Orden de Pago" en Matriculados).
+     * @param PDO $pdo
+     * @param int $idinscripcion
+     * @param int $idModulo
+     * @return bool
+     */
+    private static function ExisteOrdenPagoPendienteModuloModelo($pdo, $idinscripcion, $idModulo)
+    {
+        return self::BuscarOrdenPagoPendienteModuloModelo($pdo, $idinscripcion, $idModulo) !== null;
+    }
+
+    /**
+     * Marca como CONFIRMADO (ya no PENDIENTE) la orden de pago que se haya
+     * generado para este modulo antes de pagarlo, porque el pago que la
+     * originaba ya quedo registrado en pagomodulo.
+     * @param PDO $pdo
+     * @param int $idinscripcion
+     * @param int $idModulo
+     */
+    private static function ConfirmarOrdenPagoPendienteModuloModelo($pdo, $idinscripcion, $idModulo)
+    {
+        $orden = self::BuscarOrdenPagoPendienteModuloModelo($pdo, $idinscripcion, $idModulo);
+        if ($orden !== null) {
+            $upd = $pdo->prepare(
+                "UPDATE ordenpago SET Estado = 'CONFIRMADO', FechaConfirmacion = NOW() WHERE IdOrdenPago = :id"
+            );
+            $upd->bindParam(":id", $orden['IdOrdenPago'], PDO::PARAM_INT);
+            $upd->execute();
         }
     }
 
