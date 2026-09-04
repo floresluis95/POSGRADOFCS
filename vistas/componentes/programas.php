@@ -93,6 +93,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                                 <option value="DIPLOMADO">DIPLOMADO</option>
                                 <option value="MAESTRIA">MAESTRÍA</option>
                                 <option value="ESPECIALIDAD">ESPECIALIDAD</option>
+                                <option value="ESPECIALIDAD">DOCTORADO</option>
                               </select>
                             </div>
                           </div>
@@ -332,23 +333,37 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
 
                         <div class="col-md-4">
                           <div class="modal-body">
-                            <label>NÚMERO DE TRÁMITE</label>
-                            <input type="text" class="form-control" name="NumeroTramite" placeholder="Ej: 2024-001">
+                            <label>CUENTA
+                              <a href="javascript:void(0)" data-toggle="modal" data-target="#gestionarCuentas" title="Administrar cuentas">
+                                <i class="fa fa-cog"></i>
+                              </a>
+                            </label>
+                            <select class="form-control" name="NumeroTramite">
+                              <option value="" selected>Seleccione una cuenta</option>
+                              <?php
+                                $cuentasDisponibles = CuentaModelo::ListarCuentasActivasModelo();
+                                foreach ($cuentasDisponibles as $cuentaOpcion) {
+                                    $etiqueta = $cuentaOpcion['NumeroCuenta'] . (!empty($cuentaOpcion['Banco']) ? ' - ' . $cuentaOpcion['Banco'] : '');
+                                    echo '<option value="' . htmlspecialchars($cuentaOpcion['NumeroCuenta']) . '">' . htmlspecialchars($etiqueta) . '</option>';
+                                }
+                              ?>
+                            </select>
                           </div>
                         </div>
                       </div>
 
                     <div class="row">
-                      <div class="col-md-6">
+                      <div class="col-md-4">
                         <div class="modal-body">
                           <label>FECHA DE INICIO</label>
                           <input type="date" class="form-control" id="FechaInicioNuevo" name="FechaInicio" required>
                         </div>
                       </div>
 
-                      <div class="col-md-6">
+                      <div class="col-md-4">
                         <div class="modal-body">
-                          <label>COSTO TOTAL DEL PROGRAMA</label>
+                          <label>COSTO DEL PROGRAMA S/M</label>
+            
                           <input type="number" class="form-control" name="Costo" step="0.01" required>
                         </div>
                       </div>
@@ -378,7 +393,60 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
               </div>
             </div>
             <!-- end:: Modal -->
-            
+
+            <!-- Modal Gestionar cuentas -->
+            <div class="modal fade" id="gestionarCuentas" tabindex="-1" role="dialog" aria-labelledby="gestionarCuentasLabel" aria-hidden="true">
+              <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="gestionarCuentasLabel">Administrar cuentas</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+
+                  <div class="modal-body">
+                    <form method="post" class="form-inline mb-3">
+                      <input type="hidden" name="registrarCuenta" value="1">
+                      <input type="text" class="form-control mr-2 mb-2" name="NumeroCuenta" placeholder="Número de cuenta" required>
+                      <input type="text" class="form-control mr-2 mb-2" name="Banco" placeholder="Banco (opcional)">
+                      <button type="submit" class="btn btn-success mb-2"><i class="fa fa-plus"></i> Agregar cuenta</button>
+                      <?php
+                        $registrocuenta = new CuentaControlador();
+                        $registrocuenta->RegistrarCuentaControlador();
+                      ?>
+                    </form>
+
+                    <table class="table table-bordered table-sm">
+                      <thead>
+                        <tr>
+                          <th>N° Cuenta</th>
+                          <th>Banco</th>
+                          <th class="text-center">Estado</th>
+                          <th class="text-center">Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <?php
+                          $listacuentas = new CuentaControlador();
+                          $listacuentas->ListarCuentasControlador();
+                        ?>
+                      </tbody>
+                    </table>
+                    <?php
+                      $estadocuenta = new CuentaControlador();
+                      $estadocuenta->CambiarEstadoCuentaControlador();
+                    ?>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- end:: Modal -->
+
             <?php
               $Footer = new FuncionesControladores();
               $Footer->FooterResumidoControlador();
@@ -763,7 +831,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
 
           <div class="col-md-4">
             <div class="modal-body">
-              <label>DURACIÓN (meses)</label>
+              <label>DURACIÓN </label>
               <input type="number" class="form-control" id="DuracionMesesEditar" name="DuracionMesesEditar" required>
             </div>
           </div>
@@ -913,6 +981,15 @@ $(document).ready(function() {
         var fechaFinParam = urlParams.get('fechaFin');
         console.log('Restaurando fechaFin:', fechaFinParam);
         $('#filtroFechaFin').val(fechaFinParam);
+    }
+
+    // Si la página se recargó después de una acción dentro de un modal (ej: registrar/dar de baja
+    // una cuenta), reabrir ese mismo modal en vez de dejar al usuario en la lista principal
+    if (urlParams.has('panel')) {
+        var panelAReabrir = '#' + urlParams.get('panel');
+        if ($(panelAReabrir).length) {
+            $(panelAReabrir).modal('show');
+        }
     }
 });
 

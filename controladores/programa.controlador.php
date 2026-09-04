@@ -166,7 +166,7 @@ class ProgramasControladores
                 "CostoMatricula" => (float)$_POST['CostoMatricula'], // Costo de matrícula
                 "Detalle" => strtoupper(htmlspecialchars(trim($_POST['Detalle']))),
                 "Version" => strtoupper(htmlspecialchars(trim($_POST['Version'] ?? 'V-1'))), // Versión del programa
-                "NumeroTramite" => strtoupper(htmlspecialchars(trim($_POST['NumeroTramite'] ?? ''))) // Número de trámite
+                "NumeroTramite" => strtoupper(htmlspecialchars(trim($_POST['NumeroTramite'] ?? ''))) // Cuenta del programa
                 );
                 $nombreprograma = $_POST['NombrePrograma'];
                 $existe = ProgramasModelos::Buscarprogramamodelo($nombreprograma);
