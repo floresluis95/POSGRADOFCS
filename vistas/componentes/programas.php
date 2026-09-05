@@ -91,9 +91,9 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                               <select class="form-control" id="filtroGrado" name="grado">
                                 <option value="">Todos los grados</option>
                                 <option value="DIPLOMADO">DIPLOMADO</option>
-                                <option value="MAESTRIA">MAESTRÍA</option>
+                                <option value="MAESTRIA">MAESTRIA</option>
                                 <option value="ESPECIALIDAD">ESPECIALIDAD</option>
-                                <option value="ESPECIALIDAD">DOCTORADO</option>
+                                <option value="DOCTORADO">DOCTORADO</option>
                               </select>
                             </div>
                           </div>
@@ -282,8 +282,9 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                             <select class="form-control" name="GradoAcademico" required>
                               <option value="" disabled selected>Elija el grado académico</option>
                               <option value="DIPLOMADO">DIPLOMADO</option>
-                              <option value="MAESTRIA">MAESTRÍA</option>
+                              <option value="MAESTRIA">MAESTRIA</option>
                               <option value="ESPECIALIDAD">ESPECIALIDAD</option>
+                              <option value="DOCTORADO">DOCTORADO</option>
                             </select>
                           </div>
                         </div>
@@ -299,12 +300,15 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                           </div>
                         </div>
 
-                        <div class="col-md-4">
-                          <div class="modal-body">
-                            <label>DURACIÓN (meses)</label>
-                            <input type="number" class="form-control" name="DuracionMeses" required placeholder="Ej: 12">
+                            <div class="col-md-4" >
+                              <div class="modal-body">
+                                  <label>DURACIÓN</label>
+                                  <div class="input-group">
+                                      <input type="number" class="form-control" name="DuracionMeses" required placeholder="Ej: 12">
+                                      <span class="input-group-text">meses</span>
+                                  </div>
+                              </div>
                           </div>
-                        </div>
 
                         <div class="col-md-4">
                           <div class="modal-body">
@@ -363,14 +367,18 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                       <div class="col-md-4">
                         <div class="modal-body">
                           <label>COSTO DEL PROGRAMA S/M</label>
-            
-                          <input type="number" class="form-control" name="Costo" step="0.01" required>
+                            <div class="input-group">
+                              <input type="number" class="form-control" name="Costo" step="0.01" required>
+                              <span class="input-group-text">Bs.</span>
+                            </div>
                         </div>
                       </div>
                        <div class="col-md-4">
                         <div class="modal-body">
                           <label>COSTO DE LA MATRICULA</label>
+                            <div class="input-group">
                           <input type="number" class="form-control" name="CostoMatricula" step="0.01" required>
+                          <span class="input-group-text">Bs.</span>
                         </div>
                       </div>
                     </div>
