@@ -132,21 +132,26 @@ class PagoProgramaModelos
 
     /**
      * Listar estudiantes matriculados que todavía no tienen un plan de pago del programa
-     * (para elegir a los integrantes de un Plan Grupal).
+     * (para elegir a los integrantes de un Plan Grupal). Incluye, si existe, la propuesta
+     * de plan que el estudiante hizo en Pre-Registro (PlanPropuestoTipo/Porcentaje), para
+     * que la pantalla de Plan Grupal pueda mostrarla como sugerencia y priorizar en la lista
+     * a quienes ya propusieron Grupal.
      * @param int|null $programaID
      * @return array
      */
     public static function ListarMatriculadosSinPlanModelo($programaID = null)
     {
         try {
-            $sql = "SELECT idInscripcion, EstudianteID, NombreCompleto, CiCompleto, ProgramaID,
-                           NombrePrograma, CodigoPrograma, GradoAcademico, CostoPrograma
-                    FROM vista_estudiantes_matriculados
-                    WHERE TipoPlan IS NULL";
+            $sql = "SELECT vm.idInscripcion, vm.EstudianteID, vm.NombreCompleto, vm.CiCompleto, vm.ProgramaID,
+                           vm.NombrePrograma, vm.CodigoPrograma, vm.GradoAcademico, vm.CostoPrograma,
+                           op.PlanPropuestoTipo, op.PlanPropuestoPorcentaje
+                    FROM vista_estudiantes_matriculados vm
+                    LEFT JOIN ordenpago op ON op.idInscripcion = vm.idInscripcion AND op.Estado = 'CONFIRMADO'
+                    WHERE vm.TipoPlan IS NULL";
             if ($programaID) {
-                $sql .= " AND ProgramaID = :programaID";
+                $sql .= " AND vm.ProgramaID = :programaID";
             }
-            $sql .= " ORDER BY NombreCompleto ASC";
+            $sql .= " ORDER BY (op.PlanPropuestoTipo = 'GRUPAL') DESC, vm.NombreCompleto ASC";
 
             $stmt = Conexion::Conectar()->prepare($sql);
             if ($programaID) {
@@ -157,6 +162,107 @@ class PagoProgramaModelos
         } catch (PDOException $e) {
             error_log("Error en ListarMatriculadosSinPlanModelo: " . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Actualizar el TIPO de plan y/o % de descuento de un plan YA existente (REGULAR o
+     * DESCUENTO). No permite editar así un Plan Grupal: para eso hay que "quitarlo del
+     * grupo" primero (AnularPlanModelo) y luego asignarle un plan individual o incluirlo
+     * en un nuevo grupo.
+     * @param int $idInscripcion
+     * @param string $tipoPlan REGULAR|DESCUENTO
+     * @param float $porcentajeDescuento
+     * @param string|null $responsable
+     * @return array
+     */
+    public static function ActualizarPlanModelo($idInscripcion, $tipoPlan, $porcentajeDescuento, $responsable = null)
+    {
+        if (!in_array($tipoPlan, ['REGULAR', 'DESCUENTO'], true)) {
+            return ['status' => 'error', 'mensaje' => 'Tipo de plan inválido'];
+        }
+
+        try {
+            $pdo = Conexion::Conectar();
+            $pdo->beginTransaction();
+
+            $stmtActual = $pdo->prepare(
+                "SELECT * FROM pagoprograma WHERE idInscripcion = :idInscripcion AND Estado = 'ACTIVO' FOR UPDATE"
+            );
+            $stmtActual->bindParam(":idInscripcion", $idInscripcion, PDO::PARAM_INT);
+            $stmtActual->execute();
+            $planActual = $stmtActual->fetch(PDO::FETCH_ASSOC);
+
+            if (!$planActual) {
+                $pdo->rollBack();
+                return ['status' => 'error', 'mensaje' => 'Esta inscripción no tiene un plan de pago activo'];
+            }
+            if ($planActual['TipoPlan'] === 'GRUPAL') {
+                $pdo->rollBack();
+                return ['status' => 'error', 'mensaje' => 'No se puede editar un Plan Grupal aquí. Primero quítelo del grupo.'];
+            }
+
+            $porcentaje = floatval($porcentajeDescuento);
+            if ($porcentaje < 0) $porcentaje = 0;
+            if ($porcentaje > 100) $porcentaje = 100;
+            $costoTotal = floatval($planActual['CostoTotalPrograma']);
+            $montoDescuento = round($costoTotal * $porcentaje / 100, 2);
+            $montoTotalPagar = round($costoTotal - $montoDescuento, 2);
+
+            $stmtUpdate = $pdo->prepare(
+                "UPDATE pagoprograma
+                 SET TipoPlan = :tipoPlan, PorcentajeDescuento = :porcentaje,
+                     MontoDescuento = :montoDescuento, MontoTotalPagar = :montoTotalPagar,
+                     ResponsableGeneracion = :responsable
+                 WHERE IdPagoPrograma = :idPagoPrograma"
+            );
+            $stmtUpdate->bindParam(":tipoPlan", $tipoPlan, PDO::PARAM_STR);
+            $stmtUpdate->bindParam(":porcentaje", $porcentaje);
+            $stmtUpdate->bindParam(":montoDescuento", $montoDescuento);
+            $stmtUpdate->bindParam(":montoTotalPagar", $montoTotalPagar);
+            $stmtUpdate->bindParam(":responsable", $responsable, PDO::PARAM_STR);
+            $stmtUpdate->bindParam(":idPagoPrograma", $planActual['IdPagoPrograma'], PDO::PARAM_INT);
+
+            if (!$stmtUpdate->execute()) {
+                $pdo->rollBack();
+                return ['status' => 'error', 'mensaje' => 'No se pudo actualizar el plan de pago'];
+            }
+
+            $pdo->commit();
+            return ['status' => 'exitoso', 'mensaje' => 'Plan de pago actualizado correctamente'];
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("Error en ActualizarPlanModelo: " . $e->getMessage());
+            return ['status' => 'error', 'mensaje' => 'Error en el servidor: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Anular el plan de pago activo de una inscripción (por ejemplo, para "quitarla" de un
+     * Plan Grupal o para corregir un plan mal asignado). Al quedar sin plan ACTIVO, la
+     * inscripción vuelve a aparecer en ListarMatriculadosSinPlanModelo y puede recibir un
+     * plan nuevo (individual o grupal).
+     * @param int $idInscripcion
+     * @return array
+     */
+    public static function AnularPlanModelo($idInscripcion)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "UPDATE pagoprograma SET Estado = 'ANULADO' WHERE idInscripcion = :idInscripcion AND Estado = 'ACTIVO'"
+            );
+            $stmt->bindParam(":idInscripcion", $idInscripcion, PDO::PARAM_INT);
+            $stmt->execute();
+
+            if ($stmt->rowCount() === 0) {
+                return ['status' => 'error', 'mensaje' => 'Esta inscripción no tiene un plan de pago activo'];
+            }
+            return ['status' => 'exitoso', 'mensaje' => 'Plan de pago anulado; la inscripción puede recibir un nuevo plan'];
+        } catch (PDOException $e) {
+            error_log("Error en AnularPlanModelo: " . $e->getMessage());
+            return ['status' => 'error', 'mensaje' => 'Error en el servidor: ' . $e->getMessage()];
         }
     }
 

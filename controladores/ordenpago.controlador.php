@@ -62,10 +62,16 @@ class OrdenPagoControladores
             $montoDescuentoAplicado = isset($_POST['montoDescuento']) ? floatval($_POST['montoDescuento']) : 0;
             $tipoPago = isset($_POST['tipoPago']) ? htmlspecialchars(trim($_POST['tipoPago'])) : 'PLAN REGULAR';
 
-            // Plan de pago del PROGRAMA que el estudiante propone (Regular/Contado/Grupal).
+            // Plan de pago del PROGRAMA que el estudiante propone (Regular/Descuento/Grupal).
             // Es solo una propuesta hasta que se valide el voucher en Inscripción.
-            $planPropuestoTipo = isset($_POST['tipoPagoCodigo']) && in_array($_POST['tipoPagoCodigo'], ['REGULAR', 'CONTADO', 'GRUPAL'], true)
-                ? $_POST['tipoPagoCodigo']
+            // 'CONTADO' se acepta como sinónimo histórico de 'DESCUENTO' (valor usado antes
+            // de unificar el vocabulario con `pagoprograma.TipoPlan`).
+            $planPropuestoTipoCodigo = isset($_POST['tipoPagoCodigo']) ? $_POST['tipoPagoCodigo'] : 'REGULAR';
+            if ($planPropuestoTipoCodigo === 'CONTADO') {
+                $planPropuestoTipoCodigo = 'DESCUENTO';
+            }
+            $planPropuestoTipo = in_array($planPropuestoTipoCodigo, ['REGULAR', 'DESCUENTO', 'GRUPAL'], true)
+                ? $planPropuestoTipoCodigo
                 : 'REGULAR';
 
             $estudianteID = (int)$_POST['idcliente'];

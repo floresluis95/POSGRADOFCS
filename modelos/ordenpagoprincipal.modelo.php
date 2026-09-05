@@ -279,11 +279,15 @@ class OrdenPagoModelos
             $observaciones = isset($datos['Observaciones']) ? $datos['Observaciones'] : null;
 
             // Plan de pago del PROGRAMA que el estudiante propone en este momento
-            // (Regular/Contado/Grupal). Es solo una propuesta: recien se vuelve
+            // (Regular/Descuento/Grupal). Es solo una propuesta: recien se vuelve
             // definitiva cuando se valida el voucher (ver ValidarVoucherMatriculaModelo),
             // que crea el registro correspondiente en `pagoprograma`.
-            $planTipo = in_array($datos['PlanPropuestoTipo'] ?? null, ['REGULAR', 'CONTADO', 'GRUPAL'], true)
-                ? $datos['PlanPropuestoTipo']
+            $planTipoPropuesto = $datos['PlanPropuestoTipo'] ?? null;
+            if ($planTipoPropuesto === 'CONTADO') {
+                $planTipoPropuesto = 'DESCUENTO'; // sinónimo histórico
+            }
+            $planTipo = in_array($planTipoPropuesto, ['REGULAR', 'DESCUENTO', 'GRUPAL'], true)
+                ? $planTipoPropuesto
                 : 'REGULAR';
             $planPorcentaje = isset($datos['PlanPropuestoPorcentaje']) ? floatval($datos['PlanPropuestoPorcentaje']) : 0;
 

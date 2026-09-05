@@ -22,7 +22,7 @@ $listaProfesionesInicial = ProfesionModelos::ListaprofesionModelos();
 
 function EtiquetaPlanPropuesto($tipo, $porcentaje)
 {
-    $nombres = ['REGULAR' => 'Regular', 'CONTADO' => 'Contado', 'GRUPAL' => 'Grupal'];
+    $nombres = ['REGULAR' => 'Regular', 'DESCUENTO' => 'Contado', 'GRUPAL' => 'Grupal'];
     $nombre = $nombres[$tipo] ?? 'Regular';
     $porcentaje = (float)$porcentaje;
     $detalle = $porcentaje > 0 ? ($nombre . ' -' . rtrim(rtrim(number_format($porcentaje, 2), '0'), '.') . '%') : $nombre;
@@ -353,7 +353,7 @@ kt-aside--fixed kt-page--loading">
                             </div>
                             <div class="col-lg-4 mb-2">
                               <label class="plan-opcion-card" for="planOpcionContado">
-                                <input type="radio" name="planOpcionRadio" id="planOpcionContado" value="CONTADO">
+                                <input type="radio" name="planOpcionRadio" id="planOpcionContado" value="DESCUENTO">
                                 <span class="plan-opcion-titulo">Plan al Contado</span>
                                 <span class="plan-opcion-desc">Paga todo de una vez. Tiene descuento.</span>
                               </label>
@@ -368,7 +368,7 @@ kt-aside--fixed kt-page--loading">
                           </div>
                           <select class="d-none" id="tipoPago" name="tipoPagoCodigo">
                             <option value="REGULAR">Plan Regular (sin descuento)</option>
-                            <option value="CONTADO">Plan al Contado (con descuento)</option>
+                            <option value="DESCUENTO">Plan al Contado (con descuento)</option>
                             <option value="GRUPAL">Plan Grupal (2+ inscritos)</option>
                           </select>
                         </div>
@@ -862,7 +862,7 @@ function iniciarPreregistro() {
         const tipoPago = $('#tipoPago').val();
         let porcentaje = 0;
 
-        if (tipoPago === 'CONTADO' || tipoPago === 'GRUPAL') {
+        if (tipoPago === 'DESCUENTO' || tipoPago === 'GRUPAL') {
             porcentaje = parseFloat($('#porcentajeDescuentoInput').val()) || 0;
             if (porcentaje < 0) porcentaje = 0;
             if (porcentaje > 100) porcentaje = 100;
@@ -897,7 +897,7 @@ function iniciarPreregistro() {
 
     $('#tipoPago').on('change', function() {
         const tipoPago = $(this).val();
-        if (tipoPago === 'CONTADO' || tipoPago === 'GRUPAL') {
+        if (tipoPago === 'DESCUENTO' || tipoPago === 'GRUPAL') {
             $('#grupoDescuentoManual').show();
         } else {
             $('#grupoDescuentoManual').hide();
@@ -1100,7 +1100,7 @@ function iniciarPreregistro() {
     // ============================================
 
     function etiquetaPlanPropuesto(tipo, porcentaje) {
-        const nombres = { REGULAR: 'Regular', CONTADO: 'Contado', GRUPAL: 'Grupal' };
+        const nombres = { REGULAR: 'Regular', DESCUENTO: 'Contado', CONTADO: 'Contado', GRUPAL: 'Grupal' };
         const nombre = nombres[tipo] || 'Regular';
         const pct = parseFloat(porcentaje) || 0;
         const detalle = pct > 0 ? (nombre + ' -' + (pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(2)) + '%') : nombre;

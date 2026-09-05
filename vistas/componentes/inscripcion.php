@@ -172,6 +172,7 @@ kt-aside--fixed kt-page--loading">
                             <div class="col-lg-6 form-group mb-2">
                               <label class="small font-weight-bold mb-1">Tipo de Plan</label>
                               <select class="form-control form-control-sm" id="planTipoPago">
+                                <option value="PENDIENTE">Dejar pendiente (definir después en Matriculados)</option>
                                 <option value="REGULAR">Plan Regular (paga cada módulo al iniciarlo)</option>
                                 <option value="DESCUENTO">Plan al Contado (con descuento)</option>
                               </select>
@@ -182,10 +183,10 @@ kt-aside--fixed kt-page--loading">
                             </div>
                           </div>
 
-                          <small class="text-muted d-block mb-2">
-                            <i class="fa fa-users"></i> ¿Es un <strong>Plan Grupal</strong> (varios inscritos)? Ese plan se define
-                            desde <strong>Matriculados</strong> una vez que los integrantes del grupo estén matriculados,
-                            para poder seleccionarlos a todos juntos.
+                          <small class="text-muted d-block mb-2" id="planGrupalHint">
+                            <i class="fa fa-users"></i> ¿Es un <strong>Plan Grupal</strong> (varios inscritos)? Deje el plan
+                            <strong>pendiente</strong> aquí y defínalo desde <strong>Matriculados → Plan Grupal</strong> una vez
+                            que los integrantes del grupo estén matriculados, para poder seleccionarlos a todos juntos.
                           </small>
                         </div>
 
@@ -391,19 +392,20 @@ kt-aside--fixed kt-page--loading">
                   costoTotalProgramaActual = parseFloat(p.CostoPrograma) || 0;
                   $('#planCostoTotal').text(costoTotalProgramaActual.toFixed(2));
 
-                  const planPropuestoTipo = p.PlanPropuestoTipo || 'REGULAR';
+                  let planPropuestoTipo = p.PlanPropuestoTipo || 'REGULAR';
+                  if (planPropuestoTipo === 'CONTADO') planPropuestoTipo = 'DESCUENTO'; // sinónimo histórico
                   const planPropuestoPorcentaje = parseFloat(p.PlanPropuestoPorcentaje) || 0;
-                  const nombresPlan = { REGULAR: 'Regular', CONTADO: 'al Contado', GRUPAL: 'Grupal' };
+                  const nombresPlan = { REGULAR: 'Regular', DESCUENTO: 'al Contado', GRUPAL: 'Grupal' };
 
                   if (planPropuestoTipo === 'GRUPAL') {
                       $('#planPropuestaInfo').html(
                           '<i class="fa fa-info-circle text-primary"></i> El estudiante propuso un <strong>Plan Grupal</strong>' +
                           (planPropuestoPorcentaje > 0 ? ' (-' + planPropuestoPorcentaje.toFixed(2) + '%)' : '') +
-                          ' en Pre-Registro. Ese plan se define desde <strong>Matriculados</strong> una vez inscrito junto a sus compañeros de grupo; ' +
-                          'por ahora puede confirmar el voucher con un Plan Regular provisional.'
+                          ' en Pre-Registro. Se dejará <strong>pendiente</strong>: aparecerá en <strong>Matriculados → Plan Grupal</strong> ' +
+                          'para agruparlo con sus compañeros. Si prefiere asignarle otro plan ahora mismo, cámbielo abajo.'
                       ).show();
-                      $('#planTipoPago').val('REGULAR');
-                      $('#planPorcentajeDescuento').val(0);
+                      $('#planTipoPago').val('PENDIENTE');
+                      $('#planPorcentajeDescuento').val(planPropuestoPorcentaje).prop('disabled', true);
                   } else {
                       $('#planPropuestaInfo').html(
                           '<i class="fa fa-info-circle text-primary"></i> Propuesta del estudiante (Pre-Registro): <strong>Plan ' +
@@ -411,8 +413,8 @@ kt-aside--fixed kt-page--loading">
                           (planPropuestoPorcentaje > 0 ? ' con <strong>' + planPropuestoPorcentaje.toFixed(2) + '%</strong> de descuento' : '') +
                           '. Revise y confirme, o ajuste si es necesario.'
                       ).show();
-                      $('#planTipoPago').val(planPropuestoTipo === 'CONTADO' ? 'DESCUENTO' : 'REGULAR');
-                      $('#planPorcentajeDescuento').val(planPropuestoPorcentaje);
+                      $('#planTipoPago').val(planPropuestoTipo);
+                      $('#planPorcentajeDescuento').val(planPropuestoPorcentaje).prop('disabled', false);
                   }
 
                   $('#detalleEstadoPlan').html('<i class="fa fa-clock-o"></i> Pendiente de confirmación');
@@ -459,8 +461,14 @@ kt-aside--fixed kt-page--loading">
       // aplicando este % de descuento automaticamente.
       // ============================================
       $('#planTipoPago').on('change', function() {
-          if ($(this).val() !== 'DESCUENTO') {
-              $('#planPorcentajeDescuento').val(0);
+          const valor = $(this).val();
+          if (valor === 'PENDIENTE') {
+              $('#planPorcentajeDescuento').prop('disabled', true);
+          } else {
+              $('#planPorcentajeDescuento').prop('disabled', false);
+              if (valor !== 'DESCUENTO') {
+                  $('#planPorcentajeDescuento').val(0);
+              }
           }
       });
 
@@ -483,16 +491,23 @@ kt-aside--fixed kt-page--loading">
               return;
           }
 
+          const tipoPlanSeleccionado = $('#planTipoPago').val();
+
           const formData = new FormData();
           formData.append('accion', 'validarVoucherMatricula');
           formData.append('idOrdenPago', idOrdenPago);
           formData.append('numeroVoucher', numeroVoucher);
           formData.append('fechaInscripcion', fechaInscripcion);
-          formData.append('planPago', JSON.stringify({
-              TipoPlan: $('#planTipoPago').val(),
-              CostoTotalPrograma: costoTotalProgramaActual,
-              PorcentajeDescuento: parseFloat($('#planPorcentajeDescuento').val()) || 0
-          }));
+          // Si se deja "pendiente" (típicamente porque el estudiante propuso Plan Grupal),
+          // no se envía planPago: la inscripción queda sin plan de pago del programa y
+          // aparecerá en Matriculados -> Plan Grupal / Cambiar Plan para asignarlo después.
+          if (tipoPlanSeleccionado !== 'PENDIENTE') {
+              formData.append('planPago', JSON.stringify({
+                  TipoPlan: tipoPlanSeleccionado,
+                  CostoTotalPrograma: costoTotalProgramaActual,
+                  PorcentajeDescuento: parseFloat($('#planPorcentajeDescuento').val()) || 0
+              }));
+          }
 
           const archivoFoto = $('#voucherFoto')[0].files[0];
           if (archivoFoto) {
@@ -513,12 +528,15 @@ kt-aside--fixed kt-page--loading">
                   btnSubmit.prop('disabled', false);
 
                   if (resp.success) {
+                      const textoPlan = tipoPlanSeleccionado === 'PENDIENTE'
+                          ? 'El estudiante quedó inscrito formalmente. Su plan de pago del programa quedó PENDIENTE: asígnelo desde Matriculados (individual o Plan Grupal).'
+                          : 'El estudiante quedó inscrito formalmente en el programa y su plan de pago quedó CONFIRMADO.';
                       swal({
                           title: '¡Voucher validado!',
-                          text: 'El estudiante quedó inscrito formalmente en el programa y su plan de pago quedó CONFIRMADO.',
+                          text: textoPlan,
                           icon: 'success',
                           buttons: false,
-                          timer: 2200
+                          timer: 2800
                       }).then(function() {
                           $('#panelDetalle').slideUp();
                           $('#buscarTermino').val('').focus();

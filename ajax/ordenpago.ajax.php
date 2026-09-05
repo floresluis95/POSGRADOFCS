@@ -121,6 +121,14 @@ switch ($accion) {
         registrarPlanGrupal();
         break;
 
+    case 'actualizarPlanPagoPrograma':
+        actualizarPlanPagoPrograma();
+        break;
+
+    case 'anularPlanPagoPrograma':
+        anularPlanPagoPrograma();
+        break;
+
     default:
         echo json_encode([
             'success' => false,
@@ -1019,6 +1027,53 @@ function registrarPlanGrupal()
         floatval($_POST['porcentajeDescuento']),
         $responsable
     );
+
+    echo json_encode([
+        'success' => $resultado['status'] === 'exitoso',
+        'mensaje' => $resultado['mensaje']
+    ]);
+}
+
+/**
+ * Cambiar el TIPO de plan (REGULAR/DESCUENTO) y % de descuento de un plan ya existente.
+ * No permite editar así un Plan Grupal (usar anularPlanPagoPrograma primero).
+ */
+function actualizarPlanPagoPrograma()
+{
+    if (empty($_POST['idInscripcion']) || empty($_POST['tipoPlan'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'Faltan datos requeridos']);
+        return;
+    }
+
+    $responsable = isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
+        ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
+        : null;
+
+    $resultado = PagoProgramaModelos::ActualizarPlanModelo(
+        (int)$_POST['idInscripcion'],
+        htmlspecialchars(trim($_POST['tipoPlan'])),
+        isset($_POST['porcentajeDescuento']) ? floatval($_POST['porcentajeDescuento']) : 0,
+        $responsable
+    );
+
+    echo json_encode([
+        'success' => $resultado['status'] === 'exitoso',
+        'mensaje' => $resultado['mensaje']
+    ]);
+}
+
+/**
+ * Anular el plan de pago activo de una inscripción (p.ej. para quitarla de un Plan
+ * Grupal o corregir un plan mal asignado). Vuelve a quedar disponible para un plan nuevo.
+ */
+function anularPlanPagoPrograma()
+{
+    if (empty($_POST['idInscripcion'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El ID de inscripción es requerido']);
+        return;
+    }
+
+    $resultado = PagoProgramaModelos::AnularPlanModelo((int)$_POST['idInscripcion']);
 
     echo json_encode([
         'success' => $resultado['status'] === 'exitoso',
