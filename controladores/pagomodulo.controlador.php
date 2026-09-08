@@ -1,7 +1,7 @@
 <?php
 /**
- * Controlador de Pago de Módulos
- * Gestiona el registro y consulta de pagos de módulos
+ * Controlador de Pago del Programa (cuotas)
+ * Gestiona el registro y consulta de cuotas del programa por inscripción.
  */
 
 require_once __DIR__ . '/../modelos/modulopagos_core.php';
@@ -10,203 +10,127 @@ require_once __DIR__ . '/../modelos/conexion.modelo.php';
 class PagoModuloControlador
 {
     /**
-     * Registrar pago de uno o múltiples módulos
+     * Registrar el pago de una cuota del programa vía AJAX: responde JSON.
      */
-    public function RegistrarPagoModuloControlador()
+    public function RegistrarPagoModuloAjaxControlador()
     {
-        error_log("=== RegistrarPagoModuloControlador ejecutado ===");
-        error_log("POST data: " . print_r($_POST, true));
-        error_log("FILES data: " . print_r($_FILES, true));
-
-        if (isset($_POST["registrarPagoModulo"])) {
-            error_log("POST registrarPagoModulo detectado");
-
-            // Validar datos requeridos
-            if (empty($_POST['idinscripcion']) || empty($_POST['fechaPago']) ||
-                (empty($_POST['costos']) || !is_array($_POST['costos']))) {
-
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("ERROR!", "Debe seleccionar al menos un módulo e ingresar todos los costos", "error")
-                .then(function () {
-                    location.href="matriculados";
-                });
-                </script>';
-                return;
-            }
-
-            $idinscripcion = (int)$_POST['idinscripcion'];
-            $fechaPago = htmlspecialchars(trim($_POST['fechaPago']));
-            $numeroVaucher = htmlspecialchars(trim($_POST['numeroVaucher'] ?? ''));
-            $costosModulos = $_POST['costos']; // Array: [IdModulo => costo]
-            $programaID = isset($_POST['programaID']) ? (int)$_POST['programaID'] : 0;
-
-            // Si este pago cubre TODOS los módulos que aún quedaban pendientes de la
-            // inscripción, se ajusta el monto del último módulo (por orden de código)
-            // para que la suma total pagada cierre exacto con el costo total del programa,
-            // cubriendo el faltante/sobrante por redondeo entre los costos de los módulos.
-            if ($programaID > 0) {
-                $costosModulos = PagoModuloModelo::AjustarUltimoModuloDelPagoAlTotalModelo(
-                    $programaID,
-                    $idinscripcion,
-                    $costosModulos
-                );
-            }
-
-            // Procesar archivo de voucher (si existe) - mismo para todos
-            $archivoVoucher = null;
-            if (isset($_FILES['fmodulo']) && $_FILES['fmodulo']['error'] == 0) {
-                $archivoVoucher = file_get_contents($_FILES['fmodulo']['tmp_name']);
-            }
-
-            // Registrar cada módulo
-            $exitosos = 0;
-            $errores = 0;
-            $duplicados = 0;
-            $sinOrden = 0;
-            $modulosProcesados = array();
-
-            foreach ($costosModulos as $idModulo => $costo) {
-                // Validar costo
-                if (empty($costo) || floatval($costo) <= 0) {
-                    $errores++;
-                    continue;
-                }
-
-                // Preparar datos para insertar
-                $datosPago = array(
-                    "idinscripcion" => $idinscripcion,
-                    "IdModulo" => (int)$idModulo,
-                    "costomodulo" => floatval($costo),
-                    "fechapago" => $fechaPago,
-                    "nvaucher" => $numeroVaucher,
-                    "fmodulo" => $archivoVoucher
-                );
-
-                error_log("Registrando módulo ID {$idModulo}: " . print_r($datosPago, true));
-
-                // Registrar en la base de datos
-                $resultado = PagoModuloModelo::RegistrarPagoModuloModelo($datosPago);
-
-                if ($resultado == 'exitoso') {
-                    $exitosos++;
-                    $modulosProcesados[] = $idModulo;
-                } elseif ($resultado == 'duplicado') {
-                    $duplicados++;
-                } elseif ($resultado == 'sin_orden') {
-                    $sinOrden++;
-                } else {
-                    $errores++;
-                }
-            }
-
-            // Mensajes según resultado
-            $totalProcesados = count($costosModulos);
-
-            if ($exitosos == $totalProcesados) {
-                // Todos exitosos
-                $mensaje = $exitosos == 1
-                    ? "El pago del módulo se registró correctamente"
-                    : "Los pagos de {$exitosos} módulos se registraron correctamente";
-
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("EXITOSO!", "' . $mensaje . '\\n\\n¿Desea ver el recibo de pago?", "success", {
-                    buttons: {
-                        cancel: "No, volver",
-                        confirm: "Sí, ver recibo"
-                    }
-                })
-                .then(function (value) {
-                    if (value) {
-                        window.open("vistas/componentes/recibo-pago-modulos.php?idinscripcion=' . $idinscripcion . '", "_blank");
-                    }
-                    location.href="matriculados";
-                });
-                </script>';
-            } elseif ($exitosos > 0) {
-                // Algunos exitosos, algunos con errores
-                $mensaje = "Se registraron {$exitosos} de {$totalProcesados} módulos.";
-                if ($duplicados > 0) $mensaje .= " {$duplicados} ya estaban registrados.";
-                if ($sinOrden > 0) $mensaje .= " {$sinOrden} no tenían orden de pago generada.";
-                if ($errores > 0) $mensaje .= " {$errores} tuvieron errores.";
-
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("PARCIAL!", "' . $mensaje . '", "warning")
-                .then(function () {
-                    location.href="matriculados";
-                });
-                </script>';
-            } elseif ($duplicados > 0 && $errores == 0 && $sinOrden == 0) {
-                // Todos eran duplicados
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("ERROR!", "Todos los módulos seleccionados ya fueron registrados", "error")
-                .then(function () {
-                    location.href="matriculados";
-                });
-                </script>';
-            } elseif ($sinOrden > 0 && $errores == 0 && $duplicados == 0) {
-                // Todos sin orden de pago previa
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("ERROR!", "Debe generar primero la orden de pago del módulo (pestaña \\"Orden de Pago\\") antes de registrar el pago", "error")
-                .then(function () {
-                    location.href="matriculados";
-                });
-                </script>';
-            } else {
-                // Todos fallaron
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("ERROR!", "No se pudo registrar ningún pago", "error")
-                .then(function () {
-                    location.href="matriculados";
-                });
-                </script>';
-            }
-        }
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($this->ProcesarRegistroCuota());
+        exit();
     }
 
     /**
-     * Listar pagos de módulos en una tabla HTML
+     * Lógica de validación y registro de una cuota del programa.
+     * Devuelve ['estado' => 'exitoso'|'sin_orden'|'validacion'|'error', 'mensaje' => ..., 'idinscripcion' => ...]
      */
-    public function ListarPagosModulosControlador()
+    private function ProcesarRegistroCuota()
     {
-        if (isset($_GET['idinscripcion'])) {
-            $idinscripcion = (int)$_GET['idinscripcion'];
-            $pagos = PagoModuloModelo::ObtenerPagosModulosPorInscripcionModelo($idinscripcion);
-
-            if (empty($pagos)) {
-                echo '<tr>
-                        <td colspan="6" class="text-center">No hay pagos de módulos registrados</td>
-                      </tr>';
-                return;
-            }
-
-            foreach ($pagos as $key => $pago) {
-                $fechaFormateada = date('d/m/Y', strtotime($pago['fechapago']));
-                $estadoBadge = $pago['Estado'] == 'PAGADO' ? 'badge-success' : 'badge-warning';
-
-                echo '<tr>
-                        <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
-                        <td>' . $pago['nmodulo'] . '</td>
-                        <td class="text-center"><strong>Bs. ' . number_format($pago['costomodulo'], 2) . '</strong></td>
-                        <td class="text-center">' . $pago['nvaucher'] . '</td>
-                        <td class="text-center">' . $fechaFormateada . '</td>
-                        <td class="text-center">
-                            <span class="badge ' . $estadoBadge . '">' . $pago['Estado'] . '</span>
-                        </td>
-                      </tr>';
-            }
+        if (empty($_POST['idinscripcion']) || empty($_POST['fechaPago']) || empty($_POST['montoCuota'])) {
+            return ['estado' => 'validacion', 'mensaje' => 'Debe ingresar la fecha y el monto de la cuota'];
         }
+
+        $idinscripcion = (int)$_POST['idinscripcion'];
+        $fechaPago = htmlspecialchars(trim($_POST['fechaPago']));
+        $numeroVaucher = htmlspecialchars(trim($_POST['numeroVaucher'] ?? ''));
+        $montoCuota = floatval($_POST['montoCuota']);
+
+        if ($montoCuota <= 0) {
+            return ['estado' => 'validacion', 'mensaje' => 'El monto de la cuota debe ser mayor a 0'];
+        }
+
+        $archivoVoucher = null;
+        if (isset($_FILES['fmodulo']) && $_FILES['fmodulo']['error'] == 0) {
+            $archivoVoucher = file_get_contents($_FILES['fmodulo']['tmp_name']);
+        }
+
+        $resultado = PagoModuloModelo::RegistrarCuotaProgramaModelo([
+            'idinscripcion' => $idinscripcion,
+            'montocuota' => $montoCuota,
+            'fechapago' => $fechaPago,
+            'nvaucher' => $numeroVaucher,
+            'fmodulo' => $archivoVoucher
+        ]);
+
+        $mensajes = [
+            'exitoso'   => 'El pago de la cuota se registró correctamente',
+            'sin_orden' => 'Debe generar primero la orden de pago (pestaña "Orden de Pago") antes de registrar el pago',
+            'error'     => 'No se pudo registrar el pago'
+        ];
+
+        $estado = $resultado === 'exitoso' ? 'exitoso' : ($resultado === 'sin_orden' ? 'sin_orden' : 'error');
+
+        return [
+            'estado' => $estado,
+            'mensaje' => $mensajes[$resultado] ?? $mensajes['error'],
+            'idinscripcion' => $idinscripcion
+        ];
+    }
+
+    /**
+     * Rechazar el voucher de una cuota (queda disponible para reintentar).
+     */
+    public function RechazarCuotaAjaxControlador()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (empty($_POST['idpago'])) {
+            echo json_encode(['estado' => 'error', 'mensaje' => 'Falta el ID de la cuota']);
+            exit();
+        }
+
+        $motivo = isset($_POST['motivo']) ? htmlspecialchars(trim($_POST['motivo'])) : null;
+        $resultado = PagoModuloModelo::RechazarCuotaModelo((int)$_POST['idpago'], $motivo);
+
+        echo json_encode([
+            'estado' => $resultado ? 'exitoso' : 'error',
+            'mensaje' => $resultado ? 'La cuota quedó marcada como rechazada' : 'No se pudo rechazar la cuota'
+        ]);
+        exit();
+    }
+
+    /**
+     * Anular una cuota registrada.
+     */
+    public function AnularCuotaAjaxControlador()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (empty($_POST['idpago'])) {
+            echo json_encode(['estado' => 'error', 'mensaje' => 'Falta el ID de la cuota']);
+            exit();
+        }
+
+        $resultado = PagoModuloModelo::AnularPagoModuloModelo((int)$_POST['idpago']);
+
+        echo json_encode([
+            'estado' => $resultado ? 'exitoso' : 'error',
+            'mensaje' => $resultado ? 'La cuota fue anulada' : 'No se pudo anular la cuota'
+        ]);
+        exit();
+    }
+
+    /**
+     * Resumen de pago del programa (costo total, pagado, saldo) + historial de cuotas,
+     * para la pestaña "Pago de Módulos" (Cuotas del Programa) en Matriculados.
+     */
+    public function ObtenerResumenCuotasAjaxControlador()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (empty($_POST['idinscripcion']) || empty($_POST['programaID'])) {
+            echo json_encode(['success' => false, 'mensaje' => 'Faltan datos requeridos']);
+            exit();
+        }
+
+        $idinscripcion = (int)$_POST['idinscripcion'];
+        $programaID = (int)$_POST['programaID'];
+
+        echo json_encode([
+            'success' => true,
+            'resumen' => PagoModuloModelo::ObtenerResumenPagoProgramaModelo($idinscripcion, $programaID),
+            'cuotas' => PagoModuloModelo::ObtenerCuotasPorInscripcionModelo($idinscripcion)
+        ]);
+        exit();
     }
 
     /**
@@ -231,7 +155,7 @@ class PagoModuloControlador
     }
 
     /**
-     * Obtener detalle de módulos (pagados y pendientes) del estudiante por programa
+     * Obtener detalle de pago del programa (resumen + cuotas) del estudiante por programa
      */
     public function ObtenerDetalleModulosEstudianteControlador()
     {
@@ -260,4 +184,3 @@ class PagoModuloControlador
         ]);
     }
 }
-?>

@@ -1,10 +1,12 @@
 /**
- * Orden de Pago de Módulos
+ * Orden de Pago de Cuotas del Programa
  * Pestaña "Orden de Pago" del modal unificado de Gestión de Pagos del Programa (Matriculados).
- * Se emite ANTES de pagar: el estudiante selecciona módulos pendientes, se genera un
- * comprobante (PDF) con el monto a cancelar, y recién después se registra el pago (con
- * voucher) en la pestaña "Pago de Módulos". Al registrarse ese pago, la orden pendiente
- * correspondiente se marca automáticamente como confirmada (ver modulopagos_core.php).
+ * Las cuotas ya NO están ligadas a módulos: su monto es libre (Plan Regular) o el saldo
+ * total (Plan Contado/Grupal). Solo puede existir una orden pendiente a la vez por inscripción.
+ *
+ * Se emite ANTES de pagar: se genera un comprobante (PDF) con el monto a cancelar, y recién
+ * después se registra el pago (con voucher) en la pestaña "Pago de Módulos" (Cuotas del
+ * Programa). Al registrarse ese pago, la orden pendiente se confirma automáticamente.
  *
  * El PDF usa el MISMO formato oficial (UTO - Coordinación de Posgrado) que la orden de
  * pago de matrícula/preregistro: se genera enviando los datos por POST a
@@ -17,15 +19,8 @@ $(document).ready(function() {
     // programaNombre, version, numeroTramite
     let opContexto = {};
 
-    // Ordenes pendientes cargadas actualmente, indexadas por IdOrdenPago (para reimprimir)
-    let opOrdenesPorId = {};
-
-    // Total de módulos ACTIVOS del programa actual (pagados + pendientes), para mostrar
-    // en el PDF la cuota como "IV/XII" (módulo IV de XII en total)
-    let opTotalModulos = 0;
-
     // ========================================
-    // CARGAR PESTAÑA: módulos pendientes de esta inscripción + órdenes ya emitidas
+    // CARGAR PESTAÑA: resumen de pago + orden pendiente (si existe)
     // Invocado desde inscripcionmodulo.js al abrir el modal unificado de Gestión de Pagos
     // ========================================
     window.cargarOrdenPagoModulos = function(datos) {
@@ -35,90 +30,91 @@ $(document).ready(function() {
 
         $.when(
             $.ajax({
-                url: 'ajax/modulo.ajax.php',
+                url: 'ajax/pagomodulo.ajax.php',
                 method: 'POST',
-                data: { programaID: opContexto.programaID, idinscripcion: opContexto.idInscripcion },
+                data: { accion: 'obtenerResumenCuotas', idinscripcion: opContexto.idInscripcion, programaID: opContexto.programaID },
                 dataType: 'json'
             }),
             $.ajax({
                 url: 'ajax/ordenpago.ajax.php',
                 method: 'POST',
-                data: { accion: 'obtenerOrdenesModulosPendientes', idinscripcion: opContexto.idInscripcion },
+                data: { accion: 'obtenerOrdenPendienteCuotaPrograma', idinscripcion: opContexto.idInscripcion },
                 dataType: 'json'
             })
-        ).done(function(respModulos, respOrdenes) {
-            const todosLosModulos = respModulos[0] || [];
-            const pendientes = todosLosModulos.filter(function(m) { return parseInt(m.Pagado) !== 1; });
-            opTotalModulos = todosLosModulos.length;
+        ).done(function(respResumen, respOrden) {
+            const resp = respResumen[0];
+            if (!resp || !resp.success) {
+                $('#ordenPagoContenido').html('<div class="alert alert-danger">No se pudo cargar el resumen de pago</div>');
+                return;
+            }
 
-            const ordenesResp = respOrdenes[0];
-            const ordenes = (ordenesResp && ordenesResp.success) ? (ordenesResp.ordenes || []) : [];
+            const ordenResp = respOrden[0];
+            const orden = (ordenResp && ordenResp.success) ? ordenResp.orden : null;
 
-            opOrdenesPorId = {};
-            ordenes.forEach(function(orden) { opOrdenesPorId[orden.IdOrdenPago] = orden; });
-
-            // Mapa ModuloID -> orden pendiente que ya lo incluye
-            const ordenPorModulo = {};
-            ordenes.forEach(function(orden) {
-                (orden.ListaModulos || '').split(',').forEach(function(idMod) {
-                    idMod = idMod.trim();
-                    if (idMod) ordenPorModulo[idMod] = orden;
-                });
-            });
-
-            renderOrdenPago(pendientes, ordenPorModulo);
+            renderOrdenPago(resp.resumen, orden);
         }).fail(function() {
-            $('#ordenPagoContenido').html('<div class="alert alert-danger">No se pudieron cargar los módulos pendientes</div>');
+            $('#ordenPagoContenido').html('<div class="alert alert-danger">No se pudieron cargar los datos de la orden de pago</div>');
         });
     };
 
-    function renderOrdenPago(pendientes, ordenPorModulo) {
-        if (pendientes.length === 0) {
+    function renderOrdenPago(r, orden) {
+        if (!r.tienePlan) {
             $('#ordenPagoContenido').html(
-                '<div class="alert alert-success text-center">' +
-                    '<i class="fa fa-check-circle fa-2x mb-2"></i>' +
-                    '<h6>Sin módulos pendientes</h6>' +
-                    '<p class="mb-0">Este estudiante no tiene módulos pendientes de pago en este programa.</p>' +
+                '<div class="alert alert-warning text-center">' +
+                    '<i class="fa fa-exclamation-triangle fa-2x mb-2"></i>' +
+                    '<h6>Sin Plan de Pago del Programa</h6>' +
+                    '<p class="mb-0">Normalmente porque eligió Plan Grupal en Pre-Registro. Use el botón "Plan Grupal" en la barra superior para armarle uno.</p>' +
                 '</div>'
             );
             return;
         }
 
-        let filas = '';
-        pendientes.forEach(function(m) {
-            const orden = ordenPorModulo[String(m.ModuloID)];
-            const costo = parseFloat(m.Costo || 0);
+        if (r.completado) {
+            $('#ordenPagoContenido').html(
+                '<div class="alert alert-success text-center">' +
+                    '<i class="fa fa-check-circle fa-2x mb-2"></i>' +
+                    '<h6>Programa pagado en su totalidad</h6>' +
+                    '<p class="mb-0">No queda saldo pendiente para este estudiante.</p>' +
+                '</div>'
+            );
+            return;
+        }
 
-            filas += '<tr>' +
-                '<td class="text-center">' +
-                    (orden
-                        ? '<i class="fa fa-clock-o text-muted" title="Ya tiene una orden de pago pendiente"></i>'
-                        : '<input type="checkbox" class="op-check" value="' + m.ModuloID + '" data-codigo="' + m.Codigo + '" data-nombre="' + (m.NombreModulo || '').replace(/"/g, '&quot;') + '" data-costo="' + costo + '">') +
-                '</td>' +
-                '<td><span class="badge badge-primary">' + (m.Codigo || '') + '</span> ' + (m.NombreModulo || '') + '</td>' +
-                '<td class="text-center">Bs. ' + costo.toFixed(2) + '</td>' +
-                '<td class="text-center">' +
-                    (orden
-                        ? '<span class="badge badge-warning" title="Generada el ' + orden.FechaGeneracion + '">N° ' + orden.NumeroOrden + '</span> ' +
-                          '<button type="button" class="btn btn-xs btn-outline-secondary btn-reimprimir-orden-pendiente" data-id="' + orden.IdOrdenPago + '"><i class="fa fa-print"></i></button>'
-                        : '<span class="text-muted">Sin orden</span>') +
-                '</td>' +
-            '</tr>';
-        });
+        if (orden) {
+            $('#ordenPagoContenido').html(
+                '<div class="alert alert-info">' +
+                    '<i class="fa fa-file-invoice"></i> Ya existe una orden de pago pendiente: ' +
+                    '<span class="badge badge-warning">N° ' + orden.NumeroOrden + '</span> ' +
+                    'por <strong>Bs. ' + parseFloat(orden.MontoTotal).toFixed(2) + '</strong> ' +
+                    '(generada el ' + orden.FechaGeneracion + ').' +
+                '</div>' +
+                '<small class="text-muted d-block mb-2">Registre el voucher en la pestaña "Pago de Módulos" para confirmarla, o reimprímala aquí.</small>' +
+                '<button type="button" class="btn btn-sm btn-outline-secondary" id="btnReimprimirOrdenCuota" ' +
+                    'data-id="' + orden.IdOrdenPago + '" data-monto="' + orden.MontoTotal + '" ' +
+                    'data-nombre-factura="' + (orden.NombreFactura || '') + '" data-nit-ci="' + (orden.NitCiFactura || '') + '">' +
+                    '<i class="fa fa-print"></i> Reimprimir orden' +
+                '</button>'
+            );
+            return;
+        }
+
+        const saldoPendiente = parseFloat(r.saldoPendiente) || 0;
+        const campoMonto = r.cuotaUnica
+            ? '<input type="hidden" id="opMontoCuota" value="' + saldoPendiente.toFixed(2) + '">' +
+              '<div class="form-group"><label class="small font-weight-bold mb-1">Monto a pagar (saldo total)</label>' +
+              '<input type="text" class="form-control form-control-sm font-weight-bold" value="Bs. ' + saldoPendiente.toFixed(2) + '" readonly></div>'
+            : '<div class="form-group"><label class="small font-weight-bold mb-1">Monto de esta cuota</label>' +
+              '<div class="input-group input-group-sm">' +
+              '<div class="input-group-prepend"><span class="input-group-text">Bs.</span></div>' +
+              '<input type="number" class="form-control" id="opMontoCuota" min="0.01" max="' + saldoPendiente.toFixed(2) + '" ' +
+              'step="0.01" value="' + saldoPendiente.toFixed(2) + '">' +
+              '</div><small class="form-text text-muted">Saldo pendiente: Bs. ' + saldoPendiente.toFixed(2) + '</small></div>';
 
         const html =
-            '<div class="table-responsive mb-3">' +
-                '<table class="table table-sm table-bordered table-hover mb-0">' +
-                    '<thead class="thead-light">' +
-                        '<tr>' +
-                            '<th class="text-center" style="width:36px;"></th>' +
-                            '<th>Módulo</th>' +
-                            '<th class="text-center">Costo</th>' +
-                            '<th class="text-center">Orden</th>' +
-                        '</tr>' +
-                    '</thead>' +
-                    '<tbody id="opListaModulos">' + filas + '</tbody>' +
-                '</table>' +
+            '<div class="row">' +
+                '<div class="col-lg-6">' + campoMonto + '</div>' +
+                '<div class="col-lg-3"><small class="text-muted d-block">Costo del programa</small><strong>Bs. ' + parseFloat(r.costoTotal).toFixed(2) + '</strong></div>' +
+                '<div class="col-lg-3"><small class="text-muted d-block">Pagado</small><strong class="text-success">Bs. ' + parseFloat(r.totalPagado).toFixed(2) + '</strong></div>' +
             '</div>' +
             '<div class="row">' +
                 '<div class="col-lg-6 form-group">' +
@@ -131,66 +127,61 @@ $(document).ready(function() {
                 '</div>' +
             '</div>' +
             '<div class="row">' +
-                '<div class="col-lg-6 form-group">' +
+                '<div class="col-lg-8 form-group">' +
                     '<label class="small font-weight-bold mb-1">Responsable *</label>' +
                     '<input type="text" class="form-control form-control-sm" id="opResponsable" placeholder="Nombre de quien genera la orden">' +
                 '</div>' +
-                '<div class="col-lg-6 text-right">' +
-                    '<label class="small font-weight-bold mb-1 d-block">&nbsp;</label>' +
-                    'Total a pagar: <strong>Bs. <span id="opTotalSeleccionado">0.00</span></strong>' +
+                '<div class="col-lg-4 form-group">' +
+                    '<label class="small font-weight-bold mb-1">Cuenta de pago</label>' +
+                    '<select class="form-control form-control-sm" id="opCuentaPago">' +
+                        '<option value="">Cargando cuentas...</option>' +
+                    '</select>' +
                 '</div>' +
             '</div>' +
             '<div class="text-right mt-2">' +
-                '<button type="button" class="btn btn-sm btn-success" id="opBtnGenerarOrden" disabled>' +
+                '<button type="button" class="btn btn-sm btn-success" id="opBtnGenerarOrden">' +
                     '<i class="fa fa-file-invoice"></i> Generar Orden de Pago' +
                 '</button>' +
             '</div>';
 
         $('#ordenPagoContenido').html(html);
-        actualizarTotalOP();
+        cargarOpcionesCuentaPago();
     }
 
-    $(document).on('change', '.op-check', actualizarTotalOP);
-
-    function actualizarTotalOP() {
-        const seleccionados = $('.op-check:checked');
-        let total = 0;
-        seleccionados.each(function() {
-            total += parseFloat($(this).data('costo')) || 0;
+    // ========================================
+    // Cuenta bancaria a la que el estudiante debe depositar (catálogo de "Cuentas",
+    // administrado desde Programas). Se imprime en la sección "DATOS PARA DEPÓSITO
+    // EN BANCO" de la orden de pago en PDF.
+    // ========================================
+    function cargarOpcionesCuentaPago() {
+        $.ajax({
+            url: 'ajax/cuenta.ajax.php',
+            type: 'POST',
+            data: { accion: 'listarActivasHtml' },
+            success: function(html) {
+                $('#opCuentaPago').html('<option value="">Cuenta por defecto (UTO)</option>' + html);
+            },
+            error: function() {
+                $('#opCuentaPago').html('<option value="">Cuenta por defecto (UTO)</option>');
+            }
         });
-        $('#opTotalSeleccionado').text(total.toFixed(2));
-        $('#opBtnGenerarOrden').prop('disabled', seleccionados.length === 0);
     }
 
     $(document).on('click', '#opBtnGenerarOrden', function() {
-        const seleccionados = $('.op-check:checked');
         const responsable = ($('#opResponsable').val() || '').trim();
         const nombreFactura = ($('#opNombreFactura').val() || '').trim();
         const nitCiFactura = ($('#opNitCiFactura').val() || '').trim();
+        const numeroCuentaDeposito = $('#opCuentaPago').val() || '';
+        const monto = parseFloat($('#opMontoCuota').val());
 
-        if (seleccionados.length === 0) {
-            Swal.fire({ icon: 'warning', title: 'Atención', text: 'Seleccione al menos un módulo pendiente' });
+        if (!monto || monto <= 0) {
+            Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingrese un monto válido para la cuota' });
             return;
         }
         if (!responsable) {
             Swal.fire({ icon: 'warning', title: 'Atención', text: 'Indique el responsable que genera la orden' });
             return;
         }
-
-        const listaModulos = seleccionados.map(function() { return $(this).val(); }).get().join(',');
-
-        let montoTotal = 0;
-        const detalleModulos = [];
-        seleccionados.each(function() {
-            const costo = parseFloat($(this).data('costo')) || 0;
-            montoTotal += costo;
-            detalleModulos.push({
-                ModuloID: $(this).val(),
-                Codigo: $(this).data('codigo'),
-                Nombre: $(this).data('nombre'),
-                Costo: costo
-            });
-        });
 
         const $btn = $('#opBtnGenerarOrden');
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Generando...');
@@ -199,13 +190,11 @@ $(document).ready(function() {
             url: 'ajax/ordenpago.ajax.php',
             type: 'POST',
             data: {
-                accion: 'registrarOrdenPagoModulosPendientes',
+                accion: 'registrarOrdenPagoCuotaPrograma',
                 estudianteID: opContexto.estudianteID,
                 idinscripcion: opContexto.idInscripcion,
                 programaID: opContexto.programaID,
-                listaModulos: listaModulos,
-                detalleModulos: JSON.stringify(detalleModulos),
-                montoTotal: montoTotal,
+                montoTotal: monto,
                 responsable: responsable,
                 nombreFactura: nombreFactura,
                 nitCiFactura: nitCiFactura
@@ -213,23 +202,23 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(resp) {
                 if (resp.success) {
-                    Swal.fire({ icon: 'success', title: 'Orden generada', text: 'N° ' + resp.numeroOrden, timer: 1800, showConfirmButton: false });
-                    imprimirOrdenPagoOficial({
-                        estudianteID: opContexto.estudianteID,
-                        programaNombre: opContexto.programaNombre,
-                        version: opContexto.version,
-                        numeroTramite: opContexto.numeroTramite,
-                        montoTotal: montoTotal,
-                        nombreFactura: nombreFactura,
-                        nitCiFactura: nitCiFactura,
-                        detalleModulos: detalleModulos,
-                        totalModulos: opTotalModulos
-                    });
-                    window.cargarOrdenPagoModulos(opContexto);
-                    // El módulo recién ordenado ya puede seleccionarse en "Pago de Módulos"
-                    if (typeof window.cargarModulosDisponibles === 'function') {
-                        window.cargarModulosDisponibles(opContexto.programaID);
-                    }
+                    Swal.fire({ icon: 'success', title: 'Orden generada', text: 'N° ' + resp.numeroOrden, timer: 1800, showConfirmButton: false })
+                        .then(function() {
+                            imprimirOrdenPagoOficial({
+                                estudianteID: opContexto.estudianteID,
+                                programaNombre: opContexto.programaNombre,
+                                version: opContexto.version,
+                                numeroTramite: opContexto.numeroTramite,
+                                montoTotal: monto,
+                                nombreFactura: nombreFactura,
+                                nitCiFactura: nitCiFactura,
+                                numeroCuentaDeposito: numeroCuentaDeposito
+                            });
+                            window.cargarOrdenPagoModulos(opContexto);
+                            if (typeof window.cargarCuotasPrograma === 'function') {
+                                window.cargarCuotasPrograma(opContexto.programaID);
+                            }
+                        });
                 } else {
                     Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo generar la orden de pago' });
                     $btn.prop('disabled', false).html('<i class="fa fa-file-invoice"></i> Generar Orden de Pago');
@@ -242,42 +231,25 @@ $(document).ready(function() {
         });
     });
 
-    $(document).on('click', '.btn-reimprimir-orden-pendiente', function() {
-        const idOrdenPago = $(this).data('id');
-        const orden = opOrdenesPorId[idOrdenPago];
-        if (!orden) {
-            Swal.fire({ icon: 'error', title: 'Error', text: 'No se encontraron los datos de la orden' });
-            return;
-        }
-
-        let detalleModulos = [];
-        try {
-            const detalleJson = JSON.parse(orden.Observaciones || '[]');
-            if (Array.isArray(detalleJson)) detalleModulos = detalleJson;
-        } catch (e) {
-            detalleModulos = [];
-        }
-
+    $(document).on('click', '#btnReimprimirOrdenCuota', function() {
+        const $this = $(this);
         imprimirOrdenPagoOficial({
             estudianteID: opContexto.estudianteID,
             programaNombre: opContexto.programaNombre,
             version: opContexto.version,
             numeroTramite: opContexto.numeroTramite,
-            montoTotal: orden.MontoTotal,
-            nombreFactura: orden.NombreFactura,
-            nitCiFactura: orden.NitCiFactura,
-            detalleModulos: detalleModulos,
-            totalModulos: opTotalModulos
+            montoTotal: $this.data('monto'),
+            nombreFactura: $this.data('nombre-factura'),
+            nitCiFactura: $this.data('nit-ci')
         });
     });
 
     /**
-     * Genera el PDF de la orden de pago de módulos con el mismo formato oficial
+     * Genera el PDF de la orden de pago de la cuota con el mismo formato oficial
      * (UTO - Coordinación de Posgrado, doble copia) que la orden de pago de matrícula:
      * envía los datos por POST a generar-orden-pago-pdf.php, igual que ordenpago.js.
      * @param {Object} params estudianteID, programaNombre, version, numeroTramite,
-     *        montoTotal, nombreFactura, nitCiFactura, totalModulos,
-     *        detalleModulos (array {Codigo, Nombre})
+     *        montoTotal, nombreFactura, nitCiFactura, numeroCuentaDeposito
      */
     function imprimirOrdenPagoOficial(params) {
         $.ajax({
@@ -292,11 +264,6 @@ $(document).ready(function() {
                 if (est.Complemento) ciCompleto += '-' + est.Complemento;
                 if (est.Exp) ciCompleto += ' ' + est.Exp;
 
-                // Cada módulo se identifica por su cuota (posición/total del programa),
-                // p.ej. "CUOTA IV/XII", en vez de "código - nombre" (que suelen ser
-                // iguales, como "MODULO IV - MODULO IV").
-                const listaModulosTexto = formatoModulosParaPdf(params.detalleModulos, params.totalModulos);
-
                 const montoTotal = parseFloat(params.montoTotal) || 0;
 
                 const datos = {
@@ -306,13 +273,14 @@ $(document).ready(function() {
                     correo: est.Correo || '',
                     ci: ciCompleto,
                     celular: est.Celular || '',
-                    programa: (params.programaNombre || '') + (listaModulosTexto ? ('\nMódulos: ' + listaModulosTexto) : ''),
+                    programa: (params.programaNombre || '') + '\nCuota del programa',
                     montoNumeral: 'Bs. ' + montoTotal.toFixed(2),
                     montoLiteral: numeroALetras(montoTotal),
                     version: params.version || 'V-1',
                     numeroTramite: params.numeroTramite || '',
                     nombreFactura: params.nombreFactura || '',
-                    nitCiFactura: params.nitCiFactura || ''
+                    nitCiFactura: params.nitCiFactura || '',
+                    numeroCuentaDeposito: params.numeroCuentaDeposito || ''
                 };
 
                 const form = document.createElement('form');
@@ -339,54 +307,7 @@ $(document).ready(function() {
     }
 
     /**
-     * Texto de módulos para el PDF, identificando cada uno por su cuota (posición/total
-     * del programa), p.ej. "CUOTA IV/XII", en vez de "código - nombre" (que en la mayoría
-     * de los módulos son iguales, ej. "MODULO IV - MODULO IV", y salían repetidos).
-     * @param {Array} detalleModulos [{Codigo, Nombre}, ...]
-     * @param {number} totalModulos total de módulos activos del programa
-     * @returns {string}
-     */
-    function formatoModulosParaPdf(detalleModulos, totalModulos) {
-        const totalRomano = toRoman(totalModulos);
-        return (detalleModulos || []).map(function(m) {
-            const codigo = m.Codigo || '';
-            const nombre = m.Nombre || '';
-            const romanPos = romanDeCodigo(codigo);
-            const cuota = 'CUOTA ' + (romanPos || codigo) + (totalRomano ? ('/' + totalRomano) : '');
-            return (nombre && nombre !== codigo) ? (cuota + ' - ' + nombre) : cuota;
-        }).join('; ');
-    }
-
-    /**
-     * Extrae el número romano de un código de módulo con formato "MODULO <romano>"
-     * (ej. "MODULO IV" -> "IV"). Si no calza el formato, devuelve el código tal cual.
-     */
-    function romanDeCodigo(codigo) {
-        const m = /^MODULO\s+([IVXLCDM]+)$/i.exec((codigo || '').trim());
-        return m ? m[1].toUpperCase() : '';
-    }
-
-    /**
-     * Convertir un entero a número romano (1..3999).
-     */
-    function toRoman(num) {
-        num = parseInt(num, 10);
-        if (!num || num <= 0) return '';
-        const valores = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
-        const simbolos = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
-        let resultado = '';
-        for (let i = 0; i < valores.length; i++) {
-            while (num >= valores[i]) {
-                resultado += simbolos[i];
-                num -= valores[i];
-            }
-        }
-        return resultado;
-    }
-
-    /**
-     * Convertir número a letras (español - bolivianos). Copia de la función usada en
-     * ordenpago.js (no está disponible en esta vista porque ordenpago.js no se carga aquí).
+     * Convertir número a letras (español - bolivianos).
      */
     function numeroALetras(numero) {
         const unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];

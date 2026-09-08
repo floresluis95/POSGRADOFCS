@@ -77,6 +77,14 @@ switch ($accion) {
         registrarOrdenPagoModulosPendientes();
         break;
 
+    case 'obtenerOrdenPendienteCuotaPrograma':
+        obtenerOrdenPendienteCuotaPrograma();
+        break;
+
+    case 'registrarOrdenPagoCuotaPrograma':
+        registrarOrdenPagoCuotaPrograma();
+        break;
+
     case 'listarPreregistros':
         listarPreregistros();
         break;
@@ -612,9 +620,133 @@ function obtenerOrdenesModulosPendientes()
 }
 
 /**
+ * Obtener la orden de pago PENDIENTE de una cuota del programa (si existe) para
+ * esta inscripción. Las cuotas ya no se ligan a módulos: solo puede haber una
+ * orden de cuota pendiente a la vez por inscripción.
+ */
+function obtenerOrdenPendienteCuotaPrograma()
+{
+    if (empty($_POST['idinscripcion'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El ID de inscripción es requerido']);
+        return;
+    }
+
+    $idinscripcion = (int)$_POST['idinscripcion'];
+
+    try {
+        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        $conexion = Conexion::Conectar();
+
+        $stmt = $conexion->prepare("
+            SELECT IdOrdenPago, NumeroOrden, MontoTotal, FechaGeneracion, NombreFactura, NitCiFactura
+            FROM ordenpago
+            WHERE idinscripcion = :idinscripcion
+            AND Estado = 'PENDIENTE'
+            AND ListaModulos IS NULL
+            ORDER BY FechaGeneracion DESC
+            LIMIT 1
+        ");
+        $stmt->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
+        $stmt->execute();
+        $orden = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        echo json_encode(['success' => true, 'orden' => $orden ?: null]);
+    } catch (Exception $e) {
+        error_log("Error en obtenerOrdenPendienteCuotaPrograma: " . $e->getMessage());
+        echo json_encode(['success' => false, 'mensaje' => 'Error al obtener la orden de pago pendiente']);
+    }
+}
+
+/**
+ * Registrar una orden de pago de una cuota del programa (Estado PENDIENTE), sin
+ * ligarla a módulos. El estudiante presenta esta orden para pagar; el pago en sí
+ * se registra después en "Pago de Módulos" (con su voucher), lo que confirma esta orden.
+ */
+function registrarOrdenPagoCuotaPrograma()
+{
+    if (!isset($_POST['estudianteID']) || !isset($_POST['idinscripcion']) ||
+        !isset($_POST['programaID']) || !isset($_POST['montoTotal'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'Faltan datos requeridos']);
+        return;
+    }
+
+    try {
+        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        $conexion = Conexion::Conectar();
+
+        $estudianteID = (int)$_POST['estudianteID'];
+        $idinscripcion = (int)$_POST['idinscripcion'];
+        $programaID = (int)$_POST['programaID'];
+        $montoTotal = (float)$_POST['montoTotal'];
+        $responsable = isset($_POST['responsable']) ? $_POST['responsable'] : '';
+        $nombreFactura = isset($_POST['nombreFactura']) ? $_POST['nombreFactura'] : '';
+        $nitCiFactura = isset($_POST['nitCiFactura']) ? $_POST['nitCiFactura'] : '';
+
+        if ($montoTotal <= 0) {
+            echo json_encode(['success' => false, 'mensaje' => 'El monto de la cuota debe ser mayor a 0']);
+            return;
+        }
+
+        // Solo una orden de cuota pendiente a la vez por inscripción
+        $stmtCheck = $conexion->prepare(
+            "SELECT IdOrdenPago FROM ordenpago
+             WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND ListaModulos IS NULL"
+        );
+        $stmtCheck->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
+        $stmtCheck->execute();
+        if ($stmtCheck->fetch()) {
+            echo json_encode(['success' => false, 'mensaje' => 'Ya existe una orden de pago pendiente para esta inscripción. Valide o anule esa orden antes de generar otra']);
+            return;
+        }
+
+        $numeroOrden = 'ORD-' . str_pad($estudianteID, 4, '0', STR_PAD_LEFT) . '-' .
+                       str_pad($programaID, 3, '0', STR_PAD_LEFT) . '-' .
+                       date('YmdHis');
+
+        $stmt = $conexion->prepare("
+            INSERT INTO ordenpago
+            (EstudianteID, idinscripcion, ProgramaID, MontoTotal,
+             ResponsableGeneracion, NombreFactura, NitCiFactura, NumeroOrden, FechaGeneracion, Observaciones, Estado)
+            VALUES
+            (:estudianteID, :idinscripcion, :programaID, :montoTotal,
+             :responsable, :nombreFactura, :nitCiFactura, :numeroOrden, NOW(), 'CUOTA PROGRAMA', 'PENDIENTE')
+        ");
+
+        $stmt->bindParam(':estudianteID', $estudianteID, PDO::PARAM_INT);
+        $stmt->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
+        $stmt->bindParam(':programaID', $programaID, PDO::PARAM_INT);
+        $stmt->bindParam(':montoTotal', $montoTotal);
+        $stmt->bindParam(':responsable', $responsable, PDO::PARAM_STR);
+        $stmt->bindParam(':nombreFactura', $nombreFactura, PDO::PARAM_STR);
+        $stmt->bindParam(':nitCiFactura', $nitCiFactura, PDO::PARAM_STR);
+        $stmt->bindParam(':numeroOrden', $numeroOrden, PDO::PARAM_STR);
+
+        if ($stmt->execute()) {
+            echo json_encode([
+                'success' => true,
+                'mensaje' => 'Orden de pago registrada exitosamente',
+                'numeroOrden' => $numeroOrden,
+                'idOrdenPago' => $conexion->lastInsertId()
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'mensaje' => 'Error al registrar la orden de pago']);
+        }
+    } catch (Exception $e) {
+        error_log("Error en registrarOrdenPagoCuotaPrograma: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'mensaje' => 'Error al registrar la orden de pago: ' . $e->getMessage()
+        ]);
+    }
+}
+
+/**
  * Registrar una orden de pago de modulos ANTES de que se paguen (Estado PENDIENTE).
  * El estudiante debe presentar esta orden para pagar; el pago en si se registra
  * despues, por separado, en "Pago de Modulos" (con su voucher).
+ * @deprecated Las cuotas del programa ya no se ligan a módulos: usar
+ * registrarOrdenPagoCuotaPrograma(). Se mantiene por compatibilidad si quedan
+ * órdenes antiguas con ListaModulos.
  */
 function registrarOrdenPagoModulosPendientes()
 {
@@ -865,12 +997,16 @@ function actualizarFacturacion()
  */
 function validarVoucherMatricula()
 {
-    if (empty($_POST['idOrdenPago']) || empty($_POST['numeroVoucher'])) {
+    // "Matricular sin pago de matrícula": no hay voucher real que exigir, el programa
+    // completo se cobrará después desde Matriculados.
+    $sinMatricula = isset($_POST['sinMatricula']) && $_POST['sinMatricula'] == '1';
+
+    if (empty($_POST['idOrdenPago']) || (!$sinMatricula && empty($_POST['numeroVoucher']))) {
         echo json_encode(['success' => false, 'mensaje' => 'El N° de voucher es requerido']);
         return;
     }
 
-    $numeroVoucher = htmlspecialchars(trim($_POST['numeroVoucher']));
+    $numeroVoucher = !empty($_POST['numeroVoucher']) ? htmlspecialchars(trim($_POST['numeroVoucher'])) : 'SIN MATRÍCULA';
     $fechaInscripcion = !empty($_POST['fechaInscripcion']) ? htmlspecialchars(trim($_POST['fechaInscripcion'])) : null;
 
     $fotoVoucher = null;
@@ -917,7 +1053,8 @@ function validarVoucherMatricula()
         $numeroVoucher,
         $fechaInscripcion,
         $fotoVoucher,
-        $planPago
+        $planPago,
+        $sinMatricula
     );
 
     echo json_encode([
@@ -968,6 +1105,7 @@ function registrarPlanPagoPrograma()
         'ProgramaID' => (int)$_POST['programaID'],
         'CostoTotalPrograma' => floatval($_POST['costoTotalPrograma']),
         'TipoPlan' => htmlspecialchars(trim($_POST['tipoPlan'] ?? 'REGULAR')),
+        'NumeroCuotas' => !empty($_POST['numeroCuotas']) ? (int)$_POST['numeroCuotas'] : null,
         'PorcentajeDescuento' => isset($_POST['porcentajeDescuento']) ? floatval($_POST['porcentajeDescuento']) : 0,
         'CodigoGrupo' => !empty($_POST['codigoGrupo']) ? htmlspecialchars(trim($_POST['codigoGrupo'])) : null,
         'CantidadInscritosGrupo' => isset($_POST['cantidadInscritosGrupo']) ? (int)$_POST['cantidadInscritosGrupo'] : 1,

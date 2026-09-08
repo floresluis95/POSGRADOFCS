@@ -139,122 +139,141 @@ class ModuloControlador
      */
     public function RegistrarModulosPorProgramaControlador()
     {
-        if (isset($_POST["registrarModulosPorPrograma"])) {
-            // Validar datos requeridos
-            if (empty($_POST['programaID']) || empty($_POST['totalModulos'])) {
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("ERROR!", "Faltan datos obligatorios", "error")
-                .then(function () {
-                    location.href="modulos";
-                });
-                </script>';
-                return;
-            }
+        if (!isset($_POST["registrarModulosPorPrograma"])) {
+            return;
+        }
 
-            $programaID = (int)$_POST['programaID'];
-            $totalModulos = (int)$_POST['totalModulos'];
-            $modulos = [];
+        // Fallback sin JavaScript: procesa el POST tradicional y recarga la página.
+        // Cuando hay JavaScript disponible, el modal usa RegistrarModulosPorProgramaAjaxControlador().
+        $resultado = $this->ProcesarRegistroModulosPorPrograma();
 
-            // Recopilar módulos del formulario
-            for ($i = 1; $i <= $totalModulos; $i++) {
-                $nombreKey = 'nombremodulo_' . $i;
-                $codigoKey = 'codigomodulo_' . $i;
-                $docenteKey = 'docentemodulo_' . $i;
-                $costoKey = 'costomodulo_' . $i;
-                $fechaInicioKey = 'fechainicio_' . $i;
-                $fechaFinKey = 'fechafin_' . $i;
+        if ($resultado['estado'] === 'validacion') {
+            echo '
+            <script src="vistas/recursos/sweetalert.min.js"></script>
+            <script>
+            swal("ERROR!", "' . $resultado['mensaje'] . '", "error")
+            .then(function () {
+                location.href="modulos";
+            });
+            </script>';
+            return;
+        }
 
-                if (isset($_POST[$codigoKey])) {
-                    $codigomodulo = strtoupper(htmlspecialchars(trim($_POST[$codigoKey])));
+        if ($resultado['estado'] === 'exitoso') {
+            echo '
+            <script src="vistas/recursos/sweetalert.min.js"></script>
+            <script>
+            sessionStorage.setItem("programaIDSeleccionado", "' . $resultado['programaID'] . '");
+            swal("EXITOSO!", "' . $resultado['mensaje'] . '", "success")
+            .then(function () {
+                location.href="modulos";
+            });
+            </script>';
+        } else {
+            echo '
+            <script src="vistas/recursos/sweetalert.min.js"></script>
+            <script>
+            swal("ERROR!", "' . $resultado['mensaje'] . '", "error")
+            .then(function () {
+                location.href="modulos";
+            });
+            </script>';
+        }
+    }
 
-                    // El nombre es opcional, si está vacío usar el código como nombre
-                    $nombremodulo = isset($_POST[$nombreKey]) && !empty(trim($_POST[$nombreKey]))
-                        ? strtoupper(htmlspecialchars(trim($_POST[$nombreKey])))
-                        : $codigomodulo;
+    /**
+     * Registrar módulos por programa vía AJAX: responde JSON en vez de
+     * redirigir, para que el modal se cierre y la tabla se refresque
+     * sin recargar la página.
+     */
+    public function RegistrarModulosPorProgramaAjaxControlador()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($this->ProcesarRegistroModulosPorPrograma());
+        exit();
+    }
 
-                    $docenteID = isset($_POST[$docenteKey]) && !empty($_POST[$docenteKey])
-                        ? (int)$_POST[$docenteKey]
-                        : null;
+    /**
+     * Lógica compartida de validación y registro de módulos por programa.
+     * Devuelve ['estado' => 'exitoso'|'duplicado'|'error'|'validacion', 'mensaje' => ..., 'programaID' => ...]
+     */
+    private function ProcesarRegistroModulosPorPrograma()
+    {
+        if (empty($_POST['programaID']) || empty($_POST['totalModulos'])) {
+            return ['estado' => 'validacion', 'mensaje' => 'Faltan datos obligatorios'];
+        }
 
-                    $costomodulo = isset($_POST[$costoKey]) && !empty($_POST[$costoKey])
-                        ? (float)$_POST[$costoKey]
-                        : 0;
+        $programaID = (int)$_POST['programaID'];
+        $totalModulos = (int)$_POST['totalModulos'];
+        $modulos = [];
 
-                    $fechainicio = isset($_POST[$fechaInicioKey]) && !empty($_POST[$fechaInicioKey])
-                        ? trim($_POST[$fechaInicioKey])
-                        : null;
+        // Recopilar módulos del formulario
+        for ($i = 1; $i <= $totalModulos; $i++) {
+            $nombreKey = 'nombremodulo_' . $i;
+            $codigoKey = 'codigomodulo_' . $i;
+            $docenteKey = 'docentemodulo_' . $i;
+            $costoKey = 'costomodulo_' . $i;
+            $fechaInicioKey = 'fechainicio_' . $i;
+            $fechaFinKey = 'fechafin_' . $i;
 
-                    $fechafin = isset($_POST[$fechaFinKey]) && !empty($_POST[$fechaFinKey])
-                        ? trim($_POST[$fechaFinKey])
-                        : null;
+            if (isset($_POST[$codigoKey])) {
+                $codigomodulo = strtoupper(htmlspecialchars(trim($_POST[$codigoKey])));
 
-                    if (!empty($codigomodulo)) {
-                        $modulos[] = [
-                            'nombremodulo' => $nombremodulo,
-                            'codigomodulo' => $codigomodulo,
-                            'docenteID' => $docenteID,
-                            'costomodulo' => $costomodulo,
-                            'fechainicio' => $fechainicio,
-                            'fechafin' => $fechafin
-                        ];
-                    }
+                // El nombre es opcional, si está vacío usar el código como nombre
+                $nombremodulo = isset($_POST[$nombreKey]) && !empty(trim($_POST[$nombreKey]))
+                    ? strtoupper(htmlspecialchars(trim($_POST[$nombreKey])))
+                    : $codigomodulo;
+
+                $docenteID = isset($_POST[$docenteKey]) && !empty($_POST[$docenteKey])
+                    ? (int)$_POST[$docenteKey]
+                    : null;
+
+                $costomodulo = isset($_POST[$costoKey]) && !empty($_POST[$costoKey])
+                    ? (float)$_POST[$costoKey]
+                    : 0;
+
+                $fechainicio = isset($_POST[$fechaInicioKey]) && !empty($_POST[$fechaInicioKey])
+                    ? trim($_POST[$fechaInicioKey])
+                    : null;
+
+                $fechafin = isset($_POST[$fechaFinKey]) && !empty($_POST[$fechaFinKey])
+                    ? trim($_POST[$fechaFinKey])
+                    : null;
+
+                if (!empty($codigomodulo)) {
+                    $modulos[] = [
+                        'nombremodulo' => $nombremodulo,
+                        'codigomodulo' => $codigomodulo,
+                        'docenteID' => $docenteID,
+                        'costomodulo' => $costomodulo,
+                        'fechainicio' => $fechainicio,
+                        'fechafin' => $fechafin
+                    ];
                 }
             }
-
-            if (empty($modulos)) {
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("ERROR!", "Debe llenar al menos un módulo", "error")
-                .then(function () {
-                    location.href="modulos";
-                });
-                </script>';
-                return;
-            }
-
-            // Preparar datos para el modelo
-            $datosModulos = [
-                'programaID' => $programaID,
-                'modulos' => $modulos
-            ];
-
-            // Registrar en la base de datos
-            $resultado = ModuloModelo::RegistrarModulosPorProgramaModelo($datosModulos);
-
-            if ($resultado == 'exitoso') {
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                // Guardar el programaID en sessionStorage para mantener la selección
-                sessionStorage.setItem("programaIDSeleccionado", "' . $programaID . '");
-                swal("EXITOSO!", "Los módulos se registraron correctamente (' . count($modulos) . ' módulos)", "success")
-                .then(function () {
-                    location.href="modulos";
-                });
-                </script>';
-            } elseif ($resultado == 'duplicado') {
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("ERROR!", "Ya existen módulos registrados para este programa", "error")
-                .then(function () {
-                    location.href="modulos";
-                });
-                </script>';
-            } else {
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("ERROR!", "No se pudieron registrar los módulos", "error")
-                .then(function () {
-                    location.href="modulos";
-                });
-                </script>';
-            }
         }
+
+        if (empty($modulos)) {
+            return ['estado' => 'validacion', 'mensaje' => 'Debe llenar al menos un módulo'];
+        }
+
+        // Registrar en la base de datos
+        $resultado = ModuloModelo::RegistrarModulosPorProgramaModelo([
+            'programaID' => $programaID,
+            'modulos' => $modulos
+        ]);
+
+        $mensajes = [
+            'exitoso'   => 'Los módulos se registraron correctamente (' . count($modulos) . ' módulos)',
+            'duplicado' => 'Ya existen módulos registrados para este programa',
+            'error'     => 'No se pudieron registrar los módulos'
+        ];
+
+        return [
+            'estado' => $resultado,
+            'mensaje' => $mensajes[$resultado] ?? $mensajes['error'],
+            'programaID' => $programaID
+        ];
     }
 
     /**
@@ -327,64 +346,79 @@ class ModuloControlador
      */
     public function ActualizarModuloControlador()
     {
-        if (isset($_POST["actualizarModulo"])) {
-            // Validar datos requeridos
-            if (empty($_POST['idmodulo']) || empty($_POST['programaID']) || empty($_POST['nombremodulo']) || empty($_POST['codigomodulo'])) {
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("ERROR!", "Faltan datos obligatorios para actualizar", "error")
-                .then(function () {
-                    location.href="modulos";
-                });
-                </script>';
-                return;
-            }
-
-            $idmodulo = (int)$_POST['idmodulo'];
-            $programaID = (int)$_POST['programaID'];
-            $nombremodulo = strtoupper(htmlspecialchars(trim($_POST['nombremodulo'])));
-            $codigomodulo = strtoupper(htmlspecialchars(trim($_POST['codigomodulo'])));
-            $docenteID = isset($_POST['docenteID']) && !empty($_POST['docenteID']) ? (int)$_POST['docenteID'] : null;
-            $costomodulo = isset($_POST['costomodulo']) && !empty($_POST['costomodulo']) ? (float)$_POST['costomodulo'] : 0;
-            $fechainicio = isset($_POST['fechainicio']) && !empty($_POST['fechainicio']) ? trim($_POST['fechainicio']) : null;
-            $fechafin = isset($_POST['fechafin']) && !empty($_POST['fechafin']) ? trim($_POST['fechafin']) : null;
-
-            // Preparar datos para el modelo
-            $datosModulo = [
-                'idmodulo' => $idmodulo,
-                'programaID' => $programaID,
-                'nombremodulo' => $nombremodulo,
-                'codigomodulo' => $codigomodulo,
-                'docenteID' => $docenteID,
-                'costomodulo' => $costomodulo,
-                'fechainicio' => $fechainicio,
-                'fechafin' => $fechafin
-            ];
-
-            // Actualizar en la base de datos
-            $resultado = ModuloModelo::ActualizarModuloPorProgramaModelo($datosModulo);
-
-            if ($resultado) {
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("EXITOSO!", "El módulo se actualizó correctamente", "success")
-                .then(function () {
-                    location.href="modulos";
-                });
-                </script>';
-            } else {
-                echo '
-                <script src="vistas/recursos/sweetalert.min.js"></script>
-                <script>
-                swal("ERROR!", "No se pudo actualizar el módulo", "error")
-                .then(function () {
-                    location.href="modulos";
-                });
-                </script>';
-            }
+        if (!isset($_POST["actualizarModulo"])) {
+            return;
         }
+
+        // Fallback sin JavaScript: procesa el POST tradicional y recarga la página.
+        // Cuando hay JavaScript disponible, el modal usa ActualizarModuloAjaxControlador().
+        $resultado = $this->ProcesarActualizacionModulo();
+
+        if ($resultado['estado'] === 'exitoso') {
+            echo '
+            <script src="vistas/recursos/sweetalert.min.js"></script>
+            <script>
+            swal("EXITOSO!", "' . $resultado['mensaje'] . '", "success")
+            .then(function () {
+                location.href="modulos";
+            });
+            </script>';
+        } else {
+            echo '
+            <script src="vistas/recursos/sweetalert.min.js"></script>
+            <script>
+            swal("ERROR!", "' . $resultado['mensaje'] . '", "error")
+            .then(function () {
+                location.href="modulos";
+            });
+            </script>';
+        }
+    }
+
+    /**
+     * Actualizar módulo vía AJAX: responde JSON en vez de redirigir, para
+     * que el modal se cierre y la tabla se refresque sin recargar la página.
+     */
+    public function ActualizarModuloAjaxControlador()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($this->ProcesarActualizacionModulo());
+        exit();
+    }
+
+    /**
+     * Lógica compartida de validación y actualización de un módulo.
+     * Devuelve ['estado' => 'exitoso'|'validacion'|'error', 'mensaje' => ..., 'programaID' => ...]
+     */
+    private function ProcesarActualizacionModulo()
+    {
+        if (empty($_POST['idmodulo']) || empty($_POST['programaID']) || empty($_POST['nombremodulo']) || empty($_POST['codigomodulo'])) {
+            return ['estado' => 'validacion', 'mensaje' => 'Faltan datos obligatorios para actualizar'];
+        }
+
+        $idmodulo = (int)$_POST['idmodulo'];
+        $programaID = (int)$_POST['programaID'];
+        $nombremodulo = strtoupper(htmlspecialchars(trim($_POST['nombremodulo'])));
+        $codigomodulo = strtoupper(htmlspecialchars(trim($_POST['codigomodulo'])));
+        $docenteID = isset($_POST['docenteID']) && !empty($_POST['docenteID']) ? (int)$_POST['docenteID'] : null;
+        $fechainicio = isset($_POST['fechainicio']) && !empty($_POST['fechainicio']) ? trim($_POST['fechainicio']) : null;
+        $fechafin = isset($_POST['fechafin']) && !empty($_POST['fechafin']) ? trim($_POST['fechafin']) : null;
+
+        $resultado = ModuloModelo::ActualizarModuloPorProgramaModelo([
+            'idmodulo' => $idmodulo,
+            'programaID' => $programaID,
+            'nombremodulo' => $nombremodulo,
+            'codigomodulo' => $codigomodulo,
+            'docenteID' => $docenteID,
+            'fechainicio' => $fechainicio,
+            'fechafin' => $fechafin
+        ]);
+
+        return [
+            'estado' => $resultado ? 'exitoso' : 'error',
+            'mensaje' => $resultado ? 'El módulo se actualizó correctamente' : 'No se pudo actualizar el módulo',
+            'programaID' => $programaID
+        ];
     }
 }
 ?>

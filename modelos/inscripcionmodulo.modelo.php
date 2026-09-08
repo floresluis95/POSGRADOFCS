@@ -183,16 +183,15 @@ class InscripcionModuloModelos
                 $programaID = $programa['ProgramaID'];
             }
 
-            // Construir la consulta SQL con filtros opcionales
+            // Los módulos son puramente académicos (ya no están ligados al pago,
+            // que ahora es por cuotas libres del programa): se listan todos los
+            // módulos activos del programa, con su calificación si existe.
             $sql = "SELECT
-                    pm.Idpagomodulo,
-                    pm.fechapago as FechaInscripcion,
-                    pm.costomodulo,
-                    pm.nvaucher as nvauchermodulo,
-                    pm.Estado,
+                    m.Idmodulo,
                     m.nombremodulo as NombreModulo,
                     m.codigomodulo as Codigo,
-                    0 as Creditos,
+                    m.FechaInicio,
+                    m.FechaFinal,
                     CONCAT(d.Nombre, ' ', d.Apaterno, ' ', d.Amaterno) as NombreDocente,
                     d.Especialidad as EspecialidadDocente,
                     c.Nota,
@@ -201,31 +200,19 @@ class InscripcionModuloModelos
                         WHEN c.Nota >= 51 THEN 'APROBADO'
                         ELSE 'REPROBADO'
                     END as EstadoAprobacion
-                FROM pagomodulo pm
-                INNER JOIN modulos m ON pm.IdModulo = m.Idmodulo
-                INNER JOIN estudianteprograma ep ON pm.idinscripcion = ep.idInscripcion
+                FROM modulos m
                 LEFT JOIN docente d ON m.DocenteID = d.DocenteID
                 LEFT JOIN calificacion c ON c.EstudianteID = :estudianteID
                     AND c.Idmodulo = m.Idmodulo
                     AND c.ProgramaId = :programaID
-                WHERE ep.EstudianteID = :estudianteID
-                AND pm.Estado != 'ANULADO'";
-
-            // Agregar filtro por idInscripcion si se proporciona
-            if ($idInscripcion !== null) {
-                $sql .= " AND ep.idInscripcion = :idInscripcion";
-            }
-
-            $sql .= " ORDER BY pm.fechapago DESC";
+                WHERE m.ProgramaId = :programaIDFiltro
+                AND m.estadomodulo = 'ACTIVO'
+                ORDER BY m.codigomodulo ASC";
 
             $stmt = Conexion::Conectar()->prepare($sql);
             $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
             $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
-
-            if ($idInscripcion !== null) {
-                $stmt->bindParam(":idInscripcion", $idInscripcion, PDO::PARAM_INT);
-            }
-
+            $stmt->bindParam(":programaIDFiltro", $programaID, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -289,38 +276,5 @@ class InscripcionModuloModelos
         }
     }
 
-    /**
-     * Obtener módulos pagados del estudiante para PDF
-     * @param int $estudianteID
-     * @return array
-     */
-    public static function ObtenerModulosPagadosEstudianteModelo($estudianteID)
-    {
-        try {
-            $stmt = Conexion::Conectar()->prepare(
-                "SELECT
-                    pm.Idpagomodulo,
-                    pm.fechapago,
-                    pm.costomodulo,
-                    pm.nvaucher,
-                    pm.Estado,
-                    m.nombremodulo as NombreModulo,
-                    m.codigomodulo as Codigo,
-                    m.costomodulo as CostoOriginal
-                FROM pagomodulo pm
-                INNER JOIN modulos m ON pm.IdModulo = m.Idmodulo
-                INNER JOIN estudianteprograma ep ON pm.idinscripcion = ep.idInscripcion
-                WHERE ep.EstudianteID = :estudianteID
-                AND pm.Estado = 'PAGADO'
-                ORDER BY pm.fechapago DESC"
-            );
-            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error en ObtenerModulosPagadosEstudianteModelo: " . $e->getMessage());
-            return [];
-        }
-    }
 }
 ?>

@@ -150,7 +150,7 @@
                                                                 Bs. <span id="total_pagado">0.00</span>
                                                             </h2>
                                                             <p style="color: rgba(255,255,255,0.8); margin-top: 0.5rem; margin-bottom: 0; font-size: 0.95rem;">
-                                                                <i class="flaticon2-files-and-folders"></i> <span id="cantidad_pagados">0</span> módulos cancelados
+                                                                <i class="flaticon2-files-and-folders"></i> <span id="cantidad_pagados">0</span> cuotas pagadas
                                                             </p>
                                                         </div>
                                                     </div>
@@ -169,8 +169,8 @@
                                                             <h2 style="color: white; font-weight: 700; font-size: 2.2rem; margin: 0;">
                                                                 Bs. <span id="total_pendiente">0.00</span>
                                                             </h2>
-                                                            <p style="color: rgba(255,255,255,0.8); margin-top: 0.5rem; margin-bottom: 0; font-size: 0.95rem;">
-                                                                <i class="flaticon2-warning"></i> <span id="cantidad_pendientes">0</span> módulos por cancelar
+                                                            <p style="color: rgba(255,255,255,0.8); margin-top: 0.5rem; margin-bottom: 0; font-size: 0.95rem;" id="estado_plan_texto">
+                                                                <i class="flaticon2-warning"></i> Saldo por cancelar
                                                             </p>
                                                         </div>
                                                     </div>
@@ -178,12 +178,12 @@
                                             </div>
                                         </div>
 
-                                        <!-- M�dulos Pagados -->
-                                        <div class="mb-5" id="modulos_pagados_container" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
+                                        <!-- Historial de Cuotas -->
+                                        <div class="mb-4" id="modulos_pagados_container" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
                                             <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 1.5rem 2rem;">
                                                 <h3 style="color: white; font-weight: 700; margin: 0; font-size: 1.4rem;">
                                                     <i class="flaticon2-check-mark" style="font-size: 1.8rem; margin-right: 10px;"></i>
-                                                    Módulos Cancelados (Pagados)
+                                                    Historial de Cuotas
                                                 </h3>
                                             </div>
                                             <div style="padding: 2rem;">
@@ -191,56 +191,18 @@
                                                     <table class="table table-hover" id="tabla_modulos_pagados" style="margin-bottom: 0;">
                                                         <thead>
                                                             <tr style="background: #f8f9fa; border-bottom: 2px solid #11998e;">
-                                                                <th class="text-center" width="5%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">#</th>
-                                                                <th width="20%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">MÓDULO</th>
-                                                                <th width="10%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">CÓDIGO</th>
-                                                                <th width="18%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">DOCENTE</th>
-                                                                <th width="15%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">ESPECIALIDAD</th>
-                                                                <th class="text-center" width="10%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">COSTO PAGADO</th>
-                                                                <th class="text-center" width="10%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">FECHA PAGO</th>
-                                                                <th class="text-center" width="12%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">Nº VOUCHER</th>
+                                                                <th class="text-center" width="10%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">N° CUOTA</th>
+                                                                <th class="text-center" width="20%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">MONTO</th>
+                                                                <th class="text-center" width="20%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">FECHA DE PAGO</th>
+                                                                <th class="text-center" width="25%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">Nº VOUCHER</th>
+                                                                <th class="text-center" width="25%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">ESTADO</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody id="tbody_modulos_pagados">
                                                             <tr>
-                                                                <td colspan="8" class="text-center" style="padding: 3rem; color: #B5B5C3;">
+                                                                <td colspan="5" class="text-center" style="padding: 3rem; color: #B5B5C3;">
                                                                     <i class="flaticon2-information" style="font-size: 3rem; color: #E4E6EF;"></i>
-                                                                    <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay módulos pagados</p>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- M�dulos Pendientes -->
-                                        <div class="mb-4" id="modulos_pendientes_container" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
-                                            <div style="background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); padding: 1.5rem 2rem;">
-                                                <h3 style="color: white; font-weight: 700; margin: 0; font-size: 1.4rem;">
-                                                    <i class="flaticon2-hourglass-1" style="font-size: 1.8rem; margin-right: 10px;"></i>
-                                                    Módulos Por Cancelar (Pendientes de Pago)
-                                                </h3>
-                                            </div>
-                                            <div style="padding: 2rem;">
-                                                <div class="table-responsive">
-                                                    <table class="table table-hover" id="tabla_modulos_pendientes" style="margin-bottom: 0;">
-                                                        <thead>
-                                                            <tr style="background: #f8f9fa; border-bottom: 2px solid #ee0979;">
-                                                                <th class="text-center" width="5%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">#</th>
-                                                                <th width="25%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">MÓDULO</th>
-                                                                <th width="12%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">CÓDIGO</th>
-                                                                <th width="20%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">DOCENTE</th>
-                                                                <th width="18%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">ESPECIALIDAD</th>
-                                                                <th class="text-center" width="10%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">COSTO</th>
-                                                                <th class="text-center" width="10%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">ESTADO</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody id="tbody_modulos_pendientes">
-                                                            <tr>
-                                                                <td colspan="7" class="text-center" style="padding: 3rem; color: #B5B5C3;">
-                                                                    <i class="flaticon2-check-mark" style="font-size: 3rem; color: #38ef7d;"></i>
-                                                                    <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 600; color: #38ef7d;">¡Felicidades! No tiene módulos pendientes de pago</p>
+                                                                    <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay cuotas registradas</p>
                                                                 </td>
                                                             </tr>
                                                         </tbody>

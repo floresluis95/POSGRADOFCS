@@ -42,10 +42,10 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                     </div>
 
                     <div class="kt-portlet__body">
-                        <div class="form-group row">
-                            <label class="col-lg-3 col-form-label"><strong>FILTRAR POR SEDE:</strong></label>
-                            <div class="col-lg-7">
-                                <select class="form-control" id="selectSede" style="width: 100%;">
+                        <div class="row filtros-modulos align-items-end">
+                            <div class="col-lg-2 col-md-6 form-group mb-3">
+                                <label class="filtro-label">Sede</label>
+                                <select class="form-control" id="selectSede">
                                     <option value="">Todas las sedes</option>
                                     <?php
                                     foreach ($sedes as $sede) {
@@ -55,11 +55,20 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                                     ?>
                                 </select>
                             </div>
-                        </div>
 
-                        <div class="form-group row">
-                            <label class="col-lg-3 col-form-label"><strong>SELECCIONAR PROGRAMA:</strong></label>
-                            <div class="col-lg-7">
+                            <div class="col-lg-2 col-md-6 form-group mb-3">
+                                <label class="filtro-label">Grado académico</label>
+                                <select class="form-control" id="selectGrado">
+                                    <option value="">Todos los grados</option>
+                                    <option value="DIPLOMADO">DIPLOMADO</option>
+                                    <option value="MAESTRIA">MAESTRIA</option>
+                                    <option value="ESPECIALIDAD">ESPECIALIDAD</option>
+                                    <option value="DOCTORADO">DOCTORADO</option>
+                                </select>
+                            </div>
+
+                            <div class="col-lg-6 col-md-8 form-group mb-3">
+                                <label class="filtro-label">Programa</label>
                                 <select class="form-control select2-programa" id="selectPrograma" style="width: 100%;">
                                     <option value="">Buscar programa...</option>
                                     <?php
@@ -72,6 +81,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                                         $modulos = htmlspecialchars($prog['Modulos'] ?? 0, ENT_QUOTES);
                                         $costo = htmlspecialchars($prog['Costo'] ?? 0, ENT_QUOTES);
                                         $sedePrograma = htmlspecialchars($prog['Sede'] ?? '', ENT_QUOTES);
+                                        $fechaInicioPrograma = htmlspecialchars($prog['FechaInicio'] ?? '', ENT_QUOTES);
 
                                         echo '<option value="' . $programaID . '"
                                                     data-nombre="' . $nombrePrograma . '"
@@ -79,7 +89,8 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                                                     data-grado="' . $grado . '"
                                                     data-modulos="' . $modulos . '"
                                                     data-costo="' . $costo . '"
-                                                    data-sede="' . $sedePrograma . '">';
+                                                    data-sede="' . $sedePrograma . '"
+                                                    data-fechainicio="' . $fechaInicioPrograma . '">';
                                         echo $nombrePrograma . ' - ' . $grado . ' (' . $codigo . ') - ' . $sedePrograma;
                                         echo '</option>';
                                     }
@@ -87,137 +98,129 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                                 </select>
                             </div>
 
-                            <div class="col-lg-2">
+                            <div class="col-lg-2 col-md-4 form-group mb-3">
                                 <button type="button" class="btn btn-primary btn-block" id="btnAbrirModalModulos" disabled>
                                     <i class="fa fa-plus"></i> Agregar Módulos
                                 </button>
                             </div>
                         </div>
-                      
-                     
+
+                        <style>
+                            .filtros-modulos .filtro-label {
+                                font-size: 0.72rem;
+                                font-weight: 600;
+                                color: #6c757d;
+                                text-transform: uppercase;
+                                letter-spacing: 0.3px;
+                                margin-bottom: 4px;
+                            }
+
+                            .filtros-modulos .form-control {
+                                font-size: 0.9rem;
+                            }
+                        </style>
+
 
 <style>
-    
-  
-    /* Chip destacado */
-    .modulo-highlight {
-        background: linear-gradient(135deg, #07204c 0%, #474dbd 100%);
-        color: white !important;
-        padding: 14px 32px;
-        border-radius: 60px;
-        font-size: 2rem;
-        font-weight: 600;
-        display: inline-block;
-        animation: pulseGlow 2.8s infinite ease-in-out;
-        border: 1px solid rgba(255,255,255,0.3);
-        backdrop-filter: blur(5px);
-    }
-
-    /* Correcciones modernas generales */
+    /* Ficha de información del programa seleccionado: compacta y formal */
     .card-modern {
-        border-radius: 22px;
+        border-radius: 6px;
         overflow: hidden;
+        border: 1px solid #dee2e6;
     }
 
     .header-modern {
-        background: rgba(13,110,253,0.15);
-        backdrop-filter: blur(14px);
-        border: none;
-        padding: 20px 30px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        padding: 10px 16px;
     }
 
     .header-modern h4 {
-        font-size: 1.8rem;
-        font-weight: 700;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
 
     .program-title {
-        font-size: 2rem;
-        font-weight: 800;
-        border-left: 5px solid #0d6efd;
-        padding-left: 14px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        border-left: 3px solid #6c757d;
+        padding-left: 10px;
     }
 
     .label-modern {
-        font-size: 1.2rem;
+        font-size: 0.72rem;
         font-weight: 600;
         color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
 
     .value-modern {
-        font-size: 1.8rem;
-        font-weight: 700;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #2b2b2b;
+    }
+
+    .modulo-highlight {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #2b2b2b;
     }
 </style>
 
 
-<div id="infoProgramaSeleccionadoNuevo" 
-     style="display:none;" 
-     class="card card-modern shadow-lg mt-4 animate__animated animate__fadeIn">
+<div id="infoProgramaSeleccionadoNuevo"
+     style="display:none;"
+     class="card card-modern mt-4">
 
-    <!-- Header moderno -->
+    <!-- Header -->
     <div class="card-header header-modern d-flex justify-content-between align-items-center">
 
         <div class="d-flex align-items-center">
-            <i class="bi bi-journal-bookmark fs-2 me-3 text-primary opacity-75"></i>
+            <i class="bi bi-journal-bookmark me-2 text-muted"></i>
             <h4 class="mb-0 text-dark">Programa Seleccionado</h4>
         </div>
 
-        <span class="badge px-4 py-2 rounded-pill"
-              style="background: rgba(255,255,255,0.45); backdrop-filter: blur(10px); color: #0d6efd; font-size: 1.1rem;">
-            Activo
-        </span>
+        <span class="badge badge-success">Activo</span>
 
     </div>
 
     <!-- Body -->
-    <div class="card-body px-4 py-4">
+    <div class="card-body px-3 py-3">
 
         <!-- Título -->
-        <h2 class="program-title text-dark mb-4" id="infoNombrePrograma">
+        <h2 class="program-title text-dark mb-3" id="infoNombrePrograma">
             [Nombre del Programa]
         </h2>
 
-        <div class="row g-4">
+        <div class="row">
 
             <!-- Grado -->
             <div class="col-md-4">
-                <div class="label-modern d-flex align-items-center mb-1">
-                    <i class="bi bi-mortarboard fs-4 me-2 text-primary"></i>
-                    Grado
-                </div>
-                <div class="value-modern text-primary" id="infoGradoPrograma">
+                <div class="label-modern mb-1">Grado</div>
+                <div class="value-modern mb-2" id="infoGradoPrograma">
                     [Grado]
                 </div>
-                <div class="label-modern d-flex align-items-center mb-1">
-                    <i class="bi bi-mortarboard fs-4 me-2 text-primary"></i>
-                    Codigo del programa
-                </div>
-                <div class="value-modern text-primary" id="infoCodigoPrograma">
+                <div class="label-modern mb-1">Código del programa</div>
+                <div class="value-modern" id="infoCodigoPrograma">
                     [0]
                 </div>
-               
             </div>
 
-            <!-- Número de módulos resaltado -->
+            <!-- Número de módulos -->
             <div class="col-md-4">
-                <div class="label-modern d-flex align-items-center mb-1">
-                    <i class="bi bi-layers fs-4 me-2 text-success"></i>
-                    N° de Módulos
-                </div>
+                <div class="label-modern mb-1">N° de Módulos</div>
                 <span id="infoNumModulosPrograma" class="modulo-highlight">
                     [0]
                 </span>
-                
             </div>
 
             <!-- Costo Total del Programa -->
             <div class="col-md-4">
-                <div class="label-modern d-flex align-items-center mb-1">
-                    <i class="bi bi-cash-coin fs-4 me-2 text-warning"></i>
-                    Costo Total
-                </div>
-                <div class="value-modern text-warning" id="infoCostoPrograma" style="font-size: 1.8rem; font-weight: 700;">
+                <div class="label-modern mb-1">Costo Total</div>
+                <div class="value-modern" id="infoCostoPrograma">
                     Bs. 0.00
                 </div>
             </div>
@@ -226,8 +229,8 @@ $sedes = ProgramasModelos::ListarSedesModelo();
     </div>
 
     <!-- Footer -->
-    <div class="card-footer text-center bg-transparent border-0 py-3">
-        <small class="text-muted" style="font-size: 1.1rem; font-style: italic;">
+    <div class="card-footer text-center bg-transparent py-2">
+        <small class="text-muted">
             Información relevante para la matrícula.
         </small>
     </div>
@@ -298,22 +301,41 @@ $sedes = ProgramasModelos::ListarSedesModelo();
             <form method="POST" id="formRegistrarModulosPorPrograma">
                 <div class="modal-body" style="max-height: 60vh; overflow-y: auto; overflow-x: hidden; padding: 20px;">
                     <!-- Información del Programa -->
-                    <div class="alert alert-info">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <strong>Programa:</strong> <span id="modalNombrePrograma"></span>
+                    <div class="detalle-programa-modal">
+                        <div class="row no-gutters">
+                            <div class="col detalle-programa-item">
+                                <div class="label-modern">Programa</div>
+                                <div class="value-modern" id="modalNombrePrograma">-</div>
                             </div>
-                            <div class="col-md-3">
-                                <strong>Código:</strong> <span id="modalCodigoPrograma"></span>
+                            <div class="col detalle-programa-item">
+                                <div class="label-modern">N° Módulos</div>
+                                <div class="value-modern" id="modalNumModulos">-</div>
                             </div>
-                            <div class="col-md-3">
-                                <strong>N° Módulos:</strong> <span id="modalNumModulos" class="badge badge-primary"></span>
-                            </div>
-                            <div class="col-md-3">
-                                <strong>Costo Total:</strong> <span id="modalCostoTotal" class="badge badge-success" style="font-size: 14px;"></span>
+                            <div class="col detalle-programa-item">
+                                <div class="label-modern">Fecha inicio programa</div>
+                                <div class="value-modern" id="modalFechaInicioProgramaTexto">-</div>
                             </div>
                         </div>
                     </div>
+
+                    <style>
+                        .detalle-programa-modal {
+                            background-color: #f8f9fa;
+                            border: 1px solid #dee2e6;
+                            border-radius: 6px;
+                            padding: 4px 0;
+                            margin-bottom: 1rem;
+                        }
+
+                        .detalle-programa-item {
+                            padding: 10px 16px;
+                            border-right: 1px solid #dee2e6;
+                        }
+
+                        .detalle-programa-item:last-child {
+                            border-right: none;
+                        }
+                    </style>
 
                     <input type="hidden" name="programaID" id="modalProgramaID">
                     <input type="hidden" name="totalModulos" id="modalTotalModulos">
@@ -331,7 +353,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <i class="fa fa-times"></i> Cancelar
                     </button>
-                    <button type="submit" name="registrarModulosPorPrograma" class="btn btn-success btn-lg">
+                    <button type="submit" id="btnGuardarModulosPrograma" name="registrarModulosPorPrograma" class="btn btn-success btn-lg">
                         <i class="fa fa-save"></i> Guardar Módulos
                     </button>
                 </div>
@@ -507,7 +529,7 @@ $(document).ready(function() {
     }
 
     // ========================================
-    // FILTRO DE PROGRAMAS POR SEDE (usado por Select2)
+    // FILTRO DE PROGRAMAS POR SEDE Y GRADO ACADÉMICO (usado por Select2)
     // ========================================
     function filtrarProgramaPorSede(params, data) {
         // Opción placeholder ("Buscar programa...") siempre visible
@@ -520,6 +542,14 @@ $(document).ready(function() {
 
         // Si hay una sede elegida, ocultar los programas que no pertenezcan a ella
         if (sedeSeleccionada && sedeSeleccionada !== '' && String(sedeOpcion) !== String(sedeSeleccionada)) {
+            return null;
+        }
+
+        const gradoSeleccionado = $('#selectGrado').val();
+        const gradoOpcion = $(data.element).data('grado');
+
+        // Si hay un grado elegido, ocultar los programas que no pertenezcan a él
+        if (gradoSeleccionado && gradoSeleccionado !== '' && String(gradoOpcion) !== String(gradoSeleccionado)) {
             return null;
         }
 
@@ -577,6 +607,24 @@ $(document).ready(function() {
     });
 
     // ========================================
+    // EVENTO: CAMBIO DE GRADO ACADÉMICO (filtra los programas)
+    // ========================================
+    $('#selectGrado').on('change', function() {
+        const gradoSeleccionado = $(this).val();
+        console.log('>>> Grado seleccionado:', gradoSeleccionado || '(todos)');
+
+        // Si el programa actualmente elegido no pertenece al grado filtrado, limpiarlo
+        const opcionActual = $('#selectPrograma').find('option:selected');
+        const gradoProgramaActual = opcionActual.data('grado');
+
+        if (gradoSeleccionado && $('#selectPrograma').val() && String(gradoProgramaActual) !== String(gradoSeleccionado)) {
+            $('#selectPrograma').val('').trigger('change');
+            $('#infoProgramaSeleccionadoNuevo').hide();
+            $('#btnAbrirModalModulos').prop('disabled', true);
+        }
+    });
+
+    // ========================================
     // FUNCIÓN PARA MANEJAR LA SELECCIÓN DE PROGRAMA
     // ========================================
     function manejarSeleccionPrograma() {
@@ -599,6 +647,7 @@ $(document).ready(function() {
             const gradoPrograma = selectedOption.data('grado');
             const numModulos = parseInt(selectedOption.data('modulos')) || 0;
             const costoTotal = parseFloat(selectedOption.data('costo')) || 0;
+            const fechaInicioPrograma = selectedOption.data('fechainicio') || '';
 
             console.log('Datos del programa:', {
                 id: programaID,
@@ -606,7 +655,8 @@ $(document).ready(function() {
                 codigo: codigoPrograma,
                 grado: gradoPrograma,
                 modulos: numModulos,
-                costo: costoTotal
+                costo: costoTotal,
+                fechaInicio: fechaInicioPrograma
             });
 
             // Actualizar información en la interfaz
@@ -622,6 +672,7 @@ $(document).ready(function() {
             $('#btnAbrirModalModulos').data('codigo', codigoPrograma);
             $('#btnAbrirModalModulos').data('modulos', numModulos);
             $('#btnAbrirModalModulos').data('costo', costoTotal);
+            $('#btnAbrirModalModulos').data('fechainicio', fechaInicioPrograma);
 
             // Habilitar botón y mostrar info
             console.log('Habilitando botón "Agregar Módulos"');
@@ -685,13 +736,15 @@ $(document).ready(function() {
         const gradoPrograma = selectedOption.data('grado');
         const numModulos = parseInt(selectedOption.data('modulos')) || 0;
         const costoTotal = parseFloat(selectedOption.data('costo')) || 0;
+        const fechaInicioPrograma = selectedOption.data('fechainicio') || '';
 
         console.log('Datos extraídos del programa:', {
             id: programaIDGuardado,
             nombre: nombrePrograma,
             grado: gradoPrograma,
             modulos: numModulos,
-            costo: costoTotal
+            costo: costoTotal,
+            fechaInicio: fechaInicioPrograma
         });
 
         // Actualizar información en la interfaz
@@ -706,6 +759,7 @@ $(document).ready(function() {
         $('#btnAbrirModalModulos').data('codigo', codigoPrograma);
         $('#btnAbrirModalModulos').data('modulos', numModulos);
         $('#btnAbrirModalModulos').data('costo', costoTotal);
+        $('#btnAbrirModalModulos').data('fechainicio', fechaInicioPrograma);
 
         // Habilitar botón y mostrar info
         $('#btnAbrirModalModulos').prop('disabled', false);
@@ -803,13 +857,15 @@ $(document).ready(function() {
         const codigoPrograma = $(this).data('codigo');
         const numModulos = parseInt($(this).data('modulos'));
         const costoTotal = parseFloat($(this).data('costo')) || 0;
+        const fechaInicioPrograma = $(this).data('fechainicio') || '';
 
         console.log('Datos del programa para el modal:', {
             programaID,
             nombrePrograma,
             codigoPrograma,
             numModulos,
-            costoTotal
+            costoTotal,
+            fechaInicioPrograma
         });
 
         if (numModulos <= 0) {
@@ -820,15 +876,15 @@ $(document).ready(function() {
 
         // Actualizar información en el modal
         $('#modalNombrePrograma').text(nombrePrograma);
-        $('#modalCodigoPrograma').text(codigoPrograma);
         $('#modalNumModulos').text(numModulos);
-        $('#modalCostoTotal').text('Bs. ' + costoTotal.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+        $('#modalFechaInicioProgramaTexto').text(fechaInicioPrograma || 'N/A');
         $('#modalProgramaID').val(programaID);
         $('#modalTotalModulos').val(numModulos);
 
         console.log('Generando campos para', numModulos, 'módulos...');
 
-        // Generar campos de módulos con el costo repartido
+        // Generar campos de módulos con el costo repartido (el costo se calcula
+        // internamente pero ya no se muestra ni se pide en el formulario)
         generarCamposModulosModal(numModulos, costoTotal);
 
         console.log('Abriendo modal...');
@@ -919,27 +975,14 @@ $(document).ready(function() {
                                        placeholder="Ej: Metodología de Investigación"
                                        maxlength="100">
                             </div>
-                            <div class="form-group">
-                                <label class="mb-1"><strong>Costo del Módulo (Bs.):</strong></label>
-                                <input type="label"
-                                       class="form-control form-control-sm"
-                                       name="costomodulo_${i}"
-                                       value="${costoPorModulo}"
-                                       placeholder="Ej: 500"
-                                       min="0"
-                                       step="1"
-                                       readonly>
-                                <small class="form-text text-muted">
-                                    <i class="fa fa-money"></i> Costo calculado automáticamente 
-                                </small>
-                            </div>
+                            <input type="hidden" name="costomodulo_${i}" value="${costoPorModulo}">
 
                         <div class="row">
-                           
+
                             <div class="col-md-6 form-group mb-3">
                                 <label class="mb-1"><strong>Fecha de inicio:</strong></label>
                                 <input type="date"
-                                    class="form-control form-control-sm"
+                                    class="form-control form-control-sm modulo-fecha-inicio"
                                     name="fechainicio_${i}"
                                     id="fechainicio_${i}">
                             </div>
@@ -993,6 +1036,7 @@ $(document).ready(function() {
         // Contar cuántos módulos tienen nombre
         for (let i = 1; i <= numModulos; i++) {
             const nombre = $(`input[name="nombremodulo_${i}"]`).val();
+
             if (nombre && nombre.trim() !== '') {
                 modulosConNombre++;
             }
@@ -1010,10 +1054,43 @@ $(document).ready(function() {
 
         const confirmacion = confirm(mensaje);
 
-        if (confirmacion) {
-            // Enviar formulario
-            $('#formRegistrarModulosPorPrograma')[0].submit();
+        if (!confirmacion) {
+            return;
         }
+
+        // Enviar por AJAX: así el modal se cierra y la tabla se refresca
+        // automáticamente, sin recargar toda la página.
+        const $btnGuardar = $('#btnGuardarModulosPrograma');
+        $btnGuardar.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Guardando...');
+
+        $.ajax({
+            url: 'ajax/modulo.ajax.php',
+            method: 'POST',
+            data: $('#formRegistrarModulosPorPrograma').serialize() + '&accion=registrarModulosPorPrograma',
+            dataType: 'json',
+            success: function(respuesta) {
+                if (respuesta.estado === 'exitoso') {
+                    // Primero el aviso, y solo al cerrarlo se oculta el modal y se
+                    // refresca la tabla: hacerlo en el otro orden puede dejar el
+                    // aviso atrapado detrás del backdrop del modal (pantalla "congelada").
+                    // Se usa Swal.fire (API real de SweetAlert2) en vez de swal(...):
+                    // ese alias de compatibilidad con la v1 está roto en esta página
+                    // (lanza "can't access property constructor, this is undefined").
+                    Swal.fire('EXITOSO!', respuesta.mensaje, 'success').then(function() {
+                        $('#modalRegistrarModulos').modal('hide');
+                        cargarTablaModulos(respuesta.programaID);
+                    });
+                } else {
+                    Swal.fire('ERROR!', respuesta.mensaje, 'error');
+                }
+            },
+            error: function() {
+                Swal.fire('ERROR!', 'No se pudo conectar con el servidor', 'error');
+            },
+            complete: function() {
+                $btnGuardar.prop('disabled', false).html('<i class="fa fa-save"></i> Guardar Módulos');
+            }
+        });
     });
 
     // ========================================
@@ -1041,11 +1118,8 @@ $(document).ready(function() {
         $('#editProgramaID').val(datosModulo.programaId);
         $('#editCodigoModulo').val(datosModulo.codigomodulo);
         $('#editNombreModulo').val(datosModulo.nombremodulo);
-        $('#editCostoModulo').val(datosModulo.costomodulo || 0);
-        $('#editFechaInicio').val(datosModulo.fechainicio || '');
-        $('#editFechaFinal').val(datosModulo.fechafin || '');
-        $('#editNombrePrograma').text(datosModulo.nombrePrograma);
-        $('#editCodigoPrograma').text(datosModulo.codigoPrograma);
+        $('#editFechaInicio').val(datosModulo.fechaInicio || '');
+        $('#editFechaFinal').val(datosModulo.fechaFinal || '');
 
         // Establecer el docente seleccionado
         $('#editDocenteID').val(datosModulo.docenteID || '');
@@ -1101,8 +1175,40 @@ $(document).ready(function() {
         const confirmacion = confirm('¿Está seguro de actualizar este módulo?');
 
         if (confirmacion) {
-            console.log('✓ Confirmado, enviando formulario...');
-            this.submit();
+            console.log('✓ Confirmado, enviando por AJAX...');
+
+            const $formEditar = $(this);
+            const $btnActualizar = $formEditar.find('button[type="submit"]');
+            $btnActualizar.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Actualizando...');
+
+            $.ajax({
+                url: 'ajax/modulo.ajax.php',
+                method: 'POST',
+                data: $formEditar.serialize() + '&accion=actualizarModulo',
+                dataType: 'json',
+                success: function(respuesta) {
+                    if (respuesta.estado === 'exitoso') {
+                        // Primero el aviso, y solo al cerrarlo se oculta el modal y se
+                        // refresca la tabla: hacerlo en el otro orden puede dejar el
+                        // aviso atrapado detrás del backdrop del modal (pantalla "congelada").
+                        // Se usa Swal.fire (API real de SweetAlert2) en vez de swal(...):
+                        // ese alias de compatibilidad con la v1 está roto en esta página
+                        // (lanza "can't access property constructor, this is undefined").
+                        Swal.fire('EXITOSO!', respuesta.mensaje, 'success').then(function() {
+                            $('#modalEditarModulo').modal('hide');
+                            cargarTablaModulos(respuesta.programaID);
+                        });
+                    } else {
+                        Swal.fire('ERROR!', respuesta.mensaje, 'error');
+                    }
+                },
+                error: function() {
+                    Swal.fire('ERROR!', 'No se pudo conectar con el servidor', 'error');
+                },
+                complete: function() {
+                    $btnActualizar.prop('disabled', false).html('<i class="fa fa-save"></i> Actualizar Módulo');
+                }
+            });
         } else {
             console.log('✗ Actualización cancelada');
         }

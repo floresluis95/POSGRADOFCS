@@ -44,14 +44,17 @@ class PagoProgramaModelos
         $cantidadGrupo = isset($datos['CantidadInscritosGrupo']) ? (int)$datos['CantidadInscritosGrupo'] : 1;
         $responsable = $datos['ResponsableGeneracion'] ?? null;
         $observaciones = $datos['Observaciones'] ?? null;
+        // Número de cuotas planificado (solo tiene sentido para Plan Regular; las cuotas
+        // siguen siendo de monto libre, esto es solo para poder mostrar "Cuota X de N").
+        $numeroCuotas = ($tipoPlan === 'REGULAR' && !empty($datos['NumeroCuotas'])) ? (int)$datos['NumeroCuotas'] : null;
 
         $stmt = $pdo->prepare(
             "INSERT INTO pagoprograma
-            (idInscripcion, EstudianteID, ProgramaID, CostoTotalPrograma, TipoPlan,
+            (idInscripcion, EstudianteID, ProgramaID, CostoTotalPrograma, TipoPlan, NumeroCuotas,
              PorcentajeDescuento, MontoDescuento, MontoTotalPagar,
              CodigoGrupo, CantidadInscritosGrupo, ResponsableGeneracion, Observaciones, Estado)
             VALUES
-            (:idInscripcion, :estudianteID, :programaID, :costoTotal, :tipoPlan,
+            (:idInscripcion, :estudianteID, :programaID, :costoTotal, :tipoPlan, :numeroCuotas,
              :porcentaje, :montoDescuento, :montoTotalPagar,
              :codigoGrupo, :cantidadGrupo, :responsable, :observaciones, 'ACTIVO')"
         );
@@ -60,6 +63,11 @@ class PagoProgramaModelos
         $stmt->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
         $stmt->bindParam(":costoTotal", $costoTotal);
         $stmt->bindParam(":tipoPlan", $tipoPlan, PDO::PARAM_STR);
+        if ($numeroCuotas !== null) {
+            $stmt->bindParam(":numeroCuotas", $numeroCuotas, PDO::PARAM_INT);
+        } else {
+            $stmt->bindValue(":numeroCuotas", null, PDO::PARAM_NULL);
+        }
         $stmt->bindParam(":porcentaje", $porcentaje);
         $stmt->bindParam(":montoDescuento", $montoDescuento);
         $stmt->bindParam(":montoTotalPagar", $montoTotalPagar);

@@ -38,6 +38,10 @@ $version = $_POST['version'] ?? '';
 $numeroTramite = $_POST['numeroTramite'] ?? '';
 $nombreFactura = $_POST['nombreFactura'] ?? '';
 $nitCiFactura = $_POST['nitCiFactura'] ?? '';
+// Cuenta bancaria a la que el estudiante debe depositar. Si no se selecciona una del
+// catálogo (ej. órdenes generadas desde Pre-Registro, que aún no tienen este selector),
+// se mantiene la cuenta por defecto que ya se usaba antes.
+$numeroCuentaDeposito = !empty($_POST['numeroCuentaDeposito']) ? $_POST['numeroCuentaDeposito'] : '10000006050938';
 
 $nombreCompleto = trim("$apaterno $amaterno $nombres");
 
@@ -268,7 +272,7 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     $pdf->SetXY($x_left, $y_cuenta);
     $pdf->MultiCell($W_BANCO_IZQ, 8, "UTO\nAPORTES EXTRAORDINARIOS", 1, 'L', true, 0, '', '', true, 0, false, true, 8, 'M');
     $pdf->SetXY($x_left + $W_BANCO_IZQ, $y_cuenta);
-    $pdf->Cell($W_BANCO_DER, 8, '10000006050938', 1, 0, 'L', true);
+    $pdf->Cell($W_BANCO_DER, 8, $numeroCuentaDeposito, 1, 0, 'L', true);
     $pdf->Ln(8);
 
     $pdf->SetX($x_left);
@@ -283,7 +287,7 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
 $datos = compact(
     'apaterno', 'amaterno', 'nombres', 'correo', 'ci', 'celular',
     'programa', 'montoNumeral', 'montoLiteral', 'version', 'numeroTramite',
-    'nombreFactura', 'nitCiFactura'
+    'nombreFactura', 'nitCiFactura', 'numeroCuentaDeposito'
 );
 
 // Crear instancia de TCPDF

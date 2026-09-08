@@ -159,15 +159,7 @@ function mostrarVouchers(vouchers) {
             const numeroVoucher = voucher.NumeroVoucher || 'S/N';
             const monto = parseFloat(voucher.MontoTotal || 0).toFixed(2);
 
-            // Construir lista de módulos
-            let modulosHTML = '';
-            if (voucher.Modulos && voucher.Modulos.length > 0) {
-                voucher.Modulos.forEach(function(modulo) {
-                    modulosHTML += `<span class="modulo-badge">${modulo.NombreModulo}</span>`;
-                });
-            } else {
-                modulosHTML = '<span style="color: #B5B5C3;">Sin módulos asociados</span>';
-            }
+            const numeroCuota = voucher.NumeroCuota ? `Cuota N° ${voucher.NumeroCuota}` : 'Cuota del programa';
 
             // Verificar si tiene imagen
             const tieneImagen = voucher.TieneImagen && voucher.TieneImagen === 'SI';
@@ -223,10 +215,10 @@ function mostrarVouchers(vouchers) {
                                 <div class="row">
                                     <div class="col-12">
                                         <h6 style="color: #B5B5C3; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem;">
-                                            <i class="flaticon2-layers"></i> Módulos Pagados (${voucher.Modulos ? voucher.Modulos.length : 0})
+                                            <i class="flaticon2-layers"></i> Concepto
                                         </h6>
                                         <div>
-                                            ${modulosHTML}
+                                            <span class="modulo-badge">${numeroCuota}</span>
                                         </div>
                                     </div>
                                 </div>

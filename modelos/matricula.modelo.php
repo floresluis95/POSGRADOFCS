@@ -75,39 +75,28 @@ class MatriculaModelos
                 $modulos = $stmtModulos->fetchAll(PDO::FETCH_ASSOC);
 
                 if (count($modulos) > 0) {
-                    // Calcular costo por módulo si es necesario
-                    // Si los módulos no tienen costo, distribuir el monto pagado entre ellos
                     $totalModulos = count($modulos);
-                    $costoPorModulo = $datos['montoPagado'] / $totalModulos;
 
-                    // Preparar statement para registrar pagos de módulos
+                    // NOTA: este flujo de "pago completo" está desactualizado (las cuotas ya
+                    // no están ligadas a módulos); se deja funcional a nivel de columnas para
+                    // no romper si se reactiva, pero registra el pago como una sola cuota del
+                    // programa en vez de una fila por módulo.
                     $stmtPagoModulo = $pdo->prepare(
                         "INSERT INTO pagomodulo
-                        (idinscripcion, IdModulo, costomodulo, fechapago, nvaucher, Estado)
-                        VALUES (:idinscripcion, :idModulo, :costomodulo, :fechapago, :nvaucher, 'PAGADO')"
+                        (idinscripcion, NumeroCuota, montocuota, fechapago, nvaucher, Estado)
+                        VALUES (:idinscripcion, 1, :montocuota, :fechapago, :nvaucher, 'PAGADO')"
                     );
 
+                    $stmtPagoModulo->bindParam(":idinscripcion", $inscripcionID, PDO::PARAM_INT);
+                    $stmtPagoModulo->bindParam(":montocuota", $datos['montoPagado'], PDO::PARAM_STR);
+                    $stmtPagoModulo->bindParam(":fechapago", $datos['FechaInscripcion'], PDO::PARAM_STR);
+                    $stmtPagoModulo->bindParam(":nvaucher", $datos['nvauchermatricula'], PDO::PARAM_STR);
+
                     $modulosInscritos = 0;
-                    $pagosFechaInscripcion = $datos['FechaInscripcion'];
-
-                    foreach ($modulos as $modulo) {
-                        // Determinar el costo del módulo
-                        $costoModulo = !empty($modulo['costomodulo']) && floatval($modulo['costomodulo']) > 0
-                            ? floatval($modulo['costomodulo'])
-                            : $costoPorModulo;
-
-                        // Registrar pago del módulo
-                        $stmtPagoModulo->bindParam(":idinscripcion", $inscripcionID, PDO::PARAM_INT);
-                        $stmtPagoModulo->bindParam(":idModulo", $modulo['Idmodulo'], PDO::PARAM_INT);
-                        $stmtPagoModulo->bindParam(":costomodulo", $costoModulo, PDO::PARAM_STR);
-                        $stmtPagoModulo->bindParam(":fechapago", $pagosFechaInscripcion, PDO::PARAM_STR);
-                        $stmtPagoModulo->bindParam(":nvaucher", $datos['nvauchermatricula'], PDO::PARAM_STR);
-
-                        if ($stmtPagoModulo->execute()) {
-                            $modulosInscritos++;
-                        } else {
-                            error_log("Error al registrar pago de módulo: " . print_r($stmtPagoModulo->errorInfo(), true));
-                        }
+                    if ($stmtPagoModulo->execute()) {
+                        $modulosInscritos = $totalModulos;
+                    } else {
+                        error_log("Error al registrar pago completo del programa: " . print_r($stmtPagoModulo->errorInfo(), true));
                     }
 
                     error_log("PAGO COMPLETO: Estudiante {$datos['EstudianteID']} inscrito y pagado en {$modulosInscritos} de {$totalModulos} módulos del programa {$datos['ProgramaID']}");

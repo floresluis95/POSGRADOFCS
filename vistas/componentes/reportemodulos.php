@@ -52,15 +52,15 @@ date_default_timezone_set("America/La_Paz");
                             ?>
 
                             <!-- Estadísticas por Sede -->
-                            <div class="kt-portlet mb-4">
-                                <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="kt-portlet mb-3">
+                                <div class="kt-portlet__head" style="background: #fff; border-bottom: 2px solid #EBEDF3; min-height: 45px;">
                                     <div class="kt-portlet__head-label">
-                                        <h3 style="color: white; margin: 0;">
-                                            <i class="flaticon2-location"></i> Programas por Sede
+                                        <h3 style="color: #3b3f5c; margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;">
+                                            <i class="flaticon2-location" style="color: #5867dd;"></i> Programas por Sede
                                         </h3>
                                     </div>
                                 </div>
-                                <div class="kt-portlet__body">
+                                <div class="kt-portlet__body" style="padding: 15px;">
                                     <?php
                                     $sedes = new ReporteModulosControlador();
                                     $sedes->MostrarEstadisticaSedesControlador();
@@ -69,11 +69,11 @@ date_default_timezone_set("America/La_Paz");
                             </div>
 
                             <!-- Programas y Módulos Categorizados -->
-                            <div class="kt-portlet mb-4">
-                                <div class="kt-portlet__head" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                            <div class="kt-portlet mb-3">
+                                <div class="kt-portlet__head" style="background: #fff; border-bottom: 2px solid #EBEDF3; min-height: 45px;">
                                     <div class="kt-portlet__head-label">
-                                        <h3 style="color: white; margin: 0;">
-                                            <i class="fa fa-th-large"></i> Programas y Módulos del Sistema
+                                        <h3 style="color: #3b3f5c; margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;">
+                                            <i class="fa fa-th-large" style="color: #34bfa3;"></i> Programas y Módulos del Sistema
                                         </h3>
                                     </div>
                                 </div>
@@ -85,70 +85,64 @@ date_default_timezone_set("America/La_Paz");
                                 </div>
                             </div>
 
-                            <!-- Generador de Reportes -->
+                            <!-- Reporte de Pagos por Programa -->
                             <div class="kt-portlet">
-                                <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <div class="kt-portlet__head" style="background: #fff; border-bottom: 2px solid #EBEDF3; min-height: 45px;">
                                     <div class="kt-portlet__head-label">
-                                        <h3 style="color: white; margin: 0;">
-                                            <i class="fa fa-chart-bar"></i> Generador de Reportes de Estudiantes Inscritos
+                                        <h3 style="color: #3b3f5c; margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;">
+                                            <i class="fa fa-money-bill-wave" style="color: #575962;"></i> Reporte de Pagos por Programa
                                         </h3>
                                     </div>
                                 </div>
 
                                 <div class="kt-portlet__body">
-                                    <!-- Filtros -->
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <div class="form-group">
-                                                <label><i class="fa fa-graduation-cap"></i> <strong>1. Grado Académico</strong></label>
-                                                <select class="form-control select2-basic" id="grado-select">
-                                                    <option value="">-- Seleccione Grado --</option>
-                                                </select>
-                                            </div>
-                                        </div>
+                                    <small class="text-muted d-block mb-3">
+                                        <i class="fa fa-info-circle"></i> Cuántos estudiantes inscritos tiene cada programa, con qué
+                                        plan de pago (Regular, Contado con descuento o Grupal), cuántos ya completaron su pago y
+                                        cuánto falta cobrar en total.
+                                    </small>
 
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label><i class="fa fa-book"></i> <strong>2. Programa/Carrera</strong></label>
-                                                <select class="form-control select2-basic" id="programa-select" disabled>
-                                                    <option value="">-- Seleccione Programa --</option>
-                                                </select>
-                                            </div>
+                                    <div class="row mb-3 align-items-end">
+                                        <div class="col-md-4 form-group mb-2 mb-md-0">
+                                            <label class="small font-weight-bold mb-1">Grado Académico</label>
+                                            <select class="form-control form-control-sm" id="reportePagosGrado">
+                                                <option value="">Todos los grados</option>
+                                            </select>
                                         </div>
-
-                                        <div class="col-md-3">
-                                            <div class="form-group">
-                                                <label><i class="fa fa-list"></i> <strong>3. Módulo (Opcional)</strong></label>
-                                                <select class="form-control select2-basic" id="modulo-select" disabled>
-                                                    <option value="">-- Todos los Módulos --</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-2 d-flex align-items-end">
-                                            <div class="form-group w-100">
-                                                <button class="btn btn-primary btn-block" id="btn-buscar" style="height: 40px;">
-                                                    <i class="fa fa-search"></i> Buscar
-                                                </button>
-                                            </div>
+                                        <div class="col-md-8 text-md-right">
+                                            <button type="button" class="btn btn-sm btn-primary" id="btnActualizarReportePagos">
+                                                <i class="fa fa-sync"></i> Actualizar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnImprimirReportePagos">
+                                                <i class="fa fa-print"></i> Imprimir
+                                            </button>
                                         </div>
                                     </div>
 
-                                    <hr>
-
-                                    <!-- Área de resultados -->
-                                    <div id="resultados-reporte">
-                                        <div class="alert alert-info text-center">
-                                            <i class="fa fa-info-circle fa-2x"></i>
-                                            <h5 class="mt-2">Use los filtros de arriba y presione <strong>Buscar</strong> para generar el reporte</h5>
-                                        </div>
-                                    </div>
-
-                                    <!-- Botón de imprimir -->
-                                    <div class="text-right mt-4" id="contenedor-imprimir" style="display: none;">
-                                        <button class="btn btn-warning btn-lg" id="btn-imprimir">
-                                            <i class="fa fa-print"></i> Imprimir Reporte
-                                        </button>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered table-hover mb-0" id="tablaReportePagos">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>Programa</th>
+                                                    <th class="text-center">Grado</th>
+                                                    <th class="text-center">Inscritos</th>
+                                                    <th class="text-center">Plan<br>Regular</th>
+                                                    <th class="text-center">Plan Contado<br>(Descuento)</th>
+                                                    <th class="text-center">Plan<br>Grupal</th>
+                                                    <th class="text-center">Sin<br>Plan</th>
+                                                    <th class="text-center">Completaron<br>el Pago</th>
+                                                    <th class="text-center">Con Saldo<br>Pendiente</th>
+                                                    <th class="text-right">Total<br>Programado</th>
+                                                    <th class="text-right">Total<br>Pagado</th>
+                                                    <th class="text-right">Saldo<br>Pendiente</th>
+                                                    <th class="text-center">Detalle</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tablaReportePagosBody">
+                                                <tr><td colspan="13" class="text-center text-muted py-4"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                            </tbody>
+                                            <tfoot id="tablaReportePagosFooter"></tfoot>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -169,7 +163,7 @@ date_default_timezone_set("America/La_Paz");
     <div class="modal fade" id="modalModulosPrograma" tabindex="-1" role="dialog" aria-labelledby="modalModulosProgramaLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="modal-header" style="background: #3b3f5c; color: white;">
                     <h5 class="modal-title" id="modalModulosProgramaLabel">
                         <i class="flaticon2-layers"></i> Módulos del Programa
                     </h5>
@@ -181,7 +175,7 @@ date_default_timezone_set("America/La_Paz");
                     <div id="contenido-modulos-programa">
                         <div class="text-center p-5">
                             <div class="kt-spinner kt-spinner--lg kt-spinner--brand"></div>
-                            <p class="mt-3" style="color: #667eea; font-weight: 600;">Cargando módulos...</p>
+                            <p class="mt-3" style="color: #575962; font-weight: 600;">Cargando módulos...</p>
                         </div>
                     </div>
                 </div>
@@ -194,133 +188,107 @@ date_default_timezone_set("America/La_Paz");
         </div>
     </div>
 
+    <!-- Modal: Detalle de Pagos por Estudiante (de un programa) -->
+    <div class="modal fade" id="modalDetallePagosPrograma" tabindex="-1" role="dialog" aria-labelledby="modalDetallePagosProgramaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: #3b3f5c; color: white;">
+                    <h5 class="modal-title" id="modalDetallePagosProgramaLabel">
+                        <i class="fa fa-users"></i> Detalle de Pagos: <span id="detallePagosProgramaNombre"></span>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered table-hover mb-0" id="tablaDetallePagosEstudiante">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Estudiante</th>
+                                    <th style="width:110px;">C.I.</th>
+                                    <th class="text-center" style="width:150px;">Plan</th>
+                                    <th class="text-center" style="width:110px;">Cuotas</th>
+                                    <th class="text-right" style="width:120px;">Costo Total</th>
+                                    <th class="text-right" style="width:120px;">Pagado</th>
+                                    <th class="text-right" style="width:120px;">Saldo</th>
+                                    <th class="text-center" style="width:110px;">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaDetallePagosEstudianteBody">
+                                <tr><td colspan="8" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="btnImprimirDetallePagos">
+                        <i class="fa fa-print"></i> Imprimir
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fa fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="vistas/recursos/assets/js/scripts/reportemodulos.js?v=<?php echo time(); ?>"></script>
 
     <style>
-        .select2-container--default .select2-selection--single {
-            height: 40px !important;
-            padding: 6px 12px !important;
-        }
-
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 28px !important;
-        }
-
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 38px !important;
-        }
-
-        .tabla-reporte {
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .tabla-reporte thead th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 12px;
-            padding: 12px;
-            border: none;
-        }
-
-        .tabla-reporte tbody tr {
-            transition: background 0.3s ease;
-        }
-
-        .tabla-reporte tbody tr:hover {
-            background: #f8f9fa;
-        }
-
-        .badge-modulo {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
+        #tablaReportePagos thead th,
+        #tablaDetallePagosEstudiante thead th {
             font-size: 11px;
-        }
-
-        .badge-estado-pagado {
-            background: #28a745;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 10px;
-        }
-
-        .badge-estado-pendiente {
-            background: #ffc107;
-            color: #000;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 10px;
+            text-transform: uppercase;
+            vertical-align: middle;
         }
 
         /* Estilos para modal de módulos */
         .modulo-card {
             background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border-left: 4px solid transparent;
-        }
-
-        .modulo-card:hover {
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
-            transform: translateY(-3px);
-            border-left-color: #667eea;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid #EBEDF3;
+            border-left: 3px solid #5867dd;
         }
 
         .modulo-card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         .modulo-codigo {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
+            background: #f1f3f4;
+            color: #5867dd;
+            padding: 4px 12px;
+            border-radius: 3px;
             font-weight: 700;
-            font-size: 14px;
-        }
-
-        .modulo-inscritos {
-            background: linear-gradient(135deg, #fd397a 0%, #e91e63 100%);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .modulo-nombre {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             color: #464E5F;
             margin-bottom: 0.5rem;
         }
 
         .modulo-costo {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 700;
-            color: #11998e;
+            color: #34bfa3;
         }
 
         .modulo-card-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-top: 1rem;
+            padding-top: 0.75rem;
             border-top: 1px solid #f0f0f0;
         }
     </style>

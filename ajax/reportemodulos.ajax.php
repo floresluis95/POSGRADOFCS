@@ -20,11 +20,6 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerModulos') {
     ReporteModulosControlador::ObtenerModulosPorProgramaControlador();
 }
 
-// Obtener inscritos (reporte)
-if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerInscritos') {
-    ReporteModulosControlador::ObtenerInscritosReporteControlador();
-}
-
 // Obtener estadísticas generales
 if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerEstadisticas') {
     ReporteModulosControlador::ObtenerEstadisticasGeneralesControlador();
@@ -35,8 +30,13 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerConteoModulosPorProg
     ReporteModulosControlador::ObtenerConteoModulosPorProgramaControlador();
 }
 
-// Obtener conteo de inscritos por módulo
-if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerConteoInscritosPorModulo') {
-    ReporteModulosControlador::ObtenerConteoInscritosPorModuloControlador();
+// Reporte de pagos por programa (cuántos por tipo de plan, completados, saldo pendiente)
+if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerReportePagosPrograma') {
+    ReporteModulosControlador::ObtenerReportePagosPorProgramaControlador();
+}
+
+// Detalle de pagos por estudiante, para un programa específico
+if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerReportePagosEstudiantes') {
+    ReporteModulosControlador::ObtenerReportePagosPorEstudianteControlador();
 }
 ?>

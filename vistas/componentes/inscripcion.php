@@ -79,17 +79,33 @@ kt-aside--fixed kt-page--loading">
               <div class="row justify-content-md-center">
                 <div class="col-lg-9">
 
-                  <!-- BUSCAR ESTUDIANTE CON PREREGISTRO PENDIENTE -->
+                  <!-- Indicador de pasos -->
+                  <div class="pasos-inscripcion mb-3">
+                    <div class="paso-item active" id="pasoBuscar">
+                      <span class="paso-numero">1</span> Buscar estudiante
+                    </div>
+                    <div class="paso-separador"></div>
+                    <div class="paso-item" id="pasoValidar">
+                      <span class="paso-numero">2</span> Validar voucher de matrícula
+                    </div>
+                  </div>
+
+                  <!-- PASO 1: BUSCAR ESTUDIANTE CON PREREGISTRO PENDIENTE -->
                   <div class="kt-portlet inscripcion-portlet">
+                    <div class="kt-portlet__head">
+                      <div class="kt-portlet__head-label">
+                        <h3 class="kt-portlet__head-title">
+                          <i class="flaticon2-search"></i> Buscar estudiante con pre-registro pendiente
+                        </h3>
+                      </div>
+                    </div>
                     <div class="kt-portlet__body py-3">
                       <div class="row align-items-end">
                         <div class="col-lg-8">
-                          <label class="small font-weight-bold mb-1">
-                            <i class="flaticon2-search text-primary"></i> Buscar estudiante con pre-registro pendiente
-                          </label>
+                          <label class="filtro-label">C.I., nombre o apellido</label>
                           <div class="input-group input-group-sm">
                             <input type="text" id="buscarTermino" class="form-control"
-                                   placeholder="C.I., nombre o apellido..." maxlength="60">
+                                   placeholder="Ej: 1234567 o Pérez" maxlength="60">
                             <div class="input-group-append">
                               <button type="button" id="btnBuscarPreregistro" class="btn btn-primary">
                                 <i class="flaticon2-search"></i> Buscar
@@ -101,24 +117,24 @@ kt-aside--fixed kt-page--loading">
                           </small>
                         </div>
                         <div class="col-lg-4 text-lg-right mt-2 mt-lg-0">
-                          <a href="preregistro" class="btn btn-sm btn-outline-primary btn-block">
-                            <i class="flaticon2-plus"></i> Nuevo Estudiante
+                          <a href="preregistro" class="btn btn-sm btn-outline-secondary btn-block">
+                            <i class="flaticon2-plus"></i> Nuevo estudiante
                           </a>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <!-- DETALLE DEL PREREGISTRO SELECCIONADO / VALIDACIÓN DEL VOUCHER -->
+                  <!-- PASO 2: DETALLE DEL PREREGISTRO SELECCIONADO / VALIDACIÓN DEL VOUCHER -->
                   <div class="kt-portlet mt-3 inscripcion-portlet" id="panelDetalle" style="display:none;">
-                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); min-height: 46px;">
+                    <div class="kt-portlet__head">
                       <div class="kt-portlet__head-label">
-                        <h3 class="kt-portlet__head-title" style="color: white; font-size: 14px;">
+                        <h3 class="kt-portlet__head-title">
                           <i class="fa fa-check-circle"></i> Validar Voucher de Matrícula
                         </h3>
                       </div>
                       <div class="kt-portlet__head-toolbar">
-                        <button type="button" id="btnBuscarOtro" class="btn btn-sm btn-light">
+                        <button type="button" id="btnBuscarOtro" class="btn btn-sm btn-outline-secondary">
                           <i class="flaticon2-back"></i> Buscar otro estudiante
                         </button>
                       </div>
@@ -128,98 +144,112 @@ kt-aside--fixed kt-page--loading">
                       <input type="hidden" id="detalleIdOrdenPago">
 
                       <!-- Datos del estudiante -->
-                      <div class="chip-summary mb-2">
-                        <div class="chip-summary-row">
-                          <span><i class="flaticon2-user-outline-symbol"></i> <strong id="detalleNombre"></strong></span>
-                          <span>CI: <span id="detalleCi"></span></span>
-                          <span id="detalleCorreo"></span>
-                          <span id="detalleCelular"></span>
+                      <div class="seccion-detalle mb-3">
+                        <div class="seccion-detalle-titulo">Datos del estudiante</div>
+                        <div class="row">
+                          <div class="col-md-4">
+                            <div class="label-modern">Nombre completo</div>
+                            <div class="value-modern" id="detalleNombre"></div>
+                          </div>
+                          <div class="col-md-2">
+                            <div class="label-modern">C.I.</div>
+                            <div class="value-modern" id="detalleCi"></div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="label-modern">Correo</div>
+                            <div class="value-modern" id="detalleCorreo"></div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="label-modern">Celular</div>
+                            <div class="value-modern" id="detalleCelular"></div>
+                          </div>
                         </div>
                       </div>
 
                       <!-- Datos del programa -->
-                      <div class="chip-summary mb-2">
-                        <div class="chip-summary-row flex-wrap">
-                          <span><strong id="detallePrograma"></strong> (<span id="detalleCodigo"></span>)</span>
-                          <span>Grado: <span id="detalleGrado"></span></span>
-                          <span>Sede: <span id="detalleSede"></span></span>
-                          <span>Modalidad de pago: <span class="badge badge-primary" id="detalleModalidad"></span></span>
-                          <span>Monto: <strong class="text-primary">Bs. <span id="detalleMonto">0.00</span></strong></span>
-                          <span>Plan del programa: <span class="badge badge-warning" id="detalleEstadoPlan"><i class="fa fa-clock-o"></i> Pendiente de confirmación</span></span>
+                      <div class="seccion-detalle mb-3">
+                        <div class="seccion-detalle-titulo">Datos del programa</div>
+                        <div class="row">
+                          <div class="col-md-4">
+                            <div class="label-modern">Programa</div>
+                            <div class="value-modern"><span id="detallePrograma"></span> (<span id="detalleCodigo"></span>)</div>
+                          </div>
+                          <div class="col-md-2">
+                            <div class="label-modern">Grado</div>
+                            <div class="value-modern" id="detalleGrado"></div>
+                          </div>
+                          <div class="col-md-2">
+                            <div class="label-modern">Sede</div>
+                            <div class="value-modern" id="detalleSede"></div>
+                          </div>
+                          <div class="col-md-2">
+                            <div class="label-modern">Modalidad</div>
+                            <div class="value-modern"><span class="badge badge-secondary" id="detalleModalidad"></span></div>
+                          </div>
+                          <div class="col-md-2">
+                            <div class="label-modern">Monto</div>
+                            <div class="value-modern">Bs. <span id="detalleMonto">0.00</span></div>
+                          </div>
+                        </div>
+                        <div class="mt-2">
+                          <span class="label-modern">Plan del programa</span><br>
+                          <span class="badge badge-warning" id="detalleEstadoPlan"><i class="fa fa-clock-o"></i> Pendiente de confirmación</span>
                         </div>
                       </div>
-
-                      <hr class="my-2">
 
                       <!-- Formulario de validación del voucher -->
                       <form id="formValidarVoucher" enctype="multipart/form-data">
 
-                        <!-- PLAN DE PAGO DEL PROGRAMA (posgrado, aparte de la matrícula) -->
-                        <div class="plan-pago-programa mb-2">
-                          <div class="step-title" style="font-size:13px;">
-                            <i class="fa fa-money"></i> Plan de Pago del Programa
+                        <!-- PLAN DE PAGO DEL PROGRAMA: ya se eligió en Pre-Registro y queda
+                             definitivo al validar el voucher; aquí solo se muestra como referencia. -->
+                        <div class="seccion-detalle mb-3">
+                          <div class="seccion-detalle-titulo">
+                            <i class="fa fa-money"></i> Plan de pago del programa
                           </div>
-                          <small class="text-muted d-block mb-2">
-                            Defina el tipo de plan para el costo del programa (posgrado), aparte de la matrícula.
-                            El pago de cada módulo se registra después, desde <strong>Matriculados → Inscribir a Módulo</strong>,
-                            aplicando este descuento automáticamente. Costo total del programa:
-                            <strong class="text-primary">Bs. <span id="planCostoTotal">0.00</span></strong>
-                          </small>
-
-                          <div class="alert alert-light border py-2 px-3 mb-2" id="planPropuestaInfo" style="font-size:12px; display:none;"></div>
-
-                          <div class="row">
-                            <div class="col-lg-6 form-group mb-2">
-                              <label class="small font-weight-bold mb-1">Tipo de Plan</label>
-                              <select class="form-control form-control-sm" id="planTipoPago">
-                                <option value="REGULAR">Plan Regular (paga cada módulo al iniciarlo)</option>
-                                <option value="DESCUENTO">Plan al Contado (con descuento)</option>
-                              </select>
-                            </div>
-                            <div class="col-lg-6 form-group mb-2">
-                              <label class="small font-weight-bold mb-1">% Descuento</label>
-                              <input type="number" class="form-control form-control-sm" id="planPorcentajeDescuento" min="0" max="100" step="0.01" value="0">
-                            </div>
-                          </div>
-
-                          <small class="text-muted d-block mb-2">
-                            <i class="fa fa-users"></i> ¿Es un <strong>Plan Grupal</strong> (varios inscritos)? Ese plan se define
-                            desde <strong>Matriculados</strong> una vez que los integrantes del grupo estén matriculados,
-                            para poder seleccionarlos a todos juntos.
-                          </small>
+                          <div id="planPropuestaInfo"></div>
                         </div>
 
-                        <hr class="my-2">
+                        <!-- DATOS DEL VOUCHER -->
+                        <div class="seccion-detalle mb-3">
+                          <div class="seccion-detalle-titulo">Datos del voucher</div>
 
-                        <div class="row">
-                          <div class="col-lg-4 form-group mb-2">
-                            <label class="small font-weight-bold mb-1">Código de Voucher <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm" id="voucherNumero" maxlength="25" required>
+                          <div class="custom-control custom-checkbox mb-3">
+                            <input type="checkbox" class="custom-control-input" id="sinPagoMatricula">
+                            <label class="custom-control-label font-weight-bold" for="sinPagoMatricula">
+                              Matricular sin pago de matrícula (el programa completo se cancelará después)
+                            </label>
                           </div>
-                          <div class="col-lg-4 form-group mb-2">
-                            <label class="small font-weight-bold mb-1">Fecha de Inscripción <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control form-control-sm" id="voucherFecha" required
-                                   max="<?php echo date('Y-m-d'); ?>">
-                          </div>
-                          <div class="col-lg-4 form-group mb-2">
-                            <label class="small font-weight-bold mb-1">Foto del Voucher</label>
-                            <div class="custom-file custom-file-sm">
-                              <input type="file" class="custom-file-input" id="voucherFoto" accept="image/*">
-                              <label class="custom-file-label" for="voucherFoto" id="voucherFotoLabel">Seleccionar imagen...</label>
+
+                          <div class="row" id="filaCamposVoucher">
+                            <div class="col-lg-4 form-group mb-2" id="grupoVoucherNumero">
+                              <label class="filtro-label">Código de voucher <span class="text-danger">*</span></label>
+                              <input type="text" class="form-control form-control-sm" id="voucherNumero" maxlength="25" required>
                             </div>
-                            <small class="form-text text-muted">JPG, PNG, GIF o WEBP (máx. 5MB)</small>
+                            <div class="col-lg-4 form-group mb-2">
+                              <label class="filtro-label">Fecha de inscripción <span class="text-danger">*</span></label>
+                              <input type="date" class="form-control form-control-sm" id="voucherFecha" required
+                                     max="<?php echo date('Y-m-d'); ?>">
+                            </div>
+                            <div class="col-lg-4 form-group mb-2" id="grupoVoucherFoto">
+                              <label class="filtro-label">Foto del voucher</label>
+                              <div class="custom-file custom-file-sm">
+                                <input type="file" class="custom-file-input" id="voucherFoto" accept="image/*">
+                                <label class="custom-file-label" for="voucherFoto" id="voucherFotoLabel">Seleccionar imagen...</label>
+                              </div>
+                              <small class="form-text text-muted">JPG, PNG, GIF o WEBP (máx. 5MB)</small>
+                            </div>
+                          </div>
+
+                          <div id="voucherFotoPreview" style="display:none;">
+                            <img id="voucherFotoPreviewImg" src="" class="img-thumbnail" style="max-width: 140px;">
                           </div>
                         </div>
 
-                        <div id="voucherFotoPreview" class="mb-2" style="display:none;">
-                          <img id="voucherFotoPreviewImg" src="" class="img-thumbnail" style="max-width: 140px;">
-                        </div>
-
-                        <small class="text-warning d-block mb-2">
+                        <div class="alert alert-warning py-2 px-3 mb-3" style="font-size:12px;" id="avisoValidacion">
                           <i class="fa fa-exclamation-triangle"></i>
                           Verifique que la matrícula ya fue cancelada en caja antes de validar. Esta acción
                           <strong>inscribe formalmente</strong> al estudiante en el programa y no se puede deshacer desde aquí.
-                        </small>
+                        </div>
 
                         <div class="text-right">
                           <button type="submit" class="btn btn-sm btn-success">
@@ -248,17 +278,17 @@ kt-aside--fixed kt-page--loading">
   <!-- Modal: Resultados de la búsqueda -->
   <div class="modal fade" id="ModalResultadosBusqueda" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
-      <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
+      <div class="modal-content">
+        <div class="modal-header">
           <h5 class="modal-title"><i class="flaticon2-search"></i> Resultados de la búsqueda</h5>
-          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <div class="modal-body" id="resultadosBusquedaBody" style="padding: 1.5rem; max-height: 60vh; overflow-y: auto;">
+        <div class="modal-body" id="resultadosBusquedaBody" style="max-height: 60vh; overflow-y: auto;">
           <!-- Se llena por JS -->
         </div>
-        <div class="modal-footer" style="background-color: #f5f5f5; border-radius: 0 0 15px 15px;">
+        <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
         </div>
       </div>
@@ -270,8 +300,6 @@ kt-aside--fixed kt-page--loading">
 
   <script>
   function iniciarInscripcion() {
-
-      let costoTotalProgramaActual = 0;
 
       function actualizarFecha() {
           const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -385,40 +413,41 @@ kt-aside--fixed kt-page--loading">
                   $('#voucherFotoPreview').hide();
                   $('#voucherFotoPreviewImg').attr('src', '');
 
-                  // Reiniciar y precargar el plan de pago del programa con el costo del programa elegido,
-                  // partiendo de la propuesta que el estudiante hizo en Pre-Registro (solo referencia:
-                  // el staff puede ajustarla antes de confirmar).
-                  costoTotalProgramaActual = parseFloat(p.CostoPrograma) || 0;
-                  $('#planCostoTotal').text(costoTotalProgramaActual.toFixed(2));
+                  // Si la matrícula ya vino exonerada (Bs. 0) desde Pre-Registro, se marca
+                  // automáticamente "sin pago de matrícula" para no exigir un voucher que no existe.
+                  const montoFinal = parseFloat(p.MontoFinal) || 0;
+                  $('#sinPagoMatricula').prop('checked', montoFinal <= 0).trigger('change');
 
-                  const planPropuestoTipo = p.PlanPropuestoTipo || 'REGULAR';
-                  const planPropuestoPorcentaje = parseFloat(p.PlanPropuestoPorcentaje) || 0;
+                  // El plan de pago del programa ya se definió en Pre-Registro; aquí solo se
+                  // muestra como referencia. Queda definitivo al validar el voucher, salvo
+                  // Grupal, que se arma después en Matriculados.
+                  const planTipo = p.PlanPropuestoTipo || 'REGULAR';
+                  const planPorcentaje = parseFloat(p.PlanPropuestoPorcentaje) || 0;
                   const nombresPlan = { REGULAR: 'Regular', CONTADO: 'al Contado', GRUPAL: 'Grupal' };
 
-                  if (planPropuestoTipo === 'GRUPAL') {
+                  if (planTipo === 'GRUPAL') {
                       $('#planPropuestaInfo').html(
-                          '<i class="fa fa-info-circle text-primary"></i> El estudiante propuso un <strong>Plan Grupal</strong>' +
-                          (planPropuestoPorcentaje > 0 ? ' (-' + planPropuestoPorcentaje.toFixed(2) + '%)' : '') +
-                          ' en Pre-Registro. Ese plan se define desde <strong>Matriculados</strong> una vez inscrito junto a sus compañeros de grupo; ' +
-                          'por ahora puede confirmar el voucher con un Plan Regular provisional.'
-                      ).show();
-                      $('#planTipoPago').val('REGULAR');
-                      $('#planPorcentajeDescuento').val(0);
+                          '<div class="alert alert-light border py-2 px-3 mb-0" style="font-size:12px;">' +
+                          '<i class="fa fa-users text-primary"></i> Se eligió <strong>Plan Grupal</strong> en Pre-Registro. ' +
+                          'No se fija ningún plan al validar este voucher: el estudiante quedará disponible para armarse ' +
+                          'en un grupo después, desde <strong>Matriculados</strong>.</div>'
+                      );
+                      $('#detalleEstadoPlan').html('<i class="fa fa-clock-o"></i> Pendiente (Grupal, se arma en Matriculados)');
                   } else {
                       $('#planPropuestaInfo').html(
-                          '<i class="fa fa-info-circle text-primary"></i> Propuesta del estudiante (Pre-Registro): <strong>Plan ' +
-                          nombresPlan[planPropuestoTipo] + '</strong>' +
-                          (planPropuestoPorcentaje > 0 ? ' con <strong>' + planPropuestoPorcentaje.toFixed(2) + '%</strong> de descuento' : '') +
-                          '. Revise y confirme, o ajuste si es necesario.'
-                      ).show();
-                      $('#planTipoPago').val(planPropuestoTipo === 'CONTADO' ? 'DESCUENTO' : 'REGULAR');
-                      $('#planPorcentajeDescuento').val(planPropuestoPorcentaje);
+                          '<div class="alert alert-light border py-2 px-3 mb-0" style="font-size:12px;">' +
+                          '<i class="fa fa-info-circle text-primary"></i> Plan definido en Pre-Registro: <strong>Plan ' +
+                          nombresPlan[planTipo] + '</strong>' +
+                          (planPorcentaje > 0 ? ' con <strong>' + planPorcentaje.toFixed(2) + '%</strong> de descuento' : '') +
+                          '. Quedará definitivo al validar el voucher.</div>'
+                      );
+                      $('#detalleEstadoPlan').html('<i class="fa fa-clock-o"></i> Se confirmará al validar');
                   }
-
-                  $('#detalleEstadoPlan').html('<i class="fa fa-clock-o"></i> Pendiente de confirmación');
 
                   $('#ModalResultadosBusqueda').modal('hide');
                   $('#panelDetalle').slideDown();
+                  $('#pasoBuscar').removeClass('active');
+                  $('#pasoValidar').addClass('active');
                   $('html, body').animate({ scrollTop: $('#panelDetalle').offset().top - 100 }, 400);
               },
               error: function() {
@@ -430,6 +459,8 @@ kt-aside--fixed kt-page--loading">
       // Volver a la búsqueda
       $('#btnBuscarOtro').on('click', function() {
           $('#panelDetalle').slideUp();
+          $('#pasoValidar').removeClass('active');
+          $('#pasoBuscar').addClass('active');
           $('#buscarTermino').val('').focus();
       });
 
@@ -453,14 +484,32 @@ kt-aside--fixed kt-page--loading">
 
       // ============================================
       // PLAN DE PAGO DEL PROGRAMA (posgrado, aparte de la matrícula)
-      // Se define ANTES de validar el voucher; queda CONFIRMADO en la misma
-      // transacción en que se valida el voucher (backend). El pago en si de
-      // cada modulo se hace despues desde Matriculados -> Inscribir a Modulo,
-      // aplicando este % de descuento automaticamente.
+      // Se define en Pre-Registro; el backend lo confirma automáticamente en la misma
+      // transacción en que se valida el voucher de matrícula (ver ValidarVoucherMatriculaModelo).
       // ============================================
-      $('#planTipoPago').on('change', function() {
-          if ($(this).val() !== 'DESCUENTO') {
-              $('#planPorcentajeDescuento').val(0);
+
+      // ============================================
+      // "MATRICULAR SIN PAGO DE MATRÍCULA": oculta los campos de voucher (no hay nada que
+      // validar) y avisa que el programa completo se cobrará después, desde Matriculados.
+      // Se marca automáticamente si la matrícula ya vino exonerada desde Pre-Registro, pero
+      // también se puede activar manualmente aquí para cualquier preregistro.
+      // ============================================
+      $('#sinPagoMatricula').on('change', function() {
+          const sinPago = $(this).is(':checked');
+
+          $('#grupoVoucherNumero, #grupoVoucherFoto').toggle(!sinPago);
+          $('#voucherNumero').prop('required', !sinPago);
+
+          if (sinPago) {
+              $('#avisoValidacion').html(
+                  '<i class="fa fa-info-circle"></i> Se inscribirá al estudiante <strong>sin registrar pago de matrícula</strong>. ' +
+                  'El programa completo se deberá cancelar después, desde <strong>Matriculados</strong>.'
+              );
+          } else {
+              $('#avisoValidacion').html(
+                  '<i class="fa fa-exclamation-triangle"></i> Verifique que la matrícula ya fue cancelada en caja antes de validar. Esta acción ' +
+                  '<strong>inscribe formalmente</strong> al estudiante en el programa y no se puede deshacer desde aquí.'
+              );
           }
       });
 
@@ -471,10 +520,11 @@ kt-aside--fixed kt-page--loading">
           e.preventDefault();
 
           const idOrdenPago = $('#detalleIdOrdenPago').val();
-          const numeroVoucher = $('#voucherNumero').val().trim();
+          const sinPago = $('#sinPagoMatricula').is(':checked');
+          const numeroVoucher = sinPago ? 'SIN MATRÍCULA' : $('#voucherNumero').val().trim();
           const fechaInscripcion = $('#voucherFecha').val();
 
-          if (!numeroVoucher) {
+          if (!sinPago && !numeroVoucher) {
               swal('Atención', 'Ingrese el código de voucher', 'warning');
               return;
           }
@@ -488,15 +538,13 @@ kt-aside--fixed kt-page--loading">
           formData.append('idOrdenPago', idOrdenPago);
           formData.append('numeroVoucher', numeroVoucher);
           formData.append('fechaInscripcion', fechaInscripcion);
-          formData.append('planPago', JSON.stringify({
-              TipoPlan: $('#planTipoPago').val(),
-              CostoTotalPrograma: costoTotalProgramaActual,
-              PorcentajeDescuento: parseFloat($('#planPorcentajeDescuento').val()) || 0
-          }));
+          formData.append('sinMatricula', sinPago ? '1' : '0');
 
-          const archivoFoto = $('#voucherFoto')[0].files[0];
-          if (archivoFoto) {
-              formData.append('fotoVoucher', archivoFoto);
+          if (!sinPago) {
+              const archivoFoto = $('#voucherFoto')[0].files[0];
+              if (archivoFoto) {
+                  formData.append('fotoVoucher', archivoFoto);
+              }
           }
 
           const btnSubmit = $(this).find('button[type="submit"]');
@@ -513,6 +561,19 @@ kt-aside--fixed kt-page--loading">
                   btnSubmit.prop('disabled', false);
 
                   if (resp.success) {
+                      if (sinPago) {
+                          swal({
+                              title: '¡Estudiante inscrito!',
+                              text: 'Quedó inscrito sin pago de matrícula. A continuación se le llevará a Matriculados para registrar el pago del programa completo.',
+                              icon: 'success',
+                              buttons: false,
+                              timer: 2500
+                          }).then(function() {
+                              window.location.href = 'matriculados';
+                          });
+                          return;
+                      }
+
                       swal({
                           title: '¡Voucher validado!',
                           text: 'El estudiante quedó inscrito formalmente en el programa y su plan de pago quedó CONFIRMADO.',
@@ -521,6 +582,8 @@ kt-aside--fixed kt-page--loading">
                           timer: 2200
                       }).then(function() {
                           $('#panelDetalle').slideUp();
+                          $('#pasoValidar').removeClass('active');
+                          $('#pasoBuscar').addClass('active');
                           $('#buscarTermino').val('').focus();
                       });
                   } else {
@@ -546,24 +609,112 @@ kt-aside--fixed kt-page--loading">
 
 <style>
 .inscripcion-portlet {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid #dee2e6;
     border-radius: 6px;
+    box-shadow: none;
 }
 
-.chip-summary {
-    padding: 8px 12px;
-    background: #f4f6fb;
-    border-left: 3px solid #667eea;
-    border-radius: 6px;
+.inscripcion-portlet .kt-portlet__head {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    min-height: 46px;
 }
 
-.chip-summary-row {
+.inscripcion-portlet .kt-portlet__head-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #3b3f5c;
+}
+
+/* Indicador de pasos */
+.pasos-inscripcion {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    font-size: 13px;
-    color: #444;
+}
+
+.paso-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #9aa1b1;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.paso-item.active {
+    color: #3b3f5c;
+}
+
+.paso-numero {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.paso-item.active .paso-numero {
+    background-color: #3b3f5c;
+    color: #fff;
+}
+
+.paso-separador {
+    flex: 1;
+    height: 1px;
+    background-color: #dee2e6;
+    margin: 0 14px;
+}
+
+/* Secciones formales dentro del detalle */
+.seccion-detalle {
+    padding: 12px 16px;
+    background-color: #fbfbfd;
+    border: 1px solid #e1e3ea;
+    border-radius: 6px;
+}
+
+.seccion-detalle-titulo {
+    font-size: 12px;
+    font-weight: 700;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e1e3ea;
+}
+
+.label-modern {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.value-modern {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2b2b2b;
+}
+
+.filtro-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 4px;
 }
 
 .custom-file-sm .custom-file-label,
@@ -581,24 +732,6 @@ kt-aside--fixed kt-page--loading">
     height: calc(1.5em + 0.5rem);
     padding: 0.25rem 0.5rem;
     line-height: 1.5;
-}
-
-.card, .kt-portlet {
-    transition: box-shadow 0.3s ease;
-}
-
-.plan-pago-programa {
-    padding: 10px 12px;
-    background: #fbfbfd;
-    border: 1px solid #e1e3ea;
-    border-radius: 6px;
-}
-
-.plan-pago-programa .step-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #3b3f5c;
-    margin-bottom: 4px;
 }
 </style>
 

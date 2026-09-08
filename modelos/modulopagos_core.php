@@ -1,151 +1,15 @@
 <?php
 /**
- * Modelo de Pago de Módulos
- * Gestiona el registro de pagos de módulos por estudiante
+ * Modelo de Pago del Programa (cuotas)
+ * Gestiona el registro de cuotas del programa por inscripción.
+ * Las cuotas NO están ligadas a los módulos: su número y monto son libres
+ * (Plan Regular), o una única cuota por el total (Plan Contado/Grupal).
  */
 
 require_once 'conexion.modelo.php';
 
 class PagoModuloModelo
 {
-    /**
-     * Distribuir el costo total del programa entre sus módulos activos
-     * Si el programa tiene 2 o más módulos, divide el costo equitativamente
-     * @param int $programaID
-     * @return bool
-     */
-    public static function DistribuirCostoProgramaEnModulosModelo($programaID)
-    {
-        try {
-            $pdo = Conexion::Conectar();
-            $pdo->beginTransaction();
-
-            // 1. Obtener el costo total del programa
-            $stmtPrograma = $pdo->prepare(
-                "SELECT CostoMatricula FROM programa WHERE ProgramaID = :programaID"
-            );
-            $stmtPrograma->bindParam(":programaID", $programaID, PDO::PARAM_INT);
-            $stmtPrograma->execute();
-            $programa = $stmtPrograma->fetch(PDO::FETCH_ASSOC);
-
-            if (!$programa || !isset($programa['CostoMatricula'])) {
-                $pdo->rollBack();
-                error_log("Programa no encontrado o sin costo: " . $programaID);
-                return false;
-            }
-
-            $costoTotalPrograma = floatval($programa['CostoMatricula']);
-
-            // 2. Contar módulos activos del programa
-            $stmtCount = $pdo->prepare(
-                "SELECT COUNT(*) as total FROM modulos
-                 WHERE ProgramaId = :programaID AND estadomodulo = 'ACTIVO'"
-            );
-            $stmtCount->bindParam(":programaID", $programaID, PDO::PARAM_INT);
-            $stmtCount->execute();
-            $count = $stmtCount->fetch(PDO::FETCH_ASSOC);
-            $totalModulos = intval($count['total']);
-
-            if ($totalModulos === 0) {
-                $pdo->rollBack();
-                error_log("No hay módulos activos para el programa: " . $programaID);
-                return false;
-            }
-
-            // 3. Calcular costo por módulo
-            $costoPorModulo = $costoTotalPrograma / $totalModulos;
-
-            // 4. Actualizar todos los módulos con el costo distribuido
-            $stmtUpdate = $pdo->prepare(
-                "UPDATE modulos
-                 SET costomodulo = :costo
-                 WHERE ProgramaId = :programaID AND estadomodulo = 'ACTIVO'"
-            );
-            $stmtUpdate->bindParam(":costo", $costoPorModulo, PDO::PARAM_STR);
-            $stmtUpdate->bindParam(":programaID", $programaID, PDO::PARAM_INT);
-            $stmtUpdate->execute();
-
-            $pdo->commit();
-
-            error_log("Costos distribuidos exitosamente: Programa ID $programaID, $totalModulos módulos, Bs. $costoPorModulo c/u");
-            return true;
-
-        } catch (PDOException $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-            error_log("Error en DistribuirCostoProgramaEnModulosModelo: " . $e->getMessage());
-            return false;
-        }
-    }
-    /**
-     * Obtener módulos de un programa con estado de pago por inscripción
-     * Usa la tabla modulos (con 's') que tiene la estructura: ProgramaId, nombremodulo, codigomodulo
-     * @param int $programaID
-     * @param int $idinscripcion
-     * @return array
-     */
-    public static function ObtenerModulosConEstadoPagoModelo($programaID, $idinscripcion)
-    {
-        // NOTA: Ya no es necesario distribuir costos porque los módulos
-        // ya tienen su costo asignado cuando se registran
-        // self::DistribuirCostoProgramaEnModulosModelo($programaID);
-
-        try {
-            $stmt = Conexion::Conectar()->prepare(
-                "SELECT
-                    m.Idmodulo as ModuloID,
-                    m.nombremodulo as NombreModulo,
-                    m.codigomodulo as Codigo,
-                    m.costomodulo as Costo,
-                    m.estadomodulo,
-                    CONCAT(d.Nombre, ' ', d.Apaterno, ' ', d.Amaterno) as NombreDocente,
-                    d.Especialidad as EspecialidadDocente,
-                    pm.Idpagomodulo,
-                    pm.costomodulo as CostoPagado,
-                    pm.fechapago as FechaPago,
-                    pm.nvaucher as NumeroVaucher,
-                    pm.Estado as EstadoPago,
-                    CASE
-                        WHEN pm.Idpagomodulo IS NOT NULL THEN 1
-                        ELSE 0
-                    END as Pagado
-                FROM modulos m
-                LEFT JOIN docente d ON m.DocenteID = d.DocenteID
-                LEFT JOIN pagomodulo pm ON m.Idmodulo = pm.IdModulo
-                    AND pm.idinscripcion = :idinscripcion
-                    AND pm.Estado != 'ANULADO'
-                WHERE m.ProgramaId = :programaID
-                AND m.estadomodulo = 'ACTIVO'
-                ORDER BY m.codigomodulo ASC"
-            );
-            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
-            $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
-            $stmt->execute();
-            $modulos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Si el estudiante tiene un Plan de Pago del Programa activo (Regular/Contado/Grupal,
-            // definido en Pre-Registro o Matriculados), su % de descuento se aplica automaticamente
-            // al costo de cada modulo aun no pagado. Los modulos ya pagados no se tocan.
-            $porcentajeDescuento = self::ObtenerPorcentajeDescuentoPlanModelo($idinscripcion);
-            if ($porcentajeDescuento > 0) {
-                foreach ($modulos as &$modulo) {
-                    if ((int)$modulo['Pagado'] === 0) {
-                        $modulo['Costo'] = round(floatval($modulo['Costo']) * (1 - $porcentajeDescuento / 100), 2);
-                    }
-                }
-                unset($modulo);
-            }
-
-            self::AjustarUltimoModuloPendienteAlTotal($modulos, $programaID, $porcentajeDescuento);
-
-            return $modulos;
-        } catch (PDOException $e) {
-            error_log("Error en ObtenerModulosConEstadoPagoModelo: " . $e->getMessage());
-            return [];
-        }
-    }
-
     /**
      * Porcentaje de descuento del Plan de Pago del Programa activo de una inscripción
      * (0 si no tiene plan o el plan no tiene descuento).
@@ -157,7 +21,7 @@ class PagoModuloModelo
         try {
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT PorcentajeDescuento FROM pagoprograma
-                 WHERE idInscripcion = :idinscripcion AND Estado = 'ACTIVO' LIMIT 1"
+                 WHERE idInscripcion = :idinscripcion AND Estado != 'ANULADO' LIMIT 1"
             );
             $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
             $stmt->execute();
@@ -170,403 +34,244 @@ class PagoModuloModelo
     }
 
     /**
-     * Si queda un único módulo pendiente de pago, ajusta su costo (solo para mostrarlo
-     * en las tarjetas) para que la suma de todo lo pagado + este último módulo cierre
-     * exactamente el costo total del programa (con el descuento del plan, si tiene).
-     * @param array $modulos (por referencia) resultado de ObtenerModulosConEstadoPagoModelo
-     * @param int $programaID
-     * @param float $porcentajeDescuento
-     * @return void
-     */
-    private static function AjustarUltimoModuloPendienteAlTotal(&$modulos, $programaID, $porcentajeDescuento = 0)
-    {
-        if (empty($modulos)) {
-            return;
-        }
-
-        $pendientes = [];
-        $sumaPagada = 0.0;
-
-        foreach ($modulos as $i => $modulo) {
-            if ((int)$modulo['Pagado'] === 1) {
-                $sumaPagada += floatval($modulo['CostoPagado']);
-            } else {
-                $pendientes[] = $i;
-            }
-        }
-
-        // Solo se ajusta cuando queda exactamente UN módulo pendiente: es el último
-        // que falta cancelar para completar el programa.
-        if (count($pendientes) !== 1) {
-            return;
-        }
-
-        try {
-            $stmtPrograma = Conexion::Conectar()->prepare(
-                "SELECT Costo FROM programa WHERE ProgramaID = :programaID"
-            );
-            $stmtPrograma->bindParam(":programaID", $programaID, PDO::PARAM_INT);
-            $stmtPrograma->execute();
-            $programa = $stmtPrograma->fetch(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error al obtener costo del programa en AjustarUltimoModuloPendienteAlTotal: " . $e->getMessage());
-            return;
-        }
-
-        if (!$programa || $programa['Costo'] === null) {
-            return;
-        }
-
-        $costoTotalPrograma = floatval($programa['Costo']);
-        if ($porcentajeDescuento > 0) {
-            $costoTotalPrograma = round($costoTotalPrograma * (1 - $porcentajeDescuento / 100), 2);
-        }
-        $montoRestante = round($costoTotalPrograma - $sumaPagada, 2);
-
-        if ($montoRestante < 0) {
-            $montoRestante = 0.0;
-        }
-
-        $idxUltimo = $pendientes[0];
-        $costoOriginal = floatval($modulos[$idxUltimo]['Costo']);
-
-        // Solo se marca como "ajustado" si realmente cambia el monto (falta o sobra algo)
-        if (abs($montoRestante - $costoOriginal) > 0.01) {
-            $modulos[$idxUltimo]['CostoOriginal'] = $costoOriginal;
-            $modulos[$idxUltimo]['Costo'] = $montoRestante;
-            $modulos[$idxUltimo]['AjustadoAlTotal'] = true;
-        } else {
-            $modulos[$idxUltimo]['AjustadoAlTotal'] = false;
-        }
-    }
-
-    /**
-     * Ajusta, dentro de un lote de pago de módulos que se está registrando, el monto del
-     * ÚLTIMO módulo (por orden de código) cuando ese lote termina de cubrir TODOS los
-     * módulos que le quedaban pendientes a la inscripción. Así la boleta/recibo de cada
-     * módulo pagado en el lote suma exacto al costo total del programa, sin importar si
-     * los costos cargados por módulo no cerraban exacto por redondeo.
-     *
-     * Si el lote no cubre todos los pendientes (quedará algo por pagar después), no se
-     * toca nada: se devuelven los costos tal como se enviaron.
-     *
-     * @param int $programaID
+     * Plan de pago del programa (tipo y descuento) de una inscripción, o null si no tiene.
      * @param int $idinscripcion
-     * @param array $costosModulos [IdModulo => costo] tal como llega del formulario
-     * @return array [IdModulo => costo] posiblemente con el último ajustado
+     * @return array|null
      */
-    public static function AjustarUltimoModuloDelPagoAlTotalModelo($programaID, $idinscripcion, $costosModulos)
-    {
-        if (empty($costosModulos)) {
-            return $costosModulos;
-        }
-
-        try {
-            $pdo = Conexion::Conectar();
-
-            // Módulos activos del programa, en el mismo orden que se muestran en las tarjetas.
-            // PDO devuelve las columnas como string por defecto: se castean a int para comparar bien.
-            $stmtModulos = $pdo->prepare(
-                "SELECT Idmodulo FROM modulos
-                 WHERE ProgramaId = :programaID AND estadomodulo = 'ACTIVO'
-                 ORDER BY codigomodulo ASC"
-            );
-            $stmtModulos->bindParam(":programaID", $programaID, PDO::PARAM_INT);
-            $stmtModulos->execute();
-            $todosLosModulos = array_map('intval', array_column($stmtModulos->fetchAll(PDO::FETCH_ASSOC), 'Idmodulo'));
-
-            if (empty($todosLosModulos)) {
-                return $costosModulos;
-            }
-
-            // Módulos ya pagados (no anulados) de esta inscripción
-            $stmtPagados = $pdo->prepare(
-                "SELECT IdModulo, costomodulo FROM pagomodulo
-                 WHERE idinscripcion = :idinscripcion AND Estado != 'ANULADO'"
-            );
-            $stmtPagados->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
-            $stmtPagados->execute();
-            $pagados = $stmtPagados->fetchAll(PDO::FETCH_ASSOC);
-
-            $idsPagados = array_map('intval', array_column($pagados, 'IdModulo'));
-            $sumaYaPagada = array_sum(array_map('floatval', array_column($pagados, 'costomodulo')));
-
-            $pendientesAntes = array_values(array_diff($todosLosModulos, $idsPagados));
-            $idsEsteLote = array_map('intval', array_keys($costosModulos));
-
-            // Comparar como conjuntos: este lote debe cubrir EXACTAMENTE todo lo pendiente
-            sort($pendientesAntes);
-            $idsEsteLoteOrdenado = $idsEsteLote;
-            sort($idsEsteLoteOrdenado);
-
-            if ($pendientesAntes !== $idsEsteLoteOrdenado) {
-                // Este pago no cierra el programa (queda algo pendiente para después): no se ajusta
-                return $costosModulos;
-            }
-
-            // Obtener el costo total del programa
-            $stmtPrograma = $pdo->prepare("SELECT Costo FROM programa WHERE ProgramaID = :programaID");
-            $stmtPrograma->bindParam(":programaID", $programaID, PDO::PARAM_INT);
-            $stmtPrograma->execute();
-            $programa = $stmtPrograma->fetch(PDO::FETCH_ASSOC);
-
-            if (!$programa || $programa['Costo'] === null) {
-                return $costosModulos;
-            }
-
-            $costoTotalPrograma = floatval($programa['Costo']);
-            $montoRestanteTotal = round($costoTotalPrograma - $sumaYaPagada, 2);
-            if ($montoRestanteTotal < 0) {
-                $montoRestanteTotal = 0.0;
-            }
-
-            // El "último" módulo del lote es el de mayor orden (codigomodulo) entre los que se están pagando ahora
-            $ultimoModuloID = null;
-            foreach ($todosLosModulos as $idModulo) {
-                if (in_array($idModulo, $idsEsteLote, true)) {
-                    $ultimoModuloID = $idModulo;
-                }
-            }
-
-            if ($ultimoModuloID === null) {
-                return $costosModulos;
-            }
-
-            // Sumar el resto del lote (todos menos el último) para calcular cuánto le toca al último
-            $sumaRestoDelLote = 0.0;
-            foreach ($costosModulos as $idModulo => $costo) {
-                if ((int)$idModulo !== $ultimoModuloID) {
-                    $sumaRestoDelLote += floatval($costo);
-                }
-            }
-
-            $montoUltimo = round($montoRestanteTotal - $sumaRestoDelLote, 2);
-            if ($montoUltimo < 0) {
-                $montoUltimo = 0.0;
-            }
-
-            $costosModulos[$ultimoModuloID] = $montoUltimo;
-
-            return $costosModulos;
-        } catch (PDOException $e) {
-            error_log("Error en AjustarUltimoModuloDelPagoAlTotalModelo: " . $e->getMessage());
-            return $costosModulos;
-        }
-    }
-
-    /**
-     * Obtener módulos disponibles de un programa (sin estado de pago)
-     * @param int $programaID
-     * @return array
-     */
-    public static function ObtenerModulosPorProgramaModelo($programaID)
+    private static function ObtenerPlanProgramaModelo($idinscripcion)
     {
         try {
             $stmt = Conexion::Conectar()->prepare(
-                "SELECT
-                    m.Idmodulo as ModuloID,
-                    m.nombremodulo as NombreModulo,
-                    m.codigomodulo as Codigo,
-                    m.costomodulo as Costo,
-                    m.estadomodulo as Estado,
-                    CONCAT(d.Nombre, ' ', d.Apaterno, ' ', d.Amaterno) as NombreDocente
-                FROM modulos m
-                LEFT JOIN docente d ON m.DocenteID = d.DocenteID
-                WHERE m.ProgramaId = :programaID
-                AND m.estadomodulo = 'ACTIVO'
-                ORDER BY m.codigomodulo ASC"
+                "SELECT TipoPlan, NumeroCuotas, PorcentajeDescuento, MontoTotalPagar, CostoTotalPrograma
+                 FROM pagoprograma
+                 WHERE idInscripcion = :idinscripcion AND Estado != 'ANULADO'
+                 ORDER BY IdPagoPrograma DESC LIMIT 1"
             );
-            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
             $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $plan = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $plan ?: null;
         } catch (PDOException $e) {
-            error_log("Error en ObtenerModulosPorProgramaModelo: " . $e->getMessage());
-            return [];
+            error_log("Error en ObtenerPlanProgramaModelo: " . $e->getMessage());
+            return null;
         }
     }
 
     /**
-     * Registrar pago de módulo
-     * Ahora usa IdModulo como FK a la tabla modulos
-     * @param array $datos - debe incluir: idinscripcion, IdModulo, costomodulo, fechapago, nvaucher, fmodulo
-     * @return string
+     * Resumen de pago del programa para una inscripción: costo total (con el
+     * descuento del plan ya aplicado), lo pagado (cuotas VALIDADAS/PAGADO), saldo
+     * pendiente, y si el plan admite cuotas libres (Regular) o es de una sola
+     * cuota por el total (Contado/Grupal).
+     * @param int $idinscripcion
+     * @param int $programaID
+     * @return array
      */
-    public static function RegistrarPagoModuloModelo($datos)
+    public static function ObtenerResumenPagoProgramaModelo($idinscripcion, $programaID)
     {
         try {
-            $pdo = Conexion::Conectar();
-            $pdo->beginTransaction();
+            $stmtPrograma = Conexion::Conectar()->prepare("SELECT Costo FROM programa WHERE ProgramaID = :programaID");
+            $stmtPrograma->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmtPrograma->execute();
+            $programa = $stmtPrograma->fetch(PDO::FETCH_ASSOC);
+            $costoBase = $programa ? floatval($programa['Costo']) : 0.0;
 
-            // Verificar si ya existe un pago para este módulo en esta inscripción
-            $stmtCheck = $pdo->prepare(
-                "SELECT Idpagomodulo FROM pagomodulo
-                 WHERE idinscripcion = :idinscripcion
-                 AND IdModulo = :idModulo
-                 AND Estado != 'ANULADO'"
+            $plan = self::ObtenerPlanProgramaModelo($idinscripcion);
+            $tipoPlan = $plan['TipoPlan'] ?? null;
+            $porcentajeDescuento = $plan ? floatval($plan['PorcentajeDescuento']) : 0.0;
+
+            $costoTotal = $porcentajeDescuento > 0
+                ? round($costoBase * (1 - $porcentajeDescuento / 100), 2)
+                : round($costoBase, 2);
+
+            $stmtPagado = Conexion::Conectar()->prepare(
+                "SELECT COALESCE(SUM(montocuota), 0) as total, COUNT(*) as cantidad FROM pagomodulo
+                 WHERE idinscripcion = :idinscripcion AND Estado = 'PAGADO'"
             );
-            $stmtCheck->bindParam(":idinscripcion", $datos['idinscripcion'], PDO::PARAM_INT);
-            $stmtCheck->bindParam(":idModulo", $datos['IdModulo'], PDO::PARAM_INT);
-            $stmtCheck->execute();
+            $stmtPagado->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
+            $stmtPagado->execute();
+            $filaPagado = $stmtPagado->fetch(PDO::FETCH_ASSOC);
+            $totalPagado = round(floatval($filaPagado['total']), 2);
+            $cuotasPagadasCount = (int)$filaPagado['cantidad'];
 
-            if ($stmtCheck->fetch()) {
-                $pdo->rollBack();
-                return "duplicado";
+            $saldoPendiente = round($costoTotal - $totalPagado, 2);
+            if ($saldoPendiente < 0) {
+                $saldoPendiente = 0.0;
             }
 
-            // El pago solo puede registrarse si antes se emitio una orden de pago
-            // para este modulo (pestaña "Orden de Pago"), con el mismo formato que
-            // la orden de pago de matricula.
-            if (!self::ExisteOrdenPagoPendienteModuloModelo($pdo, $datos['idinscripcion'], $datos['IdModulo'])) {
-                $pdo->rollBack();
-                return "sin_orden";
-            }
+            // Contado y Grupal se pagan en una única cuota por el total; Regular admite cuotas libres.
+            $cuotaUnica = in_array($tipoPlan, ['DESCUENTO', 'GRUPAL'], true);
 
-            // Preparar el archivo (si existe)
-            $fmodulo = null;
-            if (!empty($datos['fmodulo'])) {
-                $fmodulo = $datos['fmodulo'];
-            }
-
-            // Insertar el pago del módulo
-            $stmt = $pdo->prepare(
-                "INSERT INTO pagomodulo
-                (idinscripcion, IdModulo, costomodulo, fechapago, nvaucher, fmodulo, Estado)
-                VALUES (:idinscripcion, :idModulo, :costomodulo, :fechapago, :nvaucher, :fmodulo, 'PAGADO')"
-            );
-
-            $stmt->bindParam(":idinscripcion", $datos['idinscripcion'], PDO::PARAM_INT);
-            $stmt->bindParam(":idModulo", $datos['IdModulo'], PDO::PARAM_INT);
-            $stmt->bindParam(":costomodulo", $datos['costomodulo'], PDO::PARAM_STR);
-            $stmt->bindParam(":fechapago", $datos['fechapago'], PDO::PARAM_STR);
-            $stmt->bindParam(":nvaucher", $datos['nvaucher'], PDO::PARAM_STR);
-            $stmt->bindParam(":fmodulo", $fmodulo, PDO::PARAM_LOB);
-
-            if ($stmt->execute()) {
-                $pdo->commit();
-
-                // Si este modulo tenia una orden de pago pendiente (generada ANTES de pagar),
-                // se marca como confirmada porque el pago ya quedo registrado arriba.
-                // No es critico: si falla, el pago igual queda guardado correctamente.
-                try {
-                    self::ConfirmarOrdenPagoPendienteModuloModelo($pdo, $datos['idinscripcion'], $datos['IdModulo']);
-                } catch (Exception $e) {
-                    error_log("Aviso: no se pudo confirmar la orden de pago pendiente del módulo: " . $e->getMessage());
-                }
-
-                return "exitoso";
-            } else {
-                $pdo->rollBack();
-                error_log("Error al ejecutar INSERT en pagomodulo: " . print_r($stmt->errorInfo(), true));
-                return "error";
-            }
-
+            return [
+                'tienePlan' => $plan !== null,
+                'tipoPlan' => $tipoPlan,
+                'costoTotal' => $costoTotal,
+                'totalPagado' => $totalPagado,
+                'saldoPendiente' => $saldoPendiente,
+                'completado' => $plan !== null && $saldoPendiente <= 0,
+                'cuotaUnica' => $cuotaUnica,
+                // Número de cuotas planificado (solo Plan Regular; null si no se definió o no aplica)
+                'numeroCuotasPlan' => isset($plan['NumeroCuotas']) ? (int)$plan['NumeroCuotas'] : null,
+                'cuotasPagadasCount' => $cuotasPagadasCount
+            ];
         } catch (PDOException $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-            error_log("Error en RegistrarPagoModuloModelo: " . $e->getMessage());
-            return "error";
+            error_log("Error en ObtenerResumenPagoProgramaModelo: " . $e->getMessage());
+            return [
+                'tienePlan' => false, 'tipoPlan' => null, 'costoTotal' => 0,
+                'totalPagado' => 0, 'saldoPendiente' => 0, 'completado' => false, 'cuotaUnica' => false,
+                'numeroCuotasPlan' => null, 'cuotasPagadasCount' => 0
+            ];
         }
     }
 
     /**
-     * Busca la orden de pago PENDIENTE (emitida antes de pagar) que incluye a este
-     * modulo, si existe. Se usa tanto para exigirla antes de registrar el pago como
-     * para confirmarla una vez el pago queda registrado.
-     * @param PDO $pdo
-     * @param int $idinscripcion
-     * @param int $idModulo
-     * @return array|null fila de ordenpago (IdOrdenPago, ListaModulos) o null
-     */
-    private static function BuscarOrdenPagoPendienteModuloModelo($pdo, $idinscripcion, $idModulo)
-    {
-        $stmt = $pdo->prepare(
-            "SELECT IdOrdenPago, ListaModulos FROM ordenpago
-             WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND ListaModulos IS NOT NULL"
-        );
-        $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
-        $stmt->execute();
-        $ordenes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($ordenes as $orden) {
-            $modulosEnOrden = array_map('trim', explode(',', $orden['ListaModulos']));
-            if (in_array((string)$idModulo, $modulosEnOrden, true)) {
-                return $orden;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Verifica que exista una orden de pago pendiente para este modulo, requisito
-     * para poder registrar su pago (ver pestaña "Orden de Pago" en Matriculados).
-     * @param PDO $pdo
-     * @param int $idinscripcion
-     * @param int $idModulo
-     * @return bool
-     */
-    private static function ExisteOrdenPagoPendienteModuloModelo($pdo, $idinscripcion, $idModulo)
-    {
-        return self::BuscarOrdenPagoPendienteModuloModelo($pdo, $idinscripcion, $idModulo) !== null;
-    }
-
-    /**
-     * Marca como CONFIRMADO (ya no PENDIENTE) la orden de pago que se haya
-     * generado para este modulo antes de pagarlo, porque el pago que la
-     * originaba ya quedo registrado en pagomodulo.
-     * @param PDO $pdo
-     * @param int $idinscripcion
-     * @param int $idModulo
-     */
-    private static function ConfirmarOrdenPagoPendienteModuloModelo($pdo, $idinscripcion, $idModulo)
-    {
-        $orden = self::BuscarOrdenPagoPendienteModuloModelo($pdo, $idinscripcion, $idModulo);
-        if ($orden !== null) {
-            $upd = $pdo->prepare(
-                "UPDATE ordenpago SET Estado = 'CONFIRMADO', FechaConfirmacion = NOW() WHERE IdOrdenPago = :id"
-            );
-            $upd->bindParam(":id", $orden['IdOrdenPago'], PDO::PARAM_INT);
-            $upd->execute();
-        }
-    }
-
-    /**
-     * Obtener pagos de módulos por inscripción
+     * Historial de cuotas (pagadas, pendientes, rechazadas) de una inscripción.
      * @param int $idinscripcion
      * @return array
      */
-    public static function ObtenerPagosModulosPorInscripcionModelo($idinscripcion)
+    public static function ObtenerCuotasPorInscripcionModelo($idinscripcion)
     {
         try {
             $stmt = Conexion::Conectar()->prepare(
-                "SELECT
-                    pm.Idpagomodulo,
-                    pm.idinscripcion,
-                    pm.IdModulo,
-                    m.nombremodulo as nmodulo,
-                    m.codigomodulo,
-                    pm.costomodulo,
-                    pm.fechapago,
-                    pm.nvaucher,
-                    pm.Estado,
-                    pm.FechaRegistro
-                FROM pagomodulo pm
-                LEFT JOIN modulos m ON pm.IdModulo = m.Idmodulo
-                WHERE pm.idinscripcion = :idinscripcion
-                AND pm.Estado != 'ANULADO'
-                ORDER BY pm.fechapago DESC"
+                "SELECT Idpagomodulo, idinscripcion, NumeroCuota, montocuota, fechapago,
+                        nvaucher, Estado, MotivoRechazo, FechaRegistro
+                 FROM pagomodulo
+                 WHERE idinscripcion = :idinscripcion AND Estado != 'ANULADO'
+                 ORDER BY FechaRegistro DESC"
             );
             $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Error en ObtenerPagosModulosPorInscripcionModelo: " . $e->getMessage());
+            error_log("Error en ObtenerCuotasPorInscripcionModelo: " . $e->getMessage());
             return [];
         }
     }
 
     /**
-     * Obtener pagos de módulos por estudiante
+     * Busca la orden de pago PENDIENTE de una cuota del programa para esta inscripción
+     * (emitida antes de pagar, desde la pestaña "Orden de Pago"). A diferencia del
+     * esquema anterior, ya no se filtra por módulo: cualquier orden pendiente sin
+     * lista de módulos asociada a esta inscripción cuenta como la orden de la cuota.
+     * @return array|null fila de ordenpago
+     */
+    private static function BuscarOrdenPagoPendienteCuotaModelo($pdo, $idinscripcion)
+    {
+        $stmt = $pdo->prepare(
+            "SELECT IdOrdenPago, MontoTotal FROM ordenpago
+             WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND ListaModulos IS NULL
+             ORDER BY FechaGeneracion ASC LIMIT 1"
+        );
+        $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
+        $stmt->execute();
+        $orden = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $orden ?: null;
+    }
+
+    /**
+     * Registrar el pago (con voucher) de una cuota del programa.
+     * Requiere que exista una orden de pago pendiente para la inscripción.
+     * @param array $datos idinscripcion, montocuota, fechapago, nvaucher, fmodulo
+     * @return string 'exitoso'|'sin_orden'|'error'
+     */
+    public static function RegistrarCuotaProgramaModelo($datos)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+            $pdo->beginTransaction();
+
+            $orden = self::BuscarOrdenPagoPendienteCuotaModelo($pdo, $datos['idinscripcion']);
+            if ($orden === null) {
+                $pdo->rollBack();
+                return "sin_orden";
+            }
+
+            $stmtNum = $pdo->prepare(
+                "SELECT COUNT(*) as total FROM pagomodulo WHERE idinscripcion = :idinscripcion AND Estado != 'ANULADO'"
+            );
+            $stmtNum->bindParam(":idinscripcion", $datos['idinscripcion'], PDO::PARAM_INT);
+            $stmtNum->execute();
+            $numeroCuota = intval($stmtNum->fetch(PDO::FETCH_ASSOC)['total']) + 1;
+
+            $fmodulo = !empty($datos['fmodulo']) ? $datos['fmodulo'] : null;
+
+            $stmt = $pdo->prepare(
+                "INSERT INTO pagomodulo
+                (idinscripcion, NumeroCuota, montocuota, fechapago, nvaucher, fmodulo, Estado)
+                VALUES (:idinscripcion, :numeroCuota, :montocuota, :fechapago, :nvaucher, :fmodulo, 'PAGADO')"
+            );
+            $stmt->bindParam(":idinscripcion", $datos['idinscripcion'], PDO::PARAM_INT);
+            $stmt->bindParam(":numeroCuota", $numeroCuota, PDO::PARAM_INT);
+            $stmt->bindParam(":montocuota", $datos['montocuota'], PDO::PARAM_STR);
+            $stmt->bindParam(":fechapago", $datos['fechapago'], PDO::PARAM_STR);
+            $stmt->bindParam(":nvaucher", $datos['nvaucher'], PDO::PARAM_STR);
+            $stmt->bindParam(":fmodulo", $fmodulo, PDO::PARAM_LOB);
+
+            if (!$stmt->execute()) {
+                $pdo->rollBack();
+                error_log("Error al ejecutar INSERT en pagomodulo: " . print_r($stmt->errorInfo(), true));
+                return "error";
+            }
+
+            $upd = $pdo->prepare(
+                "UPDATE ordenpago SET Estado = 'CONFIRMADO', FechaConfirmacion = NOW() WHERE IdOrdenPago = :id"
+            );
+            $upd->bindParam(":id", $orden['IdOrdenPago'], PDO::PARAM_INT);
+            $upd->execute();
+
+            $pdo->commit();
+            return "exitoso";
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("Error en RegistrarCuotaProgramaModelo: " . $e->getMessage());
+            return "error";
+        }
+    }
+
+    /**
+     * Rechazar el voucher de una cuota: queda disponible para volver a intentarse
+     * (no se anula el compromiso de pago, solo el comprobante presentado).
+     * @param int $idpago
+     * @param string|null $motivo
+     * @return bool
+     */
+    public static function RechazarCuotaModelo($idpago, $motivo = null)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "UPDATE pagomodulo SET Estado = 'RECHAZADO', MotivoRechazo = :motivo WHERE Idpagomodulo = :id"
+            );
+            $stmt->bindParam(":motivo", $motivo, PDO::PARAM_STR);
+            $stmt->bindParam(":id", $idpago, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error en RechazarCuotaModelo: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Anular una cuota registrada.
+     * @param int $idpago
+     * @return bool
+     */
+    public static function AnularPagoModuloModelo($idpago)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "UPDATE pagomodulo SET Estado = 'ANULADO' WHERE Idpagomodulo = :id"
+            );
+            $stmt->bindParam(":id", $idpago, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error en AnularPagoModuloModelo: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Obtener cuotas pagadas por estudiante (todas sus inscripciones).
      * @param int $estudianteID
      * @return array
      */
@@ -576,10 +281,8 @@ class PagoModuloModelo
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT
                     pm.Idpagomodulo,
-                    pm.IdModulo,
-                    m.nombremodulo as nmodulo,
-                    m.codigomodulo,
-                    pm.costomodulo,
+                    pm.NumeroCuota,
+                    pm.montocuota,
                     pm.fechapago,
                     pm.nvaucher,
                     pm.Estado,
@@ -588,12 +291,11 @@ class PagoModuloModelo
                     p.NombrePrograma,
                     p.GradoAcademico
                 FROM pagomodulo pm
-                LEFT JOIN modulos m ON pm.IdModulo = m.Idmodulo
                 INNER JOIN estudianteprograma ep ON pm.idinscripcion = ep.idInscripcion
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
                 WHERE ep.EstudianteID = :estudianteID
                 AND pm.Estado != 'ANULADO'
-                ORDER BY pm.fechapago DESC"
+                ORDER BY pm.FechaRegistro DESC"
             );
             $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
             $stmt->execute();
@@ -601,46 +303,6 @@ class PagoModuloModelo
         } catch (PDOException $e) {
             error_log("Error en ObtenerPagosModulosPorEstudianteModelo: " . $e->getMessage());
             return [];
-        }
-    }
-
-    /**
-     * Obtener archivo/foto de voucher
-     * @param int $idmodulo
-     * @return mixed
-     */
-    public static function ObtenerArchivoVoucherModelo($idmodulo)
-    {
-        try {
-            $stmt = Conexion::Conectar()->prepare(
-                "SELECT fmodulo FROM pagomodulo WHERE Idmodulo = :idmodulo"
-            );
-            $stmt->bindParam(":idmodulo", $idmodulo, PDO::PARAM_INT);
-            $stmt->execute();
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $result ? $result['fmodulo'] : null;
-        } catch (PDOException $e) {
-            error_log("Error en ObtenerArchivoVoucherModelo: " . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Anular pago de módulo
-     * @param int $idmodulo
-     * @return bool
-     */
-    public static function AnularPagoModuloModelo($idmodulo)
-    {
-        try {
-            $stmt = Conexion::Conectar()->prepare(
-                "UPDATE pagomodulo SET Estado = 'ANULADO' WHERE Idmodulo = :idmodulo"
-            );
-            $stmt->bindParam(":idmodulo", $idmodulo, PDO::PARAM_INT);
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("Error en AnularPagoModuloModelo: " . $e->getMessage());
-            return false;
         }
     }
 
@@ -677,15 +339,14 @@ class PagoModuloModelo
     }
 
     /**
-     * Obtener detalle de módulos con estado de pago para el estudiante
+     * Detalle de pago del programa (resumen + cuotas) para el estudiante, por programa.
      * @param int $estudianteID
      * @param int $programaID
-     * @return array con módulos pagados y pendientes
+     * @return array
      */
     public static function ObtenerDetalleModulosEstudianteModelo($estudianteID, $programaID)
     {
         try {
-            // Primero obtener el ID de inscripción del estudiante en el programa
             $stmtInsc = Conexion::Conectar()->prepare(
                 "SELECT idInscripcion FROM estudianteprograma
                  WHERE EstudianteID = :estudianteID
@@ -699,68 +360,18 @@ class PagoModuloModelo
             $inscripcion = $stmtInsc->fetch(PDO::FETCH_ASSOC);
 
             if (!$inscripcion) {
-                return [
-                    'modulosPagados' => [],
-                    'modulosPendientes' => [],
-                    'resumen' => [
-                        'totalModulos' => 0,
-                        'modulosPagados' => 0,
-                        'modulosPendientes' => 0,
-                        'costoTotal' => 0,
-                        'montoPagado' => 0,
-                        'montoPendiente' => 0
-                    ]
-                ];
+                return ['resumen' => null, 'cuotas' => []];
             }
 
             $idinscripcion = $inscripcion['idInscripcion'];
 
-            // Obtener todos los módulos con estado de pago
-            $modulos = self::ObtenerModulosConEstadoPagoModelo($programaID, $idinscripcion);
-
-            $modulosPagados = [];
-            $modulosPendientes = [];
-            $totalCosto = 0;
-            $totalPagado = 0;
-
-            foreach ($modulos as $modulo) {
-                $totalCosto += floatval($modulo['Costo']);
-
-                if ($modulo['Pagado'] == 1) {
-                    $modulosPagados[] = $modulo;
-                    $totalPagado += floatval($modulo['CostoPagado']);
-                } else {
-                    $modulosPendientes[] = $modulo;
-                }
-            }
-
             return [
-                'modulosPagados' => $modulosPagados,
-                'modulosPendientes' => $modulosPendientes,
-                'resumen' => [
-                    'totalModulos' => count($modulos),
-                    'modulosPagados' => count($modulosPagados),
-                    'modulosPendientes' => count($modulosPendientes),
-                    'costoTotal' => $totalCosto,
-                    'montoPagado' => $totalPagado,
-                    'montoPendiente' => $totalCosto - $totalPagado
-                ]
+                'resumen' => self::ObtenerResumenPagoProgramaModelo($idinscripcion, $programaID),
+                'cuotas' => self::ObtenerCuotasPorInscripcionModelo($idinscripcion)
             ];
-
         } catch (PDOException $e) {
             error_log("Error en ObtenerDetalleModulosEstudianteModelo: " . $e->getMessage());
-            return [
-                'modulosPagados' => [],
-                'modulosPendientes' => [],
-                'resumen' => [
-                    'totalModulos' => 0,
-                    'modulosPagados' => 0,
-                    'modulosPendientes' => 0,
-                    'costoTotal' => 0,
-                    'montoPagado' => 0,
-                    'montoPendiente' => 0
-                ]
-            ];
+            return ['resumen' => null, 'cuotas' => []];
         }
     }
 }

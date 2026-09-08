@@ -36,6 +36,23 @@ if (isset($_POST['accion'])) {
             echo $controlador->ObtenerDetalleModulosEstudianteControlador();
             break;
 
+        // Las siguientes acciones responden JSON y terminan la ejecución por su cuenta
+        case 'registrarPagoModulo':
+            $controlador->RegistrarPagoModuloAjaxControlador();
+            break;
+
+        case 'rechazarCuota':
+            $controlador->RechazarCuotaAjaxControlador();
+            break;
+
+        case 'anularCuota':
+            $controlador->AnularCuotaAjaxControlador();
+            break;
+
+        case 'obtenerResumenCuotas':
+            $controlador->ObtenerResumenCuotasAjaxControlador();
+            break;
+
         default:
             echo json_encode([
                 'success' => false,

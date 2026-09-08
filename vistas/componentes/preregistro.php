@@ -20,17 +20,6 @@ $sedesDisponibles = ProgramasModelos::ListarSedesModelo();
 // Profesiones disponibles, para el formulario de datos del estudiante en el PASO 1
 $listaProfesionesInicial = ProfesionModelos::ListaprofesionModelos();
 
-function EtiquetaPlanPropuesto($tipo, $porcentaje)
-{
-    $nombres = ['REGULAR' => 'Regular', 'CONTADO' => 'Contado', 'GRUPAL' => 'Grupal'];
-    $nombre = $nombres[$tipo] ?? 'Regular';
-    $porcentaje = (float)$porcentaje;
-    $detalle = $porcentaje > 0 ? ($nombre . ' -' . rtrim(rtrim(number_format($porcentaje, 2), '0'), '.') . '%') : $nombre;
-
-    return '<span class="badge badge-warning" title="Plan propuesto por el estudiante; se confirma al validar el voucher">'
-        . '<i class="fa fa-clock-o"></i> ' . htmlspecialchars($detalle) . '</span>';
-}
-
 function PintarFilaPreregistro($pr)
 {
     $nombreCompleto = trim(($pr['Apaterno'] ?? '') . ' ' . ($pr['Amaterno'] ?? '') . ' ' . ($pr['Nombre'] ?? ''));
@@ -44,7 +33,6 @@ function PintarFilaPreregistro($pr)
     $html .= '<td>' . htmlspecialchars($pr['NombrePrograma'] . ' (' . $pr['CodigoPrograma'] . ')') . '</td>';
     $html .= '<td>' . htmlspecialchars($pr['Sede'] ?? '') . '</td>';
     $html .= '<td>' . htmlspecialchars($fechaCorta) . '</td>';
-    $html .= '<td class="text-center">' . EtiquetaPlanPropuesto($pr['PlanPropuestoTipo'] ?? 'REGULAR', $pr['PlanPropuestoPorcentaje'] ?? 0) . '</td>';
     $html .= '<td class="text-center"><div class="acciones-preregistro">';
     $html .= '<button type="button" class="btn btn-accion btn-info btn-ver-detalle-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Ver Detalle"><i class="fa fa-eye"></i></button>';
     $html .= '<button type="button" class="btn btn-accion-texto btn-success btn-generar-orden" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Generar Orden de Pago"><i class="fa fa-file-invoice"></i> Generar Orden</button>';
@@ -337,47 +325,40 @@ kt-aside--fixed kt-page--loading">
                           <i class="flaticon2-information"></i> Solo se genera la orden de pago de la <strong>matrícula</strong>; el estudiante queda <strong>PENDIENTE</strong> hasta presentar el voucher.
                         </small>
 
-                        <div class="plan-pago-propuesta mb-2">
-                          <label class="small font-weight-bold mb-1">Plan de Pago (propuesta)</label>
-                          <small class="text-muted d-block mb-2">
-                            Esta elección es solo una <strong>propuesta</strong>: queda pendiente de confirmación hasta que se valide
-                            el voucher de matrícula en Inscripción.
-                          </small>
-                          <div class="row">
-                            <div class="col-lg-4 mb-2">
-                              <label class="plan-opcion-card" for="planOpcionRegular">
-                                <input type="radio" name="planOpcionRadio" id="planOpcionRegular" value="REGULAR" checked>
-                                <span class="plan-opcion-titulo">Plan Regular</span>
-                                <span class="plan-opcion-desc">Paga cada módulo al iniciarlo. Sin descuento (o el que se defina).</span>
-                              </label>
-                            </div>
-                            <div class="col-lg-4 mb-2">
-                              <label class="plan-opcion-card" for="planOpcionContado">
-                                <input type="radio" name="planOpcionRadio" id="planOpcionContado" value="CONTADO">
-                                <span class="plan-opcion-titulo">Plan al Contado</span>
-                                <span class="plan-opcion-desc">Paga todo de una vez. Tiene descuento.</span>
-                              </label>
-                            </div>
-                            <div class="col-lg-4 mb-2">
-                              <label class="plan-opcion-card" for="planOpcionGrupal">
-                                <input type="radio" name="planOpcionRadio" id="planOpcionGrupal" value="GRUPAL">
-                                <span class="plan-opcion-titulo">Plan Grupal</span>
-                                <span class="plan-opcion-desc">Se inscribe junto a 2 o más personas. Tiene descuento.</span>
-                              </label>
+                        <div class="row">
+                          <div class="col-lg-4 form-group mb-2">
+                            <label class="small font-weight-bold mb-1">Plan de Pago del Programa</label>
+                            <select class="form-control form-control-sm" id="tipoPagoCodigo" name="tipoPagoCodigo">
+                              <option value="REGULAR">Plan Regular (cuotas libres)</option>
+                              <option value="CONTADO">Plan al Contado (con descuento)</option>
+                              <option value="GRUPAL">Plan Grupal (definir después en Matriculados)</option>
+                            </select>
+                          </div>
+                          <div class="col-lg-3 form-group mb-2" id="grupoDescuentoPreregistro" style="display:none;">
+                            <label class="small font-weight-bold mb-1" id="labelPorcentajeDescuento">% Descuento</label>
+                            <input type="number" class="form-control form-control-sm" id="porcentajeDescuento" name="porcentajeDescuento" min="0" max="100" step="0.01" value="0">
+                          </div>
+                          <div class="col-lg-3 form-group mb-2" id="grupoNumeroCuotasPreregistro">
+                            <label class="small font-weight-bold mb-1">N° de Cuotas (estimado)</label>
+                            <input type="number" class="form-control form-control-sm" id="numeroCuotas" name="numeroCuotas" min="1" step="1" placeholder="Ej: 6">
+                            <small class="form-text text-muted">Cada cuota sigue siendo de monto libre; esto es solo para el recibo.</small>
+                          </div>
+                          <div class="col-lg-2 form-group mb-2" id="grupoPagoMatriculaPreregistro" style="display:none;">
+                            <label class="small font-weight-bold mb-1 d-block">Matrícula</label>
+                            <div class="custom-control custom-checkbox mt-1">
+                              <input type="checkbox" class="custom-control-input" id="pagarMatricula" name="pagarMatricula" value="1" checked>
+                              <label class="custom-control-label" for="pagarMatricula">¿Pagar matrícula?</label>
                             </div>
                           </div>
-                          <select class="d-none" id="tipoPago" name="tipoPagoCodigo">
-                            <option value="REGULAR">Plan Regular (sin descuento)</option>
-                            <option value="CONTADO">Plan al Contado (con descuento)</option>
-                            <option value="GRUPAL">Plan Grupal (2+ inscritos)</option>
-                          </select>
                         </div>
+                        <small class="text-muted d-block mb-2" id="textoMatriculaExonerada" style="display:none;">
+                          <i class="flaticon2-information"></i> La matrícula queda en <strong>Bs. 0.00</strong> (ya pagada / exonerada).
+                        </small>
+                        <small class="text-muted d-block mb-2" id="planInfoTexto">
+                          Este plan queda <strong>definitivo</strong> apenas se valide el voucher de matrícula.
+                        </small>
 
                         <div class="row">
-                            <div class="col-lg-3 form-group mb-2" id="grupoDescuentoManual" style="display: none;">
-                              <label class="small font-weight-bold mb-1">% Descuento</label>
-                              <input type="number" class="form-control form-control-sm" id="porcentajeDescuentoInput" min="0" max="100" step="0.01" value="0">
-                            </div>
                             <div class="col-lg-3 form-group mb-2">
                               <label class="small font-weight-bold mb-1">Monto de Matrícula</label>
                               <div class="input-group input-group-sm">
@@ -392,15 +373,11 @@ kt-aside--fixed kt-page--loading">
                               <input type="date" class="form-control form-control-sm" name="fechaInscripcion" value="<?php echo date('Y-m-d'); ?>" required>
                             </div>
                         </div>
-                        <small class="text-success font-weight-bold" id="chipDescuentoInfo" style="display: none;"></small>
 
                         <!-- Campos hidden -->
                         <input type="hidden" name="costoTotalPrograma" id="costoTotalPrograma" value="0">
                         <input type="hidden" name="costoMatriculaPrograma" id="costoMatriculaPrograma" value="0">
                         <input type="hidden" name="montoAPagar" id="montoAPagar" value="0">
-                        <input type="hidden" name="porcentajeDescuento" id="porcentajeDescuentoHidden" value="0">
-                        <input type="hidden" name="montoDescuento" id="montoDescuentoHidden" value="0">
-                        <input type="hidden" name="tipoPago" id="tipoPagoHidden" value="PLAN REGULAR">
                         <input type="hidden" name="pagoCompleto" value="0">
                         <input type="hidden" name="paginaRedirect" value="preregistro">
 
@@ -477,14 +454,13 @@ kt-aside--fixed kt-page--loading">
                               <th>Programa</th>
                               <th style="width: 110px;">Sede</th>
                               <th style="width: 110px;">Fecha</th>
-                              <th class="text-center" style="width: 120px;">Plan Propuesto</th>
                               <th class="text-center" style="width: 190px;">Acciones</th>
                             </tr>
                           </thead>
                           <tbody id="tablaPreregistrosBody">
                             <?php
                               if (empty($listaPreregistrosInicial)) {
-                                  echo '<tr><td colspan="8" class="text-center text-muted"><i class="flaticon2-information"></i> No hay preregistros pendientes</td></tr>';
+                                  echo '<tr><td colspan="7" class="text-center text-muted"><i class="flaticon2-information"></i> No hay preregistros pendientes</td></tr>';
                               } else {
                                   foreach ($listaPreregistrosInicial as $pr) {
                                       echo PintarFilaPreregistro($pr);
@@ -530,16 +506,6 @@ kt-aside--fixed kt-page--loading">
             <div class="form-group">
               <label class="font-weight-bold">Monto a Pagar (Bs.) <span class="text-danger">*</span></label>
               <input type="number" step="0.01" min="0.01" class="form-control" name="montoPagado" id="editMontoPagado" required>
-            </div>
-            <div class="row">
-              <div class="col-md-6 form-group">
-                <label class="font-weight-bold">% Descuento</label>
-                <input type="number" step="0.01" min="0" max="100" class="form-control" name="porcentajeDescuento" id="editPorcentajeDescuento">
-              </div>
-              <div class="col-md-6 form-group">
-                <label class="font-weight-bold">Monto Descuento (Bs.)</label>
-                <input type="number" step="0.01" min="0" class="form-control" name="montoDescuento" id="editMontoDescuento">
-              </div>
             </div>
             <div class="form-group">
               <label class="font-weight-bold">Fecha de Orden <span class="text-danger">*</span></label>
@@ -855,58 +821,73 @@ function iniciarPreregistro() {
     $('#sedePrograma').on('change', cargarProgramasPorSedeYGrado);
 
     // ============================================
-    // PASO 3: TIPO DE PAGO (Regular / Contado / Grupal) Y DESCUENTO
+    // PASO 3: MONTO DE MATRÍCULA
+    // El backend (RegistrarPreregistroModelo) exige que este monto ya refleje el mismo
+    // % de descuento del Plan de Pago del Programa elegido arriba (hoy es un descuento
+    // único compartido; un descuento de matrícula totalmente independiente queda pendiente).
+    // Para Plan Regular, además se puede exonerar la matrícula (checkbox "¿Pagar matrícula?"),
+    // dejando el monto en 0, y aplicar su propio % de descuento independiente.
     // ============================================
     function recalcularMontoMatricula() {
+        const tipo = $('#tipoPagoCodigo').val();
         const costoBase = parseFloat($('#costoMatriculaPrograma').val()) || 0;
-        const tipoPago = $('#tipoPago').val();
-        let porcentaje = 0;
+        const matriculaExonerada = tipo !== 'GRUPAL' && !$('#pagarMatricula').is(':checked');
 
-        if (tipoPago === 'CONTADO' || tipoPago === 'GRUPAL') {
-            porcentaje = parseFloat($('#porcentajeDescuentoInput').val()) || 0;
-            if (porcentaje < 0) porcentaje = 0;
-            if (porcentaje > 100) porcentaje = 100;
+        let montoFinal;
+        if (matriculaExonerada) {
+            montoFinal = 0;
+        } else {
+            const porcentaje = parseFloat($('#porcentajeDescuento').val()) || 0;
+            montoFinal = Math.round((costoBase - (costoBase * porcentaje / 100)) * 100) / 100;
         }
-
-        const montoDescuento = Math.round((costoBase * porcentaje / 100) * 100) / 100;
-        const montoFinal = Math.round((costoBase - montoDescuento) * 100) / 100;
 
         $('#montoSoloMatricula').val(montoFinal.toFixed(2));
         $('#montoAPagar').val(montoFinal.toFixed(2));
-        $('#porcentajeDescuentoHidden').val(porcentaje.toFixed(2));
-        $('#montoDescuentoHidden').val(montoDescuento.toFixed(2));
-        $('#tipoPagoHidden').val($('#tipoPago option:selected').text());
-
-        if (montoDescuento > 0) {
-            $('#chipDescuentoInfo')
-                .text('Descuento aplicado: Bs. ' + montoDescuento.toFixed(2) + ' (' + porcentaje.toFixed(2) + '%)')
-                .show();
-        } else {
-            $('#chipDescuentoInfo').hide();
-        }
+        $('#textoMatriculaExonerada').toggle(matriculaExonerada);
+        $('#porcentajeDescuento').prop('disabled', matriculaExonerada);
     }
 
-    // Las tarjetas de radio son la UI visible; sincronizan el <select> oculto
-    // #tipoPago, que es el que en verdad se envia con el formulario.
-    $('input[name="planOpcionRadio"]').on('change', function() {
-        $('.plan-opcion-card').removeClass('is-selected');
-        $(this).closest('.plan-opcion-card').addClass('is-selected');
-        $('#tipoPago').val($(this).val()).trigger('change');
-    });
-    $('.plan-opcion-card input:checked').closest('.plan-opcion-card').addClass('is-selected');
+    // ============================================
+    // PLAN DE PAGO DEL PROGRAMA (Regular/Contado/Grupal): elegido aquí, queda definitivo
+    // al validar el voucher de matrícula (salvo Grupal, que se arma después en Matriculados)
+    // ============================================
+    $('#tipoPagoCodigo').on('change', function() {
+        const tipo = $(this).val();
 
-    $('#tipoPago').on('change', function() {
-        const tipoPago = $(this).val();
-        if (tipoPago === 'CONTADO' || tipoPago === 'GRUPAL') {
-            $('#grupoDescuentoManual').show();
+        $('#grupoNumeroCuotasPreregistro').hide();
+        $('#grupoPagoMatriculaPreregistro').hide();
+        $('#pagarMatricula').prop('checked', true);
+
+        if (tipo === 'CONTADO') {
+            $('#grupoDescuentoPreregistro').show();
+            $('#grupoPagoMatriculaPreregistro').show();
+            $('#labelPorcentajeDescuento').text('% Descuento (programa)');
+            $('#planInfoTexto').html('Este plan queda <strong>definitivo</strong> apenas se valide el voucher de matrícula.');
+        } else if (tipo === 'GRUPAL') {
+            $('#grupoDescuentoPreregistro').hide();
+            $('#porcentajeDescuento').val(0);
+            $('#numeroCuotas').val('');
+            $('#planInfoTexto').html('No se fija ningún plan todavía: el estudiante quedará disponible para armar un <strong>Plan Grupal</strong> después, desde Matriculados.');
         } else {
-            $('#grupoDescuentoManual').hide();
-            $('#porcentajeDescuentoInput').val(0);
+            $('#grupoDescuentoPreregistro').show();
+            $('#grupoNumeroCuotasPreregistro').show();
+            $('#grupoPagoMatriculaPreregistro').show();
+            $('#porcentajeDescuento').val(0);
+            $('#labelPorcentajeDescuento').text('% Descuento (matrícula)');
+            $('#planInfoTexto').html('Este plan queda <strong>definitivo</strong> apenas se valide el voucher de matrícula.');
         }
+
         recalcularMontoMatricula();
     });
 
-    $('#porcentajeDescuentoInput').on('input', recalcularMontoMatricula);
+    // El select ya viene con "Plan Regular" seleccionado por defecto (primera opción), así
+    // que el evento "change" nunca se dispara solo con la carga de la página; se fuerza aquí
+    // para que los campos de descuento/matrícula del plan por defecto se muestren de una vez.
+    $('#tipoPagoCodigo').trigger('change');
+
+    $('#porcentajeDescuento').on('input', recalcularMontoMatricula);
+
+    $('#pagarMatricula').on('change', recalcularMontoMatricula);
 
     $('#programa').on('change', function() {
         const programaId = $(this).val();
@@ -941,7 +922,6 @@ function iniciarPreregistro() {
                     $('#seccionPago').slideDown();
 
                     // El pre-registro SIEMPRE es orden de pago de matrícula (nunca programa completo)
-                    // El monto final se recalcula según el plan de pago elegido (Regular/Contado/Grupal)
                     recalcularMontoMatricula();
                 },
                 error: function() {
@@ -989,9 +969,11 @@ function iniciarPreregistro() {
             return false;
         }
 
-        // Validar que el monto de matrícula sea mayor a 0
+        // Validar que el monto de matrícula sea mayor a 0, salvo que el Plan Regular
+        // haya marcado explícitamente la matrícula como ya pagada / exonerada
         const montoAPagar = parseFloat($('#montoAPagar').val()) || 0;
-        if (montoAPagar <= 0) {
+        const matriculaExonerada = $('#tipoPagoCodigo').val() !== 'GRUPAL' && !$('#pagarMatricula').is(':checked');
+        if (montoAPagar <= 0 && !matriculaExonerada) {
             swal("Error", "El monto de matrícula debe ser mayor a 0", "error");
             return false;
         }
@@ -1099,18 +1081,9 @@ function iniciarPreregistro() {
     // TABLA DE PREREGISTROS PENDIENTES (CRUD)
     // ============================================
 
-    function etiquetaPlanPropuesto(tipo, porcentaje) {
-        const nombres = { REGULAR: 'Regular', CONTADO: 'Contado', GRUPAL: 'Grupal' };
-        const nombre = nombres[tipo] || 'Regular';
-        const pct = parseFloat(porcentaje) || 0;
-        const detalle = pct > 0 ? (nombre + ' -' + (pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(2)) + '%') : nombre;
-        return '<span class="badge badge-warning" title="Plan propuesto por el estudiante; se confirma al validar el voucher">' +
-            '<i class="fa fa-clock-o"></i> ' + detalle + '</span>';
-    }
-
     function renderTablaPreregistros(lista) {
         if (!lista || lista.length === 0) {
-            $('#tablaPreregistrosBody').html('<tr><td colspan="8" class="text-center text-muted"><i class="flaticon2-information"></i> No hay preregistros que coincidan con la búsqueda</td></tr>');
+            $('#tablaPreregistrosBody').html('<tr><td colspan="7" class="text-center text-muted"><i class="flaticon2-information"></i> No hay preregistros que coincidan con la búsqueda</td></tr>');
             return;
         }
 
@@ -1126,7 +1099,6 @@ function iniciarPreregistro() {
                 '<td>' + pr.NombrePrograma + ' (' + pr.CodigoPrograma + ')</td>' +
                 '<td>' + (pr.Sede || '') + '</td>' +
                 '<td>' + fechaCorta + '</td>' +
-                '<td class="text-center">' + etiquetaPlanPropuesto(pr.PlanPropuestoTipo, pr.PlanPropuestoPorcentaje) + '</td>' +
                 '<td class="text-center"><div class="acciones-preregistro">' +
                     '<button type="button" class="btn btn-accion btn-info btn-ver-detalle-preregistro" data-id="' + pr.IdOrdenPago + '" title="Ver Detalle"><i class="fa fa-eye"></i></button>' +
                     '<button type="button" class="btn btn-accion-texto btn-success btn-generar-orden" data-id="' + pr.IdOrdenPago + '" title="Generar Orden de Pago"><i class="fa fa-file-invoice"></i> Generar Orden</button>' +
@@ -1201,7 +1173,7 @@ function iniciarPreregistro() {
     aplicarFiltrosPreregistro();
 
     function cargarPreregistros() {
-        $('#tablaPreregistrosBody').html('<tr><td colspan="8" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
+        $('#tablaPreregistrosBody').html('<tr><td colspan="7" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
 
         $.ajax({
             url: 'ajax/ordenpago.ajax.php',
@@ -1214,11 +1186,11 @@ function iniciarPreregistro() {
                     poblarFiltroProgramas();
                     aplicarFiltrosPreregistro();
                 } else {
-                    $('#tablaPreregistrosBody').html('<tr><td colspan="8" class="text-center text-danger">Error al cargar los preregistros</td></tr>');
+                    $('#tablaPreregistrosBody').html('<tr><td colspan="7" class="text-center text-danger">Error al cargar los preregistros</td></tr>');
                 }
             },
             error: function() {
-                $('#tablaPreregistrosBody').html('<tr><td colspan="8" class="text-center text-danger">Error al cargar los preregistros</td></tr>');
+                $('#tablaPreregistrosBody').html('<tr><td colspan="7" class="text-center text-danger">Error al cargar los preregistros</td></tr>');
             }
         });
     }
@@ -1269,9 +1241,6 @@ function iniciarPreregistro() {
                             '<tr><th style="width:45%;">N° de Orden</th><td>' + (p.NumeroOrden || '-') + '</td></tr>' +
                             '<tr><th>Fecha de solicitud</th><td>' + fechaCorta + '</td></tr>' +
                             '<tr><th>Monto de matrícula</th><td>Bs. ' + parseFloat(p.MontoFinal || 0).toFixed(2) + '</td></tr>' +
-                            '<tr><th>Descuento aplicado</th><td>' + parseFloat(p.PorcentajeDescuento || 0).toFixed(2) + '% (Bs. ' + parseFloat(p.MontoDescuento || 0).toFixed(2) + ')</td></tr>' +
-                            '<tr><th>Modalidad de pago (matrícula)</th><td>' + (p.Observaciones || '-') + '</td></tr>' +
-                            '<tr><th>Plan del programa propuesto</th><td>' + etiquetaPlanPropuesto(p.PlanPropuestoTipo, p.PlanPropuestoPorcentaje) + '</td></tr>' +
                             '<tr><th>Estado</th><td><span class="badge badge-warning">' + (p.Estado || 'PENDIENTE') + '</span></td></tr>' +
                         '</tbody>' +
                     '</table>';
@@ -1381,8 +1350,6 @@ function iniciarPreregistro() {
                     $('#editIdOrdenPago').val(p.IdOrdenPago);
                     $('#editPagoCompleto').val(p.PagoCompleto);
                     $('#editMontoPagado').val(parseFloat(p.MontoFinal).toFixed(2));
-                    $('#editPorcentajeDescuento').val(p.PorcentajeDescuento || 0);
-                    $('#editMontoDescuento').val(p.MontoDescuento || 0);
                     $('#editFechaInscripcion').val(p.FechaGeneracion ? p.FechaGeneracion.substring(0, 10) : '');
                     $('#ModalEditarPreregistro').modal('show');
                 } else {
@@ -1512,44 +1479,6 @@ if (document.readyState === 'loading') {
 .custom-control-label {
     cursor: pointer;
     width: 100%;
-}
-
-/* Tarjetas seleccionables del plan de pago propuesto (Paso 3) */
-.plan-opcion-card {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 8px 10px;
-    border: 1px solid #dfe1ea;
-    border-radius: 6px;
-    cursor: pointer;
-    height: 100%;
-    margin-bottom: 0;
-    transition: border-color 0.15s ease, background-color 0.15s ease;
-}
-
-.plan-opcion-card:hover {
-    border-color: #667eea;
-}
-
-.plan-opcion-card.is-selected {
-    border-color: #667eea;
-    background: #f4f6fb;
-}
-
-.plan-opcion-card input[type="radio"] {
-    margin-bottom: 4px;
-}
-
-.plan-opcion-titulo {
-    font-size: 12.5px;
-    font-weight: 700;
-    color: #3b3f5c;
-}
-
-.plan-opcion-desc {
-    font-size: 11px;
-    color: #74788d;
 }
 
 /* Formulario compacto de pre-registro */

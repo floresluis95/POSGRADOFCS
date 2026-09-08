@@ -222,6 +222,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
               </div>
             </div>
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script src="vistas/recursos/sweetalert.min.js"></script>
           <script>
           $(document).on('click', '#btnDetallePrograma', function() {
               var idprograma = $(this).attr("idcod");
@@ -342,14 +343,11 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                                 <i class="fa fa-cog"></i>
                               </a>
                             </label>
-                            <select class="form-control" name="NumeroTramite">
+                            <select class="form-control" id="selectCuentaNuevo" name="NumeroTramite">
                               <option value="" selected>Seleccione una cuenta</option>
                               <?php
-                                $cuentasDisponibles = CuentaModelo::ListarCuentasActivasModelo();
-                                foreach ($cuentasDisponibles as $cuentaOpcion) {
-                                    $etiqueta = $cuentaOpcion['NumeroCuenta'] . (!empty($cuentaOpcion['Banco']) ? ' - ' . $cuentaOpcion['Banco'] : '');
-                                    echo '<option value="' . htmlspecialchars($cuentaOpcion['NumeroCuenta']) . '">' . htmlspecialchars($etiqueta) . '</option>';
-                                }
+                                $opcionesCuenta = new CuentaControlador();
+                                $opcionesCuenta->RenderOpcionesCuentasActivasControlador();
                               ?>
                             </select>
                           </div>
@@ -414,15 +412,10 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                   </div>
 
                   <div class="modal-body">
-                    <form method="post" class="form-inline mb-3">
-                      <input type="hidden" name="registrarCuenta" value="1">
-                      <input type="text" class="form-control mr-2 mb-2" name="NumeroCuenta" placeholder="Número de cuenta" required>
-                      <input type="text" class="form-control mr-2 mb-2" name="Banco" placeholder="Banco (opcional)">
+                    <form id="formRegistrarCuenta" class="form-inline mb-3">
+                      <input type="text" class="form-control mr-2 mb-2" id="inputNumeroCuenta" name="NumeroCuenta" placeholder="Número de cuenta" required>
+                      <input type="text" class="form-control mr-2 mb-2" id="inputBancoCuenta" name="Banco" placeholder="Banco (opcional)">
                       <button type="submit" class="btn btn-success mb-2"><i class="fa fa-plus"></i> Agregar cuenta</button>
-                      <?php
-                        $registrocuenta = new CuentaControlador();
-                        $registrocuenta->RegistrarCuentaControlador();
-                      ?>
                     </form>
 
                     <table class="table table-bordered table-sm">
@@ -434,17 +427,13 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                           <th class="text-center">Acción</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody id="tablaCuentasBody">
                         <?php
                           $listacuentas = new CuentaControlador();
                           $listacuentas->ListarCuentasControlador();
                         ?>
                       </tbody>
                     </table>
-                    <?php
-                      $estadocuenta = new CuentaControlador();
-                      $estadocuenta->CambiarEstadoCuentaControlador();
-                    ?>
                   </div>
 
                   <div class="modal-footer">
@@ -871,7 +860,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
 
           <div class="col-md-4">
             <div class="modal-body">
-              <label>NÚMERO DE TRÁMITE</label>
+              <label>NÚMERO DE CUENTA</label>
               <input type="text" class="form-control" id="NumeroTramiteEditar" name="NumeroTramiteEditar" placeholder="Ej: 2024-001">
             </div>
           </div>
@@ -1044,6 +1033,92 @@ $(document).on('click', '.btnSubir', function() {
 $(document).on('click', '.btnDarBaja', function() {
     var idprograma = $(this).data('idprograma');
     $('#idProgramaBaja').val(idprograma);
+});
+
+// Manejo correcto de modales de Bootstrap apilados (Gestionar cuentas se abre
+// sobre Nuevo programa). Sin esto, al cerrar el modal hijo Bootstrap quita
+// "modal-open" del body aunque el padre siga abierto y la pantalla queda bloqueada.
+$(document).on('show.bs.modal', '.modal', function() {
+    var zIndex = 1040 + (10 * $('.modal:visible').length);
+    $(this).css('z-index', zIndex);
+    setTimeout(function() {
+        $('.modal-backdrop').not('.modal-stack-fixed').css('z-index', zIndex - 1).addClass('modal-stack-fixed');
+    }, 0);
+});
+$(document).on('hidden.bs.modal', '.modal', function() {
+    if ($('.modal:visible').length) {
+        $('body').addClass('modal-open');
+    }
+});
+
+// Gestión de cuentas por AJAX: registrar y cambiar estado sin recargar la página,
+// para no perder los datos del modal "Nuevo programa" ni romper el modal apilado.
+function refrescarTablaCuentas() {
+    $.ajax({
+        url: 'ajax/cuenta.ajax.php',
+        method: 'POST',
+        data: { accion: 'listarHtml' },
+        success: function(html) {
+            $('#tablaCuentasBody').html(html);
+        }
+    });
+}
+
+function refrescarSelectCuenta() {
+    $.ajax({
+        url: 'ajax/cuenta.ajax.php',
+        method: 'POST',
+        data: { accion: 'listarActivasHtml' },
+        success: function(html) {
+            var valorActual = $('#selectCuentaNuevo').val();
+            $('#selectCuentaNuevo').html('<option value="" selected>Seleccione una cuenta</option>' + html);
+            $('#selectCuentaNuevo').val(valorActual);
+        }
+    });
+}
+
+$('#formRegistrarCuenta').on('submit', function(e) {
+    e.preventDefault();
+    var numeroCuenta = $('#inputNumeroCuenta').val();
+    var banco = $('#inputBancoCuenta').val();
+
+    $.ajax({
+        url: 'ajax/cuenta.ajax.php',
+        method: 'POST',
+        data: { accion: 'registrar', NumeroCuenta: numeroCuenta, Banco: banco },
+        dataType: 'json',
+        success: function(respuesta) {
+            if (respuesta.estado === 'exitoso') {
+                $('#formRegistrarCuenta')[0].reset();
+                refrescarTablaCuentas();
+                refrescarSelectCuenta();
+            }
+            swal(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
+        },
+        error: function() {
+            swal('ERROR!', 'No se pudo conectar con el servidor', 'error');
+        }
+    });
+});
+
+$(document).on('click', '.btnCambiarEstadoCuenta', function() {
+    var idcuenta = $(this).data('idcuenta');
+    var nuevoestado = $(this).data('nuevoestado');
+
+    $.ajax({
+        url: 'ajax/cuenta.ajax.php',
+        method: 'POST',
+        data: { accion: 'cambiarEstado', CuentaID: idcuenta, NuevoEstado: nuevoestado },
+        dataType: 'json',
+        success: function(respuesta) {
+            refrescarTablaCuentas();
+            refrescarSelectCuenta();
+            swal(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
+        },
+        error: function() {
+            swal('ERROR!', 'No se pudo conectar con el servidor', 'error');
+        }
+    });
 });
 </script>
 

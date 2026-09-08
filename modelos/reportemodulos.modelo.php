@@ -86,55 +86,6 @@ class ReporteModulosModelo
     }
 
     /**
-     * Obtener inscritos por programa (con pagos de módulos)
-     * @param int $programaID
-     * @param int|null $moduloID
-     * @return array
-     */
-    public static function ObtenerInscritosPorProgramaModelo($programaID, $moduloID = null)
-    {
-        try {
-            $sql = "SELECT
-                        e.EstudianteID,
-                        CONCAT(e.Nombre, ' ', e.Apaterno, ' ', IFNULL(e.Amaterno, '')) as NombreCompleto,
-                        e.Ci,
-                        e.Celular,
-                        e.Correo,
-                        m.Idmodulo,
-                        m.codigomodulo,
-                        m.nombremodulo,
-                        pm.costomodulo,
-                        pm.fechapago,
-                        pm.Estado as EstadoPago
-                    FROM estudianteprograma ep
-                    INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
-                    INNER JOIN pagomodulo pm ON ep.idInscripcion = pm.idinscripcion
-                    INNER JOIN modulos m ON pm.IdModulo = m.Idmodulo
-                    WHERE ep.ProgramaID = :programaID
-                    AND pm.Estado != 'ANULADO'";
-
-            if ($moduloID !== null) {
-                $sql .= " AND m.Idmodulo = :moduloID";
-            }
-
-            $sql .= " ORDER BY e.Apaterno ASC, e.Nombre ASC, m.codigomodulo ASC";
-
-            $stmt = Conexion::Conectar()->prepare($sql);
-            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
-
-            if ($moduloID !== null) {
-                $stmt->bindParam(":moduloID", $moduloID, PDO::PARAM_INT);
-            }
-
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error en ObtenerInscritosPorProgramaModelo: " . $e->getMessage());
-            return [];
-        }
-    }
-
-    /**
      * Obtener estadísticas generales del sistema
      * @return array
      */
@@ -218,32 +169,118 @@ class ReporteModulosModelo
     }
 
     /**
-     * Obtener conteo de inscritos por módulo
+     * Reporte de pagos por programa: cuántos estudiantes inscritos tiene cada programa,
+     * cuántos con cada tipo de plan (Regular/Contado con descuento/Grupal), cuántos ya
+     * completaron su pago, y cuánto se ha cobrado vs. cuánto falta cobrar en total.
+     * El plan del programa vive en `pagoprograma` (uno por inscripción); lo pagado se
+     * suma desde `pagomodulo` (las "cuotas del programa", ya no ligadas a módulos).
+     * @param string|null $grado Filtrar por grado académico (opcional)
+     * @return array
+     */
+    public static function ObtenerReportePagosPorProgramaModelo($grado = null)
+    {
+        try {
+            $sql = "SELECT
+                        d.ProgramaID,
+                        d.NombrePrograma,
+                        d.Codigo,
+                        d.GradoAcademico,
+                        d.Sede,
+                        COUNT(d.idInscripcion) AS TotalInscritos,
+                        SUM(CASE WHEN d.TipoPlan = 'REGULAR' THEN 1 ELSE 0 END) AS CountRegular,
+                        SUM(CASE WHEN d.TipoPlan = 'DESCUENTO' THEN 1 ELSE 0 END) AS CountDescuento,
+                        SUM(CASE WHEN d.TipoPlan = 'GRUPAL' THEN 1 ELSE 0 END) AS CountGrupal,
+                        SUM(CASE WHEN d.idInscripcion IS NOT NULL AND d.TipoPlan IS NULL THEN 1 ELSE 0 END) AS CountSinPlan,
+                        SUM(d.Completado) AS CountCompletados,
+                        SUM(CASE WHEN d.idInscripcion IS NOT NULL AND d.Completado = 0 THEN 1 ELSE 0 END) AS CountPendientes,
+                        COALESCE(SUM(d.CostoTotalPrograma), 0) AS CostoTotalProgramado,
+                        COALESCE(SUM(d.TotalPagado), 0) AS TotalPagado,
+                        COALESCE(SUM(d.SaldoPendiente), 0) AS SaldoPendiente
+                    FROM (
+                        SELECT
+                            p.ProgramaID, p.NombrePrograma, p.Codigo, p.GradoAcademico, p.Sede,
+                            ep.idInscripcion,
+                            pp.TipoPlan,
+                            COALESCE(pp.MontoTotalPagar, 0) AS CostoTotalPrograma,
+                            COALESCE(pagado.TotalPagadoInscripcion, 0) AS TotalPagado,
+                            GREATEST(COALESCE(pp.MontoTotalPagar, 0) - COALESCE(pagado.TotalPagadoInscripcion, 0), 0) AS SaldoPendiente,
+                            CASE
+                                WHEN pp.idInscripcion IS NOT NULL AND COALESCE(pagado.TotalPagadoInscripcion, 0) >= pp.MontoTotalPagar THEN 1
+                                ELSE 0
+                            END AS Completado
+                        FROM programa p
+                        LEFT JOIN estudianteprograma ep ON ep.ProgramaID = p.ProgramaID AND ep.Estado IN ('ACTIVO', 'CONFIRMADO')
+                        LEFT JOIN pagoprograma pp ON pp.idInscripcion = ep.idInscripcion
+                        LEFT JOIN (
+                            SELECT idinscripcion, SUM(montocuota) AS TotalPagadoInscripcion
+                            FROM pagomodulo
+                            WHERE Estado = 'PAGADO'
+                            GROUP BY idinscripcion
+                        ) pagado ON pagado.idinscripcion = ep.idInscripcion
+                        WHERE p.Estado = 1";
+
+            if (!empty($grado)) {
+                $sql .= " AND p.GradoAcademico = :grado";
+            }
+
+            $sql .= "
+                    ) d
+                    GROUP BY d.ProgramaID, d.NombrePrograma, d.Codigo, d.GradoAcademico, d.Sede
+                    ORDER BY d.GradoAcademico ASC, d.NombrePrograma ASC";
+
+            $stmt = Conexion::Conectar()->prepare($sql);
+            if (!empty($grado)) {
+                $stmt->bindParam(":grado", $grado, PDO::PARAM_STR);
+            }
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerReportePagosPorProgramaModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Reporte de pagos por estudiante, para un programa específico: plan asignado,
+     * cuánto debe pagar en total, cuánto pagó y cuánto le falta.
      * @param int $programaID
      * @return array
      */
-    public static function ObtenerConteoInscritosPorModuloModelo($programaID)
+    public static function ObtenerReportePagosPorEstudianteModelo($programaID)
     {
         try {
-            $stmt = Conexion::Conectar()->prepare(
-                "SELECT
-                    m.Idmodulo,
-                    m.codigomodulo,
-                    m.nombremodulo,
-                    m.costomodulo,
-                    COUNT(DISTINCT pm.idinscripcion) as TotalInscritos
-                FROM modulos m
-                LEFT JOIN pagomodulo pm ON m.Idmodulo = pm.IdModulo AND pm.Estado != 'ANULADO'
-                WHERE m.ProgramaId = :programaID
-                AND m.estadomodulo = 'ACTIVO'
-                GROUP BY m.Idmodulo, m.codigomodulo, m.nombremodulo, m.costomodulo
-                ORDER BY m.codigomodulo ASC"
-            );
+            $sql = "SELECT
+                        ep.idInscripcion,
+                        e.EstudianteID,
+                        CONCAT(e.Nombre, ' ', e.Apaterno, ' ', IFNULL(e.Amaterno, '')) AS NombreCompleto,
+                        e.Ci,
+                        e.Celular,
+                        pp.TipoPlan,
+                        pp.NumeroCuotas,
+                        pp.PorcentajeDescuento,
+                        COALESCE(pp.MontoTotalPagar, 0) AS CostoTotal,
+                        COALESCE(pagado.TotalPagado, 0) AS TotalPagado,
+                        GREATEST(COALESCE(pp.MontoTotalPagar, 0) - COALESCE(pagado.TotalPagado, 0), 0) AS SaldoPendiente,
+                        COALESCE(pagado.CuotasPagadas, 0) AS CuotasPagadas
+                    FROM estudianteprograma ep
+                    INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID
+                    LEFT JOIN pagoprograma pp ON pp.idInscripcion = ep.idInscripcion
+                    LEFT JOIN (
+                        SELECT idinscripcion, SUM(montocuota) AS TotalPagado, COUNT(*) AS CuotasPagadas
+                        FROM pagomodulo
+                        WHERE Estado = 'PAGADO'
+                        GROUP BY idinscripcion
+                    ) pagado ON pagado.idinscripcion = ep.idInscripcion
+                    WHERE ep.ProgramaID = :programaID
+                    AND ep.Estado IN ('ACTIVO', 'CONFIRMADO')
+                    ORDER BY e.Apaterno ASC, e.Nombre ASC";
+
+            $stmt = Conexion::Conectar()->prepare($sql);
             $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Error en ObtenerConteoInscritosPorModuloModelo: " . $e->getMessage());
+            error_log("Error en ObtenerReportePagosPorEstudianteModelo: " . $e->getMessage());
             return [];
         }
     }

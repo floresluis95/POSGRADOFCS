@@ -62,11 +62,29 @@ class OrdenPagoControladores
             $montoDescuentoAplicado = isset($_POST['montoDescuento']) ? floatval($_POST['montoDescuento']) : 0;
             $tipoPago = isset($_POST['tipoPago']) ? htmlspecialchars(trim($_POST['tipoPago'])) : 'PLAN REGULAR';
 
-            // Plan de pago del PROGRAMA que el estudiante propone (Regular/Contado/Grupal).
-            // Es solo una propuesta hasta que se valide el voucher en Inscripción.
+            // Plan de pago del PROGRAMA elegido en Pre-Registro (Regular/Contado/Grupal).
+            // Queda definitivo automáticamente al validar el voucher en Inscripción
+            // (salvo Grupal, que se arma después en Matriculados).
             $planPropuestoTipo = isset($_POST['tipoPagoCodigo']) && in_array($_POST['tipoPagoCodigo'], ['REGULAR', 'CONTADO', 'GRUPAL'], true)
                 ? $_POST['tipoPagoCodigo']
                 : 'REGULAR';
+
+            // Número de cuotas PLANIFICADO para el Plan Regular (las cuotas siguen siendo de
+            // monto libre; este número es solo de referencia, para poder mostrar "Cuota X de N"
+            // en recibos). No aplica a Contado/Grupal (siempre es un solo pago).
+            $planPropuestoNumeroCuotas = ($planPropuestoTipo === 'REGULAR' && !empty($_POST['numeroCuotas']))
+                ? (int)$_POST['numeroCuotas']
+                : null;
+
+            // Plan Regular o Contado: la matrícula se puede marcar como ya pagada / exonerada
+            // (checkbox sin marcar no llega en el POST), dejando el monto de matrícula en Bs. 0.
+            // No aplica a Grupal (ese plan no genera orden de matrícula en este paso).
+            $matriculaExonerada = $planPropuestoTipo !== 'GRUPAL' && !isset($_POST['pagarMatricula']);
+
+            // El % de descuento en Plan Regular solo se aplica a la matrícula de este
+            // pre-registro (no se propaga al plan de cuotas del programa, a diferencia de
+            // Plan al Contado). Por eso PlanPropuestoPorcentaje solo se guarda para Contado.
+            $planPropuestoPorcentaje = ($planPropuestoTipo === 'CONTADO') ? $porcentajeDescuento : 0;
 
             $estudianteID = (int)$_POST['idcliente'];
 
@@ -111,7 +129,9 @@ class OrdenPagoControladores
                 "Firma" => $firma,
                 "Observaciones" => $tipoPago,
                 "PlanPropuestoTipo" => $planPropuestoTipo,
-                "PlanPropuestoPorcentaje" => $porcentajeDescuento
+                "PlanPropuestoNumeroCuotas" => $planPropuestoNumeroCuotas,
+                "PlanPropuestoPorcentaje" => $planPropuestoPorcentaje,
+                "MatriculaExonerada" => $matriculaExonerada
             );
 
             // Registrar en la base de datos

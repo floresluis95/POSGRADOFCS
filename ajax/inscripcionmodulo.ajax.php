@@ -16,16 +16,14 @@ if (isset($_POST["accion"]) && $_POST["accion"] === "obtenerModulosInscritos" &&
     try {
         $modulos = InscripcionModuloModelos::ObtenerModulosInscritosEstudianteModelo($estudianteID, $programaID, $idInscripcion);
 
-        // Formatear los datos para la respuesta
+        // Formatear los datos para la respuesta. Los módulos son puramente académicos
+        // (el pago ya no está ligado a un módulo específico, sino a cuotas del programa).
         $resultado = array_map(function($modulo) {
             return [
                 'NombreModulo' => $modulo['NombreModulo'],
                 'Codigo' => $modulo['Codigo'],
-                'Creditos' => $modulo['Creditos'],
-                'Costo' => $modulo['costomodulo'],
-                'NumeroVaucher' => $modulo['nvauchermodulo'],
-                'FechaInscripcion' => $modulo['FechaInscripcion'],
-                'Estado' => $modulo['Estado'],
+                'FechaInicio' => $modulo['FechaInicio'] ?? null,
+                'FechaFinal' => $modulo['FechaFinal'] ?? null,
                 'NombreDocente' => $modulo['NombreDocente'] ?? 'Sin asignar',
                 'EspecialidadDocente' => $modulo['EspecialidadDocente'] ?? '',
                 'Nota' => $modulo['Nota'],

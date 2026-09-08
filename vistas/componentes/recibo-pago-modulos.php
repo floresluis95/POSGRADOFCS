@@ -20,7 +20,6 @@ try {
                ep.montoPagado,
                ep.montoDescuento,
                ep.porcentajeDescuento,
-               ep.pagoCompleto,
                ep.nvauchermatricula AS VoucherMatricula,
                p.NombrePrograma,p.Codigo AS CodigoPrograma,p.GradoAcademico,p.Costo AS CostoTotalPrograma,p.CostoMatricula,
                p.Version,p.NumeroTramite
@@ -37,41 +36,16 @@ try {
     $nombreCompleto=$estudiante['Nombre'].' '.$estudiante['Apaterno'].' '.$estudiante['Amaterno'];
     $ciCompleto=$estudiante['Ci'].(!empty($estudiante['Complemento'])?'-'.$estudiante['Complemento']:'').' '.$estudiante['Exp'];
 
-    $modulos=PagoModuloModelo::ObtenerModulosConEstadoPagoModelo($estudiante['ProgramaID'],$idinscripcion);
-    $modulosPagados=array_filter($modulos,function($m){return $m['Pagado']==1;});
-    $modulosPendientes=array_filter($modulos,function($m){return $m['Pagado']==0;});
+    $costoMatriculaPagado = floatval($estudiante['costomatricula']);
+    $montoDescuentoMatricula = floatval($estudiante['montoDescuento']);
+    $porcentajeDescuentoMatricula = floatval($estudiante['porcentajeDescuento']);
 
-    // Calcular montos
-    $pagoCompleto = isset($estudiante['pagoCompleto']) ? intval($estudiante['pagoCompleto']) : 0;
-    $montoPagado = isset($estudiante['montoPagado']) ? floatval($estudiante['montoPagado']) : 0;
-    $montoDescuento = isset($estudiante['montoDescuento']) ? floatval($estudiante['montoDescuento']) : 0;
-    $porcentajeDescuento = isset($estudiante['porcentajeDescuento']) ? floatval($estudiante['porcentajeDescuento']) : 0;
-    $costoMatriculaBD = floatval($estudiante['CostoMatricula']); // Costo de matrícula del programa (BD)
-    $costoProgramaBD = floatval($estudiante['CostoTotalPrograma']); // Costo del programa (BD)
-
-    // Si es pago completo y tiene montoPagado, usar ese, sino usar el costo guardado en costomatricula
-    $costoMatriculaPagado = ($pagoCompleto == 1 && $montoPagado > 0) ? $montoPagado : floatval($estudiante['costomatricula']);
-
-    // Calcular el costo original TOTAL (antes del descuento)
-    // Cuando es pago completo: TOTAL = Matrícula + Programa
-    // El montoPagado + montoDescuento también nos da el total original
-    if ($pagoCompleto == 1) {
-        // Usar el cálculo más preciso: montoPagado + montoDescuento
-        $costoOriginal = $montoPagado + $montoDescuento;
-        // Verificar con la suma de matrícula + programa (debe coincidir)
-        $totalDesdePrograma = $costoMatriculaBD + $costoProgramaBD;
-        // Si hay diferencia significativa, usar el total desde programa
-        if (abs($costoOriginal - $totalDesdePrograma) > 0.01) {
-            $costoOriginal = $totalDesdePrograma;
-        }
-    } else {
-        $costoOriginal = floatval($estudiante['costomatricula']);
-    }
-
-    $totalPagadoModulos=array_sum(array_column($modulosPagados,'CostoPagado'));
-    $totalPendiente=array_sum(array_column($modulosPendientes,'Costo'));
-    $totalPrograma=floatval($estudiante['CostoTotalPrograma']);
-    $saldoPrograma=$totalPrograma-$totalPagadoModulos;
+    // Plan de pago del programa y sus cuotas (las cuotas ya no están ligadas a módulos:
+    // su número y monto son libres en el Plan Regular, o una sola cuota por el total
+    // en Contado/Grupal).
+    $resumenPrograma = PagoModuloModelo::ObtenerResumenPagoProgramaModelo($idinscripcion, $estudiante['ProgramaID']);
+    $cuotas = PagoModuloModelo::ObtenerCuotasPorInscripcionModelo($idinscripcion);
+    $cuotasPagadas = array_filter($cuotas, function($c) { return $c['Estado'] === 'PAGADO'; });
 
 } catch(PDOException $e){ die('Error al obtener datos: '.$e->getMessage()); }
 ?>
@@ -84,51 +58,44 @@ try {
 body{
     font-family:Arial,sans-serif;
     font-size:11pt;
-    line-height:1.1;           /* 🔽 INTERLINEADO REDUCIDO */
+    line-height:1.1;
     color:#333;
     background:#fff;
     padding:15px;
 }
 
-/* HEADER */
 .header{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:2px solid #ccc}
 .header-content{text-align:center;flex-grow:1;margin:0 10px;line-height:1.1}
 .header-content h3,.header-content h4{margin:3px 0;line-height:1.1}
 .header-content p{margin:2px 0;font-size:9pt}
 
-/* LOGOS */
 .logo{width:80px}
 .logo img{max-width:100%;max-height:65px}
 
-/* RECIBO */
 .numero-recibo{
     position:absolute;top:12px;right:12px;
     background:#667eea;color:#fff;padding:5px 12px;
     font-size:8pt;border-radius:4px;font-weight:bold
 }
 
-/* INFO ESTUDIANTE */
 .info-estudiante{
     background:#f8f9fa;border-left:4px solid #667eea;
     padding:10px;margin:15px 0;border-radius:5px
 }
-.info-estudiante table{width:100%;line-height:1.0} /* 🔽 INTERLINEADO TABLA */
+.info-estudiante table{width:100%;line-height:1.0}
 
-/* SECCIONES */
 .seccion{margin:15px 0}
 .seccion-titulo{
     padding:6px 10px;border-radius:4px;font-size:11pt;
     margin-bottom:5px;font-weight:bold
 }
 
-/* COLORES SECCIONES */
 .seccion-titulo.pendiente{background:#dc3545;color:white}
 .seccion-titulo:not(.pendiente){background:#28a745;color:white}
 
-/* TABLAS */
 .tabla-modulos{
     width:100%;border-collapse:collapse;margin-bottom:10px;
-    line-height:1.0   /* 🔽 INTERLINEADO */
+    line-height:1.0
 }
 .tabla-modulos th,.tabla-modulos td{
     border:1px solid #ddd;
@@ -136,7 +103,6 @@ body{
 }
 .tabla-modulos thead{background:#667eea;color:#fff}
 
-/* RESUMEN */
 .resumen{
     background:#f8f9fa;border:2px solid #667eea;
     border-radius:6px;padding:12px;margin-top:20px
@@ -144,14 +110,12 @@ body{
 .resumen table{width:100%;line-height:1.0}
 .resumen td{padding:6px}
 
-/* FOOTER */
 .footer{
     margin-top:25px;padding-top:10px;
     border-top:1px solid #ddd;text-align:center;
     font-size:8.5pt;line-height:1.1;color:#666
 }
 
-/* BOTÓN */
 .btn-imprimir{
     position:fixed;top:15px;right:15px;
     background:#667eea;color:#fff;border:none;
@@ -163,8 +127,6 @@ body{
     .no-print{display:none}
     @page{margin:1cm}
 }
-
-
 </style>
 </head>
 <body>
@@ -199,97 +161,94 @@ body{
 
 <?php if($costoMatriculaPagado>0): ?>
 <div class="seccion">
-<div class="seccion-titulo" style="background:#667eea">✓ <?php echo $pagoCompleto == 1 ? 'PAGO COMPLETO REGISTRADO' : 'MATRÍCULA CANCELADA'; ?></div>
+<div class="seccion-titulo" style="background:#667eea">✓ MATRÍCULA CANCELADA</div>
 <table class="tabla-modulos"><thead>
 <tr><th>#</th><th>Concepto</th><th>Monto</th><th>Fecha</th><th>Voucher</th></tr>
 </thead><tbody>
-<?php if($pagoCompleto == 1): ?>
-<!-- Desglose para Pago Completo -->
-<tr style="background:#e7f3ff">
-<td>1</td><td><strong>Matrícula - <?php echo $estudiante['NombrePrograma']; ?></strong></td>
-<td>Bs. <?php echo number_format($costoMatriculaBD,2); ?></td>
-<td rowspan="<?php echo $montoDescuento > 0 ? 5 : 3; ?>"><?php echo date('d/m/Y',strtotime($estudiante['FechaInscripcion'])); ?></td>
-<td rowspan="<?php echo $montoDescuento > 0 ? 5 : 3; ?>"><?php echo $estudiante['VoucherMatricula'] ?: '-'; ?></td>
-</tr>
-<tr style="background:#e7f3ff">
-<td>2</td><td><strong>Costo del Programa</strong></td>
-<td>Bs. <?php echo number_format($costoProgramaBD,2); ?></td>
-</tr>
-<tr style="background:#fff3cd">
-<td colspan="2"><strong>Subtotal (Matrícula + Programa)</strong></td>
-<td><strong>Bs. <?php echo number_format($costoOriginal,2); ?></strong></td>
-</tr>
-<?php if($montoDescuento > 0): ?>
-<tr style="background:#d4edda">
-<td colspan="2"><strong>Descuento Aplicado (<?php echo number_format($porcentajeDescuento,1); ?>%)</strong></td>
-<td style="color:#28a745"><strong>- Bs. <?php echo number_format($montoDescuento,2); ?></strong></td>
-</tr>
-<tr style="background:#c3e6cb; font-weight:bold">
-<td colspan="2"><strong>TOTAL PAGADO</strong></td>
-<td><strong>Bs. <?php echo number_format($montoPagado,2); ?></strong></td>
-</tr>
-<?php endif; ?>
-<?php else: ?>
-<!-- Solo Matrícula -->
 <tr>
 <td>1</td><td>Matrícula - <?php echo $estudiante['NombrePrograma']; ?></td>
 <td>Bs. <?php echo number_format($costoMatriculaPagado,2); ?></td>
 <td><?php echo date('d/m/Y',strtotime($estudiante['FechaInscripcion'])); ?></td>
 <td><?php echo $estudiante['VoucherMatricula'] ?: '-'; ?></td>
 </tr>
+<?php if($montoDescuentoMatricula > 0): ?>
+<tr style="background:#d4edda">
+<td colspan="2"><strong>Descuento de matrícula aplicado (<?php echo number_format($porcentajeDescuentoMatricula,1); ?>%)</strong></td>
+<td colspan="3" style="color:#28a745"><strong>- Bs. <?php echo number_format($montoDescuentoMatricula,2); ?></strong></td>
+</tr>
 <?php endif; ?>
 </tbody></table></div>
 <?php endif; ?>
 
-<?php if(count($modulosPagados)>0): ?>
-<div class="seccion"><div class="seccion-titulo">✓ MÓDULOS PAGADOS (<?php echo count($modulosPagados); ?>)</div>
+<?php if($resumenPrograma['tienePlan']): ?>
+<div class="seccion">
+<div class="seccion-titulo" style="background:#3b3f5c">
+    <?php
+    $nombresPlan = ['REGULAR' => 'Plan Regular', 'DESCUENTO' => 'Plan al Contado', 'GRUPAL' => 'Plan Grupal'];
+    echo $nombresPlan[$resumenPrograma['tipoPlan']] ?? $resumenPrograma['tipoPlan'];
+    if (!$resumenPrograma['cuotaUnica'] && $resumenPrograma['numeroCuotasPlan']) {
+        echo ' (' . $resumenPrograma['numeroCuotasPlan'] . ' cuotas planificadas)';
+    }
+    ?>
+</div>
 <table class="tabla-modulos"><thead>
-<tr><th>#</th><th>Código</th><th>Módulo</th><th>Monto</th><th>Fecha</th><th>Voucher</th></tr>
+<tr><th>Costo del Programa</th><th>Pagado</th><th>Saldo Pendiente</th></tr>
 </thead><tbody>
-<?php foreach($modulosPagados as $i=>$m): ?>
 <tr>
-<td><?php echo $i+1; ?></td><td><?php echo $m['Codigo']; ?></td>
-<td><?php echo $m['NombreModulo']; ?></td>
-<td>Bs. <?php echo number_format($m['CostoPagado'],2); ?></td>
-<td><?php echo $m['FechaPago']?date('d/m/Y',strtotime($m['FechaPago'])):'-'; ?></td>
-<td><?php echo $m['NumeroVaucher'] ?: '-'; ?></td>
+<td>Bs. <?php echo number_format($resumenPrograma['costoTotal'],2); ?></td>
+<td style="color:#28a745"><strong>Bs. <?php echo number_format($resumenPrograma['totalPagado'],2); ?></strong></td>
+<td style="color:<?php echo $resumenPrograma['saldoPendiente'] > 0 ? '#dc3545' : '#28a745'; ?>">
+    <strong><?php echo $resumenPrograma['saldoPendiente'] > 0 ? 'Bs. ' . number_format($resumenPrograma['saldoPendiente'],2) : 'CANCELADO ✓'; ?></strong>
+</td>
+</tr>
+</tbody></table></div>
+
+<?php if(count($cuotasPagadas)>0): ?>
+<div class="seccion"><div class="seccion-titulo">✓ CUOTAS PAGADAS (<?php echo count($cuotasPagadas); ?>)</div>
+<table class="tabla-modulos"><thead>
+<tr><th>Cuota</th><th>Monto</th><th>Fecha</th><th>Voucher</th></tr>
+</thead><tbody>
+<?php foreach($cuotasPagadas as $c): ?>
+<tr>
+<td>
+<?php
+    if (!$resumenPrograma['cuotaUnica'] && $resumenPrograma['numeroCuotasPlan'] && $c['NumeroCuota']) {
+        echo $c['NumeroCuota'] . ' de ' . $resumenPrograma['numeroCuotasPlan'];
+    } else {
+        echo $c['NumeroCuota'] ?: '-';
+    }
+?>
+</td>
+<td>Bs. <?php echo number_format($c['montocuota'],2); ?></td>
+<td><?php echo $c['fechapago']?date('d/m/Y',strtotime($c['fechapago'])):'-'; ?></td>
+<td><?php echo $c['nvaucher'] ?: '-'; ?></td>
 </tr>
 <?php endforeach; ?>
 </tbody></table></div>
 <?php endif; ?>
 
-<?php if(count($modulosPendientes)>0): ?>
-<div class="seccion"><div class="seccion-titulo pendiente">⚠ CUOTAS PENDIENTES (<?php echo count($modulosPendientes); ?>)</div>
-<table class="tabla-modulos"><thead>
-<tr><th>#</th><th>Código</th><th>Módulo</th><th>Monto</th><th colspan="2">Estado</th></tr></thead><tbody>
-<?php foreach($modulosPendientes as $i=>$m): ?>
-<tr>
-<td><?php echo $i+1; ?></td><td><?php echo $m['Codigo']; ?></td>
-<td><?php echo $m['NombreModulo']; ?></td>
-<td>Bs. <?php echo number_format($m['Costo'],2); ?></td>
-<td colspan="2"><span style="background:#dc3545;color:#fff;padding:3px 10px;border-radius:10px">PENDIENTE</span></td>
-</tr>
-<?php endforeach; ?>
-</tbody></table>
+<?php if($resumenPrograma['saldoPendiente'] > 0): ?>
 <div style="background:#fff3cd;padding:10px;border-left:4px solid #ffc107;margin-top:10px">
-<strong>⚠ IMPORTANTE:</strong> Pendiente: <?php echo count($modulosPendientes); ?> módulo(s), Total: <strong>Bs. <?php echo number_format($totalPendiente,2); ?></strong>
-</div></div>
+<strong>⚠ IMPORTANTE:</strong> Saldo pendiente del programa: <strong>Bs. <?php echo number_format($resumenPrograma['saldoPendiente'],2); ?></strong>
+</div>
+<?php endif; ?>
+<?php else: ?>
+<div class="seccion">
+<div class="alert" style="background:#fff3cd;padding:10px;border-left:4px solid #ffc107;">
+⚠ Este estudiante todavía no tiene un Plan de Pago del Programa definido.
+</div>
+</div>
 <?php endif; ?>
 
 <div class="resumen"><table>
-<?php if($montoDescuento > 0): ?>
-<tr style="background:#e7f3ff"><td><strong>Costo Original del Programa:</strong></td><td><strong>Bs. <?php echo number_format($costoOriginal,2); ?></strong></td></tr>
-<tr style="background:#d4edda"><td>Descuento Aplicado (<?php echo number_format($porcentajeDescuento,1); ?>%):</td><td style="color:#28a745"><strong>- Bs. <?php echo number_format($montoDescuento,2); ?></strong></td></tr>
-<tr style="background:#fff"><td><strong>Monto Pagado (con descuento):</strong></td><td><strong>Bs. <?php echo number_format($costoMatriculaPagado,2); ?></strong></td></tr>
-<?php else: ?>
 <tr><td>Matrícula Pagada:</td><td>Bs. <?php echo number_format($costoMatriculaPagado,2); ?></td></tr>
-<?php endif; ?>
-<tr><td>Costo Programa:</td><td>Bs. <?php echo number_format($totalPrograma,2); ?></td></tr>
-<tr><td>Pagado Módulos:</td><td>Bs. <?php echo number_format($totalPagadoModulos,2); ?></td></tr>
-<tr><td>Pendiente:</td><td>Bs. <?php echo number_format($totalPendiente,2); ?></td></tr>
-<tr><td><strong>Saldo Total:</strong></td><td><strong>
-<?php echo $saldoPrograma>0?'Bs. '.number_format($saldoPrograma,2):'CANCELADO ✓'; ?>
+<?php if($resumenPrograma['tienePlan']): ?>
+<tr><td>Costo Programa:</td><td>Bs. <?php echo number_format($resumenPrograma['costoTotal'],2); ?></td></tr>
+<tr><td>Pagado del Programa:</td><td>Bs. <?php echo number_format($resumenPrograma['totalPagado'],2); ?></td></tr>
+<tr><td><strong>Saldo Total del Programa:</strong></td><td><strong>
+<?php echo $resumenPrograma['saldoPendiente']>0?'Bs. '.number_format($resumenPrograma['saldoPendiente'],2):'CANCELADO ✓'; ?>
 </strong></td></tr>
+<?php endif; ?>
 </table></div>
 
 <div class="footer">

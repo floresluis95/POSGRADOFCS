@@ -5,6 +5,19 @@
 
 require_once "../modelos/modulopagos_core.php";
 require_once "../modelos/modulo.modelo.php";
+require_once "../controladores/modulo.controlador.php";
+
+// Registrar módulos por programa (responde JSON, sin recargar la página)
+if (isset($_POST["accion"]) && $_POST["accion"] == "registrarModulosPorPrograma") {
+    $controlador = new ModuloControlador();
+    $controlador->RegistrarModulosPorProgramaAjaxControlador();
+}
+
+// Actualizar un módulo (responde JSON, sin recargar la página)
+if (isset($_POST["accion"]) && $_POST["accion"] == "actualizarModulo") {
+    $controlador = new ModuloControlador();
+    $controlador->ActualizarModuloAjaxControlador();
+}
 
 // Obtener módulos con estado de pago por inscripción
 if (isset($_POST["programaID"]) && isset($_POST["idinscripcion"])) {

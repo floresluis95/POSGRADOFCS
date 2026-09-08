@@ -112,34 +112,26 @@ function cargarDetalleModulos(programaID) {
             // Mostrar loading
             $('#tbody_modulos_pagados').html(`
                 <tr>
-                    <td colspan="8" class="text-center" style="padding: 3rem;">
+                    <td colspan="5" class="text-center" style="padding: 3rem;">
                         <div class="kt-spinner kt-spinner--lg kt-spinner--brand"></div>
-                        <p style="margin-top: 1.5rem; color: #667eea; font-weight: 600; font-size: 1.1rem;">Cargando módulos pagados...</p>
-                    </td>
-                </tr>
-            `);
-            $('#tbody_modulos_pendientes').html(`
-                <tr>
-                    <td colspan="7" class="text-center" style="padding: 3rem;">
-                        <div class="kt-spinner kt-spinner--lg kt-spinner--brand"></div>
-                        <p style="margin-top: 1.5rem; color: #ee0979; font-weight: 600; font-size: 1.1rem;">Cargando módulos pendientes...</p>
+                        <p style="margin-top: 1.5rem; color: #667eea; font-weight: 600; font-size: 1.1rem;">Cargando cuotas...</p>
                     </td>
                 </tr>
             `);
             $('#area_resultados_modulos').show();
         },
         success: function(response) {
-            if (response.success && response.detalle) {
+            if (response.success && response.detalle && response.detalle.resumen) {
                 const detalle = response.detalle;
 
+                const cuotas = detalle.cuotas || [];
+                const cuotasPagadas = cuotas.filter(function(c) { return c.Estado === 'PAGADO'; }).length;
+
                 // Actualizar resumen
-                actualizarResumen(detalle.resumen);
+                actualizarResumen(detalle.resumen, cuotasPagadas);
 
-                // Actualizar tabla de módulos pagados
-                actualizarTablaPagados(detalle.modulosPagados);
-
-                // Actualizar tabla de módulos pendientes
-                actualizarTablaPendientes(detalle.modulosPendientes);
+                // Actualizar tabla de cuotas
+                actualizarTablaPagados(cuotas);
 
                 // Mostrar área de resultados
                 $('#area_resultados_modulos').fadeIn();
@@ -171,50 +163,55 @@ function cargarDetalleModulos(programaID) {
 /**
  * Actualizar el resumen de pagos
  */
-function actualizarResumen(resumen) {
+function actualizarResumen(resumen, cuotasPagadas) {
     $('#total_programa').text(parseFloat(resumen.costoTotal).toFixed(2));
-    $('#total_pagado').text(parseFloat(resumen.montoPagado).toFixed(2));
-    $('#total_pendiente').text(parseFloat(resumen.montoPendiente).toFixed(2));
-    $('#cantidad_pagados').text(resumen.modulosPagados);
-    $('#cantidad_pendientes').text(resumen.modulosPendientes);
+    $('#total_pagado').text(parseFloat(resumen.totalPagado).toFixed(2));
+    $('#total_pendiente').text(parseFloat(resumen.saldoPendiente).toFixed(2));
+    $('#cantidad_pagados').text(cuotasPagadas || 0);
+
+    if (resumen.completado) {
+        $('#estado_plan_texto').html('<i class="flaticon2-check-mark"></i> Programa pagado en su totalidad');
+    } else if (!resumen.tienePlan) {
+        $('#estado_plan_texto').html('<i class="flaticon2-warning"></i> Sin plan de pago definido aún');
+    } else {
+        $('#estado_plan_texto').html('<i class="flaticon2-warning"></i> Saldo por cancelar');
+    }
 }
 
 /**
- * Actualizar tabla de módulos pagados
+ * Actualizar tabla de historial de cuotas
  */
-function actualizarTablaPagados(modulos) {
+function actualizarTablaPagados(cuotas) {
     let html = '';
 
-    if (modulos && modulos.length > 0) {
-        modulos.forEach(function(modulo, index) {
-            const fechaPago = modulo.FechaPago ? formatearFecha(modulo.FechaPago) : 'N/A';
-            const voucher = modulo.NumeroVaucher || 'N/A';
-            const costo = parseFloat(modulo.CostoPagado || 0).toFixed(2);
-            const docente = modulo.NombreDocente || 'Por asignar';
-            const especialidad = modulo.EspecialidadDocente || 'N/A';
+    const badgeColorPorEstado = { PAGADO: '#11998e', PENDIENTE: '#ffa800', RECHAZADO: '#dc3545' };
+
+    if (cuotas && cuotas.length > 0) {
+        cuotas.forEach(function(cuota) {
+            const fechaPago = cuota.fechapago ? formatearFecha(cuota.fechapago) : 'N/A';
+            const voucher = cuota.nvaucher || 'N/A';
+            const monto = parseFloat(cuota.montocuota || 0).toFixed(2);
+            const numeroCuota = cuota.NumeroCuota || '-';
+            const estado = cuota.Estado || 'PENDIENTE';
+            const colorEstado = badgeColorPorEstado[estado] || '#6c757d';
 
             html += `
-                <tr style="border-bottom: 1px solid #f0f0f0; transition: all 0.3s;">
+                <tr style="border-bottom: 1px solid #f0f0f0;">
                     <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
-                        <span style="background: #11998e; color: white; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700;">${index + 1}</span>
-                    </td>
-                    <td style="padding: 1.2rem; vertical-align: middle;">
-                        <strong style="color: #464E5F; font-size: 1rem;">${modulo.NombreModulo || 'N/A'}</strong>
-                    </td>
-                    <td style="padding: 1.2rem; vertical-align: middle;">
-                        <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem;">${modulo.Codigo || 'N/A'}</span>
-                    </td>
-                    <td style="padding: 1.2rem; vertical-align: middle; color: #464E5F; font-weight: 500;">${docente}</td>
-                    <td style="padding: 1.2rem; vertical-align: middle;">
-                        <small style="color: #B5B5C3; font-style: italic;">${especialidad}</small>
+                        <span style="background: #11998e; color: white; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700;">${numeroCuota}</span>
                     </td>
                     <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
-                        <strong style="color: #11998e; font-size: 1.1rem; font-weight: 700;">Bs. ${costo}</strong>
+                        <strong style="color: #11998e; font-size: 1.1rem; font-weight: 700;">Bs. ${monto}</strong>
                     </td>
                     <td class="text-center" style="padding: 1.2rem; vertical-align: middle; color: #464E5F; font-weight: 500;">${fechaPago}</td>
                     <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
                         <span style="background: #f3f6f9; color: #667eea; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
                             ${voucher}
+                        </span>
+                    </td>
+                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
+                        <span style="background: ${colorEstado}; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.85rem;">
+                            ${estado}
                         </span>
                     </td>
                 </tr>
@@ -223,9 +220,9 @@ function actualizarTablaPagados(modulos) {
     } else {
         html = `
             <tr>
-                <td colspan="8" class="text-center" style="padding: 3rem; color: #B5B5C3;">
+                <td colspan="5" class="text-center" style="padding: 3rem; color: #B5B5C3;">
                     <i class="flaticon2-information" style="font-size: 3rem; color: #E4E6EF;"></i>
-                    <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay módulos pagados</p>
+                    <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay cuotas registradas</p>
                 </td>
             </tr>
         `;
@@ -235,95 +232,17 @@ function actualizarTablaPagados(modulos) {
 }
 
 /**
- * Actualizar tabla de módulos pendientes
- */
-function actualizarTablaPendientes(modulos) {
-    let html = '';
-
-    if (modulos && modulos.length > 0) {
-        modulos.forEach(function(modulo, index) {
-            const docente = modulo.NombreDocente || 'Por asignar';
-            const especialidad = modulo.EspecialidadDocente || 'N/A';
-            const costo = parseFloat(modulo.Costo || 0).toFixed(2);
-            const estadoModulo = modulo.estadomodulo || 'ACTIVO';
-
-            // Badge de estado según el estado del módulo
-            let estadoBadge = 'kt-badge--success';
-            if (estadoModulo === 'INACTIVO') {
-                estadoBadge = 'kt-badge--dark';
-            } else if (estadoModulo === 'PENDIENTE') {
-                estadoBadge = 'kt-badge--warning';
-            }
-
-            // Color del badge según estado
-            let badgeColor = '#38ef7d';
-            if (estadoModulo === 'INACTIVO') {
-                badgeColor = '#6c757d';
-            } else if (estadoModulo === 'PENDIENTE') {
-                badgeColor = '#ffa800';
-            }
-
-            html += `
-                <tr style="border-bottom: 1px solid #f0f0f0; transition: all 0.3s;">
-                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
-                        <span style="background: #ee0979; color: white; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700;">${index + 1}</span>
-                    </td>
-                    <td style="padding: 1.2rem; vertical-align: middle;">
-                        <strong style="color: #464E5F; font-size: 1rem;">${modulo.NombreModulo || 'N/A'}</strong>
-                    </td>
-                    <td style="padding: 1.2rem; vertical-align: middle;">
-                        <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem;">${modulo.Codigo || 'N/A'}</span>
-                    </td>
-                    <td style="padding: 1.2rem; vertical-align: middle; color: #464E5F; font-weight: 500;">${docente}</td>
-                    <td style="padding: 1.2rem; vertical-align: middle;">
-                        <small style="color: #B5B5C3; font-style: italic;">${especialidad}</small>
-                    </td>
-                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
-                        <strong style="color: #ee0979; font-size: 1.2rem; font-weight: 700;">Bs. ${costo}</strong>
-                    </td>
-                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
-                        <span style="background: ${badgeColor}; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.85rem;">
-                            ${estadoModulo}
-                        </span>
-                    </td>
-                </tr>
-            `;
-        });
-    } else {
-        html = `
-            <tr>
-                <td colspan="7" class="text-center" style="padding: 3rem; color: #B5B5C3;">
-                    <i class="flaticon2-check-mark" style="font-size: 3rem; color: #38ef7d;"></i>
-                    <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 600; color: #38ef7d;">¡Felicidades! No tiene módulos pendientes de pago</p>
-                </td>
-            </tr>
-        `;
-    }
-
-    $('#tbody_modulos_pendientes').html(html);
-}
-
-/**
  * Ocultar área de resultados
  */
 function ocultarResultados() {
     $('#area_resultados_modulos').fadeOut();
 
-    // Resetear tablas
+    // Resetear tabla
     $('#tbody_modulos_pagados').html(`
         <tr>
-            <td colspan="8" class="text-center" style="padding: 3rem; color: #B5B5C3;">
+            <td colspan="5" class="text-center" style="padding: 3rem; color: #B5B5C3;">
                 <i class="flaticon2-information" style="font-size: 3rem; color: #E4E6EF;"></i>
-                <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay módulos pagados</p>
-            </td>
-        </tr>
-    `);
-
-    $('#tbody_modulos_pendientes').html(`
-        <tr>
-            <td colspan="7" class="text-center" style="padding: 3rem; color: #B5B5C3;">
-                <i class="flaticon2-check-mark" style="font-size: 3rem; color: #38ef7d;"></i>
-                <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 600; color: #38ef7d;">¡Felicidades! No tiene módulos pendientes de pago</p>
+                <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay cuotas registradas</p>
             </td>
         </tr>
     `);
@@ -333,7 +252,6 @@ function ocultarResultados() {
     $('#total_pagado').text('0.00');
     $('#total_pendiente').text('0.00');
     $('#cantidad_pagados').text('0');
-    $('#cantidad_pendientes').text('0');
 }
 
 /**

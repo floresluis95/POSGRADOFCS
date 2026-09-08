@@ -269,16 +269,11 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                 <input type="hidden" name="programaID" id="programaID">
                 <input type="hidden" name="idinscripcion" id="idinscripcion">
 
-                <!-- Pestañas: Plan de Pago / Pago de Módulos -->
+                <!-- Pestañas: Cuotas del Programa / Orden de Pago -->
                 <ul class="nav nav-tabs" id="tabsGestionPagos" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" id="tab-plan-pago-link" data-toggle="tab" href="#tab-plan-pago" role="tab">
-                            <i class="fa fa-credit-card"></i> Plan de Pago
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="tab-pago-modulos-link" data-toggle="tab" href="#tab-pago-modulos" role="tab">
-                            <i class="fa fa-book"></i> Pago de Módulos
+                        <a class="nav-link active" id="tab-pago-modulos-link" data-toggle="tab" href="#tab-pago-modulos" role="tab">
+                            <i class="fa fa-book"></i> Cuotas del Programa
                         </a>
                     </li>
                     <li class="nav-item">
@@ -290,104 +285,26 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 
                 <div class="tab-content border border-top-0 p-3 mb-3">
 
-                    <!-- Pestaña: Plan de Pago del Programa -->
-                    <div class="tab-pane fade show active" id="tab-plan-pago" role="tabpanel">
-                        <div id="planPagoContenido">
-                            <div class="text-center p-4">
-                                <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
-                                <p class="mt-2">Cargando plan de pago...</p>
-                            </div>
+                    <!-- Pestaña: Cuotas del Programa (antes "Pago de Módulos"; las cuotas ya no
+                         están ligadas a módulos, su número y monto son libres) -->
+                    <div class="tab-pane fade show active" id="tab-pago-modulos" role="tabpanel">
+
+                        <!-- Resumen de pago del programa -->
+                        <div id="resumenPagoPrograma" class="alert alert-light border">
+                            <div class="text-center p-2"><i class="fa fa-spinner fa-spin"></i> Cargando resumen...</div>
                         </div>
-                    </div>
 
-                    <!-- Pestaña: Pago de Módulos -->
-                    <div class="tab-pane fade" id="tab-pago-modulos" role="tabpanel">
-                        <form method="POST" id="formPagoModulo" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        <form id="formPagoModulo" enctype="multipart/form-data">
+                            <input type="hidden" name="montoCuota" id="montoCuota">
 
-                            <!-- Leyenda de Estados -->
-                            <div class="alert alert-light border">
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <span class="badge badge-success"><i class="fa fa-check-circle"></i> PAGADO</span>
-                                        <small class="ml-2">Módulo ya cancelado</small>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <span class="badge badge-danger"><i class="fa fa-times-circle"></i> PENDIENTE</span>
-                                        <small class="ml-2">Módulo por cancelar</small>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <button type="button" class="btn btn-sm btn-primary" id="btnSeleccionarTodos">
-                                            <i class="fa fa-check-square"></i> Seleccionar Todos
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-secondary" id="btnLimpiarSeleccion">
-                                            <i class="fa fa-times"></i> Limpiar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                            <div id="cuotaPendienteInfo"></div>
 
-                            <!-- Módulos del Programa -->
-                            <h6 class="text-primary"><i class="fa fa-list"></i> Módulos del Programa</h6>
-                            <small class="text-muted d-block mb-3">
-                                <i class="fa fa-info-circle"></i> Seleccione uno o más módulos pendientes para registrar el pago
-                            </small>
-
-                            <div id="contenedorModulos" class="modulos-grid">
-                                <div class="text-center p-4">
-                                    <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
-                                    <p class="mt-2">Cargando módulos...</p>
-                                </div>
-                            </div>
-
-                            <!-- Módulos Seleccionados (se muestra cuando se seleccionan uno o más módulos) -->
-                            <div id="modulosSeleccionadosInfo" style="display: none;" class="card border-success shadow-sm mt-4">
-                                <div class="card-header bg-success text-white">
-                                    <h6 class="mb-0">
-                                        <i class="fa fa-check-square"></i>
-                                        Módulos Seleccionados (<span id="contadorSeleccionados">0</span>)
-                                    </h6>
-                                </div>
-                                <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                                    <div id="listaModulosSeleccionados">
-                                        <!-- Se llenará dinámicamente con JavaScript -->
-                                    </div>
-                                </div>
-                                <div class="card-footer bg-light">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <strong>Total a Pagar:</strong>
-                                        </div>
-                                        <div class="col-md-6 text-right">
-                                            <span id="totalAPagar" class="text-success font-weight-bold h5">Bs. 0.00</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr>
-
-                            <!-- Datos de Pago -->
-                            <h6 class="text-primary"><i class="fa fa-money"></i> Datos del Pago</h6>
-
-                            <!-- Costos por módulo (se genera dinámicamente) -->
-                            <div id="contenedorCostos" style="display: none;">
-                                <div class="alert alert-warning">
-                                    <i class="fa fa-info-circle"></i>
-                                    <strong>Nota:</strong> Ingrese el costo de cada módulo seleccionado
-                                </div>
-                                <div id="camposCostos" class="row">
-                                    <!-- Se llenará dinámicamente con JavaScript -->
-                                </div>
-                            </div>
-
-                            <!-- Datos comunes del pago -->
                             <div class="row">
                                 <div class="col-lg-6">
                                     <div class="form-group">
                                         <label>FECHA DE PAGO: *</label>
                                         <input type="date" class="form-control" name="fechaPago"
                                                id="fechaPago" required>
-                                        <div class="invalid-feedback">Seleccione la fecha de pago.</div>
                                     </div>
                                 </div>
 
@@ -396,7 +313,6 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                         <label>N° VOUCHER:</label>
                                         <input type="text" class="form-control" name="numeroVaucher" id="numeroVaucher"
                                                placeholder="Número de comprobante (opcional)">
-                                        <small class="form-text text-muted">Mismo voucher para todos los módulos</small>
                                     </div>
                                 </div>
                             </div>
@@ -407,33 +323,43 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                         <label>FOTO/ARCHIVO DE VOUCHER:</label>
                                         <input type="file" class="form-control-file" name="fmodulo" id="fmodulo"
                                                accept="image/*,.pdf">
-                                        <small class="form-text text-muted">
-                                            <i class="fa fa-info-circle"></i>
-                                            Adjunte una imagen o PDF del comprobante de pago (opcional). Este archivo se asociará a todos los módulos seleccionados.
-                                        </small>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="text-right">
-                                <button type="submit" name="registrarPagoModulo" class="btn btn-primary">
+                                <button type="submit" id="btnGuardarPagoCuota" class="btn btn-primary" disabled>
                                     <i class="fa fa-save"></i> Guardar Pago
                                 </button>
                             </div>
-
-                            <?php
-                                require_once 'controladores/pagomodulo.controlador.php';
-                                $registrarPago = new PagoModuloControlador();
-                                $registrarPago->RegistrarPagoModuloControlador();
-                            ?>
                         </form>
+
+                        <hr>
+
+                        <h6 class="text-primary"><i class="fa fa-history"></i> Historial de Cuotas</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-hover mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th class="text-center" style="width:60px;">N°</th>
+                                        <th class="text-center">Monto</th>
+                                        <th class="text-center">Fecha</th>
+                                        <th>Voucher</th>
+                                        <th class="text-center">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaCuotasBody">
+                                    <tr><td colspan="5" class="text-center text-muted py-3">Sin cuotas registradas</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Pestaña: Orden de Pago (se emite ANTES de pagar, para que el estudiante pague y luego suba el voucher) -->
                     <div class="tab-pane fade" id="tab-orden-pago" role="tabpanel">
                         <small class="text-muted d-block mb-3">
-                            <i class="fa fa-info-circle"></i> Seleccione los módulos <strong>pendientes</strong> para emitir la orden de pago que el estudiante debe presentar al pagar.
-                            Una vez realizado el pago, registre el voucher en la pestaña "Pago de Módulos".
+                            <i class="fa fa-info-circle"></i> Emita la orden de pago que el estudiante debe presentar al pagar.
+                            Una vez realizado el pago, registre el voucher en la pestaña "Cuotas del Programa".
                         </small>
 
                         <div id="ordenPagoContenido">
@@ -882,9 +808,6 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
         color: white !important;
     }
 </style>
-
-<!-- Script para selección múltiple de módulos -->
-<script src="vistas/recursos/assets/js/scripts/matriculados-modulos-multiple.js?v=<?php echo time(); ?>"></script>
 
 <!-- Script para filtro por programa -->
 <script>

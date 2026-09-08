@@ -388,11 +388,12 @@ class ModuloModelo
     public static function ActualizarModuloPorProgramaModelo($datos)
     {
         try {
+            // No se actualiza costomodulo: el costo se calcula al registrar los módulos
+            // y no debe modificarse al editar (el formulario de edición no lo solicita).
             $stmt = Conexion::Conectar()->prepare(
                 "UPDATE modulos
                 SET nombremodulo = :nombremodulo,
                     codigomodulo = :codigomodulo,
-                    costomodulo = :costomodulo,
                     DocenteID = :docenteID,
                     FechaInicio = :fechainicio,
                     FechaFinal = :fechafin
@@ -402,9 +403,6 @@ class ModuloModelo
             $stmt->bindParam(":programaID", $datos['programaID'], PDO::PARAM_INT);
             $stmt->bindParam(":nombremodulo", $datos['nombremodulo'], PDO::PARAM_STR);
             $stmt->bindParam(":codigomodulo", $datos['codigomodulo'], PDO::PARAM_STR);
-
-            $costomodulo = isset($datos['costomodulo']) && !empty($datos['costomodulo']) ? (float)$datos['costomodulo'] : 0.0;
-            $stmt->bindParam(":costomodulo", $costomodulo, PDO::PARAM_STR);
 
             if (isset($datos['docenteID']) && !empty($datos['docenteID'])) {
                 $stmt->bindParam(":docenteID", $datos['docenteID'], PDO::PARAM_INT);

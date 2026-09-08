@@ -21,9 +21,11 @@ class OrdenPagoModelos
      * @param string|null $fechaInscripcion
      * @param string|null $fotoVoucher Contenido binario de la imagen del voucher (opcional)
      * @param array|null $planPago Datos del plan de pago del programa (opcional, ver PagoProgramaModelos)
+     * @param bool $forzarSinMatricula Si es true, la matrícula queda en Bs. 0 en la inscripción
+     *             sin importar el monto de la orden (el estudiante pagará el programa completo después)
      * @return array
      */
-    public static function ValidarVoucherMatriculaModelo($idOrdenPago, $numeroVoucher, $fechaInscripcion = null, $fotoVoucher = null, $planPago = null)
+    public static function ValidarVoucherMatriculaModelo($idOrdenPago, $numeroVoucher, $fechaInscripcion = null, $fotoVoucher = null, $planPago = null, $forzarSinMatricula = false)
     {
         try {
             $pdo = Conexion::Conectar();
@@ -60,6 +62,11 @@ class OrdenPagoModelos
             // Inscripción formal: única escritura en estudianteprograma
             $fechaInscripcionFinal = !empty($fechaInscripcion) ? $fechaInscripcion : date('Y-m-d');
 
+            // "Matricular sin pago de matrícula": la inscripción queda con matrícula en Bs. 0
+            // sin importar el monto de la orden original; el programa completo se cobra después.
+            $costomatriculaFinal = $forzarSinMatricula ? 0 : $orden['CostoMatricula'];
+            $montoPagadoFinal = $forzarSinMatricula ? 0 : $orden['MontoFinal'];
+
             $stmtInsert = $pdo->prepare(
                 "INSERT INTO estudianteprograma
                 (EstudianteID, ProgramaID, costomatricula, montoPagado, pagoCompleto,
@@ -70,8 +77,8 @@ class OrdenPagoModelos
             );
             $stmtInsert->bindParam(":estudianteID", $orden['EstudianteID'], PDO::PARAM_INT);
             $stmtInsert->bindParam(":programaID", $orden['ProgramaID'], PDO::PARAM_INT);
-            $stmtInsert->bindParam(":costomatricula", $orden['CostoMatricula']);
-            $stmtInsert->bindParam(":montoPagado", $orden['MontoFinal']);
+            $stmtInsert->bindParam(":costomatricula", $costomatriculaFinal);
+            $stmtInsert->bindParam(":montoPagado", $montoPagadoFinal);
             $stmtInsert->bindParam(":pagoCompleto", $orden['PagoCompleto'], PDO::PARAM_INT);
             $stmtInsert->bindParam(":porcentajeDescuento", $orden['PorcentajeDescuento']);
             $stmtInsert->bindParam(":montoDescuento", $orden['MontoDescuento']);
@@ -96,8 +103,33 @@ class OrdenPagoModelos
             $stmtUpdate->bindParam(":idOrdenPago", $idOrdenPago, PDO::PARAM_INT);
             $stmtUpdate->execute();
 
-            // Si se definió un plan de pago del programa antes de validar, se registra
-            // aquí mismo (misma transacción) para que quede consistente con la matrícula.
+            // El plan de pago del programa (Regular/Contado) se define en Pre-Registro y
+            // queda DEFINITIVO en este mismo momento, automáticamente, sin volver a
+            // pedirlo aquí. Si en Pre-Registro se eligió "Grupal", no se crea ningún plan
+            // todavía: el estudiante queda disponible para armarse en un grupo después,
+            // desde Matriculados. Un llamador puede seguir pasando $planPago explícito
+            // (por compatibilidad); si no lo pasa, se deriva de la propia orden.
+            if ($planPago === null && !empty($orden['PlanPropuestoTipo']) && $orden['PlanPropuestoTipo'] !== 'GRUPAL') {
+                $stmtCostoPrograma = $pdo->prepare("SELECT Costo FROM programa WHERE ProgramaID = :programaID");
+                $stmtCostoPrograma->bindParam(":programaID", $orden['ProgramaID'], PDO::PARAM_INT);
+                $stmtCostoPrograma->execute();
+                $filaPrograma = $stmtCostoPrograma->fetch(PDO::FETCH_ASSOC);
+
+                // El enum de pagoprograma.TipoPlan usa 'DESCUENTO' para lo que en el resto
+                // del sistema se llama "Plan al Contado" (PlanPropuestoTipo usa 'CONTADO').
+                $tipoPlanFinal = $orden['PlanPropuestoTipo'] === 'CONTADO' ? 'DESCUENTO' : $orden['PlanPropuestoTipo'];
+
+                $planPago = [
+                    'idInscripcion' => $idInscripcion,
+                    'EstudianteID' => $orden['EstudianteID'],
+                    'ProgramaID' => $orden['ProgramaID'],
+                    'CostoTotalPrograma' => $filaPrograma ? floatval($filaPrograma['Costo']) : 0,
+                    'TipoPlan' => $tipoPlanFinal,
+                    'NumeroCuotas' => $orden['PlanPropuestoNumeroCuotas'] ?? null,
+                    'PorcentajeDescuento' => $orden['PlanPropuestoPorcentaje'] ?? 0
+                ];
+            }
+
             if (!empty($planPago) && !empty($planPago['TipoPlan'])) {
                 $planPago['idInscripcion'] = $idInscripcion;
                 $planPago['EstudianteID'] = $orden['EstudianteID'];
@@ -237,10 +269,14 @@ class OrdenPagoModelos
             if ($porcentajeDescuento < 0) $porcentajeDescuento = 0;
             if ($porcentajeDescuento > 100) $porcentajeDescuento = 100;
 
+            // Plan Regular: la matrícula puede quedar exonerada (ya pagada fuera del sistema),
+            // en cuyo caso se espera un monto de Bs. 0 en vez de matrícula con descuento.
+            $matriculaExonerada = !empty($datos['MatriculaExonerada']);
+
             // VALIDACIÓN: Si NO es pago completo, validar que el monto corresponda a la matrícula con descuento
             if ($datos['pagoCompleto'] != 1) {
                 $montoPagado = floatval($datos['montoPagado']);
-                $montoEsperado = round($costoMatriculaPrograma * (1 - $porcentajeDescuento / 100), 2);
+                $montoEsperado = $matriculaExonerada ? 0 : round($costoMatriculaPrograma * (1 - $porcentajeDescuento / 100), 2);
 
                 // Validar que el monto pagado coincida con la matrícula (con pequeña tolerancia para redondeos)
                 if (abs($montoPagado - $montoEsperado) > 0.01) {
@@ -286,6 +322,10 @@ class OrdenPagoModelos
                 ? $datos['PlanPropuestoTipo']
                 : 'REGULAR';
             $planPorcentaje = isset($datos['PlanPropuestoPorcentaje']) ? floatval($datos['PlanPropuestoPorcentaje']) : 0;
+            // Número de cuotas planificado (solo Plan Regular; NULL para Contado/Grupal)
+            $planNumeroCuotas = ($planTipo === 'REGULAR' && !empty($datos['PlanPropuestoNumeroCuotas']))
+                ? (int)$datos['PlanPropuestoNumeroCuotas']
+                : null;
 
             // INSERTAR SOLO EN ORDENPAGO - NO tocar estudianteprograma
             $stmtOrden = $pdo->prepare(
@@ -293,13 +333,13 @@ class OrdenPagoModelos
                 (NumeroOrden, idInscripcion, EstudianteID, ProgramaID,
                  MontoTotal, MontoDescuento, PorcentajeDescuento, MontoFinal,
                  PagoCompleto, CostoMatricula, FechaGeneracion, Observaciones,
-                 PlanPropuestoTipo, PlanPropuestoPorcentaje,
+                 PlanPropuestoTipo, PlanPropuestoNumeroCuotas, PlanPropuestoPorcentaje,
                  NombreFactura, NitCiFactura, ResponsableGeneracion, Firma, Estado)
                 VALUES
                 (:numeroOrden, NULL, :estudianteID, :programaID,
                  :montoTotal, :montoDescuento, :porcentajeDescuento, :montoFinal,
                  :pagoCompleto, :costoMatricula, NOW(), :observaciones,
-                 :planTipo, :planPorcentaje,
+                 :planTipo, :planNumeroCuotas, :planPorcentaje,
                  :nombreFactura, :nitCiFactura, :responsable, :firma, 'PENDIENTE')"
             );
 
@@ -314,6 +354,11 @@ class OrdenPagoModelos
             $stmtOrden->bindParam(":costoMatricula", $costoMatricula);
             $stmtOrden->bindParam(":observaciones", $observaciones, PDO::PARAM_STR);
             $stmtOrden->bindParam(":planTipo", $planTipo, PDO::PARAM_STR);
+            if ($planNumeroCuotas !== null) {
+                $stmtOrden->bindParam(":planNumeroCuotas", $planNumeroCuotas, PDO::PARAM_INT);
+            } else {
+                $stmtOrden->bindValue(":planNumeroCuotas", null, PDO::PARAM_NULL);
+            }
             $stmtOrden->bindParam(":planPorcentaje", $planPorcentaje);
             $stmtOrden->bindParam(":nombreFactura", $datos['NombreFactura'], PDO::PARAM_STR);
             $stmtOrden->bindParam(":nitCiFactura", $datos['NitCiFactura'], PDO::PARAM_STR);
