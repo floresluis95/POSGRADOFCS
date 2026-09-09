@@ -11,10 +11,10 @@
 
 /* Variables de colores */
 :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --primary-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    --secondary-gradient: linear-gradient(135deg, #52616e 0%, #37424a 100%);
+    --success-gradient: linear-gradient(135deg, #0f6674 0%, #159895 100%);
+    --info-gradient: linear-gradient(135deg, #0f6674 0%, #159895 100%);
     --text-dark: #2d3436;
     --text-light: #636e72;
     --bg-light: #f8f9fa;
@@ -96,7 +96,7 @@
 
 .slide-content .btn-info-programa {
     background: white;
-    color: #667eea;
+    color: #1e3c72;
     padding: 12px 30px;
     border-radius: 25px;
     font-weight: 600;
@@ -134,7 +134,7 @@
     justify-content: center;
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
-    color: #667eea;
+    color: #1e3c72;
     font-size: 20px;
 }
 
@@ -157,7 +157,7 @@
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: rgba(102, 126, 234, 0.3);
+    background: rgba(30, 60, 114, 0.3);
     cursor: pointer;
     transition: all 0.3s ease;
     border: none;
@@ -210,7 +210,7 @@
 
 .news-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 20px 60px rgba(30, 60, 114, 0.2);
 }
 
 .news-card-image {
@@ -241,7 +241,7 @@
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.4);
 }
 
 .news-card-content {
@@ -257,7 +257,7 @@
 }
 
 .news-card-meta i {
-    color: #667eea;
+    color: #1e3c72;
     margin-right: 5px;
 }
 
@@ -285,7 +285,7 @@
 }
 
 .btn-read-more {
-    color: #667eea;
+    color: #1e3c72;
     font-weight: 600;
     font-size: 14px;
     display: flex;
@@ -346,7 +346,7 @@
 
 .social-card:hover {
     transform: translateY(-10px);
-    border-color: #667eea;
+    border-color: #1e3c72;
 }
 
 .social-card > * {
@@ -374,7 +374,7 @@
 
 .social-card:hover .social-icon {
     background: white !important;
-    color: #667eea;
+    color: #1e3c72;
     transform: scale(1.1) rotate(5deg);
 }
 
@@ -416,7 +416,7 @@
 
 .social-card:hover .btn-social {
     background: white;
-    color: #667eea;
+    color: #1e3c72;
     transform: translateY(-3px);
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 }
@@ -609,7 +609,7 @@
                       <a href="#" class="btn-read-more">
                         Leer más <i class="fas fa-arrow-right"></i>
                       </a>
-                      <span style="color: #667eea;"><i class="far fa-eye"></i> 245</span>
+                      <span style="color: #1e3c72;"><i class="far fa-eye"></i> 245</span>
                     </div>
                   </div>
                 </div>
@@ -618,7 +618,7 @@
                 <div class="news-card animate-fade-in animate-delay-3">
                   <div class="news-card-image">
                     <img src="vistas/recursos/assets/media/news/news2.jpg" alt="Noticia 2" onerror="this.src='vistas/recursos/assets/media/co/c2.png'">
-                    <span class="news-card-badge" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">IMPORTANTE</span>
+                    <span class="news-card-badge" style="background: linear-gradient(135deg, #52616e 0%, #37424a 100%);">IMPORTANTE</span>
                   </div>
                   <div class="news-card-content">
                     <div class="news-card-meta">
@@ -631,7 +631,7 @@
                       <a href="#" class="btn-read-more">
                         Leer más <i class="fas fa-arrow-right"></i>
                       </a>
-                      <span style="color: #667eea;"><i class="far fa-eye"></i> 189</span>
+                      <span style="color: #1e3c72;"><i class="far fa-eye"></i> 189</span>
                     </div>
                   </div>
                 </div>
@@ -640,7 +640,7 @@
                 <div class="news-card animate-fade-in animate-delay-4">
                   <div class="news-card-image">
                     <img src="vistas/recursos/assets/media/news/news3.jpg" alt="Noticia 3" onerror="this.src='vistas/recursos/assets/media/co/c3.png'">
-                    <span class="news-card-badge" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">EVENTO</span>
+                    <span class="news-card-badge" style="background: linear-gradient(135deg, #0f6674 0%, #159895 100%);">EVENTO</span>
                   </div>
                   <div class="news-card-content">
                     <div class="news-card-meta">
@@ -653,7 +653,7 @@
                       <a href="#" class="btn-read-more">
                         Leer más <i class="fas fa-arrow-right"></i>
                       </a>
-                      <span style="color: #667eea;"><i class="far fa-eye"></i> 312</span>
+                      <span style="color: #1e3c72;"><i class="far fa-eye"></i> 312</span>
                     </div>
                   </div>
                 </div>

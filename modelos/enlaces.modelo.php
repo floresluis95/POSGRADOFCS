@@ -32,8 +32,8 @@
                 $enlace == 'reportecalificaciones'||
                 $enlace == 'preregistro'||
 
-                $enlace == 'reportecalificaciones'
-
+                $enlace == 'reportecalificaciones'||
+                $enlace == 'certificadocalificaciones'
 
                 )
             {

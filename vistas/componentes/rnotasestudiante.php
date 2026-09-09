@@ -48,7 +48,7 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                     <!-- CONTENIDO PRINCIPAL -->
                     <div class="container-fluid">
                         <div class="kt-portlet kt-portlet--mobile">
-                            <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px 10px 0 0;">
+                            <div class="kt-portlet__head" style="background-color: #34495e; border-radius: 4px 4px 0 0;">
                                 <div class="kt-portlet__head-label">
                                     <h3 class="kt-portlet__head-title text-white">
                                         <i class="fa fa-graduation-cap"></i> Registro de Calificaciones Finales
@@ -59,19 +59,19 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                             <div class="kt-portlet__body" style="padding: 2rem;">
 
                                 <!-- PASO 1: SELECCIÓN DE DOCENTE -->
-                                <div id="paso1-container" class="card mb-4" style="border-left: 4px solid #5867dd; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                <div id="paso1-container" class="card mb-4" style="border-left: 4px solid #34495e; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
                                     <div class="card-header" style="background-color: #f8f9fa;">
-                                        <h5 class="mb-0" style="color: #667eea;">
+                                        <h5 class="mb-0" style="color: #34495e;">
                                             <i class="flaticon2-user-outline-symbol"></i> Paso 1: Seleccionar Docente
                                         </h5>
                                     </div>
                                     <div class="card-body">
                                         <div class="row">
-                                            <div class="col-md-12">
+                                            <div class="col-md-6">
                                                 <label for="select-docente" class="font-weight-bold">
-                                                    <i class="flaticon2-user-outline-symbol text-primary"></i> Seleccione un Docente:
+                                                    <i class="flaticon2-user-outline-symbol text-primary"></i> Docente:
                                                 </label>
-                                                <select id="select-docente" class="form-control form-control-lg select2-docente">
+                                                <select id="select-docente" class="form-control select2-docente">
                                                     <option value="">-- Seleccione un docente --</option>
                                                     <?php
                                                         $controlador = new CalificacionControlador();
@@ -79,7 +79,7 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                                                     ?>
                                                 </select>
                                                 <small class="form-text text-muted">
-                                                    <i class="flaticon2-information"></i> Seleccione el docente para ver sus asignaciones
+                                                    <i class="flaticon2-information"></i> Seleccione el docente para ver sus módulos asignados
                                                 </small>
                                             </div>
                                         </div>
@@ -87,11 +87,11 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                                 </div>
 
                                 <!-- PASO 2: INFORMACIÓN DEL DOCENTE Y SUS ASIGNACIONES -->
-                                <div id="paso2-container" class="card mb-4" style="display: none; border-left: 4px solid #1dc9b7; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                <div id="paso2-container" class="card mb-4" style="display: none; border-left: 4px solid #34495e; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
                                     <div class="card-header" style="background-color: #f8f9fa;">
                                         <div class="row align-items-center">
                                             <div class="col-md-8">
-                                                <h5 class="mb-0" style="color: #1dc9b7;">
+                                                <h5 class="mb-0" style="color: #34495e;">
                                                     <i class="flaticon2-user"></i> Paso 2: Asignaciones del Docente
                                                 </h5>
                                             </div>
@@ -123,11 +123,11 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                                 </div>
 
                                 <!-- PASO 3: ESTUDIANTES DEL MÓDULO SELECCIONADO -->
-                                <div id="paso3-container" class="card mb-4" style="display: none; border-left: 4px solid #ffb822; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                <div id="paso3-container" class="card mb-4" style="display: none; border-left: 4px solid #34495e; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
                                     <div class="card-header" style="background-color: #f8f9fa;">
                                         <div class="row align-items-center">
                                             <div class="col-md-6">
-                                                <h5 class="mb-0" style="color: #ffb822;">
+                                                <h5 class="mb-0" style="color: #34495e;">
                                                     <i class="flaticon2-edit"></i> Paso 3: Ingresar Calificaciones
                                                 </h5>
                                             </div>
@@ -185,7 +185,7 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                                                 </span>
                                             </div>
                                             <div class="col-lg-6 kt-align-right">
-                                                <button class="btn btn-success btn-lg" id="btn-guardar-notas" style="padding: 0.75rem 2.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(29, 201, 183, 0.4);">
+                                                <button class="btn btn-success" id="btn-guardar-notas" style="padding: 0.6rem 2rem;">
                                                     <i class="fa fa-save"></i> Guardar Calificaciones
                                                 </button>
                                             </div>
@@ -223,33 +223,40 @@ $esAdministrador = ($tipoUsuario === 'ADM');
 
 <style>
 .form-control:focus {
-    border-color: #667eea !important;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    border-color: #34495e !important;
+    box-shadow: 0 0 0 0.15rem rgba(52, 73, 94, 0.2) !important;
+}
+
+.select2-container--default .select2-selection--single {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+    padding: 0.375rem 0 !important;
+    border: 1px solid #ced4da !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 1.5 !important;
+    padding-left: 0.75rem !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100% !important;
 }
 
 .card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.btn {
-    transition: all 0.3s ease;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
+    transition: box-shadow 0.2s ease;
 }
 
 .table-calificaciones {
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
 .table-calificaciones thead {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-color: #34495e;
     color: white;
 }
 
 .table-calificaciones tbody tr:hover {
-    background-color: #f8f9fa;
+    background-color: #f4f5f7;
 }
 
 .input-nota {
@@ -259,7 +266,7 @@ $esAdministrador = ($tipoUsuario === 'ADM');
 }
 
 .input-nota.is-valid {
-    border-color: #1dc9b7 !important;
+    border-color: #1e3c72 !important;
     background-color: #f0fdf4 !important;
 }
 
@@ -270,21 +277,29 @@ $esAdministrador = ($tipoUsuario === 'ADM');
 
 .resultado-docente {
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease;
 }
 
 .resultado-docente:hover {
-    background-color: #f5f5f5;
-    transform: translateX(5px);
+    background-color: #f4f5f7;
 }
 
 .asignacion-row {
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease;
 }
 
 .asignacion-row:hover {
-    background-color: #e8f5e9 !important;
+    background-color: #eef1f4 !important;
+}
+
+/* Badges informativos (Grado, Código): tono neutro; se conservan en color
+   solo los badges de estado de calificación (sin calificar/parcial/completo),
+   que sí aportan información útil de un vistazo. */
+.kt-badge--primary,
+.kt-badge--dark {
+    background-color: #e9ecef !important;
+    color: #34495e !important;
 }
 </style>
 

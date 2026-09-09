@@ -48,12 +48,25 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 
                     <div class="kt-portlet__body">
                         <div class="form-group row">
-                            <label class="col-lg-2 col-form-label"><strong>SELECCIONAR PROGRAMA:</strong></label>
-                            <div class="col-lg-8">
+                            <label class="col-lg-2 col-form-label"><strong>SEDE:</strong></label>
+                            <div class="col-lg-3">
+                                <select class="form-control" id="selectSedeFiltro" style="width: 100%;">
+                                    <option value="">Todas las sedes...</option>
+                                    <?php
+                                    require_once 'modelos/programa.modelo.php';
+                                    $sedesMatriculados = ProgramasModelos::ListarSedesModelo();
+                                    foreach ($sedesMatriculados as $sedeOpcion) {
+                                        $sedeValor = htmlspecialchars($sedeOpcion, ENT_QUOTES);
+                                        echo '<option value="' . $sedeValor . '">' . $sedeValor . '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <label class="col-lg-2 col-form-label"><strong>PROGRAMA:</strong></label>
+                            <div class="col-lg-3">
                                 <select class="form-control select2-programa" id="selectProgramaFiltro" style="width: 100%;">
                                     <option value="">Todos los programas...</option>
                                     <?php
-                                    require_once 'modelos/programa.modelo.php';
                                     $programas = ProgramasModelos::ListaProgramaModelo();
                                     foreach ($programas as $prog) {
                                         $programaID = htmlspecialchars($prog['ProgramaID'] ?? '', ENT_QUOTES);
@@ -83,7 +96,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
         <div class="row">
             <div class="col-lg-12">
                 <div class="kt-portlet kt-portlet--modern">
-                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
                         <div class="kt-portlet__head-label">
                             <h3 class="kt-portlet__head-title" style="color: white;">
                                 <i class="fa fa-list-alt"></i> LISTA DE ESTUDIANTES MATRICULADOS EN PROGRAMAS
@@ -104,7 +117,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                     <div class="kt-portlet__body">
                         <div class="table-responsive">
                             <table class="table table-hover table-bordered" id="tablaMatriculados" style="background: white;">
-                                <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <thead style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
                                     <tr>
                                         <th class="text-center" style="color: white; width: 50px;">#</th>
                                         <th style="color: white;">ESTUDIANTE</th>
@@ -112,6 +125,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                         <th style="color: white;">PROGRAMA</th>
                                         <th class="text-center" style="color: white; width: 120px;">GRADO</th>
                                         <th class="text-center" style="color: white; width: 100px;">CÓDIGO</th>
+                                        <th class="text-center" style="color: white; width: 100px;">SEDE</th>
                                         <th class="text-center" style="color: white; width: 120px;">COSTO MATRÍCULA</th>
                                         <th class="text-center" style="color: white; width: 100px;">DESCUENTO</th>
                                         <th class="text-center" style="color: white; width: 150px;">TIPO DE PAGO</th>
@@ -140,7 +154,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 <div class="modal fade" id="modalVerDetalles" tabindex="-1" role="dialog" aria-labelledby="modalVerDetallesLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
                 <h5 class="modal-title text-white" id="modalVerDetallesLabel">
                     <i class="fa fa-user-circle"></i> Detalles del Estudiante Matriculado
                 </h5>
@@ -247,7 +261,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 <div class="modal fade" id="modalInscribirModulo" tabindex="-1" role="dialog" aria-labelledby="modalInscribirModuloLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
                 <h5 class="modal-title text-white" id="modalInscribirModuloLabel">
                     <i class="fa fa-credit-card"></i> Gestión de Pagos del Programa
                 </h5>
@@ -387,7 +401,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 <div class="modal fade" id="modalPlanGrupal" tabindex="-1" role="dialog" aria-labelledby="modalPlanGrupalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
                 <h5 class="modal-title" id="modalPlanGrupalLabel">
                     <i class="fa fa-users"></i> Plan Grupal - Seleccionar Estudiantes
                 </h5>
@@ -526,7 +540,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     }
 
     .dropdown-item:hover {
-        background-color: #667eea;
+        background-color: #1e3c72;
         color: white;
         padding-left: 25px;
     }
@@ -541,12 +555,12 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     }
 
     .modal-header.bg-primary {
-        background-color: #667eea !important;
+        background-color: #1e3c72 !important;
     }
 
     #detallesModulo {
         background-color: #f8f9fa;
-        border-left: 4px solid #667eea;
+        border-left: 4px solid #1e3c72;
     }
 
     /* Animaciones */
@@ -681,7 +695,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     }
 
     .modulo-card-codigo {
-        background: #667eea;
+        background: #1e3c72;
         color: white;
         padding: 3px 8px;
         border-radius: 4px;
@@ -707,7 +721,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     }
 
     .modulo-card-docente i {
-        color: #667eea;
+        color: #1e3c72;
         margin-right: 4px;
     }
 
@@ -736,7 +750,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     }
 
     .modulos-grid::-webkit-scrollbar-thumb {
-        background: #667eea;
+        background: #1e3c72;
         border-radius: 10px;
     }
 
@@ -804,7 +818,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     }
 
     .select2-container--default .select2-results__option--highlighted[aria-selected] {
-        background-color: #667eea !important;
+        background-color: #1e3c72 !important;
         color: white !important;
     }
 </style>
@@ -828,9 +842,9 @@ $(document).ready(function() {
         }
     });
 
-    // Función para cargar estudiantes filtrados por programa
-    function cargarEstudiantes(programaID) {
-        console.log('>>> Cargando estudiantes. ProgramaID:', programaID || 'TODOS');
+    // Función para cargar estudiantes filtrados por programa y/o sede
+    function cargarEstudiantes(programaID, sede) {
+        console.log('>>> Cargando estudiantes. ProgramaID:', programaID || 'TODOS', '| Sede:', sede || 'TODAS');
 
         // Destruir DataTable si existe
         if ($.fn.DataTable.isDataTable('#tablaMatriculados')) {
@@ -838,7 +852,7 @@ $(document).ready(function() {
         }
 
         // Mostrar mensaje de carga
-        $('#tablaMatriculadosBody').html('<tr><td colspan="12" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando estudiantes...</td></tr>');
+        $('#tablaMatriculadosBody').html('<tr><td colspan="13" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando estudiantes...</td></tr>');
 
         // Petición AJAX
         $.ajax({
@@ -846,7 +860,8 @@ $(document).ready(function() {
             type: 'POST',
             data: {
                 accion: 'cargarTablaMatriculados',
-                programaIDFiltro: programaID || ''
+                programaIDFiltro: programaID || '',
+                sedeFiltro: sede || ''
             },
             success: function(response) {
                 console.log('✓ Estudiantes cargados correctamente');
@@ -890,21 +905,30 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error('✗ Error al cargar estudiantes:', error);
-                $('#tablaMatriculadosBody').html('<tr><td colspan="12" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los estudiantes</td></tr>');
+                $('#tablaMatriculadosBody').html('<tr><td colspan="13" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los estudiantes</td></tr>');
             }
         });
     }
 
-    // Evento al cambiar el programa
+    // Evento al cambiar el programa o la sede (se combinan ambos filtros)
     $('#selectProgramaFiltro').on('change', function() {
         const programaID = $(this).val();
+        const sede = $('#selectSedeFiltro').val();
         console.log('>>> Programa seleccionado:', programaID);
-        cargarEstudiantes(programaID);
+        cargarEstudiantes(programaID, sede);
+    });
+
+    $('#selectSedeFiltro').on('change', function() {
+        const sede = $(this).val();
+        const programaID = $('#selectProgramaFiltro').val();
+        console.log('>>> Sede seleccionada:', sede);
+        cargarEstudiantes(programaID, sede);
     });
 
     // Evento al limpiar filtro
     $('#btnLimpiarFiltro').on('click', function() {
         console.log('>>> Limpiando filtro');
+        $('#selectSedeFiltro').val('');
         $('#selectProgramaFiltro').val('').trigger('change');
     });
 

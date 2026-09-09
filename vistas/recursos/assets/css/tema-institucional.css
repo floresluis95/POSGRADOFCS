@@ -1,0 +1,74 @@
+/* ========================================================
+   TEMA INSTITUCIONAL - FACULTAD DE ODONTOLOGIA (POSGRADO)
+   Paleta formal compartida por todo el sistema.
+   ======================================================== */
+
+:root {
+    /* Marca institucional (encabezados, botones primarios) */
+    --inst-primario-ini: #1e3c72;
+    --inst-primario-fin: #2a5298;
+
+    /* Acciones secundarias: editar / cambiar / cerrar sesion */
+    --inst-secundario-ini: #52616e;
+    --inst-secundario-fin: #37424a;
+
+    /* Acento clinico (informacion, destacados) */
+    --inst-acento-ini: #0f6674;
+    --inst-acento-fin: #159895;
+
+    /* Estados semanticos */
+    --inst-exito-ini: #1e7145;
+    --inst-exito-fin: #27ae60;
+    --inst-peligro-ini: #c0392b;
+    --inst-peligro-fin: #dc3545;
+    --inst-advertencia-ini: #b7791f;
+    --inst-advertencia-fin: #d4a017;
+
+    /* Colores por Grado Academico (Facultad de Odontologia) */
+    --grado-diplomado-ini: #0f6674;   /* teal clinico */
+    --grado-diplomado-fin: #159895;
+    --grado-especialidad-ini: #2f5233; /* verde salvia */
+    --grado-especialidad-fin: #4a7c59;
+    --grado-maestria-ini: #1e3c72;     /* azul institucional */
+    --grado-maestria-fin: #2a5298;
+    --grado-doctorado-ini: #6b2737;    /* vino academico */
+    --grado-doctorado-fin: #8e3b4f;
+    --grado-generico-ini: #5a6570;     /* gris neutro */
+    --grado-generico-fin: #434d56;
+}
+
+.badge-grado-diplomado,
+.badge-grado-especialidad,
+.badge-grado-maestria,
+.badge-grado-doctorado,
+.badge-grado-generico {
+    display: inline-block;
+    color: #ffffff;
+    padding: 4px 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.badge-grado-diplomado {
+    background: linear-gradient(135deg, var(--grado-diplomado-ini) 0%, var(--grado-diplomado-fin) 100%);
+}
+
+.badge-grado-especialidad {
+    background: linear-gradient(135deg, var(--grado-especialidad-ini) 0%, var(--grado-especialidad-fin) 100%);
+}
+
+.badge-grado-maestria {
+    background: linear-gradient(135deg, var(--grado-maestria-ini) 0%, var(--grado-maestria-fin) 100%);
+}
+
+.badge-grado-doctorado {
+    background: linear-gradient(135deg, var(--grado-doctorado-ini) 0%, var(--grado-doctorado-fin) 100%);
+}
+
+.badge-grado-generico {
+    background: linear-gradient(135deg, var(--grado-generico-ini) 0%, var(--grado-generico-fin) 100%);
+}

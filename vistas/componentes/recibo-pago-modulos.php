@@ -74,12 +74,12 @@ body{
 
 .numero-recibo{
     position:absolute;top:12px;right:12px;
-    background:#667eea;color:#fff;padding:5px 12px;
+    background:#1e3c72;color:#fff;padding:5px 12px;
     font-size:8pt;border-radius:4px;font-weight:bold
 }
 
 .info-estudiante{
-    background:#f8f9fa;border-left:4px solid #667eea;
+    background:#f8f9fa;border-left:4px solid #1e3c72;
     padding:10px;margin:15px 0;border-radius:5px
 }
 .info-estudiante table{width:100%;line-height:1.0}
@@ -101,10 +101,10 @@ body{
     border:1px solid #ddd;
     padding:5px;font-size:9.5pt
 }
-.tabla-modulos thead{background:#667eea;color:#fff}
+.tabla-modulos thead{background:#1e3c72;color:#fff}
 
 .resumen{
-    background:#f8f9fa;border:2px solid #667eea;
+    background:#f8f9fa;border:2px solid #1e3c72;
     border-radius:6px;padding:12px;margin-top:20px
 }
 .resumen table{width:100%;line-height:1.0}
@@ -118,7 +118,7 @@ body{
 
 .btn-imprimir{
     position:fixed;top:15px;right:15px;
-    background:#667eea;color:#fff;border:none;
+    background:#1e3c72;color:#fff;border:none;
     padding:10px 20px;border-radius:20px;
     font-size:11pt;cursor:pointer
 }
@@ -161,7 +161,7 @@ body{
 
 <?php if($costoMatriculaPagado>0): ?>
 <div class="seccion">
-<div class="seccion-titulo" style="background:#667eea">✓ MATRÍCULA CANCELADA</div>
+<div class="seccion-titulo" style="background:#1e3c72">✓ MATRÍCULA CANCELADA</div>
 <table class="tabla-modulos"><thead>
 <tr><th>#</th><th>Concepto</th><th>Monto</th><th>Fecha</th><th>Voucher</th></tr>
 </thead><tbody>

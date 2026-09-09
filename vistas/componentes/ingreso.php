@@ -17,7 +17,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         }
 
         /* Partículas de fondo animadas */
@@ -88,7 +88,7 @@
 
         /* Panel izquierdo con imagen */
         .login-left {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             padding: 60px 40px;
             display: flex;
             flex-direction: column;
@@ -268,7 +268,7 @@
             left: 20px;
             top: 50%;
             transform: translateY(-50%);
-            color: #667eea;
+            color: #1e3c72;
             font-size: 18px;
             z-index: 1;
         }
@@ -285,9 +285,9 @@
 
         .form-control:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #1e3c72;
             background: white;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 4px rgba(30, 60, 114, 0.1);
         }
 
         .form-control::placeholder {
@@ -313,7 +313,7 @@
             width: 18px;
             height: 18px;
             cursor: pointer;
-            accent-color: #667eea;
+            accent-color: #1e3c72;
         }
 
         .remember-me label {
@@ -324,7 +324,7 @@
         }
 
         .forgot-password {
-            color: #667eea;
+            color: #1e3c72;
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
@@ -332,7 +332,7 @@
         }
 
         .forgot-password:hover {
-            color: #764ba2;
+            color: #2a5298;
             text-decoration: underline;
         }
 
@@ -340,7 +340,7 @@
         .btn-login {
             width: 100%;
             padding: 18px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             border: none;
             border-radius: 15px;
@@ -349,7 +349,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             letter-spacing: 0.5px;
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3);
             position: relative;
             overflow: hidden;
         }
@@ -371,7 +371,7 @@
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 15px 40px rgba(30, 60, 114, 0.4);
         }
 
         .btn-login:active {

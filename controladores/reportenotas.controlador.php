@@ -37,6 +37,7 @@ class ReporteNotasControlador
             echo '<tr>';
             echo '<td class="text-center">' . $contador . '</td>';
             echo '<td><strong>' . htmlspecialchars($programa['NombrePrograma']) . '</strong></td>';
+            echo '<td class="text-center">' . htmlspecialchars($programa['Sede'] ?? '') . '</td>';
             echo '<td class="text-center">' . $badgeGrado . '</td>';
             echo '<td class="text-center">' . htmlspecialchars($programa['CodigoPrograma']) . '</td>';
             echo '<td class="text-center">' . ($programa['TotalModulos'] ?: '0') . '</td>';
@@ -55,7 +56,7 @@ class ReporteNotasControlador
         }
 
         if ($contador == 0) {
-            echo '<tr><td colspan="7" class="text-center text-muted">No hay programas registrados</td></tr>';
+            echo '<tr><td colspan="8" class="text-center text-muted">No hay programas registrados</td></tr>';
         }
     }
 

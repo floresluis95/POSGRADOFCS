@@ -44,7 +44,7 @@ require_once 'modelos/calificacion.modelo.php';
                     <!-- CONTENIDO PRINCIPAL -->
                     <div class="container-fluid">
                         <div class="kt-portlet kt-portlet--mobile">
-                            <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px 10px 0 0;">
+                            <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 10px 10px 0 0;">
                                 <div class="kt-portlet__head-label">
                                     <h3 class="kt-portlet__head-title text-white">
                                         <i class="fa fa-graduation-cap"></i> Registro de Calificaciones Finales
@@ -65,9 +65,9 @@ require_once 'modelos/calificacion.modelo.php';
                                 </div>
 
                                 <!-- PASO 1: INFORMACIÓN DEL DOCENTE Y SUS ASIGNACIONES -->
-                                <div id="paso1-container" class="card mb-4" style="display: none; border-left: 4px solid #1dc9b7; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                <div id="paso1-container" class="card mb-4" style="display: none; border-left: 4px solid #1e3c72; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                                     <div class="card-header" style="background-color: #f8f9fa;">
-                                        <h5 class="mb-0" style="color: #1dc9b7;">
+                                        <h5 class="mb-0" style="color: #1e3c72;">
                                             <i class="flaticon2-user"></i> Mis Asignaciones
                                         </h5>
                                     </div>
@@ -92,11 +92,11 @@ require_once 'modelos/calificacion.modelo.php';
                                 </div>
 
                                 <!-- PASO 2: ESTUDIANTES DEL MÓDULO SELECCIONADO -->
-                                <div id="paso2-container" class="card mb-4" style="display: none; border-left: 4px solid #ffb822; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                <div id="paso2-container" class="card mb-4" style="display: none; border-left: 4px solid #52616e; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                                     <div class="card-header" style="background-color: #f8f9fa;">
                                         <div class="row align-items-center">
                                             <div class="col-md-8">
-                                                <h5 class="mb-0" style="color: #ffb822;">
+                                                <h5 class="mb-0" style="color: #52616e;">
                                                     <i class="flaticon2-edit"></i> Ingresar Calificaciones
                                                 </h5>
                                             </div>
@@ -144,7 +144,7 @@ require_once 'modelos/calificacion.modelo.php';
                                         <!-- SECCIÓN DE GENERACIÓN DE PDF -->
                                         <div id="pdf-section" class="mt-4" style="display: none;">
                                             <div class="card" style="border: 2px solid #5867dd; border-radius: 10px;">
-                                                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                                <div class="card-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
                                                     <h5 class="mb-0 text-white">
                                                         <i class="fa fa-file-pdf"></i> Imprimir Planilla de Calificaciones (PDF)
                                                     </h5>
@@ -177,7 +177,7 @@ require_once 'modelos/calificacion.modelo.php';
                                                 </span>
                                             </div>
                                             <div class="col-lg-6 kt-align-right">
-                                                <button class="btn btn-success btn-lg" id="btn-guardar-notas" style="padding: 0.75rem 2.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(29, 201, 183, 0.4);">
+                                                <button class="btn btn-success btn-lg" id="btn-guardar-notas" style="padding: 0.75rem 2.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(30, 60, 114, 0.4);">
                                                     <i class="fa fa-save"></i> Guardar Calificaciones
                                                 </button>
                                             </div>
@@ -194,7 +194,7 @@ require_once 'modelos/calificacion.modelo.php';
 <div class="modal fade" id="modalFechasPDF" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
                 <h5 class="modal-title text-white">
                     <i class="fa fa-calendar"></i> Seleccionar Fechas para el PDF
                 </h5>
@@ -254,8 +254,8 @@ require_once 'modelos/calificacion.modelo.php';
 
 <style>
 .form-control:focus {
-    border-color: #667eea !important;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    border-color: #1e3c72 !important;
+    box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25) !important;
 }
 
 .card {
@@ -275,7 +275,7 @@ require_once 'modelos/calificacion.modelo.php';
 }
 
 .table-calificaciones thead {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
 }
 
@@ -290,7 +290,7 @@ require_once 'modelos/calificacion.modelo.php';
 }
 
 .input-nota.is-valid {
-    border-color: #1dc9b7 !important;
+    border-color: #1e3c72 !important;
     background-color: #f0fdf4 !important;
 }
 

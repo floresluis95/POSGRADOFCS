@@ -34,7 +34,7 @@
                 <div class="kt-body kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-grid--stretch" id="kt_body">
                     <div class="kt-content  kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
 
-                        <div class="kt-subheader kt-grid__item" id="kt_subheader" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem 0;">
+                        <div class="kt-subheader kt-grid__item" id="kt_subheader" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 2rem 0;">
                             <div class="kt-container">
                                 <div class="kt-subheader__main">
                                     <h2 class="kt-subheader__title" style="color: white; font-size: 2rem; font-weight: 700;">
@@ -67,8 +67,8 @@
                                 </div>
                                 <div class="kt-portlet__body" style="padding: 2.5rem; background: #f8f9fa;">
 
-                                    <!-- Información del estudiante -->
-                                    <div class="mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+                                    <!-- Informaciï¿½n del estudiante -->
+                                    <div class="mb-4" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3);">
                                         <div class="row align-items-center">
                                             <div class="col-md-8">
                                                 <div style="display: flex; align-items: center; margin-bottom: 1rem;">
@@ -88,7 +88,7 @@
                                             <div class="col-md-4 text-right">
                                                 <div style="background: rgba(255,255,255,0.2); border-radius: 30px; padding: 12px 24px; display: inline-block;">
                                                     <i class="flaticon2-protected" style="color: white; font-size: 1.2rem;"></i>
-                                                    <span style="color: white; font-weight: 600; font-size: 1rem; margin-left: 8px;">Sesión Activa</span>
+                                                    <span style="color: white; font-weight: 600; font-size: 1rem; margin-left: 8px;">Sesiï¿½n Activa</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -99,7 +99,7 @@
                                         <div class="row align-items-center">
                                             <div class="col-lg-3">
                                                 <label class="mb-0" style="font-weight: 700; font-size: 1.1rem; color: #464E5F;">
-                                                    <i class="flaticon2-layers-1" style="color: #667eea; font-size: 1.5rem; margin-right: 10px;"></i>
+                                                    <i class="flaticon2-layers-1" style="color: #1e3c72; font-size: 1.5rem; margin-right: 10px;"></i>
                                                     Programa:
                                                 </label>
                                             </div>
@@ -114,10 +114,10 @@
                                         </div>
                                     </div>
 
-                                    <!-- Área de vouchers -->
+                                    <!-- ï¿½rea de vouchers -->
                                     <div id="area_vouchers" style="display: none;">
                                         <div class="mb-4" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
-                                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem 2rem;">
+                                            <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 1.5rem 2rem;">
                                                 <h3 style="color: white; font-weight: 700; margin: 0; font-size: 1.4rem;">
                                                     <i class="flaticon2-file-1" style="font-size: 1.8rem; margin-right: 10px;"></i>
                                                     Vouchers de Pago Registrados
@@ -125,7 +125,7 @@
                                             </div>
                                             <div style="padding: 2rem;">
                                                 <div id="contenido_vouchers">
-                                                    <!-- Los vouchers se cargarán aquí dinámicamente -->
+                                                    <!-- Los vouchers se cargarï¿½n aquï¿½ dinï¿½micamente -->
                                                 </div>
                                             </div>
                                         </div>
@@ -149,7 +149,7 @@
     <div class="modal fade" id="modalImagenVoucher" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content" style="border-radius: 15px; overflow: hidden;">
-                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border: none;">
                     <h5 class="modal-title" style="color: white; font-weight: 700;">
                         <i class="flaticon2-photograph"></i> Voucher de Pago
                     </h5>
@@ -166,14 +166,14 @@
     </div>
 
     <script>
-        // Esperar a que jQuery esté completamente cargado
+        // Esperar a que jQuery estï¿½ completamente cargado
         window.addEventListener('load', function() {
             if (typeof jQuery === 'undefined') {
-                console.error('jQuery no está cargado!');
+                console.error('jQuery no estï¿½ cargado!');
                 return;
             }
 
-            // Cargar el script después de que jQuery esté disponible
+            // Cargar el script despuï¿½s de que jQuery estï¿½ disponible
             var script = document.createElement('script');
             script.src = 'vistas/recursos/assets/js/scripts/historial-vouchers-estudiante.js?v=<?php echo time(); ?>';
             document.body.appendChild(script);
@@ -193,7 +193,7 @@
 
         .voucher-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 25px rgba(30, 60, 114, 0.3);
         }
 
         .voucher-image {
@@ -211,7 +211,7 @@
         }
 
         .modulo-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             padding: 6px 14px;
             border-radius: 20px;
@@ -236,7 +236,7 @@
             }
         }
 
-        /* Animación de carga */
+        /* Animaciï¿½n de carga */
         @keyframes fadeIn {
             from {
                 opacity: 0;

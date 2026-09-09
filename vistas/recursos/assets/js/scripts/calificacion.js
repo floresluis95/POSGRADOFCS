@@ -85,7 +85,7 @@ function cargarAsignacionesDocente(docenteID) {
                 title: 'Cargando asignaciones...',
                 text: 'Por favor espere',
                 allowOutsideClick: false,
-                onOpen: function() {
+                didOpen: function() {
                     Swal.showLoading();
                 }
             });
@@ -104,11 +104,12 @@ function cargarAsignacionesDocente(docenteID) {
             } else {
                 console.log('No hay asignaciones');
                 Swal.fire({
-                    type: 'info',
-                    title: 'Sin asignaciones',
-                    text: 'Este docente no tiene módulos asignados',
-                    html: 'DocenteID: ' + docenteID + '<br>Response: ' + JSON.stringify(response)
+                    icon: 'info',
+                    title: 'Sin módulos asignados',
+                    text: 'Este docente aún no tiene módulos asignados. Solicite al administrador que le asigne un módulo desde "Asignación de Docentes".',
+                    confirmButtonText: 'Entendido'
                 });
+                volverPaso1();
             }
         },
         error: function(xhr, status, error) {
@@ -120,10 +121,10 @@ function cargarAsignacionesDocente(docenteID) {
 
             Swal.close();
             Swal.fire({
-                type: 'error',
+                icon: 'error',
                 title: 'Error',
-                text: 'Error al cargar las asignaciones',
-                html: 'Error: ' + error + '<br>Status: ' + status
+                text: 'No se pudieron cargar las asignaciones del docente. Intente nuevamente.',
+                confirmButtonText: 'Cerrar'
             });
         }
     });

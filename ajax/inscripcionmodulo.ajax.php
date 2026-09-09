@@ -49,8 +49,12 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
         ? (int)$_POST["programaIDFiltro"]
         : null;
 
+    $sede = isset($_POST["sedeFiltro"]) && $_POST["sedeFiltro"] !== ''
+        ? trim($_POST["sedeFiltro"])
+        : null;
+
     $listar = new InscripcionModuloControladores();
-    $listar->ListarEstudiantesMatriculadosControlador($programaID);
+    $listar->ListarEstudiantesMatriculadosControlador($programaID, $sede);
     exit();
 }
 

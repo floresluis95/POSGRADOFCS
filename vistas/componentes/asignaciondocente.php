@@ -37,7 +37,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
 }
 
 .tabla-asignacion thead {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
 }
 
 .tabla-asignacion thead th {
@@ -67,22 +67,13 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
 }
 
 .badge-codigo {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 5px 12px;
     border-radius: 12px;
     font-weight: 700;
     font-size: 11px;
     display: inline-block;
-}
-
-.badge-grado {
-    background: #e9ecef;
-    color: #495057;
-    padding: 4px 10px;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 11px;
 }
 
 .docente-asignado {
@@ -100,7 +91,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
 }
 
 .btn-asignar-tabla {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     border: none;
     padding: 6px 14px;
@@ -113,12 +104,12 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
 
 .btn-asignar-tabla:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
     color: white;
 }
 
 .btn-cambiar-tabla {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #52616e 0%, #37424a 100%);
     color: white;
     border: none;
     padding: 6px 14px;
@@ -131,7 +122,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
 
 .btn-cambiar-tabla:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+    box-shadow: 0 4px 12px rgba(55, 66, 74, 0.3);
     color: white;
 }
 
@@ -144,7 +135,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
 }
 
 .stats-header {
-    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 15px 20px;
     border-radius: 12px;
@@ -232,6 +223,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                     p.NombrePrograma,
                                     p.GradoAcademico,
                                     p.Codigo as CodigoPrograma,
+                                    p.Sede,
                                     CONCAT(d.Nombre, ' ', d.Apaterno, ' ', IFNULL(d.Amaterno, '')) as NombreDocente,
                                     (SELECT COUNT(DISTINCT ep.EstudianteID)
                                      FROM estudianteprograma ep
@@ -260,35 +252,69 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                     $sinDocente++;
                                 }
                             }
+                            $porcentajeAsignado = $totalModulos > 0 ? round(($conDocente / $totalModulos) * 100) : 0;
                             ?>
 
-                            <!-- Estadísticas -->
+                            <!-- Estadísticas (se recalculan según los filtros aplicados) -->
                             <div class="stats-header">
                                 <div class="stat-item-header">
-                                    <div class="numero"><?php echo $totalModulos; ?></div>
+                                    <div class="numero" id="stat-total"><?php echo $totalModulos; ?></div>
                                     <div class="label">Total Módulos Vigentes</div>
                                 </div>
                                 <div class="stat-item-header">
-                                    <div class="numero"><?php echo $conDocente; ?></div>
+                                    <div class="numero" id="stat-con"><?php echo $conDocente; ?></div>
                                     <div class="label">Con Docente Asignado</div>
                                 </div>
                                 <div class="stat-item-header">
-                                    <div class="numero"><?php echo $sinDocente; ?></div>
+                                    <div class="numero" id="stat-sin"><?php echo $sinDocente; ?></div>
                                     <div class="label">Sin Docente</div>
                                 </div>
+                                <div class="stat-item-header">
+                                    <div class="numero"><span id="stat-porcentaje"><?php echo $porcentajeAsignado; ?></span>%</div>
+                                    <div class="label">% Cobertura Docente</div>
+                                </div>
                             </div>
+                            <div id="stat-detalle-filtro" class="text-center" style="margin:-10px 0 20px; font-size:12px; color:#6c757d;"></div>
 
                             <!-- Sección de filtros -->
                             <div class="filter-box">
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label><strong><i class="fas fa-map-marker-alt"></i> Sede</strong></label>
+                                            <select class="form-control form-control-sm" id="filtro-sede">
+                                                <option value="">Todas las sedes</option>
+                                                <?php
+                                                $stmtSedes = Conexion::Conectar()->prepare("
+                                                    SELECT DISTINCT p.Sede
+                                                    FROM programa p
+                                                    INNER JOIN modulos m ON p.ProgramaID = m.ProgramaId
+                                                    WHERE p.Estado = 1
+                                                    AND p.Codigo LIKE :anioActual
+                                                    AND m.estadomodulo = 'ACTIVO'
+                                                    ORDER BY p.Sede
+                                                ");
+                                                $stmtSedes->bindValue(':anioActual', '%-' . $anioActual, PDO::PARAM_STR);
+                                                $stmtSedes->execute();
+                                                $sedes = $stmtSedes->fetchAll(PDO::FETCH_ASSOC);
+                                                foreach ($sedes as $s) {
+                                                    if ($s['Sede'] === '' || $s['Sede'] === null) continue;
+                                                    echo '<option value="' . htmlspecialchars($s['Sede']) . '">' .
+                                                         htmlspecialchars($s['Sede']) .
+                                                         '</option>';
+                                                }
+                                                ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label><strong><i class="fas fa-graduation-cap"></i> Programa</strong></label>
                                             <select class="form-control form-control-sm" id="filtro-programa">
                                                 <option value="">Todos los programas</option>
                                                 <?php
                                                 $stmt = Conexion::Conectar()->prepare("
-                                                    SELECT DISTINCT p.ProgramaID, p.NombrePrograma, p.GradoAcademico
+                                                    SELECT DISTINCT p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Sede
                                                     FROM programa p
                                                     INNER JOIN modulos m ON p.ProgramaID = m.ProgramaId
                                                     WHERE p.Estado = 1
@@ -300,7 +326,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                                 $stmt->execute();
                                                 $programas = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 foreach ($programas as $prog) {
-                                                    echo '<option value="' . $prog['ProgramaID'] . '">' .
+                                                    echo '<option value="' . $prog['ProgramaID'] . '" data-sede="' . htmlspecialchars($prog['Sede']) . '">' .
                                                          htmlspecialchars($prog['GradoAcademico'] . ' - ' . $prog['NombrePrograma']) .
                                                          '</option>';
                                                 }
@@ -308,7 +334,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label><strong><i class="fas fa-filter"></i> Estado</strong></label>
                                             <select class="form-control form-control-sm" id="filtro-estado">
@@ -318,7 +344,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label><strong><i class="fas fa-search"></i> Buscar</strong></label>
                                             <input type="text" class="form-control form-control-sm" id="filtro-buscar" placeholder="Código o nombre...">
@@ -341,6 +367,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                             <tr>
                                                 <th style="width: 80px;">Código</th>
                                                 <th>Módulo</th>
+                                                <th style="width: 90px;">Sede</th>
                                                 <th style="width: 120px;">Grado</th>
                                                 <th>Programa</th>
                                                 <th style="width: 200px;">Docente Asignado</th>
@@ -353,6 +380,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                                 <?php $tieneDocente = !empty($modulo['DocenteID']); ?>
                                                 <tr class="fila-modulo"
                                                     data-programa-id="<?php echo $modulo['ProgramaId']; ?>"
+                                                    data-sede="<?php echo htmlspecialchars($modulo['Sede']); ?>"
                                                     data-tiene-docente="<?php echo $tieneDocente ? 'true' : 'false'; ?>">
                                                     <td>
                                                         <span class="badge-codigo">
@@ -363,7 +391,10 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                                         <strong><?php echo htmlspecialchars($modulo['nombremodulo']); ?></strong>
                                                     </td>
                                                     <td>
-                                                        <span class="badge-grado">
+                                                        <small><?php echo htmlspecialchars($modulo['Sede']); ?></small>
+                                                    </td>
+                                                    <td>
+                                                        <span class="<?php echo FuncionesControladores::ClaseGrado($modulo['GradoAcademico']); ?>">
                                                             <?php echo htmlspecialchars($modulo['GradoAcademico']); ?>
                                                         </span>
                                                     </td>
@@ -424,7 +455,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
     <div class="modal fade" id="modalAsignarDocente" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content" style="border-radius: 15px; overflow: hidden;">
-                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
                     <h5 class="modal-title">
                         <i class="fas fa-user-plus"></i> Asignar Docente al Módulo
                     </h5>
@@ -464,7 +495,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <i class="fas fa-times"></i> Cancelar
                     </button>
-                    <button type="button" class="btn btn-primary" id="btn-guardar-asignacion" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                    <button type="button" class="btn btn-primary" id="btn-guardar-asignacion" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border: none;">
                         <i class="fas fa-save"></i> Guardar Asignación
                     </button>
                 </div>
@@ -478,16 +509,45 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
         let moduloActual = null;
 
         // Filtros
-        $('#filtro-programa, #filtro-estado').on('change', aplicarFiltros);
+        $('#filtro-sede, #filtro-programa, #filtro-estado').on('change', aplicarFiltros);
         $('#filtro-buscar').on('keyup', aplicarFiltros);
 
+        // Cascada: al elegir sede, limitar el combo de programas a los de esa sede
+        $('#filtro-sede').on('change', function() {
+            const sede = $(this).val();
+            const $programa = $('#filtro-programa');
+            const programaSeleccionado = $programa.val();
+
+            $programa.find('option').each(function() {
+                if (!$(this).val()) return; // "Todos los programas"
+                const perteneceSede = !sede || $(this).data('sede') === sede;
+                $(this).toggle(perteneceSede);
+            });
+
+            // Si el programa seleccionado ya no pertenece a la sede elegida, reiniciar
+            if (programaSeleccionado) {
+                const $opt = $programa.find('option[value="' + programaSeleccionado + '"]');
+                if (sede && $opt.data('sede') !== sede) {
+                    $programa.val('');
+                }
+            }
+        });
+
         function aplicarFiltros() {
+            const sede = $('#filtro-sede').val();
             const programaId = $('#filtro-programa').val();
             const estado = $('#filtro-estado').val();
             const busqueda = $('#filtro-buscar').val().toLowerCase();
 
+            let total = 0, con = 0, sin = 0;
+
             $('.fila-modulo').each(function() {
                 let mostrar = true;
+
+                // Filtro por sede
+                if (sede && $(this).data('sede') != sede) {
+                    mostrar = false;
+                }
 
                 // Filtro por programa
                 if (programaId && $(this).data('programa-id') != programaId) {
@@ -511,7 +571,35 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                 }
 
                 $(this).toggle(mostrar);
+
+                if (mostrar) {
+                    total++;
+                    if ($(this).data('tiene-docente') === true) {
+                        con++;
+                    } else {
+                        sin++;
+                    }
+                }
             });
+
+            actualizarEstadisticas(total, con, sin, sede, programaId);
+        }
+
+        function actualizarEstadisticas(total, con, sin, sede, programaId) {
+            $('#stat-total').text(total);
+            $('#stat-con').text(con);
+            $('#stat-sin').text(sin);
+            $('#stat-porcentaje').text(total > 0 ? Math.round((con / total) * 100) : 0);
+
+            const hayFiltro = sede || programaId || $('#filtro-estado').val() || $('#filtro-buscar').val();
+            if (hayFiltro) {
+                let detalle = 'Mostrando resultados filtrados';
+                if (sede) detalle += ' · Sede: ' + sede;
+                if (programaId) detalle += ' · Programa: ' + $('#filtro-programa option:selected').text();
+                $('#stat-detalle-filtro').text(detalle);
+            } else {
+                $('#stat-detalle-filtro').text('');
+            }
         }
 
         // Asignar docente

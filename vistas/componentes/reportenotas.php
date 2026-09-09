@@ -69,6 +69,52 @@ $csrf_token = bin2hex(random_bytes(32));
       <section id="html">
         <div class="row">
           <div class="col-12">
+            <div class="card shadow-sm mb-3">
+              <div class="card-header" style="background-color: #34495e;">
+                <h4 class="card-title text-white mb-0">
+                  <i class="fas fa-filter"></i> Filtrar por Sede y Programa
+                </h4>
+              </div>
+              <div class="card-content collapse show">
+                <div class="card-body">
+                  <div class="form-group row mb-0">
+                    <label class="col-lg-1 col-form-label"><strong>Sede:</strong></label>
+                    <div class="col-lg-4">
+                      <select class="form-control" id="filtroSedeReporte">
+                        <option value="">Todas las sedes...</option>
+                        <?php
+                          require_once 'modelos/programa.modelo.php';
+                          $sedesReporteNotas = ProgramasModelos::ListarSedesModelo();
+                          foreach ($sedesReporteNotas as $sedeOpcionReporte) {
+                              $sedeValorReporte = htmlspecialchars($sedeOpcionReporte, ENT_QUOTES);
+                              echo '<option value="' . $sedeValorReporte . '">' . $sedeValorReporte . '</option>';
+                          }
+                        ?>
+                      </select>
+                    </div>
+                    <label class="col-lg-1 col-form-label"><strong>Programa:</strong></label>
+                    <div class="col-lg-4">
+                      <select class="form-control" id="filtroProgramaReporte">
+                        <option value="">Todos los programas...</option>
+                        <?php
+                          $programasReporteNotas = ProgramasModelos::ListaProgramaModelo();
+                          foreach ($programasReporteNotas as $progReporte) {
+                              $nombreProgReporte = htmlspecialchars($progReporte['NombrePrograma'] ?? '', ENT_QUOTES);
+                              echo '<option value="' . $nombreProgReporte . '">' . $nombreProgReporte . '</option>';
+                          }
+                        ?>
+                      </select>
+                    </div>
+                    <div class="col-lg-2">
+                      <button type="button" class="btn btn-secondary btn-block" id="btnLimpiarFiltroReporte">
+                        <i class="fa fa-times"></i> Limpiar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="card shadow-sm">
               <div class="card-header bg-gradient-primary">
                 <h4 class="card-title text-white mb-0">
@@ -87,8 +133,11 @@ $csrf_token = bin2hex(random_bytes(32));
                       <thead class="thead-dark">
                         <tr>
                           <th class="text-center" style="width: 5%;">Nº</th>
-                          <th style="width: 35%;">
+                          <th style="width: 30%;">
                             <i class="fas fa-graduation-cap"></i> Programa Académico
+                          </th>
+                          <th class="text-center" style="width: 10%;">
+                            <i class="fas fa-map-marker-alt"></i> Sede
                           </th>
                           <th class="text-center" style="width: 15%;">
                             <i class="fas fa-award"></i> Grado
@@ -127,7 +176,7 @@ $csrf_token = bin2hex(random_bytes(32));
 
 <style>
   .table thead.thead-dark th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-color: #34495e;
     color: white;
     font-weight: 600;
     border: none;
@@ -137,13 +186,11 @@ $csrf_token = bin2hex(random_bytes(32));
   }
 
   .table tbody tr {
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease;
   }
 
   .table tbody tr:hover {
-    background-color: #f8f9fa;
-    transform: scale(1.005);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background-color: #f4f5f7;
   }
 
   .table tbody td {
@@ -154,15 +201,15 @@ $csrf_token = bin2hex(random_bytes(32));
   }
 
   .card.shadow-sm {
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
-    border: none;
-    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
     overflow: hidden;
   }
 
   .card-header.bg-gradient-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 20px;
+    background-color: #34495e;
+    padding: 15px 20px;
     border: none;
     display: flex;
     justify-content: space-between;
@@ -175,9 +222,19 @@ $csrf_token = bin2hex(random_bytes(32));
   }
 
   .badge {
-    padding: 6px 12px;
+    padding: 5px 10px;
     font-size: 11px;
     font-weight: 600;
+    border-radius: 3px;
+  }
+
+  .badge-primary,
+  .badge-danger,
+  .badge-success,
+  .badge-secondary {
+    background-color: #e9ecef !important;
+    color: #34495e !important;
+    border: 1px solid #ced4da;
   }
 </style>
 
@@ -185,7 +242,7 @@ $csrf_token = bin2hex(random_bytes(32));
 <div class="modal fade" id="ModalModulosPrograma" tabindex="-1" role="dialog" aria-labelledby="modalModulosLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
-      <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+      <div class="modal-header" style="background-color: #34495e; color: white;">
         <h4 class="modal-title text-white" id="modalModulosLabel">
           <i class="fas fa-book mr-2"></i> Módulos del Programa: <span id="nombreProgramaModal"></span>
         </h4>
@@ -215,7 +272,7 @@ $csrf_token = bin2hex(random_bytes(32));
 <div class="modal fade" id="ModalAuditoria" tabindex="-1" role="dialog" aria-labelledby="modalAuditoriaLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
-      <div class="modal-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+      <div class="modal-header" style="background-color: #34495e; color: white;">
         <h4 class="modal-title text-white" id="modalAuditoriaLabel">
           <i class="fas fa-history mr-2"></i> Panel de Auditoría: <span id="nombreModuloAuditoria"></span>
         </h4>

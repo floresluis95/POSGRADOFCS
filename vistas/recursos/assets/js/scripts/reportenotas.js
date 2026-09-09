@@ -5,7 +5,7 @@
 
 $(document).ready(function() {
     // Inicializar DataTables
-    $('#tablaProgramas').DataTable({
+    const tablaProgramas = $('#tablaProgramas').DataTable({
         language: {
             search: "Buscar:",
             lengthMenu: "Mostrar _MENU_ registros",
@@ -19,6 +19,29 @@ $(document).ready(function() {
             emptyTable: "No hay programas disponibles",
             zeroRecords: "No se encontraron resultados"
         }
+    });
+
+    // Filtros por Sede (columna 2) y Programa (columna 1): coincidencia exacta
+    // sobre el texto de la celda, para no mezclar programas con nombres parecidos.
+    function escaparRegex(texto) {
+        return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function aplicarFiltrosReporte() {
+        const sede = $('#filtroSedeReporte').val();
+        const programa = $('#filtroProgramaReporte').val();
+
+        tablaProgramas.column(2).search(sede ? '^' + escaparRegex(sede) + '$' : '', true, false);
+        tablaProgramas.column(1).search(programa ? '^' + escaparRegex(programa) + '$' : '', true, false);
+        tablaProgramas.draw();
+    }
+
+    $('#filtroSedeReporte, #filtroProgramaReporte').on('change', aplicarFiltrosReporte);
+
+    $('#btnLimpiarFiltroReporte').on('click', function() {
+        $('#filtroSedeReporte').val('');
+        $('#filtroProgramaReporte').val('');
+        aplicarFiltrosReporte();
     });
 
     // Evento: Ver módulos del programa

@@ -62,21 +62,21 @@ date_default_timezone_set("America/La_Paz");
           <!-- Reporte 1: Lista de Estudiantes -->
           <div class="col-md-4">
             <div class="card shadow-sm" style="border-radius: 15px; overflow: hidden;">
-              <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px;">
+              <div class="card-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 20px;">
                 <h4 class="card-title text-white mb-0">
                   <i class="fas fa-users"></i> Lista de Estudiantes
                 </h4>
               </div>
               <div class="card-body" style="padding: 30px;">
                 <div class="text-center mb-3">
-                  <i class="fas fa-file-pdf" style="font-size: 60px; color: #667eea;"></i>
+                  <i class="fas fa-file-pdf" style="font-size: 60px; color: #1e3c72;"></i>
                 </div>
                 <p class="text-center" style="color: #666; min-height: 60px;">
                   Genera un reporte completo de todos los estudiantes activos con sus datos personales y de contacto.
                 </p>
                 <form action="ajax/reportes.ajax.php" method="POST" target="_blank">
                   <input type="hidden" name="tipo_reporte" value="estudiantes">
-                  <button type="submit" class="btn btn-primary btn-block" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px;">
+                  <button type="submit" class="btn btn-primary btn-block" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border: none; padding: 12px;">
                     <i class="fas fa-download"></i> Generar Reporte
                   </button>
                 </form>
@@ -153,7 +153,7 @@ date_default_timezone_set("America/La_Paz");
           <div class="col-12">
             <div class="card shadow-sm" style="border-radius: 15px; overflow: hidden;">
               <div class="card-body" style="padding: 25px;">
-                <h5 style="color: #667eea;">
+                <h5 style="color: #1e3c72;">
                   <i class="fas fa-info-circle"></i> Información sobre los Reportes
                 </h5>
                 <hr>
@@ -214,8 +214,8 @@ date_default_timezone_set("America/La_Paz");
   }
 
   .form-control:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
   }
 </style>
 

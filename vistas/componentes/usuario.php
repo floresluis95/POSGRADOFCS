@@ -126,7 +126,7 @@
 
 <style>
   .table thead.thead-dark th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     font-weight: 600;
     border: none;
@@ -160,7 +160,7 @@
   }
 
   .card-header.bg-gradient-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     padding: 20px;
     border: none;
     display: flex;
@@ -192,7 +192,7 @@
   }
 
   .form-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 10px 15px;
     border-radius: 5px;

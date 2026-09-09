@@ -75,7 +75,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
               <div class="row justify-content-md-right mb-3">
                 <div class="col-lg-12">
                   <div class="kt-portlet">
-                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
                       <div class="kt-portlet__head-label">
                         <h3 class="kt-portlet__head-title" style="color: white;">
                           <i class="fa fa-filter"></i> FILTROS DE BÚSQUEDA
@@ -151,7 +151,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
               <div class="row justify-content-md-center">
                 <div class="col-lg-12">
                   <div class="kt-portlet">
-                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #52616e 0%, #37424a 100%);">
                       <div class="kt-portlet__head-label">
                         <h3 class="kt-portlet__head-title" style="color: white;">
                           <i class="fa fa-list-alt"></i> LISTA DE PROGRAMAS
@@ -181,7 +181,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                       <div class="kt-portlet__body">
                         <div class="table-responsive">
                           <table class="table table-hover table-bordered" id="tabladetalle" style="background: white;">
-                            <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <thead style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
                               <tr>
                                 <th class="text-center" style="color: white;">N°</th>
                                 <th style="color: white;">PROGRAMA</th>
@@ -511,8 +511,8 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
   }
 
   .form-control:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
   }
 
   /* Estilos para input type="date" */

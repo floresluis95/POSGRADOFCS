@@ -6,7 +6,7 @@
 
 /* Header principal con gradiente */
 #kt_header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
@@ -79,7 +79,7 @@
 .user-avatar-modern {
     width: 45px;
     height: 45px;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #52616e 0%, #37424a 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -88,7 +88,7 @@
     font-weight: 700;
     font-size: 18px;
     margin-right: 12px;
-    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+    box-shadow: 0 4px 15px rgba(55, 66, 74, 0.4);
     border: 3px solid rgba(255, 255, 255, 0.3);
     transition: all 0.3s ease;
     cursor: pointer;
@@ -96,7 +96,7 @@
 
 .user-avatar-modern:hover {
     transform: scale(1.1) rotate(5deg);
-    box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+    box-shadow: 0 6px 20px rgba(55, 66, 74, 0.6);
 }
 
 .kt-header__topbar-wrapper {
@@ -188,7 +188,7 @@
 .dropdown-user-avatar {
     width: 50px;
     height: 50px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -227,7 +227,7 @@
 
 .dropdown-info-item i {
     width: 25px;
-    color: #667eea;
+    color: #1e3c72;
     font-size: 14px;
 }
 
@@ -244,7 +244,7 @@
     width: calc(100% - 40px);
     margin: 10px 20px 0;
     padding: 12px;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #52616e 0%, #37424a 100%);
     color: white;
     border: none;
     border-radius: 10px;
@@ -256,8 +256,8 @@
 
 .btn-logout-modern:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
-    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+    box-shadow: 0 6px 20px rgba(55, 66, 74, 0.4);
+    background: linear-gradient(135deg, #37424a 0%, #52616e 100%);
 }
 
 .btn-logout-modern i {

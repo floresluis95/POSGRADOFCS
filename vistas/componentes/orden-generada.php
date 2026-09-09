@@ -113,7 +113,7 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
 
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             font-family: 'Poppins', sans-serif;
             min-height: 100vh;
             padding: 20px;
@@ -129,7 +129,7 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
         }
 
         .success-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             padding: 30px;
             text-align: center;
@@ -178,7 +178,7 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
         .order-number-value {
             font-size: 28px;
             font-weight: 700;
-            color: #667eea;
+            color: #1e3c72;
         }
 
         .info-grid {
@@ -192,7 +192,7 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
             padding: 15px;
             background: #f8f9fa;
             border-radius: 8px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #1e3c72;
         }
 
         .info-label {
@@ -222,12 +222,12 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
 
         .factura-input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.15);
         }
 
         .amount-box {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             padding: 30px;
             border-radius: 10px;
@@ -261,7 +261,7 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
         }
 
         .btn-download {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             padding: 15px 30px;
             border: none;
@@ -279,7 +279,7 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
 
         .btn-download:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 20px rgba(30, 60, 114, 0.4);
         }
 
         .btn-secondary {
@@ -314,7 +314,7 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
         </div>
 
         <!-- Información del Estudiante -->
-        <h3 style="margin-bottom: 20px; color: #667eea;">
+        <h3 style="margin-bottom: 20px; color: #1e3c72;">
             <i class="flaticon2-user"></i> Información del Estudiante
         </h3>
         <div class="info-grid">
@@ -337,7 +337,7 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
         </div>
 
         <!-- Información del Programa -->
-        <h3 style="margin-bottom: 20px; margin-top: 30px; color: #667eea;">
+        <h3 style="margin-bottom: 20px; margin-top: 30px; color: #1e3c72;">
             <i class="flaticon2-layers-1"></i> Información del Programa
         </h3>
         <div class="info-grid">
@@ -364,7 +364,7 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
         </div>
 
         <!-- Datos para la Factura (editables antes de generar la boleta) -->
-        <h3 style="margin-bottom: 20px; margin-top: 30px; color: #667eea;">
+        <h3 style="margin-bottom: 20px; margin-top: 30px; color: #1e3c72;">
             <i class="flaticon2-document"></i> Datos para la Factura
         </h3>
         <div class="info-grid">

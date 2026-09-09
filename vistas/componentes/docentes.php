@@ -133,7 +133,7 @@ $csrf_token = bin2hex(random_bytes(32));
 
 <style>
   .table thead.thead-dark th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     font-weight: 600;
     border: none;
@@ -167,7 +167,7 @@ $csrf_token = bin2hex(random_bytes(32));
   }
 
   .card-header.bg-gradient-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     padding: 20px;
     border: none;
     display: flex;
@@ -199,7 +199,7 @@ $csrf_token = bin2hex(random_bytes(32));
   }
 
   .form-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 10px 15px;
     border-radius: 5px;
@@ -344,9 +344,9 @@ $csrf_token = bin2hex(random_bytes(32));
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <div class="custom-control custom-checkbox custom-control-inline" style="padding: 15px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-radius: 8px; border: 2px solid #667eea;">
+                                <div class="custom-control custom-checkbox custom-control-inline" style="padding: 15px; background: linear-gradient(135deg, rgba(30, 60, 114, 0.1) 0%, rgba(42, 82, 152, 0.1) 100%); border-radius: 8px; border: 2px solid #1e3c72;">
                                     <input type="checkbox" class="custom-control-input" id="checkExtranjero" name="EsExtranjero" value="1">
-                                    <label class="custom-control-label" for="checkExtranjero" style="font-size: 1.1rem; font-weight: 600; color: #667eea; cursor: pointer;">
+                                    <label class="custom-control-label" for="checkExtranjero" style="font-size: 1.1rem; font-weight: 600; color: #1e3c72; cursor: pointer;">
                                         <i class="fas fa-passport mr-2"></i> El docente es extranjero
                                     </label>
                                 </div>
@@ -555,7 +555,7 @@ $csrf_token = bin2hex(random_bytes(32));
      aria-labelledby="modalEditarDocenteLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border: none;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #52616e 0%, #37424a 100%); border: none;">
                 <h4 class="modal-title text-white" id="modalEditarDocenteLabel">
                     <i class="fas fa-edit mr-2"></i> Editar Datos del Docente
                 </h4>
@@ -675,9 +675,9 @@ $csrf_token = bin2hex(random_bytes(32));
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <div class="custom-control custom-checkbox custom-control-inline" style="padding: 15px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-radius: 8px; border: 2px solid #667eea;">
+                                <div class="custom-control custom-checkbox custom-control-inline" style="padding: 15px; background: linear-gradient(135deg, rgba(30, 60, 114, 0.1) 0%, rgba(42, 82, 152, 0.1) 100%); border-radius: 8px; border: 2px solid #1e3c72;">
                                     <input type="checkbox" class="custom-control-input" id="editCheckExtranjero" name="editEsExtranjero" value="1">
-                                    <label class="custom-control-label" for="editCheckExtranjero" style="font-size: 1.1rem; font-weight: 600; color: #667eea; cursor: pointer;">
+                                    <label class="custom-control-label" for="editCheckExtranjero" style="font-size: 1.1rem; font-weight: 600; color: #1e3c72; cursor: pointer;">
                                         <i class="fas fa-passport mr-2"></i> El docente es extranjero
                                     </label>
                                 </div>

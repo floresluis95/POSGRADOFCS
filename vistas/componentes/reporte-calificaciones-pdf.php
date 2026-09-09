@@ -169,12 +169,12 @@ function numeroALetras($numero) {
         .header {
             text-align: center;
             margin-bottom: 30px;
-            border-bottom: 3px solid #667eea;
+            border-bottom: 3px solid #1e3c72;
             padding-bottom: 20px;
         }
 
         .header h1 {
-            color: #667eea;
+            color: #1e3c72;
             font-size: 20pt;
             margin-bottom: 5px;
             text-transform: uppercase;
@@ -182,7 +182,7 @@ function numeroALetras($numero) {
         }
 
         .header h2 {
-            color: #764ba2;
+            color: #2a5298;
             font-size: 14pt;
             margin-bottom: 3px;
         }
@@ -198,7 +198,7 @@ function numeroALetras($numero) {
            ==================================== */
         .info-modulo {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #1e3c72;
             padding: 15px;
             margin-bottom: 20px;
             border-radius: 5px;
@@ -217,7 +217,7 @@ function numeroALetras($numero) {
         .info-modulo td:first-child {
             font-weight: bold;
             width: 150px;
-            color: #667eea;
+            color: #1e3c72;
         }
 
         /* ====================================
@@ -231,7 +231,7 @@ function numeroALetras($numero) {
         }
 
         .tabla-calificaciones thead {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
         }
 
@@ -276,7 +276,7 @@ function numeroALetras($numero) {
         }
 
         .badge-aprobado {
-            background-color: #1dc9b7;
+            background-color: #1e3c72;
             color: white;
         }
 
@@ -306,13 +306,13 @@ function numeroALetras($numero) {
             text-align: center;
             padding: 15px;
             background: #f8f9fa;
-            border-left: 3px solid #667eea;
+            border-left: 3px solid #1e3c72;
             margin: 0 5px;
         }
 
         .estadistica-item h3 {
             font-size: 24pt;
-            color: #667eea;
+            color: #1e3c72;
             margin-bottom: 5px;
         }
 
@@ -392,7 +392,7 @@ function numeroALetras($numero) {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             border: none;
             padding: 12px 30px;
@@ -400,14 +400,14 @@ function numeroALetras($numero) {
             font-size: 12pt;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.4);
             transition: all 0.3s ease;
             z-index: 1000;
         }
 
         .btn-imprimir:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            box-shadow: 0 6px 20px rgba(30, 60, 114, 0.6);
         }
 
         .btn-imprimir:active {

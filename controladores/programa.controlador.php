@@ -69,7 +69,7 @@ class ProgramasControladores
     echo '<tr style="border-bottom: 2px solid #e9ecef;">
         <td class="text-center align-middle"><strong>'.$programa['ProgramaID'].'</strong></td>
         <td class="align-middle"><strong>'.$programa["NombrePrograma"].'</strong></td>
-        <td class="text-center align-middle">'.$programa["GradoAcademico"].'</td>
+        <td class="text-center align-middle"><span class="'.FuncionesControladores::ClaseGrado($programa["GradoAcademico"]).'">'.$programa["GradoAcademico"].'</span></td>
         <td class="text-center align-middle"><span class="badge badge-secondary">'.$programa["Codigo"].'</span></td>
         <td class="text-center align-middle">'.date("d/m/Y", strtotime($programa["FechaInicio"])).'</td>
         <td class="text-center align-middle">'.$programa["Sede"].'</td>';

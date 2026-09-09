@@ -12,13 +12,13 @@ class InscripcionModuloControladores
     /**
      * Listar estudiantes matriculados en programas
      */
-    public function ListarEstudiantesMatriculadosControlador($programaID = null)
+    public function ListarEstudiantesMatriculadosControlador($programaID = null, $sede = null)
     {
-        $estudiantes = InscripcionModuloModelos::ListarEstudiantesMatriculadosModelo($programaID);
+        $estudiantes = InscripcionModuloModelos::ListarEstudiantesMatriculadosModelo($programaID, $sede);
 
         if (empty($estudiantes)) {
             echo '<tr>
-                    <td colspan="12" class="text-center">No hay estudiantes matriculados</td>
+                    <td colspan="13" class="text-center">No hay estudiantes matriculados</td>
                   </tr>';
             return;
         }
@@ -61,6 +61,7 @@ class InscripcionModuloControladores
                     <td>' . $estudiante['NombrePrograma'] . '</td>
                     <td class="text-center"><span class="badge badge-info">' . $estudiante['GradoAcademico'] . '</span></td>
                     <td class="text-center"><span class="badge badge-primary">' . $estudiante['CodigoPrograma'] . '</span></td>
+                    <td class="text-center">' . htmlspecialchars($estudiante['Sede'] ?? '') . '</td>
                     <td class="text-center"><strong>Bs. ' . number_format($montoMostrar, 2) . '</strong></td>
                     <td class="text-center">' . $descuentoHTML . '</td>
                     <td class="text-center">' . $tipoPago . '</td>

@@ -233,17 +233,32 @@
 
         /* Header con Gradiente */
         .kt-portlet__head--gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             padding: 25px 30px;
             border: none;
         }
 
         .kt-portlet__head--results {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #52616e 0%, #37424a 100%);
             color: white;
             padding: 25px 30px;
             border: none;
+        }
+
+        /* El tema fuerza un color oscuro en .kt-portlet__head-title (mayor
+           especificidad); se reafirma blanco explicitamente para que no se
+           pierda sobre estos encabezados oscuros */
+        .kt-portlet__head--gradient .kt-portlet__head-label .kt-portlet__head-title,
+        .kt-portlet__head--gradient .kt-portlet__head-label .kt-portlet__head-title small,
+        .kt-portlet__head--results .kt-portlet__head-label .kt-portlet__head-title,
+        .kt-portlet__head--results .kt-portlet__head-label .kt-portlet__head-title small {
+            color: #ffffff !important;
+        }
+
+        .kt-portlet__head--gradient .kt-portlet__head-label .kt-portlet__head-icon,
+        .kt-portlet__head--results .kt-portlet__head-label .kt-portlet__head-icon {
+            color: #ffffff !important;
         }
 
         .kt-portlet__head-icon {
@@ -297,7 +312,7 @@
         .filter-card__icon {
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             border-radius: 12px;
             display: flex;
             align-items: center;
@@ -344,8 +359,8 @@
         }
 
         .search-section:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+            border-color: #1e3c72;
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.1);
         }
 
         .search-section__header {
@@ -358,7 +373,7 @@
 
         .search-section__header i {
             font-size: 24px;
-            color: #667eea;
+            color: #1e3c72;
             margin-right: 12px;
         }
 
@@ -396,13 +411,13 @@
         }
 
         .form-control-modern:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
             background: #f8f9ff;
         }
 
         .input-group-modern .input-group-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             border: none;
             color: white;
             border-radius: 8px 0 0 8px;
@@ -419,7 +434,7 @@
         ======================================== */
         .btn-search-modern {
             width: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             border: none;
             color: white;
             font-weight: 600;
@@ -436,8 +451,8 @@
 
         .btn-search-modern:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            box-shadow: 0 8px 20px rgba(30, 60, 114, 0.4);
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
         }
 
         .btn-search-modern:active {
@@ -496,7 +511,7 @@
 
         .table-modern thead th i {
             margin-right: 8px;
-            color: #667eea;
+            color: #1e3c72;
             font-size: 16px;
         }
 
@@ -508,7 +523,7 @@
         .table-modern tbody tr:hover {
             background: linear-gradient(90deg, #f8f9ff 0%, #fff 100%);
             transform: scale(1.01);
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 2px 8px rgba(30, 60, 114, 0.1);
         }
 
         .table-modern tbody td {
@@ -537,7 +552,7 @@
         .empty-state__icon {
             width: 80px;
             height: 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;

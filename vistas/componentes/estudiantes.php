@@ -130,7 +130,7 @@ $csrf_token = bin2hex(random_bytes(32));
 
 <style>
   .table thead.thead-dark th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     font-weight: 600;
     border: none;
@@ -164,7 +164,7 @@ $csrf_token = bin2hex(random_bytes(32));
   }
 
   .card-header.bg-gradient-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     padding: 20px;
     border: none;
     display: flex;
@@ -196,7 +196,7 @@ $csrf_token = bin2hex(random_bytes(32));
   }
 
   .form-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 10px 15px;
     border-radius: 5px;
@@ -264,6 +264,7 @@ $csrf_token = bin2hex(random_bytes(32));
                                     <option value="TJ">Tarija</option>
                                     <option value="BN">Beni</option>
                                     <option value="PD">Pando</option>
+                                    <option value="OTR">Otro</option>
                                 </select>
                                 <div class="invalid-feedback">Seleccione el lugar de expedición.</div>
                             </div>

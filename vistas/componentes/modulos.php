@@ -244,7 +244,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
         <div class="row">
             <div class="col-lg-12">
                 <div class="kt-portlet">
-                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
                         <div class="kt-portlet__head-label">
                             <h4 style="color: white; margin: 0;">
                                 <i class="fa fa-list"></i> Módulos Registrados
@@ -255,7 +255,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                     <div class="kt-portlet__body">
                         <div class="table-responsive">
                             <table class="table table-striped table-bordered table-hover" id="tablaModulos" style="width: 100%;">
-                                <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <thead style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
                                     <tr>
                                         <th class="text-center" style="color: white; width: 50px;">#</th>
                                         <th class="text-center" style="color: white; width: 120px;">CÓDIGO</th>
@@ -289,7 +289,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
 <div class="modal fade" id="modalRegistrarModulos" tabindex="-1" role="dialog" style="z-index: 1050;">
     <div class="modal-dialog modal-xl" role="document" style="max-width: 90%;">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
                 <h5 class="modal-title">
                     <i class="fa fa-book"></i> REGISTRAR MÓDULOS DEL PROGRAMA
                 </h5>
@@ -371,7 +371,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
 <div class="modal fade" id="modalEditarModulo" tabindex="-1" role="dialog" style="z-index: 1050;">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #52616e 0%, #37424a 100%); color: white;">
                 <h5 class="modal-title">
                     <i class="fa fa-edit"></i> EDITAR MÓDULO
                 </h5>
@@ -1300,7 +1300,7 @@ $(document).ready(function() {
 }
 
 .select2-container--default .select2-results__option--highlighted[aria-selected] {
-    background-color: #667eea !important;
+    background-color: #1e3c72 !important;
     color: white !important;
 }
 
@@ -1455,36 +1455,36 @@ $(document).ready(function() {
 }
 
 .badge-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
 }
 
 .badge-info {
-    background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+    background: linear-gradient(135deg, #0f6674 0%, #159895 100%);
 }
 
 .badge-success {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    background: linear-gradient(135deg, #1e7145 0%, #27ae60 100%);
 }
 
 .badge-secondary {
-    background: linear-gradient(135deg, #868f96 0%, #596164 100%);
+    background: linear-gradient(135deg, #52616e 0%, #37424a 100%);
 }
 
 /* Botones de acción mejorados */
 .btn-editar-modulo {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #52616e 0%, #37424a 100%);
     border: none;
     color: white;
     padding: 6px 12px;
     border-radius: 6px;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(245, 87, 108, 0.3);
+    box-shadow: 0 2px 5px rgba(55, 66, 74, 0.3);
 }
 
 .btn-editar-modulo:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.5);
-    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+    box-shadow: 0 4px 12px rgba(55, 66, 74, 0.5);
+    background: linear-gradient(135deg, #37424a 0%, #52616e 100%);
     color: white;
 }
 
@@ -1520,8 +1520,8 @@ $(document).ready(function() {
 }
 
 #modalEditarModulo .form-control:focus {
-    border-color: #f5576c;
-    box-shadow: 0 0 0 3px rgba(245, 87, 108, 0.1);
+    border-color: #37424a;
+    box-shadow: 0 0 0 3px rgba(55, 66, 74, 0.1);
 }
 
 #modalEditarModulo .alert-info {
@@ -1552,7 +1552,7 @@ $(document).ready(function() {
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
     border: none !important;
     color: white !important;
 }

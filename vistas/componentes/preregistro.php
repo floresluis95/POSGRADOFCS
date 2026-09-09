@@ -399,7 +399,7 @@ kt-aside--fixed kt-page--loading">
 
                   <!-- TABLA DE PREREGISTROS PENDIENTES (Read + Update + Delete) -->
                   <div class="kt-portlet mt-4 kt-portlet-preregistros-pendientes">
-                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1dc9b7 0%, #667eea 100%);">
+                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
                       <div class="kt-portlet__head-label">
                         <h3 class="kt-portlet__head-title" style="color: white;">
                           <i class="flaticon2-list"></i> PRE-REGISTROS PENDIENTES
@@ -493,7 +493,7 @@ kt-aside--fixed kt-page--loading">
   <div class="modal fade" id="ModalEditarPreregistro" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-        <div class="modal-header" style="background: linear-gradient(135deg, #ffb822 0%, #f5576c 100%); color: white; border-radius: 15px 15px 0 0;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #52616e 0%, #37424a 100%); color: white; border-radius: 15px 15px 0 0;">
           <h5 class="modal-title"><i class="flaticon2-edit"></i> Editar Pre-Registro</h5>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
             <span aria-hidden="true">&times;</span>
@@ -526,7 +526,7 @@ kt-aside--fixed kt-page--loading">
   <div class="modal fade" id="ModalNuevaProfesion" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border-radius: 15px 15px 0 0;">
           <h5 class="modal-title"><i class="fa fa-plus"></i> Nueva Profesión</h5>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
             <span aria-hidden="true">&times;</span>
@@ -553,7 +553,7 @@ kt-aside--fixed kt-page--loading">
   <div class="modal fade" id="ModalDetallePreregistro" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border-radius: 15px 15px 0 0;">
           <h5 class="modal-title"><i class="fa fa-eye"></i> Detalle de la Solicitud</h5>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
             <span aria-hidden="true">&times;</span>
@@ -573,7 +573,7 @@ kt-aside--fixed kt-page--loading">
   <div class="modal fade" id="ModalGenerarOrdenPago" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-        <div class="modal-header" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius: 15px 15px 0 0;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e7145 0%, #27ae60 100%); color: white; border-radius: 15px 15px 0 0;">
           <h5 class="modal-title"><i class="fa fa-file-invoice"></i> Generar Orden de Pago</h5>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
             <span aria-hidden="true">&times;</span>
@@ -1500,7 +1500,7 @@ if (document.readyState === 'loading') {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: #fff;
     font-size: 12px;
     margin-right: 6px;
@@ -1515,7 +1515,7 @@ if (document.readyState === 'loading') {
     margin-top: 10px;
     padding: 8px 12px;
     background: #f4f6fb;
-    border-left: 3px solid #667eea;
+    border-left: 3px solid #1e3c72;
     border-radius: 6px;
 }
 

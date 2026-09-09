@@ -34,7 +34,7 @@
                 <div class="kt-body kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-grid--stretch" id="kt_body">
                     <div class="kt-content  kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
 
-                        <div class="kt-subheader kt-grid__item" id="kt_subheader" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem 0;">
+                        <div class="kt-subheader kt-grid__item" id="kt_subheader" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 2rem 0;">
                             <div class="kt-container">
                                 <div class="kt-subheader__main">
                                     <h2 class="kt-subheader__title" style="color: white; font-size: 2rem; font-weight: 700;">
@@ -68,7 +68,7 @@
                                 <div class="kt-portlet__body" style="padding: 2.5rem; background: #f8f9fa;">
 
                                     <!-- Informaci�n del estudiante -->
-                                    <div class="mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+                                    <div class="mb-4" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3);">
                                         <div class="row align-items-center">
                                             <div class="col-md-8">
                                                 <div style="display: flex; align-items: center; margin-bottom: 1rem;">
@@ -99,7 +99,7 @@
                                         <div class="row align-items-center">
                                             <div class="col-lg-3">
                                                 <label class="mb-0" style="font-weight: 700; font-size: 1.1rem; color: #464E5F;">
-                                                    <i class="flaticon2-layers-1" style="color: #667eea; font-size: 1.5rem; margin-right: 10px;"></i>
+                                                    <i class="flaticon2-layers-1" style="color: #1e3c72; font-size: 1.5rem; margin-right: 10px;"></i>
                                                     Programa:
                                                 </label>
                                             </div>
@@ -120,7 +120,7 @@
                                         <!-- Resumen de pagos -->
                                         <div class="row mb-5" id="resumen_pagos_container">
                                             <div class="col-lg-4 mb-3">
-                                                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); height: 100%;">
+                                                <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3); height: 100%;">
                                                     <div style="display: flex; align-items: center; justify-content: space-between;">
                                                         <div>
                                                             <div style="background: rgba(255,255,255,0.2); border-radius: 12px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
@@ -137,7 +137,7 @@
                                                 </div>
                                             </div>
                                             <div class="col-lg-4 mb-3">
-                                                <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(17, 153, 142, 0.3); height: 100%;">
+                                                <div style="background: linear-gradient(135deg, #1e7145 0%, #27ae60 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(30, 113, 69, 0.3); height: 100%;">
                                                     <div style="display: flex; align-items: center; justify-content: space-between;">
                                                         <div>
                                                             <div style="background: rgba(255,255,255,0.2); border-radius: 12px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
@@ -157,7 +157,7 @@
                                                 </div>
                                             </div>
                                             <div class="col-lg-4 mb-3">
-                                                <div style="background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(238, 9, 121, 0.3); height: 100%;">
+                                                <div style="background: linear-gradient(135deg, #c0392b 0%, #dc3545 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(192, 57, 43, 0.3); height: 100%;">
                                                     <div style="display: flex; align-items: center; justify-content: space-between;">
                                                         <div>
                                                             <div style="background: rgba(255,255,255,0.2); border-radius: 12px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
@@ -180,7 +180,7 @@
 
                                         <!-- Historial de Cuotas -->
                                         <div class="mb-4" id="modulos_pagados_container" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
-                                            <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 1.5rem 2rem;">
+                                            <div style="background: linear-gradient(135deg, #1e7145 0%, #27ae60 100%); padding: 1.5rem 2rem;">
                                                 <h3 style="color: white; font-weight: 700; margin: 0; font-size: 1.4rem;">
                                                     <i class="flaticon2-check-mark" style="font-size: 1.8rem; margin-right: 10px;"></i>
                                                     Historial de Cuotas
@@ -190,7 +190,7 @@
                                                 <div class="table-responsive">
                                                     <table class="table table-hover" id="tabla_modulos_pagados" style="margin-bottom: 0;">
                                                         <thead>
-                                                            <tr style="background: #f8f9fa; border-bottom: 2px solid #11998e;">
+                                                            <tr style="background: #f8f9fa; border-bottom: 2px solid #1e7145;">
                                                                 <th class="text-center" width="10%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">N° CUOTA</th>
                                                                 <th class="text-center" width="20%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">MONTO</th>
                                                                 <th class="text-center" width="20%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">FECHA DE PAGO</th>

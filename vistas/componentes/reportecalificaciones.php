@@ -47,7 +47,7 @@ date_default_timezone_set("America/La_Paz");
                     <!-- CONTENIDO PRINCIPAL -->
                     <div class="container-fluid">
                         <div class="kt-portlet kt-portlet--mobile">
-                            <div class="kt-portlet__head" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px 10px 0 0;">
+                            <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 10px 10px 0 0;">
                                 <div class="kt-portlet__head-label">
                                     <h3 class="kt-portlet__head-title text-white">
                                         <i class="fa fa-chart-bar"></i> Mis Modulos Asignados - Estado de Calificaciones
@@ -74,7 +74,7 @@ date_default_timezone_set("America/La_Paz");
                                 </div>
 
                                 <!-- INFORMACI�N DEL DOCENTE -->
-                                <div id="info-docente" class="alert alert-light mb-4" style="display: none; border-left: 4px solid #1dc9b7;">
+                                <div id="info-docente" class="alert alert-light mb-4" style="display: none; border-left: 4px solid #1e3c72;">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <p class="mb-1"><strong><i class="fa fa-user"></i> Docente:</strong> <span id="docente-nombre"></span></p>
@@ -100,7 +100,7 @@ date_default_timezone_set("America/La_Paz");
 <div class="modal fade" id="modalFechasPDF" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
                 <h5 class="modal-title text-white">
                     <i class="fa fa-calendar"></i> Seleccionar Fechas para el PDF
                 </h5>
@@ -165,7 +165,7 @@ date_default_timezone_set("America/La_Paz");
 }
 
 .table-modulos thead {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
 }
 

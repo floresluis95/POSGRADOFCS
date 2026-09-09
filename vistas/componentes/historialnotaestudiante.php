@@ -34,7 +34,7 @@
                 <div class="kt-body kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-grid--stretch" id="kt_body">
                     <div class="kt-content  kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
 
-                        <div class="kt-subheader kt-grid__item" id="kt_subheader" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem 0;">
+                        <div class="kt-subheader kt-grid__item" id="kt_subheader" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 2rem 0;">
                             <div class="kt-container">
                                 <div class="kt-subheader__main">
                                     <h2 class="kt-subheader__title" style="color: white; font-size: 2rem; font-weight: 700;">
@@ -68,7 +68,7 @@
                                 <div class="kt-portlet__body" style="padding: 2.5rem; background: #f8f9fa;">
 
                                     <!-- Información del estudiante -->
-                                    <div class="mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+                                    <div class="mb-4" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3);">
                                         <div class="row align-items-center">
                                             <div class="col-md-8">
                                                 <div style="display: flex; align-items: center; margin-bottom: 1rem;">
@@ -99,7 +99,7 @@
                                         <div class="row align-items-center">
                                             <div class="col-lg-3">
                                                 <label class="mb-0" style="font-weight: 700; font-size: 1.1rem; color: #464E5F;">
-                                                    <i class="flaticon2-layers-1" style="color: #667eea; font-size: 1.5rem; margin-right: 10px;"></i>
+                                                    <i class="flaticon2-layers-1" style="color: #1e3c72; font-size: 1.5rem; margin-right: 10px;"></i>
                                                     Programa:
                                                 </label>
                                             </div>
@@ -116,7 +116,7 @@
 
                                     <!-- Tabla de calificaciones -->
                                     <div class="mb-4" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
-                                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center;">
                                             <h3 style="color: white; font-weight: 700; margin: 0; font-size: 1.4rem;">
                                                 <i class="flaticon2-line-chart" style="font-size: 1.8rem; margin-right: 10px;"></i>
                                                 Detalle de Calificaciones Finales
@@ -129,7 +129,7 @@
                                             <div class="table-responsive">
                                                 <table class="table table-hover mb-0" id="tabla_calificaciones_finales">
                                                     <thead>
-                                                        <tr style="background: #f8f9fa; border-bottom: 2px solid #667eea;">
+                                                        <tr style="background: #f8f9fa; border-bottom: 2px solid #1e3c72;">
                                                             <th width="30%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">MÓDULO / ASIGNATURA</th>
                                                             <th width="25%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">DOCENTE</th>
                                                             <th class="text-center" width="15%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">NOTA OBTENIDA</th>
@@ -184,8 +184,8 @@
 
         /* Estilos para el select */
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
         }
 
         /* Animación para las filas */
@@ -211,7 +211,7 @@
 
         #btn_descargar_pdf:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+            box-shadow: 0 6px 20px rgba(30, 60, 114, 0.4) !important;
         }
 
         /* Badge de estado */
@@ -224,17 +224,17 @@
         }
 
         .badge-aprobado {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            background: linear-gradient(135deg, #1e7145 0%, #27ae60 100%);
             color: white;
         }
 
         .badge-reprobado {
-            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+            background: linear-gradient(135deg, #c0392b 0%, #dc3545 100%);
             color: white;
         }
 
         .badge-pendiente {
-            background: linear-gradient(135deg, #ffa800 0%, #ffcd00 100%);
+            background: linear-gradient(135deg, #b7791f 0%, #d4a017 100%);
             color: white;
         }
 
@@ -249,12 +249,12 @@
 
         .nota-aprobado {
             background: #e8f5f3;
-            color: #11998e;
+            color: #1e7145;
         }
 
         .nota-reprobado {
             background: #fee5ed;
-            color: #ee0979;
+            color: #c0392b;
         }
 
         /* Spinner de carga */

@@ -198,7 +198,7 @@ $w4 = 20;  // NUM.
 $w5 = 40;  // LITERAL
 
 // Encabezados de la tabla
-$pdf->SetFillColor(102, 126, 234); // Color morado #667eea
+$pdf->SetFillColor(102, 126, 234); // Color morado #1e3c72
 $pdf->SetTextColor(255, 255, 255); // Texto blanco
 $pdf->SetFont('helvetica', 'B', 9);
 

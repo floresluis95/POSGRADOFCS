@@ -12,7 +12,7 @@ class InscripcionModuloModelos
      * @param int|null $programaID (opcional) - Si se proporciona, filtra por ese programa
      * @return array
      */
-    public static function ListarEstudiantesMatriculadosModelo($programaID = null)
+    public static function ListarEstudiantesMatriculadosModelo($programaID = null, $sede = null)
     {
         try {
             $sql = "SELECT
@@ -38,7 +38,8 @@ class InscripcionModuloModelos
                     p.Codigo as CodigoPrograma,
                     p.Version,
                     p.NumeroTramite,
-                    p.Costo as CostoPrograma
+                    p.Costo as CostoPrograma,
+                    p.Sede
                 FROM estudianteprograma ep
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
@@ -49,12 +50,21 @@ class InscripcionModuloModelos
                 $sql .= " AND ep.ProgramaID = :programaID";
             }
 
+            // Si se proporciona sede, agregar filtro
+            if ($sede !== null && $sede !== '') {
+                $sql .= " AND p.Sede = :sede";
+            }
+
             $sql .= " ORDER BY ep.FechaInscripcion DESC";
 
             $stmt = Conexion::Conectar()->prepare($sql);
 
             if ($programaID !== null && $programaID != '') {
                 $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            }
+
+            if ($sede !== null && $sede !== '') {
+                $stmt->bindParam(":sede", $sede, PDO::PARAM_STR);
             }
 
             $stmt->execute();

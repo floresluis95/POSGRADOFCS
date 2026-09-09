@@ -65,6 +65,10 @@ ob_start();
   <link href="vistas/recursos/assets/css/demo9/style.bundle.css" rel="stylesheet" type="text/css" />
   <!--end::Global Theme Styles -->
 
+  <!--begin::Tema institucional (paleta formal, colores por grado academico) -->
+  <link href="vistas/recursos/assets/css/tema-institucional.css" rel="stylesheet" type="text/css" />
+  <!--end::Tema institucional -->
+
   <!--begin::Layout Skins(used by all pages) -->
   <!--end::Layout Skins -->
 

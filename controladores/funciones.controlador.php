@@ -33,4 +33,23 @@
         {
             include 'vistas/componentes/modulos/footer-resumido.php';
         }
+
+        // Clase CSS de color institucional segun el Grado Academico
+        // (Diplomado, Especialidad, Maestria, Doctorado - Facultad de Odontologia)
+        public static function ClaseGrado($grado)
+        {
+            switch (strtoupper(trim((string)$grado))) {
+                case 'DIPLOMADO':
+                    return 'badge-grado-diplomado';
+                case 'ESPECIALIDAD':
+                    return 'badge-grado-especialidad';
+                case 'MAESTRIA':
+                case 'MAESTRÍA':
+                    return 'badge-grado-maestria';
+                case 'DOCTORADO':
+                    return 'badge-grado-doctorado';
+                default:
+                    return 'badge-grado-generico';
+            }
+        }
     }
