@@ -30,6 +30,7 @@
                     if ($passwordValido) {
                         session_start();
                         $_SESSION["Validar"] = true;
+                        $_SESSION["IdUsuario"] = $TraerUsuario["ID"];
                         $_SESSION["Usuario"] = $TraerUsuario["Usuario"];
                         $_SESSION["FechaIngreso"] = $TraerUsuario["FechaIngreso"];
                         $_SESSION["Estado"] = $TraerUsuario["Estado"];

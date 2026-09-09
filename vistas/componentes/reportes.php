@@ -102,13 +102,25 @@ date_default_timezone_set("America/La_Paz");
                 <form action="ajax/reportes.ajax.php" method="POST" target="_blank">
                   <input type="hidden" name="tipo_reporte" value="por_programa">
                   <div class="form-group">
+                    <label for="sede_programa">Sede (opcional):</label>
+                    <select name="sede" id="sede_programa" class="form-control select-programa-por-sede" data-target="#programa_id">
+                      <option value="">Todas las sedes</option>
+                      <?php
+                        $sedesDisponibles = ReportesModelos::ListaSedes();
+                        foreach ($sedesDisponibles as $s) {
+                          echo '<option value="' . htmlspecialchars($s) . '">' . htmlspecialchars($s) . '</option>';
+                        }
+                      ?>
+                    </select>
+                  </div>
+                  <div class="form-group">
                     <label for="programa_id">Programa (opcional):</label>
                     <select name="programa_id" id="programa_id" class="form-control">
                       <option value="">Todos los programas</option>
                       <?php
                         $programas = ReportesModelos::ListaProgramas();
                         foreach ($programas as $prog) {
-                          echo '<option value="' . $prog['ProgramaID'] . '">' . $prog['NombrePrograma'] . '</option>';
+                          echo '<option value="' . $prog['ProgramaID'] . '" data-sede="' . htmlspecialchars($prog['Sede']) . '">' . htmlspecialchars($prog['NombrePrograma']) . ' (' . htmlspecialchars($prog['Sede']) . ')</option>';
                         }
                       ?>
                     </select>
@@ -121,7 +133,7 @@ date_default_timezone_set("America/La_Paz");
             </div>
           </div>
 
-          <!-- Reporte 3: Módulos y Matriculados -->
+          <!-- Reporte 3: Módulos por Programa/Sede -->
           <div class="col-md-4">
             <div class="card shadow-sm" style="border-radius: 15px; overflow: hidden;">
               <div class="card-header" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); padding: 20px;">
@@ -134,11 +146,72 @@ date_default_timezone_set("America/La_Paz");
                   <i class="fas fa-file-pdf" style="font-size: 60px; color: #17a2b8;"></i>
                 </div>
                 <p class="text-center" style="color: #666; min-height: 60px;">
-                  Reporte de módulos con información de matriculados, pagos realizados y pendientes.
+                  Estado de cada módulo (activo/validado), docente asignado y avance de aprobación/reprobación.
                 </p>
                 <form action="ajax/reportes.ajax.php" method="POST" target="_blank">
                   <input type="hidden" name="tipo_reporte" value="modulos">
+                  <div class="form-group">
+                    <label for="sede_modulos">Sede (opcional):</label>
+                    <select name="sede" id="sede_modulos" class="form-control select-programa-por-sede" data-target="#programa_id_modulos">
+                      <option value="">Todas las sedes</option>
+                      <?php foreach ($sedesDisponibles as $s): ?>
+                        <option value="<?php echo htmlspecialchars($s); ?>"><?php echo htmlspecialchars($s); ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="programa_id_modulos">Programa (opcional):</label>
+                    <select name="programa_id" id="programa_id_modulos" class="form-control">
+                      <option value="">Todos los programas</option>
+                      <?php foreach ($programas as $prog): ?>
+                        <option value="<?php echo $prog['ProgramaID']; ?>" data-sede="<?php echo htmlspecialchars($prog['Sede']); ?>"><?php echo htmlspecialchars($prog['NombrePrograma']); ?> (<?php echo htmlspecialchars($prog['Sede']); ?>)</option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
                   <button type="submit" class="btn btn-info btn-block" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); border: none; padding: 12px;">
+                    <i class="fas fa-download"></i> Generar Reporte
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reporte 4: Ejecutivo (toma de decisiones) -->
+          <div class="col-md-4">
+            <div class="card shadow-sm" style="border-radius: 15px; overflow: hidden;">
+              <div class="card-header" style="background: linear-gradient(135deg, #b7791f 0%, #d4a017 100%); padding: 20px;">
+                <h4 class="card-title text-white mb-0">
+                  <i class="fas fa-chart-line"></i> Reporte Ejecutivo
+                </h4>
+              </div>
+              <div class="card-body" style="padding: 30px;">
+                <div class="text-center mb-3">
+                  <i class="fas fa-file-invoice-dollar" style="font-size: 60px; color: #b7791f;"></i>
+                </div>
+                <p class="text-center" style="color: #666; min-height: 60px;">
+                  Matrícula, % de cobranza, % de aprobación, módulos validados y docentes por programa. Resalta programas con baja cobranza o bajo rendimiento académico.
+                </p>
+                <form action="ajax/reportes.ajax.php" method="POST" target="_blank">
+                  <input type="hidden" name="tipo_reporte" value="ejecutivo">
+                  <div class="form-group">
+                    <label for="sede_ejecutivo">Sede (opcional):</label>
+                    <select name="sede" id="sede_ejecutivo" class="form-control select-programa-por-sede" data-target="#programa_id_ejecutivo">
+                      <option value="">Todas las sedes</option>
+                      <?php foreach ($sedesDisponibles as $s): ?>
+                        <option value="<?php echo htmlspecialchars($s); ?>"><?php echo htmlspecialchars($s); ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="programa_id_ejecutivo">Programa (opcional):</label>
+                    <select name="programa_id" id="programa_id_ejecutivo" class="form-control">
+                      <option value="">Todos los programas</option>
+                      <?php foreach ($programas as $prog): ?>
+                        <option value="<?php echo $prog['ProgramaID']; ?>" data-sede="<?php echo htmlspecialchars($prog['Sede']); ?>"><?php echo htmlspecialchars($prog['NombrePrograma']); ?> (<?php echo htmlspecialchars($prog['Sede']); ?>)</option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+                  <button type="submit" class="btn btn-warning btn-block" style="background: linear-gradient(135deg, #b7791f 0%, #d4a017 100%); border: none; padding: 12px; color: white;">
                     <i class="fas fa-download"></i> Generar Reporte
                   </button>
                 </form>
@@ -232,6 +305,29 @@ function actualizarFecha() {
     document.getElementById('lafecha').textContent = fecha.charAt(0).toUpperCase() + fecha.slice(1);
 }
 actualizarFecha();
+
+// Cascada Sede -> Programa: al elegir una sede, el combo de Programa
+// de esa misma tarjeta solo muestra los programas de esa sede.
+$(document).ready(function() {
+    $('.select-programa-por-sede').on('change', function() {
+        const sede = $(this).val();
+        const $programa = $($(this).data('target'));
+        const programaSeleccionado = $programa.val();
+
+        $programa.find('option').each(function() {
+            if (!$(this).val()) return; // "Todos los programas"
+            const perteneceSede = !sede || $(this).data('sede') === sede;
+            $(this).toggle(perteneceSede);
+        });
+
+        if (programaSeleccionado) {
+            const $opt = $programa.find('option[value="' + programaSeleccionado + '"]');
+            if (sede && $opt.data('sede') !== sede) {
+                $programa.val('');
+            }
+        }
+    });
+});
 setInterval(actualizarFecha, 60000);
 </script>
 

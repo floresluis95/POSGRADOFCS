@@ -166,6 +166,30 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Certificado de Calificaciones</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="certificadohistorialacademico" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-list-3" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Historial Académico</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="certificadoaprobacionmonografia" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-contract" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Aprobación de Monografía</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="certificadomediomagnetico" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-paper-plane" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Medio Magnético</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="registrodocumentos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-checking" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Registro de Documentos</span>
+                  </a>
+                </li>
 
                   <!-- REPORTES PDF -->
                 <li class="kt-menu__section">
@@ -355,6 +379,30 @@ if ($_SESSION["Tipo"] == "SEC") {
                   <a href="certificadocalificaciones" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-document" style="color: #d9a941;"></i>
                     <span class="kt-menu__link-text">Certificado de Calificaciones</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="certificadohistorialacademico" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-list-3" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Historial Académico</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="certificadoaprobacionmonografia" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-contract" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Aprobación de Monografía</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="certificadomediomagnetico" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-paper-plane" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Medio Magnético</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="registrodocumentos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-checking" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Registro de Documentos</span>
                   </a>
                 </li>
 
@@ -658,6 +706,46 @@ if ($_SESSION["Tipo"] == "EST") {
   background: rgba(217, 169, 65, 0.2);
 }
 .kt-menu__item--active > a[href="certificadocalificaciones"] {
+  background: rgba(217, 169, 65, 0.3);
+  box-shadow: 0 4px 12px rgba(217, 169, 65, 0.4);
+}
+.kt-menu__nav a[href="certificadohistorialacademico"] {
+  border-left-color: #d9a941;
+}
+.kt-menu__nav a[href="certificadohistorialacademico"]:hover {
+  background: rgba(217, 169, 65, 0.2);
+}
+.kt-menu__item--active > a[href="certificadohistorialacademico"] {
+  background: rgba(217, 169, 65, 0.3);
+  box-shadow: 0 4px 12px rgba(217, 169, 65, 0.4);
+}
+.kt-menu__nav a[href="certificadoaprobacionmonografia"] {
+  border-left-color: #d9a941;
+}
+.kt-menu__nav a[href="certificadoaprobacionmonografia"]:hover {
+  background: rgba(217, 169, 65, 0.2);
+}
+.kt-menu__item--active > a[href="certificadoaprobacionmonografia"] {
+  background: rgba(217, 169, 65, 0.3);
+  box-shadow: 0 4px 12px rgba(217, 169, 65, 0.4);
+}
+.kt-menu__nav a[href="certificadomediomagnetico"] {
+  border-left-color: #d9a941;
+}
+.kt-menu__nav a[href="certificadomediomagnetico"]:hover {
+  background: rgba(217, 169, 65, 0.2);
+}
+.kt-menu__item--active > a[href="certificadomediomagnetico"] {
+  background: rgba(217, 169, 65, 0.3);
+  box-shadow: 0 4px 12px rgba(217, 169, 65, 0.4);
+}
+.kt-menu__nav a[href="registrodocumentos"] {
+  border-left-color: #d9a941;
+}
+.kt-menu__nav a[href="registrodocumentos"]:hover {
+  background: rgba(217, 169, 65, 0.2);
+}
+.kt-menu__item--active > a[href="registrodocumentos"] {
   background: rgba(217, 169, 65, 0.3);
   box-shadow: 0 4px 12px rgba(217, 169, 65, 0.4);
 }

@@ -9,6 +9,13 @@ require_once '../controladores/reportes.controlador.php';
 if (isset($_POST['tipo_reporte'])) {
     $tipoReporte = $_POST['tipo_reporte'];
 
+    $programaID = isset($_POST['programa_id']) && !empty($_POST['programa_id'])
+        ? intval($_POST['programa_id'])
+        : null;
+    $sede = isset($_POST['sede']) && !empty($_POST['sede'])
+        ? trim($_POST['sede'])
+        : null;
+
     switch ($tipoReporte) {
         case 'estudiantes':
             // Reporte completo de estudiantes
@@ -16,16 +23,18 @@ if (isset($_POST['tipo_reporte'])) {
             break;
 
         case 'por_programa':
-            // Reporte de estudiantes por programa
-            $programaID = isset($_POST['programa_id']) && !empty($_POST['programa_id'])
-                ? intval($_POST['programa_id'])
-                : null;
-            ReportesControladores::GenerarReportePorPrograma($programaID);
+            // Reporte de estudiantes por programa y/o sede
+            ReportesControladores::GenerarReportePorPrograma($programaID, $sede);
             break;
 
         case 'modulos':
-            // Reporte de módulos y matriculados
-            ReportesControladores::GenerarReporteModulos();
+            // Reporte de módulos por programa y/o sede
+            ReportesControladores::GenerarReporteModulos($programaID, $sede);
+            break;
+
+        case 'ejecutivo':
+            // Reporte ejecutivo (KPIs para toma de decisiones) por sede y/o programa
+            ReportesControladores::GenerarReporteEjecutivo($sede, $programaID);
             break;
 
         default:

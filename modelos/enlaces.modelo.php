@@ -33,7 +33,11 @@
                 $enlace == 'preregistro'||
 
                 $enlace == 'reportecalificaciones'||
-                $enlace == 'certificadocalificaciones'
+                $enlace == 'certificadocalificaciones'||
+                $enlace == 'certificadohistorialacademico'||
+                $enlace == 'certificadoaprobacionmonografia'||
+                $enlace == 'certificadomediomagnetico'||
+                $enlace == 'registrodocumentos'
 
                 )
             {

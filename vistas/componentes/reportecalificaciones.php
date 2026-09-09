@@ -154,6 +154,53 @@ date_default_timezone_set("America/La_Paz");
     </div>
 </div>
 
+<!-- MODAL PARA PONER / VER CALIFICACIONES -->
+<div class="modal fade" id="modalCalificar" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fa fa-graduation-cap"></i> <span id="modal-calificar-titulo">Calificaciones del Módulo</span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong><i class="fa fa-book"></i> Módulo:</strong> <span id="modal-calificar-modulo"></span><br>
+                            <strong><i class="fa fa-code"></i> Código:</strong> <span id="modal-calificar-codigo"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong><i class="fa fa-university"></i> Programa:</strong> <span id="modal-calificar-programa"></span><br>
+                            <strong><i class="fa fa-graduation-cap"></i> Grado:</strong> <span id="modal-calificar-grado"></span>
+                        </div>
+                    </div>
+                </div>
+                <div id="modal-calificar-aviso"></div>
+                <div id="modal-calificar-container">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" id="modal-calificar-footer" style="display:none;">
+                <span class="text-danger small mr-auto">
+                    <i class="fa fa-exclamation-triangle"></i> Verifique todas las notas antes de guardar.
+                </span>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Cerrar
+                </button>
+                <button type="button" class="btn btn-success" id="btn-guardar-notas-reporte">
+                    <i class="fa fa-save"></i> Guardar Calificaciones
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- SCRIPTS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -202,6 +249,7 @@ date_default_timezone_set("America/La_Paz");
 <script>
 let docenteData = null;
 let moduloParaPDF = null;
+let moduloSeleccionado = null;
 
 $(document).ready(function() {
     // Cargar módulos del docente
@@ -220,7 +268,37 @@ $(document).ready(function() {
     $('#btn-confirmar-pdf-reporte').on('click', function() {
         generarPDFConFechas();
     });
+
+    // Abrir modal de calificar (delegado porque la tabla se genera dinámicamente)
+    $(document).on('click', '.btn-calificar', function() {
+        moduloSeleccionado = {
+            moduloID: $(this).data('modulo-id'),
+            programaID: $(this).data('programa-id'),
+            moduloNombre: $(this).data('modulo-nombre'),
+            moduloCodigo: $(this).data('modulo-codigo'),
+            programaNombre: $(this).data('programa-nombre'),
+            grado: $(this).data('grado'),
+            estadoModulo: $(this).data('estado-modulo')
+        };
+        abrirModalCalificar();
+    });
+
+    $(document).on('click', '.btn-validar', function() {
+        validarCerrarModuloReporte($(this).data('modulo-id'), $(this).data('modulo-nombre'));
+    });
+
+    $(document).on('click', '.btn-reabrir', function() {
+        reabrirModuloReporte($(this).data('modulo-id'), $(this).data('modulo-nombre'));
+    });
+
+    $('#btn-guardar-notas-reporte').on('click', function() {
+        guardarCalificacionesReporte();
+    });
 });
+
+function escaparHtml(texto) {
+    return $('<div>').text(texto == null ? '' : texto).html();
+}
 
 function actualizarFecha() {
     const opciones = {
@@ -310,7 +388,7 @@ function mostrarTablaModulos(modulos) {
                         <th class="text-center" style="width: 8%;">Inscritos</th>
                         <th class="text-center" style="width: 10%;">Calificados</th>
                         <th class="text-center" style="width: 12%;">Estado Modulo</th>
-                        <th class="text-center" style="width: 15%;">Acciones</th>
+                        <th class="text-center" style="width: 20%;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -332,10 +410,11 @@ function mostrarTablaModulos(modulos) {
 
         // Determinar estado del módulo
         const estadoModulo = modulo.EstadoModulo || 'ACTIVO';
+        const moduloCerrado = (estadoModulo === 'VALIDADO' || estadoModulo === 'CERRADO');
         let estadoModuloBadge = '';
         let estadoModuloIcono = '';
 
-        if (estadoModulo === 'VALIDADO' || estadoModulo === 'CERRADO') {
+        if (moduloCerrado) {
             estadoModuloBadge = 'kt-badge--danger';
             estadoModuloIcono = 'la-lock';
         } else {
@@ -360,21 +439,41 @@ function mostrarTablaModulos(modulos) {
                     <span class="kt-badge ${estadoModuloBadge} kt-badge--inline kt-badge--bold">
                         <i class="la ${estadoModuloIcono}"></i> ${estadoModulo}
                     </span>
+        `;
+
+        if (moduloCerrado) {
+            html += `
+                    <br><button type="button" class="btn btn-info btn-xs mt-1 btn-reabrir"
+                            data-modulo-id="${modulo.Idmodulo}" data-modulo-nombre="${escaparHtml(modulo.nombremodulo)}">
+                        <i class="la la-unlock"></i> Reabrir
+                    </button>
+            `;
+        } else if (calificados > 0) {
+            html += `
+                    <br><button type="button" class="btn btn-warning btn-xs mt-1 btn-validar"
+                            data-modulo-id="${modulo.Idmodulo}" data-modulo-nombre="${escaparHtml(modulo.nombremodulo)}">
+                        <i class="la la-lock"></i> Validar y Cerrar
+                    </button>
+            `;
+        }
+
+        html += `
                 </td>
                 <td class="text-center">
+                    <button type="button" class="btn btn-brand btn-sm mb-1 btn-calificar"
+                            data-modulo-id="${modulo.Idmodulo}" data-programa-id="${modulo.ProgramaID}"
+                            data-modulo-nombre="${escaparHtml(modulo.nombremodulo)}" data-modulo-codigo="${escaparHtml(modulo.codigomodulo)}"
+                            data-programa-nombre="${escaparHtml(modulo.NombrePrograma)}" data-grado="${escaparHtml(modulo.GradoAcademico)}"
+                            data-estado-modulo="${estadoModulo}">
+                        <i class="la la-edit"></i> ${moduloCerrado ? 'Ver Notas' : 'Poner Notas'}
+                    </button>
         `;
 
         if (calificados > 0) {
             html += `
-                <button type="button" class="btn btn-print-planilla btn-sm"
+                <button type="button" class="btn btn-print-planilla btn-sm mb-1"
                         onclick="generarPlanillaPDF(${modulo.Idmodulo}, ${modulo.ProgramaID}, '${modulo.nombremodulo}', '${modulo.codigomodulo}', '${modulo.NombrePrograma}', '${modulo.GradoAcademico}')">
-                    <i class="fa fa-print"></i> IMPRIMIR PLANILLA
-                </button>
-            `;
-        } else {
-            html += `
-                <button type="button" class="btn btn-secondary btn-sm" disabled>
-                    <i class="fa fa-ban"></i> Sin calificaciones
+                    <i class="fa fa-print"></i> IMPRIMIR
                 </button>
             `;
         }
@@ -502,6 +601,274 @@ function generarPDFConFechas() {
 
     // Limpiar datos temporales
     moduloParaPDF = null;
+}
+
+/**
+ * ================================================================
+ * PONER / VER CALIFICACIONES (desde el mismo reporte)
+ * ================================================================
+ */
+
+function abrirModalCalificar() {
+    $('#modal-calificar-titulo').text(moduloSeleccionado.estadoModulo === 'ACTIVO' ? 'Poner Calificaciones' : 'Ver Calificaciones');
+    $('#modal-calificar-modulo').text(moduloSeleccionado.moduloNombre);
+    $('#modal-calificar-codigo').text(moduloSeleccionado.moduloCodigo);
+    $('#modal-calificar-programa').text(moduloSeleccionado.programaNombre);
+    $('#modal-calificar-grado').text(moduloSeleccionado.grado);
+    $('#modal-calificar-aviso').html('');
+    $('#modal-calificar-footer').hide();
+    $('#modal-calificar-container').html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
+
+    $('#modalCalificar').modal('show');
+
+    $.ajax({
+        url: 'ajax/calificacion.ajax.php',
+        method: 'POST',
+        data: { accion: 'obtenerEstudiantes', moduloID: moduloSeleccionado.moduloID, programaID: moduloSeleccionado.programaID },
+        dataType: 'json',
+        success: function(response) {
+            if (response.status !== 'success') {
+                $('#modal-calificar-container').html('<div class="alert alert-danger">Error al cargar los estudiantes</div>');
+                return;
+            }
+            verificarPermisoEdicionReporte(function(permisoData) {
+                const puedeEditar = permisoData.permitido;
+                const esModuloCerrado = moduloSeleccionado.estadoModulo !== 'ACTIVO';
+
+                if (esModuloCerrado) {
+                    const mensaje = puedeEditar
+                        ? '<div class="alert alert-warning"><i class="la la-warning"></i> Este módulo está validado/cerrado. Puede editarlo porque tiene permisos de administrador.</div>'
+                        : '<div class="alert alert-danger"><i class="la la-lock"></i> Este módulo está validado/cerrado y no puede editarse. Solo un administrador puede modificarlo.</div>';
+                    $('#modal-calificar-aviso').html(mensaje);
+                }
+
+                renderizarFormularioCalificarReporte(response.data, puedeEditar);
+            });
+        },
+        error: function() {
+            $('#modal-calificar-container').html('<div class="alert alert-danger">Error al conectar con el servidor</div>');
+        }
+    });
+}
+
+function verificarPermisoEdicionReporte(callback) {
+    $.ajax({
+        url: 'ajax/calificacion.ajax.php',
+        method: 'POST',
+        data: { accion: 'verificarPermisoEdicion', moduloID: moduloSeleccionado.moduloID },
+        dataType: 'json',
+        success: function(response) { callback(response); },
+        error: function() { callback({ permitido: false }); }
+    });
+}
+
+function renderizarFormularioCalificarReporte(estudiantes, puedeEditar) {
+    if (!estudiantes || estudiantes.length === 0) {
+        $('#modal-calificar-container').html('<div class="alert alert-warning text-center"><i class="flaticon-warning"></i> No hay estudiantes inscritos en este módulo</div>');
+        return;
+    }
+
+    const inputDisabled = !puedeEditar ? 'disabled readonly' : '';
+    const inputStyle = !puedeEditar ? 'background-color: #f4f5f8; cursor: not-allowed;' : '';
+
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover table-modulos">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">#</th>
+                        <th style="width: 12%;">C.I.</th>
+                        <th>Estudiante</th>
+                        <th style="width: 18%;">Nota Final</th>
+                        <th style="width: 15%;">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    estudiantes.forEach(function(estudiante, index) {
+        const nombreCompleto = escaparHtml(`${estudiante.Nombre} ${estudiante.Apaterno} ${estudiante.Amaterno}`);
+        const notaActual = estudiante.Nota !== null ? parseFloat(estudiante.Nota) : '';
+        const estadoClass = notaActual === '' ? 'kt-badge--secondary' : (parseFloat(notaActual) >= 76 ? 'kt-badge--success' : 'kt-badge--danger');
+        const estadoTexto = notaActual === '' ? 'Pendiente' : (parseFloat(notaActual) >= 76 ? 'Aprobado' : 'Reprobado');
+        const notaInputClass = notaActual === '' ? '' : (parseFloat(notaActual) >= 76 ? 'is-valid' : 'is-invalid');
+
+        html += `
+            <tr>
+                <td class="text-center">${index + 1}</td>
+                <td class="text-center">${escaparHtml(estudiante.Ci)}</td>
+                <td>${nombreCompleto}</td>
+                <td>
+                    <input type="number" class="form-control input-nota-reporte ${notaInputClass}"
+                        value="${notaActual}" min="0" max="100" step="0.01"
+                        data-estudiante-id="${estudiante.EstudianteID}"
+                        onchange="validarNotaReporte(this)"
+                        placeholder="0.00" style="${inputStyle}" ${inputDisabled} required>
+                </td>
+                <td class="text-center">
+                    <span class="kt-badge kt-badge--xl ${estadoClass}" data-estudiante-id="${estudiante.EstudianteID}">${estadoTexto}</span>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table></div>';
+    $('#modal-calificar-container').html(html);
+
+    if (puedeEditar) {
+        $('#modal-calificar-footer').show();
+    }
+}
+
+function validarNotaReporte(input) {
+    const nota = parseFloat(input.value);
+    const estudianteID = $(input).data('estudiante-id');
+    const estadoBadge = $(`#modal-calificar-container .kt-badge[data-estudiante-id="${estudianteID}"]`);
+
+    $(input).removeClass('is-valid is-invalid');
+
+    if (isNaN(nota) || nota < 0 || nota > 100) {
+        $(input).addClass('is-invalid');
+        estadoBadge.removeClass('kt-badge--success kt-badge--danger kt-badge--secondary').addClass('kt-badge--warning').text('Inválida');
+        return;
+    }
+
+    if (nota >= 76) {
+        $(input).addClass('is-valid');
+        estadoBadge.removeClass('kt-badge--danger kt-badge--warning kt-badge--secondary').addClass('kt-badge--success').text('Aprobado');
+    } else {
+        $(input).addClass('is-invalid');
+        estadoBadge.removeClass('kt-badge--success kt-badge--warning kt-badge--secondary').addClass('kt-badge--danger').text('Reprobado');
+    }
+}
+
+function guardarCalificacionesReporte() {
+    const calificaciones = [];
+    let hayErrores = false;
+
+    $('.input-nota-reporte').each(function() {
+        const estudianteID = $(this).data('estudiante-id');
+        const valorNota = $(this).val();
+        const nota = parseFloat(valorNota);
+
+        if (valorNota === '' || isNaN(nota) || nota < 0 || nota > 100) {
+            hayErrores = true;
+            $(this).addClass('is-invalid');
+            return;
+        }
+
+        calificaciones.push({ estudianteID: estudianteID, nota: nota });
+    });
+
+    if (hayErrores) {
+        Swal.fire({ type: 'error', title: 'Error de validación', text: 'Hay calificaciones inválidas o vacías. Corrija antes de guardar.' });
+        return;
+    }
+
+    if (calificaciones.length === 0) {
+        Swal.fire({ type: 'warning', title: 'Sin datos', text: 'No hay calificaciones para guardar' });
+        return;
+    }
+
+    Swal.fire({
+        title: `¿Guardar ${calificaciones.length} calificación(es)?`,
+        text: moduloSeleccionado.moduloNombre,
+        type: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (!result.value) return;
+
+        $.ajax({
+            url: 'ajax/calificacion.ajax.php',
+            method: 'POST',
+            data: {
+                accion: 'guardarCalificaciones',
+                programaID: moduloSeleccionado.programaID,
+                moduloID: moduloSeleccionado.moduloID,
+                calificaciones: JSON.stringify(calificaciones)
+            },
+            dataType: 'json',
+            beforeSend: function() {
+                Swal.fire({ title: 'Guardando...', allowOutsideClick: false, onOpen: () => Swal.showLoading() });
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    Swal.fire({ type: 'success', title: 'Calificaciones guardadas', timer: 1500, showConfirmButton: false }).then(() => {
+                        $('#modalCalificar').modal('hide');
+                        cargarModulosDocente();
+                    });
+                } else {
+                    Swal.fire({ type: 'error', title: 'Error', text: response.message || 'Error al guardar' });
+                }
+            },
+            error: function() {
+                Swal.fire({ type: 'error', title: 'Error de conexión', text: 'No se pudo guardar' });
+            }
+        });
+    });
+}
+
+function validarCerrarModuloReporte(moduloID, moduloNombre) {
+    Swal.fire({
+        title: '¿Validar y cerrar módulo?',
+        html: `<p>Está a punto de <strong>validar y cerrar</strong>:</p><p class="text-primary"><strong>${escaparHtml(moduloNombre)}</strong></p><p class="text-danger"><i class="la la-warning"></i> Una vez cerrado, solo un administrador podrá modificar las calificaciones.</p>`,
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, validar y cerrar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#f4516c'
+    }).then((result) => {
+        if (!result.value) return;
+        $.ajax({
+            url: 'ajax/calificacion.ajax.php',
+            method: 'POST',
+            data: { accion: 'validarCerrarModulo', moduloID: moduloID },
+            dataType: 'json',
+            beforeSend: function() { Swal.fire({ title: 'Procesando...', allowOutsideClick: false, onOpen: () => Swal.showLoading() }); },
+            success: function(response) {
+                if (response.status === 'success') {
+                    Swal.fire({ type: 'success', title: 'Módulo validado', text: response.message, timer: 2000 }).then(() => cargarModulosDocente());
+                } else {
+                    Swal.fire({ type: response.status === 'warning' ? 'warning' : 'error', title: response.status === 'warning' ? 'Advertencia' : 'Error', text: response.message });
+                }
+            },
+            error: function() {
+                Swal.fire({ type: 'error', title: 'Error de conexión', text: 'No se pudo validar el módulo' });
+            }
+        });
+    });
+}
+
+function reabrirModuloReporte(moduloID, moduloNombre) {
+    Swal.fire({
+        title: '¿Reabrir módulo?',
+        html: `<p>Está a punto de <strong>reabrir</strong>:</p><p class="text-primary"><strong>${escaparHtml(moduloNombre)}</strong></p><p class="text-warning"><i class="la la-info-circle"></i> Solo disponible para administradores.</p>`,
+        type: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, reabrir',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (!result.value) return;
+        $.ajax({
+            url: 'ajax/calificacion.ajax.php',
+            method: 'POST',
+            data: { accion: 'reabrirModulo', moduloID: moduloID },
+            dataType: 'json',
+            beforeSend: function() { Swal.fire({ title: 'Procesando...', allowOutsideClick: false, onOpen: () => Swal.showLoading() }); },
+            success: function(response) {
+                if (response.status === 'success') {
+                    Swal.fire({ type: 'success', title: 'Módulo reabierto', text: response.message, timer: 2000 }).then(() => cargarModulosDocente());
+                } else {
+                    Swal.fire({ type: 'error', title: 'Error', text: response.message });
+                }
+            },
+            error: function() {
+                Swal.fire({ type: 'error', title: 'Error de conexión', text: 'No se pudo reabrir el módulo' });
+            }
+        });
+    });
 }
 
 function mostrarSinModulos() {

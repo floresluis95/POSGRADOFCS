@@ -72,3 +72,18 @@
 .badge-grado-generico {
     background: linear-gradient(135deg, var(--grado-generico-ini) 0%, var(--grado-generico-fin) 100%);
 }
+
+/* ========================================================
+   FOOTER PEGADO AL FONDO
+   #kt_content ya es un flex-container en columna (subheader,
+   contenido, footer), pero el div de contenido de cada vista
+   (.container / .kt-container / etc., el nombre varia por
+   pagina) no tenia flex:1, asi que en paginas con poco
+   contenido el footer quedaba pegado justo debajo en vez de
+   anclado al fondo de la pantalla. Se aplica a cualquier div
+   hijo directo de #kt_content que no sea el subheader ni el
+   footer, sin importar que clase de contenedor use la vista.
+   ======================================================== */
+#kt_content > div:not(#kt_subheader):not(#kt_footer) {
+    flex: 1 0 auto;
+}

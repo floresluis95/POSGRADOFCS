@@ -42,6 +42,10 @@ if (empty($modulos)) {
     die('Error: El estudiante no tiene calificaciones registradas en este programa');
 }
 
+CertificadoModelo::RegistrarDocumentoEmitidoModelo(
+    'CALIFICACIONES', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null
+);
+
 /**
  * Convierte un número entero (0-100) a su literal en español, en mayúsculas.
  */
