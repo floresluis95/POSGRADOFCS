@@ -8,26 +8,54 @@
 require_once __DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php';
 require_once __DIR__ . '/../modelos/reportes.modelo.php';
 
+// El servidor tiene configurada otra zona horaria (Europe/Berlin) en php.ini;
+// sin esto, la fecha/hora impresa en los reportes no corresponde a Bolivia.
+date_default_timezone_set('America/La_Paz');
+
 class ReportesControladores extends TCPDF
 {
-    // Header personalizado
+    // Header personalizado (mismo formato institucional que los demás reportes: logos UTO/FCS)
     public function Header()
     {
-        // Logo (opcional)
-        $logoPath = __DIR__ . '/../vistas/recursos/assets/media/logos/logo0.png';
-        if (file_exists($logoPath)) {
-            $this->Image($logoPath, 15, 10, 20, '', 'PNG');
+        $pageWidth = $this->getPageWidth();
+        $logoSize = 18; // mismo ancho y alto para ambos logos
+
+        $logoUTO = __DIR__ . '/../extensiones/imagenespdf/logouto.png';
+        $logoFCS = __DIR__ . '/../extensiones/imagenespdf/logofcs.png';
+
+        if (file_exists($logoUTO)) {
+            $this->Image($logoUTO, 15, 8, $logoSize, $logoSize, 'PNG');
+        }
+        if (file_exists($logoFCS)) {
+            $this->Image($logoFCS, $pageWidth - 15 - $logoSize, 8, $logoSize, $logoSize, 'PNG');
         }
 
-        $this->SetFont('helvetica', 'B', 16);
+        $this->SetY(8);
         $this->SetTextColor(30, 60, 114);
-        $this->Cell(0, 15, 'UNIVERSIDAD TÉCNICA DE ORURO - POSGRADO FCS', 0, false, 'C', 0, '', 0, false, 'M', 'M');
-        $this->Ln();
+        $this->SetFont('helvetica', 'B', 12);
+        $this->Cell(0, 5, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
+        $this->SetFont('helvetica', 'B', 9);
+        $this->Cell(0, 4, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C');
+        $this->Cell(0, 4, 'COORDINACIÓN DE POSGRADO - ODONTOLOGÍA', 0, 1, 'C');
 
-        $this->SetFont('helvetica', '', 9);
+        $this->SetFont('helvetica', '', 7);
         $this->SetTextColor(100);
-        $this->Cell(0, 10, 'Fecha: ' . date('d/m/Y H:i'), 0, false, 'R', 0, '', 0, false, 'T', 'M');
-        $this->Ln(12);
+        $this->Cell(0, 4, 'Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso - Telf: 5237317 - Fax: 5247110 - Oruro - Bolivia', 0, 1, 'C');
+
+        // Bajar el cursor hasta después de los logos, para que la fecha no quede oculta detrás de ellos
+        $yTrasLogos = 8 + $logoSize + 2;
+        if ($this->GetY() < $yTrasLogos) {
+            $this->SetY($yTrasLogos);
+        }
+        $this->SetFont('helvetica', '', 8);
+        $this->Cell(0, 4, 'Fecha: ' . date('d/m/Y H:i'), 0, 1, 'R');
+
+        $this->SetLineWidth(0.4);
+        $this->SetDrawColor(30, 60, 114);
+        $this->Line(15, $this->GetY() + 1, $pageWidth - 15, $this->GetY() + 1);
+        $this->Ln(4);
+
+        $this->SetTextColor(0, 0, 0);
     }
 
     // Footer personalizado

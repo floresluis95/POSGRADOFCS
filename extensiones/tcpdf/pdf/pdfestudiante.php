@@ -4,6 +4,10 @@
  * Genera una ficha de inscripción con foto y datos del estudiante
  */
 
+// El servidor tiene otra zona horaria configurada en php.ini; sin esto, las
+// fechas impresas en el PDF no corresponden a la hora de Bolivia.
+date_default_timezone_set('America/La_Paz');
+
 // Configurar errores
 error_reporting(E_ALL);
 ini_set('display_errors', 0);

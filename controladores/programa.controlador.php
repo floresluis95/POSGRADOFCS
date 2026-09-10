@@ -1,5 +1,10 @@
 <?php
 
+// El servidor tiene otra zona horaria configurada en php.ini; sin esto, el
+// estado del programa (ACTIVO/EN CURSO/CONCLUIDO) se calcula con la fecha
+// equivocada al compararla contra hoy.
+date_default_timezone_set('America/La_Paz');
+
 class ProgramasControladores
 {
     /**

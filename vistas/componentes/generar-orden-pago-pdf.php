@@ -4,6 +4,10 @@
  * Se imprimen dos copias (ORIGINAL y COPIA) en una sola hoja carta.
  */
 
+// El servidor tiene otra zona horaria configurada en php.ini; sin esto, las
+// fechas impresas en el PDF no corresponden a la hora de Bolivia.
+date_default_timezone_set('America/La_Paz');
+
 // Iniciar sesión
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -93,7 +97,7 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
 
     $pdf->SetFont('helvetica', '', 6);
     $pdf->SetX($x_left);
-    $pdf->Cell($content_width, 3, 'Av. Del Minero Edificio San Agustín II (Ex Almacenes COMIBOL) Telf: 5237317 - Fax 5247110 - Oruro - Bolivia', 0, 1, 'C');
+    $pdf->Cell($content_width, 3, 'Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso - Telf: 5237317 - Fax 5247110 - Oruro - Bolivia', 0, 1, 'C');
 
     if ($esCopia) {
         // Se dibuja la etiqueta arriba a la derecha (junto al logo) sin perder la posición Y actual

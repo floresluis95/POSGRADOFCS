@@ -3,6 +3,10 @@
  * Generar Lista de Asistencia en PDF usando TCPDF
  */
 
+// El servidor tiene otra zona horaria configurada en php.ini; sin esto, las
+// fechas impresas en el PDF no corresponden a la hora de Bolivia.
+date_default_timezone_set('America/La_Paz');
+
 // Habilitar reporte de errores para debug
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -136,7 +140,7 @@ $pdf->Cell(0, 4, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C', false);
 $pdf->Cell(0, 4, 'COORDINACIÓN DE POSGRADO - ODONTOLOGÍA', 0, 1, 'C', false);
 
 $pdf->SetFont('helvetica', '', 8); // Fuente ligeramente más pequeña para datos de contacto
-$pdf->Cell(0, 3.5, 'Av. Del Minero Edificio San Agustín II (Ex Almacenes COMIBOL) Teléfonos: 5237317 - Fax: 5247110', 0, 1, 'C', false);
+$pdf->Cell(0, 3.5, 'Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso, Teléfonos: 5237317 - Fax: 5247110', 0, 1, 'C', false);
 $pdf->Cell(0, 3.5, 'Oruro - Bolivia', 0, 1, 'C', false);
 
 $pdf->Ln(2); // Salto pequeño antes de la línea

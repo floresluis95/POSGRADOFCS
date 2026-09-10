@@ -4,6 +4,10 @@
  * Genera el PDF y lo guarda automáticamente
  */
 
+// El servidor tiene otra zona horaria configurada en php.ini; sin esto, las
+// fechas impresas en el PDF no corresponden a la hora de Bolivia.
+date_default_timezone_set('America/La_Paz');
+
 session_start();
 if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
     die(json_encode([
