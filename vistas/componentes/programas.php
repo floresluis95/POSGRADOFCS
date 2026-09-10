@@ -191,6 +191,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                                 <th class="text-center" style="color: white;">SEDE</th>
                                 <th class="text-center" style="color: white;">ESTADO</th>
                                 <th class="text-center" style="color: white;">DETALLE</th>
+                                <th class="text-center" style="color: white;">CUENTAS</th>
                                 <th class="text-center" style="color: white;">EDITAR</th>
                                 <th class="text-center" style="color: white;">ACTIVAR</th>
                                 <th class="text-center" style="color: white;">DAR BAJA</th>
@@ -338,18 +339,12 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
 
                         <div class="col-md-4">
                           <div class="modal-body">
-                            <label>CUENTA
-                              <a href="javascript:void(0)" data-toggle="modal" data-target="#gestionarCuentas" title="Administrar cuentas">
-                                <i class="fa fa-cog"></i>
-                              </a>
-                            </label>
-                            <select class="form-control" id="selectCuentaNuevo" name="NumeroTramite">
-                              <option value="" selected>Seleccione una cuenta</option>
-                              <?php
-                                $opcionesCuenta = new CuentaControlador();
-                                $opcionesCuenta->RenderOpcionesCuentasActivasControlador();
-                              ?>
-                            </select>
+                            <label>CUENTAS</label>
+                            <p class="text-muted mb-0" style="font-size: 12px;">
+                              <i class="fa fa-info-circle"></i> Podrás registrar las cuentas de este programa
+                              (Matrícula, Cuotas, Clínicas, etc.) desde el botón <i class="fa fa-university"></i>
+                              "Administrar cuentas" una vez creado.
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -380,6 +375,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                         </div>
                       </div>
                     </div>
+                    </div>
 
                     <div class="modal-body">
                       <label>DETALLE</label>
@@ -400,38 +396,56 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
             </div>
             <!-- end:: Modal -->
 
-            <!-- Modal Gestionar cuentas -->
+            <!-- Modal Gestionar cuentas (por programa) -->
             <div class="modal fade" id="gestionarCuentas" tabindex="-1" role="dialog" aria-labelledby="gestionarCuentasLabel" aria-hidden="true">
               <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                   <div class="modal-header">
-                    <h5 class="modal-title" id="gestionarCuentasLabel">Administrar cuentas</h5>
+                    <h5 class="modal-title" id="gestionarCuentasLabel">Administrar cuentas — <span id="cuentasProgramaNombre"></span></h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                       <span aria-hidden="true">&times;</span>
                     </button>
                   </div>
 
                   <div class="modal-body">
-                    <form id="formRegistrarCuenta" class="form-inline mb-3">
-                      <input type="text" class="form-control mr-2 mb-2" id="inputNumeroCuenta" name="NumeroCuenta" placeholder="Número de cuenta" required>
-                      <input type="text" class="form-control mr-2 mb-2" id="inputBancoCuenta" name="Banco" placeholder="Banco (opcional)">
-                      <button type="submit" class="btn btn-success mb-2"><i class="fa fa-plus"></i> Agregar cuenta</button>
+                    <p class="text-muted" style="font-size: 12px;">
+                      <i class="fa fa-info-circle"></i> Un programa puede tener varias cuentas por tipo
+                      (ej. Matrícula, Cuotas, Clínicas). La cuenta marcada como <strong>Principal</strong> de
+                      cada tipo es la que se imprime automáticamente en las órdenes de pago.
+                    </p>
+
+                    <input type="hidden" id="cuentasProgramaID">
+
+                    <form id="formRegistrarCuentaPrograma" class="form-row align-items-end mb-3">
+                      <div class="col-md-3 mb-2">
+                        <label class="mb-1">Tipo de cuenta</label>
+                        <input type="text" class="form-control" id="inputTipoCuenta" name="TipoCuenta" list="listaTiposCuenta" placeholder="Ej: MATRICULA" required>
+                        <datalist id="listaTiposCuenta"></datalist>
+                      </div>
+                      <div class="col-md-3 mb-2">
+                        <label class="mb-1">Número de cuenta</label>
+                        <input type="text" class="form-control" id="inputNumeroCuenta" name="NumeroCuenta" placeholder="Número de cuenta" required>
+                      </div>
+                      <div class="col-md-3 mb-2">
+                        <label class="mb-1">Banco</label>
+                        <input type="text" class="form-control" id="inputBancoCuenta" name="Banco" placeholder="Banco (opcional)">
+                      </div>
+                      <div class="col-md-3 mb-2">
+                        <button type="submit" class="btn btn-success btn-block"><i class="fa fa-plus"></i> Agregar cuenta</button>
+                      </div>
                     </form>
 
                     <table class="table table-bordered table-sm">
                       <thead>
                         <tr>
+                          <th>Tipo</th>
                           <th>N° Cuenta</th>
                           <th>Banco</th>
+                          <th class="text-center">Principal</th>
                           <th class="text-center">Estado</th>
-                          <th class="text-center">Acción</th>
                         </tr>
                       </thead>
                       <tbody id="tablaCuentasBody">
-                        <?php
-                          $listacuentas = new CuentaControlador();
-                          $listacuentas->ListarCuentasControlador();
-                        ?>
                       </tbody>
                     </table>
                   </div>
@@ -1051,47 +1065,65 @@ $(document).on('hidden.bs.modal', '.modal', function() {
     }
 });
 
-// Gestión de cuentas por AJAX: registrar y cambiar estado sin recargar la página,
-// para no perder los datos del modal "Nuevo programa" ni romper el modal apilado.
-function refrescarTablaCuentas() {
+// Gestión de cuentas POR PROGRAMA: un programa puede tener varias cuentas
+// clasificadas por tipo (Matrícula, Cuotas, Clínicas...). Todo vía AJAX,
+// para no recargar la página ni romper el modal apilado.
+function refrescarTablaCuentasPrograma() {
+    var programaID = $('#cuentasProgramaID').val();
+    if (!programaID) { return; }
+
     $.ajax({
-        url: 'ajax/cuenta.ajax.php',
+        url: 'ajax/programacuenta.ajax.php',
         method: 'POST',
-        data: { accion: 'listarHtml' },
+        data: { accion: 'listarHtml', ProgramaID: programaID },
         success: function(html) {
             $('#tablaCuentasBody').html(html);
         }
     });
 }
 
-function refrescarSelectCuenta() {
+function refrescarTiposCuentaDatalist() {
     $.ajax({
-        url: 'ajax/cuenta.ajax.php',
+        url: 'ajax/programacuenta.ajax.php',
         method: 'POST',
-        data: { accion: 'listarActivasHtml' },
+        data: { accion: 'listarTiposHtml' },
         success: function(html) {
-            var valorActual = $('#selectCuentaNuevo').val();
-            $('#selectCuentaNuevo').html('<option value="" selected>Seleccione una cuenta</option>' + html);
-            $('#selectCuentaNuevo').val(valorActual);
+            $('#listaTiposCuenta').html(html);
         }
     });
 }
 
-$('#formRegistrarCuenta').on('submit', function(e) {
+// Abrir el modal de cuentas desde el botón de la fila del programa
+$(document).on('click', '.btnAbrirCuentasPrograma', function() {
+    var programaID = $(this).data('idprograma');
+    var nombrePrograma = $(this).data('nombreprograma');
+
+    $('#cuentasProgramaID').val(programaID);
+    $('#cuentasProgramaNombre').text(nombrePrograma);
+    $('#formRegistrarCuentaPrograma')[0].reset();
+
+    refrescarTablaCuentasPrograma();
+    refrescarTiposCuentaDatalist();
+});
+
+$('#formRegistrarCuentaPrograma').on('submit', function(e) {
     e.preventDefault();
+
+    var programaID = $('#cuentasProgramaID').val();
+    var tipoCuenta = $('#inputTipoCuenta').val();
     var numeroCuenta = $('#inputNumeroCuenta').val();
     var banco = $('#inputBancoCuenta').val();
 
     $.ajax({
-        url: 'ajax/cuenta.ajax.php',
+        url: 'ajax/programacuenta.ajax.php',
         method: 'POST',
-        data: { accion: 'registrar', NumeroCuenta: numeroCuenta, Banco: banco },
+        data: { accion: 'registrar', ProgramaID: programaID, TipoCuenta: tipoCuenta, NumeroCuenta: numeroCuenta, Banco: banco },
         dataType: 'json',
         success: function(respuesta) {
             if (respuesta.estado === 'exitoso') {
-                $('#formRegistrarCuenta')[0].reset();
-                refrescarTablaCuentas();
-                refrescarSelectCuenta();
+                $('#formRegistrarCuentaPrograma')[0].reset();
+                refrescarTablaCuentasPrograma();
+                refrescarTiposCuentaDatalist();
             }
             swal(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
         },
@@ -1101,18 +1133,35 @@ $('#formRegistrarCuenta').on('submit', function(e) {
     });
 });
 
-$(document).on('click', '.btnCambiarEstadoCuenta', function() {
+$(document).on('click', '.btnCambiarEstadoCuentaPrograma', function() {
     var idcuenta = $(this).data('idcuenta');
     var nuevoestado = $(this).data('nuevoestado');
 
     $.ajax({
-        url: 'ajax/cuenta.ajax.php',
+        url: 'ajax/programacuenta.ajax.php',
         method: 'POST',
-        data: { accion: 'cambiarEstado', CuentaID: idcuenta, NuevoEstado: nuevoestado },
+        data: { accion: 'cambiarEstado', ProgramaCuentaID: idcuenta, NuevoEstado: nuevoestado },
         dataType: 'json',
         success: function(respuesta) {
-            refrescarTablaCuentas();
-            refrescarSelectCuenta();
+            refrescarTablaCuentasPrograma();
+            swal(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
+        },
+        error: function() {
+            swal('ERROR!', 'No se pudo conectar con el servidor', 'error');
+        }
+    });
+});
+
+$(document).on('click', '.btnMarcarPrincipalCuenta', function() {
+    var idcuenta = $(this).data('idcuenta');
+
+    $.ajax({
+        url: 'ajax/programacuenta.ajax.php',
+        method: 'POST',
+        data: { accion: 'marcarPrincipal', ProgramaCuentaID: idcuenta },
+        dataType: 'json',
+        success: function(respuesta) {
+            refrescarTablaCuentasPrograma();
             swal(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
         },
         error: function() {

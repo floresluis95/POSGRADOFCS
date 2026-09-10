@@ -1,6 +1,30 @@
 <?php
 class DocentesControlador
 {
+    /**
+     * Convierte el arreglo de menciones del formulario ("Menciones[]") en
+     * un único string separado por comas, listo para guardar en la BD.
+     * No se fuerza a mayúsculas: se respeta la capitalización tal como se
+     * escribió (ej. "M. Sc.", "Lic.").
+     * Ej: ["M. Sc.", "Lic."] => "M. Sc., Lic."
+     */
+    private static function ProcesarMencionesControlador($menciones)
+    {
+        if (!is_array($menciones)) {
+            return '';
+        }
+
+        $menciones = array_map(function ($mencion) {
+            return htmlspecialchars(trim($mencion));
+        }, $menciones);
+
+        $menciones = array_filter($menciones, function ($mencion) {
+            return $mencion !== '';
+        });
+
+        return implode(', ', $menciones);
+    }
+
  public function ListaDocenteControlador()
 {
     $Listad = DocentesModelo::ListaDocenteActivoModelo();
@@ -9,7 +33,8 @@ class DocentesControlador
     foreach ($Listad as $key => $Docente) {
         $contador++;
 
-        $nombreCompleto = $Docente['Apaterno'] . ' ' . $Docente['Amaterno'] . ' ' . $Docente['Nombre'];
+        $menciones = !empty($Docente['Menciones']) ? $Docente['Menciones'] . ' ' : '';
+        $nombreCompleto = $menciones . $Docente['Apaterno'] . ' ' . $Docente['Amaterno'] . ' ' . $Docente['Nombre'];
         $ciCompleto = $Docente['Ci'] . ($Docente['Complemento'] ? '-' . $Docente['Complemento'] : '') . ' ' . $Docente['Exp'];
 
         // Verificar si tiene usuario
@@ -82,6 +107,7 @@ class DocentesControlador
                             data-fecha-nacimiento="' . htmlspecialchars($Docente['FechaNacimiento']) . '"
                             data-cedula="' . htmlspecialchars($Docente['CedulaProfesional']) . '"
                             data-especialidad="' . htmlspecialchars($Docente['Especialidad']) . '"
+                            data-menciones="' . htmlspecialchars($Docente['Menciones'] ?? '') . '"
                             data-direccion="' . htmlspecialchars($Docente['Direccion']) . '"
                             data-correo="' . htmlspecialchars($Docente['Correo']) . '"
                             data-tel="' . htmlspecialchars($Docente['Tel']) . '"
@@ -110,13 +136,14 @@ class DocentesControlador
         $DatosDocente = array(
             "Ci"                => htmlspecialchars(trim($_POST['Ci'])),
             "Complemento"       => strtoupper(htmlspecialchars(trim($_POST['Complemento']))),
-            "Exp"               => strtoupper(htmlspecialchars(trim($_POST['Exp']))),
+            "Exp"               => strtoupper(htmlspecialchars(trim($_POST['Exp'] ?? ''))),
             "Nombre"            => strtoupper(htmlspecialchars(trim($_POST['Nombre']))),
             "Apaterno"          => strtoupper(htmlspecialchars(trim($_POST['Apaterno']))),
             "Amaterno"          => strtoupper(htmlspecialchars(trim($_POST['Amaterno']))),
             "FechaNacimiento"   => htmlspecialchars(trim($_POST['FechaNacimiento'])),
             "CedulaProfesional" => strtoupper(htmlspecialchars(trim($_POST['CedulaProfesional']))),
             "Especialidad"      => strtoupper(htmlspecialchars(trim($_POST['Especialidad']))),
+            "Menciones"         => self::ProcesarMencionesControlador($_POST['Menciones'] ?? []),
             "Direccion"         => strtoupper(htmlspecialchars(trim($_POST['Direccion']))),
             "Correo"            => htmlspecialchars(trim($_POST['Correo'])), // Correo en minúsculas
             "Tel"               => htmlspecialchars(trim($_POST['Tel'])),
@@ -183,13 +210,14 @@ class DocentesControlador
             $DatosDocente = array(
                 "Ci"                => htmlspecialchars(trim($_POST['editCi'])),
                 "Complemento"       => strtoupper(htmlspecialchars(trim($_POST['editComplemento']))),
-                "Exp"               => strtoupper(htmlspecialchars(trim($_POST['editExp']))),
+                "Exp"               => strtoupper(htmlspecialchars(trim($_POST['editExp'] ?? ''))),
                 "Nombre"            => strtoupper(htmlspecialchars(trim($_POST['editNombre']))),
                 "Apaterno"          => strtoupper(htmlspecialchars(trim($_POST['editApaterno']))),
                 "Amaterno"          => strtoupper(htmlspecialchars(trim($_POST['editAmaterno']))),
                 "FechaNacimiento"   => htmlspecialchars(trim($_POST['editFechaNacimiento'])),
                 "CedulaProfesional" => strtoupper(htmlspecialchars(trim($_POST['editCedulaProfesional']))),
                 "Especialidad"      => strtoupper(htmlspecialchars(trim($_POST['editEspecialidad']))),
+                "Menciones"         => self::ProcesarMencionesControlador($_POST['editMenciones'] ?? []),
                 "Direccion"         => strtoupper(htmlspecialchars(trim($_POST['editDireccion']))),
                 "Correo"            => htmlspecialchars(trim($_POST['editCorreo'])), // Correo en minúsculas
                 "Tel"               => htmlspecialchars(trim($_POST['editTel'])),

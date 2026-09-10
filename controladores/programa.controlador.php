@@ -1,8 +1,72 @@
 <?php
 
 class ProgramasControladores
-{ 
-    
+{
+    /**
+     * Valida los datos de un programa (registro o edición).
+     * $sufijo permite reusar la validación en el formulario de edición,
+     * cuyos campos tienen el mismo nombre + "Editar" (ej. NombreProgramaEditar).
+     * @return string|null Mensaje de error, o null si los datos son válidos.
+     */
+    private function ValidarDatosProgramaControlador($sufijo = '')
+    {
+        $camposObligatorios = [
+            'NombrePrograma' => 'Nombre del programa',
+            'GradoAcademico' => 'Grado académico',
+            'DuracionMeses' => 'Duración en meses',
+            'Modulos' => 'Número de módulos',
+            'FechaInicio' => 'Fecha de inicio',
+            'Sede' => 'Sede',
+            'Costo' => 'Costo',
+            'CostoMatricula' => 'Costo de matrícula',
+        ];
+
+        foreach ($camposObligatorios as $campo => $etiqueta) {
+            $key = $campo . $sufijo;
+            if (!isset($_POST[$key]) || trim($_POST[$key]) === '') {
+                return "El campo \"$etiqueta\" es obligatorio";
+            }
+        }
+
+        if (!is_numeric($_POST['DuracionMeses' . $sufijo]) || (int)$_POST['DuracionMeses' . $sufijo] <= 0) {
+            return 'La duración en meses debe ser un número mayor a 0';
+        }
+
+        if (!is_numeric($_POST['Modulos' . $sufijo]) || (int)$_POST['Modulos' . $sufijo] <= 0) {
+            return 'El número de módulos debe ser un número mayor a 0';
+        }
+
+        if (!is_numeric($_POST['Costo' . $sufijo]) || (float)$_POST['Costo' . $sufijo] <= 0) {
+            return 'El costo debe ser un número mayor a 0';
+        }
+
+        if (!is_numeric($_POST['CostoMatricula' . $sufijo]) || (float)$_POST['CostoMatricula' . $sufijo] < 0) {
+            return 'El costo de matrícula debe ser un número válido';
+        }
+
+        $fecha = trim($_POST['FechaInicio' . $sufijo]);
+        $fechaValida = DateTime::createFromFormat('Y-m-d', $fecha);
+        if (!$fechaValida || $fechaValida->format('Y-m-d') !== $fecha) {
+            return 'La fecha de inicio no es válida (formato esperado: AAAA-MM-DD)';
+        }
+
+        return null;
+    }
+
+    private function MostrarErrorValidacionPrograma($mensaje)
+    {
+        echo '
+        <script src="vistas/recursos/sweetalert.min.js"></script>
+        <script>
+        swal("ERROR!", "' . addslashes($mensaje) . '", "error")
+        .then(function () {
+            location.href="programas";
+        })
+        ;
+        </script>';
+    }
+
+
     public function ListaProgramaControlador($grado = null, $fechaInicio = null, $fechaFin = null)
     {
         // Debug activado - ver en el código fuente HTML (Ctrl+U)
@@ -23,7 +87,7 @@ class ProgramasControladores
         // Si no hay resultados, mostrar mensaje
         if (empty($listaprogramas)) {
             echo '<tr>
-                    <td colspan="11" class="text-center" style="padding: 40px;">
+                    <td colspan="12" class="text-center" style="padding: 40px;">
                         <i class="fa fa-search" style="font-size: 48px; color: #ccc;"></i>
                         <h4 style="color: #999; margin-top: 20px;">No se encontraron programas con los filtros seleccionados</h4>
                         <p style="color: #999;">Intenta cambiar los criterios de búsqueda</p>
@@ -87,6 +151,17 @@ class ProgramasControladores
             class="btn btn-info btn-sm" title="Ver Detalle"
             data-toggle="modal" data-target="#DetallePrograma">
             <i class="fa fa-eye"></i>
+        </button>
+    </td>';
+
+    // Botón CUENTAS (administrar cuentas bancarias del programa por tipo)
+    echo '<td class="text-center align-middle">
+        <button type="button" id="btnCuentasPrograma" idcod="'.$programa['ProgramaID'].'"
+            data-idprograma="'.$programa['ProgramaID'].'"
+            data-nombreprograma="'.htmlspecialchars($programa['NombrePrograma']).'"
+            class="btn btn-secondary btn-sm btnAbrirCuentasPrograma" title="Administrar cuentas"
+            data-toggle="modal" data-target="#gestionarCuentas">
+            <i class="fa fa-university"></i>
         </button>
     </td>';
 
@@ -154,6 +229,11 @@ class ProgramasControladores
     {
         if (isset($_POST["NombrePrograma"]))
         {
+                $errorValidacion = $this->ValidarDatosProgramaControlador();
+                if ($errorValidacion !== null) {
+                    $this->MostrarErrorValidacionPrograma($errorValidacion);
+                    return;
+                }
 
                 $datosPrograma =array(
                 "NombrePrograma" => strtoupper(htmlspecialchars(trim($_POST['NombrePrograma']))), // Sanitizar y convertir a mayúsculas
@@ -168,7 +248,7 @@ class ProgramasControladores
                 "Version" => strtoupper(htmlspecialchars(trim($_POST['Version'] ?? 'V-1'))), // Versión del programa
                 "NumeroTramite" => strtoupper(htmlspecialchars(trim($_POST['NumeroTramite'] ?? ''))) // Cuenta del programa
                 );
-                $nombreprograma = $_POST['NombrePrograma'];
+                $nombreprograma = $datosPrograma['NombrePrograma']; // Ya normalizado (mayúsculas/trim) para comparar correctamente
                 $existe = ProgramasModelos::Buscarprogramamodelo($nombreprograma);
                 if ($existe==true)
                     {
@@ -235,6 +315,12 @@ class ProgramasControladores
     {
         if (isset($_POST["ProgramaIDEditar"]))
         {
+            $errorValidacion = $this->ValidarDatosProgramaControlador('Editar');
+            if ($errorValidacion !== null) {
+                $this->MostrarErrorValidacionPrograma($errorValidacion);
+                return;
+            }
+
             $datosPrograma = array(
                 "ProgramaID" => (int)$_POST['ProgramaIDEditar'],
                 "NombrePrograma" => strtoupper(htmlspecialchars(trim($_POST['NombreProgramaEditar']))),

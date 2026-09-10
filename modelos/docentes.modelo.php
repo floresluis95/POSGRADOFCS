@@ -36,6 +36,7 @@
                 `FechaNacimiento`,
                 `CedulaProfesional`,
                 `Especialidad`,
+                `Menciones`,
                 `Direccion`,
                 `Correo`,
                 `Tel`,
@@ -54,6 +55,7 @@
                 :FechaNacimiento,
                 :CedulaProfesional,
                 :Especialidad,
+                :Menciones,
                 :Direccion,
                 :Correo,
                 :Tel,
@@ -71,6 +73,7 @@
                 $stmt->bindParam(":FechaNacimiento",   $DatosDocentes['FechaNacimiento'],   PDO::PARAM_STR);
                 $stmt->bindParam(":CedulaProfesional", $DatosDocentes['CedulaProfesional'], PDO::PARAM_STR);
                 $stmt->bindParam(":Especialidad",      $DatosDocentes['Especialidad'],      PDO::PARAM_STR);
+                $stmt->bindParam(":Menciones",         $DatosDocentes['Menciones'],         PDO::PARAM_STR);
                 $stmt->bindParam(":Direccion",         $DatosDocentes['Direccion'],         PDO::PARAM_STR);
                 $stmt->bindParam(":Correo",            $DatosDocentes['Correo'],            PDO::PARAM_STR);
                 $stmt->bindParam(":Tel",               $DatosDocentes['Tel'],               PDO::PARAM_STR);
@@ -107,6 +110,7 @@
             `FechaNacimiento` = :FechaNacimiento,
             `CedulaProfesional` = :CedulaProfesional,
             `Especialidad` = :Especialidad,
+            `Menciones` = :Menciones,
             `Direccion` = :Direccion,
             `Correo` = :Correo,
             `Tel` = :Tel,
@@ -125,6 +129,7 @@
         $stmt->bindParam(":FechaNacimiento", $DatosDocente['FechaNacimiento'], PDO::PARAM_STR);
         $stmt->bindParam(":CedulaProfesional", $DatosDocente['CedulaProfesional'], PDO::PARAM_STR);
         $stmt->bindParam(":Especialidad", $DatosDocente['Especialidad'], PDO::PARAM_STR);
+        $stmt->bindParam(":Menciones", $DatosDocente['Menciones'], PDO::PARAM_STR);
         $stmt->bindParam(":Direccion", $DatosDocente['Direccion'], PDO::PARAM_STR);
         $stmt->bindParam(":Correo", $DatosDocente['Correo'], PDO::PARAM_STR);
         $stmt->bindParam(":Tel", $DatosDocente['Tel'], PDO::PARAM_STR);

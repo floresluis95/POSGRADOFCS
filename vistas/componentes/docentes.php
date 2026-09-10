@@ -233,6 +233,64 @@ $csrf_token = bin2hex(random_bytes(32));
                 <div class="modal-body" style="padding: 30px;">
 
                     <h4 class="form-section">
+                        <i class="fas fa-globe mr-2"></i> Nacionalidad
+                    </h4>
+
+                    <!-- Checkbox de Docente Extranjero -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <div style="padding: 15px; background: linear-gradient(135deg, rgba(30, 60, 114, 0.1) 0%, rgba(42, 82, 152, 0.1) 100%); border-radius: 8px; border: 2px solid #1e3c72;">
+                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                        <input type="checkbox" class="custom-control-input" id="checkExtranjero" name="EsExtranjero" value="1">
+                                        <label class="custom-control-label" for="checkExtranjero" style="font-size: 1.1rem; font-weight: 600; color: #1e3c72; cursor: pointer;">
+                                            <i class="fas fa-passport mr-2"></i> El docente es extranjero
+                                        </label>
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle"></i> Si el docente no es boliviano, marque esta opción primero: el campo "Expedido" cambiará a los datos de país/región.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos de País y Región (ocultos por defecto) -->
+                    <div class="row" id="camposExtranjero" style="display: none;">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="selectPais"><i class="fas fa-flag text-primary"></i> País de Origen *</label>
+                                <select class="form-control" id="selectPais" name="Pais">
+                                    <option value="" selected>Seleccione un país...</option>
+                                    <option value="Argentina">Argentina</option>
+                                    <option value="Brasil">Brasil</option>
+                                    <option value="Chile">Chile</option>
+                                    <option value="Colombia">Colombia</option>
+                                    <option value="Ecuador">Ecuador</option>
+                                    <option value="España">España</option>
+                                    <option value="Estados Unidos">Estados Unidos</option>
+                                    <option value="México">México</option>
+                                    <option value="Paraguay">Paraguay</option>
+                                    <option value="Perú">Perú</option>
+                                    <option value="Uruguay">Uruguay</option>
+                                    <option value="Venezuela">Venezuela</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                                <div class="invalid-feedback">Seleccione el país de origen.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="inputRegion"><i class="fas fa-map-marked-alt text-primary"></i> Región/Departamento *</label>
+                                <input type="text" id="inputRegion" name="Region" class="form-control text-uppercase"
+                                       placeholder="Ej: Buenos Aires, California, etc." maxlength="100">
+                                <small class="text-muted">Estado, provincia o departamento del país</small>
+                                <div class="invalid-feedback">Ingrese la región o departamento.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="form-section">
                         <i class="fas fa-id-card mr-2"></i> Datos de Identificación
                     </h4>
 
@@ -279,7 +337,7 @@ $csrf_token = bin2hex(random_bytes(32));
 
                     <!-- Nombre y fecha -->
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <div class="form-group">
                                 <label for="inputNombres"><i class="fas fa-user text-primary"></i> Nombre(s) *</label>
                                 <input type="text" id="inputNombres" name="Nombre" class="form-control"
@@ -293,7 +351,7 @@ $csrf_token = bin2hex(random_bytes(32));
                                 <input type="text" id="apaterno" name="Apaterno" class="form-control" required placeholder="García">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="amaterno"><i class="fas fa-user text-primary"></i> Apellido Materno</label>
                                 <input type="text" id="amaterno" name="Amaterno" class="form-control" placeholder="López">
@@ -302,7 +360,7 @@ $csrf_token = bin2hex(random_bytes(32));
                     </div>
 
                     <div class="row">
-                        <div class="col-md-12">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="fechaNacimiento"><i class="fas fa-calendar text-info"></i> Fecha Nacimiento</label>
                                 <input type="date" id="fechaNacimiento" name="FechaNacimiento" class="form-control"
@@ -328,66 +386,44 @@ $csrf_token = bin2hex(random_bytes(32));
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="especialidad"><i class="fas fa-briefcase text-danger"></i> Especialidad *</label>
-                                <input type="text" id="especialidad" name="Especialidad" class="form-control"
-                                       required placeholder="Ej: Odontología General" maxlength="100">
-                                <div class="invalid-feedback">Ingrese la especialidad.</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h4 class="form-section">
-                        <i class="fas fa-globe mr-2"></i> Nacionalidad
-                    </h4>
-
-                    <!-- Checkbox de Docente Extranjero -->
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <div class="custom-control custom-checkbox custom-control-inline" style="padding: 15px; background: linear-gradient(135deg, rgba(30, 60, 114, 0.1) 0%, rgba(42, 82, 152, 0.1) 100%); border-radius: 8px; border: 2px solid #1e3c72;">
-                                    <input type="checkbox" class="custom-control-input" id="checkExtranjero" name="EsExtranjero" value="1">
-                                    <label class="custom-control-label" for="checkExtranjero" style="font-size: 1.1rem; font-weight: 600; color: #1e3c72; cursor: pointer;">
-                                        <i class="fas fa-passport mr-2"></i> El docente es extranjero
-                                    </label>
-                                </div>
-                                <small class="text-muted d-block mt-2">
-                                    <i class="fas fa-info-circle"></i> Si el docente no es boliviano, marque esta opción y complete los datos adicionales.
+                                <label for="especialidad">
+                                    <i class="fas fa-briefcase text-danger"></i> Especialidad *
+                                    <a href="javascript:void(0)" data-toggle="modal" data-target="#ModalGestionarEspecialidades" title="Administrar especialidades">
+                                        <i class="fa fa-cog"></i>
+                                    </a>
+                                </label>
+                                <select id="especialidad" name="Especialidad" class="form-control" required>
+                                    <option value="" disabled selected>Seleccione una especialidad</option>
+                                    <?php
+                                        $opcionesEspecialidad = new EspecialidadControlador();
+                                        $opcionesEspecialidad->RenderOpcionesActivasControlador();
+                                    ?>
+                                </select>
+                                <div class="invalid-feedback">Seleccione la especialidad.</div>
+                                <small class="text-muted d-block mt-1">
+                                    ¿No está en la lista? Usa el ícono <i class="fa fa-cog"></i> para agregarla.
                                 </small>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Campos de País y Región (ocultos por defecto) -->
-                    <div class="row" id="camposExtranjero" style="display: none;">
-                        <div class="col-md-6">
+                    <!-- Menciones / Títulos académicos -->
+                    <div class="row">
+                        <div class="col-md-12">
                             <div class="form-group">
-                                <label for="selectPais"><i class="fas fa-flag text-primary"></i> País de Origen *</label>
-                                <select class="form-control" id="selectPais" name="Pais">
-                                    <option value="" selected>Seleccione un país...</option>
-                                    <option value="Argentina">Argentina</option>
-                                    <option value="Brasil">Brasil</option>
-                                    <option value="Chile">Chile</option>
-                                    <option value="Colombia">Colombia</option>
-                                    <option value="Ecuador">Ecuador</option>
-                                    <option value="España">España</option>
-                                    <option value="Estados Unidos">Estados Unidos</option>
-                                    <option value="México">México</option>
-                                    <option value="Paraguay">Paraguay</option>
-                                    <option value="Perú">Perú</option>
-                                    <option value="Uruguay">Uruguay</option>
-                                    <option value="Venezuela">Venezuela</option>
-                                    <option value="Otro">Otro</option>
-                                </select>
-                                <div class="invalid-feedback">Seleccione el país de origen.</div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="inputRegion"><i class="fas fa-map-marked-alt text-primary"></i> Región/Departamento *</label>
-                                <input type="text" id="inputRegion" name="Region" class="form-control text-uppercase"
-                                       placeholder="Ej: Buenos Aires, California, etc." maxlength="100">
-                                <small class="text-muted">Estado, provincia o departamento del país</small>
-                                <div class="invalid-feedback">Ingrese la región o departamento.</div>
+                                <label><i class="fas fa-award text-warning"></i> Menciones / Títulos académicos</label>
+                                <div id="contenedorMencionesNuevo">
+                                    <div class="input-group mb-2 mencion-row">
+                                        <input type="text" name="Menciones[]" class="form-control" placeholder="Ej: M. Sc., Lic., Dr.">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-danger btnQuitarMencion"><i class="fa fa-times"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarMencionNuevo">
+                                    <i class="fa fa-plus"></i> Agregar mención
+                                </button>
+                                <small class="text-muted d-block mt-1">Opcional. Se antepondrán al nombre del docente (ej. "M. SC. LIC. JUAN PÉREZ").</small>
                             </div>
                         </div>
                     </div>
@@ -409,21 +445,21 @@ $csrf_token = bin2hex(random_bytes(32));
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="direccionInput"><i class="fas fa-home text-warning"></i> Dirección</label>
                                 <input type="text" id="direccionInput" name="Direccion" class="form-control" maxlength="100"
                                        placeholder="Av. Principal #123">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="inputTelefono"><i class="fas fa-phone text-warning"></i> Teléfono</label>
                                 <input type="tel" id="inputTelefono" name="Tel" class="form-control" pattern="[0-9]{7,8}"
                                        placeholder="2525252">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="inputCelular"><i class="fas fa-mobile-alt text-warning"></i> Celular *</label>
                                 <input type="tel" id="inputCelular" name="Cel" class="form-control"
@@ -570,6 +606,62 @@ $csrf_token = bin2hex(random_bytes(32));
                 <div class="modal-body" style="padding: 30px;">
 
                     <h4 class="form-section">
+                        <i class="fas fa-globe mr-2"></i> Nacionalidad
+                    </h4>
+
+                    <!-- Checkbox de Docente Extranjero (Editar) -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <div style="padding: 15px; background: linear-gradient(135deg, rgba(30, 60, 114, 0.1) 0%, rgba(42, 82, 152, 0.1) 100%); border-radius: 8px; border: 2px solid #1e3c72;">
+                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                        <input type="checkbox" class="custom-control-input" id="editCheckExtranjero" name="editEsExtranjero" value="1">
+                                        <label class="custom-control-label" for="editCheckExtranjero" style="font-size: 1.1rem; font-weight: 600; color: #1e3c72; cursor: pointer;">
+                                            <i class="fas fa-passport mr-2"></i> El docente es extranjero
+                                        </label>
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle"></i> Si el docente no es boliviano, marque esta opción primero: el campo "Expedido" cambiará a los datos de país/región.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos de País y Región para Editar (ocultos por defecto) -->
+                    <div class="row" id="editCamposExtranjero" style="display: none;">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editSelectPais"><i class="fas fa-flag text-primary"></i> País de Origen *</label>
+                                <select class="form-control" id="editSelectPais" name="editPais">
+                                    <option value="">Seleccione un país...</option>
+                                    <option value="Argentina">Argentina</option>
+                                    <option value="Brasil">Brasil</option>
+                                    <option value="Chile">Chile</option>
+                                    <option value="Colombia">Colombia</option>
+                                    <option value="Ecuador">Ecuador</option>
+                                    <option value="España">España</option>
+                                    <option value="Estados Unidos">Estados Unidos</option>
+                                    <option value="México">México</option>
+                                    <option value="Paraguay">Paraguay</option>
+                                    <option value="Perú">Perú</option>
+                                    <option value="Uruguay">Uruguay</option>
+                                    <option value="Venezuela">Venezuela</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editInputRegion"><i class="fas fa-map-marked-alt text-primary"></i> Región/Departamento *</label>
+                                <input type="text" id="editInputRegion" name="editRegion" class="form-control text-uppercase"
+                                       placeholder="Ej: Buenos Aires, California, etc." maxlength="100">
+                                <small class="text-muted">Estado, provincia o departamento del país</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="form-section">
                         <i class="fas fa-id-card mr-2"></i> Datos de Identificación
                     </h4>
 
@@ -615,7 +707,7 @@ $csrf_token = bin2hex(random_bytes(32));
 
                     <!-- Nombre y fecha -->
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <div class="form-group">
                                 <label for="editNombre"><i class="fas fa-user text-primary"></i> Nombre(s) *</label>
                                 <input type="text" id="editNombre" name="editNombre" class="form-control"
@@ -628,7 +720,7 @@ $csrf_token = bin2hex(random_bytes(32));
                                 <input type="text" id="editApaterno" name="editApaterno" class="form-control" required placeholder="García">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="editAmaterno"><i class="fas fa-user text-primary"></i> Apellido Materno</label>
                                 <input type="text" id="editAmaterno" name="editAmaterno" class="form-control" placeholder="López">
@@ -637,7 +729,7 @@ $csrf_token = bin2hex(random_bytes(32));
                     </div>
 
                     <div class="row">
-                        <div class="col-md-12">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="editFechaNacimiento"><i class="fas fa-calendar text-info"></i> Fecha Nacimiento</label>
                                 <input type="date" id="editFechaNacimiento" name="editFechaNacimiento" class="form-control">
@@ -660,60 +752,36 @@ $csrf_token = bin2hex(random_bytes(32));
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editEspecialidad"><i class="fas fa-briefcase text-danger"></i> Especialidad *</label>
-                                <input type="text" id="editEspecialidad" name="editEspecialidad" class="form-control"
-                                       required placeholder="Ej: Odontología General" maxlength="100">
-                            </div>
-                        </div>
-                    </div>
-
-                    <h4 class="form-section">
-                        <i class="fas fa-globe mr-2"></i> Nacionalidad
-                    </h4>
-
-                    <!-- Checkbox de Docente Extranjero (Editar) -->
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <div class="custom-control custom-checkbox custom-control-inline" style="padding: 15px; background: linear-gradient(135deg, rgba(30, 60, 114, 0.1) 0%, rgba(42, 82, 152, 0.1) 100%); border-radius: 8px; border: 2px solid #1e3c72;">
-                                    <input type="checkbox" class="custom-control-input" id="editCheckExtranjero" name="editEsExtranjero" value="1">
-                                    <label class="custom-control-label" for="editCheckExtranjero" style="font-size: 1.1rem; font-weight: 600; color: #1e3c72; cursor: pointer;">
-                                        <i class="fas fa-passport mr-2"></i> El docente es extranjero
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Campos de País y Región para Editar (ocultos por defecto) -->
-                    <div class="row" id="editCamposExtranjero" style="display: none;">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editSelectPais"><i class="fas fa-flag text-primary"></i> País de Origen *</label>
-                                <select class="form-control" id="editSelectPais" name="editPais">
-                                    <option value="">Seleccione un país...</option>
-                                    <option value="Argentina">Argentina</option>
-                                    <option value="Brasil">Brasil</option>
-                                    <option value="Chile">Chile</option>
-                                    <option value="Colombia">Colombia</option>
-                                    <option value="Ecuador">Ecuador</option>
-                                    <option value="España">España</option>
-                                    <option value="Estados Unidos">Estados Unidos</option>
-                                    <option value="México">México</option>
-                                    <option value="Paraguay">Paraguay</option>
-                                    <option value="Perú">Perú</option>
-                                    <option value="Uruguay">Uruguay</option>
-                                    <option value="Venezuela">Venezuela</option>
-                                    <option value="Otro">Otro</option>
+                                <label for="editEspecialidad">
+                                    <i class="fas fa-briefcase text-danger"></i> Especialidad *
+                                    <a href="javascript:void(0)" data-toggle="modal" data-target="#ModalGestionarEspecialidades" title="Administrar especialidades">
+                                        <i class="fa fa-cog"></i>
+                                    </a>
+                                </label>
+                                <select id="editEspecialidad" name="editEspecialidad" class="form-control" required>
+                                    <option value="" disabled>Seleccione una especialidad</option>
+                                    <?php $opcionesEspecialidad->RenderOpcionesActivasControlador(); ?>
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                    </div>
+
+                    <!-- Menciones / Títulos académicos (Editar) -->
+                    <div class="row">
+                        <div class="col-md-12">
                             <div class="form-group">
-                                <label for="editInputRegion"><i class="fas fa-map-marked-alt text-primary"></i> Región/Departamento *</label>
-                                <input type="text" id="editInputRegion" name="editRegion" class="form-control text-uppercase"
-                                       placeholder="Ej: Buenos Aires, California, etc." maxlength="100">
-                                <small class="text-muted">Estado, provincia o departamento del país</small>
+                                <label><i class="fas fa-award text-warning"></i> Menciones / Títulos académicos</label>
+                                <div id="contenedorMencionesEditar">
+                                    <div class="input-group mb-2 mencion-row">
+                                        <input type="text" name="editMenciones[]" class="form-control" placeholder="Ej: M. Sc., Lic., Dr.">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-danger btnQuitarMencion"><i class="fa fa-times"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarMencionEditar">
+                                    <i class="fa fa-plus"></i> Agregar mención
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -734,21 +802,21 @@ $csrf_token = bin2hex(random_bytes(32));
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="editDireccion"><i class="fas fa-home text-warning"></i> Dirección</label>
                                 <input type="text" id="editDireccion" name="editDireccion" class="form-control" maxlength="100"
                                        placeholder="Av. Principal #123">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="editTel"><i class="fas fa-phone text-warning"></i> Teléfono</label>
                                 <input type="tel" id="editTel" name="editTel" class="form-control" pattern="[0-9]{7,8}"
                                        placeholder="2525252">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="editCel"><i class="fas fa-mobile-alt text-warning"></i> Celular *</label>
                                 <input type="tel" id="editCel" name="editCel" class="form-control"
@@ -777,6 +845,44 @@ $csrf_token = bin2hex(random_bytes(32));
     </div>
 </div>
 
+<!-- Modal Gestionar Especialidades -->
+<div class="modal fade" id="ModalGestionarEspecialidades" tabindex="-1" role="dialog" aria-labelledby="ModalGestionarEspecialidadesLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ModalGestionarEspecialidadesLabel">Administrar especialidades</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formRegistrarEspecialidad" method="post" class="form-inline mb-3">
+                    <input type="text" class="form-control mr-2 mb-2" id="inputNombreEspecialidad" name="Nombre" placeholder="Nombre de la especialidad" required>
+                    <button type="submit" class="btn btn-success mb-2"><i class="fa fa-plus"></i> Agregar especialidad</button>
+                </form>
+                <table class="table table-bordered table-sm">
+                    <thead>
+                        <tr>
+                            <th>Especialidad</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaEspecialidadesBody">
+                        <?php
+                            $listaEspecialidades = new EspecialidadControlador();
+                            $listaEspecialidades->ListarEspecialidadesControlador();
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php
     $darDeBaja = new DocentesControlador();
     $darDeBaja->DarDeBajaDocenteControlador();
@@ -788,7 +894,138 @@ $csrf_token = bin2hex(random_bytes(32));
 ?>
 
 <!-- Scripts -->
+<script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
+<script src="vistas/recursos/sweetalert.min.js"></script>
 <script>
+// ========================================
+// MENCIONES / TÍTULOS ACADÉMICOS (dinámico)
+// ========================================
+
+// Agrega una fila de mención vacía al contenedor indicado
+function agregarFilaMencion(idContenedor, nombreCampo, valor) {
+    valor = valor || '';
+    var fila = jQuery('<div class="input-group mb-2 mencion-row"></div>');
+    var input = jQuery('<input type="text" class="form-control" placeholder="Ej: M. Sc., Lic., Dr.">')
+        .attr('name', nombreCampo)
+        .val(valor);
+    var btnQuitar = jQuery('<div class="input-group-append"><button type="button" class="btn btn-outline-danger btnQuitarMencion"><i class="fa fa-times"></i></button></div>');
+
+    fila.append(input).append(btnQuitar);
+    jQuery(idContenedor).append(fila);
+}
+
+// Vacía el contenedor y lo llena con las menciones existentes (separadas por coma);
+// si no hay ninguna, deja una fila vacía para que se pueda escribir la primera.
+function cargarMencionesEnFormulario(idContenedor, nombreCampo, mencionesTexto) {
+    jQuery(idContenedor).empty();
+
+    var menciones = (mencionesTexto || '').split(',')
+        .map(function(m) { return m.trim(); })
+        .filter(function(m) { return m !== ''; });
+
+    if (menciones.length === 0) {
+        agregarFilaMencion(idContenedor, nombreCampo, '');
+    } else {
+        menciones.forEach(function(mencion) {
+            agregarFilaMencion(idContenedor, nombreCampo, mencion);
+        });
+    }
+}
+
+jQuery(document).ready(function() {
+    jQuery('#btnAgregarMencionNuevo').on('click', function() {
+        agregarFilaMencion('#contenedorMencionesNuevo', 'Menciones[]', '');
+    });
+
+    jQuery('#btnAgregarMencionEditar').on('click', function() {
+        agregarFilaMencion('#contenedorMencionesEditar', 'editMenciones[]', '');
+    });
+
+    // Quitar una fila de mención (deja al menos una fila en el contenedor)
+    jQuery(document).on('click', '.btnQuitarMencion', function() {
+        var $contenedor = jQuery(this).closest('#contenedorMencionesNuevo, #contenedorMencionesEditar');
+        if ($contenedor.find('.mencion-row').length > 1) {
+            jQuery(this).closest('.mencion-row').remove();
+        } else {
+            jQuery(this).closest('.mencion-row').find('input').val('');
+        }
+    });
+});
+
+// ========================================
+// CATÁLOGO DE ESPECIALIDADES (administrar / refrescar selects)
+// ========================================
+function refrescarTablaEspecialidades() {
+    jQuery.ajax({
+        url: 'ajax/especialidad.ajax.php',
+        method: 'POST',
+        data: { accion: 'listarHtml' },
+        success: function(html) {
+            jQuery('#tablaEspecialidadesBody').html(html);
+        }
+    });
+}
+
+function refrescarSelectsEspecialidad() {
+    jQuery.ajax({
+        url: 'ajax/especialidad.ajax.php',
+        method: 'POST',
+        data: { accion: 'listarOpcionesHtml' },
+        success: function(html) {
+            ['#especialidad', '#editEspecialidad'].forEach(function(selector) {
+                var valorActual = jQuery(selector).val();
+                jQuery(selector).html('<option value="" disabled>Seleccione una especialidad</option>' + html);
+                jQuery(selector).val(valorActual);
+            });
+        }
+    });
+}
+
+jQuery(document).ready(function() {
+    jQuery('#formRegistrarEspecialidad').on('submit', function(e) {
+        e.preventDefault();
+        var nombre = jQuery('#inputNombreEspecialidad').val();
+
+        jQuery.ajax({
+            url: 'ajax/especialidad.ajax.php',
+            method: 'POST',
+            data: { accion: 'registrar', Nombre: nombre },
+            dataType: 'json',
+            success: function(respuesta) {
+                if (respuesta.estado === 'exitoso') {
+                    jQuery('#formRegistrarEspecialidad')[0].reset();
+                    refrescarTablaEspecialidades();
+                    refrescarSelectsEspecialidad();
+                }
+                swal(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
+            },
+            error: function() {
+                swal('ERROR!', 'No se pudo conectar con el servidor', 'error');
+            }
+        });
+    });
+
+    jQuery(document).on('click', '.btnCambiarEstadoEspecialidad', function() {
+        var idespecialidad = jQuery(this).data('idespecialidad');
+        var nuevoestado = jQuery(this).data('nuevoestado');
+
+        jQuery.ajax({
+            url: 'ajax/especialidad.ajax.php',
+            method: 'POST',
+            data: { accion: 'cambiarEstado', EspecialidadID: idespecialidad, NuevoEstado: nuevoestado },
+            dataType: 'json',
+            success: function(respuesta) {
+                refrescarTablaEspecialidades();
+                refrescarSelectsEspecialidad();
+                swal(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
+            },
+            error: function() {
+                swal('ERROR!', 'No se pudo conectar con el servidor', 'error');
+            }
+        });
+    });
+});
+
 // Función que se ejecuta cuando jQuery está disponible
 function inicializarModalAsignarUsuarioDocente() {
   if (typeof jQuery === 'undefined') {
@@ -872,6 +1109,7 @@ jQuery(document).on('click', '.btnEditarDocente', function() {
     const fechaNacimiento = jQuery(this).attr('data-fecha-nacimiento');
     const cedula = jQuery(this).attr('data-cedula');
     const especialidad = jQuery(this).attr('data-especialidad');
+    const menciones = jQuery(this).attr('data-menciones');
     const direccion = jQuery(this).attr('data-direccion');
     const correo = jQuery(this).attr('data-correo');
     const tel = jQuery(this).attr('data-tel');
@@ -894,7 +1132,14 @@ jQuery(document).on('click', '.btnEditarDocente', function() {
     jQuery('#editAmaterno').val(amaterno);
     jQuery('#editFechaNacimiento').val(fechaNacimiento);
     jQuery('#editCedulaProfesional').val(cedula);
-    jQuery('#editEspecialidad').val(especialidad);
+    // Si la especialidad guardada ya no está en el catálogo (ej. fue dada de baja),
+    // se agrega temporalmente como opción para no perder el dato del docente.
+    var $selectEspecialidad = jQuery('#editEspecialidad');
+    if (especialidad && $selectEspecialidad.find('option[value="' + especialidad.replace(/"/g, '\\"') + '"]').length === 0) {
+        $selectEspecialidad.append(jQuery('<option>', { value: especialidad, text: especialidad }));
+    }
+    $selectEspecialidad.val(especialidad);
+    cargarMencionesEnFormulario('#contenedorMencionesEditar', 'editMenciones[]', menciones);
     jQuery('#editDireccion').val(direccion);
     jQuery('#editCorreo').val(correo);
     jQuery('#editTel').val(tel);
@@ -906,13 +1151,13 @@ jQuery(document).on('click', '.btnEditarDocente', function() {
         jQuery('#editCamposExtranjero').show();
         jQuery('#editSelectPais').val(pais).prop('required', true);
         jQuery('#editInputRegion').val(region).prop('required', true);
-        jQuery('#editExp').prop('required', false);
+        jQuery('#editExp').prop('required', false).prop('disabled', true).val('');
     } else {
         jQuery('#editCheckExtranjero').prop('checked', false);
         jQuery('#editCamposExtranjero').hide();
         jQuery('#editSelectPais').val('').prop('required', false);
         jQuery('#editInputRegion').val('').prop('required', false);
-        jQuery('#editExp').prop('required', true);
+        jQuery('#editExp').prop('required', true).prop('disabled', false).val(exp);
     }
 
     console.log('✓ Modal de edición llenado con datos del docente');
@@ -1014,8 +1259,8 @@ jQuery(document).ready(function() {
             form.classList.add('was-validated');
         }, false);
 
-        // Mayúsculas automáticas
-        jQuery('#inputComplemento, #inputNombres, #apaterno, #amaterno').on('input', function() {
+        // Mayúsculas automáticas (todos los datos del docente, excepto correo y menciones)
+        jQuery('#inputComplemento, #inputNombres, #apaterno, #amaterno, #cedulaProfesional, #direccionInput').on('input', function() {
             this.value = this.value.toUpperCase();
         });
 
@@ -1066,9 +1311,8 @@ jQuery(document).ready(function() {
             $selectPais.prop('required', true);
             $inputRegion.prop('required', true);
 
-            // Deshabilitar validación de CI boliviano si es necesario
-            jQuery('#selectExpedido').prop('required', false);
-            jQuery('#selectExpedido').removeClass('is-invalid');
+            // Bloquear el campo "Expedido" (solo aplica a docentes bolivianos)
+            jQuery('#selectExpedido').prop('required', false).prop('disabled', true).val('').removeClass('is-invalid');
         } else {
             // Ocultar campos y limpiar valores
             console.log('>>> Ocultando campos de extranjero');
@@ -1076,8 +1320,8 @@ jQuery(document).ready(function() {
             $selectPais.prop('required', false).val('');
             $inputRegion.prop('required', false).val('');
 
-            // Habilitar validación de CI boliviano
-            jQuery('#selectExpedido').prop('required', true);
+            // Habilitar de nuevo el campo "Expedido"
+            jQuery('#selectExpedido').prop('required', true).prop('disabled', false);
         }
     });
 
@@ -1105,17 +1349,22 @@ jQuery(document).ready(function() {
             $camposExtranjero.show();
             $selectPais.prop('required', true);
             $inputRegion.prop('required', true);
-            jQuery('#editExp').prop('required', false);
+            jQuery('#editExp').prop('required', false).prop('disabled', true).val('');
         } else {
             console.log('>>> Ocultando campos EDITAR de extranjero');
             $camposExtranjero.hide();
             $selectPais.prop('required', false).val('');
             $inputRegion.prop('required', false).val('');
-            jQuery('#editExp').prop('required', true);
+            jQuery('#editExp').prop('required', true).prop('disabled', false);
         }
     });
 
     jQuery('#editInputRegion').on('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+
+    // Mayúsculas automáticas en el formulario de edición (excepto correo y menciones)
+    jQuery('#editComplemento, #editNombre, #editApaterno, #editAmaterno, #editCedulaProfesional, #editDireccion').on('input', function() {
         this.value = this.value.toUpperCase();
     });
 });

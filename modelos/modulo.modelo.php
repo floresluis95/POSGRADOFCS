@@ -25,7 +25,7 @@ class ModuloModelo
                     estadomodulo
                 FROM modulos
                 WHERE idinscripcion = :idinscripcion
-                ORDER BY codigomodulo ASC"
+                ORDER BY Idmodulo ASC"
             );
             $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
             $stmt->execute();
@@ -187,7 +187,7 @@ class ModuloModelo
                 INNER JOIN estudianteprograma ep ON m.idinscripcion = ep.idInscripcion
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
-                ORDER BY m.idinscripcion DESC, m.codigomodulo ASC"
+                ORDER BY m.idinscripcion DESC, m.Idmodulo ASC"
             );
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -321,7 +321,7 @@ class ModuloModelo
                     DocenteID
                 FROM modulos
                 WHERE ProgramaId = :programaID
-                ORDER BY codigomodulo ASC"
+                ORDER BY Idmodulo ASC"
             );
             $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
             $stmt->execute();
@@ -364,7 +364,7 @@ class ModuloModelo
                 $sql .= " WHERE m.ProgramaId = :programaID";
             }
 
-            $sql .= " ORDER BY m.ProgramaId DESC, m.codigomodulo ASC";
+            $sql .= " ORDER BY m.ProgramaId DESC, m.Idmodulo ASC";
 
             $stmt = Conexion::Conectar()->prepare($sql);
 

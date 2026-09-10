@@ -205,7 +205,21 @@ private static function GenerarCodigo($sede, $grado, $fechaInicio)
 
     //detalle programa
     public static function MostrarDetallePrograma($id) {
-    $stmt = Conexion::conectar()->prepare("SELECT * FROM programa WHERE ProgramaID = :id");
+    // El alias NumeroTramite se repite a propósito: PDO se queda con el
+    // último valor de una columna duplicada, así que esto sobrescribe el
+    // p.NumeroTramite crudo del SELECT p.* con la cuenta MATRICULA principal
+    // (o el propio NumeroTramite si el programa aún no tiene cuentas).
+    $stmt = Conexion::conectar()->prepare("
+        SELECT p.*,
+            COALESCE(
+                (SELECT pc.NumeroCuenta FROM programacuenta pc
+                 WHERE pc.ProgramaID = p.ProgramaID AND pc.TipoCuenta = 'MATRICULA' AND pc.Principal = 1 AND pc.Estado = 1
+                 LIMIT 1),
+                p.NumeroTramite
+            ) AS NumeroTramite
+        FROM programa p
+        WHERE p.ProgramaID = :id
+    ");
     $stmt->bindParam(":id", $id, PDO::PARAM_INT);
     $stmt->execute();
     return $stmt->fetch(PDO::FETCH_ASSOC);

@@ -33,7 +33,13 @@ try {
             op.PorcentajeDescuento as porcentajeDescuento, op.PagoCompleto as pagoCompleto,
             op.NombreFactura, op.NitCiFactura, op.ResponsableGeneracion,
             p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico,
-            p.Costo AS CostoTotalPrograma, p.CostoMatricula, p.Version, p.NumeroTramite, p.Sede, p.FechaInicio
+            p.Costo AS CostoTotalPrograma, p.CostoMatricula, p.Version, p.Sede, p.FechaInicio,
+            COALESCE(
+                (SELECT pc.NumeroCuenta FROM programacuenta pc
+                 WHERE pc.ProgramaID = p.ProgramaID AND pc.TipoCuenta = 'MATRICULA' AND pc.Principal = 1 AND pc.Estado = 1
+                 LIMIT 1),
+                p.NumeroTramite
+            ) AS NumeroTramite
         FROM ordenpago op
         INNER JOIN estudiante e ON op.EstudianteID = e.EstudianteID
         INNER JOIN programa p ON op.ProgramaID = p.ProgramaID

@@ -18,6 +18,8 @@
     require_once 'controladores/calificacion.controlador.php';
     require_once 'controladores/pagomodulo.controlador.php';
     require_once 'controladores/cuenta.controlador.php';
+    require_once 'controladores/programacuenta.controlador.php';
+    require_once 'controladores/especialidad.controlador.php';
     // Modelos
     require_once 'modelos/enlaces.modelo.php';
     require_once 'modelos/ingreso.modelo.php';
@@ -35,6 +37,8 @@
     require_once 'modelos/reportenotas.modelo.php';
     require_once 'modelos/calificacion.modelo.php';
     require_once 'modelos/cuenta.modelo.php';
+    require_once 'modelos/programacuenta.modelo.php';
+    require_once 'modelos/especialidad.modelo.php';
     require_once 'modelos/modulopagos_core.php';
 
 

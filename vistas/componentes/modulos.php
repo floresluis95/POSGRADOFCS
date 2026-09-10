@@ -215,6 +215,9 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                 <span id="infoNumModulosPrograma" class="modulo-highlight">
                     [0]
                 </span>
+                <div id="avisoModulosCompletos" class="mt-2" style="display:none;">
+                    <span class="badge badge-success"><i class="fa fa-check-circle"></i> Módulos completos</span>
+                </div>
             </div>
 
             <!-- Costo Total del Programa -->
@@ -776,6 +779,22 @@ $(document).ready(function() {
     // ========================================
     // FUNCIÓN PARA CARGAR TABLA DE MÓDULOS VÍA AJAX
     // ========================================
+    // Si el programa ya tiene registrados todos los módulos definidos al crearlo,
+    // se bloquea el botón "Agregar Módulos" (el backend igual lo rechazaría,
+    // pero así el usuario no llega a intentarlo).
+    function actualizarEstadoBotonModulos(modulosRegistrados) {
+        const modulosEsperados = parseInt($('#btnAbrirModalModulos').data('modulos')) || 0;
+        const completos = modulosEsperados > 0 && modulosRegistrados >= modulosEsperados;
+
+        if (completos) {
+            $('#btnAbrirModalModulos').prop('disabled', true).attr('title', 'Este programa ya tiene todos sus módulos registrados');
+            $('#avisoModulosCompletos').show();
+        } else {
+            $('#btnAbrirModalModulos').prop('disabled', false).attr('title', '');
+            $('#avisoModulosCompletos').hide();
+        }
+    }
+
     function cargarTablaModulos(programaID) {
         console.log('>>> Cargando módulos del programa:', programaID);
 
@@ -802,6 +821,10 @@ $(document).ready(function() {
                 // Verificar si hay datos reales (sin colspan)
                 const $firstRow = $('#tablaModulosBody tr:first');
                 const hasColspan = $firstRow.find('td[colspan]').length > 0;
+
+                // Si el programa ya tiene registrados todos sus módulos, bloquear el botón de agregar
+                const modulosRegistrados = hasColspan ? 0 : $('#tablaModulosBody > tr').length;
+                actualizarEstadoBotonModulos(modulosRegistrados);
 
                 if (!hasColspan) {
                     // Inicializar DataTable solo si hay datos

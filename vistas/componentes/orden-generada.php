@@ -19,7 +19,13 @@ $stmt = $pdo->prepare("
     SELECT
         op.*,
         e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Complemento, e.Exp, e.Correo, e.Celular,
-        p.NombrePrograma, p.Codigo, p.Version, p.NumeroTramite, p.GradoAcademico
+        p.NombrePrograma, p.Codigo, p.Version, p.GradoAcademico,
+        COALESCE(
+            (SELECT pc.NumeroCuenta FROM programacuenta pc
+             WHERE pc.ProgramaID = p.ProgramaID AND pc.TipoCuenta = 'MATRICULA' AND pc.Principal = 1 AND pc.Estado = 1
+             LIMIT 1),
+            p.NumeroTramite
+        ) AS NumeroTramite
     FROM ordenpago op
     INNER JOIN estudiante e ON op.EstudianteID = e.EstudianteID
     INNER JOIN programa p ON op.ProgramaID = p.ProgramaID

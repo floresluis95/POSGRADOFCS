@@ -153,7 +153,13 @@ class MatriculaModelos
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT i.idInscripcion, i.FechaInscripcion, i.costomatricula, i.montoPagado, i.pagoCompleto, i.porcentajeDescuento, i.montoDescuento, i.nvauchermatricula, i.Estado,
                         e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Ci,
-                        p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Sede, p.Version, p.NumeroTramite
+                        p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Sede, p.Version,
+                        COALESCE(
+                            (SELECT pc.NumeroCuenta FROM programacuenta pc
+                             WHERE pc.ProgramaID = p.ProgramaID AND pc.TipoCuenta = 'MATRICULA' AND pc.Principal = 1 AND pc.Estado = 1
+                             LIMIT 1),
+                            p.NumeroTramite
+                        ) AS NumeroTramite
                  FROM estudianteprograma i
                  INNER JOIN estudiante e ON i.EstudianteID = e.EstudianteID
                  INNER JOIN programa p ON i.ProgramaID = p.ProgramaID
@@ -178,7 +184,13 @@ class MatriculaModelos
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT i.*,
                         e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Correo, e.Celular,
-                        p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Costo, p.Sede, p.Version, p.NumeroTramite
+                        p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Costo, p.Sede, p.Version,
+                        COALESCE(
+                            (SELECT pc.NumeroCuenta FROM programacuenta pc
+                             WHERE pc.ProgramaID = p.ProgramaID AND pc.TipoCuenta = 'MATRICULA' AND pc.Principal = 1 AND pc.Estado = 1
+                             LIMIT 1),
+                            p.NumeroTramite
+                        ) AS NumeroTramite
                  FROM estudianteprograma i
                  INNER JOIN estudiante e ON i.EstudianteID = e.EstudianteID
                  INNER JOIN programa p ON i.ProgramaID = p.ProgramaID

@@ -228,9 +228,14 @@ class ModuloControlador
                     ? (int)$_POST[$docenteKey]
                     : null;
 
-                $costomodulo = isset($_POST[$costoKey]) && !empty($_POST[$costoKey])
-                    ? (float)$_POST[$costoKey]
-                    : 0;
+                $costoRaw = isset($_POST[$costoKey]) ? trim($_POST[$costoKey]) : '';
+                if ($costoRaw !== '' && !is_numeric($costoRaw)) {
+                    return ['estado' => 'validacion', 'mensaje' => "El costo del módulo \"$codigomodulo\" debe ser un número válido"];
+                }
+                if ($costoRaw !== '' && (float)$costoRaw < 0) {
+                    return ['estado' => 'validacion', 'mensaje' => "El costo del módulo \"$codigomodulo\" no puede ser negativo"];
+                }
+                $costomodulo = $costoRaw !== '' ? (float)$costoRaw : 0;
 
                 $fechainicio = isset($_POST[$fechaInicioKey]) && !empty($_POST[$fechaInicioKey])
                     ? trim($_POST[$fechaInicioKey])
@@ -240,7 +245,17 @@ class ModuloControlador
                     ? trim($_POST[$fechaFinKey])
                     : null;
 
+                if ($fechainicio !== null && $fechafin !== null && strtotime($fechafin) < strtotime($fechainicio)) {
+                    return ['estado' => 'validacion', 'mensaje' => "La fecha de fin del módulo \"$codigomodulo\" no puede ser anterior a la fecha de inicio"];
+                }
+
                 if (!empty($codigomodulo)) {
+                    foreach ($modulos as $moduloExistente) {
+                        if ($moduloExistente['codigomodulo'] === $codigomodulo) {
+                            return ['estado' => 'validacion', 'mensaje' => "El código de módulo \"$codigomodulo\" está repetido"];
+                        }
+                    }
+
                     $modulos[] = [
                         'nombremodulo' => $nombremodulo,
                         'codigomodulo' => $codigomodulo,
@@ -403,6 +418,10 @@ class ModuloControlador
         $docenteID = isset($_POST['docenteID']) && !empty($_POST['docenteID']) ? (int)$_POST['docenteID'] : null;
         $fechainicio = isset($_POST['fechainicio']) && !empty($_POST['fechainicio']) ? trim($_POST['fechainicio']) : null;
         $fechafin = isset($_POST['fechafin']) && !empty($_POST['fechafin']) ? trim($_POST['fechafin']) : null;
+
+        if ($fechainicio !== null && $fechafin !== null && strtotime($fechafin) < strtotime($fechainicio)) {
+            return ['estado' => 'validacion', 'mensaje' => 'La fecha de fin no puede ser anterior a la fecha de inicio'];
+        }
 
         $resultado = ModuloModelo::ActualizarModuloPorProgramaModelo([
             'idmodulo' => $idmodulo,
