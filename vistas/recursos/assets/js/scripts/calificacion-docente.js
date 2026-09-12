@@ -321,6 +321,7 @@ function mostrarAsignaciones(asignaciones) {
                                 data-modulo-codigo="${asig.codigomodulo}"
                                 data-programa-nombre="${asig.NombrePrograma}"
                                 data-grado="${asig.GradoAcademico}"
+                                data-programa-sigla="${asig.Sigla || ''}"
                                 title="Imprimir PDF">
                             <i class="fa fa-print"></i>
                         </button>
@@ -377,7 +378,8 @@ function mostrarAsignaciones(asignaciones) {
             moduloNombre: $(this).data('modulo-nombre'),
             moduloCodigo: $(this).data('modulo-codigo'),
             programaNombre: $(this).data('programa-nombre'),
-            grado: $(this).data('grado')
+            grado: $(this).data('grado'),
+            sigla: $(this).data('programa-sigla')
         };
 
         console.log('>>> Datos del módulo para PDF:', moduloData);
@@ -991,8 +993,8 @@ function abrirModalFechasPDF(moduloData) {
     // Guardar datos del módulo
     moduloParaPDF = moduloData;
 
-    // Limpiar campos del modal
-    $('#sigla-modulo-pdf').val('');
+    // Limpiar campos del modal (la sigla se prellena con la del programa, si tiene)
+    $('#sigla-modulo-pdf').val(moduloData.sigla || '');
     $('#fecha-inicio-pdf').val('');
     $('#fecha-fin-pdf').val('');
 

@@ -70,14 +70,19 @@ class ProgramasModelos
     // Generar código automáticamente
     $codigo = self::GenerarCodigo($datos["Sede"], $datos["GradoAcademico"], $datos["FechaInicio"]);
 
+    // Sigla: identificador corto y legible del programa (distinto del Codigo
+    // institucional autogenerado), definido por quien registra el programa.
+    $sigla = !empty(trim($datos["Sigla"] ?? '')) ? strtoupper(trim($datos["Sigla"])) : null;
+
     $stmt = Conexion::conectar()->prepare("
-        INSERT INTO programa (NombrePrograma, GradoAcademico, Codigo, DuracionMeses, Modulos, FechaInicio, Sede, Costo, CostoMatricula, Detalle, Estado, Version, NumeroTramite)
-        VALUES (:nombre, :grado, :codigo, :duracionmeses, :modulos, :fecha, :sede, :costo, :costomatricula, :detalle, '1', :version, :numerotramite)
+        INSERT INTO programa (NombrePrograma, GradoAcademico, Codigo, Sigla, DuracionMeses, Modulos, FechaInicio, Sede, Costo, CostoMatricula, Detalle, Estado, Version, NumeroTramite)
+        VALUES (:nombre, :grado, :codigo, :sigla, :duracionmeses, :modulos, :fecha, :sede, :costo, :costomatricula, :detalle, '1', :version, :numerotramite)
     ");
 
     $stmt->bindParam(":nombre", $datos["NombrePrograma"], PDO::PARAM_STR);
     $stmt->bindParam(":grado", $datos["GradoAcademico"], PDO::PARAM_STR);
     $stmt->bindParam(":codigo", $codigo, PDO::PARAM_STR);
+    $stmt->bindParam(":sigla", $sigla, PDO::PARAM_STR);
     $stmt->bindParam(":duracionmeses", $datos["DuracionMeses"], PDO::PARAM_INT);
     $stmt->bindParam(":modulos", $datos["Modulos"], PDO::PARAM_INT);
     $stmt->bindParam(":fecha", $datos["FechaInicio"], PDO::PARAM_STR);
@@ -164,10 +169,13 @@ private static function GenerarCodigo($sede, $grado, $fechaInicio)
     // Actualizar programa existente
     public static function ActualizarProgramaModelo($datos)
     {
+        $sigla = !empty(trim($datos["Sigla"] ?? '')) ? strtoupper(trim($datos["Sigla"])) : null;
+
         $stmt = Conexion::conectar()->prepare("
             UPDATE programa
             SET NombrePrograma = :nombre,
                 GradoAcademico = :grado,
+                Sigla = :sigla,
                 DuracionMeses = :duracionmeses,
                 Modulos = :modulos,
                 FechaInicio = :fecha,
@@ -175,14 +183,14 @@ private static function GenerarCodigo($sede, $grado, $fechaInicio)
                 Costo = :costo,
                 CostoMatricula = :costomatricula,
                 Detalle = :detalle,
-                Version = :version,
-                NumeroTramite = :numerotramite
+                Version = :version
             WHERE ProgramaID = :id
         ");
 
         $stmt->bindParam(":id", $datos["ProgramaID"], PDO::PARAM_INT);
         $stmt->bindParam(":nombre", $datos["NombrePrograma"], PDO::PARAM_STR);
         $stmt->bindParam(":grado", $datos["GradoAcademico"], PDO::PARAM_STR);
+        $stmt->bindParam(":sigla", $sigla, PDO::PARAM_STR);
         $stmt->bindParam(":duracionmeses", $datos["DuracionMeses"], PDO::PARAM_INT);
         $stmt->bindParam(":modulos", $datos["Modulos"], PDO::PARAM_INT);
         $stmt->bindParam(":fecha", $datos["FechaInicio"], PDO::PARAM_STR);
@@ -191,7 +199,6 @@ private static function GenerarCodigo($sede, $grado, $fechaInicio)
         $stmt->bindParam(":costomatricula", $datos["CostoMatricula"], PDO::PARAM_STR);
         $stmt->bindParam(":detalle", $datos["Detalle"], PDO::PARAM_STR);
         $stmt->bindParam(":version", $datos["Version"], PDO::PARAM_STR);
-        $stmt->bindParam(":numerotramite", $datos["NumeroTramite"], PDO::PARAM_STR);
 
         if ($stmt->execute()) {
             return "exitoso";

@@ -85,7 +85,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                     <div class="kt-portlet__body">
                       <form id="formBusquedaProgramas" method="GET">
                         <div class="row">
-                          <div class="col-md-4">
+                          <div class="col-md-3">
                             <div class="form-group">
                               <label><i class="fa fa-graduation-cap"></i> Grado Académico</label>
                               <select class="form-control" id="filtroGrado" name="grado">
@@ -99,11 +99,26 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                           </div>
                           <div class="col-md-3">
                             <div class="form-group">
+                              <label><i class="fa fa-map-marker"></i> Sede</label>
+                              <select class="form-control" id="filtroSede" name="sede">
+                                <option value="">Todas las sedes</option>
+                                <?php
+                                  $sedesFiltroProgramas = ProgramasModelos::ListarSedesModelo();
+                                  foreach ($sedesFiltroProgramas as $sedeFiltroOpcion) {
+                                      $sedeFiltroValor = htmlspecialchars($sedeFiltroOpcion, ENT_QUOTES);
+                                      echo '<option value="' . $sedeFiltroValor . '">' . $sedeFiltroValor . '</option>';
+                                  }
+                                ?>
+                              </select>
+                            </div>
+                          </div>
+                          <div class="col-md-2">
+                            <div class="form-group">
                               <label><i class="fa fa-calendar"></i> Fecha Inicio Desde</label>
                               <input type="date" class="form-control" id="filtroFechaInicio" name="fechaInicio">
                             </div>
                           </div>
-                          <div class="col-md-3">
+                          <div class="col-md-2">
                             <div class="form-group">
                               <label><i class="fa fa-calendar"></i> Fecha Inicio Hasta</label>
                               <input type="date" class="form-control" id="filtroFechaFin" name="fechaFin">
@@ -137,7 +152,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                   <div class="kt-portlet">
                     <div class="kt-portlet__head">
                       <div class="kt-portlet__head-label">
-                        <button type="button" class="btn btn-success btn-lg" data-toggle="modal" data-target="#nprograma">
+                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#nprograma">
                           <i class="fa fa-plus-circle"></i> Nuevo programa
                         </button>
                       </div>
@@ -179,6 +194,16 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                     </div>
                     <form action="" method="post">
                       <div class="kt-portlet__body">
+                        <div class="row mb-3">
+                          <div class="col-md-4 offset-md-8">
+                            <div class="input-group">
+                              <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-search"></i></span>
+                              </div>
+                              <input type="text" class="form-control" id="buscadorTablaProgramas" placeholder="Buscar en la tabla (nombre, sigla, código, sede, etc.)">
+                            </div>
+                          </div>
+                        </div>
                         <div class="table-responsive">
                           <table class="table table-hover table-bordered" id="tabladetalle" style="background: white;">
                             <thead style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
@@ -187,6 +212,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                                 <th style="color: white;">PROGRAMA</th>
                                 <th class="text-center" style="color: white;">GRADO ACADÉMICO</th>
                                 <th class="text-center" style="color: white;">CÓDIGO</th>
+                                <th class="text-center" style="color: white;">SIGLA</th>
                                 <th class="text-center" style="color: white;">FECHA INICIO</th>
                                 <th class="text-center" style="color: white;">SEDE</th>
                                 <th class="text-center" style="color: white;">ESTADO</th>
@@ -204,12 +230,13 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                                 $grado = isset($_GET['grado']) && !empty($_GET['grado']) ? $_GET['grado'] : null;
                                 $fechaInicio = isset($_GET['fechaInicio']) && !empty($_GET['fechaInicio']) ? $_GET['fechaInicio'] : null;
                                 $fechaFin = isset($_GET['fechaFin']) && !empty($_GET['fechaFin']) ? $_GET['fechaFin'] : null;
+                                $sede = isset($_GET['sede']) && !empty($_GET['sede']) ? $_GET['sede'] : null;
 
                                 // Debug activado - ver en el código fuente HTML (Ctrl+U)
-                                echo "<!-- DEBUG VISTA: Grado='$grado', FechaInicio='$fechaInicio', FechaFin='$fechaFin' -->";
+                                echo "<!-- DEBUG VISTA: Grado='$grado', FechaInicio='$fechaInicio', FechaFin='$fechaFin', Sede='$sede' -->";
                                 echo "<!-- URL actual: " . $_SERVER['REQUEST_URI'] . " -->";
 
-                                $listaprogramas->ListaProgramaControlador($grado, $fechaInicio, $fechaFin);
+                                $listaprogramas->ListaProgramaControlador($grado, $fechaInicio, $fechaFin, $sede);
                               ?>
                             </tbody>
                           </table>
@@ -243,6 +270,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                       // Mostrar en el panel o modal
                       $("#detalleNombre").text(respuesta.NombrePrograma);
                       $("#detalleCodigo").text(respuesta.Codigo);
+                      $("#detalleSigla").text(respuesta.Sigla || '-');
                       $("#detalleGrado").text(respuesta.GradoAcademico);
                       $("#detalleDuracion").text(respuesta.DuracionMeses);
                       $("#detalleModulos").text(respuesta.Modulos);
@@ -321,6 +349,16 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
 
                         <div class="col-md-4">
                           <div class="modal-body">
+                            <label>SIGLA</label>
+                            <input type="text" class="form-control" name="Sigla" autocomplete="off" maxlength="20" placeholder="Ej: ODO-01" style="text-transform: uppercase;">
+                            <p class="text-muted mb-0" style="font-size: 11px;">
+                              <i class="fa fa-info-circle"></i> Identificador corto del programa. Se mostrará en el listado y en la planilla de calificaciones.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div class="col-md-4">
+                          <div class="modal-body">
                             <label>VERSIÓN</label>
                             <select class="form-control" name="Version">
                               <option value="V-1" selected>V-1</option>
@@ -337,16 +375,6 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                           </div>
                         </div>
 
-                        <div class="col-md-4">
-                          <div class="modal-body">
-                            <label>CUENTAS</label>
-                            <p class="text-muted mb-0" style="font-size: 12px;">
-                              <i class="fa fa-info-circle"></i> Podrás registrar las cuentas de este programa
-                              (Matrícula, Cuotas, Clínicas, etc.) desde el botón <i class="fa fa-university"></i>
-                              "Administrar cuentas" una vez creado.
-                            </p>
-                          </div>
-                        </div>
                       </div>
 
                     <div class="row">
@@ -679,6 +707,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
           <tbody>
             <tr><th>Programa</th><td id="detalleNombre"></td></tr>
             <tr><th>Código</th><td id="detalleCodigo"></td></tr>
+            <tr><th>Sigla</th><td id="detalleSigla"></td></tr>
             <tr><th>Grado</th><td id="detalleGrado"></td></tr>
             <tr><th>Duración</th><td><span id="detalleDuracion"></span> meses</td></tr>
             <tr><th>Módulos</th><td><span id="detalleModulos"></span> módulos</td></tr>
@@ -825,6 +854,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                 <option value="DIPLOMADO">DIPLOMADO</option>
                 <option value="MAESTRIA">MAESTRÍA</option>
                 <option value="ESPECIALIDAD">ESPECIALIDAD</option>
+                <option value="DOCTORADO">DOCTORADO</option>
               </select>
             </div>
           </div>
@@ -843,7 +873,10 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
           <div class="col-md-4">
             <div class="modal-body">
               <label>DURACIÓN </label>
-              <input type="number" class="form-control" id="DuracionMesesEditar" name="DuracionMesesEditar" required>
+              <div class="input-group">
+                  <input type="number" class="form-control" id="DuracionMesesEditar" name="DuracionMesesEditar" required>
+                  <span class="input-group-text">meses</span>
+              </div>
             </div>
           </div>
 
@@ -851,6 +884,16 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
             <div class="modal-body">
               <label>MÓDULOS</label>
               <input type="number" class="form-control" id="ModulosEditar" name="ModulosEditar" required>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="modal-body">
+              <label>SIGLA</label>
+              <input type="text" class="form-control" id="SiglaEditar" name="SiglaEditar" autocomplete="off" maxlength="20" placeholder="Ej: ODO-01" style="text-transform: uppercase;">
+              <p class="text-muted mb-0" style="font-size: 11px;">
+                <i class="fa fa-info-circle"></i> Identificador corto del programa. Se mostrará en el listado y en la planilla de calificaciones.
+              </p>
             </div>
           </div>
 
@@ -872,12 +915,6 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
             </div>
           </div>
 
-          <div class="col-md-4">
-            <div class="modal-body">
-              <label>NÚMERO DE CUENTA</label>
-              <input type="text" class="form-control" id="NumeroTramiteEditar" name="NumeroTramiteEditar" placeholder="Ej: 2024-001">
-            </div>
-          </div>
         </div>
 
         <div class="row">
@@ -891,14 +928,20 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
           <div class="col-md-4">
             <div class="modal-body">
               <label>COSTO DEL PROGRAMA</label>
-              <input type="number" class="form-control" id="CostoEditar" name="CostoEditar" step="0.01" required>
+              <div class="input-group">
+                <input type="number" class="form-control" id="CostoEditar" name="CostoEditar" step="0.01" required>
+                <span class="input-group-text">Bs.</span>
+              </div>
             </div>
           </div>
 
           <div class="col-md-4">
             <div class="modal-body">
               <label>COSTO DE LA MATRÍCULA</label>
-              <input type="number" class="form-control" id="CostoMatriculaEditar" name="CostoMatriculaEditar" step="0.01" required>
+              <div class="input-group">
+                <input type="number" class="form-control" id="CostoMatriculaEditar" name="CostoMatriculaEditar" step="0.01" required>
+                <span class="input-group-text">Bs.</span>
+              </div>
             </div>
           </div>
         </div>
@@ -927,14 +970,9 @@ $(document).ready(function() {
     // Botón Buscar
     $('#btnBuscar').click(function() {
         var grado = $('#filtroGrado').val();
+        var sede = $('#filtroSede').val();
         var fechaInicio = $('#filtroFechaInicio').val();
         var fechaFin = $('#filtroFechaFin').val();
-
-        // Debug en consola
-        console.log('Búsqueda iniciada:');
-        console.log('Grado:', grado);
-        console.log('Fecha Inicio:', fechaInicio);
-        console.log('Fecha Fin:', fechaFin);
 
         // Construir URL con parámetros - USAR index.php?action=
         var url = 'index.php?action=programas';
@@ -942,6 +980,9 @@ $(document).ready(function() {
 
         if (grado && grado !== '') {
             params.push('grado=' + encodeURIComponent(grado));
+        }
+        if (sede && sede !== '') {
+            params.push('sede=' + encodeURIComponent(sede));
         }
         if (fechaInicio && fechaInicio !== '') {
             params.push('fechaInicio=' + encodeURIComponent(fechaInicio));
@@ -954,12 +995,20 @@ $(document).ready(function() {
             url += '&' + params.join('&');
         }
 
-        console.log('URL final:', url);
         window.location.href = url;
     });
 
+    // Buscador de texto libre sobre la tabla ya cargada (filtra por cualquier patrón, en cualquier columna)
+    $('#buscadorTablaProgramas').on('keyup', function() {
+        var patron = $(this).val().trim().toLowerCase();
+        $('#tablaProgramasBody tr').each(function() {
+            var textoFila = $(this).text().toLowerCase();
+            $(this).toggle(textoFila.indexOf(patron) !== -1);
+        });
+    });
+
     // Permitir buscar con Enter
-    $('#filtroGrado, #filtroFechaInicio, #filtroFechaFin').keypress(function(e) {
+    $('#filtroGrado, #filtroSede, #filtroFechaInicio, #filtroFechaFin').keypress(function(e) {
         if (e.which == 13) { // Enter key
             $('#btnBuscar').click();
             return false;
@@ -969,6 +1018,7 @@ $(document).ready(function() {
     // Botón Limpiar
     $('#btnLimpiar').click(function() {
         $('#filtroGrado').val('');
+        $('#filtroSede').val('');
         $('#filtroFechaInicio').val('');
         $('#filtroFechaFin').val('');
         window.location.href = 'index.php?action=programas';
@@ -976,22 +1026,18 @@ $(document).ready(function() {
 
     // Mantener valores de filtros después de búsqueda
     var urlParams = new URLSearchParams(window.location.search);
-    console.log('Parámetros URL actuales:', window.location.search);
 
     if (urlParams.has('grado')) {
-        var gradoParam = urlParams.get('grado');
-        console.log('Restaurando grado:', gradoParam);
-        $('#filtroGrado').val(gradoParam);
+        $('#filtroGrado').val(urlParams.get('grado'));
+    }
+    if (urlParams.has('sede')) {
+        $('#filtroSede').val(urlParams.get('sede'));
     }
     if (urlParams.has('fechaInicio')) {
-        var fechaInicioParam = urlParams.get('fechaInicio');
-        console.log('Restaurando fechaInicio:', fechaInicioParam);
-        $('#filtroFechaInicio').val(fechaInicioParam);
+        $('#filtroFechaInicio').val(urlParams.get('fechaInicio'));
     }
     if (urlParams.has('fechaFin')) {
-        var fechaFinParam = urlParams.get('fechaFin');
-        console.log('Restaurando fechaFin:', fechaFinParam);
-        $('#filtroFechaFin').val(fechaFinParam);
+        $('#filtroFechaFin').val(urlParams.get('fechaFin'));
     }
 
     // Si la página se recargó después de una acción dentro de un modal (ej: registrar/dar de baja
@@ -1009,6 +1055,7 @@ $(document).on('click', '.btnEditarPrograma', function() {
     var idprograma = $(this).data('idprograma');
     var nombre = $(this).data('nombre');
     var grado = $(this).data('grado');
+    var sigla = $(this).data('sigla');
     var duracion = $(this).data('duracion');
     var modulos = $(this).data('modulos');
     var fecha = $(this).data('fecha');
@@ -1017,7 +1064,6 @@ $(document).on('click', '.btnEditarPrograma', function() {
     var costomatricula = $(this).data('costomatricula');
     var detalle = $(this).data('detalle');
     var version = $(this).data('version');
-    var numerotramite = $(this).data('numerotramite');
 
     // Formatear costos a 2 decimales
     var costoFormateado = parseFloat(costo).toFixed(2);
@@ -1026,6 +1072,7 @@ $(document).on('click', '.btnEditarPrograma', function() {
     $('#ProgramaIDEditar').val(idprograma);
     $('#NombreProgramaEditar').val(nombre);
     $('#GradoAcademicoEditar').val(grado);
+    $('#SiglaEditar').val(sigla || '');
     $('#DuracionMesesEditar').val(duracion);
     $('#ModulosEditar').val(modulos);
     $('#FechaInicioEditar').val(fecha);
@@ -1034,7 +1081,6 @@ $(document).on('click', '.btnEditarPrograma', function() {
     $('#CostoMatriculaEditar').val(costoMatriculaFormateado);
     $('#DetalleEditar').val(detalle);
     $('#VersionEditar').val(version || 'V-1');
-    $('#NumeroTramiteEditar').val(numerotramite || '');
 });
 
 // JavaScript para modal de subir programa

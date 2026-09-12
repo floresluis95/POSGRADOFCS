@@ -74,6 +74,240 @@
 }
 
 /* ========================================================
+   TITULOS UNIFORMES
+   Cada vista usaba una etiqueta distinta (h2/h3/h4) para el
+   mismo tipo de encabezado (titulo de modulo, subtitulo de
+   breadcrumb, titulo de panel), asi que el tamano/peso variaba
+   de pagina en pagina aunque el rol fuera el mismo. Se apunta
+   a las clases contenedoras de Metronic (siempre presentes,
+   sin importar el tag) para que el tamano/peso quede uniforme
+   sin tener que igualar el tag en cada vista.
+   ======================================================== */
+/* Algunas vistas (ej. bnotaestudiante, historial de estudiante) agregan ademas
+   la clase propia del tema ".kt-subheader__title" al h1-h4 del titulo
+   principal; esa clase trae una regla nativa mas especifica (font-size 1.2rem,
+   peso 500) que le ganaba a esta normalizacion. Se usa !important para que
+   el tamano quede igual sin importar que otras clases traiga el encabezado. */
+.kt-subheader__main > h1,
+.kt-subheader__main > h2,
+.kt-subheader__main > h3,
+.kt-subheader__main > h4,
+.kt-subheader__main .kt-subheader__title {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    color: #1e3c72 !important;
+    margin: 0 !important;
+    letter-spacing: .3px;
+}
+
+.kt-subheader__breadcrumbs h1,
+.kt-subheader__breadcrumbs h2,
+.kt-subheader__breadcrumbs h3,
+.kt-subheader__breadcrumbs h4 {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #74788d !important;
+    margin: 0 !important;
+    text-transform: uppercase;
+    letter-spacing: .2px;
+}
+
+/* El icono del titulo principal en algunas vistas quedaba a 2.5rem (fijo por
+   estilo inline) acompanando un texto que ahora se normalizo a 20px; se
+   reduce a un tamano proporcional al texto. */
+.kt-subheader__main h1 i,
+.kt-subheader__main h2 i,
+.kt-subheader__main h3 i,
+.kt-subheader__main h4 i,
+.kt-subheader__main .kt-subheader__title i {
+    font-size: 1.3rem !important;
+    margin-right: .4rem;
+    vertical-align: middle;
+}
+
+.kt-portlet__head-title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    letter-spacing: .2px;
+}
+
+/* Algunos titulos de panel usan un h3/h4 suelto (con estilo inline) dentro del
+   contenedor en vez de la clase ".kt-portlet__head-title"; se normaliza por
+   el contenedor, que si es constante en todas las vistas. */
+.kt-portlet__head-label > h1,
+.kt-portlet__head-label > h2,
+.kt-portlet__head-label > h3,
+.kt-portlet__head-label > h4,
+.kt-portlet__head-label > h5 {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    letter-spacing: .2px;
+    margin: 0 !important;
+}
+
+/* Algunas vistas (Docentes, Estudiantes, Usuarios) usan tarjetas Bootstrap
+   (.card) en vez de portlets de Metronic (.kt-portlet); se iguala el peso
+   visual del titulo aunque el contenedor sea distinto. */
+.card-header .card-title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    letter-spacing: .2px;
+}
+
+/* ========================================================
+   BOTONES: TAMANO Y COLOR POR TIPO DE ACCION
+   btn-lg quedaba fuera de proporcion dentro de tarjetas y
+   paneles (pensado para CTAs de pantalla completa, no para
+   una barra de acciones). Dentro de portlets/paneles/subheader
+   se limita al tamano por defecto de Bootstrap.
+   Color por rol de la accion (ya usado como convencion en la
+   mayoria de las vistas, aqui queda reforzado): crear/registrar
+   = verde (success), abrir panel/ver detalle/gestionar = celeste
+   (info), editar = ambar (warning), eliminar/dar de baja = rojo
+   (danger).
+   ======================================================== */
+.kt-portlet .btn-lg,
+.kt-subheader .btn-lg,
+.kt-portlet__head .btn-lg {
+    padding: .5rem 1.25rem;
+    font-size: .925rem;
+    line-height: 1.4;
+    border-radius: .28rem;
+}
+
+/* ========================================================
+   ALINEACION DE SELECTS (Select2)
+   Select2 sustituye el <select> por un span con su propio alto
+   (28px), distinto al alto de Bootstrap 4 para .form-control
+   (38px). En cualquier fila con un select2 junto a un input o
+   select nativo, el select2 quedaba mas bajo y desalineado.
+   Se iguala su alto/linea/borde al de .form-control.
+   ======================================================== */
+.select2-container--default .select2-selection--single,
+.select2-container--bootstrap .select2-selection--single {
+    height: calc(1.5em + .75rem + 2px) !important;
+    padding: .375rem .75rem;
+    border: 1px solid #ced4da !important;
+    border-radius: .25rem !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered,
+.select2-container--bootstrap .select2-selection--single .select2-selection__rendered {
+    line-height: calc(1.5em + .75rem) !important;
+    padding-left: 0;
+    padding-right: 20px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow,
+.select2-container--bootstrap .select2-selection--single .select2-selection__arrow {
+    height: calc(1.5em + .75rem) !important;
+}
+
+/* Los selects marcados form-control-sm (filtros compactos) usan un select2 mas bajo */
+.form-control-sm + .select2-container .select2-selection--single,
+select.select2-hidden-accessible.form-control-sm ~ .select2-container .select2-selection--single {
+    height: calc(1.5em + .5rem + 2px) !important;
+}
+
+/* ========================================================
+   NOTIFICACIONES UNIFORMES (SweetAlert v1 y SweetAlert2)
+   El sistema mezcla las dos versiones de la libreria segun la
+   pagina; se colorea el boton de confirmacion de ambas con la
+   misma paleta institucional segun el tipo de mensaje, para que
+   una alerta de exito/error/advertencia se vea igual sin
+   importar en que modulo aparezca.
+   ======================================================== */
+/* SweetAlert v1: la libreria fuerza "confirm btn btn-lg" en cada alerta sin
+   distinguir el tipo (exito/error/advertencia no quedan como clase del modal,
+   solo se muestra/oculta el icono correspondiente por estilo inline), asi que
+   el boton no se puede colorear por tipo con CSS puro; se deja un solo color
+   institucional consistente y se corrige el tamano (btn-lg quedaba enorme).
+   El icono si distingue tipo via clase y ahi se aplica la paleta. */
+.sweet-alert button.confirm {
+    background-color: var(--inst-primario-fin) !important;
+    border-color: var(--inst-primario-fin) !important;
+    box-shadow: none !important;
+    padding: .5rem 1.25rem !important;
+    font-size: .925rem !important;
+    line-height: 1.4 !important;
+}
+
+.sweet-alert .sa-icon.sa-success .sa-line {
+    background-color: var(--inst-exito-fin) !important;
+}
+
+.sweet-alert .sa-icon.sa-success .sa-placeholder {
+    border-color: var(--inst-exito-fin) !important;
+}
+
+.sweet-alert .sa-icon.sa-error {
+    border-color: var(--inst-peligro-fin) !important;
+}
+
+.sweet-alert .sa-icon.sa-error .sa-line {
+    background-color: var(--inst-peligro-fin) !important;
+}
+
+.sweet-alert .sa-icon.sa-warning {
+    border-color: var(--inst-advertencia-fin) !important;
+}
+
+.sweet-alert .sa-icon.sa-warning .sa-body,
+.sweet-alert .sa-icon.sa-warning .sa-dot {
+    background-color: var(--inst-advertencia-fin) !important;
+}
+
+/* SweetAlert2: el tipo si queda como clase junto al icono, asi que el boton
+   de confirmacion se puede colorear segun el mensaje que se muestre. */
+.swal2-styled.swal2-confirm {
+    background-color: var(--inst-primario-fin) !important;
+    box-shadow: none !important;
+}
+
+.swal2-icon.swal2-success ~ .swal2-actions .swal2-confirm {
+    background-color: var(--inst-exito-fin) !important;
+}
+
+.swal2-icon.swal2-error ~ .swal2-actions .swal2-confirm {
+    background-color: var(--inst-peligro-fin) !important;
+}
+
+.swal2-icon.swal2-warning ~ .swal2-actions .swal2-confirm {
+    background-color: var(--inst-advertencia-fin) !important;
+}
+
+.swal2-icon.swal2-success [class^='swal2-success-line'] {
+    background-color: var(--inst-exito-fin) !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+    border-color: var(--inst-exito-fin) !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-fix {
+    background-color: transparent !important;
+}
+
+.swal2-icon.swal2-warning {
+    border-color: var(--inst-advertencia-fin) !important;
+    color: var(--inst-advertencia-fin) !important;
+}
+
+.swal2-icon.swal2-error {
+    border-color: var(--inst-peligro-fin) !important;
+}
+
+.swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+    background-color: var(--inst-peligro-fin) !important;
+}
+
+.sweet-alert h2,
+.swal2-popup .swal2-title {
+    color: #1e3c72;
+    font-weight: 700;
+}
+
+/* ========================================================
    FOOTER PEGADO AL FONDO
    #kt_content ya es un flex-container en columna (subheader,
    contenido, footer), pero el div de contenido de cada vista

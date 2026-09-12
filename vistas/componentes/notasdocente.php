@@ -158,7 +158,7 @@ require_once 'modelos/calificacion.modelo.php';
                                                             <input type="date" class="form-control" id="fecha-planilla" required>
                                                         </div>
                                                         <div class="col-md-8 d-flex align-items-end">
-                                                            <button class="btn btn-danger btn-lg" id="btn-generar-pdf" style="width: 100%;">
+                                                            <button class="btn btn-danger" id="btn-generar-pdf" style="width: 100%;">
                                                                 <i class="fa fa-print"></i> IMPRIMIR PLANILLA DE CALIFICACIONES
                                                             </button>
                                                         </div>
@@ -177,7 +177,7 @@ require_once 'modelos/calificacion.modelo.php';
                                                 </span>
                                             </div>
                                             <div class="col-lg-6 kt-align-right">
-                                                <button class="btn btn-success btn-lg" id="btn-guardar-notas" style="padding: 0.75rem 2.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(30, 60, 114, 0.4);">
+                                                <button class="btn btn-success" id="btn-guardar-notas" style="border-radius: 6px;">
                                                     <i class="fa fa-save"></i> Guardar Calificaciones
                                                 </button>
                                             </div>
@@ -205,10 +205,10 @@ require_once 'modelos/calificacion.modelo.php';
             <div class="modal-body">
                 <div class="form-group">
                     <label for="sigla-modulo-pdf" class="font-weight-bold">
-                        <i class="fa fa-tag"></i> Sigla del Módulo:
+                        <i class="fa fa-tag"></i> Sigla del Programa:
                     </label>
                     <input type="text" class="form-control" id="sigla-modulo-pdf" placeholder="Ej: ODO-01, EST-02, etc." maxlength="20">
-                    <small class="form-text text-muted">Opcional: Identificador corto del módulo</small>
+                    <small class="form-text text-muted">Se prellena con la sigla registrada en el programa. Puedes ajustarla si es necesario.</small>
                 </div>
                 <div class="form-group">
                     <label for="fecha-inicio-pdf" class="font-weight-bold">

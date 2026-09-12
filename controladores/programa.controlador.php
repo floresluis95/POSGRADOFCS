@@ -72,15 +72,15 @@ class ProgramasControladores
     }
 
 
-    public function ListaProgramaControlador($grado = null, $fechaInicio = null, $fechaFin = null)
+    public function ListaProgramaControlador($grado = null, $fechaInicio = null, $fechaFin = null, $sede = null)
     {
         // Debug activado - ver en el código fuente HTML (Ctrl+U)
-        echo "<!-- DEBUG CONTROLADOR: Grado='$grado', FechaInicio='$fechaInicio', FechaFin='$fechaFin' -->";
+        echo "<!-- DEBUG CONTROLADOR: Grado='$grado', FechaInicio='$fechaInicio', FechaFin='$fechaFin', Sede='$sede' -->";
 
         // Si hay filtros, usar búsqueda con filtros, sino listar todos
-        if ($grado !== null || $fechaInicio !== null || $fechaFin !== null) {
+        if ($grado !== null || $fechaInicio !== null || $fechaFin !== null || $sede !== null) {
             echo "<!-- Usando BuscarProgramasConFiltros -->";
-            $listaprogramas = ProgramasModelos::BuscarProgramasConFiltros($grado, $fechaInicio, $fechaFin);
+            $listaprogramas = ProgramasModelos::BuscarProgramasConFiltros($grado, $fechaInicio, $fechaFin, $sede);
         } else {
             echo "<!-- Usando ListaProgramaModelo (sin filtros) -->";
             $listaprogramas = ProgramasModelos::ListaProgramaModelo();
@@ -92,7 +92,7 @@ class ProgramasControladores
         // Si no hay resultados, mostrar mensaje
         if (empty($listaprogramas)) {
             echo '<tr>
-                    <td colspan="12" class="text-center" style="padding: 40px;">
+                    <td colspan="13" class="text-center" style="padding: 40px;">
                         <i class="fa fa-search" style="font-size: 48px; color: #ccc;"></i>
                         <h4 style="color: #999; margin-top: 20px;">No se encontraron programas con los filtros seleccionados</h4>
                         <p style="color: #999;">Intenta cambiar los criterios de búsqueda</p>
@@ -140,6 +140,7 @@ class ProgramasControladores
         <td class="align-middle"><strong>'.$programa["NombrePrograma"].'</strong></td>
         <td class="text-center align-middle"><span class="'.FuncionesControladores::ClaseGrado($programa["GradoAcademico"]).'">'.$programa["GradoAcademico"].'</span></td>
         <td class="text-center align-middle"><span class="badge badge-secondary">'.$programa["Codigo"].'</span></td>
+        <td class="text-center align-middle">'.(!empty($programa["Sigla"]) ? '<span class="badge badge-info">'.htmlspecialchars($programa["Sigla"]).'</span>' : '<span class="text-muted">-</span>').'</td>
         <td class="text-center align-middle">'.date("d/m/Y", strtotime($programa["FechaInicio"])).'</td>
         <td class="text-center align-middle">'.$programa["Sede"].'</td>';
 
@@ -164,7 +165,7 @@ class ProgramasControladores
         <button type="button" id="btnCuentasPrograma" idcod="'.$programa['ProgramaID'].'"
             data-idprograma="'.$programa['ProgramaID'].'"
             data-nombreprograma="'.htmlspecialchars($programa['NombrePrograma']).'"
-            class="btn btn-secondary btn-sm btnAbrirCuentasPrograma" title="Administrar cuentas"
+            class="btn btn-info btn-sm btnAbrirCuentasPrograma" title="Administrar cuentas"
             data-toggle="modal" data-target="#gestionarCuentas">
             <i class="fa fa-university"></i>
         </button>
@@ -176,6 +177,7 @@ class ProgramasControladores
             data-idprograma="'.$programa['ProgramaID'].'"
             data-nombre="'.$programa['NombrePrograma'].'"
             data-grado="'.$programa['GradoAcademico'].'"
+            data-sigla="'.htmlspecialchars($programa['Sigla'] ?? '').'"
             data-duracion="'.$programa['DuracionMeses'].'"
             data-modulos="'.$programa['Modulos'].'"
             data-fecha="'.$programa['FechaInicio'].'"
@@ -184,7 +186,6 @@ class ProgramasControladores
             data-costomatricula="'.(isset($programa['CostoMatricula']) ? $programa['CostoMatricula'] : '').'"
             data-detalle="'.htmlspecialchars($programa['Detalle']).'"
             data-version="'.(isset($programa['Version']) ? $programa['Version'] : 'V-1').'"
-            data-numerotramite="'.(isset($programa['NumeroTramite']) ? $programa['NumeroTramite'] : '').'"
             data-toggle="modal" data-target="#modalEditarPrograma">
             <i class="fa fa-edit"></i>
         </button>
@@ -243,6 +244,7 @@ class ProgramasControladores
                 $datosPrograma =array(
                 "NombrePrograma" => strtoupper(htmlspecialchars(trim($_POST['NombrePrograma']))), // Sanitizar y convertir a mayúsculas
                 "GradoAcademico" => strtoupper(htmlspecialchars(trim($_POST['GradoAcademico']))),
+                "Sigla" => strtoupper(htmlspecialchars(trim($_POST['Sigla'] ?? ''))),
                 "DuracionMeses" => (int)$_POST['DuracionMeses'],
                 "Modulos" => (int)$_POST['Modulos'], // Forzar tipo entero
                 "FechaInicio" => htmlspecialchars(trim($_POST['FechaInicio'])),
@@ -330,6 +332,7 @@ class ProgramasControladores
                 "ProgramaID" => (int)$_POST['ProgramaIDEditar'],
                 "NombrePrograma" => strtoupper(htmlspecialchars(trim($_POST['NombreProgramaEditar']))),
                 "GradoAcademico" => strtoupper(htmlspecialchars(trim($_POST['GradoAcademicoEditar']))),
+                "Sigla" => strtoupper(htmlspecialchars(trim($_POST['SiglaEditar'] ?? ''))),
                 "DuracionMeses" => (int)$_POST['DuracionMesesEditar'],
                 "Modulos" => (int)$_POST['ModulosEditar'],
                 "FechaInicio" => htmlspecialchars(trim($_POST['FechaInicioEditar'])),
@@ -337,8 +340,7 @@ class ProgramasControladores
                 "Costo" => (float)$_POST['CostoEditar'],
                 "CostoMatricula" => (float)$_POST['CostoMatriculaEditar'],
                 "Detalle" => strtoupper(htmlspecialchars(trim($_POST['DetalleEditar']))),
-                "Version" => strtoupper(htmlspecialchars(trim($_POST['VersionEditar'] ?? 'V-1'))),
-                "NumeroTramite" => strtoupper(htmlspecialchars(trim($_POST['NumeroTramiteEditar'] ?? '')))
+                "Version" => strtoupper(htmlspecialchars(trim($_POST['VersionEditar'] ?? 'V-1')))
             );
 
             $resultado = ProgramasModelos::ActualizarProgramaModelo($datosPrograma);

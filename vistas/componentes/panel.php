@@ -854,3 +854,55 @@ document.querySelectorAll('.animate-fade-in').forEach(el => {
     observer.observe(el);
 });
 </script>
+
+<?php if (in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC'], true)): ?>
+<script>
+// ========================================
+// AVISO DE MORA: estudiantes con una cuota vencida al ingresar al sistema.
+// Solo Administrador/Secretaría (control de cobranza).
+// ========================================
+$(document).ready(function() {
+    $.ajax({
+        url: 'ajax/ordenpago.ajax.php',
+        method: 'POST',
+        data: { accion: 'obtenerOrdenesVencidas' },
+        dataType: 'json',
+        success: function(resp) {
+            if (!resp.success || !resp.ordenes || resp.ordenes.length === 0) {
+                return;
+            }
+
+            let filas = '';
+            resp.ordenes.forEach(function(o) {
+                const whatsappBtn = o.whatsapp
+                    ? '<a href="' + o.whatsapp + '" target="_blank" class="btn btn-sm" ' +
+                      'style="background:#25D366; color:#fff; padding:3px 10px;">' +
+                      '<i class="fab fa-whatsapp"></i> WhatsApp</a>'
+                    : '<span class="text-muted small">Sin celular</span>';
+
+                filas += '<tr>' +
+                    '<td style="text-align:left;">' + o.nombreEstudiante + '<br>' +
+                    '<small class="text-muted">' + o.nombrePrograma + ' (' + o.sede + ')</small></td>' +
+                    '<td class="text-right">Bs. ' + o.monto.toFixed(2) + '</td>' +
+                    '<td class="text-center"><span class="badge badge-danger">' + o.diasVencido + ' día(s)</span></td>' +
+                    '<td class="text-center">' + whatsappBtn + '</td>' +
+                    '</tr>';
+            });
+
+            const tabla = '<div class="table-responsive" style="max-height:320px; overflow-y:auto; text-align:left;">' +
+                '<table class="table table-sm table-bordered mb-0" style="font-size:13px;">' +
+                '<thead><tr><th>Estudiante</th><th class="text-right">Monto</th><th class="text-center">Vencido hace</th><th class="text-center">Contactar</th></tr></thead>' +
+                '<tbody>' + filas + '</tbody></table></div>';
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Estudiantes con cuotas vencidas',
+                html: '<p>Hay <strong>' + resp.ordenes.length + '</strong> orden(es) de pago vencidas sin cancelar:</p>' + tabla,
+                width: 650,
+                confirmButtonText: 'Entendido'
+            });
+        }
+    });
+});
+</script>
+<?php endif; ?>

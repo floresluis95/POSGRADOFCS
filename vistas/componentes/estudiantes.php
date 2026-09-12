@@ -63,7 +63,7 @@ $csrf_token = bin2hex(random_bytes(32));
 
 <!-- end:: Subheader -->
 <!-- begin:: Content -->
-<div class="app-content content">
+<div class="app-content content kt-container">
   <div class="content-wrapper">
     <div class="content-body">
       <section id="html">
@@ -75,7 +75,7 @@ $csrf_token = bin2hex(random_bytes(32));
                   <i class="fas fa-user-graduate"></i> Estudiantes Registrados
                 </h4>
                 <div class="heading-elements">
-                  <button data-toggle="modal" data-target="#ModalInsertarEstudiante" type="button" class="btn btn-light btn-sm">
+                  <button data-toggle="modal" data-target="#ModalInsertarEstudiante" type="button" class="btn btn-success btn-sm">
                     <i class="fas fa-user-plus mr-1"></i>Nuevo Estudiante
                   </button>
                 </div>

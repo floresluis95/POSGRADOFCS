@@ -16,23 +16,30 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 
 <!-- Content -->
 <div class="kt-content kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
-    <div class="kt-container kt-container--fluid kt-grid__item kt-grid__item--fluid">
 
-        <!-- Título -->
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="kt-portlet">
-                    <div class="kt-portlet__head">
-                        <div class="kt-portlet__head-label">
-                            <h3 class="kt-portlet__head-title">
-                                <img src="vistas/recursos/assets/media/icons/inscripcion.png" width="40" alt="Icono Matriculados">
-                                ESTUDIANTES MATRICULADOS
-                            </h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- Subheader -->
+    <div class="kt-subheader kt-grid__item" id="kt_subheader">
+      <div class="kt-container">
+        <div class="kt-subheader__main">
+          <h2>MATRICULADOS</h2>
+          <span class="kt-subheader__separator kt-hidden"></span>
+          <div class="kt-subheader__breadcrumbs">
+            <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
+            <span class="kt-subheader__breadcrumbs-separator"></span>
+            <a href="#" class="kt-subheader__breadcrumbs-link">
+              <h3>ESTUDIANTES MATRICULADOS</h3>
+            </a>
+          </div>
         </div>
+        <div class="kt-subheader__toolbar">
+          <div class="kt-subheader__wrapper">
+            <div id="lafecha" style="font-size:13pt"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kt-container kt-container--fluid kt-grid__item kt-grid__item--fluid">
 
         <!-- Sección de Filtro por Programa -->
         <div class="row">
@@ -85,6 +92,16 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                 <button type="button" class="btn btn-secondary btn-block" id="btnLimpiarFiltro">
                                     <i class="fa fa-times"></i> Limpiar
                                 </button>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-lg-2 col-form-label"><strong>ESTADO:</strong></label>
+                            <div class="col-lg-3">
+                                <select class="form-control" id="selectEstadoFiltro" style="width: 100%;">
+                                    <option value="ACTIVO" selected>Activos</option>
+                                    <option value="ABANDONO">Abandonos</option>
+                                    <option value="TODOS">Todos</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -842,9 +859,9 @@ $(document).ready(function() {
         }
     });
 
-    // Función para cargar estudiantes filtrados por programa y/o sede
-    function cargarEstudiantes(programaID, sede) {
-        console.log('>>> Cargando estudiantes. ProgramaID:', programaID || 'TODOS', '| Sede:', sede || 'TODAS');
+    // Función para cargar estudiantes filtrados por programa, sede y/o estado
+    function cargarEstudiantes(programaID, sede, estado) {
+        console.log('>>> Cargando estudiantes. ProgramaID:', programaID || 'TODOS', '| Sede:', sede || 'TODAS', '| Estado:', estado || 'ACTIVO');
 
         // Destruir DataTable si existe
         if ($.fn.DataTable.isDataTable('#tablaMatriculados')) {
@@ -861,7 +878,8 @@ $(document).ready(function() {
             data: {
                 accion: 'cargarTablaMatriculados',
                 programaIDFiltro: programaID || '',
-                sedeFiltro: sede || ''
+                sedeFiltro: sede || '',
+                estadoFiltro: estado || 'ACTIVO'
             },
             success: function(response) {
                 console.log('✓ Estudiantes cargados correctamente');
@@ -910,27 +928,48 @@ $(document).ready(function() {
         });
     }
 
-    // Evento al cambiar el programa o la sede (se combinan ambos filtros)
+    // Evento al cambiar el programa, la sede o el estado (se combinan los 3 filtros)
     $('#selectProgramaFiltro').on('change', function() {
         const programaID = $(this).val();
         const sede = $('#selectSedeFiltro').val();
+        const estado = $('#selectEstadoFiltro').val();
         console.log('>>> Programa seleccionado:', programaID);
-        cargarEstudiantes(programaID, sede);
+        cargarEstudiantes(programaID, sede, estado);
     });
 
     $('#selectSedeFiltro').on('change', function() {
         const sede = $(this).val();
         const programaID = $('#selectProgramaFiltro').val();
+        const estado = $('#selectEstadoFiltro').val();
         console.log('>>> Sede seleccionada:', sede);
-        cargarEstudiantes(programaID, sede);
+        cargarEstudiantes(programaID, sede, estado);
+    });
+
+    $('#selectEstadoFiltro').on('change', function() {
+        const estado = $(this).val();
+        const programaID = $('#selectProgramaFiltro').val();
+        const sede = $('#selectSedeFiltro').val();
+        console.log('>>> Estado seleccionado:', estado);
+        cargarEstudiantes(programaID, sede, estado);
     });
 
     // Evento al limpiar filtro
     $('#btnLimpiarFiltro').on('click', function() {
         console.log('>>> Limpiando filtro');
         $('#selectSedeFiltro').val('');
+        $('#selectEstadoFiltro').val('ACTIVO');
         $('#selectProgramaFiltro').val('').trigger('change');
     });
+
+    // Expuesto globalmente para que inscripcionmodulo.js pueda refrescar la tabla
+    // tras marcar/revertir un abandono, sin perder los filtros actuales.
+    window.refrescarTablaMatriculados = function() {
+        cargarEstudiantes(
+            $('#selectProgramaFiltro').val(),
+            $('#selectSedeFiltro').val(),
+            $('#selectEstadoFiltro').val()
+        );
+    };
 
     console.log('=== FILTRO INICIALIZADO ===');
 });

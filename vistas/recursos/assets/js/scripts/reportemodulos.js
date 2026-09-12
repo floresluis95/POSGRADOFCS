@@ -70,7 +70,7 @@ const NOMBRES_PLAN_REPORTE = { REGULAR: 'Regular', DESCUENTO: 'Contado (Desc.)',
 function cargarReportePagos() {
     const grado = $('#reportePagosGrado').val();
 
-    $('#tablaReportePagosBody').html('<tr><td colspan="13" class="text-center text-muted py-4"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
+    $('#tablaReportePagosBody').html('<tr><td colspan="16" class="text-center text-muted py-4"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
     $('#tablaReportePagosFooter').html('');
 
     $.ajax({
@@ -82,22 +82,22 @@ function cargarReportePagos() {
             renderTablaReportePagos(response || []);
         },
         error: function() {
-            $('#tablaReportePagosBody').html('<tr><td colspan="13" class="text-center text-danger py-4">No se pudo cargar el reporte de pagos</td></tr>');
+            $('#tablaReportePagosBody').html('<tr><td colspan="16" class="text-center text-danger py-4">No se pudo cargar el reporte de pagos</td></tr>');
         }
     });
 }
 
 function renderTablaReportePagos(datos) {
     if (!datos || datos.length === 0) {
-        $('#tablaReportePagosBody').html('<tr><td colspan="13" class="text-center text-muted py-4">No hay programas para mostrar</td></tr>');
+        $('#tablaReportePagosBody').html('<tr><td colspan="16" class="text-center text-muted py-4">No hay programas para mostrar</td></tr>');
         $('#tablaReportePagosFooter').html('');
         return;
     }
 
     let html = '';
     const totales = {
-        inscritos: 0, regular: 0, descuento: 0, grupal: 0, sinPlan: 0,
-        completaron: 0, pendientes: 0, programado: 0, pagado: 0, saldo: 0
+        inscritos: 0, regular: 0, descuento: 0, grupal: 0, sinPlan: 0, abandonos: 0, conDescuento: 0,
+        completaron: 0, pendientes: 0, programado: 0, pagado: 0, montoDescuentos: 0, saldo: 0
     };
 
     datos.forEach(function(p) {
@@ -105,16 +105,22 @@ function renderTablaReportePagos(datos) {
         const programado = parseFloat(p.CostoTotalProgramado) || 0;
         const pagado = parseFloat(p.TotalPagado) || 0;
         const saldo = parseFloat(p.SaldoPendiente) || 0;
+        const montoDescuentos = parseFloat(p.MontoTotalDescuentos) || 0;
+        const abandonos = parseInt(p.CountAbandono) || 0;
+        const conDescuento = parseInt(p.CountConDescuento) || 0;
 
         totales.inscritos += inscritos;
         totales.regular += parseInt(p.CountRegular) || 0;
         totales.descuento += parseInt(p.CountDescuento) || 0;
         totales.grupal += parseInt(p.CountGrupal) || 0;
         totales.sinPlan += parseInt(p.CountSinPlan) || 0;
+        totales.abandonos += abandonos;
+        totales.conDescuento += conDescuento;
         totales.completaron += parseInt(p.CountCompletados) || 0;
         totales.pendientes += parseInt(p.CountPendientes) || 0;
         totales.programado += programado;
         totales.pagado += pagado;
+        totales.montoDescuentos += montoDescuentos;
         totales.saldo += saldo;
 
         html += '<tr>' +
@@ -125,10 +131,13 @@ function renderTablaReportePagos(datos) {
             '<td class="text-center">' + (parseInt(p.CountDescuento) || 0) + '</td>' +
             '<td class="text-center">' + (parseInt(p.CountGrupal) || 0) + '</td>' +
             '<td class="text-center">' + (parseInt(p.CountSinPlan) || 0) + '</td>' +
+            '<td class="text-center">' + (abandonos > 0 ? '<span class="badge badge-danger">' + abandonos + '</span>' : '0') + '</td>' +
+            '<td class="text-center">' + (conDescuento > 0 ? '<span class="badge badge-info">' + conDescuento + '</span>' : '0') + '</td>' +
             '<td class="text-center"><span class="badge badge-success">' + (parseInt(p.CountCompletados) || 0) + '</span></td>' +
             '<td class="text-center"><span class="badge badge-warning">' + (parseInt(p.CountPendientes) || 0) + '</span></td>' +
             '<td class="text-right">' + formatoMoneda(programado) + '</td>' +
             '<td class="text-right text-success">' + formatoMoneda(pagado) + '</td>' +
+            '<td class="text-right">' + formatoMoneda(montoDescuentos) + '</td>' +
             '<td class="text-right text-danger"><strong>' + formatoMoneda(saldo) + '</strong></td>' +
             '<td class="text-center">' +
                 '<button type="button" class="btn btn-xs btn-outline-primary btn-detalle-pagos-programa" ' +
@@ -149,10 +158,13 @@ function renderTablaReportePagos(datos) {
             '<td class="text-center">' + totales.descuento + '</td>' +
             '<td class="text-center">' + totales.grupal + '</td>' +
             '<td class="text-center">' + totales.sinPlan + '</td>' +
+            '<td class="text-center">' + totales.abandonos + '</td>' +
+            '<td class="text-center">' + totales.conDescuento + '</td>' +
             '<td class="text-center">' + totales.completaron + '</td>' +
             '<td class="text-center">' + totales.pendientes + '</td>' +
             '<td class="text-right">' + formatoMoneda(totales.programado) + '</td>' +
             '<td class="text-right">' + formatoMoneda(totales.pagado) + '</td>' +
+            '<td class="text-right">' + formatoMoneda(totales.montoDescuentos) + '</td>' +
             '<td class="text-right">' + formatoMoneda(totales.saldo) + '</td>' +
             '<td></td>' +
         '</tr>'
@@ -164,7 +176,7 @@ function renderTablaReportePagos(datos) {
  */
 function verDetallePagosPrograma(programaID, programaNombre) {
     $('#detallePagosProgramaNombre').text(programaNombre || '');
-    $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="8" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
+    $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="9" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
     $('#modalDetallePagosPrograma').modal('show');
 
     $.ajax({
@@ -176,14 +188,14 @@ function verDetallePagosPrograma(programaID, programaNombre) {
             renderDetallePagosEstudiante(response || []);
         },
         error: function() {
-            $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="8" class="text-center text-danger py-3">No se pudo cargar el detalle</td></tr>');
+            $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="9" class="text-center text-danger py-3">No se pudo cargar el detalle</td></tr>');
         }
     });
 }
 
 function renderDetallePagosEstudiante(datos) {
     if (!datos || datos.length === 0) {
-        $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="8" class="text-center text-muted py-3">Este programa no tiene estudiantes inscritos</td></tr>');
+        $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="9" class="text-center text-muted py-3">Este programa no tiene estudiantes inscritos</td></tr>');
         return;
     }
 
@@ -192,25 +204,33 @@ function renderDetallePagosEstudiante(datos) {
         const costoTotal = parseFloat(e.CostoTotal) || 0;
         const pagado = parseFloat(e.TotalPagado) || 0;
         const saldo = parseFloat(e.SaldoPendiente) || 0;
+        const descuento = parseFloat(e.MontoDescuentoTotal) || 0;
+        const abandono = e.EstadoInscripcion === 'ABANDONO';
         const tienePlan = !!e.TipoPlan;
         const planTexto = tienePlan ? (NOMBRES_PLAN_REPORTE[e.TipoPlan] || e.TipoPlan) : '<span class="text-muted">Sin plan</span>';
         const cuotasTexto = tienePlan
             ? (e.NumeroCuotas ? (e.CuotasPagadas || 0) + ' de ' + e.NumeroCuotas : (e.CuotasPagadas || 0) + ' pagada(s)')
             : '-';
         const completado = tienePlan && saldo <= 0;
-        const estadoBadge = !tienePlan
-            ? '<span class="badge badge-secondary">SIN PLAN</span>'
-            : (completado
-                ? '<span class="badge badge-success">COMPLETADO</span>'
-                : '<span class="badge badge-warning">PENDIENTE</span>');
+        let estadoBadge;
+        if (abandono) {
+            estadoBadge = '<span class="badge badge-danger">ABANDONÓ</span>';
+        } else if (!tienePlan) {
+            estadoBadge = '<span class="badge badge-secondary">SIN PLAN</span>';
+        } else if (completado) {
+            estadoBadge = '<span class="badge badge-success">COMPLETADO</span>';
+        } else {
+            estadoBadge = '<span class="badge badge-warning">PENDIENTE</span>';
+        }
 
-        html += '<tr>' +
+        html += '<tr' + (abandono ? ' style="background:#fdecea;"' : '') + '>' +
             '<td>' + (e.NombreCompleto || '') + '</td>' +
             '<td>' + (e.Ci || '') + '</td>' +
             '<td class="text-center">' + planTexto + '</td>' +
             '<td class="text-center">' + cuotasTexto + '</td>' +
             '<td class="text-right">' + formatoMoneda(costoTotal) + '</td>' +
             '<td class="text-right text-success">' + formatoMoneda(pagado) + '</td>' +
+            '<td class="text-right">' + (descuento > 0 ? formatoMoneda(descuento) : '-') + '</td>' +
             '<td class="text-right text-danger">' + formatoMoneda(saldo) + '</td>' +
             '<td class="text-center">' + estadoBadge + '</td>' +
         '</tr>';
@@ -318,8 +338,6 @@ function mostrarTarjetasModulos(modulos) {
     let html = '';
 
     modulos.forEach(function(modulo) {
-        const costo = parseFloat(modulo.costomodulo || 0).toFixed(2);
-
         html += `
             <div class="modulo-card" style="cursor:default;">
                 <div class="modulo-card-header">
@@ -329,12 +347,6 @@ function mostrarTarjetasModulos(modulos) {
                 </div>
                 <div class="modulo-nombre">
                     ${modulo.nombremodulo}
-                </div>
-                <div class="modulo-card-footer">
-                    <div>
-                        <small style="color: #B5B5C3; text-transform: uppercase; font-size: 11px;">Costo Referencial</small>
-                        <div class="modulo-costo">Bs. ${costo}</div>
-                    </div>
                 </div>
             </div>
         `;

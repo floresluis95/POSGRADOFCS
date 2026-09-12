@@ -319,7 +319,7 @@ function mostrarTablaPagos(modulos) {
         `;
 
         programa.modulos.forEach((modulo, index) => {
-            const costo = parseFloat(modulo.costomodulo || 0);
+            const costo = parseFloat(modulo.montocuota || 0);
             totalPrograma += costo;
 
             const tieneOrden = modulo.OrdenPagoID != null;

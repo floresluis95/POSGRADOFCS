@@ -37,7 +37,8 @@
                 $enlace == 'certificadohistorialacademico'||
                 $enlace == 'certificadoaprobacionmonografia'||
                 $enlace == 'certificadomediomagnetico'||
-                $enlace == 'registrodocumentos'
+                $enlace == 'registrodocumentos'||
+                $enlace == 'calendario'
 
                 )
             {

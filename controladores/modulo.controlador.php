@@ -212,7 +212,6 @@ class ModuloControlador
             $nombreKey = 'nombremodulo_' . $i;
             $codigoKey = 'codigomodulo_' . $i;
             $docenteKey = 'docentemodulo_' . $i;
-            $costoKey = 'costomodulo_' . $i;
             $fechaInicioKey = 'fechainicio_' . $i;
             $fechaFinKey = 'fechafin_' . $i;
 
@@ -227,15 +226,6 @@ class ModuloControlador
                 $docenteID = isset($_POST[$docenteKey]) && !empty($_POST[$docenteKey])
                     ? (int)$_POST[$docenteKey]
                     : null;
-
-                $costoRaw = isset($_POST[$costoKey]) ? trim($_POST[$costoKey]) : '';
-                if ($costoRaw !== '' && !is_numeric($costoRaw)) {
-                    return ['estado' => 'validacion', 'mensaje' => "El costo del módulo \"$codigomodulo\" debe ser un número válido"];
-                }
-                if ($costoRaw !== '' && (float)$costoRaw < 0) {
-                    return ['estado' => 'validacion', 'mensaje' => "El costo del módulo \"$codigomodulo\" no puede ser negativo"];
-                }
-                $costomodulo = $costoRaw !== '' ? (float)$costoRaw : 0;
 
                 $fechainicio = isset($_POST[$fechaInicioKey]) && !empty($_POST[$fechaInicioKey])
                     ? trim($_POST[$fechaInicioKey])
@@ -260,7 +250,6 @@ class ModuloControlador
                         'nombremodulo' => $nombremodulo,
                         'codigomodulo' => $codigomodulo,
                         'docenteID' => $docenteID,
-                        'costomodulo' => $costomodulo,
                         'fechainicio' => $fechainicio,
                         'fechafin' => $fechafin
                     ];
@@ -325,7 +314,6 @@ class ModuloControlador
                 'programaId' => $modulo['ProgramaId'],
                 'nombremodulo' => $modulo['nombremodulo'],
                 'codigomodulo' => $modulo['codigomodulo'],
-                'costomodulo' => $modulo['costomodulo'],
                 'docenteID' => $modulo['DocenteID'],
                 'fechainicio' => $modulo['FechaInicio'],
                 'fechafin' => $modulo['FechaFinal'],
@@ -337,7 +325,6 @@ class ModuloControlador
                     <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
                     <td class="text-center"><span class="badge badge-primary">' . htmlspecialchars($modulo['codigomodulo']) . '</span></td>
                     <td><strong>' . htmlspecialchars($modulo['nombremodulo']) . '</strong></td>
-                    <td class="text-center"><strong class="text-success">Bs. ' . number_format($modulo['costomodulo'], 2) . '</strong></td>
                     <td>' . htmlspecialchars($modulo['NombrePrograma']) . '</td>
                     <td class="text-center"><span class="badge badge-info">' . htmlspecialchars($modulo['CodigoPrograma']) . '</span></td>
                     <td>' . $docenteInfo . '</td>

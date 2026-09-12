@@ -267,10 +267,9 @@ class ReportesControladores extends TCPDF
 
         $pdf->Cell(22, 8, 'Código', 1, 0, 'C', true);
         $pdf->Cell(58, 8, 'Nombre del Módulo', 1, 0, 'C', true);
-        $pdf->Cell(48, 8, 'Programa / Sede', 1, 0, 'C', true);
+        $pdf->Cell(70, 8, 'Programa / Sede', 1, 0, 'C', true);
         $pdf->Cell(38, 8, 'Docente', 1, 0, 'C', true);
         $pdf->Cell(25, 8, 'Estado', 1, 0, 'C', true);
-        $pdf->Cell(22, 8, 'Costo (Bs.)', 1, 0, 'C', true);
         $pdf->Cell(20, 8, 'Calificados', 1, 0, 'C', true);
         $pdf->Cell(20, 8, 'Aprobados', 1, 0, 'C', true);
         $pdf->Cell(24, 8, 'Reprobados', 1, 1, 'C', true);
@@ -290,10 +289,9 @@ class ReportesControladores extends TCPDF
 
             $pdf->Cell(22, 6, $mod['CodigoModulo'], 1, 0, 'C', $fill);
             $pdf->Cell(58, 6, mb_strtoupper(substr($mod['NombreModulo'], 0, 36)), 1, 0, 'L', $fill);
-            $pdf->Cell(48, 6, substr($mod['NombrePrograma'], 0, 20) . ' (' . $mod['Sede'] . ')', 1, 0, 'L', $fill);
+            $pdf->Cell(70, 6, substr($mod['NombrePrograma'], 0, 30) . ' (' . $mod['Sede'] . ')', 1, 0, 'L', $fill);
             $pdf->Cell(38, 6, $mod['Docente'] ? mb_strtoupper(substr($mod['Docente'], 0, 22)) : 'SIN ASIGNAR', 1, 0, 'L', $fill);
             $pdf->Cell(25, 6, $mod['EstadoModulo'], 1, 0, 'C', $fill);
-            $pdf->Cell(22, 6, number_format($mod['Costo'], 2), 1, 0, 'R', $fill);
             $pdf->Cell(20, 6, $mod['TotalCalificados'], 1, 0, 'C', $fill);
             $pdf->Cell(20, 6, $mod['TotalAprobados'], 1, 0, 'C', $fill);
             $pdf->Cell(24, 6, $mod['TotalReprobados'], 1, 1, 'C', $fill);

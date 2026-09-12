@@ -326,6 +326,7 @@ class CalificacionModelo
                     p.NombrePrograma,
                     p.GradoAcademico,
                     p.Codigo as CodigoPrograma,
+                    p.Sigla,
                     (SELECT COUNT(DISTINCT EstudianteID)
                      FROM estudianteprograma
                      WHERE ProgramaID = p.ProgramaID
@@ -393,6 +394,7 @@ class CalificacionModelo
                     p.NombrePrograma,
                     p.GradoAcademico,
                     p.Codigo as CodigoPrograma,
+                    p.Sigla,
                     (SELECT COUNT(DISTINCT EstudianteID)
                      FROM estudianteprograma
                      WHERE ProgramaID = p.ProgramaID

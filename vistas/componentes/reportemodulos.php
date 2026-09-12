@@ -130,16 +130,19 @@ date_default_timezone_set("America/La_Paz");
                                                     <th class="text-center">Plan Contado<br>(Descuento)</th>
                                                     <th class="text-center">Plan<br>Grupal</th>
                                                     <th class="text-center">Sin<br>Plan</th>
+                                                    <th class="text-center">Abandonos</th>
+                                                    <th class="text-center">Con<br>Descuento</th>
                                                     <th class="text-center">Completaron<br>el Pago</th>
                                                     <th class="text-center">Con Saldo<br>Pendiente</th>
                                                     <th class="text-right">Total<br>Programado</th>
                                                     <th class="text-right">Total<br>Pagado</th>
+                                                    <th class="text-right">Total<br>Descuentos</th>
                                                     <th class="text-right">Saldo<br>Pendiente</th>
                                                     <th class="text-center">Detalle</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="tablaReportePagosBody">
-                                                <tr><td colspan="13" class="text-center text-muted py-4"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                                <tr><td colspan="16" class="text-center text-muted py-4"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>
                                             </tbody>
                                             <tfoot id="tablaReportePagosFooter"></tfoot>
                                         </table>
@@ -207,16 +210,17 @@ date_default_timezone_set("America/La_Paz");
                                 <tr>
                                     <th>Estudiante</th>
                                     <th style="width:110px;">C.I.</th>
-                                    <th class="text-center" style="width:150px;">Plan</th>
-                                    <th class="text-center" style="width:110px;">Cuotas</th>
-                                    <th class="text-right" style="width:120px;">Costo Total</th>
-                                    <th class="text-right" style="width:120px;">Pagado</th>
-                                    <th class="text-right" style="width:120px;">Saldo</th>
+                                    <th class="text-center" style="width:140px;">Plan</th>
+                                    <th class="text-center" style="width:100px;">Cuotas</th>
+                                    <th class="text-right" style="width:110px;">Costo Total</th>
+                                    <th class="text-right" style="width:110px;">Pagado</th>
+                                    <th class="text-right" style="width:110px;">Descuento</th>
+                                    <th class="text-right" style="width:110px;">Saldo</th>
                                     <th class="text-center" style="width:110px;">Estado</th>
                                 </tr>
                             </thead>
                             <tbody id="tablaDetallePagosEstudianteBody">
-                                <tr><td colspan="8" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                <tr><td colspan="9" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>
                             </tbody>
                         </table>
                     </div>

@@ -53,7 +53,7 @@ date_default_timezone_set("America/La_Paz");
 
 <!-- end:: Subheader -->
 <!-- begin:: Content -->
-<div class="app-content content">
+<div class="app-content content kt-container">
   <div class="content-wrapper">
     <div class="content-body">
       <section id="html">

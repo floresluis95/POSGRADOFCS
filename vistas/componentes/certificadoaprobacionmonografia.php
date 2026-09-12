@@ -6,85 +6,7 @@ date_default_timezone_set("America/La_Paz");
 require_once 'modelos/certificado.modelo.php';
 ?>
 
-<style>
-.card-certificado {
-    background: white;
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-}
-
-.card-certificado h3 {
-    font-size: 16px;
-    font-weight: 700;
-    color: #1e3c72;
-    margin-bottom: 20px;
-}
-
-.dato-solo-lectura {
-    background: #f8f9fa;
-    border: 2px solid #e8ecef;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-weight: 600;
-    color: #464457;
-    min-height: 42px;
-}
-
-.fila-tribunal {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.btn-quitar-miembro {
-    background: #f8d7da;
-    color: #842029;
-    border: none;
-    border-radius: 8px;
-    width: 42px;
-    height: 42px;
-    flex-shrink: 0;
-    cursor: pointer;
-}
-
-.btn-agregar-miembro {
-    background: #e8ecef;
-    color: #1e3c72;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.btn-generar-certificado {
-    background: linear-gradient(135deg, #d9a941 0%, #b7791f 100%);
-    color: white;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn-generar-certificado:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(183, 121, 31, 0.4);
-    color: white;
-}
-
-.btn-generar-certificado:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-</style>
+<link rel="stylesheet" href="vistas/recursos/assets/css/certificados.css">
 
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
     <div class="kt-grid kt-grid--hor kt-grid--root" style="background:#E0DEDE;">
@@ -119,10 +41,11 @@ require_once 'modelos/certificado.modelo.php';
                             </div>
                         </div>
 
-                        <div class="container">
+                        <div class="container certificado-container">
 
                             <div class="card-certificado">
-                                <h3><i class="fas fa-id-card"></i> Buscar Estudiante por Carnet (CI)</h3>
+                                <h3><span class="paso-numero">1</span> <i class="fas fa-id-card"></i> Buscar Estudiante por Carnet (CI)</h3>
+                                <div class="certificado-cuerpo">
                                 <div class="row">
                                     <div class="col-md-5">
                                         <div class="form-group">
@@ -150,36 +73,41 @@ require_once 'modelos/certificado.modelo.php';
                                     <i class="fas fa-exclamation-triangle"></i> No se encontró ningún estudiante activo con ese carnet.
                                 </div>
 
-                                <div class="row" id="bloque-datos" style="display:none;">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label><strong>Nombre</strong></label>
-                                            <div class="dato-solo-lectura" id="dato-nombre"></div>
+                                <div id="bloque-datos" style="display:none;">
+                                    <div class="certificado-subtitulo">Datos del estudiante</div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label><strong>Nombre</strong></label>
+                                                <div class="dato-solo-lectura" id="dato-nombre"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label><strong>Programa</strong></label>
+                                                <div class="dato-solo-lectura" id="dato-programa"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label><strong>Curso</strong></label>
+                                                <input type="text" class="form-control" id="input-curso" placeholder="Curso / versión / gestión">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label><strong>N° de Recibo de Caja (Vaucher)</strong></label>
+                                                <input type="text" class="form-control" id="input-vaucher" placeholder="Número de recibo de caja">
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label><strong>Programa</strong></label>
-                                            <div class="dato-solo-lectura" id="dato-programa"></div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label><strong>Curso</strong></label>
-                                            <input type="text" class="form-control" id="input-curso" placeholder="Curso / versión / gestión">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label><strong>N° de Recibo de Caja (Vaucher)</strong></label>
-                                            <input type="text" class="form-control" id="input-vaucher" placeholder="Número de recibo de caja">
-                                        </div>
-                                    </div>
+                                </div>
                                 </div>
                             </div>
 
                             <div class="card-certificado" id="card-monografia" style="display:none;">
-                                <h3><i class="fas fa-file-alt"></i> Datos del Trabajo Monográfico</h3>
+                                <h3><span class="paso-numero">2</span> <i class="fas fa-file-alt"></i> Datos del Trabajo Monográfico</h3>
+                                <div class="certificado-cuerpo">
 
                                 <div class="form-group">
                                     <label><strong>Título del Trabajo Monográfico</strong></label>
@@ -215,10 +143,11 @@ require_once 'modelos/certificado.modelo.php';
                                     </div>
                                 </div>
 
-                                <div class="text-right mt-3">
+                                <div class="certificado-acciones">
                                     <button type="button" class="btn-generar-certificado" id="btn-generar-certificado">
                                         <i class="fas fa-file-pdf"></i> Generar Certificado PDF
                                     </button>
+                                </div>
                                 </div>
                             </div>
 

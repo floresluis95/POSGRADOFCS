@@ -73,7 +73,6 @@ class ReportesModelos
                 m.Idmodulo,
                 m.codigomodulo as CodigoModulo,
                 m.nombremodulo as NombreModulo,
-                m.costomodulo as Costo,
                 m.estadomodulo as EstadoModulo,
                 p.NombrePrograma,
                 p.Sede,

@@ -116,6 +116,22 @@
             return ($stmt -> execute()) ? 'exitoso' : 'error';
         }
 
+        /**
+         * Bloquear o habilitar el acceso al sistema del usuario asociado a un
+         * Docente (no borra ni afecta sus datos academicos, solo el login).
+         * @param int $docenteID
+         * @param int $nuevoEstado 1 = habilitado, 0 = bloqueado
+         * @return string 'exitoso'|'error'
+         */
+        public static function CambiarEstadoUsuarioDocenteModelo($docenteID, $nuevoEstado)
+        {
+            $stmt = Conexion::Conectar()->prepare("UPDATE usuario SET `Estado` = :estado WHERE DocenteID = :docenteID");
+            $stmt->bindParam(":estado", $nuevoEstado, PDO::PARAM_INT);
+            $stmt->bindParam(":docenteID", $docenteID, PDO::PARAM_INT);
+
+            return ($stmt->execute() && $stmt->rowCount() > 0) ? 'exitoso' : 'error';
+        }
+
         // Métodos para gestión de estudiantes con usuarios
         public static function ListaEstudiantesSinUsuarioModelo()
         {

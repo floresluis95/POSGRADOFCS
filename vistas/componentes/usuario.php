@@ -53,7 +53,7 @@
 
 <!-- end:: Subheader -->
 <!-- begin:: Content -->
-<div class="app-content content">
+<div class="app-content content kt-container">
   <div class="content-wrapper">
     <div class="content-body">
       <section id="html">
@@ -65,7 +65,7 @@
                   <i class="fas fa-users"></i> Usuarios del Sistema
                 </h4>
                 <div class="heading-elements">
-                  <button data-toggle="modal" data-target="#ModalInsertarUsuario" type="button" class="btn btn-light btn-sm">
+                  <button data-toggle="modal" data-target="#ModalInsertarUsuario" type="button" class="btn btn-success btn-sm">
                     <i class="fas fa-user-plus mr-1"></i>Nuevo Usuario
                   </button>
                 </div>

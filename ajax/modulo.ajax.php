@@ -112,7 +112,6 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaModulos") {
             'programaId' => $modulo['ProgramaId'],
             'nombremodulo' => $modulo['nombremodulo'],
             'codigomodulo' => $modulo['codigomodulo'],
-            'costomodulo' => $modulo['costomodulo'],
             'docenteID' => $modulo['DocenteID'],
             'nombrePrograma' => $modulo['NombrePrograma'],
             'fechaInicio' => $modulo['FechaInicio'],

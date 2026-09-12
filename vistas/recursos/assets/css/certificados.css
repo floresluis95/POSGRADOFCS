@@ -1,0 +1,243 @@
+/* ========================================================
+   VISTAS DE CERTIFICADOS (Calificaciones, Historial Académico,
+   Aprobación de Monografía, Medio Magnético)
+   Estilo compartido: formulario tipo "tramite oficial" por
+   pasos, formal pero con mejor jerarquia visual que un
+   formulario plano. Usa la paleta institucional definida en
+   tema-institucional.css.
+   ======================================================== */
+
+.certificado-container {
+    max-width: 980px;
+    margin: 0 auto 40px;
+}
+
+.certificado-intro {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+    border: 1px solid #e8ecef;
+    border-left: 4px solid var(--inst-acento-fin, #159895);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 22px;
+    color: #56637a;
+    font-size: 13px;
+}
+
+.certificado-intro i {
+    color: var(--inst-acento-fin, #159895);
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+/* Tarjeta de paso */
+.card-certificado {
+    background: white;
+    border-radius: 10px;
+    padding: 0;
+    margin-bottom: 22px;
+    box-shadow: 0 1px 3px rgba(30, 60, 114, 0.08), 0 8px 20px rgba(30, 60, 114, 0.05);
+    border: 1px solid #eef0f4;
+    overflow: hidden;
+    transition: box-shadow .2s ease;
+}
+
+.card-certificado:hover {
+    box-shadow: 0 1px 3px rgba(30, 60, 114, 0.1), 0 10px 26px rgba(30, 60, 114, 0.08);
+}
+
+.card-certificado > h3 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e3c72;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    margin: 0;
+    padding: 16px 22px;
+    background: #f7f9fc;
+    border-bottom: 1px solid #eef0f4;
+}
+
+.card-certificado > h3 .paso-numero {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--inst-primario-ini, #1e3c72) 0%, var(--inst-primario-fin, #2a5298) 100%);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.card-certificado > h3 i:not(.paso-numero i) {
+    color: var(--inst-primario-fin, #2a5298);
+    font-size: 15px;
+}
+
+.certificado-cuerpo {
+    padding: 22px;
+}
+
+/* Subseccion dentro de un paso (ej. "Buscar" vs "Datos encontrados") */
+.certificado-subtitulo {
+    font-size: 11px;
+    font-weight: 700;
+    color: #97a1b5;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin: 22px 0 12px;
+    padding-top: 18px;
+    border-top: 1px dashed #e8ecef;
+}
+
+.certificado-subtitulo:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+.certificado-cuerpo label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #56637a;
+    text-transform: uppercase;
+    letter-spacing: .2px;
+    margin-bottom: 6px;
+}
+
+.dato-solo-lectura {
+    background: #f8f9fa;
+    border: 1px solid #e3e7ed;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #33415c;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+}
+
+.dato-solo-lectura:empty::before {
+    content: '\2014';
+    color: #b8c0cc;
+    font-weight: 400;
+}
+
+.tabla-certificado {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+.tabla-certificado thead {
+    background: linear-gradient(135deg, var(--inst-primario-ini, #1e3c72) 0%, var(--inst-primario-fin, #2a5298) 100%);
+}
+
+.tabla-certificado thead th {
+    color: white;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    border: none;
+}
+
+.tabla-certificado tbody tr:hover {
+    background: #f7f9fc;
+}
+
+/* Miembros del tribunal (certificado de monografia) */
+.fila-tribunal {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.btn-quitar-miembro {
+    background: #f8d7da;
+    color: #842029;
+    border: none;
+    border-radius: 6px;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.btn-quitar-miembro:hover {
+    background: #f1aeb5;
+}
+
+.btn-agregar-miembro {
+    background: #eef1f6;
+    color: var(--inst-primario-ini, #1e3c72);
+    border: 1px dashed #c3cbdb;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.btn-agregar-miembro:hover {
+    background: #e3e8f0;
+}
+
+/* Barra de accion final: separa visualmente el boton de generar del resto */
+.certificado-acciones {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid #eef0f4;
+}
+
+.btn-generar-certificado {
+    background: linear-gradient(135deg, var(--inst-advertencia-ini, #b7791f) 0%, var(--inst-advertencia-fin, #d4a017) 100%);
+    color: white;
+    border: none;
+    padding: 11px 28px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(183, 121, 31, 0.25);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.btn-generar-certificado:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(183, 121, 31, 0.35);
+    color: white;
+}
+
+.btn-generar-certificado:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Alertas mas discretas, en linea con el resto del formulario */
+.certificado-cuerpo .alert {
+    border-radius: 6px;
+    font-size: 13px;
+    border-width: 1px;
+}

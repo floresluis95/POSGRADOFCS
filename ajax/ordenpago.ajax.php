@@ -73,6 +73,10 @@ switch ($accion) {
         obtenerOrdenesModulosPendientes();
         break;
 
+    case 'obtenerOrdenesVencidas':
+        obtenerOrdenesVencidas();
+        break;
+
     case 'registrarOrdenPagoModulosPendientes':
         registrarOrdenPagoModulosPendientes();
         break;
@@ -452,7 +456,8 @@ function obtenerModulosPagados()
             SELECT
                 pm.Idpagomodulo,
                 pm.IdModulo,
-                pm.costomodulo,
+                pm.NumeroCuota,
+                pm.montocuota,
                 pm.fechapago,
                 pm.Estado,
                 pm.idinscripcion,
@@ -478,7 +483,7 @@ function obtenerModulosPagados()
                  LIMIT 1) as FechaOrdenGenerada
             FROM pagomodulo pm
             INNER JOIN estudianteprograma ep ON pm.idinscripcion = ep.idInscripcion
-            INNER JOIN modulos m ON pm.IdModulo = m.Idmodulo
+            LEFT JOIN modulos m ON pm.IdModulo = m.Idmodulo
             INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
             WHERE ep.EstudianteID = :estudianteID
             AND pm.Estado != 'ANULADO'
@@ -487,6 +492,17 @@ function obtenerModulosPagados()
         $stmt->bindParam(':estudianteID', $estudianteID, PDO::PARAM_INT);
         $stmt->execute();
         $modulos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Las cuotas del programa (rediseño de pagos) ya no están ligadas a un módulo
+        // específico: pm.IdModulo queda NULL. Se rellena un nombre/código de
+        // referencia para que la tabla no muestre celdas vacías.
+        foreach ($modulos as &$fila) {
+            if (empty($fila['IdModulo'])) {
+                $fila['codigomodulo'] = 'CUOTA';
+                $fila['nombremodulo'] = 'Cuota' . (!empty($fila['NumeroCuota']) ? ' N° ' . $fila['NumeroCuota'] : '') . ' del programa';
+            }
+        }
+        unset($fila);
 
         echo json_encode([
             'success' => true,
@@ -498,6 +514,56 @@ function obtenerModulosPagados()
             'success' => false,
             'mensaje' => 'Error al obtener los módulos pagados'
         ]);
+    }
+}
+
+/**
+ * Estudiantes con una orden de pago de cuota vencida (mora), con enlace de
+ * WhatsApp directo al celular registrado. Usado en el aviso al ingresar al
+ * sistema (Administrador/Secretaría).
+ */
+function obtenerOrdenesVencidas()
+{
+    // Información de cobranza (nombres, celulares, montos): solo Administrador y Secretaría.
+    if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC'], true)) {
+        echo json_encode(['success' => false, 'mensaje' => 'No tiene permiso para ver esta información']);
+        return;
+    }
+
+    try {
+        $ordenes = OrdenPagoModelos::ObtenerOrdenesVencidasModelo();
+
+        $resultado = array_map(function ($o) {
+            $nombreCompleto = trim($o['Nombre'] . ' ' . $o['Apaterno'] . ' ' . ($o['Amaterno'] ?? ''));
+            $diasVencido = (int)floor((strtotime('today') - strtotime($o['FechaVencimiento'])) / 86400);
+
+            $celular = preg_replace('/\D/', '', $o['Celular'] ?? '');
+            $whatsapp = null;
+            if (!empty($celular)) {
+                $mensaje = "Hola {$o['Nombre']}, le escribimos de la Coordinación de Posgrado FCS-UTO. " .
+                    "Su cuota del programa \"{$o['NombrePrograma']}\" (orden {$o['NumeroOrden']}, Bs. " .
+                    number_format((float)$o['MontoTotal'], 2) . ") venció el " .
+                    date('d/m/Y', strtotime($o['FechaVencimiento'])) . ". Le agradecemos regularizar su pago.";
+                $whatsapp = 'https://wa.me/591' . $celular . '?text=' . rawurlencode($mensaje);
+            }
+
+            return [
+                'idOrdenPago' => $o['IdOrdenPago'],
+                'numeroOrden' => $o['NumeroOrden'],
+                'nombreEstudiante' => $nombreCompleto,
+                'nombrePrograma' => $o['NombrePrograma'],
+                'sede' => $o['Sede'],
+                'monto' => (float)$o['MontoTotal'],
+                'fechaVencimiento' => $o['FechaVencimiento'],
+                'diasVencido' => max($diasVencido, 0),
+                'whatsapp' => $whatsapp
+            ];
+        }, $ordenes);
+
+        echo json_encode(['success' => true, 'ordenes' => $resultado]);
+    } catch (Exception $e) {
+        error_log("Error en obtenerOrdenesVencidas: " . $e->getMessage());
+        echo json_encode(['success' => false, 'mensaje' => 'No se pudo obtener el listado de mora']);
     }
 }
 
@@ -681,6 +747,7 @@ function registrarOrdenPagoCuotaPrograma()
         $responsable = isset($_POST['responsable']) ? $_POST['responsable'] : '';
         $nombreFactura = isset($_POST['nombreFactura']) ? $_POST['nombreFactura'] : '';
         $nitCiFactura = isset($_POST['nitCiFactura']) ? $_POST['nitCiFactura'] : '';
+        $fechaVencimiento = !empty($_POST['fechaVencimiento']) ? trim($_POST['fechaVencimiento']) : null;
 
         if ($montoTotal <= 0) {
             echo json_encode(['success' => false, 'mensaje' => 'El monto de la cuota debe ser mayor a 0']);
@@ -705,10 +772,10 @@ function registrarOrdenPagoCuotaPrograma()
 
         $stmt = $conexion->prepare("
             INSERT INTO ordenpago
-            (EstudianteID, idinscripcion, ProgramaID, MontoTotal,
+            (EstudianteID, idinscripcion, ProgramaID, MontoTotal, FechaVencimiento,
              ResponsableGeneracion, NombreFactura, NitCiFactura, NumeroOrden, FechaGeneracion, Observaciones, Estado)
             VALUES
-            (:estudianteID, :idinscripcion, :programaID, :montoTotal,
+            (:estudianteID, :idinscripcion, :programaID, :montoTotal, :fechaVencimiento,
              :responsable, :nombreFactura, :nitCiFactura, :numeroOrden, NOW(), 'CUOTA PROGRAMA', 'PENDIENTE')
         ");
 
@@ -716,6 +783,11 @@ function registrarOrdenPagoCuotaPrograma()
         $stmt->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
         $stmt->bindParam(':programaID', $programaID, PDO::PARAM_INT);
         $stmt->bindParam(':montoTotal', $montoTotal);
+        if ($fechaVencimiento !== null) {
+            $stmt->bindParam(':fechaVencimiento', $fechaVencimiento, PDO::PARAM_STR);
+        } else {
+            $stmt->bindValue(':fechaVencimiento', null, PDO::PARAM_NULL);
+        }
         $stmt->bindParam(':responsable', $responsable, PDO::PARAM_STR);
         $stmt->bindParam(':nombreFactura', $nombreFactura, PDO::PARAM_STR);
         $stmt->bindParam(':nitCiFactura', $nitCiFactura, PDO::PARAM_STR);

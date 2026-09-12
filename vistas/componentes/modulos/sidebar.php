@@ -33,6 +33,19 @@ if ($_SESSION["Tipo"] == "ADM") {
                   </a>
                 </li>
 
+                <!-- CALENDARIO ACADÉMICO -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-calendar-3" style="color: #6f94c9;"></i> AGENDA
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="calendario" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-calendar-3" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Calendario Académico</span>
+                  </a>
+                </li>
+
                 <!-- MATRICULACIÓN -->
                 <li class="kt-menu__section">
                   <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
@@ -253,6 +266,19 @@ if ($_SESSION["Tipo"] == "SEC") {
                   </a>
                 </li>
 
+                <!-- CALENDARIO ACADÉMICO -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-calendar-3" style="color: #6f94c9;"></i> AGENDA
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="calendario" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-calendar-3" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Calendario Académico</span>
+                  </a>
+                </li>
+
                 <!-- MATRICULACIÓN -->
                 <li class="kt-menu__section">
                   <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
@@ -448,7 +474,18 @@ if ($_SESSION["Tipo"] == "DOC") {
 
               <ul class="kt-menu__nav">
 
-          
+                <!-- CALENDARIO ACADÉMICO -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-calendar-3" style="color: #36a3f7;"></i> AGENDA
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="calendario" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-calendar-3" style="color: #36a3f7;"></i>
+                    <span class="kt-menu__link-text">Mi Calendario de Clases</span>
+                  </a>
+                </li>
 
                 <!-- DOCENTES -->
                 <li class="kt-menu__section">
@@ -489,6 +526,19 @@ if ($_SESSION["Tipo"] == "EST") {
             <div id="kt_aside_menu" class="kt-aside-menu" data-ktmenu-vertical="1" data-ktmenu-scroll="1">
 
               <ul class="kt-menu__nav">
+                <!-- CALENDARIO ACADÉMICO -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-calendar-3" style="color: #fd397a;"></i> AGENDA
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="calendario" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-calendar-3" style="color: #fd397a;"></i>
+                    <span class="kt-menu__link-text">Calendario Académico</span>
+                  </a>
+                </li>
+
                 <!-- NOTAS ESTUDIANTES -->
                 <li class="kt-menu__section">
                   <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">

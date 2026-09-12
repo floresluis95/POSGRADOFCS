@@ -19,7 +19,32 @@
                                                 u.Usuario, u.Estado as EstadoUsuario, u.PasswordTexto
                                                 FROM docente d
                                                 LEFT JOIN usuario u ON d.DocenteID = u.DocenteID
-                                                ORDER BY d.Apaterno, d.Amaterno, d.Nombre");
+                                                ORDER BY d.DocenteID DESC");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /* BUSCAR DOCENTES EN TODA LA BD (no solo los cargados en la vista) */
+    public static function BuscarDocentesActivoModelo($patron)
+    {
+        $like = '%' . $patron . '%';
+        $stmt = Conexion::Conectar()->prepare("SELECT d.*,
+                                                u.Usuario, u.Estado as EstadoUsuario, u.PasswordTexto
+                                                FROM docente d
+                                                LEFT JOIN usuario u ON d.DocenteID = u.DocenteID
+                                                WHERE d.Ci LIKE :patron
+                                                   OR d.Complemento LIKE :patron
+                                                   OR d.Nombre LIKE :patron
+                                                   OR d.Apaterno LIKE :patron
+                                                   OR d.Amaterno LIKE :patron
+                                                   OR d.MatriculaNacional LIKE :patron
+                                                   OR d.CedulaProfesional LIKE :patron
+                                                   OR d.Correo LIKE :patron
+                                                   OR d.Especialidad LIKE :patron
+                                                   OR d.Menciones LIKE :patron
+                                                   OR u.Usuario LIKE :patron
+                                                ORDER BY d.DocenteID DESC");
+        $stmt->bindValue(':patron', $like, PDO::PARAM_STR);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -35,6 +60,7 @@
                 `Amaterno`,
                 `FechaNacimiento`,
                 `CedulaProfesional`,
+                `MatriculaNacional`,
                 `Especialidad`,
                 `Menciones`,
                 `Direccion`,
@@ -54,6 +80,7 @@
                 :Amaterno,
                 :FechaNacimiento,
                 :CedulaProfesional,
+                :MatriculaNacional,
                 :Especialidad,
                 :Menciones,
                 :Direccion,
@@ -72,6 +99,7 @@
                 $stmt->bindParam(":Amaterno",          $DatosDocentes['Amaterno'],          PDO::PARAM_STR);
                 $stmt->bindParam(":FechaNacimiento",   $DatosDocentes['FechaNacimiento'],   PDO::PARAM_STR);
                 $stmt->bindParam(":CedulaProfesional", $DatosDocentes['CedulaProfesional'], PDO::PARAM_STR);
+                $stmt->bindParam(":MatriculaNacional", $DatosDocentes['MatriculaNacional'], PDO::PARAM_STR);
                 $stmt->bindParam(":Especialidad",      $DatosDocentes['Especialidad'],      PDO::PARAM_STR);
                 $stmt->bindParam(":Menciones",         $DatosDocentes['Menciones'],         PDO::PARAM_STR);
                 $stmt->bindParam(":Direccion",         $DatosDocentes['Direccion'],         PDO::PARAM_STR);
@@ -109,6 +137,7 @@
             `Amaterno` = :Amaterno,
             `FechaNacimiento` = :FechaNacimiento,
             `CedulaProfesional` = :CedulaProfesional,
+            `MatriculaNacional` = :MatriculaNacional,
             `Especialidad` = :Especialidad,
             `Menciones` = :Menciones,
             `Direccion` = :Direccion,
@@ -128,6 +157,7 @@
         $stmt->bindParam(":Amaterno", $DatosDocente['Amaterno'], PDO::PARAM_STR);
         $stmt->bindParam(":FechaNacimiento", $DatosDocente['FechaNacimiento'], PDO::PARAM_STR);
         $stmt->bindParam(":CedulaProfesional", $DatosDocente['CedulaProfesional'], PDO::PARAM_STR);
+        $stmt->bindParam(":MatriculaNacional", $DatosDocente['MatriculaNacional'], PDO::PARAM_STR);
         $stmt->bindParam(":Especialidad", $DatosDocente['Especialidad'], PDO::PARAM_STR);
         $stmt->bindParam(":Menciones", $DatosDocente['Menciones'], PDO::PARAM_STR);
         $stmt->bindParam(":Direccion", $DatosDocente['Direccion'], PDO::PARAM_STR);

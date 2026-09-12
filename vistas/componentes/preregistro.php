@@ -338,11 +338,6 @@ kt-aside--fixed kt-page--loading">
                             <label class="small font-weight-bold mb-1" id="labelPorcentajeDescuento">% Descuento</label>
                             <input type="number" class="form-control form-control-sm" id="porcentajeDescuento" name="porcentajeDescuento" min="0" max="100" step="0.01" value="0">
                           </div>
-                          <div class="col-lg-3 form-group mb-2" id="grupoNumeroCuotasPreregistro">
-                            <label class="small font-weight-bold mb-1">N° de Cuotas (estimado)</label>
-                            <input type="number" class="form-control form-control-sm" id="numeroCuotas" name="numeroCuotas" min="1" step="1" placeholder="Ej: 6">
-                            <small class="form-text text-muted">Cada cuota sigue siendo de monto libre; esto es solo para el recibo.</small>
-                          </div>
                           <div class="col-lg-2 form-group mb-2" id="grupoPagoMatriculaPreregistro" style="display:none;">
                             <label class="small font-weight-bold mb-1 d-block">Matrícula</label>
                             <div class="custom-control custom-checkbox mt-1">
@@ -854,7 +849,6 @@ function iniciarPreregistro() {
     $('#tipoPagoCodigo').on('change', function() {
         const tipo = $(this).val();
 
-        $('#grupoNumeroCuotasPreregistro').hide();
         $('#grupoPagoMatriculaPreregistro').hide();
         $('#pagarMatricula').prop('checked', true);
 
@@ -866,11 +860,9 @@ function iniciarPreregistro() {
         } else if (tipo === 'GRUPAL') {
             $('#grupoDescuentoPreregistro').hide();
             $('#porcentajeDescuento').val(0);
-            $('#numeroCuotas').val('');
             $('#planInfoTexto').html('No se fija ningún plan todavía: el estudiante quedará disponible para armar un <strong>Plan Grupal</strong> después, desde Matriculados.');
         } else {
             $('#grupoDescuentoPreregistro').show();
-            $('#grupoNumeroCuotasPreregistro').show();
             $('#grupoPagoMatriculaPreregistro').show();
             $('#porcentajeDescuento').val(0);
             $('#labelPorcentajeDescuento').text('% Descuento (matrícula)');

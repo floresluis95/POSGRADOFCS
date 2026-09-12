@@ -414,28 +414,44 @@
          * Formato: Primeras 2 letras + CI + 4 caracteres aleatorios + símbolo
          * Ejemplo: Ju1234567xK9p@
          */
-        private function GenerarPasswordCompleja($nombre, $ci)
+        /**
+         * Genera una contraseña aleatoria de 12 caracteres, con al menos una
+         * mayuscula, una minuscula, un numero y un simbolo garantizados, sin
+         * caracteres ambiguos (0/O, 1/l/I) para evitar errores al transcribirla.
+         * No incluye el nombre ni el CI del usuario: son datos conocidos/publicos
+         * (aparecen en documentos, carnets, listas), no deben formar parte de un
+         * secreto. $nombre y $ci se mantienen como parametros por compatibilidad
+         * con el llamador, pero ya no se usan para construir la contraseña.
+         */
+        private function GenerarPasswordCompleja($nombre = '', $ci = '')
         {
-            // Obtener primeras 2 letras del nombre (primera mayúscula, segunda minúscula)
-            $primerLetra = strtoupper(substr($nombre, 0, 1));
-            $segundaLetra = strtolower(substr($nombre, 1, 1));
-            $prefijo = $primerLetra . $segundaLetra;
+            $minusculas = 'abcdefghjkmnpqrstuvwxyz';
+            $mayusculas = 'ABCDEFGHJKMNPQRSTUVWXYZ';
+            $numeros = '23456789';
+            $simbolos = '@#$%&*!?';
+            $todos = $minusculas . $mayusculas . $numeros . $simbolos;
 
-            // Generar 4 caracteres aleatorios (mezcla de mayúsculas, minúsculas y números)
-            $caracteres = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            $aleatorios = '';
-            for ($i = 0; $i < 4; $i++) {
-                $aleatorios .= $caracteres[random_int(0, strlen($caracteres) - 1)];
+            // Garantizar al menos un caracter de cada tipo
+            $password = [
+                $mayusculas[random_int(0, strlen($mayusculas) - 1)],
+                $minusculas[random_int(0, strlen($minusculas) - 1)],
+                $numeros[random_int(0, strlen($numeros) - 1)],
+                $simbolos[random_int(0, strlen($simbolos) - 1)],
+            ];
+
+            // Completar hasta 12 caracteres con el conjunto completo
+            for ($i = count($password); $i < 12; $i++) {
+                $password[] = $todos[random_int(0, strlen($todos) - 1)];
             }
 
-            // Seleccionar un símbolo especial aleatorio
-            $simbolos = '@#$%&*';
-            $simbolo = $simbolos[random_int(0, strlen($simbolos) - 1)];
+            // Barajar (aleatoriamente, no con shuffle() que no es criptografico
+            // pero aqui solo reordena posiciones ya elegidas al azar)
+            for ($i = count($password) - 1; $i > 0; $i--) {
+                $j = random_int(0, $i);
+                [$password[$i], $password[$j]] = [$password[$j], $password[$i]];
+            }
 
-            // Construir la contraseña: Primeras2Letras + CI + 4Aleatorios + Símbolo
-            $password = $prefijo . $ci . $aleatorios . $simbolo;
-
-            return $password;
+            return implode('', $password);
         }
 
         public function CrearUsuarioDocenteControlador()

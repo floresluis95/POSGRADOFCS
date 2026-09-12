@@ -6,15 +6,19 @@
 
 require_once __DIR__ . '/../modelos/inscripcionmodulo.modelo.php';
 require_once __DIR__ . '/../modelos/conexion.modelo.php';
+require_once __DIR__ . '/../modelos/matricula.modelo.php';
 
 class InscripcionModuloControladores
 {
     /**
      * Listar estudiantes matriculados en programas
+     * @param int|null $programaID
+     * @param string|null $sede
+     * @param string $estado 'ACTIVO' (por defecto), 'ABANDONO', o 'TODOS'
      */
-    public function ListarEstudiantesMatriculadosControlador($programaID = null, $sede = null)
+    public function ListarEstudiantesMatriculadosControlador($programaID = null, $sede = null, $estado = 'ACTIVO')
     {
-        $estudiantes = InscripcionModuloModelos::ListarEstudiantesMatriculadosModelo($programaID, $sede);
+        $estudiantes = InscripcionModuloModelos::ListarEstudiantesMatriculadosModelo($programaID, $sede, $estado);
 
         if (empty($estudiantes)) {
             echo '<tr>
@@ -29,6 +33,12 @@ class InscripcionModuloControladores
 
             // Determinar color del estado
             $colorEstado = $estudiante['Estado'] == 'ACTIVO' ? 'success' : 'danger';
+
+            // Badge de estado: solo se muestra si no está ACTIVO (evita ruido visual
+            // en el caso normal, ya que por defecto la tabla solo lista activos)
+            $badgeEstadoInscripcion = $estudiante['Estado'] !== 'ACTIVO'
+                ? '<br><span class="badge badge-' . $colorEstado . '" style="font-size: 10px;">' . htmlspecialchars($estudiante['Estado']) . '</span>'
+                : '';
 
             // Determinar tipo de pago y badge
             $pagoCompleto = isset($estudiante['pagoCompleto']) ? (int)$estudiante['pagoCompleto'] : 0;
@@ -56,7 +66,7 @@ class InscripcionModuloControladores
 
             echo '<tr>
                     <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
-                    <td><strong>' . $nombreCompleto . '</strong></td>
+                    <td><strong>' . $nombreCompleto . '</strong>' . $badgeEstadoInscripcion . '</td>
                     <td class="text-center"><span class="badge badge-secondary">' . $estudiante['Ci'] . '</span></td>
                     <td>' . $estudiante['NombrePrograma'] . '</td>
                     <td class="text-center"><span class="badge badge-info">' . $estudiante['GradoAcademico'] . '</span></td>
@@ -123,11 +133,59 @@ class InscripcionModuloControladores
             }
 
             echo '
+                                <div class="dropdown-divider"></div>';
+
+            // Marcar abandono / reactivar según el estado actual de la inscripción
+            if ($estudiante['Estado'] == 'ACTIVO') {
+                echo '
+                                <a class="dropdown-item btn-marcar-abandono" href="#"
+                                   data-idinscripcion="' . $estudiante['idInscripcion'] . '"
+                                   data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
+                                   data-nuevo-estado="ABANDONO" style="color: #dc3545;">
+                                    <i class="fa fa-user-times"></i> Marcar como Abandono
+                                </a>';
+            } else {
+                echo '
+                                <a class="dropdown-item btn-marcar-abandono" href="#"
+                                   data-idinscripcion="' . $estudiante['idInscripcion'] . '"
+                                   data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
+                                   data-nuevo-estado="ACTIVO" style="color: #28a745;">
+                                    <i class="fa fa-user-check"></i> Reactivar (marcar Activo)
+                                </a>';
+            }
+
+            echo '
                             </div>
                         </div>
                     </td>
                   </tr>';
         }
+    }
+
+    /**
+     * Marcar/revertir el abandono de una inscripción (responde JSON).
+     * Cambia estudianteprograma.Estado a 'ABANDONO' o de vuelta a 'ACTIVO'; el
+     * historial de plan de pago y cuotas (pagoprograma/pagomodulo) no se toca.
+     */
+    public function ActualizarEstadoInscripcionAjaxControlador()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $idInscripcion = isset($_POST['idinscripcion']) ? (int)$_POST['idinscripcion'] : 0;
+        $nuevoEstado = isset($_POST['nuevoEstado']) ? trim($_POST['nuevoEstado']) : '';
+
+        if (empty($idInscripcion) || !in_array($nuevoEstado, ['ACTIVO', 'ABANDONO'], true)) {
+            echo json_encode(['success' => false, 'mensaje' => 'Datos inválidos']);
+            exit();
+        }
+
+        $ok = MatriculaModelos::ActualizarEstadoInscripcionModelo($idInscripcion, $nuevoEstado);
+
+        echo json_encode([
+            'success' => $ok,
+            'mensaje' => $ok ? 'Estado actualizado correctamente' : 'No se pudo actualizar el estado'
+        ]);
+        exit();
     }
 
     /**

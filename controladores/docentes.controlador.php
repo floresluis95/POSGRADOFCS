@@ -22,49 +22,108 @@ class DocentesControlador
             return $mencion !== '';
         });
 
-        return implode(', ', $menciones);
+        return implode(' ', $menciones);
     }
 
- public function ListaDocenteControlador()
+ // Cache en memoria del listado ya ordenado (más reciente primero), para no
+ // repetir la consulta cuando la vista pide la tabla principal y la de "más docentes".
+ private static $listaDocentesCache = null;
+
+ private static function ObtenerListaDocentesCache()
+ {
+     if (self::$listaDocentesCache === null) {
+         self::$listaDocentesCache = DocentesModelo::ListaDocenteActivoModelo();
+     }
+     return self::$listaDocentesCache;
+ }
+
+ /**
+  * Imprime las filas <tr> de la tabla de docentes.
+  * @param int $offset Cuántos registros más recientes saltar (0 = desde el primero)
+  * @param int|null $limite Cuántos registros imprimir (null = todos los restantes)
+  */
+ public function ListaDocenteControlador($offset = 0, $limite = null)
 {
-    $Listad = DocentesModelo::ListaDocenteActivoModelo();
-    $contador = 0;
+    $Listad = self::ObtenerListaDocentesCache();
+    $Listad = ($limite !== null) ? array_slice($Listad, $offset, $limite) : array_slice($Listad, $offset);
+    $numero = $offset;
 
-    foreach ($Listad as $key => $Docente) {
-        $contador++;
+    foreach ($Listad as $Docente) {
+        $numero++;
+        echo $this->ConstruirFilaDocente($Docente, $numero);
+    }
+}
 
+/**
+ * Renderiza las filas <tr> de un arreglo de docentes ya obtenido (por ejemplo,
+ * el resultado de una búsqueda), con numeración consecutiva desde $offsetNumeracion + 1.
+ * @return string HTML concatenado de las filas
+ */
+public function RenderizarFilasDesdeArreglo($listaDocentes, $offsetNumeracion = 0)
+{
+    $html = '';
+    $numero = $offsetNumeracion;
+    foreach ($listaDocentes as $Docente) {
+        $numero++;
+        $html .= $this->ConstruirFilaDocente($Docente, $numero);
+    }
+    return $html;
+}
+
+/**
+ * Busca docentes en TODA la base de datos (no solo los ya cargados en la
+ * vista) y devuelve las filas ya renderizadas, con numeración consecutiva.
+ */
+public function BuscarDocentesControlador($patron)
+{
+    $patron = trim($patron);
+    $listaDocentes = ($patron === '')
+        ? self::ObtenerListaDocentesCache()
+        : DocentesModelo::BuscarDocentesActivoModelo($patron);
+
+    return array(
+        'total' => count($listaDocentes),
+        'html' => $this->RenderizarFilasDesdeArreglo($listaDocentes, 0),
+    );
+}
+
+private function ConstruirFilaDocente($Docente, $numero)
+{
         $menciones = !empty($Docente['Menciones']) ? $Docente['Menciones'] . ' ' : '';
-        $nombreCompleto = $menciones . $Docente['Apaterno'] . ' ' . $Docente['Amaterno'] . ' ' . $Docente['Nombre'];
+        $nombreCompleto = $menciones . $Docente['Nombre'] . ' ' . $Docente['Apaterno'] . ' ' . $Docente['Amaterno'];
         $ciCompleto = $Docente['Ci'] . ($Docente['Complemento'] ? '-' . $Docente['Complemento'] : '') . ' ' . $Docente['Exp'];
 
         // Verificar si tiene usuario
         $tieneUsuario = !empty($Docente['Usuario']);
         $estadoUsuarioBadge = '';
-        $passwordDisplay = '';
         $botonUsuario = '';
+        $botonBloqueo = '';
+        $estadoUsuarioTexto = 'Sin usuario asignado';
 
         if ($tieneUsuario) {
             $estadoActivo = $Docente['EstadoUsuario'] == '1';
+            $estadoUsuarioTexto = $estadoActivo ? 'Activo' : 'Bloqueado';
             $estadoUsuarioBadge = $estadoActivo
-                ? '<span class="badge badge-success"><i class="fa fa-check"></i> ' . htmlspecialchars($Docente['Usuario']) . '</span>'
-                : '<span class="badge badge-danger"><i class="fa fa-times"></i> ' . htmlspecialchars($Docente['Usuario']) . ' (Inactivo)</span>';
+                ? '<span class="badge badge-success"><i class="fa fa-unlock"></i> Activo</span>'
+                : '<span class="badge badge-danger"><i class="fa fa-lock"></i> Bloqueado</span>';
 
-            // Mostrar contraseña si existe
-            if (!empty($Docente['PasswordTexto'])) {
-                $passwordDisplay = '<span class="badge badge-warning" style="font-size: 12px; font-family: monospace; cursor: pointer;"
-                                          title="Contraseña asignada"
-                                          onclick="copyToClipboard(\'' . htmlspecialchars($Docente['PasswordTexto']) . '\', this)">
-                                        <i class="fa fa-key"></i> ' . htmlspecialchars($Docente['PasswordTexto']) . '
-                                    </span>';
-            } else {
-                $passwordDisplay = '<span class="badge badge-secondary" title="Contraseña no disponible">
-                                        <i class="fa fa-lock"></i> Oculta
-                                    </span>';
-            }
-            $botonUsuario = '';
+            // Bloquear/Habilitar el acceso del docente al sistema (no borra ni afecta
+            // sus datos academicos, solo su capacidad de iniciar sesion).
+            $botonBloqueo = $estadoActivo
+                ? '<button type="button" class="btn btn-secondary btn-sm btnBloquearAccesoDocente" title="Bloquear acceso al sistema"
+                        data-docente-id="' . $Docente['DocenteID'] . '"
+                        data-nombre-completo="' . htmlspecialchars($nombreCompleto) . '"
+                        data-nuevo-estado="0">
+                        <i class="fa fa-lock"></i>
+                    </button>'
+                : '<button type="button" class="btn btn-success btn-sm btnBloquearAccesoDocente" title="Habilitar acceso al sistema"
+                        data-docente-id="' . $Docente['DocenteID'] . '"
+                        data-nombre-completo="' . htmlspecialchars($nombreCompleto) . '"
+                        data-nuevo-estado="1">
+                        <i class="fa fa-unlock"></i>
+                    </button>';
         } else {
             $estadoUsuarioBadge = '<span class="badge badge-warning"><i class="fa fa-exclamation-triangle"></i> Sin usuario</span>';
-            $passwordDisplay = '<span class="badge badge-secondary"><i class="fa fa-minus"></i> N/A</span>';
             $botonUsuario = '<button
                                 data-toggle="modal"
                                 data-target="#ModalAsignarUsuarioDocente"
@@ -77,21 +136,36 @@ class DocentesControlador
                                 data-nombre-pila="' . htmlspecialchars($Docente['Nombre']) . '"
                                 data-correo="' . htmlspecialchars($Docente['Correo'] ? $Docente['Correo'] : '') . '"
                                 title="Asignar usuario">
-                                <i class="fa fa-user-plus"></i> Asignar
+                                <i class="fa fa-user-plus"></i>
                             </button>';
         }
 
-        echo '<tr>
-                <td class="text-center">' . $contador . '</td>
+        // Botón "Ver Detalle": agrupa correo, especialidad, cédula, usuario y
+        // contraseña en un modal, para no saturar la tabla principal.
+        $botonDetalle = '<button type="button" class="btn btn-info btn-sm btnVerDetalleDocente" title="Ver detalle"
+                            data-toggle="modal" data-target="#ModalDetalleDocente"
+                            data-nombre-completo="' . htmlspecialchars($nombreCompleto) . '"
+                            data-ci-completo="' . htmlspecialchars($ciCompleto) . '"
+                            data-correo="' . htmlspecialchars($Docente['Correo'] ? $Docente['Correo'] : 'No registrado') . '"
+                            data-especialidad="' . htmlspecialchars($Docente['Especialidad'] ?: 'No registrada') . '"
+                            data-cedula="' . htmlspecialchars($Docente['CedulaProfesional'] ?: 'No registrada') . '"
+                            data-matricula-nacional="' . htmlspecialchars($Docente['MatriculaNacional'] ?: 'No registrada') . '"
+                            data-usuario="' . htmlspecialchars($tieneUsuario ? $Docente['Usuario'] : 'No asignado') . '"
+                            data-password="' . htmlspecialchars($tieneUsuario && !empty($Docente['PasswordTexto']) ? $Docente['PasswordTexto'] : '') . '"
+                            data-estado-usuario="' . htmlspecialchars($estadoUsuarioTexto) . '">
+                            <i class="fa fa-eye"></i>
+                        </button>';
+
+        return '<tr>
+                <td class="text-center">' . $numero . '</td>
                 <td class="text-center"><strong>' . htmlspecialchars($ciCompleto) . '</strong></td>
                 <td>' . htmlspecialchars($nombreCompleto) . '</td>
-                <td>' . htmlspecialchars($Docente['CedulaProfesional']) . '</td>
-                <td>' . htmlspecialchars($Docente['Correo'] ? $Docente['Correo'] : 'No registrado') . '</td>
-                <td>' . htmlspecialchars($Docente['Especialidad']) . '</td>
+                <td class="text-center">' . htmlspecialchars($Docente['MatriculaNacional'] ?: '-') . '</td>
                 <td class="text-center">' . $estadoUsuarioBadge . '</td>
-                <td class="text-center">' . $passwordDisplay . '</td>
                 <td class="text-center">
+                    ' . $botonDetalle . '
                     ' . $botonUsuario . '
+                    ' . $botonBloqueo . '
                     <button type="button"
                             class="btn btn-warning btn-sm btnEditarDocente"
                             title="Editar"
@@ -106,6 +180,7 @@ class DocentesControlador
                             data-amaterno="' . htmlspecialchars($Docente['Amaterno']) . '"
                             data-fecha-nacimiento="' . htmlspecialchars($Docente['FechaNacimiento']) . '"
                             data-cedula="' . htmlspecialchars($Docente['CedulaProfesional']) . '"
+                            data-matricula-nacional="' . htmlspecialchars($Docente['MatriculaNacional'] ?? '') . '"
                             data-especialidad="' . htmlspecialchars($Docente['Especialidad']) . '"
                             data-menciones="' . htmlspecialchars($Docente['Menciones'] ?? '') . '"
                             data-direccion="' . htmlspecialchars($Docente['Direccion']) . '"
@@ -115,7 +190,7 @@ class DocentesControlador
                             data-es-extranjero="' . (isset($Docente['EsExtranjero']) ? $Docente['EsExtranjero'] : '0') . '"
                             data-pais="' . htmlspecialchars(isset($Docente['Pais']) ? $Docente['Pais'] : '') . '"
                             data-region="' . htmlspecialchars(isset($Docente['Region']) ? $Docente['Region'] : '') . '">
-                        <i class="bi bi-pencil-fill"></i>
+                        <i class="fa fa-edit"></i>
                     </button>
                     <button type="button"
                             class="btn btn-danger btn-sm btnDarDeBaja"
@@ -126,7 +201,6 @@ class DocentesControlador
                     </button>
                 </td>
             </tr>';
-    }
 }
     public function RegistrarDocenteControlador()
     {
@@ -141,7 +215,11 @@ class DocentesControlador
             "Apaterno"          => strtoupper(htmlspecialchars(trim($_POST['Apaterno']))),
             "Amaterno"          => strtoupper(htmlspecialchars(trim($_POST['Amaterno']))),
             "FechaNacimiento"   => htmlspecialchars(trim($_POST['FechaNacimiento'])),
-            "CedulaProfesional" => strtoupper(htmlspecialchars(trim($_POST['CedulaProfesional']))),
+            // Ya no es obligatoria; se guarda como NULL si queda vacía (tiene indice
+            // UNICO en la BD, y NULL si permite repetirse entre varios docentes,
+            // a diferencia de un texto vacio que chocaria con el segundo registro).
+            "CedulaProfesional" => !empty(trim($_POST['CedulaProfesional'] ?? '')) ? strtoupper(htmlspecialchars(trim($_POST['CedulaProfesional']))) : null,
+            "MatriculaNacional" => !empty(trim($_POST['MatriculaNacional'] ?? '')) ? strtoupper(htmlspecialchars(trim($_POST['MatriculaNacional']))) : null,
             "Especialidad"      => strtoupper(htmlspecialchars(trim($_POST['Especialidad']))),
             "Menciones"         => self::ProcesarMencionesControlador($_POST['Menciones'] ?? []),
             "Direccion"         => strtoupper(htmlspecialchars(trim($_POST['Direccion']))),
@@ -215,7 +293,8 @@ class DocentesControlador
                 "Apaterno"          => strtoupper(htmlspecialchars(trim($_POST['editApaterno']))),
                 "Amaterno"          => strtoupper(htmlspecialchars(trim($_POST['editAmaterno']))),
                 "FechaNacimiento"   => htmlspecialchars(trim($_POST['editFechaNacimiento'])),
-                "CedulaProfesional" => strtoupper(htmlspecialchars(trim($_POST['editCedulaProfesional']))),
+                "CedulaProfesional" => !empty(trim($_POST['editCedulaProfesional'] ?? '')) ? strtoupper(htmlspecialchars(trim($_POST['editCedulaProfesional']))) : null,
+                "MatriculaNacional" => !empty(trim($_POST['editMatriculaNacional'] ?? '')) ? strtoupper(htmlspecialchars(trim($_POST['editMatriculaNacional']))) : null,
                 "Especialidad"      => strtoupper(htmlspecialchars(trim($_POST['editEspecialidad']))),
                 "Menciones"         => self::ProcesarMencionesControlador($_POST['editMenciones'] ?? []),
                 "Direccion"         => strtoupper(htmlspecialchars(trim($_POST['editDireccion']))),
@@ -288,6 +367,39 @@ class DocentesControlador
                           });
                           </script>';
                 }
+            }
+        }
+    }
+
+    /**
+     * Bloquear o habilitar el acceso al sistema (login) de un Docente, sin
+     * afectar sus datos academicos ni la asignacion de modulos.
+     */
+    public function CambiarEstadoUsuarioDocenteControlador()
+    {
+        if (isset($_POST["cambiarEstadoUsuarioDocente"])) {
+            $docenteID = intval($_POST['docenteID']);
+            $nuevoEstado = intval($_POST['nuevoEstado']) === 1 ? 1 : 0;
+
+            $resultado = UsuarioModelos::CambiarEstadoUsuarioDocenteModelo($docenteID, $nuevoEstado);
+            $accionTexto = $nuevoEstado === 1 ? 'habilitado' : 'bloqueado';
+
+            if ($resultado == 'exitoso') {
+                echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                      <script>
+                      swal("EXITOSO!", "Acceso al sistema ' . $accionTexto . ' correctamente", "success")
+                      .then(function () {
+                          location.href="docentes";
+                      });
+                      </script>';
+            } else {
+                echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                      <script>
+                      swal("ERROR!", "No se pudo cambiar el acceso del docente", "error")
+                      .then(function () {
+                          location.href="docentes";
+                      });
+                      </script>';
             }
         }
     }

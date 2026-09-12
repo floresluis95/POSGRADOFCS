@@ -66,7 +66,7 @@ class MatriculaModelos
             if ($datos['pagoCompleto'] == 1) {
                 // Obtener todos los módulos del programa (usando tabla 'modulos' con 's')
                 $stmtModulos = $pdo->prepare(
-                    "SELECT Idmodulo, nombremodulo, costomodulo
+                    "SELECT Idmodulo, nombremodulo
                      FROM modulos
                      WHERE ProgramaId = :programaID AND estadomodulo = 'ACTIVO'"
                 );

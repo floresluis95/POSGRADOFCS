@@ -69,8 +69,7 @@ class ReporteModulosModelo
                 "SELECT
                     Idmodulo,
                     codigomodulo,
-                    nombremodulo,
-                    costomodulo
+                    nombremodulo
                 FROM modulos
                 WHERE ProgramaId = :programaID
                 AND estadomodulo = 'ACTIVO'
@@ -187,29 +186,35 @@ class ReporteModulosModelo
                         d.GradoAcademico,
                         d.Sede,
                         COUNT(d.idInscripcion) AS TotalInscritos,
-                        SUM(CASE WHEN d.TipoPlan = 'REGULAR' THEN 1 ELSE 0 END) AS CountRegular,
-                        SUM(CASE WHEN d.TipoPlan = 'DESCUENTO' THEN 1 ELSE 0 END) AS CountDescuento,
-                        SUM(CASE WHEN d.TipoPlan = 'GRUPAL' THEN 1 ELSE 0 END) AS CountGrupal,
-                        SUM(CASE WHEN d.idInscripcion IS NOT NULL AND d.TipoPlan IS NULL THEN 1 ELSE 0 END) AS CountSinPlan,
-                        SUM(d.Completado) AS CountCompletados,
-                        SUM(CASE WHEN d.idInscripcion IS NOT NULL AND d.Completado = 0 THEN 1 ELSE 0 END) AS CountPendientes,
+                        SUM(CASE WHEN d.EstadoInscripcion != 'ABANDONO' AND d.TipoPlan = 'REGULAR' THEN 1 ELSE 0 END) AS CountRegular,
+                        SUM(CASE WHEN d.EstadoInscripcion != 'ABANDONO' AND d.TipoPlan = 'DESCUENTO' THEN 1 ELSE 0 END) AS CountDescuento,
+                        SUM(CASE WHEN d.EstadoInscripcion != 'ABANDONO' AND d.TipoPlan = 'GRUPAL' THEN 1 ELSE 0 END) AS CountGrupal,
+                        SUM(CASE WHEN d.EstadoInscripcion != 'ABANDONO' AND d.idInscripcion IS NOT NULL AND d.TipoPlan IS NULL THEN 1 ELSE 0 END) AS CountSinPlan,
+                        SUM(CASE WHEN d.EstadoInscripcion = 'ABANDONO' THEN 1 ELSE 0 END) AS CountAbandono,
+                        SUM(CASE WHEN d.EstadoInscripcion != 'ABANDONO' THEN d.Completado ELSE 0 END) AS CountCompletados,
+                        SUM(CASE WHEN d.EstadoInscripcion != 'ABANDONO' AND d.idInscripcion IS NOT NULL AND d.Completado = 0 THEN 1 ELSE 0 END) AS CountPendientes,
+                        SUM(d.TieneDescuento) AS CountConDescuento,
                         COALESCE(SUM(d.CostoTotalPrograma), 0) AS CostoTotalProgramado,
                         COALESCE(SUM(d.TotalPagado), 0) AS TotalPagado,
-                        COALESCE(SUM(d.SaldoPendiente), 0) AS SaldoPendiente
+                        COALESCE(SUM(d.SaldoPendiente), 0) AS SaldoPendiente,
+                        COALESCE(SUM(d.MontoDescuentoTotal), 0) AS MontoTotalDescuentos
                     FROM (
                         SELECT
                             p.ProgramaID, p.NombrePrograma, p.Codigo, p.GradoAcademico, p.Sede,
                             ep.idInscripcion,
+                            ep.Estado AS EstadoInscripcion,
                             pp.TipoPlan,
                             COALESCE(pp.MontoTotalPagar, 0) AS CostoTotalPrograma,
                             COALESCE(pagado.TotalPagadoInscripcion, 0) AS TotalPagado,
                             GREATEST(COALESCE(pp.MontoTotalPagar, 0) - COALESCE(pagado.TotalPagadoInscripcion, 0), 0) AS SaldoPendiente,
+                            (COALESCE(ep.montoDescuento, 0) + COALESCE(pp.MontoDescuento, 0)) AS MontoDescuentoTotal,
+                            CASE WHEN (COALESCE(ep.montoDescuento, 0) > 0 OR COALESCE(pp.PorcentajeDescuento, 0) > 0) THEN 1 ELSE 0 END AS TieneDescuento,
                             CASE
                                 WHEN pp.idInscripcion IS NOT NULL AND COALESCE(pagado.TotalPagadoInscripcion, 0) >= pp.MontoTotalPagar THEN 1
                                 ELSE 0
                             END AS Completado
                         FROM programa p
-                        LEFT JOIN estudianteprograma ep ON ep.ProgramaID = p.ProgramaID AND ep.Estado IN ('ACTIVO', 'CONFIRMADO')
+                        LEFT JOIN estudianteprograma ep ON ep.ProgramaID = p.ProgramaID AND ep.Estado IN ('ACTIVO', 'CONFIRMADO', 'ABANDONO')
                         LEFT JOIN pagoprograma pp ON pp.idInscripcion = ep.idInscripcion
                         LEFT JOIN (
                             SELECT idinscripcion, SUM(montocuota) AS TotalPagadoInscripcion
@@ -255,9 +260,11 @@ class ReporteModulosModelo
                         CONCAT(e.Nombre, ' ', e.Apaterno, ' ', IFNULL(e.Amaterno, '')) AS NombreCompleto,
                         e.Ci,
                         e.Celular,
+                        ep.Estado AS EstadoInscripcion,
                         pp.TipoPlan,
                         pp.NumeroCuotas,
                         pp.PorcentajeDescuento,
+                        (COALESCE(ep.montoDescuento, 0) + COALESCE(pp.MontoDescuento, 0)) AS MontoDescuentoTotal,
                         COALESCE(pp.MontoTotalPagar, 0) AS CostoTotal,
                         COALESCE(pagado.TotalPagado, 0) AS TotalPagado,
                         GREATEST(COALESCE(pp.MontoTotalPagar, 0) - COALESCE(pagado.TotalPagado, 0), 0) AS SaldoPendiente,
@@ -272,8 +279,8 @@ class ReporteModulosModelo
                         GROUP BY idinscripcion
                     ) pagado ON pagado.idinscripcion = ep.idInscripcion
                     WHERE ep.ProgramaID = :programaID
-                    AND ep.Estado IN ('ACTIVO', 'CONFIRMADO')
-                    ORDER BY e.Apaterno ASC, e.Nombre ASC";
+                    AND ep.Estado IN ('ACTIVO', 'CONFIRMADO', 'ABANDONO')
+                    ORDER BY (ep.Estado = 'ABANDONO') ASC, e.Apaterno ASC, e.Nombre ASC";
 
             $stmt = Conexion::Conectar()->prepare($sql);
             $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);

@@ -99,7 +99,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                             </div>
 
                             <div class="col-lg-2 col-md-4 form-group mb-3">
-                                <button type="button" class="btn btn-primary btn-block" id="btnAbrirModalModulos" disabled>
+                                <button type="button" class="btn btn-success btn-block" id="btnAbrirModalModulos" disabled>
                                     <i class="fa fa-plus"></i> Agregar Módulos
                                 </button>
                             </div>
@@ -356,7 +356,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <i class="fa fa-times"></i> Cancelar
                     </button>
-                    <button type="submit" id="btnGuardarModulosPrograma" name="registrarModulosPorPrograma" class="btn btn-success btn-lg">
+                    <button type="submit" id="btnGuardarModulosPrograma" name="registrarModulosPorPrograma" class="btn btn-success">
                         <i class="fa fa-save"></i> Guardar Módulos
                     </button>
                 </div>
@@ -469,7 +469,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <i class="fa fa-times"></i> Cancelar
                     </button>
-                    <button type="submit" class="btn btn-success btn-lg">
+                    <button type="submit" class="btn btn-success">
                         <i class="fa fa-save"></i> Actualizar Módulo
                     </button>
                 </div>
@@ -906,9 +906,7 @@ $(document).ready(function() {
 
         console.log('Generando campos para', numModulos, 'módulos...');
 
-        // Generar campos de módulos con el costo repartido (el costo se calcula
-        // internamente pero ya no se muestra ni se pide en el formulario)
-        generarCamposModulosModal(numModulos, costoTotal);
+        generarCamposModulosModal(numModulos);
 
         console.log('Abriendo modal...');
 
@@ -946,14 +944,8 @@ $(document).ready(function() {
     // ========================================
     // GENERAR CAMPOS DINÁMICOS EN EL MODAL
     // ========================================
-    function generarCamposModulosModal(cantidad, costoTotalPrograma) {
+    function generarCamposModulosModal(cantidad) {
         let html = '<div class="row">';
-
-        // Calcular el costo por módulo (repartir equitativamente)
-        const costoPorModulo = cantidad > 0 ? Math.round(costoTotalPrograma / cantidad) : 0;
-        console.log('Costo total del programa:', costoTotalPrograma);
-        console.log('Cantidad de módulos:', cantidad);
-        console.log('Costo por módulo calculado:', costoPorModulo);
 
         // Generar opciones de docentes para el select
         let optionsDocentes = '<option value="">-- Seleccionar Docente (Opcional) --</option>';
@@ -998,7 +990,6 @@ $(document).ready(function() {
                                        placeholder="Ej: Metodología de Investigación"
                                        maxlength="100">
                             </div>
-                            <input type="hidden" name="costomodulo_${i}" value="${costoPorModulo}">
 
                         <div class="row">
 

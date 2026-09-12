@@ -19,6 +19,15 @@ $(document).ready(function() {
     // programaNombre, version, numeroTramite
     let opContexto = {};
 
+    // Fecha sugerida por defecto para el vencimiento de la cuota (hoy + 5 días),
+    // en formato YYYY-MM-DD para el input type="date".
+    function fechaPorDefectoVencimiento() {
+        const fecha = new Date();
+        fecha.setDate(fecha.getDate() + 5);
+        const pad = (n) => String(n).padStart(2, '0');
+        return fecha.getFullYear() + '-' + pad(fecha.getMonth() + 1) + '-' + pad(fecha.getDate());
+    }
+
     // ========================================
     // CARGAR PESTAÑA: resumen de pago + orden pendiente (si existe)
     // Invocado desde inscripcionmodulo.js al abrir el modal unificado de Gestión de Pagos
@@ -58,6 +67,10 @@ $(document).ready(function() {
     };
 
     function renderOrdenPago(r, orden) {
+        // Cuota que corresponde según lo ya cancelado (no un plan fijo): la próxima
+        // orden que se genere es la cuota N+1, siendo N las cuotas ya pagadas.
+        opContexto.numeroCuotaActual = (parseInt(r.cuotasPagadasCount, 10) || 0) + 1;
+
         if (!r.tienePlan) {
             $('#ordenPagoContenido').html(
                 '<div class="alert alert-warning text-center">' +
@@ -127,15 +140,20 @@ $(document).ready(function() {
                 '</div>' +
             '</div>' +
             '<div class="row">' +
-                '<div class="col-lg-8 form-group">' +
+                '<div class="col-lg-6 form-group">' +
                     '<label class="small font-weight-bold mb-1">Responsable *</label>' +
                     '<input type="text" class="form-control form-control-sm" id="opResponsable" placeholder="Nombre de quien genera la orden">' +
                 '</div>' +
-                '<div class="col-lg-4 form-group">' +
+                '<div class="col-lg-3 form-group">' +
                     '<label class="small font-weight-bold mb-1">Cuenta de pago</label>' +
                     '<select class="form-control form-control-sm" id="opCuentaPago">' +
                         '<option value="">Cargando cuentas...</option>' +
                     '</select>' +
+                '</div>' +
+                '<div class="col-lg-3 form-group">' +
+                    '<label class="small font-weight-bold mb-1">Fecha límite de pago</label>' +
+                    '<input type="date" class="form-control form-control-sm" id="opFechaVencimiento" value="' + fechaPorDefectoVencimiento() + '">' +
+                    '<small class="form-text text-muted">Para el control de mora</small>' +
                 '</div>' +
             '</div>' +
             '<div class="text-right mt-2">' +
@@ -172,6 +190,7 @@ $(document).ready(function() {
         const nombreFactura = ($('#opNombreFactura').val() || '').trim();
         const nitCiFactura = ($('#opNitCiFactura').val() || '').trim();
         const numeroCuentaDeposito = $('#opCuentaPago').val() || '';
+        const fechaVencimiento = $('#opFechaVencimiento').val() || '';
         const monto = parseFloat($('#opMontoCuota').val());
 
         if (!monto || monto <= 0) {
@@ -197,7 +216,8 @@ $(document).ready(function() {
                 montoTotal: monto,
                 responsable: responsable,
                 nombreFactura: nombreFactura,
-                nitCiFactura: nitCiFactura
+                nitCiFactura: nitCiFactura,
+                fechaVencimiento: fechaVencimiento
             },
             dataType: 'json',
             success: function(resp) {
@@ -212,7 +232,8 @@ $(document).ready(function() {
                                 montoTotal: monto,
                                 nombreFactura: nombreFactura,
                                 nitCiFactura: nitCiFactura,
-                                numeroCuentaDeposito: numeroCuentaDeposito
+                                numeroCuentaDeposito: numeroCuentaDeposito,
+                                numeroCuota: opContexto.numeroCuotaActual
                             });
                             window.cargarOrdenPagoModulos(opContexto);
                             if (typeof window.cargarCuotasPrograma === 'function') {
@@ -240,9 +261,24 @@ $(document).ready(function() {
             numeroTramite: opContexto.numeroTramite,
             montoTotal: $this.data('monto'),
             nombreFactura: $this.data('nombre-factura'),
-            nitCiFactura: $this.data('nit-ci')
+            nitCiFactura: $this.data('nit-ci'),
+            numeroCuota: opContexto.numeroCuotaActual
         });
     });
+
+    /**
+     * Texto de la cuota que corresponde según lo ya cancelado (no un plan fijo):
+     * "Primera cuota", "Segunda cuota"... y desde la 11ª en adelante, "Cuota N".
+     * @param {number} numeroCuota
+     */
+    function etiquetaCuota(numeroCuota) {
+        const ordinales = ['', 'Primera', 'Segunda', 'Tercera', 'Cuarta', 'Quinta',
+            'Sexta', 'Séptima', 'Octava', 'Novena', 'Décima'];
+        const n = parseInt(numeroCuota, 10) || 1;
+        return (n > 0 && n < ordinales.length)
+            ? (ordinales[n] + ' cuota del programa')
+            : ('Cuota ' + n + ' del programa');
+    }
 
     /**
      * Genera el PDF de la orden de pago de la cuota con el mismo formato oficial
@@ -273,7 +309,7 @@ $(document).ready(function() {
                     correo: est.Correo || '',
                     ci: ciCompleto,
                     celular: est.Celular || '',
-                    programa: (params.programaNombre || '') + '\nCuota del programa',
+                    programa: (params.programaNombre || '') + '\n' + etiquetaCuota(params.numeroCuota),
                     montoNumeral: 'Bs. ' + montoTotal.toFixed(2),
                     montoLiteral: numeroALetras(montoTotal),
                     version: params.version || 'V-1',

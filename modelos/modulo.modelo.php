@@ -233,8 +233,8 @@ class ModuloModelo
             // Insertar cada módulo
             $stmt = $pdo->prepare(
                 "INSERT INTO modulos
-                (ProgramaId, nombremodulo, codigomodulo, costomodulo, estadomodulo, DocenteID, FechaInicio, FechaFinal)
-                VALUES (:programaID, :nombremodulo, :codigomodulo, :costomodulo, 'ACTIVO', :docenteID, :fechainicio, :fechafin)"
+                (ProgramaId, nombremodulo, codigomodulo, estadomodulo, DocenteID, FechaInicio, FechaFinal)
+                VALUES (:programaID, :nombremodulo, :codigomodulo, 'ACTIVO', :docenteID, :fechainicio, :fechafin)"
             );
 
             $insertados = 0;
@@ -249,9 +249,6 @@ class ModuloModelo
                 // DocenteID puede ser NULL si no se asigna docente
                 $docenteID = isset($modulo['docenteID']) && !empty($modulo['docenteID']) ? (int)$modulo['docenteID'] : null;
 
-                // Costo del módulo (puede ser 0 si no se especifica)
-                $costomodulo = isset($modulo['costomodulo']) && !empty($modulo['costomodulo']) ? (float)$modulo['costomodulo'] : 0.0;
-
                 // Fechas del módulo (pueden ser NULL si no se especifican)
                 $fechainicio = !empty($modulo['fechainicio']) ? $modulo['fechainicio'] : null;
                 $fechafin = !empty($modulo['fechafin']) ? $modulo['fechafin'] : null;
@@ -259,7 +256,6 @@ class ModuloModelo
                 $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
                 $stmt->bindParam(":nombremodulo", $nombremodulo, PDO::PARAM_STR);
                 $stmt->bindParam(":codigomodulo", $modulo['codigomodulo'], PDO::PARAM_STR);
-                $stmt->bindParam(":costomodulo", $costomodulo, PDO::PARAM_STR);
 
                 // Usar bindValue con PDO::PARAM_NULL para valores NULL
                 if ($docenteID === null) {
@@ -316,7 +312,6 @@ class ModuloModelo
                     ProgramaId,
                     nombremodulo,
                     codigomodulo,
-                    costomodulo,
                     estadomodulo,
                     DocenteID
                 FROM modulos
@@ -345,7 +340,6 @@ class ModuloModelo
                     m.ProgramaId,
                     m.nombremodulo,
                     m.codigomodulo,
-                    m.costomodulo,
                     m.FechaInicio,
                     m.FechaFinal,
                     m.estadomodulo,
@@ -388,8 +382,6 @@ class ModuloModelo
     public static function ActualizarModuloPorProgramaModelo($datos)
     {
         try {
-            // No se actualiza costomodulo: el costo se calcula al registrar los módulos
-            // y no debe modificarse al editar (el formulario de edición no lo solicita).
             $stmt = Conexion::Conectar()->prepare(
                 "UPDATE modulos
                 SET nombremodulo = :nombremodulo,

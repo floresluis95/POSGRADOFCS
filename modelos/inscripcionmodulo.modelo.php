@@ -10,9 +10,11 @@ class InscripcionModuloModelos
     /**
      * Listar estudiantes matriculados con sus programas
      * @param int|null $programaID (opcional) - Si se proporciona, filtra por ese programa
+     * @param string|null $sede (opcional)
+     * @param string $estado 'ACTIVO' (por defecto), 'ABANDONO', o 'TODOS' para no filtrar por estado
      * @return array
      */
-    public static function ListarEstudiantesMatriculadosModelo($programaID = null, $sede = null)
+    public static function ListarEstudiantesMatriculadosModelo($programaID = null, $sede = null, $estado = 'ACTIVO')
     {
         try {
             $sql = "SELECT
@@ -43,7 +45,11 @@ class InscripcionModuloModelos
                 FROM estudianteprograma ep
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
-                WHERE ep.Estado = 'ACTIVO'";
+                WHERE 1 = 1";
+
+            if ($estado !== null && strtoupper($estado) !== 'TODOS') {
+                $sql .= " AND ep.Estado = :estado";
+            }
 
             // Si se proporciona programaID, agregar filtro
             if ($programaID !== null && $programaID != '') {
@@ -58,6 +64,10 @@ class InscripcionModuloModelos
             $sql .= " ORDER BY ep.FechaInscripcion DESC";
 
             $stmt = Conexion::Conectar()->prepare($sql);
+
+            if ($estado !== null && strtoupper($estado) !== 'TODOS') {
+                $stmt->bindParam(":estado", $estado, PDO::PARAM_STR);
+            }
 
             if ($programaID !== null && $programaID != '') {
                 $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);

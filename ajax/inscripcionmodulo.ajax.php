@@ -53,9 +53,19 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
         ? trim($_POST["sedeFiltro"])
         : null;
 
+    $estado = isset($_POST["estadoFiltro"]) && $_POST["estadoFiltro"] !== ''
+        ? trim($_POST["estadoFiltro"])
+        : 'ACTIVO';
+
     $listar = new InscripcionModuloControladores();
-    $listar->ListarEstudiantesMatriculadosControlador($programaID, $sede);
+    $listar->ListarEstudiantesMatriculadosControlador($programaID, $sede, $estado);
     exit();
+}
+
+// Marcar/revertir el abandono de una inscripción
+if (isset($_POST["accion"]) && $_POST["accion"] == "actualizarEstadoInscripcion") {
+    $controlador = new InscripcionModuloControladores();
+    $controlador->ActualizarEstadoInscripcionAjaxControlador();
 }
 
 // Si no hay acción válida

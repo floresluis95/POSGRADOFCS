@@ -63,7 +63,7 @@ $csrf_token = bin2hex(random_bytes(32));
 
 <!-- end:: Subheader -->
 <!-- begin:: Content -->
-<div class="app-content content">
+<div class="app-content content kt-container">
   <div class="content-wrapper">
     <div class="content-body">
       <section id="html">
@@ -75,48 +75,49 @@ $csrf_token = bin2hex(random_bytes(32));
                   <i class="fas fa-chalkboard-teacher"></i> Docentes Registrados
                 </h4>
                 <div class="heading-elements">
-                  <button data-toggle="modal" data-target="#ModalInsertarDocente" type="button" class="btn btn-light btn-sm">
+                  <button data-toggle="modal" data-target="#ModalInsertarDocente" type="button" class="btn btn-success btn-sm">
                     <i class="fas fa-user-plus mr-1"></i>Nuevo Docente
                   </button>
                 </div>
               </div>
               <div class="card-content collapse show">
                 <div class="card-body card-dashboard">
-                  <div class="table-responsive">
+                  <div class="row mb-3">
+                    <div class="col-md-4 offset-md-8">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text"><i class="fa fa-search"></i></span>
+                        </div>
+                        <input type="text" class="form-control" id="buscadorTablaDocentes" placeholder="Buscar por C.I., nombre, matrícula, etc.">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
                     <table class="table table-hover table-bordered align-middle TablaDocentes" id="kt_table_1">
-                      <thead class="thead-dark">
+                      <thead class="thead-dark" style="position: sticky; top: 0; z-index: 2;">
                         <tr>
                           <th class="text-center" style="width: 4%;">Nº</th>
-                          <th class="text-center" style="width: 9%;">
+                          <th class="text-center" style="width: 12%;">
                             <i class="fas fa-id-card"></i> C.I.
                           </th>
-                          <th style="width: 16%;">
+                          <th style="width: 28%;">
                             <i class="fas fa-user"></i> Nombre Completo
                           </th>
-                          <th class="text-center" style="width: 10%;">
-                            <i class="fas fa-certificate"></i> Cédula Prof.
+                          <th class="text-center" style="width: 15%;">
+                            <i class="fas fa-id-badge"></i> Matrícula Nacional
                           </th>
-                          <th style="width: 13%;">
-                            <i class="fas fa-envelope"></i> Correo
+                          <th class="text-center" style="width: 13%;">
+                            <i class="fas fa-user-shield"></i> Acceso al Sistema
                           </th>
-                          <th style="width: 11%;">
-                            <i class="fas fa-graduation-cap"></i> Especialidad
-                          </th>
-                          <th class="text-center" style="width: 10%;">
-                            <i class="fas fa-user-circle"></i> Usuario
-                          </th>
-                          <th class="text-center" style="width: 11%;">
-                            <i class="fas fa-key"></i> Contraseña
-                          </th>
-                          <th class="text-center" style="width: 16%;">
+                          <th class="text-center" style="width: 24%;">
                             <i class="fas fa-cog"></i> Acción
                           </th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody id="tablaDocentesBody">
                         <?php
                           $ListaDocentes = new DocentesControlador();
-                          $ListaDocentes -> ListaDocenteControlador();
+                          $ListaDocentes->ListaDocenteControlador(0, null);
                         ?>
                       </tbody>
                     </table>
@@ -230,7 +231,7 @@ $csrf_token = bin2hex(random_bytes(32));
             <form method="post" id="formNuevoDocente" enctype="multipart/form-data" class="needs-validation" novalidate>
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
 
-                <div class="modal-body" style="padding: 30px;">
+                <div class="modal-body" style="padding: 30px; max-height: 65vh; overflow-y: auto;">
 
                     <h4 class="form-section">
                         <i class="fas fa-globe mr-2"></i> Nacionalidad
@@ -376,15 +377,23 @@ $csrf_token = bin2hex(random_bytes(32));
 
                     <!-- Información profesional -->
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
-                                <label for="cedulaProfesional"><i class="fas fa-certificate text-danger"></i> Cédula Profesional *</label>
+                                <label for="cedulaProfesional"><i class="fas fa-certificate text-info"></i> Cédula Profesional</label>
                                 <input type="text" id="cedulaProfesional" name="CedulaProfesional" class="form-control"
-                                       required placeholder="Ej: CP-1234" maxlength="30">
-                                <div class="invalid-feedback">Ingrese la cédula profesional.</div>
+                                       placeholder="Ej: CP-1234" maxlength="30">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="matriculaNacional"><i class="fas fa-id-badge text-danger"></i> Matrícula Nacional <span id="matriculaNacionalAsterisco">*</span></label>
+                                <input type="text" id="matriculaNacional" name="MatriculaNacional" class="form-control"
+                                       required placeholder="Ej: MN-1234" maxlength="30">
+                                <div class="invalid-feedback">Ingrese la matrícula nacional.</div>
+                                <small class="text-muted d-block mt-1">Distinta de la cédula profesional. Solo aplica a profesionales nacionales.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="especialidad">
                                     <i class="fas fa-briefcase text-danger"></i> Especialidad *
@@ -469,9 +478,9 @@ $csrf_token = bin2hex(random_bytes(32));
                         </div>
                     </div>
 
-                    <div class="alert alert-info" style="border-left: 4px solid #17a2b8; background-color: #d1ecf1;">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        Los campos marcados con <span class="text-danger">*</span> son obligatorios.
+                    <div class="alert mb-0" style="border-left: 4px solid #d4a017; background-color: #fff8e6; color: #7a5b0a; font-weight: 600;">
+                        <i class="fas fa-exclamation-circle mr-2" style="color: #d4a017;"></i>
+                        Los campos marcados con <strong style="color: #b7791f;">*</strong> son obligatorios.
                     </div>
 
                 </div>
@@ -494,9 +503,68 @@ $csrf_token = bin2hex(random_bytes(32));
     </div>
 </div>
 
+<!-- Modal: Ver Detalle del Docente -->
+<div class="modal fade" id="ModalDetalleDocente" tabindex="-1" role="dialog" aria-labelledby="modalDetalleDocenteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border: none;">
+        <h4 class="modal-title text-white" id="modalDetalleDocenteLabel">
+          <i class="fas fa-user-circle mr-2"></i> Detalle del Docente
+        </h4>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 25px;">
+        <h5 id="detalleDocenteNombre" class="font-weight-bold mb-1"></h5>
+        <p class="text-muted mb-3" id="detalleDocenteCi"></p>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <small class="text-muted d-block"><i class="fas fa-envelope"></i> Correo</small>
+            <span id="detalleDocenteCorreo" class="font-weight-bold"></span>
+          </div>
+          <div class="col-md-6 mb-3">
+            <small class="text-muted d-block"><i class="fas fa-graduation-cap"></i> Especialidad</small>
+            <span id="detalleDocenteEspecialidad" class="font-weight-bold"></span>
+          </div>
+          <div class="col-md-6 mb-3">
+            <small class="text-muted d-block"><i class="fas fa-certificate"></i> Cédula Profesional</small>
+            <span id="detalleDocenteCedula" class="font-weight-bold"></span>
+          </div>
+          <div class="col-md-6 mb-3">
+            <small class="text-muted d-block"><i class="fas fa-id-badge"></i> Matrícula Nacional</small>
+            <span id="detalleDocenteMatricula" class="font-weight-bold"></span>
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="row">
+          <div class="col-md-6 mb-2">
+            <small class="text-muted d-block"><i class="fas fa-user-circle"></i> Usuario</small>
+            <span id="detalleDocenteUsuario" class="font-weight-bold"></span>
+          </div>
+          <div class="col-md-6 mb-2">
+            <small class="text-muted d-block"><i class="fas fa-user-shield"></i> Estado de acceso</small>
+            <span id="detalleDocenteEstadoUsuario" class="font-weight-bold"></span>
+          </div>
+          <div class="col-md-12" id="detalleDocentePasswordWrap" style="display:none;">
+            <small class="text-muted d-block"><i class="fas fa-key"></i> Contraseña</small>
+            <span id="detalleDocentePassword" class="badge badge-warning" style="font-size: 13px; font-family: monospace; cursor: pointer;" title="Clic para copiar"></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="background-color: #f8f9fa; border-top: 2px solid #e9ecef;">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Asignar Usuario a Docente -->
 <div style="z-index: 1500;" class="modal fade" id="ModalAsignarUsuarioDocente" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
     <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
       <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
         <h4 class="modal-title text-white" id="myModalLabel">
@@ -509,15 +577,68 @@ $csrf_token = bin2hex(random_bytes(32));
       <form method="post" enctype="multipart/form-data">
         <div class="modal-body" style="padding: 30px;">
 
-          <div class="alert alert-info" style="border-left: 4px solid #17a2b8; background-color: #d1ecf1;">
-            <i class="fas fa-info-circle mr-2"></i>
-            <strong>Credenciales que se generarán automáticamente:</strong>
-            <ul class="mb-0 mt-2">
-              <li><strong>Usuario:</strong> Número de Carnet (C.I.)</li>
-              <li><strong>Contraseña:</strong> Primera letra del nombre + Número de Carnet</li>
-              <li><strong>Cargo:</strong> DOC (Docente)</li>
-            </ul>
+          <div class="credenciales-policy-card mb-3">
+            <div class="credenciales-policy-header">
+              <i class="fas fa-shield-alt"></i> Credenciales que se generarán automáticamente
+            </div>
+            <div class="credenciales-policy-body">
+              <div class="credenciales-policy-item">
+                <i class="fas fa-user-circle text-success"></i>
+                <span><strong>Usuario:</strong> C.I. del docente</span>
+              </div>
+              <div class="credenciales-policy-item">
+                <i class="fas fa-key text-warning"></i>
+                <span><strong>Contraseña:</strong> aleatoria y segura (12 caracteres). Se muestra una única vez.</span>
+              </div>
+              <div class="credenciales-policy-item">
+                <i class="fas fa-user-tag text-primary"></i>
+                <span><strong>Cargo:</strong> DOC (Docente)</span>
+              </div>
+            </div>
           </div>
+
+          <style>
+            .credenciales-policy-card {
+              background: #fff;
+              border: 1px solid #e3e7ed;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 1px 3px rgba(30, 60, 114, 0.06);
+            }
+            .credenciales-policy-header {
+              background: #f7f9fc;
+              border-bottom: 1px solid #e3e7ed;
+              padding: 6px 12px;
+              font-weight: 700;
+              font-size: 11px;
+              color: #1e3c72;
+              text-transform: uppercase;
+              letter-spacing: .3px;
+            }
+            .credenciales-policy-body {
+              padding: 8px 12px;
+            }
+            .credenciales-policy-item {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              padding: 3px 0;
+              line-height: 1.3;
+            }
+            .credenciales-policy-item i {
+              font-size: 13px;
+              width: 14px;
+              text-align: center;
+              flex-shrink: 0;
+            }
+            .credenciales-policy-item span {
+              font-size: 11.5px;
+              color: #74788d;
+            }
+            .credenciales-policy-item strong {
+              color: #33415c;
+            }
+          </style>
 
           <input type="hidden" id="docente_id" name="docente_id">
           <input type="hidden" id="docente_ci" name="docente_ci">
@@ -552,12 +673,10 @@ $csrf_token = bin2hex(random_bytes(32));
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="password_generada_docente" class="font-weight-bold">
-              <i class="fas fa-key text-warning"></i> Contraseña Generada
-            </label>
-            <input type="text" id="password_generada_docente" class="form-control" readonly
-                   style="background-color: #fff3cd; border: 2px solid #ffc107; font-weight: 600; font-size: 16px;">
+          <div class="alert mb-3" style="background-color: #fff3cd; border: 1px solid #ffe08a; border-radius: 8px; padding: 12px 16px;">
+            <i class="fas fa-key text-warning mr-2"></i>
+            <strong>Contraseña:</strong> se generará de forma aleatoria y segura al confirmar. Podrá verla en el
+            aviso de confirmación y, más adelante, también en la columna "Contraseña" de la lista de docentes.
           </div>
 
           <div class="form-group">
@@ -603,7 +722,7 @@ $csrf_token = bin2hex(random_bytes(32));
             <form method="post" id="formEditarDocente" enctype="multipart/form-data" class="needs-validation" novalidate>
                 <input type="hidden" name="editDocenteID" id="editDocenteID">
 
-                <div class="modal-body" style="padding: 30px;">
+                <div class="modal-body" style="padding: 30px; max-height: 65vh; overflow-y: auto;">
 
                     <h4 class="form-section">
                         <i class="fas fa-globe mr-2"></i> Nacionalidad
@@ -743,14 +862,22 @@ $csrf_token = bin2hex(random_bytes(32));
 
                     <!-- Información profesional -->
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
-                                <label for="editCedulaProfesional"><i class="fas fa-certificate text-danger"></i> Cédula Profesional *</label>
+                                <label for="editCedulaProfesional"><i class="fas fa-certificate text-info"></i> Cédula Profesional</label>
                                 <input type="text" id="editCedulaProfesional" name="editCedulaProfesional" class="form-control"
-                                       required placeholder="Ej: CP-1234" maxlength="30">
+                                       placeholder="Ej: CP-1234" maxlength="30">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editMatriculaNacional"><i class="fas fa-id-badge text-danger"></i> Matrícula Nacional <span id="editMatriculaNacionalAsterisco">*</span></label>
+                                <input type="text" id="editMatriculaNacional" name="editMatriculaNacional" class="form-control"
+                                       required placeholder="Ej: MN-1234" maxlength="30">
+                                <small class="text-muted d-block mt-1">Distinta de la cédula profesional. Solo aplica a profesionales nacionales.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="editEspecialidad">
                                     <i class="fas fa-briefcase text-danger"></i> Especialidad *
@@ -886,6 +1013,8 @@ $csrf_token = bin2hex(random_bytes(32));
 <?php
     $darDeBaja = new DocentesControlador();
     $darDeBaja->DarDeBajaDocenteControlador();
+    $cambiarAcceso = new DocentesControlador();
+    $cambiarAcceso->CambiarEstadoUsuarioDocenteControlador();
 ?>
 
 <?php
@@ -897,6 +1026,29 @@ $csrf_token = bin2hex(random_bytes(32));
 <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
 <script src="vistas/recursos/sweetalert.min.js"></script>
 <script>
+// Buscador de texto libre sobre la tabla de docentes (filtra por cualquier patrón, en cualquier columna)
+// Buscador de docentes: consulta TODA la base de datos vía AJAX (no solo lo cargado en la vista)
+var timeoutBuscadorDocentes = null;
+jQuery(document).on('keyup', '#buscadorTablaDocentes', function() {
+    var patron = jQuery(this).val().trim();
+
+    clearTimeout(timeoutBuscadorDocentes);
+    timeoutBuscadorDocentes = setTimeout(function() {
+        jQuery.ajax({
+            url: 'ajax/docentes.ajax.php',
+            method: 'POST',
+            data: { buscarPatron: patron },
+            dataType: 'json',
+            success: function(respuesta) {
+                if (!respuesta.success) {
+                    return;
+                }
+                jQuery('#tablaDocentesBody').html(respuesta.html);
+            }
+        });
+    }, 300);
+});
+
 // ========================================
 // MENCIONES / TÍTULOS ACADÉMICOS (dinámico)
 // ========================================
@@ -1055,14 +1207,10 @@ function inicializarModalAsignarUsuarioDocente() {
       correo: correo
     });
 
-    // Obtener la primera letra del nombre en mayúscula
-    var primeraLetra = nombrePila ? nombrePila.charAt(0).toUpperCase() : 'X';
-
-    // Generar usuario (será el CI)
+    // El usuario sí es predecible (siempre el C.I.); la contraseña ya NO se
+    // adelanta aquí: se genera de forma aleatoria en el servidor recién al
+    // confirmar, para no mostrar un valor que no coincidirá con el real.
     var usuario = ci;
-
-    // Generar contraseña (primera letra del nombre + CI)
-    var password = primeraLetra + ci;
 
     // Llenar campos hidden que se enviarán al servidor
     jQuery('#docente_id').val(docenteID);
@@ -1073,13 +1221,9 @@ function inicializarModalAsignarUsuarioDocente() {
     jQuery('#nombre_docente_display').val(nombreCompleto);
     jQuery('#ci_display_docente').val(ciCompleto);
     jQuery('#usuario_generado_docente').val(usuario);
-    jQuery('#password_generada_docente').val(password);
     jQuery('#correo_docente').val(correo || 'No registrado');
 
-    console.log('✅ Modal actualizado con:', {
-      usuario: usuario,
-      password: password
-    });
+    console.log('✅ Modal actualizado con usuario:', usuario);
   });
 
   console.log('✅ Event listener configurado para botones .btnAsignarUsuarioDocente');
@@ -1108,6 +1252,7 @@ jQuery(document).on('click', '.btnEditarDocente', function() {
     const amaterno = jQuery(this).attr('data-amaterno');
     const fechaNacimiento = jQuery(this).attr('data-fecha-nacimiento');
     const cedula = jQuery(this).attr('data-cedula');
+    const matriculaNacional = jQuery(this).attr('data-matricula-nacional');
     const especialidad = jQuery(this).attr('data-especialidad');
     const menciones = jQuery(this).attr('data-menciones');
     const direccion = jQuery(this).attr('data-direccion');
@@ -1132,6 +1277,7 @@ jQuery(document).on('click', '.btnEditarDocente', function() {
     jQuery('#editAmaterno').val(amaterno);
     jQuery('#editFechaNacimiento').val(fechaNacimiento);
     jQuery('#editCedulaProfesional').val(cedula);
+    jQuery('#editMatriculaNacional').val(matriculaNacional);
     // Si la especialidad guardada ya no está en el catálogo (ej. fue dada de baja),
     // se agrega temporalmente como opción para no perder el dato del docente.
     var $selectEspecialidad = jQuery('#editEspecialidad');
@@ -1219,6 +1365,80 @@ jQuery(document).on('click', '.btnDarDeBaja', function() {
     });
 });
 
+// ========================================
+// VER DETALLE DEL DOCENTE (correo, especialidad, cédula, matrícula, usuario y contraseña)
+// ========================================
+jQuery(document).on('click', '.btnVerDetalleDocente', function() {
+    const $btn = jQuery(this);
+
+    jQuery('#detalleDocenteNombre').text($btn.attr('data-nombre-completo'));
+    jQuery('#detalleDocenteCi').text('C.I. ' + $btn.attr('data-ci-completo'));
+    jQuery('#detalleDocenteCorreo').text($btn.attr('data-correo'));
+    jQuery('#detalleDocenteEspecialidad').text($btn.attr('data-especialidad'));
+    jQuery('#detalleDocenteCedula').text($btn.attr('data-cedula'));
+    jQuery('#detalleDocenteMatricula').text($btn.attr('data-matricula-nacional'));
+    jQuery('#detalleDocenteUsuario').text($btn.attr('data-usuario'));
+    jQuery('#detalleDocenteEstadoUsuario').text($btn.attr('data-estado-usuario'));
+
+    const password = $btn.attr('data-password') || '';
+    if (password) {
+        jQuery('#detalleDocentePassword').text(password);
+        jQuery('#detalleDocentePasswordWrap').show();
+    } else {
+        jQuery('#detalleDocentePasswordWrap').hide();
+    }
+});
+
+// Copiar la contraseña del modal de detalle al hacer clic sobre ella
+jQuery(document).on('click', '#detalleDocentePassword', function() {
+    copyToClipboard(jQuery(this).text(), this);
+});
+
+// ========================================
+// BLOQUEAR / HABILITAR ACCESO AL SISTEMA (login del docente)
+// No afecta datos académicos ni módulos asignados, solo el ingreso al sistema.
+// ========================================
+jQuery(document).on('click', '.btnBloquearAccesoDocente', function() {
+    const docenteID = jQuery(this).attr('data-docente-id');
+    const nombreCompleto = jQuery(this).attr('data-nombre-completo');
+    const nuevoEstado = jQuery(this).attr('data-nuevo-estado');
+    const vaABloquear = nuevoEstado === '0';
+
+    swal({
+        title: vaABloquear ? '¿Bloquear el acceso al sistema?' : '¿Habilitar el acceso al sistema?',
+        text: 'Docente: ' + nombreCompleto + (vaABloquear
+            ? '\n\nNo podrá iniciar sesión hasta que se le vuelva a habilitar. Sus datos académicos no se ven afectados.'
+            : '\n\nPodrá volver a iniciar sesión con su usuario y contraseña.'),
+        icon: 'warning',
+        buttons: {
+            cancel: {
+                text: 'Cancelar',
+                value: null,
+                visible: true,
+                className: 'btn btn-secondary',
+                closeModal: true
+            },
+            confirm: {
+                text: vaABloquear ? 'Sí, bloquear' : 'Sí, habilitar',
+                value: true,
+                visible: true,
+                className: vaABloquear ? 'btn btn-secondary' : 'btn btn-success',
+                closeModal: false
+            }
+        },
+        dangerMode: vaABloquear
+    }).then((confirmado) => {
+        if (confirmado) {
+            const form = jQuery('<form>', { method: 'POST', action: '' });
+            form.append(jQuery('<input>', { type: 'hidden', name: 'cambiarEstadoUsuarioDocente', value: '1' }));
+            form.append(jQuery('<input>', { type: 'hidden', name: 'docenteID', value: docenteID }));
+            form.append(jQuery('<input>', { type: 'hidden', name: 'nuevoEstado', value: nuevoEstado }));
+            jQuery('body').append(form);
+            form.submit();
+        }
+    });
+});
+
 // Función para copiar contraseña al portapapeles
 function copyToClipboard(text, element) {
     // Crear un elemento temporal para copiar el texto
@@ -1260,7 +1480,7 @@ jQuery(document).ready(function() {
         }, false);
 
         // Mayúsculas automáticas (todos los datos del docente, excepto correo y menciones)
-        jQuery('#inputComplemento, #inputNombres, #apaterno, #amaterno, #cedulaProfesional, #direccionInput').on('input', function() {
+        jQuery('#inputComplemento, #inputNombres, #apaterno, #amaterno, #cedulaProfesional, #matriculaNacional, #direccionInput').on('input', function() {
             this.value = this.value.toUpperCase();
         });
 
@@ -1313,6 +1533,16 @@ jQuery(document).ready(function() {
 
             // Bloquear el campo "Expedido" (solo aplica a docentes bolivianos)
             jQuery('#selectExpedido').prop('required', false).prop('disabled', true).val('').removeClass('is-invalid');
+
+            // La Matrícula Nacional solo aplica a profesionales nacionales
+            jQuery('#matriculaNacional').prop('required', false).prop('disabled', true).val('').removeClass('is-invalid');
+            jQuery('#matriculaNacionalAsterisco').hide();
+
+            // El carnet/documento de identidad extranjero puede incluir letras y caracteres especiales
+            // (pasaportes, cédulas extranjeras, etc.), a diferencia del C.I. boliviano que es solo numérico.
+            jQuery('#inputCi').attr('pattern', '[A-Za-z0-9-]{4,20}')
+                               .attr('maxlength', 20)
+                               .attr('placeholder', 'Ej: AB123456');
         } else {
             // Ocultar campos y limpiar valores
             console.log('>>> Ocultando campos de extranjero');
@@ -1322,6 +1552,15 @@ jQuery(document).ready(function() {
 
             // Habilitar de nuevo el campo "Expedido"
             jQuery('#selectExpedido').prop('required', true).prop('disabled', false);
+
+            // Habilitar de nuevo la Matrícula Nacional (obligatoria para nacionales)
+            jQuery('#matriculaNacional').prop('required', true).prop('disabled', false);
+            jQuery('#matriculaNacionalAsterisco').show();
+
+            // Restaurar la validación numérica del C.I. boliviano
+            jQuery('#inputCi').attr('pattern', '[0-9]{6,12}')
+                               .attr('maxlength', 12)
+                               .attr('placeholder', '1234567');
         }
     });
 
@@ -1350,12 +1589,20 @@ jQuery(document).ready(function() {
             $selectPais.prop('required', true);
             $inputRegion.prop('required', true);
             jQuery('#editExp').prop('required', false).prop('disabled', true).val('');
+
+            // La Matrícula Nacional solo aplica a profesionales nacionales
+            jQuery('#editMatriculaNacional').prop('required', false).prop('disabled', true).val('');
+            jQuery('#editMatriculaNacionalAsterisco').hide();
         } else {
             console.log('>>> Ocultando campos EDITAR de extranjero');
             $camposExtranjero.hide();
             $selectPais.prop('required', false).val('');
             $inputRegion.prop('required', false).val('');
             jQuery('#editExp').prop('required', true).prop('disabled', false);
+
+            // Habilitar de nuevo la Matrícula Nacional (obligatoria para nacionales)
+            jQuery('#editMatriculaNacional').prop('required', true).prop('disabled', false);
+            jQuery('#editMatriculaNacionalAsterisco').show();
         }
     });
 
@@ -1364,7 +1611,7 @@ jQuery(document).ready(function() {
     });
 
     // Mayúsculas automáticas en el formulario de edición (excepto correo y menciones)
-    jQuery('#editComplemento, #editNombre, #editApaterno, #editAmaterno, #editCedulaProfesional, #editDireccion').on('input', function() {
+    jQuery('#editComplemento, #editNombre, #editApaterno, #editAmaterno, #editCedulaProfesional, #editMatriculaNacional, #editDireccion').on('input', function() {
         this.value = this.value.toUpperCase();
     });
 });

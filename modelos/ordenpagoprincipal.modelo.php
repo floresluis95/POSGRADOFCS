@@ -632,4 +632,97 @@ class OrdenPagoModelos
             return ['status' => 'error', 'mensaje' => 'Error en el servidor: ' . $e->getMessage()];
         }
     }
+
+    /**
+     * Ordenes de pago de cuota vencidas (fecha límite ya pasada y sin pagar
+     * todavía), para el aviso de mora al ingresar al sistema y para
+     * marcarlas en el Calendario Académico.
+     * @return array
+     */
+    public static function ObtenerOrdenesVencidasModelo()
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    op.IdOrdenPago, op.NumeroOrden, op.MontoTotal, op.FechaVencimiento, op.ProgramaID,
+                    e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Celular,
+                    p.NombrePrograma, p.Sede
+                 FROM ordenpago op
+                 INNER JOIN estudiante e ON e.EstudianteID = op.EstudianteID
+                 INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
+                 WHERE op.Estado = 'PENDIENTE'
+                 AND op.ListaModulos IS NULL
+                 AND op.FechaVencimiento IS NOT NULL
+                 AND op.FechaVencimiento < CURDATE()
+                 ORDER BY op.FechaVencimiento ASC"
+            );
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerOrdenesVencidasModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Ordenes de pago de cuota con fecha límite definida, dentro de un rango
+     * de fechas (para mostrarlas como marcadores en el Calendario Académico,
+     * ya sea vencidas o próximas a vencer).
+     * @param string|null $desde
+     * @param string|null $hasta
+     * @param int|null $programaID
+     * @param string|null $sede
+     * @param int|null $estudianteID Si se indica, solo trae los vencimientos de ese estudiante
+     *                                (para que el propio Estudiante vea su fecha límite, no la de otros)
+     * @return array
+     */
+    public static function ObtenerVencimientosPorRangoModelo($desde = null, $hasta = null, $programaID = null, $sede = null, $estudianteID = null)
+    {
+        try {
+            $sql = "SELECT
+                        op.IdOrdenPago, op.NumeroOrden, op.MontoTotal, op.FechaVencimiento, op.ProgramaID,
+                        e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Celular,
+                        p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico, p.Sede
+                    FROM ordenpago op
+                    INNER JOIN estudiante e ON e.EstudianteID = op.EstudianteID
+                    INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
+                    WHERE op.Estado = 'PENDIENTE'
+                    AND op.ListaModulos IS NULL
+                    AND op.FechaVencimiento IS NOT NULL";
+
+            $params = [];
+            if (!empty($desde)) {
+                $sql .= " AND op.FechaVencimiento >= :desde";
+                $params[':desde'] = substr($desde, 0, 10);
+            }
+            if (!empty($hasta)) {
+                $sql .= " AND op.FechaVencimiento <= :hasta";
+                $params[':hasta'] = substr($hasta, 0, 10);
+            }
+            if (!empty($programaID)) {
+                $sql .= " AND op.ProgramaID = :programaID";
+                $params[':programaID'] = $programaID;
+            }
+            if (!empty($sede)) {
+                $sql .= " AND p.Sede = :sede";
+                $params[':sede'] = $sede;
+            }
+            if (!empty($estudianteID)) {
+                $sql .= " AND op.EstudianteID = :estudianteID";
+                $params[':estudianteID'] = $estudianteID;
+            }
+
+            $sql .= " ORDER BY op.FechaVencimiento ASC";
+
+            $stmt = Conexion::Conectar()->prepare($sql);
+            foreach ($params as $key => $val) {
+                $stmt->bindValue($key, $val);
+            }
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerVencimientosPorRangoModelo: " . $e->getMessage());
+            return [];
+        }
+    }
 }

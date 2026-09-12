@@ -268,6 +268,60 @@ $(document).ready(function() {
     window.cargarCuotasPrograma = cargarCuotasPrograma;
 
     // ========================================
+    // MARCAR / REVERTIR ABANDONO DE UNA INSCRIPCIÓN
+    // No borra ni toca el historial de pagos (pagoprograma/pagomodulo); solo cambia
+    // estudianteprograma.Estado, lo que la saca (o la vuelve a meter) de la lista de
+    // "Activos" en Matriculados y permite identificarla en el reporte de pagos.
+    // ========================================
+    $(document).on('click', '.btn-marcar-abandono', function(e) {
+        e.preventDefault();
+
+        const idinscripcion = $(this).data('idinscripcion');
+        const nombre = $(this).data('estudiante-nombre');
+        const nuevoEstado = $(this).data('nuevo-estado');
+        const esAbandono = nuevoEstado === 'ABANDONO';
+
+        Swal.fire({
+            icon: 'warning',
+            title: esAbandono ? '¿Marcar como Abandono?' : '¿Reactivar estudiante?',
+            html: esAbandono
+                ? '<strong>' + nombre + '</strong> dejará de aparecer como activo en Matriculados. Su historial de pagos no se modifica.'
+                : '<strong>' + nombre + '</strong> volverá a aparecer como activo en Matriculados.',
+            showCancelButton: true,
+            confirmButtonText: esAbandono ? 'Sí, marcar abandono' : 'Sí, reactivar',
+            cancelButtonText: 'Cancelar'
+        }).then(function(result) {
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            $.ajax({
+                url: 'ajax/inscripcionmodulo.ajax.php',
+                type: 'POST',
+                data: {
+                    accion: 'actualizarEstadoInscripcion',
+                    idinscripcion: idinscripcion,
+                    nuevoEstado: nuevoEstado
+                },
+                dataType: 'json',
+                success: function(resp) {
+                    if (resp.success) {
+                        Swal.fire({ icon: 'success', title: 'Listo', text: resp.mensaje, timer: 1600, showConfirmButton: false });
+                        if (typeof window.refrescarTablaMatriculados === 'function') {
+                            window.refrescarTablaMatriculados();
+                        }
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo actualizar el estado' });
+                    }
+                },
+                error: function() {
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el estado' });
+                }
+            });
+        });
+    });
+
+    // ========================================
     // VER DETALLES DEL ESTUDIANTE MATRICULADO
     // ========================================
     $(document).on('click', '.btn-ver-detalles', function(e) {
