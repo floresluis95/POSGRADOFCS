@@ -5,8 +5,8 @@
  * Compatible con PHP 8
  */
 
-require_once '../modelos/inscripcion.modelo.php';
-require_once '../modelos/conexion.modelo.php';
+require_once file_exists(__DIR__ . '/../modelos/inscripcion.modelo.php') ? __DIR__ . '/../modelos/inscripcion.modelo.php' : __DIR__ . '/../core/inscripcion.modelo.php';
+require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
 
 // Incluir controlador de inscripción
 require_once '../controladores/inscripcion.controlador.php';

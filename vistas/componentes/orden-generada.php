@@ -12,7 +12,7 @@ if ($idOrdenPago == 0) {
 }
 
 // Obtener datos de la orden
-require_once 'modelos/conexion.modelo.php';
+require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
 
 $pdo = Conexion::Conectar();
 $stmt = $pdo->prepare("

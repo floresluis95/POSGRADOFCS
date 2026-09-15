@@ -133,6 +133,10 @@ switch ($accion) {
         registrarPlanGrupal();
         break;
 
+    case 'misOrdenesPago':
+        misOrdenesPago();
+        break;
+
     default:
         echo json_encode([
             'success' => false,
@@ -147,7 +151,7 @@ switch ($accion) {
 function cargarEstudiantes()
 {
     try {
-        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
         $conexion = Conexion::Conectar();
 
         $stmt = $conexion->prepare("
@@ -195,7 +199,7 @@ function obtenerDatosEstudiante()
     $estudianteID = (int)$_POST['estudianteID'];
 
     try {
-        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
         $conexion = Conexion::Conectar();
 
         $stmt = $conexion->prepare("
@@ -399,7 +403,7 @@ function obtenerProgramasEstudiante()
     $estudianteID = (int)$_POST['estudianteID'];
 
     try {
-        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
         $conexion = Conexion::Conectar();
 
         $stmt = $conexion->prepare("
@@ -449,7 +453,7 @@ function obtenerModulosPagados()
     $estudianteID = (int)$_POST['estudianteID'];
 
     try {
-        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
         $conexion = Conexion::Conectar();
 
         $stmt = $conexion->prepare("
@@ -583,7 +587,7 @@ function registrarOrdenPago()
     }
 
     try {
-        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
         $conexion = Conexion::Conectar();
 
         $estudianteID = (int)$_POST['estudianteID'];
@@ -662,7 +666,7 @@ function obtenerOrdenesModulosPendientes()
     $idinscripcion = (int)$_POST['idinscripcion'];
 
     try {
-        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
         $conexion = Conexion::Conectar();
 
         $stmt = $conexion->prepare("
@@ -700,7 +704,7 @@ function obtenerOrdenPendienteCuotaPrograma()
     $idinscripcion = (int)$_POST['idinscripcion'];
 
     try {
-        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
         $conexion = Conexion::Conectar();
 
         $stmt = $conexion->prepare("
@@ -737,7 +741,7 @@ function registrarOrdenPagoCuotaPrograma()
     }
 
     try {
-        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
         $conexion = Conexion::Conectar();
 
         $estudianteID = (int)$_POST['estudianteID'];
@@ -830,7 +834,7 @@ function registrarOrdenPagoModulosPendientes()
     }
 
     try {
-        require_once __DIR__ . '/../modelos/conexion.modelo.php';
+        require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
         $conexion = Conexion::Conectar();
 
         $estudianteID = (int)$_POST['estudianteID'];
@@ -1251,5 +1255,42 @@ function buscarPreregistrosPendientes()
 
     $resultados = OrdenPagoModelos::BuscarPreregistrosPendientesModelo($termino);
     echo json_encode(['success' => true, 'resultados' => $resultados]);
+}
+
+/**
+ * Todas las órdenes de pago del estudiante logueado (matrícula/cuota del
+ * programa y pago de módulos), para que él mismo las consulte e imprima
+ * la que le corresponda. Usa exclusivamente el EstudianteID de la sesión:
+ * un estudiante nunca puede pedir las órdenes de otro.
+ */
+function misOrdenesPago()
+{
+    if (($_SESSION['Tipo'] ?? '') !== 'EST' || empty($_SESSION['EstudianteID'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'No hay un estudiante asociado a esta sesión']);
+        return;
+    }
+
+    $estudianteID = (int)$_SESSION['EstudianteID'];
+    $ordenes = OrdenPagoModelos::ListarOrdenesPorEstudianteModelo($estudianteID);
+
+    $resultado = array_map(function ($o) {
+        $hoy = date('Y-m-d');
+        return [
+            'idOrdenPago' => (int)$o['IdOrdenPago'],
+            'numeroOrden' => $o['NumeroOrden'],
+            'nombrePrograma' => $o['NombrePrograma'],
+            'codigoPrograma' => $o['CodigoPrograma'],
+            'gradoAcademico' => $o['GradoAcademico'],
+            'sede' => $o['Sede'],
+            'tipo' => empty($o['ListaModulos']) ? 'MATRICULA' : 'MODULOS',
+            'monto' => (float)$o['MontoFinal'],
+            'fechaGeneracion' => $o['FechaGeneracion'],
+            'fechaVencimiento' => $o['FechaVencimiento'],
+            'estado' => $o['Estado'],
+            'vencida' => !empty($o['FechaVencimiento']) && $o['Estado'] === 'PENDIENTE' && $o['FechaVencimiento'] < $hoy,
+        ];
+    }, $ordenes);
+
+    echo json_encode(['success' => true, 'ordenes' => $resultado]);
 }
 ?>

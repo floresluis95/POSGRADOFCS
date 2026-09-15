@@ -16,7 +16,7 @@ if ($idOrdenPago === 0) {
     die('ID de orden de pago inválido');
 }
 
-require_once '../../modelos/conexion.modelo.php';
+require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
 require_once '../../vendor/tecnickcom/tcpdf/tcpdf.php';
 
 date_default_timezone_set("America/La_Paz");
@@ -51,6 +51,14 @@ try {
 
     if (!$datos) {
         die('No se encontró el registro');
+    }
+
+    // Un Estudiante solo puede imprimir sus propias órdenes de pago (nunca las de otro).
+    if (($_SESSION['Tipo'] ?? '') === 'EST') {
+        $estudianteSesionID = (int)($_SESSION['EstudianteID'] ?? 0);
+        if ($estudianteSesionID === 0 || $estudianteSesionID !== (int)$datos['EstudianteID']) {
+            die('Acceso denegado: esta orden de pago no le corresponde');
+        }
     }
 
     // Datos del estudiante

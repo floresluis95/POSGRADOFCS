@@ -28,7 +28,7 @@ if (!isset($_SESSION['Validar']) || !$_SESSION['Validar']) {
 // Incluir archivos necesarios
 try {
     require_once __DIR__ . '/../../vendor/tecnickcom/tcpdf/tcpdf.php';
-    require_once __DIR__ . '/../../modelos/conexion.modelo.php';
+    require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
 } catch (Exception $e) {
     ob_end_clean();
     die('Error al cargar librerías: ' . $e->getMessage());

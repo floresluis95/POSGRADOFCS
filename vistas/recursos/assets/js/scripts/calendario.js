@@ -9,11 +9,11 @@
     var calendar = null;
 
     function etiquetaTipo(tipo) {
-        return { CLASE: 'Clase', ACTIVIDAD: 'Actividad', CLINICA: 'Clínica', PAGO: 'Vencimiento de pago' }[tipo] || tipo;
+        return { CLASE: 'Clase', ACTIVIDAD: 'Actividad', CLINICA: 'Clínica', PAGO: 'Vencimiento de pago', PLAZOCUOTA: 'Plazo de cuota' }[tipo] || tipo;
     }
 
     function colorTipo(tipo) {
-        return { CLASE: 'badge-primary', ACTIVIDAD: 'badge-info', CLINICA: 'badge-dark', PAGO: 'badge-warning' }[tipo] || 'badge-secondary';
+        return { CLASE: 'badge-primary', ACTIVIDAD: 'badge-info', CLINICA: 'badge-dark', PAGO: 'badge-warning', PLAZOCUOTA: 'badge-danger' }[tipo] || 'badge-secondary';
     }
 
     function formatoFechaHora(iso) {
@@ -30,7 +30,179 @@
             'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
     }
 
+    // ============================================
+    // PLAZO DE CUOTA POR PROGRAMA (panel ADM/SEC)
+    // ============================================
+    function inicializarPlazoCuota() {
+        function formatoFecha(iso) {
+            var d = new Date(iso + 'T00:00:00');
+            if (isNaN(d.getTime())) return iso;
+            return d.toLocaleDateString('es-BO', { day: '2-digit', month: 'long', year: 'numeric' });
+        }
+
+        function cargarPlazosCuota() {
+            $.ajax({
+                url: 'ajax/plazocuotaprograma.ajax.php',
+                method: 'POST',
+                data: { accion: 'listarPlazos' },
+                dataType: 'json',
+                success: function (resp) {
+                    var $tbody = $('#tablaPlazosCuotaBody');
+                    $tbody.empty();
+
+                    if (!resp.success || !resp.data || !resp.data.length) {
+                        $tbody.html('<tr><td colspan="6" class="text-center text-muted">No hay plazos de cuota registrados</td></tr>');
+                        return;
+                    }
+
+                    var hoy = new Date().toISOString().slice(0, 10);
+
+                    resp.data.forEach(function (p) {
+                        var vencido = p.FechaPlazo < hoy;
+                        var estadoBadge = vencido
+                            ? '<span class="badge badge-danger">Vencido</span>'
+                            : '<span class="badge badge-success">Vigente</span>';
+
+                        var fila = $('<tr></tr>')
+                            .append($('<td></td>').text(p.NombrePrograma + ' (' + p.CodigoPrograma + ')'))
+                            .append($('<td></td>').text(p.Sede || '-'))
+                            .append($('<td></td>').text(formatoFecha(p.FechaPlazo)))
+                            .append($('<td></td>').text(p.Descripcion || '-'))
+                            .append($('<td class="text-center"></td>').html(estadoBadge))
+                            .append(
+                                $('<td class="text-right"></td>').append(
+                                    $('<button type="button" class="btn btn-xs btn-clean btn-icon" title="Editar"><i class="la la-edit"></i></button>')
+                                        .on('click', function () { abrirModalEdicionPlazo(p); }),
+                                    ' ',
+                                    $('<button type="button" class="btn btn-xs btn-clean btn-icon text-danger" title="Eliminar"><i class="la la-trash"></i></button>')
+                                        .on('click', function () { eliminarPlazoCuota(p.IdPlazo); })
+                                )
+                            );
+                        $tbody.append(fila);
+                    });
+                },
+                error: function () {
+                    $('#tablaPlazosCuotaBody').html('<tr><td colspan="6" class="text-center text-danger">Error al cargar los plazos</td></tr>');
+                }
+            });
+        }
+
+        function abrirModalNuevoPlazo() {
+            $('#formPlazoCuota')[0].reset();
+            $('#plazoIdPlazo').val('');
+            $('#modalPlazoCuotaTitulo').html('<i class="fa fa-hourglass-half"></i> Nuevo Plazo de Cuota');
+            $('#btnEliminarPlazoCuota').hide();
+            $('#modalListaPlazosCuota').modal('hide');
+            $('#modalPlazoCuota').modal('show');
+        }
+
+        function abrirModalEdicionPlazo(p) {
+            $('#formPlazoCuota')[0].reset();
+            $('#plazoIdPlazo').val(p.IdPlazo);
+            $('#plazoPrograma').val(p.ProgramaID);
+            $('#plazoFecha').val(p.FechaPlazo);
+            $('#plazoDescripcion').val(p.Descripcion || '');
+            $('#modalPlazoCuotaTitulo').html('<i class="fa fa-edit"></i> Editar Plazo de Cuota');
+            $('#btnEliminarPlazoCuota').show().data('id', p.IdPlazo);
+            $('#modalListaPlazosCuota').modal('hide');
+            $('#modalPlazoCuota').modal('show');
+        }
+
+        function eliminarPlazoCuota(idPlazo) {
+            Swal.fire({
+                icon: 'warning',
+                title: '¿Eliminar este plazo de cuota?',
+                text: 'Esta acción no se puede deshacer.',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+
+                $.ajax({
+                    url: 'ajax/plazocuotaprograma.ajax.php',
+                    method: 'POST',
+                    data: { accion: 'anularPlazo', idPlazo: idPlazo },
+                    dataType: 'json',
+                    success: function (resp) {
+                        if (resp.success) {
+                            $('#modalPlazoCuota').modal('hide');
+                            cargarPlazosCuota();
+                            if (calendar) calendar.refetchEvents();
+                            Swal.fire({ icon: 'success', title: 'Eliminado', timer: 1400, showConfirmButton: false });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo eliminar' });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el plazo' });
+                    }
+                });
+            });
+        }
+
+        // Abrir el listado (modal) de Plazos de Cuota desde el botón de la barra de herramientas
+        $('#btnAbrirPlazosCuota').on('click', function () {
+            $('#modalListaPlazosCuota').modal('show');
+        });
+        $('#modalListaPlazosCuota').on('show.bs.modal', cargarPlazosCuota);
+
+        $('#btnNuevoPlazoCuota').on('click', abrirModalNuevoPlazo);
+
+        // Al cerrar el formulario de nuevo/editar (guardado, cancelado o eliminado),
+        // se vuelve a mostrar el listado para no perder el contexto.
+        $('#modalPlazoCuota').on('hidden.bs.modal', function () {
+            $('#modalListaPlazosCuota').modal('show');
+        });
+
+        $('#formPlazoCuota').on('submit', function (e) {
+            e.preventDefault();
+
+            var idPlazo = $('#plazoIdPlazo').val();
+            var datos = {
+                accion: idPlazo ? 'actualizarPlazo' : 'registrarPlazo',
+                idPlazo: idPlazo,
+                programaID: $('#plazoPrograma').val(),
+                fechaPlazo: $('#plazoFecha').val(),
+                descripcion: $('#plazoDescripcion').val().trim()
+            };
+
+            var $btnSubmit = $(this).find('button[type="submit"]');
+            $btnSubmit.prop('disabled', true);
+
+            $.ajax({
+                url: 'ajax/plazocuotaprograma.ajax.php',
+                method: 'POST',
+                data: datos,
+                dataType: 'json',
+                success: function (resp) {
+                    $btnSubmit.prop('disabled', false);
+                    if (resp.success) {
+                        $('#modalPlazoCuota').modal('hide');
+                        cargarPlazosCuota();
+                        if (calendar) calendar.refetchEvents();
+                        Swal.fire({ icon: 'success', title: 'Listo', text: resp.mensaje, timer: 1600, showConfirmButton: false });
+                    } else {
+                        Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo guardar el plazo' });
+                    }
+                },
+                error: function () {
+                    $btnSubmit.prop('disabled', false);
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar el plazo' });
+                }
+            });
+        });
+
+        $('#btnEliminarPlazoCuota').on('click', function () {
+            eliminarPlazoCuota($(this).data('id'));
+        });
+    }
+
     $(document).ready(function () {
+
+        if (contexto.esAdminOSec) {
+            inicializarPlazoCuota();
+        }
 
         // ============================================
         // FILTROS: Sede -> Programa (cascada), Docente
@@ -247,13 +419,14 @@
         function abrirModalDetalle(evento) {
             var props = evento.extendedProps;
             var esPago = props.tipoEvento === 'PAGO';
+            var esPlazoCuota = props.tipoEvento === 'PLAZOCUOTA';
 
             $('#detalleEventoTipoBadge').text(etiquetaTipo(props.tipoEvento)).attr('class', 'badge mb-2 ' + colorTipo(props.tipoEvento));
             $('#detalleEventoTitulo').text(evento.title);
             $('#detalleEventoPrograma').text((props.nombrePrograma || '') + ' - ' + (props.gradoAcademico || '') + ' (' + (props.codigoPrograma || '') + ')');
             $('#detalleEventoSede').text(props.sede || '-');
-            $('#detalleEventoDocente').text(esPago ? ('Estudiante: ' + (props.nombreEstudiante || '-')) : (props.nombreDocente || 'Sin asignar'));
-            $('#detalleEventoHorario').text(esPago ? ('Fecha límite: ' + formatoFechaHora(evento.startStr)) : (formatoFechaHora(evento.startStr) + '  a  ' + formatoFechaHora(evento.endStr)));
+            $('#detalleEventoDocente').text(esPago ? ('Estudiante: ' + (props.nombreEstudiante || '-')) : (esPlazoCuota ? 'Plazo general del programa' : (props.nombreDocente || 'Sin asignar')));
+            $('#detalleEventoHorario').text((esPago || esPlazoCuota) ? ('Fecha límite: ' + formatoFechaHora(evento.startStr)) : (formatoFechaHora(evento.startStr) + '  a  ' + formatoFechaHora(evento.endStr)));
 
             if (props.descripcion) {
                 $('#detalleEventoDescripcion').text(props.descripcion);

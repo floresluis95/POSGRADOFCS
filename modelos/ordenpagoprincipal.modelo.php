@@ -676,6 +676,36 @@ class OrdenPagoModelos
      *                                (para que el propio Estudiante vea su fecha límite, no la de otros)
      * @return array
      */
+    /**
+     * Todas las órdenes de pago (matrícula/cuota del programa y pago de módulos)
+     * de un estudiante, en cualquier estado, para que él mismo las consulte e
+     * imprima las que le correspondan.
+     * @param int $estudianteID
+     * @return array
+     */
+    public static function ListarOrdenesPorEstudianteModelo($estudianteID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    op.IdOrdenPago, op.NumeroOrden, op.ProgramaID, op.ListaModulos, op.MontoTotal,
+                    op.MontoDescuento, op.MontoFinal, op.PagoCompleto, op.FechaGeneracion,
+                    op.FechaVencimiento, op.FechaConfirmacion, op.Estado,
+                    p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico, p.Sede
+                 FROM ordenpago op
+                 INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
+                 WHERE op.EstudianteID = :estudianteID
+                 ORDER BY op.FechaGeneracion DESC"
+            );
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ListarOrdenesPorEstudianteModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public static function ObtenerVencimientosPorRangoModelo($desde = null, $hasta = null, $programaID = null, $sede = null, $estudianteID = null)
     {
         try {

@@ -11,7 +11,7 @@ $esAdministrador = ($tipoUsuario === 'ADM');
 // Si es docente, obtener su DocenteID
 $docenteIDLogueado = null;
 if ($esDocente && isset($_SESSION['IdUsuario'])) {
-    require_once 'modelos/conexion.modelo.php';
+    require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
     $stmtDocente = Conexion::Conectar()->prepare("
         SELECT DocenteID FROM docente WHERE UsuarioID = :usuarioID
     ");
@@ -204,7 +204,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
 
                             <?php
                             // Obtener módulos vigentes (año actual)
-                            require_once 'modelos/conexion.modelo.php';
+                            require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
                             $anioActual = date('Y');
 
                             // Construir consulta según tipo de usuario

@@ -569,6 +569,12 @@ if ($_SESSION["Tipo"] == "EST") {
                     <span class="kt-menu__link-text">RECIBOS</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="misordenespago" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-print" style="color: #fd397a;"></i>
+                    <span class="kt-menu__link-text">MIS ÓRDENES DE PAGO</span>
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

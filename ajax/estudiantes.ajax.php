@@ -7,7 +7,7 @@
 $rutaBase = dirname(__DIR__);
 
 require_once $rutaBase . '/modelos/estudiantes.modelo.php';
-require_once $rutaBase . '/modelos/conexion.modelo.php';
+require_once file_exists($rutaBase . '/modelos/conexion.modelo.php') ? $rutaBase . '/modelos/conexion.modelo.php' : $rutaBase . '/core/conexion.modelo.php';
 
 class AjaxEstudiantes
 {

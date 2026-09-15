@@ -5,7 +5,7 @@
  */
 
 require_once __DIR__ . '/../modelos/inscripcionmodulo.modelo.php';
-require_once __DIR__ . '/../modelos/conexion.modelo.php';
+require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
 require_once __DIR__ . '/../modelos/matricula.modelo.php';
 
 class InscripcionModuloControladores

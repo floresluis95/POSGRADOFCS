@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/conexion.modelo.php';
+require_once file_exists(__DIR__ . '/conexion.modelo.php') ? __DIR__ . '/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
 
 class ReportesModelos
 {

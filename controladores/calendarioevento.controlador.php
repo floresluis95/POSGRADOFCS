@@ -11,6 +11,7 @@
 require_once __DIR__ . '/../modelos/calendarioevento.modelo.php';
 require_once __DIR__ . '/../modelos/modulo.modelo.php';
 require_once __DIR__ . '/../modelos/ordenpagoprincipal.modelo.php';
+require_once __DIR__ . '/../modelos/plazocuotaprograma.modelo.php';
 
 class CalendarioEventoControlador
 {
@@ -126,6 +127,42 @@ class CalendarioEventoControlador
                     ]
                 ];
             }
+        }
+
+        // Plazos de cuota por Programa (fecha límite general definida por
+        // Administración/Secretaría). Visibles para todos los roles que ven
+        // el calendario, como aviso informativo.
+        $plazos = PlazoCuotaProgramaModelo::ObtenerPlazosParaCalendarioModelo(
+            $filtros['desde'],
+            $filtros['hasta'],
+            $filtros['programaID'],
+            $filtros['sede']
+        );
+
+        $hoy = date('Y-m-d');
+        foreach ($plazos as $pl) {
+            $vencido = $pl['FechaPlazo'] < $hoy;
+            $resultado[] = [
+                'id' => 'plazo-' . $pl['IdPlazo'],
+                'title' => ($vencido ? '⛔ Plazo de cuota vencido: ' : '🗓 Plazo de cuota: ') . $pl['NombrePrograma'],
+                'start' => $pl['FechaPlazo'],
+                'allDay' => true,
+                'color' => $vencido ? '#c0392b' : '#8e44ad',
+                'editable' => false,
+                'extendedProps' => [
+                    'tipoEvento' => 'PLAZOCUOTA',
+                    'descripcion' => $pl['Descripcion'] ?: 'Fecha límite de pago de cuota del programa',
+                    'programaID' => $pl['ProgramaID'],
+                    'nombrePrograma' => $pl['NombrePrograma'],
+                    'codigoPrograma' => $pl['CodigoPrograma'],
+                    'gradoAcademico' => $pl['GradoAcademico'],
+                    'sede' => $pl['Sede'],
+                    'docenteID' => null,
+                    'nombreDocente' => null,
+                    'editable' => false,
+                    'vencido' => $vencido,
+                ]
+            ];
         }
 
         echo json_encode($resultado);

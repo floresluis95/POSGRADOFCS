@@ -229,6 +229,19 @@ $csrf_token = bin2hex(random_bytes(32));
 
                 <div class="modal-body" style="padding: 30px;">
 
+                    <!-- Búsqueda previa por CI: evita registrar un estudiante duplicado -->
+                    <div class="alert alert-light d-flex align-items-end flex-wrap" style="gap: 10px; border: 1px dashed #c8d3e0; background: #f8f9fc;">
+                        <div class="form-group mb-0">
+                            <label class="small font-weight-bold mb-1">Verificar CI antes de registrar</label>
+                            <input type="text" class="form-control form-control-sm" id="buscarPorCiNuevoEstudiante"
+                                   style="max-width: 220px;" placeholder="Ingrese el CI..." maxlength="12">
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary" id="btnBuscarPorCiNuevoEstudiante">
+                            <i class="fas fa-search"></i> Verificar
+                        </button>
+                        <span id="estadoBusquedaCiNuevoEstudiante" class="ml-2"></span>
+                    </div>
+
                     <h4 class="form-section">
                         <i class="fas fa-id-card mr-2"></i> Datos de Identificación
                     </h4>
@@ -352,13 +365,20 @@ $csrf_token = bin2hex(random_bytes(32));
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="IdProfesion"><i class="fas fa-graduation-cap text-danger"></i> Profesión *</label>
-                                <select class="form-control" id="IdProfesion" name="IdProfesion" required>
-                                    <option value="">Seleccione una profesión...</option>
-                                    <?php
-                                        $ListaProfesion = new ProfesionControlador();
-                                        $ListaProfesion->ListaProfesionControlador();
-                                    ?>
-                                </select>
+                                <div class="input-group">
+                                    <select class="form-control" id="IdProfesion" name="IdProfesion" required>
+                                        <option value="">Seleccione una profesión...</option>
+                                        <?php
+                                            $ListaProfesion = new ProfesionControlador();
+                                            $ListaProfesion->ListaProfesionControlador();
+                                        ?>
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-primary" id="btnNuevaProfesionEstudiante" title="Agregar una profesión que no está en la lista">
+                                            <i class="fa fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
                                 <div class="invalid-feedback">Seleccione la profesión.</div>
                             </div>
                         </div>
@@ -419,6 +439,32 @@ $csrf_token = bin2hex(random_bytes(32));
                     $DatosEstudiante = new EstudiantesControladores();
                     $DatosEstudiante->RegistarEstudianteControlador();
                 ?>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nueva Profesión (agregar una que no está en el select, sin salir del formulario) -->
+<div class="modal fade" id="ModalNuevaProfesionEstudiante" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
+            <div class="modal-header bg-gradient-info">
+                <h5 class="modal-title text-white"><i class="fa fa-plus mr-2"></i> Nueva Profesión</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formNuevaProfesionEstudiante">
+                <div class="modal-body" style="padding: 25px;">
+                    <div class="form-group">
+                        <label for="inputNuevaProfesionEstudiante">Nombre de la profesión</label>
+                        <input type="text" class="form-control" id="inputNuevaProfesionEstudiante" maxlength="100" required placeholder="Ej: Bioquímico">
+                    </div>
+                </div>
+                <div class="modal-footer" style="background-color: #f8f9fa;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Agregar</button>
+                </div>
             </form>
         </div>
     </div>
@@ -590,7 +636,10 @@ if (document.readyState === 'loading') {
 }
 
 // Validación del formulario de nuevo estudiante
-jQuery(document).ready(function() {
+// NOTA: se usa window 'load' (en vez de jQuery(document).ready) porque jQuery
+// se imprime más abajo en el HTML final de la página; para cuando el evento
+// 'load' dispara, ya está disponible.
+window.addEventListener('load', function() {
     const form = document.getElementById('formNuevoEstudiante');
 
     if (form) {
@@ -633,6 +682,127 @@ jQuery(document).ready(function() {
         actualizarFecha();
         setInterval(actualizarFecha, 60000);
     }
+
+    // ============================================
+    // VERIFICAR CI ANTES DE REGISTRAR (igual que en Pre-Registro):
+    // evita que Administración llene todo el formulario para luego
+    // enterarse, al guardar, de que ese estudiante ya existe.
+    // ============================================
+    const $btnGuardarEstudiante = jQuery('#formNuevoEstudiante button[type="submit"]');
+
+    function verificarCiNuevoEstudiante() {
+        const ci = jQuery('#buscarPorCiNuevoEstudiante').val().trim();
+
+        if (!ci) {
+            Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingrese un CI para verificar' });
+            return;
+        }
+
+        jQuery('#estadoBusquedaCiNuevoEstudiante').html('<i class="fa fa-spinner fa-spin"></i> Verificando...');
+
+        jQuery.ajax({
+            url: 'ajax/ordenpago.ajax.php',
+            type: 'POST',
+            data: { accion: 'buscarEstudiantePorCi', ci: ci },
+            dataType: 'json',
+            success: function(resp) {
+                if (!resp.success) {
+                    jQuery('#estadoBusquedaCiNuevoEstudiante').html('<span class="text-danger">Error al verificar</span>');
+                    return;
+                }
+
+                if (resp.encontrado) {
+                    const nombreExistente = [resp.estudiante.Apaterno, resp.estudiante.Amaterno, resp.estudiante.Nombre]
+                        .filter(Boolean).join(' ');
+                    jQuery('#estadoBusquedaCiNuevoEstudiante').html(
+                        '<span class="badge badge-danger"><i class="fa fa-times"></i> Ya registrado: ' + nombreExistente + '</span>'
+                    );
+                    $btnGuardarEstudiante.prop('disabled', true);
+                    Swal.fire({ icon: 'error', title: 'Ya existe', text: 'Ese CI ya está registrado como ' + nombreExistente + '. No puede registrarlo de nuevo.' });
+                } else {
+                    jQuery('#estadoBusquedaCiNuevoEstudiante').html('<span class="badge badge-success"><i class="fa fa-check"></i> CI disponible</span>');
+                    jQuery('#inputCi').val(ci);
+                    $btnGuardarEstudiante.prop('disabled', false);
+                }
+            },
+            error: function() {
+                jQuery('#estadoBusquedaCiNuevoEstudiante').html('<span class="text-danger">Error al verificar</span>');
+            }
+        });
+    }
+
+    jQuery('#btnBuscarPorCiNuevoEstudiante').on('click', verificarCiNuevoEstudiante);
+    jQuery('#buscarPorCiNuevoEstudiante').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            verificarCiNuevoEstudiante();
+        }
+    });
+
+    // Si cambia el CI manualmente después de verificar, se limpia el estado
+    // (evita quedar bloqueado o con un falso "disponible" desactualizado).
+    jQuery('#inputCi, #buscarPorCiNuevoEstudiante').on('input', function() {
+        jQuery('#estadoBusquedaCiNuevoEstudiante').html('');
+        $btnGuardarEstudiante.prop('disabled', false);
+    });
+
+    // Al abrir el modal desde cero, limpiar el estado de la última verificación
+    jQuery('#ModalInsertarEstudiante').on('show.bs.modal', function() {
+        jQuery('#buscarPorCiNuevoEstudiante').val('');
+        jQuery('#estadoBusquedaCiNuevoEstudiante').html('');
+        $btnGuardarEstudiante.prop('disabled', false);
+    });
+
+    // ============================================
+    // AGREGAR PROFESIÓN NUEVA (botón "+" junto al select), igual que en Pre-Registro
+    // ============================================
+    jQuery('#btnNuevaProfesionEstudiante').on('click', function() {
+        jQuery('#formNuevaProfesionEstudiante')[0].reset();
+        jQuery('#ModalNuevaProfesionEstudiante').modal('show');
+    });
+
+    jQuery('#formNuevaProfesionEstudiante').on('submit', function(e) {
+        e.preventDefault();
+
+        const nombre = jQuery('#inputNuevaProfesionEstudiante').val().trim();
+        if (!nombre) return;
+
+        const $btnSubmit = jQuery(this).find('button[type="submit"]');
+        $btnSubmit.prop('disabled', true);
+
+        jQuery.ajax({
+            url: 'ajax/ordenpago.ajax.php',
+            type: 'POST',
+            data: { accion: 'registrarProfesionRapida', nombreProfesion: nombre },
+            dataType: 'json',
+            success: function(resp) {
+                $btnSubmit.prop('disabled', false);
+
+                if (!resp.success) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo agregar la profesión' });
+                    return;
+                }
+
+                const prof = resp.profesion;
+                const yaExiste = jQuery('#IdProfesion option[value="' + prof.IdProfesion + '"]').length > 0;
+                if (!yaExiste) {
+                    jQuery('#IdProfesion').append(
+                        jQuery('<option></option>').attr('value', prof.IdProfesion).text(prof.NombreProfesion)
+                    );
+                }
+                jQuery('#IdProfesion').val(prof.IdProfesion);
+
+                jQuery('#ModalNuevaProfesionEstudiante').modal('hide');
+                if (resp.duplicado) {
+                    Swal.fire({ icon: 'info', title: 'Atención', text: 'Esa profesión ya existía, se seleccionó del listado' });
+                }
+            },
+            error: function() {
+                $btnSubmit.prop('disabled', false);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo agregar la profesión' });
+            }
+        });
+    });
 });
 </script>
 

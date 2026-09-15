@@ -4,7 +4,8 @@
  * Gestiona las acciones relacionadas con las calificaciones finales
  */
 
-require_once __DIR__ . '/../modelos/conexion.modelo.php';
+require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
+require_once __DIR__ . '/../modelos/plazocuotaprograma.modelo.php';
 
 class CalificacionControlador
 {
@@ -395,6 +396,16 @@ class CalificacionControlador
             // Verificar que la sesión tenga EstudianteID
             if (isset($_SESSION['EstudianteID']) && !empty($_SESSION['EstudianteID'])) {
                 $estudianteID = $_SESSION['EstudianteID'];
+
+                // El plazo de cuota de este programa venció y aún tiene una orden de
+                // pago pendiente: se bloquea la consulta hasta que regularice su pago.
+                if (PlazoCuotaProgramaModelo::TieneBloqueoProgramaModelo($estudianteID, $programaID)) {
+                    echo json_encode([
+                        'status' => 'bloqueado',
+                        'message' => 'Tiene una cuota pendiente vencida en este programa. Debe regularizar su pago para poder ver sus calificaciones.'
+                    ]);
+                    exit();
+                }
 
                 $calificaciones = CalificacionModelo::ObtenerCalificacionesEstudianteProgramaModelo(
                     $estudianteID,

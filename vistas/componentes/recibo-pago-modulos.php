@@ -4,7 +4,7 @@ session_start(); if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== tr
 $idinscripcion = isset($_GET['idinscripcion']) ? intval($_GET['idinscripcion']) : 0;
 if ($idinscripcion === 0) die('ID de inscripción inválido');
 
-require_once '../../modelos/conexion.modelo.php';
+require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
 require_once '../../modelos/modulopagos_core.php';
 
 date_default_timezone_set("America/La_Paz");

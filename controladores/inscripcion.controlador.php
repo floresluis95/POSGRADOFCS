@@ -6,8 +6,8 @@
  */
 
 // Incluir modelos necesarios
-require_once __DIR__ . '/../modelos/inscripcion.modelo.php';
-require_once __DIR__ . '/../modelos/conexion.modelo.php';
+require_once file_exists(__DIR__ . '/../modelos/inscripcion.modelo.php') ? __DIR__ . '/../modelos/inscripcion.modelo.php' : __DIR__ . '/../core/inscripcion.modelo.php';
+require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
 
 // Iniciar sesión si no está iniciada
 if (session_status() == PHP_SESSION_NONE) {

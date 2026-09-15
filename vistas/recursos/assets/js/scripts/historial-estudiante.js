@@ -140,6 +140,8 @@ function cargarCalificacionesPrograma(programaID) {
         success: function(response) {
             if (response.status === 'success') {
                 mostrarCalificaciones(response.data, response.resumen);
+            } else if (response.status === 'bloqueado') {
+                mostrarBloqueoCalificaciones(response.message);
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -307,6 +309,32 @@ function mostrarResumenCalificaciones(resumen) {
     `;
 
     $('#contenido_calificaciones').before(resumenHTML);
+}
+
+/**
+ * Mostrar aviso de bloqueo por cuota vencida en lugar de las calificaciones
+ */
+function mostrarBloqueoCalificaciones(mensaje) {
+    // Eliminar resumen si existe
+    $('#contenido_calificaciones').prev('tr').remove();
+
+    const $tbody = $('#contenido_calificaciones');
+    $tbody.html(`
+        <tr>
+            <td colspan="5" class="text-center" style="padding: 3rem; color: #c0392b;">
+                <i class="flaticon2-lock" style="font-size: 3rem; color: #c0392b;"></i>
+                <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 700;">Calificaciones no disponibles</p>
+                <p style="font-size: 0.95rem; color: #74788d;">${mensaje || 'Tiene una cuota pendiente vencida. Regularice su pago para ver sus calificaciones.'}</p>
+            </td>
+        </tr>
+    `);
+
+    Swal.fire({
+        icon: 'warning',
+        title: 'Cuota pendiente',
+        text: mensaje || 'Tiene una cuota pendiente vencida. Regularice su pago para ver sus calificaciones.',
+        confirmButtonColor: '#c0392b'
+    });
 }
 
 /**

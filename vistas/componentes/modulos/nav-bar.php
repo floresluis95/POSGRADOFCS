@@ -436,4 +436,9 @@ $menuItems = obtenerMenuPorTipo($tipoUsuario);
         </div>
         <!-- end:: Header Topbar -->
     </div>
+
+    <?php if ($tipoUsuario === 'EST'): ?>
+    <!-- Aviso de cuota vencida para el Estudiante (una vez por sesión de navegador) -->
+    <script src="vistas/recursos/assets/js/scripts/aviso-cuota-estudiante.js?v=<?php echo time(); ?>"></script>
+    <?php endif; ?>
 </div>

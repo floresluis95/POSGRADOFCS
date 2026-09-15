@@ -21,6 +21,10 @@
     require_once 'controladores/programacuenta.controlador.php';
     require_once 'controladores/especialidad.controlador.php';
     require_once 'controladores/calendarioevento.controlador.php';
+    require_once 'controladores/plazocuotaprograma.controlador.php';
+    require_once 'controladores/noticiapanel.controlador.php';
+    require_once 'controladores/cronogramadefensa.controlador.php';
+    require_once 'controladores/carruselpanel.controlador.php';
     // Modelos
     require_once 'modelos/enlaces.modelo.php';
     require_once 'modelos/ingreso.modelo.php';
@@ -28,7 +32,7 @@
     require_once 'modelos/heredado.modelo.php';
     require_once 'modelos/programa.modelo.php';
     require_once 'modelos/estudiantes.modelo.php';
-    require_once 'modelos/inscripcion.modelo.php';
+    require_once file_exists(__DIR__ . '/modelos/inscripcion.modelo.php') ? 'modelos/inscripcion.modelo.php' : 'core/inscripcion.modelo.php';
     require_once 'modelos/matricula.modelo.php';
     require_once 'modelos/inscripcionmodulo.modelo.php';
     require_once 'modelos/docentes.modelo.php';
@@ -42,6 +46,10 @@
     require_once 'modelos/especialidad.modelo.php';
     require_once 'modelos/modulopagos_core.php';
     require_once 'modelos/calendarioevento.modelo.php';
+    require_once 'modelos/plazocuotaprograma.modelo.php';
+    require_once 'modelos/noticiapanel.modelo.php';
+    require_once 'modelos/cronogramadefensa.modelo.php';
+    require_once 'modelos/carruselpanel.modelo.php';
 
 
     // Llamar plantilla

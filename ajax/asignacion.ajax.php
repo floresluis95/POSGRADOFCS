@@ -11,7 +11,7 @@ if (!isset($_SESSION['Validar']) || !$_SESSION['Validar']) {
     exit;
 }
 
-require_once '../modelos/conexion.modelo.php';
+require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
 
 // Verificar acción
 if (!isset($_POST['accion'])) {

@@ -99,6 +99,7 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
                                     <?php if ($veVencimientosPago): ?>
                                     <span><i class="calendario-punto" style="background:#d4a017;"></i> Vence cuota</span>
                                     <span><i class="calendario-punto" style="background:#c0392b;"></i> Cuota vencida</span>
+                                    <span><i class="calendario-punto" style="background:#8e44ad;"></i> Plazo de cuota (programa)</span>
                                     <?php endif; ?>
                                 </div>
 
@@ -113,6 +114,11 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
                                     <button type="button" class="btn btn-sm btn-nuevo-evento" data-tipo="CLINICA" style="background:#6b2737; color:#fff;">
                                         <i class="fa fa-plus"></i> Clínica
                                     </button>
+                                    <?php if ($esAdminOSec): ?>
+                                    <button type="button" class="btn btn-sm" id="btnAbrirPlazosCuota" style="background:#8e44ad; color:#fff;">
+                                        <i class="fa fa-hourglass-half"></i> Plazos de Cuota
+                                    </button>
+                                    <?php endif; ?>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -237,6 +243,97 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
             </div>
         </div>
     </div>
+
+    <?php if ($esAdminOSec): ?>
+    <!-- Modal: Listado de Plazos de Cuota por Programa (ADM, SEC) -->
+    <div class="modal fade" id="modalListaPlazosCuota" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #6b2737 0%, #8e44ad 100%); color: #fff;">
+                    <h5 class="modal-title"><i class="fa fa-hourglass-half"></i> Plazo de Cuota por Programa</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3" style="font-size: 13px;">
+                        <i class="fa fa-info-circle"></i>
+                        Defina la fecha límite de pago de la cuota vigente por programa. Si un estudiante llega a esa
+                        fecha con una orden de pago pendiente, verá un aviso al ingresar al sistema y no podrá consultar
+                        sus calificaciones hasta regularizar su pago.
+                    </p>
+                    <div class="text-right mb-2">
+                        <button type="button" class="btn btn-sm btn-danger" id="btnNuevoPlazoCuota">
+                            <i class="fa fa-plus"></i> Nuevo Plazo
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm" id="tablaPlazosCuota">
+                            <thead>
+                                <tr>
+                                    <th>Programa</th>
+                                    <th>Sede</th>
+                                    <th>Fecha Plazo</th>
+                                    <th>Descripción</th>
+                                    <th class="text-center">Estado</th>
+                                    <th class="text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaPlazosCuotaBody">
+                                <tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Registrar / Editar Plazo de Cuota por Programa (ADM, SEC) -->
+    <div class="modal fade" id="modalPlazoCuota" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #6b2737 0%, #8e44ad 100%); color: #fff;">
+                    <h5 class="modal-title" id="modalPlazoCuotaTitulo"><i class="fa fa-hourglass-half"></i> Nuevo Plazo de Cuota</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <form id="formPlazoCuota">
+                    <input type="hidden" id="plazoIdPlazo" value="">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="font-weight-bold">Programa <span class="text-danger">*</span></label>
+                            <select class="form-control" id="plazoPrograma" required>
+                                <option value="">Seleccione un programa...</option>
+                                <?php foreach ($programasDisponibles as $p): ?>
+                                    <option value="<?php echo (int)$p['ProgramaID']; ?>">
+                                        <?php echo htmlspecialchars($p['NombrePrograma'] . ' - ' . $p['GradoAcademico'] . ' (' . $p['Codigo'] . ') - ' . $p['Sede']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold">Fecha Plazo <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="plazoFecha" required>
+                            <small class="form-text text-muted">Fecha límite para que los estudiantes de este programa cancelen su cuota vigente.</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold">Descripción</label>
+                            <textarea class="form-control" id="plazoDescripcion" rows="2" maxlength="255" placeholder="Ej: Cuota de septiembre 2026"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-danger mr-auto" id="btnEliminarPlazoCuota" style="display:none;">
+                            <i class="fa fa-trash"></i> Eliminar
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
     <script src="vistas/recursos/assets/vendors/custom/fullcalendar/fullcalendar.bundle.js"></script>

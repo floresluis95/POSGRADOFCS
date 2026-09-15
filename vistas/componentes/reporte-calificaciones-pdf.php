@@ -42,7 +42,7 @@ if ($fechaFin) {
 }
 
 // Incluir modelo
-require_once '../../modelos/conexion.modelo.php';
+require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
 require_once '../../modelos/calificacion.modelo.php';
 
 // Obtener estudiantes y calificaciones
