@@ -345,6 +345,12 @@ kt-aside--fixed kt-page--loading">
                               <label class="custom-control-label" for="pagarMatricula">¿Pagar matrícula?</label>
                             </div>
                           </div>
+                          <div class="col-lg-3 form-group mb-2">
+                            <label class="small font-weight-bold mb-1">Tipo y N° de Cuenta a depositar</label>
+                            <select class="form-control form-control-sm" id="cuentaPago" name="ProgramaCuentaID" required>
+                              <option value="">Seleccione un programa primero...</option>
+                            </select>
+                          </div>
                         </div>
                         <small class="text-muted d-block mb-2" id="textoMatriculaExonerada" style="display:none;">
                           <i class="flaticon2-information"></i> La matrícula queda en <strong>Bs. 0.00</strong> (ya pagada / exonerada).
@@ -915,6 +921,9 @@ function iniciarPreregistro() {
 
                     // El pre-registro SIEMPRE es orden de pago de matrícula (nunca programa completo)
                     recalcularMontoMatricula();
+
+                    // Cargar las cuentas de MATRÍCULA de este programa en el select
+                    cargarCuentasPrograma(programaId);
                 },
                 error: function() {
                     swal("Error", "No se pudieron obtener los detalles del programa", "error");
@@ -925,6 +934,21 @@ function iniciarPreregistro() {
             $('#seccionPago').slideUp();
         }
     });
+
+    function cargarCuentasPrograma(programaId) {
+        $('#cuentaPago').html('<option value="">Cargando cuentas...</option>');
+        $.ajax({
+            url: 'ajax/programacuenta.ajax.php',
+            type: 'POST',
+            data: { accion: 'listarOptionsHtml', ProgramaID: programaId, TipoCuenta: 'MATRICULA' },
+            success: function(html) {
+                $('#cuentaPago').html(html);
+            },
+            error: function() {
+                $('#cuentaPago').html('<option value="">No se pudieron cargar las cuentas</option>');
+            }
+        });
+    }
 
     // ============================================
     // VALIDACIÓN Y ENVÍO DEL FORMULARIO
@@ -958,6 +982,11 @@ function iniciarPreregistro() {
         const programaID = $('#programa').val();
         if (!programaID) {
             swal("Error", "Por favor seleccione un programa", "error");
+            return false;
+        }
+
+        if (!$('#cuentaPago').val()) {
+            swal("Error", "Por favor seleccione la cuenta a la que el estudiante debe depositar", "error");
             return false;
         }
 

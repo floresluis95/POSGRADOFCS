@@ -87,6 +87,7 @@ class OrdenPagoControladores
             $planPropuestoPorcentaje = ($planPropuestoTipo === 'CONTADO') ? $porcentajeDescuento : 0;
 
             $estudianteID = (int)$_POST['idcliente'];
+            $programaCuentaID = !empty($_POST['ProgramaCuentaID']) ? (int)$_POST['ProgramaCuentaID'] : null;
 
             // Campos de facturación: si el formulario no los envía (el pre-registro no los pide),
             // se derivan de los datos del propio estudiante.
@@ -117,6 +118,7 @@ class OrdenPagoControladores
             $datosOrdenPago = array(
                 "EstudianteID" => $estudianteID,
                 "ProgramaID" => (int)$_POST['programa'],
+                "ProgramaCuentaID" => $programaCuentaID,
                 "costomatricula" => $montoMatricula,
                 "montoPagado" => $montoPagado,
                 "pagoCompleto" => $pagoCompleto,

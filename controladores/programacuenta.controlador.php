@@ -55,6 +55,36 @@ class ProgramaCuentaControlador
     }
 
     /**
+     * Renderizar las <option> de un <select> con las cuentas ACTIVAS de un
+     * programa para un tipo dado (ej. MATRICULA), para que el usuario elija
+     * a cuál debe depositar el estudiante al generar la orden de pago.
+     */
+    public function RenderOptionsCuentaProgramaControlador($programaID, $tipoCuenta)
+    {
+        $cuentas = ProgramaCuentaModelo::ListarActivasPorProgramaYTipoModelo($programaID, $tipoCuenta);
+
+        if (empty($cuentas)) {
+            echo '<option value="">Sin cuentas registradas para este programa</option>';
+            return;
+        }
+
+        echo '<option value="">Seleccione la cuenta...</option>';
+        foreach ($cuentas as $cuenta) {
+            $etiqueta = $cuenta['TipoCuenta'] . ' - ' . $cuenta['NumeroCuenta'];
+            if (!empty($cuenta['Banco'])) {
+                $etiqueta .= ' - ' . $cuenta['Banco'];
+            }
+            if ($cuenta['Principal'] == '1') {
+                $etiqueta .= ' (Principal)';
+            }
+
+            echo '<option value="' . htmlspecialchars($cuenta['ProgramaCuentaID']) . '"'
+                . ($cuenta['Principal'] == '1' ? ' selected' : '') . '>'
+                . htmlspecialchars($etiqueta) . '</option>';
+        }
+    }
+
+    /**
      * Renderizar las <option> del datalist de tipos de cuenta ya usados,
      * para que el usuario los pueda reutilizar en vez de re-escribirlos.
      */

@@ -22,6 +22,8 @@ $stmt = $pdo->prepare("
         p.NombrePrograma, p.Codigo, p.Version, p.GradoAcademico,
         COALESCE(
             (SELECT pc.NumeroCuenta FROM programacuenta pc
+             WHERE pc.ProgramaCuentaID = op.ProgramaCuentaID),
+            (SELECT pc.NumeroCuenta FROM programacuenta pc
              WHERE pc.ProgramaID = p.ProgramaID AND pc.TipoCuenta = 'MATRICULA' AND pc.Principal = 1 AND pc.Estado = 1
              LIMIT 1),
             p.NumeroTramite

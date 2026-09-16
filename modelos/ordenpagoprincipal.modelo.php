@@ -264,6 +264,28 @@ class OrdenPagoModelos
 
             $costoMatriculaPrograma = floatval($programa['CostoMatricula']);
 
+            // Validar que la cuenta elegida (a la que el estudiante debe depositar) exista,
+            // esté activa y pertenezca efectivamente a este programa (tipo MATRICULA).
+            $programaCuentaID = !empty($datos['ProgramaCuentaID']) ? (int)$datos['ProgramaCuentaID'] : null;
+            if ($programaCuentaID) {
+                $stmtCuenta = $pdo->prepare(
+                    "SELECT ProgramaCuentaID FROM programacuenta
+                     WHERE ProgramaCuentaID = :id AND ProgramaID = :programaID
+                     AND TipoCuenta = 'MATRICULA' AND Estado = 1"
+                );
+                $stmtCuenta->bindParam(":id", $programaCuentaID, PDO::PARAM_INT);
+                $stmtCuenta->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
+                $stmtCuenta->execute();
+
+                if (!$stmtCuenta->fetch()) {
+                    $pdo->rollBack();
+                    return [
+                        'status' => 'error',
+                        'mensaje' => 'La cuenta seleccionada no es válida para este programa'
+                    ];
+                }
+            }
+
             // Porcentaje de descuento según el plan de pago elegido (Contado / Grupal / Regular=0)
             $porcentajeDescuento = isset($datos['porcentajeDescuento']) ? floatval($datos['porcentajeDescuento']) : 0;
             if ($porcentajeDescuento < 0) $porcentajeDescuento = 0;
@@ -330,13 +352,13 @@ class OrdenPagoModelos
             // INSERTAR SOLO EN ORDENPAGO - NO tocar estudianteprograma
             $stmtOrden = $pdo->prepare(
                 "INSERT INTO ordenpago
-                (NumeroOrden, idInscripcion, EstudianteID, ProgramaID,
+                (NumeroOrden, idInscripcion, EstudianteID, ProgramaID, ProgramaCuentaID,
                  MontoTotal, MontoDescuento, PorcentajeDescuento, MontoFinal,
                  PagoCompleto, CostoMatricula, FechaGeneracion, Observaciones,
                  PlanPropuestoTipo, PlanPropuestoNumeroCuotas, PlanPropuestoPorcentaje,
                  NombreFactura, NitCiFactura, ResponsableGeneracion, Firma, Estado)
                 VALUES
-                (:numeroOrden, NULL, :estudianteID, :programaID,
+                (:numeroOrden, NULL, :estudianteID, :programaID, :programaCuentaID,
                  :montoTotal, :montoDescuento, :porcentajeDescuento, :montoFinal,
                  :pagoCompleto, :costoMatricula, NOW(), :observaciones,
                  :planTipo, :planNumeroCuotas, :planPorcentaje,
@@ -346,6 +368,11 @@ class OrdenPagoModelos
             $stmtOrden->bindParam(":numeroOrden", $numeroOrden, PDO::PARAM_STR);
             $stmtOrden->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
             $stmtOrden->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
+            if ($programaCuentaID) {
+                $stmtOrden->bindParam(":programaCuentaID", $programaCuentaID, PDO::PARAM_INT);
+            } else {
+                $stmtOrden->bindValue(":programaCuentaID", null, PDO::PARAM_NULL);
+            }
             $stmtOrden->bindParam(":montoTotal", $montoTotal);
             $stmtOrden->bindParam(":montoDescuento", $montoDescuento);
             $stmtOrden->bindParam(":porcentajeDescuento", $porcentajeDescuento);

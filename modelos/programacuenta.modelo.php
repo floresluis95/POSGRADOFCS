@@ -35,6 +35,33 @@ class ProgramaCuentaModelo
     }
 
     /**
+     * Listar las cuentas ACTIVAS de un programa filtradas por tipo, para
+     * ofrecerlas como opciones de un <select> (ej. elegir a qué cuenta
+     * debe depositar el estudiante en la orden de pago de matrícula).
+     * @param int $programaID
+     * @param string $tipoCuenta
+     * @return array
+     */
+    public static function ListarActivasPorProgramaYTipoModelo($programaID, $tipoCuenta)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT ProgramaCuentaID, TipoCuenta, NumeroCuenta, Banco, Principal
+                 FROM programacuenta
+                 WHERE ProgramaID = :programaID AND TipoCuenta = :tipoCuenta AND Estado = 1
+                 ORDER BY Principal DESC, NumeroCuenta ASC"
+            );
+            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmt->bindParam(":tipoCuenta", $tipoCuenta, PDO::PARAM_STR);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ListarActivasPorProgramaYTipoModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Listar los tipos de cuenta ya usados en cualquier programa, para
      * ofrecerlos como sugerencia (datalist) al registrar una cuenta nueva.
      * @return array

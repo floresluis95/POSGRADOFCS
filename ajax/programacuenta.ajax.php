@@ -77,6 +77,15 @@ switch ($accion) {
         $ctrl->ListarCuentasProgramaControlador($programaID);
         exit();
 
+    case 'listarOptionsHtml':
+        // Devuelve las <option> de las cuentas activas de un programa/tipo,
+        // para poblar el <select> de "cuenta a depositar" en Pre-Registro
+        $programaID = (int)($_POST['ProgramaID'] ?? 0);
+        $tipoCuenta = strtoupper(htmlspecialchars(trim($_POST['TipoCuenta'] ?? 'MATRICULA')));
+        $ctrl = new ProgramaCuentaControlador();
+        $ctrl->RenderOptionsCuentaProgramaControlador($programaID, $tipoCuenta);
+        exit();
+
     case 'listarTiposHtml':
         // Devuelve las <option> del datalist de tipos de cuenta ya usados
         $ctrl = new ProgramaCuentaControlador();
