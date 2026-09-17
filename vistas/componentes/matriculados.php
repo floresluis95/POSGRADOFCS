@@ -289,85 +289,104 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 
             <div class="modal-body">
 
-                <!-- Información del Estudiante (común a ambas pestañas) -->
-                <div class="alert alert-info">
-                    <h5><i class="fa fa-user"></i> Información del Estudiante</h5>
-                    <p class="mb-0"><strong>Estudiante:</strong> <span id="infoEstudianteNombre"></span></p>
-                    <p class="mb-0"><strong>Programa:</strong> <span id="infoProgramaNombre"></span></p>
+                <!-- Encabezado: estudiante + resumen de pago, visible siempre sin importar la pestaña -->
+                <div class="card bg-light border-0 mb-3">
+                    <div class="card-body py-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-5 mb-2 mb-md-0">
+                                <h6 class="mb-1 font-weight-bold"><i class="fa fa-user text-primary"></i> <span id="infoEstudianteNombre"></span></h6>
+                                <small class="text-muted"><i class="fa fa-graduation-cap"></i> <span id="infoProgramaNombre"></span></small>
+                            </div>
+                            <div class="col-md-7">
+                                <div id="resumenPagoPrograma">
+                                    <div class="text-center p-2"><i class="fa fa-spinner fa-spin"></i> Cargando resumen...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <input type="hidden" name="estudianteID" id="estudianteID">
                 <input type="hidden" name="programaID" id="programaID">
                 <input type="hidden" name="idinscripcion" id="idinscripcion">
 
-                <!-- Pestañas: Cuotas del Programa / Orden de Pago -->
-                <ul class="nav nav-tabs" id="tabsGestionPagos" role="tablist">
+                <!-- Pestañas: Orden de Pago (primero, es el paso inicial) / Cuotas del Programa -->
+                <ul class="nav nav-pills nav-fill mb-3" id="tabsGestionPagos" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" id="tab-pago-modulos-link" data-toggle="tab" href="#tab-pago-modulos" role="tab">
-                            <i class="fa fa-book"></i> Cuotas del Programa
+                        <a class="nav-link active" id="tab-orden-pago-link" data-toggle="tab" href="#tab-orden-pago" role="tab">
+                            <i class="fa fa-file-invoice"></i> 1. Orden de Pago
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="tab-orden-pago-link" data-toggle="tab" href="#tab-orden-pago" role="tab">
-                            <i class="fa fa-file-invoice"></i> Orden de Pago
+                        <a class="nav-link" id="tab-pago-modulos-link" data-toggle="tab" href="#tab-pago-modulos" role="tab">
+                            <i class="fa fa-history"></i> 2. Cuotas del Programa
                         </a>
                     </li>
                 </ul>
 
-                <div class="tab-content border border-top-0 p-3 mb-3">
+                <div class="tab-content mb-3">
+
+                    <!-- Pestaña: Orden de Pago (se emite ANTES de pagar, para que el estudiante pague y luego suba el voucher) -->
+                    <div class="tab-pane fade show active" id="tab-orden-pago" role="tabpanel">
+                        <div id="ordenPagoContenido">
+                            <div class="text-center p-4">
+                                <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
+                                <p class="mt-2">Cargando...</p>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Pestaña: Cuotas del Programa (antes "Pago de Módulos"; las cuotas ya no
                          están ligadas a módulos, su número y monto son libres) -->
-                    <div class="tab-pane fade show active" id="tab-pago-modulos" role="tabpanel">
+                    <div class="tab-pane fade" id="tab-pago-modulos" role="tabpanel">
 
-                        <!-- Resumen de pago del programa -->
-                        <div id="resumenPagoPrograma" class="alert alert-light border">
-                            <div class="text-center p-2"><i class="fa fa-spinner fa-spin"></i> Cargando resumen...</div>
+                        <div id="cuotaPendienteInfo"></div>
+
+                        <div class="card mb-3">
+                            <div class="card-header bg-white py-2">
+                                <strong><i class="fa fa-upload text-primary"></i> Registrar voucher de pago</strong>
+                            </div>
+                            <div class="card-body">
+                                <form id="formPagoModulo" enctype="multipart/form-data">
+                                    <input type="hidden" name="montoCuota" id="montoCuota">
+
+                                    <div class="row">
+                                        <div class="col-lg-4">
+                                            <div class="form-group">
+                                                <label class="small font-weight-bold mb-1">FECHA DE PAGO: *</label>
+                                                <input type="date" class="form-control" name="fechaPago"
+                                                       id="fechaPago" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-lg-4">
+                                            <div class="form-group">
+                                                <label class="small font-weight-bold mb-1">N° VOUCHER / COMPROBANTE: *</label>
+                                                <input type="text" class="form-control" name="numeroVaucher" id="numeroVaucher"
+                                                       placeholder="Ej: 123456" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-lg-4">
+                                            <div class="form-group">
+                                                <label class="small font-weight-bold mb-1">FOTO/ARCHIVO DE VOUCHER: *</label>
+                                                <input type="file" class="form-control-file" name="fmodulo" id="fmodulo"
+                                                       accept="image/*,.pdf" required>
+                                                <div id="previewFotoVoucher" class="mt-2"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="text-right mb-0">
+                                        <button type="submit" id="btnGuardarPagoCuota" class="btn btn-primary" disabled>
+                                            <i class="fa fa-save"></i> Guardar Pago
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
 
-                        <form id="formPagoModulo" enctype="multipart/form-data">
-                            <input type="hidden" name="montoCuota" id="montoCuota">
-
-                            <div id="cuotaPendienteInfo"></div>
-
-                            <div class="row">
-                                <div class="col-lg-6">
-                                    <div class="form-group">
-                                        <label>FECHA DE PAGO: *</label>
-                                        <input type="date" class="form-control" name="fechaPago"
-                                               id="fechaPago" required>
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-6">
-                                    <div class="form-group">
-                                        <label>N° VOUCHER:</label>
-                                        <input type="text" class="form-control" name="numeroVaucher" id="numeroVaucher"
-                                               placeholder="Número de comprobante (opcional)">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-lg-12">
-                                    <div class="form-group">
-                                        <label>FOTO/ARCHIVO DE VOUCHER:</label>
-                                        <input type="file" class="form-control-file" name="fmodulo" id="fmodulo"
-                                               accept="image/*,.pdf">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="text-right">
-                                <button type="submit" id="btnGuardarPagoCuota" class="btn btn-primary" disabled>
-                                    <i class="fa fa-save"></i> Guardar Pago
-                                </button>
-                            </div>
-                        </form>
-
-                        <hr>
-
-                        <h6 class="text-primary"><i class="fa fa-history"></i> Historial de Cuotas</h6>
+                        <h6 class="text-muted small text-uppercase mb-2"><i class="fa fa-history"></i> Historial de cuotas</h6>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered table-hover mb-0">
                                 <thead class="thead-light">
@@ -386,21 +405,6 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                         </div>
                     </div>
 
-                    <!-- Pestaña: Orden de Pago (se emite ANTES de pagar, para que el estudiante pague y luego suba el voucher) -->
-                    <div class="tab-pane fade" id="tab-orden-pago" role="tabpanel">
-                        <small class="text-muted d-block mb-3">
-                            <i class="fa fa-info-circle"></i> Emita la orden de pago que el estudiante debe presentar al pagar.
-                            Una vez realizado el pago, registre el voucher en la pestaña "Cuotas del Programa".
-                        </small>
-
-                        <div id="ordenPagoContenido">
-                            <div class="text-center p-4">
-                                <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
-                                <p class="mt-2">Cargando módulos pendientes...</p>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
 
             </div>
@@ -414,12 +418,31 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     </div>
 </div>
 
+<!-- Modal: Foto del voucher (vista previa antes de guardar, o del historial de
+     cuotas ya registradas). Tamaño de imagen fijo por CSS para que todas se vean
+     igual sin importar su resolución original. -->
+<div class="modal fade" id="modalFotoVoucher" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa fa-image"></i> Foto del Voucher</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="imagenVoucherGrande" src="" alt="Foto del voucher" style="width:500px; max-width:100%; height:500px; object-fit:contain; border-radius:10px; background:#f8f9fa;">
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal: Plan Grupal (seleccionar a los estudiantes que entran en el plan) -->
 <div class="modal fade" id="modalPlanGrupal" tabindex="-1" role="dialog" aria-labelledby="modalPlanGrupalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
-                <h5 class="modal-title" id="modalPlanGrupalLabel">
+                <h5 class="modal-title text-white" id="modalPlanGrupalLabel">
                     <i class="fa fa-users"></i> Plan Grupal - Seleccionar Estudiantes
                 </h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">

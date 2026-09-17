@@ -37,14 +37,14 @@
                         <div class="kt-subheader kt-grid__item" id="kt_subheader" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 2rem 0;">
                             <div class="kt-container">
                                 <div class="kt-subheader__main">
-                                    <h2 class="kt-subheader__title" style="color: white; font-size: 2rem; font-weight: 700;">
-                                        <i class="flaticon2-list-2" style="font-size: 2.5rem;"></i> HISTORIAL DE MÓDULOS
+                                    <h2 class="kt-subheader__title" style="color: #ffffff !important; font-size: 2rem; font-weight: 700;">
+                                        <i class="flaticon2-list-2" style="font-size: 2.5rem; color: #ffffff !important;"></i> HISTORIAL DE MÓDULOS
                                     </h2>
                                     <span class="kt-subheader__separator kt-hidden"></span>
                                     <div class="kt-subheader__breadcrumbs">
-                                        <a href="#" class="kt-subheader__breadcrumbs-home" style="color: rgba(255,255,255,0.8);"><i class="flaticon2-shelter"></i></a>
-                                        <span class="kt-subheader__breadcrumbs-separator" style="color: rgba(255,255,255,0.5);"></span>
-                                        <h4 style="color: rgba(255,255,255,0.9); font-weight: 500;">
+                                        <a href="#" class="kt-subheader__breadcrumbs-home" style="color: rgba(255,255,255,0.8) !important;"><i class="flaticon2-shelter"></i></a>
+                                        <span class="kt-subheader__breadcrumbs-separator" style="color: rgba(255,255,255,0.5) !important;"></span>
+                                        <h4 style="color: rgba(255,255,255,0.9) !important; font-weight: 500;">
                                             ACCESO ESTUDIANTIL
                                         </h4>
                                     </div>
@@ -65,144 +65,105 @@
                                         </h3>
                                     </div>
                                 </div>
-                                <div class="kt-portlet__body" style="padding: 2.5rem; background: #f8f9fa;">
+                                <div class="kt-portlet__body" style="padding: 2rem; background: #f8f9fa;">
 
-                                    <!-- Informaci�n del estudiante -->
-                                    <div class="mb-4" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3);">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-8">
-                                                <div style="display: flex; align-items: center; margin-bottom: 1rem;">
-                                                    <div style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; margin-right: 1.5rem;">
-                                                        <i class="flaticon2-user" style="font-size: 2rem; color: white;"></i>
-                                                    </div>
-                                                    <div>
-                                                        <h4 class="mb-1" style="color: white; font-weight: 700; font-size: 1.5rem;">
-                                                            <span id="estudiante_nombre">Estudiante</span>
-                                                        </h4>
-                                                        <p class="mb-0" style="color: rgba(255,255,255,0.8); font-size: 1rem;">
-                                                            <i class="flaticon2-checking"></i> Consulte el estado de sus pagos de módulos
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4 text-right">
-                                                <div style="background: rgba(255,255,255,0.2); border-radius: 30px; padding: 12px 24px; display: inline-block;">
-                                                    <i class="flaticon2-protected" style="color: white; font-size: 1.2rem;"></i>
-                                                    <span style="color: white; font-weight: 600; font-size: 1rem; margin-left: 8px;">Sesión Activa</span>
-                                                </div>
-                                            </div>
+                                    <!-- Información del estudiante -->
+                                    <div class="d-flex align-items-center justify-content-between mb-3 pb-3" style="border-bottom: 1px solid #E4E6EF;">
+                                        <div>
+                                            <h5 class="mb-0" style="font-weight: 600; color: #464E5F;">
+                                                <i class="flaticon2-user" style="color: #1e3c72;"></i>
+                                                <span id="estudiante_nombre">Estudiante</span>
+                                            </h5>
+                                            <small class="text-muted">Consulte el estado de sus pagos de módulos</small>
                                         </div>
                                     </div>
 
                                     <!-- Selector de programa -->
-                                    <div style="background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 2rem;">
-                                        <div class="row align-items-center">
-                                            <div class="col-lg-3">
-                                                <label class="mb-0" style="font-weight: 700; font-size: 1.1rem; color: #464E5F;">
-                                                    <i class="flaticon2-layers-1" style="color: #1e3c72; font-size: 1.5rem; margin-right: 10px;"></i>
-                                                    Programa:
-                                                </label>
-                                            </div>
-                                            <div class="col-lg-9">
-                                                <select class="form-control" id="select_programa_modulos" name="select_programa_modulos" disabled style="height: 50px; border: 2px solid #E4E6EF; border-radius: 10px; font-size: 1rem; font-weight: 500;">
-                                                    <option value="">Cargando programas...</option>
-                                                </select>
-                                                <small class="form-text" style="color: #B5B5C3; margin-top: 8px;">
-                                                    <i class="flaticon2-information"></i> Seleccione un programa para visualizar el detalle completo de sus módulos
-                                                </small>
-                                            </div>
+                                    <div class="form-group row align-items-center mb-4">
+                                        <label class="col-lg-2 col-form-label" style="font-weight: 600; color: #464E5F;">Programa:</label>
+                                        <div class="col-lg-10">
+                                            <select class="form-control" id="select_programa_modulos" name="select_programa_modulos" disabled>
+                                                <option value="">Cargando programas...</option>
+                                            </select>
+                                            <small class="form-text text-muted">Seleccione un programa para visualizar el detalle completo de sus módulos</small>
                                         </div>
                                     </div>
 
-                                    <!-- �rea de resultados -->
+                                    <!-- Área de resultados -->
                                     <div id="area_resultados_modulos" style="display: none;">
 
                                         <!-- Resumen de pagos -->
-                                        <div class="row mb-5" id="resumen_pagos_container">
-                                            <div class="col-lg-4 mb-3">
-                                                <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3); height: 100%;">
-                                                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                                                        <div>
-                                                            <div style="background: rgba(255,255,255,0.2); border-radius: 12px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                                                                <i class="flaticon2-pie-chart" style="font-size: 2rem; color: white;"></i>
-                                                            </div>
-                                                            <h5 style="color: rgba(255,255,255,0.9); font-size: 0.9rem; font-weight: 500; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">
-                                                                Costo Total Programa
-                                                            </h5>
-                                                            <h2 style="color: white; font-weight: 700; font-size: 2.2rem; margin: 0;">
-                                                                Bs. <span id="total_programa">0.00</span>
-                                                            </h2>
-                                                        </div>
+                                        <div class="row mb-3" id="resumen_pagos_container">
+                                            <div class="col-md-4 mb-2">
+                                                <div class="d-flex align-items-center" style="background: white; border: 1px solid #E4E6EF; border-left: 3px solid #1e3c72; border-radius: 4px; padding: 0.85rem 1rem;">
+                                                    <i class="flaticon2-pie-chart" style="font-size: 1.3rem; color: #1e3c72; margin-right: 0.85rem;"></i>
+                                                    <div>
+                                                        <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Costo Total</div>
+                                                        <strong style="font-size: 1.15rem; color: #464E5F;">Bs. <span id="total_programa">0.00</span></strong>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-4 mb-3">
-                                                <div style="background: linear-gradient(135deg, #1e7145 0%, #27ae60 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(30, 113, 69, 0.3); height: 100%;">
-                                                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                                                        <div>
-                                                            <div style="background: rgba(255,255,255,0.2); border-radius: 12px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                                                                <i class="flaticon2-check-mark" style="font-size: 2rem; color: white;"></i>
-                                                            </div>
-                                                            <h5 style="color: rgba(255,255,255,0.9); font-size: 0.9rem; font-weight: 500; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">
-                                                                Total Pagado
-                                                            </h5>
-                                                            <h2 style="color: white; font-weight: 700; font-size: 2.2rem; margin: 0;">
-                                                                Bs. <span id="total_pagado">0.00</span>
-                                                            </h2>
-                                                            <p style="color: rgba(255,255,255,0.8); margin-top: 0.5rem; margin-bottom: 0; font-size: 0.95rem;">
-                                                                <i class="flaticon2-files-and-folders"></i> <span id="cantidad_pagados">0</span> cuotas pagadas
-                                                            </p>
-                                                        </div>
+                                            <div class="col-md-4 mb-2">
+                                                <div class="d-flex align-items-center" style="background: white; border: 1px solid #E4E6EF; border-left: 3px solid #27ae60; border-radius: 4px; padding: 0.85rem 1rem;">
+                                                    <i class="flaticon2-check-mark" style="font-size: 1.3rem; color: #27ae60; margin-right: 0.85rem;"></i>
+                                                    <div>
+                                                        <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Total Pagado</div>
+                                                        <strong style="font-size: 1.15rem; color: #464E5F;">Bs. <span id="total_pagado">0.00</span></strong>
+                                                        <span class="text-muted" style="font-size: 0.8rem;">(<span id="cantidad_pagados">0</span> cuotas)</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-4 mb-3">
-                                                <div style="background: linear-gradient(135deg, #c0392b 0%, #dc3545 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(192, 57, 43, 0.3); height: 100%;">
-                                                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                                                        <div>
-                                                            <div style="background: rgba(255,255,255,0.2); border-radius: 12px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                                                                <i class="flaticon2-hourglass-1" style="font-size: 2rem; color: white;"></i>
-                                                            </div>
-                                                            <h5 style="color: rgba(255,255,255,0.9); font-size: 0.9rem; font-weight: 500; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">
-                                                                Total Pendiente
-                                                            </h5>
-                                                            <h2 style="color: white; font-weight: 700; font-size: 2.2rem; margin: 0;">
-                                                                Bs. <span id="total_pendiente">0.00</span>
-                                                            </h2>
-                                                            <p style="color: rgba(255,255,255,0.8); margin-top: 0.5rem; margin-bottom: 0; font-size: 0.95rem;" id="estado_plan_texto">
-                                                                <i class="flaticon2-warning"></i> Saldo por cancelar
-                                                            </p>
-                                                        </div>
+                                            <div class="col-md-4 mb-2">
+                                                <div class="d-flex align-items-center" style="background: white; border: 1px solid #E4E6EF; border-left: 3px solid #dc3545; border-radius: 4px; padding: 0.85rem 1rem;">
+                                                    <i class="flaticon2-hourglass-1" style="font-size: 1.3rem; color: #dc3545; margin-right: 0.85rem;"></i>
+                                                    <div>
+                                                        <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Total Pendiente</div>
+                                                        <strong style="font-size: 1.15rem; color: #464E5F;">Bs. <span id="total_pendiente">0.00</span></strong>
+                                                        <div class="text-muted" style="font-size: 0.8rem;" id="estado_plan_texto">Saldo por cancelar</div>
                                                     </div>
                                                 </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Estado de Matrícula -->
+                                        <div class="mb-4" id="matricula_container" style="background: white; border: 1px solid #E4E6EF; border-radius: 4px;">
+                                            <div style="padding: 0.9rem 1.25rem; border-bottom: 1px solid #E4E6EF;">
+                                                <h6 style="margin: 0; font-weight: 600; color: #464E5F; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px;">
+                                                    <i class="flaticon2-graduation-cap" style="color: #1e3c72;"></i>
+                                                    Matrícula
+                                                </h6>
+                                            </div>
+                                            <div style="padding: 1.1rem 1.25rem;" id="matricula_cuerpo">
+                                                <span class="text-muted">Sin información de matrícula</span>
                                             </div>
                                         </div>
 
                                         <!-- Historial de Cuotas -->
-                                        <div class="mb-4" id="modulos_pagados_container" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
-                                            <div style="background: linear-gradient(135deg, #1e7145 0%, #27ae60 100%); padding: 1.5rem 2rem;">
-                                                <h3 style="color: white; font-weight: 700; margin: 0; font-size: 1.4rem;">
-                                                    <i class="flaticon2-check-mark" style="font-size: 1.8rem; margin-right: 10px;"></i>
+                                        <div class="mb-4" id="modulos_pagados_container" style="background: white; border: 1px solid #E4E6EF; border-radius: 4px;">
+                                            <div style="padding: 0.9rem 1.25rem; border-bottom: 1px solid #E4E6EF;">
+                                                <h6 style="margin: 0; font-weight: 600; color: #464E5F; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px;">
+                                                    <i class="flaticon2-check-mark" style="color: #27ae60;"></i>
                                                     Historial de Cuotas
-                                                </h3>
+                                                </h6>
                                             </div>
-                                            <div style="padding: 2rem;">
+                                            <div style="padding: 1.25rem;">
                                                 <div class="table-responsive">
-                                                    <table class="table table-hover" id="tabla_modulos_pagados" style="margin-bottom: 0;">
+                                                    <table class="table table-hover table-sm" id="tabla_modulos_pagados" style="margin-bottom: 0;">
                                                         <thead>
-                                                            <tr style="background: #f8f9fa; border-bottom: 2px solid #1e7145;">
-                                                                <th class="text-center" width="10%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">N° CUOTA</th>
-                                                                <th class="text-center" width="20%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">MONTO</th>
-                                                                <th class="text-center" width="20%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">FECHA DE PAGO</th>
-                                                                <th class="text-center" width="25%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">Nº VOUCHER</th>
-                                                                <th class="text-center" width="25%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">ESTADO</th>
+                                                            <tr style="background: #f8f9fa; border-bottom: 2px solid #E4E6EF;">
+                                                                <th class="text-center" width="8%" style="padding: 0.6rem; font-weight: 600; color: #464E5F; font-size: 0.8rem;">N° CUOTA</th>
+                                                                <th class="text-center" width="15%" style="padding: 0.6rem; font-weight: 600; color: #464E5F; font-size: 0.8rem;">MONTO</th>
+                                                                <th class="text-center" width="17%" style="padding: 0.6rem; font-weight: 600; color: #464E5F; font-size: 0.8rem;">FECHA GENERADA</th>
+                                                                <th class="text-center" width="17%" style="padding: 0.6rem; font-weight: 600; color: #464E5F; font-size: 0.8rem;">FECHA DE PAGO</th>
+                                                                <th class="text-center" width="21%" style="padding: 0.6rem; font-weight: 600; color: #464E5F; font-size: 0.8rem;">Nº VOUCHER</th>
+                                                                <th class="text-center" width="21%" style="padding: 0.6rem; font-weight: 600; color: #464E5F; font-size: 0.8rem;">ESTADO</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody id="tbody_modulos_pagados">
                                                             <tr>
-                                                                <td colspan="5" class="text-center" style="padding: 3rem; color: #B5B5C3;">
-                                                                    <i class="flaticon2-information" style="font-size: 3rem; color: #E4E6EF;"></i>
-                                                                    <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay cuotas registradas</p>
+                                                                <td colspan="6" class="text-center" style="padding: 2rem; color: #B5B5C3;">
+                                                                    <i class="flaticon2-information" style="font-size: 2rem; color: #E4E6EF;"></i>
+                                                                    <p style="margin-top: 0.5rem; font-size: 1rem; font-weight: 500;">No hay cuotas registradas</p>
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -225,6 +186,36 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal: Foto del recibo/voucher de una cuota. Tamaño fijo (ver estilo abajo)
+         para que todas las fotos se muestren igual sin importar su resolución
+         original. -->
+    <div class="modal fade" id="modalFotoRecibo" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="flaticon2-photograph"></i> Foto del Recibo</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="imagen_recibo_grande" src="" alt="Foto del recibo" class="foto-recibo-tamano-fijo">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .foto-recibo-tamano-fijo {
+            width: 500px;
+            max-width: 100%;
+            height: 500px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+    </style>
 
     <script>
         // Esperar a que jQuery esté completamente cargado

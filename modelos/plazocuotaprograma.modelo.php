@@ -185,10 +185,18 @@ class PlazoCuotaProgramaModelo
     }
 
     /**
-     * Programas del estudiante cuyo plazo de cuota ya venció y que todavía
-     * tienen una orden de pago de cuota pendiente (no cancelada). Se usa
+     * Programas del estudiante con una cuota vencida y sin cancelar. Se usa
      * para el aviso al ingresar al sistema y para bloquear la consulta de
      * calificaciones.
+     *
+     * Combina dos fuentes de fecha límite (puede haber una orden vencida sin
+     * que el programa tenga un "Plazo de Cuota" configurado en Calendario
+     * Académico, que es el caso más común):
+     *  - El plazo general del PROGRAMA en `plazocuotaprograma` (Calendario
+     *    Académico, configurado a mano por Administración/Secretaría).
+     *  - La fecha límite propia de cada orden de cuota (`ordenpago.FechaVencimiento`,
+     *    la que el administrador pone en "Fecha límite de pago" al generarla).
+     * Si un programa aparece por ambas fuentes, se queda con la más vencida.
      * @param int $estudianteID
      * @return array<int, array{ProgramaID:int, NombrePrograma:string, FechaPlazo:string, DiasVencido:int}>
      */
@@ -202,9 +210,74 @@ class PlazoCuotaProgramaModelo
                  FROM estudianteprograma ep
                  INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
                  INNER JOIN plazocuotaprograma pc ON pc.ProgramaID = ep.ProgramaID AND pc.Estado = 'ACTIVO'
-                 WHERE ep.EstudianteID = :estudianteID
+                 WHERE ep.EstudianteID = :estudianteID1
                  AND ep.Estado = 'ACTIVO'
                  AND pc.FechaPlazo < CURDATE()
+                 AND EXISTS (
+                     SELECT 1 FROM ordenpago op
+                     WHERE op.EstudianteID = ep.EstudianteID
+                     AND op.ProgramaID = ep.ProgramaID
+                     AND op.Estado = 'PENDIENTE'
+                     AND op.ListaModulos IS NULL
+                 )
+                 UNION
+                 SELECT
+                    p.ProgramaID, p.NombrePrograma, op.FechaVencimiento AS FechaPlazo,
+                    DATEDIFF(CURDATE(), op.FechaVencimiento) AS DiasVencido
+                 FROM ordenpago op
+                 INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
+                 WHERE op.EstudianteID = :estudianteID2
+                 AND op.Estado = 'PENDIENTE'
+                 AND op.ListaModulos IS NULL
+                 AND op.FechaVencimiento IS NOT NULL
+                 AND op.FechaVencimiento < CURDATE()"
+            );
+            $stmt->bindParam(":estudianteID1", $estudianteID, PDO::PARAM_INT);
+            $stmt->bindParam(":estudianteID2", $estudianteID, PDO::PARAM_INT);
+            $stmt->execute();
+            $filas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Puede haber una fila por cada fuente para el mismo programa: nos
+            // quedamos con la más vencida (mayor DiasVencido) por programa.
+            $porPrograma = [];
+            foreach ($filas as $fila) {
+                $id = (int)$fila['ProgramaID'];
+                if (!isset($porPrograma[$id]) || (int)$fila['DiasVencido'] > (int)$porPrograma[$id]['DiasVencido']) {
+                    $porPrograma[$id] = $fila;
+                }
+            }
+            usort($porPrograma, function ($a, $b) {
+                return strcmp($a['FechaPlazo'], $b['FechaPlazo']);
+            });
+
+            return array_values($porPrograma);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerAvisoEstudianteModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Plazo de cuota por Programa del estudiante, con una orden pendiente de
+     * pago, para el aviso al ingresar al sistema. A diferencia de
+     * ObtenerAvisoEstudianteModelo(), se muestra desde que Administración
+     * registra el plazo (venza o no), no solo cuando ya está vencido; sirve
+     * únicamente para notificar, nunca para bloquear calificaciones.
+     * @param int $estudianteID
+     * @return array<int, array{ProgramaID:int, NombrePrograma:string, FechaPlazo:string, DiasVencido:int}>
+     */
+    public static function ObtenerAvisosProgramaModelo($estudianteID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT
+                    p.ProgramaID, p.NombrePrograma, pc.FechaPlazo,
+                    DATEDIFF(CURDATE(), pc.FechaPlazo) AS DiasVencido
+                 FROM estudianteprograma ep
+                 INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
+                 INNER JOIN plazocuotaprograma pc ON pc.ProgramaID = ep.ProgramaID AND pc.Estado = 'ACTIVO'
+                 WHERE ep.EstudianteID = :estudianteID
+                 AND ep.Estado = 'ACTIVO'
                  AND EXISTS (
                      SELECT 1 FROM ordenpago op
                      WHERE op.EstudianteID = ep.EstudianteID
@@ -218,7 +291,7 @@ class PlazoCuotaProgramaModelo
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Error en ObtenerAvisoEstudianteModelo: " . $e->getMessage());
+            error_log("Error en ObtenerAvisosProgramaModelo: " . $e->getMessage());
             return [];
         }
     }

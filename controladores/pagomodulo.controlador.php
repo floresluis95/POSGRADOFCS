@@ -29,19 +29,28 @@ class PagoModuloControlador
             return ['estado' => 'validacion', 'mensaje' => 'Debe ingresar la fecha y el monto de la cuota'];
         }
 
+        if (empty(trim($_POST['numeroVaucher'] ?? ''))) {
+            return ['estado' => 'validacion', 'mensaje' => 'El N° de voucher o código de comprobante de pago es obligatorio'];
+        }
+
+        if (empty($_FILES['fmodulo']) || $_FILES['fmodulo']['error'] !== 0) {
+            return ['estado' => 'validacion', 'mensaje' => 'La foto o archivo del voucher es obligatoria'];
+        }
+
         $idinscripcion = (int)$_POST['idinscripcion'];
         $fechaPago = htmlspecialchars(trim($_POST['fechaPago']));
-        $numeroVaucher = htmlspecialchars(trim($_POST['numeroVaucher'] ?? ''));
+        $numeroVaucher = htmlspecialchars(trim($_POST['numeroVaucher']));
         $montoCuota = floatval($_POST['montoCuota']);
 
         if ($montoCuota <= 0) {
             return ['estado' => 'validacion', 'mensaje' => 'El monto de la cuota debe ser mayor a 0'];
         }
 
-        $archivoVoucher = null;
-        if (isset($_FILES['fmodulo']) && $_FILES['fmodulo']['error'] == 0) {
-            $archivoVoucher = file_get_contents($_FILES['fmodulo']['tmp_name']);
+        if (PagoModuloModelo::ExisteVoucherCuotaModelo($numeroVaucher)) {
+            return ['estado' => 'validacion', 'mensaje' => 'Ese N° de voucher ya fue registrado en otra cuota. Verifique el número o use un comprobante distinto'];
         }
+
+        $archivoVoucher = file_get_contents($_FILES['fmodulo']['tmp_name']);
 
         $resultado = PagoModuloModelo::RegistrarCuotaProgramaModelo([
             'idinscripcion' => $idinscripcion,

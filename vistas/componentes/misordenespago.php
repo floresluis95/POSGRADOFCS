@@ -37,14 +37,14 @@
                         <div class="kt-subheader kt-grid__item" id="kt_subheader" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 2rem 0;">
                             <div class="kt-container">
                                 <div class="kt-subheader__main">
-                                    <h2 class="kt-subheader__title" style="color: white; font-size: 2rem; font-weight: 700;">
-                                        <i class="flaticon2-print" style="font-size: 2.5rem;"></i> MIS ÓRDENES DE PAGO
+                                    <h2 class="kt-subheader__title" style="color: #ffffff !important; font-size: 2rem; font-weight: 700;">
+                                        <i class="flaticon2-print" style="font-size: 2.5rem; color: #ffffff !important;"></i> MIS ÓRDENES DE PAGO
                                     </h2>
                                     <span class="kt-subheader__separator kt-hidden"></span>
                                     <div class="kt-subheader__breadcrumbs">
-                                        <a href="#" class="kt-subheader__breadcrumbs-home" style="color: rgba(255,255,255,0.8);"><i class="flaticon2-shelter"></i></a>
-                                        <span class="kt-subheader__breadcrumbs-separator" style="color: rgba(255,255,255,0.5);"></span>
-                                        <h4 style="color: rgba(255,255,255,0.9); font-weight: 500;">
+                                        <a href="#" class="kt-subheader__breadcrumbs-home" style="color: rgba(255,255,255,0.8) !important;"><i class="flaticon2-shelter"></i></a>
+                                        <span class="kt-subheader__breadcrumbs-separator" style="color: rgba(255,255,255,0.5) !important;"></span>
+                                        <h4 style="color: rgba(255,255,255,0.9) !important; font-weight: 500;">
                                             ACCESO ESTUDIANTIL
                                         </h4>
                                     </div>
@@ -84,6 +84,29 @@
                                         <p style="margin-top:1rem; font-size:1.1rem; font-weight:500;">Todavía no tiene órdenes de pago generadas.</p>
                                     </div>
 
+                                    <div class="row mb-3 align-items-end" id="ordenes_filtros" style="display:none;">
+                                        <div class="col-md-6 col-lg-4 mb-2">
+                                            <label class="small font-weight-bold mb-1">Programa</label>
+                                            <select class="form-control" id="filtro_programa">
+                                                <option value="">Todos los programas</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 col-lg-4 mb-2">
+                                            <label class="small font-weight-bold mb-1">Tipo</label>
+                                            <select class="form-control" id="filtro_tipo">
+                                                <option value="">Todos</option>
+                                                <option value="MATRICULA">Matrícula</option>
+                                                <option value="CUOTA">Cuota</option>
+                                                <option value="MODULOS">Pago de Módulos</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-lg-4 mb-2 text-lg-right">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn_ver_anuladas" style="display:none;" data-toggle="modal" data-target="#modalOrdenesAnuladas">
+                                                <i class="fa fa-ban"></i> Ver anuladas (<span id="conteo_anuladas">0</span>)
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <div class="table-responsive" id="ordenes_tabla_wrap" style="display:none;">
                                         <table class="table table-hover" id="tabla_ordenes_pago">
                                             <thead>
@@ -102,6 +125,43 @@
                                         </table>
                                     </div>
 
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal: Órdenes de Pago Anuladas (fuera de la lista principal, solo consulta) -->
+                        <div class="modal fade" id="modalOrdenesAnuladas" tabindex="-1" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title"><i class="fa fa-ban text-muted"></i> Órdenes de Pago Anuladas</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <small class="text-muted d-block mb-3">
+                                            <i class="flaticon2-information"></i> Estas órdenes fueron anuladas y no tienen validez para el pago.
+                                            Se muestran aquí solo como referencia.
+                                        </small>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered mb-0">
+                                                <thead class="thead-light">
+                                                    <tr>
+                                                        <th>N° Orden</th>
+                                                        <th>Programa</th>
+                                                        <th>Tipo</th>
+                                                        <th class="text-right">Monto</th>
+                                                        <th>Generada</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="contenido_ordenes_anuladas"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

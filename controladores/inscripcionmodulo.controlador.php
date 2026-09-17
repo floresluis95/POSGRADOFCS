@@ -79,12 +79,7 @@ class InscripcionModuloControladores
                     <td class="text-center">' . $fechaFormateada . '</td>
                     <td class="text-center">
                         <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle btn-actions-dropdown"
-                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fa fa-cog"></i> Acciones
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-right">
-                                <a class="dropdown-item btn-gestionar-pagos" href="#"
+                            <button type="button" class="btn btn-success btn-sm btn-gestionar-pagos" title="Gestionar Pagos del Programa"
                                    data-estudiante-id="' . $estudiante['EstudianteID'] . '"
                                    data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
                                    data-estudiante-ci="' . $estudiante['Ci'] . '"
@@ -94,8 +89,13 @@ class InscripcionModuloControladores
                                    data-version="' . htmlspecialchars($estudiante['Version'] ?? '') . '"
                                    data-numero-tramite="' . htmlspecialchars($estudiante['NumeroTramite'] ?? '') . '"
                                    data-idinscripcion="' . $estudiante['idInscripcion'] . '">
-                                    <i class="fa fa-credit-card text-success"></i> Gestionar Pagos del Programa
-                                </a>
+                                <i class="fa fa-credit-card"></i> Pagos
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle btn-actions-dropdown"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fa fa-cog"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
                                 <a class="dropdown-item btn-ver-detalles" href="#"
                                    data-estudiante-id="' . $estudiante['EstudianteID'] . '"
                                    data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"

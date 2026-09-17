@@ -293,7 +293,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
     <div class="modal-dialog modal-xl" role="document" style="max-width: 90%;">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
-                <h5 class="modal-title">
+                <h5 class="modal-title text-white">
                     <i class="fa fa-book"></i> REGISTRAR MÓDULOS DEL PROGRAMA
                 </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -375,7 +375,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #52616e 0%, #37424a 100%); color: white;">
-                <h5 class="modal-title">
+                <h5 class="modal-title text-white">
                     <i class="fa fa-edit"></i> EDITAR MÓDULO
                 </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">

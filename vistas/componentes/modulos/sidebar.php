@@ -557,24 +557,19 @@ if ($_SESSION["Tipo"] == "EST") {
                     <i class="flaticon2-analytics-1" style="color: #fd397a;"></i> DETALLE DE PAGOS
                   </h4>
                 </li>  
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="historialmodulosestudiante" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-list-3" style="color: #fd397a;"></i>
-                    <span class="kt-menu__link-text">MODULOS</span>
-                  </a>
-                </li>
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="historialreciboestudiante" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-list-3" style="color: #fd397a;"></i>
-                    <span class="kt-menu__link-text">RECIBOS</span>
-                  </a>
-                </li>
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="misordenespago" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-print" style="color: #fd397a;"></i>
                     <span class="kt-menu__link-text">MIS ÓRDENES DE PAGO</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="historialmodulosestudiante" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-list-3" style="color: #fd397a;"></i>
+                    <span class="kt-menu__link-text">HISTORIAL DE PAGOS</span>
+                  </a>
+                </li>
+               
               </ul>
             </div>
           </div>

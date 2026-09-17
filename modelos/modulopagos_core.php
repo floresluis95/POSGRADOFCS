@@ -132,11 +132,14 @@ class PagoModuloModelo
     {
         try {
             $stmt = Conexion::Conectar()->prepare(
-                "SELECT Idpagomodulo, idinscripcion, NumeroCuota, montocuota, fechapago,
-                        nvaucher, Estado, MotivoRechazo, FechaRegistro
-                 FROM pagomodulo
-                 WHERE idinscripcion = :idinscripcion AND Estado != 'ANULADO'
-                 ORDER BY FechaRegistro DESC"
+                "SELECT pm.Idpagomodulo, pm.idinscripcion, pm.NumeroCuota, pm.montocuota, pm.fechapago,
+                        pm.nvaucher, pm.Estado, pm.MotivoRechazo, pm.FechaRegistro,
+                        op.FechaGeneracion AS FechaSolicitud,
+                        CASE WHEN pm.fmodulo IS NOT NULL THEN 'SI' ELSE 'NO' END as TieneImagen
+                 FROM pagomodulo pm
+                 LEFT JOIN ordenpago op ON op.IdOrdenPago = pm.IdOrdenPago
+                 WHERE pm.idinscripcion = :idinscripcion AND pm.Estado != 'ANULADO'
+                 ORDER BY pm.FechaRegistro DESC"
             );
             $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
             $stmt->execute();
@@ -144,6 +147,29 @@ class PagoModuloModelo
         } catch (PDOException $e) {
             error_log("Error en ObtenerCuotasPorInscripcionModelo: " . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Si el número de voucher ya fue usado en otra cuota registrada (evita que
+     * el mismo comprobante se use para pagar dos cuotas distintas).
+     * @param string $numeroVaucher
+     * @return bool
+     */
+    public static function ExisteVoucherCuotaModelo($numeroVaucher)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT 1 FROM pagomodulo
+                 WHERE LOWER(nvaucher) = LOWER(:numeroVaucher) AND Estado != 'ANULADO'
+                 LIMIT 1"
+            );
+            $stmt->bindParam(":numeroVaucher", $numeroVaucher, PDO::PARAM_STR);
+            $stmt->execute();
+            return $stmt->fetch() !== false;
+        } catch (PDOException $e) {
+            error_log("Error en ExisteVoucherCuotaModelo: " . $e->getMessage());
+            return false;
         }
     }
 
@@ -196,10 +222,11 @@ class PagoModuloModelo
 
             $stmt = $pdo->prepare(
                 "INSERT INTO pagomodulo
-                (idinscripcion, NumeroCuota, montocuota, fechapago, nvaucher, fmodulo, Estado)
-                VALUES (:idinscripcion, :numeroCuota, :montocuota, :fechapago, :nvaucher, :fmodulo, 'PAGADO')"
+                (idinscripcion, IdOrdenPago, NumeroCuota, montocuota, fechapago, nvaucher, fmodulo, Estado)
+                VALUES (:idinscripcion, :idOrdenPago, :numeroCuota, :montocuota, :fechapago, :nvaucher, :fmodulo, 'PAGADO')"
             );
             $stmt->bindParam(":idinscripcion", $datos['idinscripcion'], PDO::PARAM_INT);
+            $stmt->bindParam(":idOrdenPago", $orden['IdOrdenPago'], PDO::PARAM_INT);
             $stmt->bindParam(":numeroCuota", $numeroCuota, PDO::PARAM_INT);
             $stmt->bindParam(":montocuota", $datos['montocuota'], PDO::PARAM_STR);
             $stmt->bindParam(":fechapago", $datos['fechapago'], PDO::PARAM_STR);
@@ -348,7 +375,8 @@ class PagoModuloModelo
     {
         try {
             $stmtInsc = Conexion::Conectar()->prepare(
-                "SELECT idInscripcion FROM estudianteprograma
+                "SELECT idInscripcion, costomatricula, montoPagado, nvauchermatricula, FechaInscripcion
+                 FROM estudianteprograma
                  WHERE EstudianteID = :estudianteID
                  AND ProgramaID = :programaID
                  AND Estado = 'ACTIVO'
@@ -360,18 +388,25 @@ class PagoModuloModelo
             $inscripcion = $stmtInsc->fetch(PDO::FETCH_ASSOC);
 
             if (!$inscripcion) {
-                return ['resumen' => null, 'cuotas' => []];
+                return ['resumen' => null, 'cuotas' => [], 'matricula' => null];
             }
 
             $idinscripcion = $inscripcion['idInscripcion'];
 
             return [
                 'resumen' => self::ObtenerResumenPagoProgramaModelo($idinscripcion, $programaID),
-                'cuotas' => self::ObtenerCuotasPorInscripcionModelo($idinscripcion)
+                'cuotas' => self::ObtenerCuotasPorInscripcionModelo($idinscripcion),
+                'matricula' => [
+                    'costo' => round(floatval($inscripcion['costomatricula']), 2),
+                    'montoPagado' => round(floatval($inscripcion['montoPagado']), 2),
+                    'voucher' => $inscripcion['nvauchermatricula'],
+                    'fecha' => $inscripcion['FechaInscripcion'],
+                    'pagada' => floatval($inscripcion['montoPagado']) >= floatval($inscripcion['costomatricula']) && floatval($inscripcion['costomatricula']) > 0
+                ]
             ];
         } catch (PDOException $e) {
             error_log("Error en ObtenerDetalleModulosEstudianteModelo: " . $e->getMessage());
-            return ['resumen' => null, 'cuotas' => []];
+            return ['resumen' => null, 'cuotas' => [], 'matricula' => null];
         }
     }
 }

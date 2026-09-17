@@ -7,9 +7,12 @@
 (function () {
     var contexto = window.CALENDARIO_CONTEXTO || { tipoSesion: '', puedeEscribir: false, esAdminOSec: false, programaIDsEstudiante: [], programasPorSede: {} };
     var calendar = null;
+    // Asignada dentro de inicializarPlazoCuota(); permite abrir el formulario
+    // de edición del Plazo de Cuota desde un clic directo en el calendario.
+    var abrirModalEdicionPlazoCuota = null;
 
     function etiquetaTipo(tipo) {
-        return { CLASE: 'Clase', ACTIVIDAD: 'Actividad', CLINICA: 'Clínica', PAGO: 'Vencimiento de pago', PLAZOCUOTA: 'Plazo de cuota' }[tipo] || tipo;
+        return { CLASE: 'Clase', ACTIVIDAD: 'Actividad', CLINICA: 'Clínica', PAGO: 'Vencimiento de pago (individual)', PLAZOCUOTA: 'Plazo de cuota (todo el programa)' }[tipo] || tipo;
     }
 
     function colorTipo(tipo) {
@@ -71,10 +74,10 @@
                             .append($('<td class="text-center"></td>').html(estadoBadge))
                             .append(
                                 $('<td class="text-right"></td>').append(
-                                    $('<button type="button" class="btn btn-xs btn-clean btn-icon" title="Editar"><i class="la la-edit"></i></button>')
+                                    $('<button type="button" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="la la-edit"></i> Editar</button>')
                                         .on('click', function () { abrirModalEdicionPlazo(p); }),
                                     ' ',
-                                    $('<button type="button" class="btn btn-xs btn-clean btn-icon text-danger" title="Eliminar"><i class="la la-trash"></i></button>')
+                                    $('<button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="la la-trash"></i> Eliminar</button>')
                                         .on('click', function () { eliminarPlazoCuota(p.IdPlazo); })
                                 )
                             );
@@ -110,14 +113,14 @@
 
         function eliminarPlazoCuota(idPlazo) {
             Swal.fire({
-                icon: 'warning',
+                type: 'warning',
                 title: '¿Eliminar este plazo de cuota?',
                 text: 'Esta acción no se puede deshacer.',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, eliminar',
                 cancelButtonText: 'Cancelar'
             }).then(function (result) {
-                if (!result.isConfirmed) return;
+                if (!result.value) return;
 
                 $.ajax({
                     url: 'ajax/plazocuotaprograma.ajax.php',
@@ -129,17 +132,19 @@
                             $('#modalPlazoCuota').modal('hide');
                             cargarPlazosCuota();
                             if (calendar) calendar.refetchEvents();
-                            Swal.fire({ icon: 'success', title: 'Eliminado', timer: 1400, showConfirmButton: false });
+                            Swal.fire({ type: 'success', title: 'Eliminado', timer: 1400, showConfirmButton: false });
                         } else {
-                            Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo eliminar' });
+                            Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo eliminar' });
                         }
                     },
                     error: function () {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el plazo' });
+                        Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo eliminar el plazo' });
                     }
                 });
             });
         }
+
+        abrirModalEdicionPlazoCuota = abrirModalEdicionPlazo;
 
         // Abrir el listado (modal) de Plazos de Cuota desde el botón de la barra de herramientas
         $('#btnAbrirPlazosCuota').on('click', function () {
@@ -181,14 +186,14 @@
                         $('#modalPlazoCuota').modal('hide');
                         cargarPlazosCuota();
                         if (calendar) calendar.refetchEvents();
-                        Swal.fire({ icon: 'success', title: 'Listo', text: resp.mensaje, timer: 1600, showConfirmButton: false });
+                        Swal.fire({ type: 'success', title: 'Listo', text: resp.mensaje, timer: 1600, showConfirmButton: false });
                     } else {
-                        Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo guardar el plazo' });
+                        Swal.fire({ type: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo guardar el plazo' });
                     }
                 },
                 error: function () {
                     $btnSubmit.prop('disabled', false);
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar el plazo' });
+                    Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo guardar el plazo' });
                 }
             });
         });
@@ -310,12 +315,21 @@
                     },
                     error: function () {
                         failureCallback();
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudieron cargar los eventos del calendario' });
+                        Swal.fire({ type: 'error', title: 'Error', text: 'No se pudieron cargar los eventos del calendario' });
                     }
                 });
             },
             eventClick: function (info) {
                 var props = info.event.extendedProps;
+                if (props.tipoEvento === 'PLAZOCUOTA' && contexto.esAdminOSec && abrirModalEdicionPlazoCuota) {
+                    abrirModalEdicionPlazoCuota({
+                        IdPlazo: props.idPlazo,
+                        ProgramaID: props.programaID,
+                        FechaPlazo: props.fechaPlazo,
+                        Descripcion: props.descripcionOriginal
+                    });
+                    return;
+                }
                 if (props.editable) {
                     abrirModalEdicion(info.event);
                 } else {
@@ -359,12 +373,12 @@
                 success: function (resp) {
                     if (!resp.success) {
                         info.revert();
-                        Swal.fire({ icon: 'error', title: 'No se pudo mover el evento', text: resp.mensaje || '' });
+                        Swal.fire({ type: 'error', title: 'No se pudo mover el evento', text: resp.mensaje || '' });
                     }
                 },
                 error: function () {
                     info.revert();
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el evento' });
+                    Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo actualizar el evento' });
                 }
             });
         }
@@ -435,6 +449,18 @@
                 $('#detalleEventoDescripcionWrap').hide();
             }
 
+            // Aclaración de a quién aplica cada tipo de aviso de cuota, para no
+            // confundir el vencimiento individual (según la solicitud/orden de
+            // pago de un estudiante) con el plazo general del programa (aplica a
+            // todos los que están en Plan Regular y no cancelaron su cuota).
+            if (props.alcance) {
+                $('#detalleEventoAlcance').text(props.alcance);
+                $('#detalleEventoAccion').text(props.accionSugerida || '');
+                $('#detalleEventoAlcanceWrap').css('border-left-color', esPago ? '#d4a017' : '#8e44ad').show();
+            } else {
+                $('#detalleEventoAlcanceWrap').hide();
+            }
+
             var celular = (props.celular || '').replace(/\D/g, '');
             if (esPago && celular) {
                 var mensaje = 'Hola ' + (props.nombreEstudiante || '') + ', le escribimos de la Coordinación de Posgrado FCS-UTO por su cuota pendiente.';
@@ -481,14 +507,14 @@
                     if (resp.success) {
                         $('#modalEventoCalendario').modal('hide');
                         calendar.refetchEvents();
-                        Swal.fire({ icon: 'success', title: 'Listo', text: resp.mensaje, timer: 1600, showConfirmButton: false });
+                        Swal.fire({ type: 'success', title: 'Listo', text: resp.mensaje, timer: 1600, showConfirmButton: false });
                     } else {
-                        Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo guardar el evento' });
+                        Swal.fire({ type: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo guardar el evento' });
                     }
                 },
                 error: function () {
                     $btnSubmit.prop('disabled', false);
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar el evento' });
+                    Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo guardar el evento' });
                 }
             });
         });
@@ -500,14 +526,14 @@
             var idEvento = $(this).data('id');
 
             Swal.fire({
-                icon: 'warning',
+                type: 'warning',
                 title: '¿Eliminar este evento?',
                 text: 'Esta acción no se puede deshacer.',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, eliminar',
                 cancelButtonText: 'Cancelar'
             }).then(function (result) {
-                if (!result.isConfirmed) return;
+                if (!result.value) return;
 
                 $.ajax({
                     url: 'ajax/calendarioevento.ajax.php',
@@ -518,13 +544,13 @@
                         if (resp.success) {
                             $('#modalEventoCalendario').modal('hide');
                             calendar.refetchEvents();
-                            Swal.fire({ icon: 'success', title: 'Eliminado', timer: 1400, showConfirmButton: false });
+                            Swal.fire({ type: 'success', title: 'Eliminado', timer: 1400, showConfirmButton: false });
                         } else {
-                            Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo eliminar' });
+                            Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo eliminar' });
                         }
                     },
                     error: function () {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el evento' });
+                        Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo eliminar el evento' });
                     }
                 });
             });

@@ -387,15 +387,13 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
                        value="<?php echo htmlspecialchars($orden['NitCiFactura']); ?>">
             </div>
             <div class="info-item">
-                <div class="info-label">Responsable</div>
-                <input type="text" id="inputResponsable" class="factura-input"
-                       value="<?php echo htmlspecialchars($orden['ResponsableGeneracion']); ?>">
-            </div>
-            <div class="info-item">
-                <div class="info-label">Firma</div>
-                <input type="text" id="inputFirma" class="factura-input"
-                       placeholder="(opcional)"
-                       value="<?php echo htmlspecialchars($orden['Firma']); ?>">
+                <div class="info-label">Responsable de la Firma</div>
+                <div style="display:flex; gap:6px;">
+                    <select id="inputFirma" class="factura-input" style="flex:1;">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                    <button type="button" id="btnAgregarFirmante" class="factura-input" style="flex:0 0 auto; width:40px; cursor:pointer;" title="Agregar nuevo nombre">+</button>
+                </div>
             </div>
         </div>
 
@@ -433,7 +431,6 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
                 <input type="hidden" name="cuentaAuxiliar" value="">
                 <input type="hidden" name="nombreFactura" id="hiddenNombreFactura" value="<?php echo htmlspecialchars($orden['NombreFactura']); ?>">
                 <input type="hidden" name="nitCiFactura" id="hiddenNitCiFactura" value="<?php echo htmlspecialchars($orden['NitCiFactura']); ?>">
-                <input type="hidden" name="responsable" id="hiddenResponsable" value="<?php echo htmlspecialchars($orden['ResponsableGeneracion']); ?>">
                 <input type="hidden" name="firma" id="hiddenFirma" value="<?php echo htmlspecialchars($orden['Firma']); ?>">
                 <input type="hidden" name="numeroOrden" value="<?php echo htmlspecialchars($orden['NumeroOrden']); ?>">
 
@@ -465,16 +462,61 @@ $montoLiteral = numeroALetras($orden['MontoFinal']);
 </div>
 
 <script>
+// Responsable de la Firma: catálogo de nombres (independiente del usuario que generó
+// la orden en el sistema, que se captura solo del lado del servidor y no se muestra aquí).
+function cargarOpcionesFirmante(seleccionar) {
+    fetch('ajax/ordenpago.ajax.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ accion: 'listarFirmantes' })
+    })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+            const firmantes = (data && data.success) ? data.firmantes : [];
+            const select = document.getElementById('inputFirma');
+            select.innerHTML = '<option value="">-- Seleccione --</option>' +
+                firmantes.map(function(f) { return '<option value="' + f.Nombre + '">' + f.Nombre + '</option>'; }).join('');
+            if (seleccionar) {
+                select.value = seleccionar;
+            }
+        })
+        .catch(function() {
+            document.getElementById('inputFirma').innerHTML = '<option value="">No se pudieron cargar los nombres</option>';
+        });
+}
+
+cargarOpcionesFirmante('<?php echo htmlspecialchars($orden['Firma'], ENT_QUOTES); ?>');
+
+document.getElementById('btnAgregarFirmante').addEventListener('click', function() {
+    const nombre = window.prompt('Nombre completo del responsable de la firma:');
+    if (!nombre || !nombre.trim()) {
+        return;
+    }
+
+    fetch('ajax/ordenpago.ajax.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ accion: 'registrarFirmante', nombre: nombre.trim() })
+    })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+            if (data.success) {
+                cargarOpcionesFirmante(data.nombre);
+            } else {
+                window.alert(data.mensaje || 'No se pudo agregar el nombre');
+            }
+        })
+        .catch(function() { window.alert('No se pudo agregar el nombre'); });
+});
+
 document.getElementById('formDescargarOrden').addEventListener('submit', function() {
     const nombreFactura = document.getElementById('inputNombreFactura').value.trim();
     const nitCiFactura = document.getElementById('inputNitCiFactura').value.trim();
-    const responsable = document.getElementById('inputResponsable').value.trim();
     const firma = document.getElementById('inputFirma').value.trim();
 
     // Volcar los datos editados a los campos ocultos que se envían al generador del PDF
     document.getElementById('hiddenNombreFactura').value = nombreFactura;
     document.getElementById('hiddenNitCiFactura').value = nitCiFactura;
-    document.getElementById('hiddenResponsable').value = responsable;
     document.getElementById('hiddenFirma').value = firma;
 
     // Guardar los datos de facturación en la orden (no bloquea la descarga del PDF)
@@ -486,7 +528,6 @@ document.getElementById('formDescargarOrden').addEventListener('submit', functio
             idOrdenPago: '<?php echo (int)$orden['IdOrdenPago']; ?>',
             nombreFactura: nombreFactura,
             nitCiFactura: nitCiFactura,
-            responsable: responsable,
             firma: firma
         })
     }).catch(function() { /* no bloquea la generación del PDF si falla */ });

@@ -149,7 +149,7 @@ class PlazoCuotaProgramaControlador
             exit();
         }
 
-        $avisos = PlazoCuotaProgramaModelo::ObtenerAvisoEstudianteModelo($estudianteID);
+        $avisos = PlazoCuotaProgramaModelo::ObtenerAvisosProgramaModelo($estudianteID);
 
         echo json_encode([
             'success' => true,

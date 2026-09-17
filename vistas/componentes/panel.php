@@ -957,7 +957,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #fff;">
-          <h5 class="modal-title" id="modalNoticiaTitulo"><i class="fa fa-newspaper"></i> Nueva Noticia</h5>
+          <h5 class="modal-title text-white" id="modalNoticiaTitulo"><i class="fa fa-newspaper"></i> Nueva Noticia</h5>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
         </div>
         <form id="formNoticia">
@@ -1026,7 +1026,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #fff;">
-          <h5 class="modal-title" id="modalDefensaTitulo"><i class="fa fa-user-graduate"></i> Nueva Defensa</h5>
+          <h5 class="modal-title text-white" id="modalDefensaTitulo"><i class="fa fa-user-graduate"></i> Nueva Defensa</h5>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
         </div>
         <form id="formDefensa">
@@ -1087,7 +1087,7 @@
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #fff;">
-          <h5 class="modal-title"><i class="fa fa-images"></i> Diapositivas del Carrusel</h5>
+          <h5 class="modal-title text-white"><i class="fa fa-images"></i> Diapositivas del Carrusel</h5>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
         </div>
         <div class="modal-body">
@@ -1130,7 +1130,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #fff;">
-          <h5 class="modal-title" id="modalCarruselSlideTitulo"><i class="fa fa-image"></i> Nueva Diapositiva</h5>
+          <h5 class="modal-title text-white" id="modalCarruselSlideTitulo"><i class="fa fa-image"></i> Nueva Diapositiva</h5>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
         </div>
         <form id="formCarruselSlide" enctype="multipart/form-data">
@@ -1187,7 +1187,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #fff;">
-          <h5 class="modal-title"><i class="fa fa-graduation-cap"></i> <span id="infoProgramaTitulo">Programa</span></h5>
+          <h5 class="modal-title text-white"><i class="fa fa-graduation-cap"></i> <span id="infoProgramaTitulo">Programa</span></h5>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
         </div>
         <div class="modal-body">

@@ -459,7 +459,7 @@
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
       <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;">
-        <h5 class="modal-title" id="exampleModalLabel">
+        <h5 class="modal-title text-white" id="exampleModalLabel">
           <i class="fas fa-ban mr-2"></i> Dar de Baja Usuario
         </h5>
         <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">

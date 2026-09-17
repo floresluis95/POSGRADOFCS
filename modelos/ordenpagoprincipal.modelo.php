@@ -161,8 +161,10 @@ class OrdenPagoModelos
     }
 
     /**
-     * Actualizar los datos de facturación (nombre, NIT/CI, responsable, firma) de una
-     * orden de pago ya generada, antes de imprimir la boleta.
+     * Actualizar los datos de facturación (nombre, NIT/CI, firma) de una orden de pago
+     * ya generada, antes de imprimir la boleta. El "responsable" (usuario que generó la
+     * orden en el sistema) no se toca aquí: se captura una sola vez, de la sesión, al
+     * crear la orden, y queda fijo para fines de auditoría.
      * @param array $datos
      * @return bool
      */
@@ -173,13 +175,11 @@ class OrdenPagoModelos
                 "UPDATE ordenpago
                  SET NombreFactura = :nombreFactura,
                      NitCiFactura = :nitCiFactura,
-                     ResponsableGeneracion = :responsable,
                      Firma = :firma
                  WHERE IdOrdenPago = :idOrdenPago"
             );
             $stmt->bindParam(":nombreFactura", $datos['nombreFactura'], PDO::PARAM_STR);
             $stmt->bindParam(":nitCiFactura", $datos['nitCiFactura'], PDO::PARAM_STR);
-            $stmt->bindParam(":responsable", $datos['responsable'], PDO::PARAM_STR);
             $stmt->bindParam(":firma", $datos['firma'], PDO::PARAM_STR);
             $stmt->bindParam(":idOrdenPago", $datos['idOrdenPago'], PDO::PARAM_INT);
             return $stmt->execute();
@@ -561,7 +561,14 @@ class OrdenPagoModelos
                     p.GradoAcademico,
                     p.Sede,
                     p.Version,
-                    p.NumeroTramite,
+                    COALESCE(
+                        (SELECT pc.NumeroCuenta FROM programacuenta pc
+                         WHERE pc.ProgramaCuentaID = op.ProgramaCuentaID),
+                        (SELECT pc.NumeroCuenta FROM programacuenta pc
+                         WHERE pc.ProgramaID = p.ProgramaID AND pc.TipoCuenta = 'MATRICULA' AND pc.Principal = 1 AND pc.Estado = 1
+                         LIMIT 1),
+                        p.NumeroTramite
+                    ) AS NumeroTramite,
                     p.Costo AS CostoPrograma
                 FROM ordenpago op
                 INNER JOIN estudiante e ON op.EstudianteID = e.EstudianteID
@@ -717,7 +724,7 @@ class OrdenPagoModelos
                 "SELECT
                     op.IdOrdenPago, op.NumeroOrden, op.ProgramaID, op.ListaModulos, op.MontoTotal,
                     op.MontoDescuento, op.MontoFinal, op.PagoCompleto, op.FechaGeneracion,
-                    op.FechaVencimiento, op.FechaConfirmacion, op.Estado,
+                    op.FechaVencimiento, op.FechaConfirmacion, op.Estado, op.Observaciones,
                     p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico, p.Sede
                  FROM ordenpago op
                  INNER JOIN programa p ON p.ProgramaID = op.ProgramaID

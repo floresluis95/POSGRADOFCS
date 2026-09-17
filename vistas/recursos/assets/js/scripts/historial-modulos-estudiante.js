@@ -12,6 +12,17 @@ $(document).ready(function() {
     // Cargar programas del estudiante al iniciar
     cargarProgramasEstudiante();
 
+    // Ver la foto del recibo/voucher de una cuota pagada. Se usa un modal de
+    // Bootstrap propio (no SweetAlert) con tamaño de imagen fijo por CSS
+    // (.foto-recibo-tamano-fijo en historialmodulosestudiante.php), igual que ya
+    // funciona en Historial de Vouchers, para que todas las fotos se vean del
+    // mismo tamaño sin importar su resolución original.
+    $(document).on('click', '.btn-ver-foto-cuota-estudiante', function() {
+        const idpago = $(this).data('idpago');
+        $('#imagen_recibo_grande').attr('src', 'ajax/obtener-voucher-imagen.php?id=' + idpago);
+        $('#modalFotoRecibo').modal('show');
+    });
+
     // Evento al cambiar el programa seleccionado
     $('#select_programa_modulos').on('change', function() {
         const programaID = $(this).val();
@@ -130,6 +141,9 @@ function cargarDetalleModulos(programaID) {
                 // Actualizar resumen
                 actualizarResumen(detalle.resumen, cuotasPagadas);
 
+                // Actualizar estado de matrícula
+                actualizarMatricula(detalle.matricula);
+
                 // Actualizar tabla de cuotas
                 actualizarTablaPagados(cuotas);
 
@@ -179,6 +193,49 @@ function actualizarResumen(resumen, cuotasPagadas) {
 }
 
 /**
+ * Actualizar el estado de la matrícula del programa seleccionado
+ */
+function actualizarMatricula(matricula) {
+    const $cont = $('#matricula_cuerpo');
+
+    if (!matricula) {
+        $cont.html('<span class="text-muted">Sin información de matrícula</span>');
+        return;
+    }
+
+    const monto = parseFloat(matricula.costo || 0).toFixed(2);
+    const fecha = matricula.fecha ? formatearFecha(matricula.fecha) : 'N/A';
+    const voucher = matricula.voucher || 'N/A';
+
+    if (matricula.pagada) {
+        $cont.html(`
+            <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap: 0.75rem;">
+                <div class="d-flex align-items-center">
+                    <i class="flaticon2-check-mark" style="font-size: 1.3rem; color: #27ae60; margin-right: 0.6rem;"></i>
+                    <div>
+                        <strong style="color: #464E5F;">Matrícula cancelada</strong> &mdash; Bs. ${monto}
+                        <div class="text-muted" style="font-size: 0.85rem;">Registrada el ${fecha} &middot; Voucher N° ${voucher}</div>
+                    </div>
+                </div>
+                <span style="background: #11998e; color: white; padding: 4px 12px; border-radius: 3px; font-weight: 600; font-size: 0.75rem;">PAGADA</span>
+            </div>
+        `);
+    } else {
+        $cont.html(`
+            <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap: 0.75rem;">
+                <div class="d-flex align-items-center">
+                    <i class="flaticon2-warning" style="font-size: 1.3rem; color: #dc3545; margin-right: 0.6rem;"></i>
+                    <div>
+                        <strong style="color: #464E5F;">Matrícula pendiente</strong> &mdash; Bs. ${monto}
+                    </div>
+                </div>
+                <span style="background: #dc3545; color: white; padding: 4px 12px; border-radius: 3px; font-weight: 600; font-size: 0.75rem;">PENDIENTE</span>
+            </div>
+        `);
+    }
+}
+
+/**
  * Actualizar tabla de historial de cuotas
  */
 function actualizarTablaPagados(cuotas) {
@@ -188,6 +245,7 @@ function actualizarTablaPagados(cuotas) {
 
     if (cuotas && cuotas.length > 0) {
         cuotas.forEach(function(cuota) {
+            const fechaSolicitud = cuota.FechaSolicitud ? formatearFecha(cuota.FechaSolicitud) : 'N/A';
             const fechaPago = cuota.fechapago ? formatearFecha(cuota.fechapago) : 'N/A';
             const voucher = cuota.nvaucher || 'N/A';
             const monto = parseFloat(cuota.montocuota || 0).toFixed(2);
@@ -195,22 +253,28 @@ function actualizarTablaPagados(cuotas) {
             const estado = cuota.Estado || 'PENDIENTE';
             const colorEstado = badgeColorPorEstado[estado] || '#6c757d';
 
+            // Foto del voucher (recibo) subida al registrar el pago de esta cuota,
+            // si tiene una: mismo endpoint que usa Matriculados del lado del
+            // administrador.
+            const tieneImagen = cuota.TieneImagen === 'SI';
+            const btnFoto = tieneImagen
+                ? `<button type="button" class="btn-ver-foto-cuota-estudiante" data-idpago="${cuota.Idpagomodulo}"
+                       style="background:none; border:none; margin-left:6px; cursor:pointer; color:#667eea;" title="Ver foto del recibo">
+                       <i class="flaticon2-photograph"></i>
+                   </button>`
+                : '';
+
             html += `
-                <tr style="border-bottom: 1px solid #f0f0f0;">
-                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
-                        <span style="background: #11998e; color: white; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700;">${numeroCuota}</span>
+                <tr>
+                    <td class="text-center" style="padding: 0.6rem; vertical-align: middle; color: #464E5F; font-weight: 600;">${numeroCuota}</td>
+                    <td class="text-center" style="padding: 0.6rem; vertical-align: middle; color: #464E5F; font-weight: 600;">Bs. ${monto}</td>
+                    <td class="text-center" style="padding: 0.6rem; vertical-align: middle; color: #6c757d;">${fechaSolicitud}</td>
+                    <td class="text-center" style="padding: 0.6rem; vertical-align: middle; color: #6c757d;">${fechaPago}</td>
+                    <td class="text-center" style="padding: 0.6rem; vertical-align: middle; color: #6c757d;">
+                        ${voucher}${btnFoto}
                     </td>
-                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
-                        <strong style="color: #11998e; font-size: 1.1rem; font-weight: 700;">Bs. ${monto}</strong>
-                    </td>
-                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle; color: #464E5F; font-weight: 500;">${fechaPago}</td>
-                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
-                        <span style="background: #f3f6f9; color: #667eea; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
-                            ${voucher}
-                        </span>
-                    </td>
-                    <td class="text-center" style="padding: 1.2rem; vertical-align: middle;">
-                        <span style="background: ${colorEstado}; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.85rem;">
+                    <td class="text-center" style="padding: 0.6rem; vertical-align: middle;">
+                        <span style="background: ${colorEstado}; color: white; padding: 4px 10px; border-radius: 3px; font-weight: 600; font-size: 0.75rem;">
                             ${estado}
                         </span>
                     </td>
@@ -220,9 +284,9 @@ function actualizarTablaPagados(cuotas) {
     } else {
         html = `
             <tr>
-                <td colspan="5" class="text-center" style="padding: 3rem; color: #B5B5C3;">
-                    <i class="flaticon2-information" style="font-size: 3rem; color: #E4E6EF;"></i>
-                    <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay cuotas registradas</p>
+                <td colspan="6" class="text-center" style="padding: 2rem; color: #B5B5C3;">
+                    <i class="flaticon2-information" style="font-size: 2rem; color: #E4E6EF;"></i>
+                    <p style="margin-top: 0.5rem; font-size: 1rem; font-weight: 500;">No hay cuotas registradas</p>
                 </td>
             </tr>
         `;
@@ -237,12 +301,15 @@ function actualizarTablaPagados(cuotas) {
 function ocultarResultados() {
     $('#area_resultados_modulos').fadeOut();
 
+    // Resetear estado de matrícula
+    $('#matricula_cuerpo').html('<span class="text-muted">Sin información de matrícula</span>');
+
     // Resetear tabla
     $('#tbody_modulos_pagados').html(`
         <tr>
-            <td colspan="5" class="text-center" style="padding: 3rem; color: #B5B5C3;">
-                <i class="flaticon2-information" style="font-size: 3rem; color: #E4E6EF;"></i>
-                <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay cuotas registradas</p>
+            <td colspan="6" class="text-center" style="padding: 2rem; color: #B5B5C3;">
+                <i class="flaticon2-information" style="font-size: 2rem; color: #E4E6EF;"></i>
+                <p style="margin-top: 0.5rem; font-size: 1rem; font-weight: 500;">No hay cuotas registradas</p>
             </td>
         </tr>
     `);

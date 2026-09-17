@@ -456,7 +456,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
         <div class="modal-dialog" role="document">
             <div class="modal-content" style="border-radius: 15px; overflow: hidden;">
                 <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
-                    <h5 class="modal-title">
+                    <h5 class="modal-title text-white">
                         <i class="fas fa-user-plus"></i> Asignar Docente al Módulo
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" style="color: white;">

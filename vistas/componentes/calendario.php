@@ -97,9 +97,9 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
                                     <span><i class="calendario-punto" style="background:#159895;"></i> Actividad</span>
                                     <span><i class="calendario-punto" style="background:#6b2737;"></i> Clínica</span>
                                     <?php if ($veVencimientosPago): ?>
-                                    <span><i class="calendario-punto" style="background:#d4a017;"></i> Vence cuota</span>
-                                    <span><i class="calendario-punto" style="background:#c0392b;"></i> Cuota vencida</span>
-                                    <span><i class="calendario-punto" style="background:#8e44ad;"></i> Plazo de cuota (programa)</span>
+                                    <span title="Vencimiento de la solicitud de pago de un estudiante en particular"><i class="calendario-punto" style="background:#d4a017;"></i> Vence cuota (individual)</span>
+                                    <span title="Vencimiento de la solicitud de pago de un estudiante en particular"><i class="calendario-punto" style="background:#c0392b;"></i> Cuota vencida (individual)</span>
+                                    <span title="Fecha límite general del programa: aplica a todos los estudiantes de Plan Regular con cuota pendiente"><i class="calendario-punto" style="background:#8e44ad;"></i> Plazo de cuota (todo el programa)</span>
                                     <?php endif; ?>
                                 </div>
 
@@ -146,7 +146,7 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #fff;">
-                    <h5 class="modal-title" id="modalEventoCalendarioTitulo"><i class="fa fa-calendar-plus"></i> Nuevo Evento</h5>
+                    <h5 class="modal-title text-white" id="modalEventoCalendarioTitulo"><i class="fa fa-calendar-plus"></i> Nuevo Evento</h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="formEventoCalendario">
@@ -222,7 +222,7 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header" style="background: linear-gradient(135deg, #52616e 0%, #37424a 100%); color: #fff;">
-                    <h5 class="modal-title"><i class="fa fa-info-circle"></i> Detalle del Evento</h5>
+                    <h5 class="modal-title text-white"><i class="fa fa-info-circle"></i> Detalle del Evento</h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
@@ -233,6 +233,10 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
                     <p class="mb-1"><i class="fa fa-chalkboard-teacher text-muted"></i> <span id="detalleEventoDocente"></span></p>
                     <p class="mb-1"><i class="fa fa-clock text-muted"></i> <span id="detalleEventoHorario"></span></p>
                     <p class="mb-0" id="detalleEventoDescripcionWrap"><i class="fa fa-align-left text-muted"></i> <span id="detalleEventoDescripcion"></span></p>
+                    <div class="mt-2 p-2" id="detalleEventoAlcanceWrap" style="display:none; border-radius:6px; background:#f8f9fa; border-left:4px solid #8e44ad;">
+                        <p class="mb-1" style="font-size:12.5px;"><i class="fa fa-users text-muted"></i> <strong>Alcance:</strong> <span id="detalleEventoAlcance"></span></p>
+                        <p class="mb-0" style="font-size:12.5px;"><i class="fa fa-info-circle text-muted"></i> <span id="detalleEventoAccion"></span></p>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <a href="#" target="_blank" class="btn mr-auto" id="detalleEventoWhatsapp" style="display:none; background:#25D366; color:#fff;">
@@ -250,7 +254,7 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header" style="background: linear-gradient(135deg, #6b2737 0%, #8e44ad 100%); color: #fff;">
-                    <h5 class="modal-title"><i class="fa fa-hourglass-half"></i> Plazo de Cuota por Programa</h5>
+                    <h5 class="modal-title" style="color: #ffffff !important;"><i class="fa fa-hourglass-half"></i> Plazo de Cuota por Programa</h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
@@ -295,7 +299,7 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header" style="background: linear-gradient(135deg, #6b2737 0%, #8e44ad 100%); color: #fff;">
-                    <h5 class="modal-title" id="modalPlazoCuotaTitulo"><i class="fa fa-hourglass-half"></i> Nuevo Plazo de Cuota</h5>
+                    <h5 class="modal-title" id="modalPlazoCuotaTitulo" style="color: #ffffff !important;"><i class="fa fa-hourglass-half"></i> Nuevo Plazo de Cuota</h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="formPlazoCuota">

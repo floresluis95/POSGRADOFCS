@@ -111,6 +111,8 @@ class CalendarioEventoControlador
                     'extendedProps' => [
                         'tipoEvento' => 'PAGO',
                         'descripcion' => 'Orden ' . $v['NumeroOrden'] . ' - Monto: ' . $montoTexto,
+                        'alcance' => 'Vencimiento individual: corresponde a la solicitud de pago (orden) de este estudiante',
+                        'accionSugerida' => 'Debe cancelar su cuota antes de esta fecha, según el plazo de su propia solicitud de pago.',
                         'programaID' => $v['ProgramaID'],
                         'nombrePrograma' => $v['NombrePrograma'],
                         'codigoPrograma' => $v['CodigoPrograma'],
@@ -151,7 +153,12 @@ class CalendarioEventoControlador
                 'editable' => false,
                 'extendedProps' => [
                     'tipoEvento' => 'PLAZOCUOTA',
+                    'idPlazo' => $pl['IdPlazo'],
+                    'fechaPlazo' => $pl['FechaPlazo'],
                     'descripcion' => $pl['Descripcion'] ?: 'Fecha límite de pago de cuota del programa',
+                    'descripcionOriginal' => $pl['Descripcion'],
+                    'alcance' => 'Plazo general del programa: aplica a todos los estudiantes en Plan Regular que aún no cancelaron su cuota vigente',
+                    'accionSugerida' => 'Los estudiantes en esta situación deben contactarse con Administración para regularizar su pago.',
                     'programaID' => $pl['ProgramaID'],
                     'nombrePrograma' => $pl['NombrePrograma'],
                     'codigoPrograma' => $pl['CodigoPrograma'],

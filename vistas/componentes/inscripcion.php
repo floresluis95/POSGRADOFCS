@@ -125,142 +125,6 @@ kt-aside--fixed kt-page--loading">
                     </div>
                   </div>
 
-                  <!-- PASO 2: DETALLE DEL PREREGISTRO SELECCIONADO / VALIDACIÓN DEL VOUCHER -->
-                  <div class="kt-portlet mt-3 inscripcion-portlet" id="panelDetalle" style="display:none;">
-                    <div class="kt-portlet__head">
-                      <div class="kt-portlet__head-label">
-                        <h3 class="kt-portlet__head-title">
-                          <i class="fa fa-check-circle"></i> Validar Voucher de Matrícula
-                        </h3>
-                      </div>
-                      <div class="kt-portlet__head-toolbar">
-                        <button type="button" id="btnBuscarOtro" class="btn btn-sm btn-outline-secondary">
-                          <i class="flaticon2-back"></i> Buscar otro estudiante
-                        </button>
-                      </div>
-                    </div>
-                    <div class="kt-portlet__body py-3">
-
-                      <input type="hidden" id="detalleIdOrdenPago">
-
-                      <!-- Datos del estudiante -->
-                      <div class="seccion-detalle mb-3">
-                        <div class="seccion-detalle-titulo">Datos del estudiante</div>
-                        <div class="row">
-                          <div class="col-md-4">
-                            <div class="label-modern">Nombre completo</div>
-                            <div class="value-modern" id="detalleNombre"></div>
-                          </div>
-                          <div class="col-md-2">
-                            <div class="label-modern">C.I.</div>
-                            <div class="value-modern" id="detalleCi"></div>
-                          </div>
-                          <div class="col-md-3">
-                            <div class="label-modern">Correo</div>
-                            <div class="value-modern" id="detalleCorreo"></div>
-                          </div>
-                          <div class="col-md-3">
-                            <div class="label-modern">Celular</div>
-                            <div class="value-modern" id="detalleCelular"></div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Datos del programa -->
-                      <div class="seccion-detalle mb-3">
-                        <div class="seccion-detalle-titulo">Datos del programa</div>
-                        <div class="row">
-                          <div class="col-md-4">
-                            <div class="label-modern">Programa</div>
-                            <div class="value-modern"><span id="detallePrograma"></span> (<span id="detalleCodigo"></span>)</div>
-                          </div>
-                          <div class="col-md-2">
-                            <div class="label-modern">Grado</div>
-                            <div class="value-modern" id="detalleGrado"></div>
-                          </div>
-                          <div class="col-md-2">
-                            <div class="label-modern">Sede</div>
-                            <div class="value-modern" id="detalleSede"></div>
-                          </div>
-                          <div class="col-md-2">
-                            <div class="label-modern">Modalidad</div>
-                            <div class="value-modern"><span class="badge badge-secondary" id="detalleModalidad"></span></div>
-                          </div>
-                          <div class="col-md-2">
-                            <div class="label-modern">Monto</div>
-                            <div class="value-modern">Bs. <span id="detalleMonto">0.00</span></div>
-                          </div>
-                        </div>
-                        <div class="mt-2">
-                          <span class="label-modern">Plan del programa</span><br>
-                          <span class="badge badge-warning" id="detalleEstadoPlan"><i class="fa fa-clock-o"></i> Pendiente de confirmación</span>
-                        </div>
-                      </div>
-
-                      <!-- Formulario de validación del voucher -->
-                      <form id="formValidarVoucher" enctype="multipart/form-data">
-
-                        <!-- PLAN DE PAGO DEL PROGRAMA: ya se eligió en Pre-Registro y queda
-                             definitivo al validar el voucher; aquí solo se muestra como referencia. -->
-                        <div class="seccion-detalle mb-3">
-                          <div class="seccion-detalle-titulo">
-                            <i class="fa fa-money"></i> Plan de pago del programa
-                          </div>
-                          <div id="planPropuestaInfo"></div>
-                        </div>
-
-                        <!-- DATOS DEL VOUCHER -->
-                        <div class="seccion-detalle mb-3">
-                          <div class="seccion-detalle-titulo">Datos del voucher</div>
-
-                          <div class="custom-control custom-checkbox mb-3">
-                            <input type="checkbox" class="custom-control-input" id="sinPagoMatricula">
-                            <label class="custom-control-label font-weight-bold" for="sinPagoMatricula">
-                              Matricular sin pago de matrícula (el programa completo se cancelará después)
-                            </label>
-                          </div>
-
-                          <div class="row" id="filaCamposVoucher">
-                            <div class="col-lg-4 form-group mb-2" id="grupoVoucherNumero">
-                              <label class="filtro-label">Código de voucher <span class="text-danger">*</span></label>
-                              <input type="text" class="form-control form-control-sm" id="voucherNumero" maxlength="25" required>
-                            </div>
-                            <div class="col-lg-4 form-group mb-2">
-                              <label class="filtro-label">Fecha de inscripción <span class="text-danger">*</span></label>
-                              <input type="date" class="form-control form-control-sm" id="voucherFecha" required
-                                     max="<?php echo date('Y-m-d'); ?>">
-                            </div>
-                            <div class="col-lg-4 form-group mb-2" id="grupoVoucherFoto">
-                              <label class="filtro-label">Foto del voucher</label>
-                              <div class="custom-file custom-file-sm">
-                                <input type="file" class="custom-file-input" id="voucherFoto" accept="image/*">
-                                <label class="custom-file-label" for="voucherFoto" id="voucherFotoLabel">Seleccionar imagen...</label>
-                              </div>
-                              <small class="form-text text-muted">JPG, PNG, GIF o WEBP (máx. 5MB)</small>
-                            </div>
-                          </div>
-
-                          <div id="voucherFotoPreview" style="display:none;">
-                            <img id="voucherFotoPreviewImg" src="" class="img-thumbnail" style="max-width: 140px;">
-                          </div>
-                        </div>
-
-                        <div class="alert alert-warning py-2 px-3 mb-3" style="font-size:12px;" id="avisoValidacion">
-                          <i class="fa fa-exclamation-triangle"></i>
-                          Verifique que la matrícula ya fue cancelada en caja antes de validar. Esta acción
-                          <strong>inscribe formalmente</strong> al estudiante en el programa y no se puede deshacer desde aquí.
-                        </div>
-
-                        <div class="text-right">
-                          <button type="submit" class="btn btn-sm btn-success">
-                            <i class="fa fa-check-circle"></i> Validar Inscripción
-                          </button>
-                        </div>
-                      </form>
-
-                    </div>
-                  </div>
-
                 </div>
               </div>
             </div>
@@ -271,6 +135,155 @@ kt-aside--fixed kt-page--loading">
           $Footer = new FuncionesControladores();
           $Footer->FooterResumidoControlador();
         ?>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- MODAL PASO 2: VALIDAR VOUCHER DE MATRÍCULA    -->
+  <!-- (antes un panel inline; ahora modal, mismo contenido e ids). Se coloca
+       fuera de #kt_wrapper, al mismo nivel que ModalResultadosBusqueda: dentro
+       de #kt_wrapper el tema aplica transform a contenedores del layout, lo
+       que rompe el position:fixed de un modal anidado ahí adentro. -->
+  <!-- ============================================ -->
+  <div class="modal fade" id="modalValidarVoucher" tabindex="-1" role="dialog" data-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #fff;">
+          <h5 class="modal-title text-white"><i class="fa fa-check-circle"></i> Validar Voucher de Matrícula</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <!-- Formulario de validación del voucher: envuelve todo el cuerpo del modal
+             (igual que en los demás modales de esta app), aunque el submit arma su
+             propio FormData a mano, no depende de la posición de los campos. -->
+        <form id="formValidarVoucher" enctype="multipart/form-data">
+
+          <div class="modal-body">
+            <div id="panelDetalle" style="display:none;">
+
+              <input type="hidden" id="detalleIdOrdenPago">
+
+              <!-- Datos del estudiante -->
+              <div class="seccion-detalle mb-3">
+                <div class="seccion-detalle-titulo">Datos del estudiante</div>
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="label-modern">Nombre completo</div>
+                    <div class="value-modern" id="detalleNombre"></div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="label-modern">C.I.</div>
+                    <div class="value-modern" id="detalleCi"></div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="label-modern">Correo</div>
+                    <div class="value-modern" id="detalleCorreo"></div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="label-modern">Celular</div>
+                    <div class="value-modern" id="detalleCelular"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Datos del programa -->
+              <div class="seccion-detalle mb-3">
+                <div class="seccion-detalle-titulo">Datos del programa</div>
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="label-modern">Programa</div>
+                    <div class="value-modern"><span id="detallePrograma"></span> (<span id="detalleCodigo"></span>)</div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="label-modern">Grado</div>
+                    <div class="value-modern" id="detalleGrado"></div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="label-modern">Sede</div>
+                    <div class="value-modern" id="detalleSede"></div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="label-modern">Modalidad</div>
+                    <div class="value-modern"><span class="badge badge-secondary" id="detalleModalidad"></span></div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="label-modern">Monto</div>
+                    <div class="value-modern">Bs. <span id="detalleMonto">0.00</span></div>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <span class="label-modern">Plan del programa</span><br>
+                  <span class="badge badge-warning" id="detalleEstadoPlan"><i class="fa fa-clock-o"></i> Pendiente de confirmación</span>
+                </div>
+              </div>
+
+              <!-- PLAN DE PAGO DEL PROGRAMA: ya se eligió en Pre-Registro y queda
+                   definitivo al validar el voucher; aquí solo se muestra como referencia. -->
+              <div class="seccion-detalle mb-3">
+                <div class="seccion-detalle-titulo">
+                  <i class="fa fa-money"></i> Plan de pago del programa
+                </div>
+                <div id="planPropuestaInfo"></div>
+              </div>
+
+              <!-- DATOS DEL VOUCHER -->
+              <div class="seccion-detalle mb-3">
+                <div class="seccion-detalle-titulo">Datos del voucher</div>
+
+                <div class="custom-control custom-checkbox mb-3">
+                  <input type="checkbox" class="custom-control-input" id="sinPagoMatricula">
+                  <label class="custom-control-label font-weight-bold" for="sinPagoMatricula">
+                    Matricular sin pago de matrícula (el programa completo se cancelará después)
+                  </label>
+                </div>
+
+                <div class="row" id="filaCamposVoucher">
+                  <div class="col-lg-4 form-group mb-2" id="grupoVoucherNumero">
+                    <label class="filtro-label">Código de voucher <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-sm" id="voucherNumero" maxlength="25" required>
+                  </div>
+                  <div class="col-lg-4 form-group mb-2">
+                    <label class="filtro-label">Fecha de inscripción <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control form-control-sm" id="voucherFecha" required
+                           max="<?php echo date('Y-m-d'); ?>">
+                  </div>
+                  <div class="col-lg-4 form-group mb-2" id="grupoVoucherFoto">
+                    <label class="filtro-label">Foto del voucher <span class="text-danger">*</span></label>
+                    <div class="custom-file custom-file-sm">
+                      <input type="file" class="custom-file-input" id="voucherFoto" accept="image/*" required>
+                      <label class="custom-file-label" for="voucherFoto" id="voucherFotoLabel">Seleccionar imagen...</label>
+                    </div>
+                    <small class="form-text text-muted">JPG, PNG, GIF o WEBP (máx. 5MB)</small>
+                  </div>
+                </div>
+
+                <div id="voucherFotoPreview" style="display:none;">
+                  <img id="voucherFotoPreviewImg" src="" class="img-thumbnail" style="max-width: 140px;">
+                </div>
+              </div>
+
+              <div class="alert alert-warning py-2 px-3 mb-0" style="font-size:12px;" id="avisoValidacion">
+                <i class="fa fa-exclamation-triangle"></i>
+                Verifique que la matrícula ya fue cancelada en caja antes de validar. Esta acción
+                <strong>inscribe formalmente</strong> al estudiante en el programa y no se puede deshacer desde aquí.
+              </div>
+
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" id="btnBuscarOtro" class="btn btn-outline-secondary">
+              <i class="flaticon2-back"></i> Buscar otro estudiante
+            </button>
+            <button type="submit" class="btn btn-success">
+              <i class="fa fa-check-circle"></i> Validar Inscripción
+            </button>
+          </div>
+        </form>
+
       </div>
     </div>
   </div>
@@ -448,7 +461,12 @@ kt-aside--fixed kt-page--loading">
                   $('#panelDetalle').slideDown();
                   $('#pasoBuscar').removeClass('active');
                   $('#pasoValidar').addClass('active');
-                  $('html, body').animate({ scrollTop: $('#panelDetalle').offset().top - 100 }, 400);
+                  // Nota: ya no se anima el scroll de la página hacia #panelDetalle
+                  // (quedaba dentro de un modal oculto en este punto, así que
+                  // .offset() daba {top:0} y el intento de mover el scroll del
+                  // body mientras Bootstrap lo bloquea para abrir el modal es lo
+                  // que generaba el aviso de "scroll-linked effect" y trababa el
+                  // scroll). El modal maneja su propio scroll interno.
               },
               error: function() {
                   swal('Error', 'No se pudo cargar el preregistro', 'error');
@@ -499,6 +517,7 @@ kt-aside--fixed kt-page--loading">
 
           $('#grupoVoucherNumero, #grupoVoucherFoto').toggle(!sinPago);
           $('#voucherNumero').prop('required', !sinPago);
+          $('#voucherFoto').prop('required', !sinPago);
 
           if (sinPago) {
               $('#avisoValidacion').html(
@@ -533,6 +552,12 @@ kt-aside--fixed kt-page--loading">
               return;
           }
 
+          const archivoFoto = $('#voucherFoto')[0].files[0];
+          if (!sinPago && !archivoFoto) {
+              swal('Atención', 'Debe subir la foto del voucher', 'warning');
+              return;
+          }
+
           const formData = new FormData();
           formData.append('accion', 'validarVoucherMatricula');
           formData.append('idOrdenPago', idOrdenPago);
@@ -541,10 +566,7 @@ kt-aside--fixed kt-page--loading">
           formData.append('sinMatricula', sinPago ? '1' : '0');
 
           if (!sinPago) {
-              const archivoFoto = $('#voucherFoto')[0].files[0];
-              if (archivoFoto) {
-                  formData.append('fotoVoucher', archivoFoto);
-              }
+              formData.append('fotoVoucher', archivoFoto);
           }
 
           const btnSubmit = $(this).find('button[type="submit"]');
@@ -595,6 +617,41 @@ kt-aside--fixed kt-page--loading">
                   swal('Error', 'No se pudo validar el voucher', 'error');
               }
           });
+      });
+
+      // ============================================
+      // MODAL "VALIDAR VOUCHER DE MATRÍCULA": puramente de presentación. Todo
+      // el código de arriba sigue igual (busca, valida y hace slideDown()/
+      // slideUp() sobre #panelDetalle exactamente como antes); este bloque
+      // solo abre/cierra el modal que ahora lo contiene, enganchándose a los
+      // mismos eventos AJAX ya existentes (no duplica ninguna validación ni
+      // toca los manejadores de arriba).
+      // ============================================
+      $(document).ajaxSuccess(function(event, jqXHR, settings, respuesta) {
+          // Se cargó el detalle de un preregistro seleccionado: abrir el modal.
+          // Si el modal de resultados todavía se está cerrando (el código de
+          // arriba ya llamó a su .modal('hide')), se espera a que termine esa
+          // transición antes de abrir el siguiente: mostrar un modal mientras
+          // otro todavía se está ocultando es lo que deja el scroll bloqueado
+          // en Bootstrap 4 (backdrop duplicado).
+          if (typeof settings.data === 'string' && settings.data.indexOf('accion=obtenerPreregistro') !== -1 && respuesta && respuesta.success) {
+              if ($('#ModalResultadosBusqueda').hasClass('show')) {
+                  $('#ModalResultadosBusqueda').one('hidden.bs.modal', function() {
+                      $('#modalValidarVoucher').modal('show');
+                  });
+              } else {
+                  $('#modalValidarVoucher').modal('show');
+              }
+          }
+          // Se validó el voucher correctamente: cerrar el modal (el mensaje de
+          // éxito y la limpieza del panel los sigue manejando el código de arriba).
+          if (settings.data instanceof FormData && settings.data.get('accion') === 'validarVoucherMatricula' && respuesta && respuesta.success) {
+              $('#modalValidarVoucher').modal('hide');
+          }
+      });
+
+      $('#btnBuscarOtro').on('click', function() {
+          $('#modalValidarVoucher').modal('hide');
       });
 
       console.log('=== INSCRIPCIÓN (VALIDAR VOUCHER) INICIALIZADO ===');

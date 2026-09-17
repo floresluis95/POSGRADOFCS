@@ -12,6 +12,7 @@ require_once __DIR__ . '/../modelos/estudiantes.modelo.php';
 require_once __DIR__ . '/../modelos/modulopagos_core.php';
 require_once __DIR__ . '/../modelos/ordenpagoprincipal.modelo.php';
 require_once __DIR__ . '/../modelos/planpago.modelo.php';
+require_once __DIR__ . '/../modelos/firmante.modelo.php';
 
 // Configurar cabecera JSON
 header('Content-Type: application/json; charset=utf-8');
@@ -135,6 +136,14 @@ switch ($accion) {
 
     case 'misOrdenesPago':
         misOrdenesPago();
+        break;
+
+    case 'listarFirmantes':
+        listarFirmantes();
+        break;
+
+    case 'registrarFirmante':
+        registrarFirmante();
         break;
 
     default:
@@ -708,12 +717,18 @@ function obtenerOrdenPendienteCuotaPrograma()
         $conexion = Conexion::Conectar();
 
         $stmt = $conexion->prepare("
-            SELECT IdOrdenPago, NumeroOrden, MontoTotal, FechaGeneracion, NombreFactura, NitCiFactura
-            FROM ordenpago
-            WHERE idinscripcion = :idinscripcion
-            AND Estado = 'PENDIENTE'
-            AND ListaModulos IS NULL
-            ORDER BY FechaGeneracion DESC
+            SELECT op.IdOrdenPago, op.NumeroOrden, op.MontoTotal, op.FechaGeneracion, op.NombreFactura, op.NitCiFactura, op.Firma,
+                COALESCE(
+                    (SELECT pc.NumeroCuenta FROM programacuenta pc WHERE pc.ProgramaCuentaID = op.ProgramaCuentaID),
+                    (SELECT pc.NumeroCuenta FROM programacuenta pc
+                     WHERE pc.ProgramaID = op.ProgramaID AND pc.TipoCuenta = 'CUOTAS' AND pc.Principal = 1 AND pc.Estado = 1
+                     LIMIT 1)
+                ) AS NumeroCuentaDeposito
+            FROM ordenpago op
+            WHERE op.idinscripcion = :idinscripcion
+            AND op.Estado = 'PENDIENTE'
+            AND op.ListaModulos IS NULL
+            ORDER BY op.FechaGeneracion DESC
             LIMIT 1
         ");
         $stmt->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
@@ -748,14 +763,40 @@ function registrarOrdenPagoCuotaPrograma()
         $idinscripcion = (int)$_POST['idinscripcion'];
         $programaID = (int)$_POST['programaID'];
         $montoTotal = (float)$_POST['montoTotal'];
-        $responsable = isset($_POST['responsable']) ? $_POST['responsable'] : '';
+        // El responsable de generar la orden es siempre el usuario que inició sesión
+        // (no un campo editable desde el formulario): igual que en Pre-Registro.
+        $responsable = isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
+            ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
+            : null;
+        // Nombre del responsable de la firma (coordinador/a), elegido del catálogo de
+        // firmantes: es el que se imprime en la orden, junto a la línea de firma.
+        $firma = isset($_POST['firma']) ? htmlspecialchars(trim($_POST['firma'])) : '';
         $nombreFactura = isset($_POST['nombreFactura']) ? $_POST['nombreFactura'] : '';
         $nitCiFactura = isset($_POST['nitCiFactura']) ? $_POST['nitCiFactura'] : '';
         $fechaVencimiento = !empty($_POST['fechaVencimiento']) ? trim($_POST['fechaVencimiento']) : null;
+        $programaCuentaID = !empty($_POST['programaCuentaID']) ? (int)$_POST['programaCuentaID'] : null;
 
         if ($montoTotal <= 0) {
             echo json_encode(['success' => false, 'mensaje' => 'El monto de la cuota debe ser mayor a 0']);
             return;
+        }
+
+        // Validar que la cuenta elegida (a la que el estudiante debe depositar) exista,
+        // esté activa y pertenezca efectivamente a este programa (tipo CUOTAS).
+        if ($programaCuentaID) {
+            $stmtCuenta = $conexion->prepare(
+                "SELECT ProgramaCuentaID FROM programacuenta
+                 WHERE ProgramaCuentaID = :id AND ProgramaID = :programaID
+                 AND TipoCuenta = 'CUOTAS' AND Estado = 1"
+            );
+            $stmtCuenta->bindParam(":id", $programaCuentaID, PDO::PARAM_INT);
+            $stmtCuenta->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmtCuenta->execute();
+
+            if (!$stmtCuenta->fetch()) {
+                echo json_encode(['success' => false, 'mensaje' => 'La cuenta seleccionada no es válida para este programa']);
+                return;
+            }
         }
 
         // Solo una orden de cuota pendiente a la vez por inscripción
@@ -776,23 +817,33 @@ function registrarOrdenPagoCuotaPrograma()
 
         $stmt = $conexion->prepare("
             INSERT INTO ordenpago
-            (EstudianteID, idinscripcion, ProgramaID, MontoTotal, FechaVencimiento,
-             ResponsableGeneracion, NombreFactura, NitCiFactura, NumeroOrden, FechaGeneracion, Observaciones, Estado)
+            (EstudianteID, idinscripcion, ProgramaID, ProgramaCuentaID, MontoTotal, FechaVencimiento,
+             ResponsableGeneracion, Firma, NombreFactura, NitCiFactura, NumeroOrden, FechaGeneracion, Observaciones, Estado)
             VALUES
-            (:estudianteID, :idinscripcion, :programaID, :montoTotal, :fechaVencimiento,
-             :responsable, :nombreFactura, :nitCiFactura, :numeroOrden, NOW(), 'CUOTA PROGRAMA', 'PENDIENTE')
+            (:estudianteID, :idinscripcion, :programaID, :programaCuentaID, :montoTotal, :fechaVencimiento,
+             :responsable, :firma, :nombreFactura, :nitCiFactura, :numeroOrden, NOW(), 'CUOTA PROGRAMA', 'PENDIENTE')
         ");
 
         $stmt->bindParam(':estudianteID', $estudianteID, PDO::PARAM_INT);
         $stmt->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
         $stmt->bindParam(':programaID', $programaID, PDO::PARAM_INT);
+        if ($programaCuentaID) {
+            $stmt->bindParam(':programaCuentaID', $programaCuentaID, PDO::PARAM_INT);
+        } else {
+            $stmt->bindValue(':programaCuentaID', null, PDO::PARAM_NULL);
+        }
         $stmt->bindParam(':montoTotal', $montoTotal);
         if ($fechaVencimiento !== null) {
             $stmt->bindParam(':fechaVencimiento', $fechaVencimiento, PDO::PARAM_STR);
         } else {
             $stmt->bindValue(':fechaVencimiento', null, PDO::PARAM_NULL);
         }
-        $stmt->bindParam(':responsable', $responsable, PDO::PARAM_STR);
+        if ($responsable !== null) {
+            $stmt->bindParam(':responsable', $responsable, PDO::PARAM_STR);
+        } else {
+            $stmt->bindValue(':responsable', null, PDO::PARAM_NULL);
+        }
+        $stmt->bindParam(':firma', $firma, PDO::PARAM_STR);
         $stmt->bindParam(':nombreFactura', $nombreFactura, PDO::PARAM_STR);
         $stmt->bindParam(':nitCiFactura', $nitCiFactura, PDO::PARAM_STR);
         $stmt->bindParam(':numeroOrden', $numeroOrden, PDO::PARAM_STR);
@@ -1042,7 +1093,11 @@ function anularPreregistro()
 }
 
 /**
- * Actualizar los datos de facturación de una orden ya generada (pantalla "orden-generada")
+ * Actualizar los datos de facturación de una orden ya generada (pantalla "orden-generada").
+ * El "responsable" (usuario que generó la orden en el sistema) NO se recibe aquí: se
+ * captura una sola vez, de la sesión, al crear la orden, y no se vuelve a exponer ni
+ * a editar desde el formulario. Lo único editable es la "firma" (el nombre del
+ * coordinador/responsable que aparece impreso junto a la línea de firma).
  */
 function actualizarFacturacion()
 {
@@ -1055,7 +1110,6 @@ function actualizarFacturacion()
         'idOrdenPago'  => (int)$_POST['idOrdenPago'],
         'nombreFactura' => isset($_POST['nombreFactura']) ? htmlspecialchars(trim($_POST['nombreFactura'])) : '',
         'nitCiFactura'  => isset($_POST['nitCiFactura']) ? htmlspecialchars(trim($_POST['nitCiFactura'])) : '',
-        'responsable'   => isset($_POST['responsable']) ? htmlspecialchars(trim($_POST['responsable'])) : '',
         'firma'         => isset($_POST['firma']) ? htmlspecialchars(trim($_POST['firma'])) : '',
     ];
 
@@ -1063,6 +1117,37 @@ function actualizarFacturacion()
     echo json_encode([
         'success' => $ok,
         'mensaje' => $ok ? 'Datos de facturación actualizados' : 'No se pudieron actualizar los datos de facturación'
+    ]);
+}
+
+/**
+ * Listar el catálogo de firmantes (nombres que pueden aparecer en la línea de firma
+ * de las órdenes de pago impresas), para el select del formulario.
+ */
+function listarFirmantes()
+{
+    echo json_encode([
+        'success' => true,
+        'firmantes' => FirmanteModelos::ListarFirmantesModelo()
+    ]);
+}
+
+/**
+ * Agregar un nuevo nombre al catálogo de firmantes.
+ */
+function registrarFirmante()
+{
+    if (empty($_POST['nombre'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El nombre es requerido']);
+        return;
+    }
+
+    $resultado = FirmanteModelos::RegistrarFirmanteModelo(htmlspecialchars(trim($_POST['nombre'])));
+    echo json_encode([
+        'success' => $resultado['status'] === 'exitoso',
+        'mensaje' => $resultado['mensaje'] ?? '',
+        'idFirmante' => $resultado['idFirmante'] ?? null,
+        'nombre' => $resultado['nombre'] ?? null
     ]);
 }
 
@@ -1079,6 +1164,11 @@ function validarVoucherMatricula()
 
     if (empty($_POST['idOrdenPago']) || (!$sinMatricula && empty($_POST['numeroVoucher']))) {
         echo json_encode(['success' => false, 'mensaje' => 'El N° de voucher es requerido']);
+        return;
+    }
+
+    if (!$sinMatricula && (empty($_FILES['fotoVoucher']) || $_FILES['fotoVoucher']['error'] !== UPLOAD_ERR_OK)) {
+        echo json_encode(['success' => false, 'mensaje' => 'La foto del voucher es obligatoria']);
         return;
     }
 
@@ -1275,15 +1365,29 @@ function misOrdenesPago()
 
     $resultado = array_map(function ($o) {
         $hoy = date('Y-m-d');
+        // Tipo de la orden: MODULOS (legado, ligado a ListaModulos), CUOTA (cuota del
+        // programa, marcada con Observaciones='CUOTA PROGRAMA') o MATRICULA (el resto,
+        // preregistro).
+        if (!empty($o['ListaModulos'])) {
+            $tipo = 'MODULOS';
+        } elseif ($o['Observaciones'] === 'CUOTA PROGRAMA') {
+            $tipo = 'CUOTA';
+        } else {
+            $tipo = 'MATRICULA';
+        }
+
         return [
             'idOrdenPago' => (int)$o['IdOrdenPago'],
             'numeroOrden' => $o['NumeroOrden'],
+            'programaID' => (int)$o['ProgramaID'],
             'nombrePrograma' => $o['NombrePrograma'],
             'codigoPrograma' => $o['CodigoPrograma'],
             'gradoAcademico' => $o['GradoAcademico'],
             'sede' => $o['Sede'],
-            'tipo' => empty($o['ListaModulos']) ? 'MATRICULA' : 'MODULOS',
-            'monto' => (float)$o['MontoFinal'],
+            'tipo' => $tipo,
+            // Las órdenes de matrícula/preregistro guardan el monto en MontoFinal;
+            // las de cuota del programa lo guardan en MontoTotal (MontoFinal les queda en 0).
+            'monto' => (float)($o['MontoFinal'] > 0 ? $o['MontoFinal'] : $o['MontoTotal']),
             'fechaGeneracion' => $o['FechaGeneracion'],
             'fechaVencimiento' => $o['FechaVencimiento'],
             'estado' => $o['Estado'],

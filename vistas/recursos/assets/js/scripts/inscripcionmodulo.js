@@ -45,6 +45,7 @@ $(document).ready(function() {
         $('input[name="numeroVaucher"]').val('');
         $('#fmodulo').val('');
         $('#montoCuota').val('');
+        $('#previewFotoVoucher').html('');
 
         // Mostrar loader en el resumen de pago
         $('#resumenPagoPrograma').html('<div class="text-center p-2"><i class="fa fa-spinner fa-spin"></i> Cargando resumen...</div>');
@@ -55,8 +56,8 @@ $(document).ready(function() {
         const hoy = new Date().toISOString().split('T')[0];
         $('#fechaPago').val(hoy);
 
-        // Volver siempre a la pestaña "Cuotas del Programa" al abrir
-        $('#tab-pago-modulos-link').tab('show');
+        // Volver siempre a la pestaña "Orden de Pago" al abrir (es el primer paso del flujo)
+        $('#tab-orden-pago-link').tab('show');
 
         // Mostrar modal
         $('#modalInscribirModulo').modal('show');
@@ -131,34 +132,39 @@ $(document).ready(function() {
     function renderResumenPagoPrograma(r) {
         if (!r.tienePlan) {
             $('#resumenPagoPrograma').html(
-                '<div class="alert alert-warning mb-0"><i class="fa fa-exclamation-triangle"></i> ' +
-                'Este estudiante todavía no tiene un Plan de Pago del Programa (normalmente porque eligió Plan Grupal ' +
-                'en Pre-Registro). Use el botón "Plan Grupal" en la barra superior para armarle uno.</div>'
+                '<div class="alert alert-warning mb-0 py-2"><i class="fa fa-exclamation-triangle"></i> ' +
+                'Sin Plan de Pago del Programa (normalmente porque eligió Plan Grupal en Pre-Registro). ' +
+                'Use el botón "Plan Grupal" en la barra superior para armarle uno.</div>'
             );
             return;
         }
+
+        const costoTotal = parseFloat(r.costoTotal) || 0;
+        const totalPagado = parseFloat(r.totalPagado) || 0;
+        const saldoPendiente = parseFloat(r.saldoPendiente) || 0;
+        const porcentaje = costoTotal > 0 ? Math.min(100, Math.round((totalPagado / costoTotal) * 100)) : 0;
 
         const badgeCompletado = r.completado
             ? '<span class="badge badge-success ml-2"><i class="fa fa-check-circle"></i> COMPLETADO</span>' : '';
 
         // Progreso de cuotas: solo tiene sentido en Plan Regular con número de cuotas definido
-        let filaCuotas = '';
-        if (!r.cuotaUnica && r.numeroCuotasPlan) {
-            filaCuotas = '<div class="row text-center mt-2">' +
-                '<div class="col-md-12"><small class="text-muted d-block">Progreso de cuotas</small>' +
-                '<strong>' + r.cuotasPagadasCount + ' de ' + r.numeroCuotasPlan + ' cuotas pagadas</strong></div>' +
-            '</div>';
-        }
+        const etiquetaCuotas = (!r.cuotaUnica && r.numeroCuotasPlan)
+            ? ' &middot; ' + r.cuotasPagadasCount + ' de ' + r.numeroCuotasPlan + ' cuotas'
+            : '';
 
         $('#resumenPagoPrograma').html(
-            '<div class="row text-center">' +
-                '<div class="col-md-4"><small class="text-muted d-block">Costo del programa</small>' +
-                    '<strong>Bs. ' + parseFloat(r.costoTotal).toFixed(2) + '</strong></div>' +
-                '<div class="col-md-4"><small class="text-muted d-block">Pagado</small>' +
-                    '<strong class="text-success">Bs. ' + parseFloat(r.totalPagado).toFixed(2) + '</strong></div>' +
-                '<div class="col-md-4"><small class="text-muted d-block">Saldo pendiente</small>' +
-                    '<strong class="text-danger">Bs. ' + parseFloat(r.saldoPendiente).toFixed(2) + '</strong>' + badgeCompletado + '</div>' +
-            '</div>' + filaCuotas
+            '<div class="d-flex justify-content-between align-items-baseline mb-1">' +
+                '<small class="text-muted">Costo Bs. ' + costoTotal.toFixed(2) + etiquetaCuotas + '</small>' +
+                '<span>' +
+                    '<strong class="text-success">Pagado Bs. ' + totalPagado.toFixed(2) + '</strong>' +
+                    (saldoPendiente > 0 ? ' <span class="text-muted">/ pendiente Bs. ' + saldoPendiente.toFixed(2) + '</span>' : '') +
+                    badgeCompletado +
+                '</span>' +
+            '</div>' +
+            '<div class="progress" style="height: 10px;">' +
+                '<div class="progress-bar ' + (r.completado ? 'bg-success' : 'bg-primary') + '" role="progressbar" ' +
+                    'style="width: ' + porcentaje + '%;" aria-valuenow="' + porcentaje + '" aria-valuemin="0" aria-valuemax="100"></div>' +
+            '</div>'
         );
     }
 
@@ -209,16 +215,70 @@ $(document).ready(function() {
                 ? (c.NumeroCuota + ' de ' + numeroCuotasPlan)
                 : (c.NumeroCuota || '-');
 
+            const tieneImagen = c.TieneImagen === 'SI';
+            const btnFoto = tieneImagen
+                ? ' <a href="#" class="btn-ver-foto-cuota" data-idpago="' + c.Idpagomodulo + '" title="Ver foto del voucher"><i class="fa fa-image text-primary"></i></a>'
+                : '';
+
             html += '<tr>' +
                 '<td class="text-center">' + etiquetaCuota + '</td>' +
                 '<td class="text-center">Bs. ' + parseFloat(c.montocuota).toFixed(2) + '</td>' +
                 '<td class="text-center">' + (c.fechapago || '-') + '</td>' +
-                '<td>' + (c.nvaucher || '-') + '</td>' +
+                '<td>' + (c.nvaucher || '-') + btnFoto + '</td>' +
                 '<td class="text-center"><span class="badge ' + (badgeEstado[c.Estado] || 'badge-secondary') + '">' + c.Estado + '</span></td>' +
             '</tr>';
         });
         $('#tablaCuotasBody').html(html);
     }
+
+    // Vista previa de la foto/archivo del voucher apenas se selecciona, para poder
+    // verificar antes de guardar que es la imagen correcta.
+    $(document).on('change', '#fmodulo', function() {
+        const archivo = this.files && this.files[0];
+        const $preview = $('#previewFotoVoucher');
+
+        if (!archivo) {
+            $preview.html('');
+            return;
+        }
+
+        if (archivo.type === 'application/pdf') {
+            $preview.html('<span class="text-muted small"><i class="fa fa-file-pdf-o"></i> ' + archivo.name + '</span>');
+            return;
+        }
+
+        if (!archivo.type.startsWith('image/')) {
+            $preview.html('');
+            return;
+        }
+
+        const lector = new FileReader();
+        lector.onload = function(e) {
+            $preview.html(
+                '<img src="' + e.target.result + '" alt="Vista previa del voucher" ' +
+                'style="max-width:100%; max-height:150px; border:1px solid #ddd; border-radius:4px; cursor:pointer;" ' +
+                'onclick="window.verFotoVoucherGrande(\'' + e.target.result + '\')">'
+            );
+        };
+        lector.readAsDataURL(archivo);
+    });
+
+    // Ver en grande la foto de un voucher (usado tanto en la vista previa antes de
+    // guardar como en el historial de cuotas ya registradas). Modal de Bootstrap
+    // propio (no SweetAlert) con tamaño de imagen fijo por CSS, igual que en
+    // Historial de Módulos del estudiante, para que todas las fotos se vean del
+    // mismo tamaño sin importar su resolución original.
+    window.verFotoVoucherGrande = function(url) {
+        $('#imagenVoucherGrande').attr('src', url);
+        $('#modalFotoVoucher').modal('show');
+    };
+
+    // Ver la foto de un voucher ya guardado (historial de cuotas)
+    $(document).on('click', '.btn-ver-foto-cuota', function(e) {
+        e.preventDefault();
+        const idpago = $(this).data('idpago');
+        window.verFotoVoucherGrande('ajax/obtener-voucher-imagen.php?id=' + idpago);
+    });
 
     // Botón "Generarla ahora" cuando no hay orden pendiente: salta a la pestaña "Orden de Pago"
     $(document).on('click', '.btn-ir-orden-pago', function() {
