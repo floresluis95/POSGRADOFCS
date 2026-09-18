@@ -16,6 +16,7 @@ class EstudiantesControladores
             $tieneUsuario = !empty($Estudiante['Usuario']);
             $estadoUsuarioBadge = '';
             $botonUsuario = '';
+            $botonBloqueo = '';
 
             if ($tieneUsuario) {
                 $estadoActivo = $Estudiante['EstadoUsuario'] == '1';
@@ -23,6 +24,22 @@ class EstudiantesControladores
                     ? '<span class="badge badge-success"><i class="fa fa-check"></i> ' . $Estudiante['Usuario'] . '</span>'
                     : '<span class="badge badge-danger"><i class="fa fa-times"></i> ' . $Estudiante['Usuario'] . ' (Inactivo)</span>';
                 $botonUsuario = '';
+
+                // Bloquear/Habilitar el acceso del estudiante al sistema (no borra ni
+                // afecta sus datos academicos, solo su capacidad de iniciar sesion).
+                $botonBloqueo = $estadoActivo
+                    ? '<button type="button" class="btn btn-secondary btn-sm btnBloquearAccesoEstudiante" title="Bloquear acceso al sistema"
+                            data-estudiante-id="' . $Estudiante['EstudianteID'] . '"
+                            data-nombre-completo="' . htmlspecialchars($nombreCompleto) . '"
+                            data-nuevo-estado="0">
+                            <i class="fa fa-lock"></i>
+                        </button>'
+                    : '<button type="button" class="btn btn-success btn-sm btnBloquearAccesoEstudiante" title="Habilitar acceso al sistema"
+                            data-estudiante-id="' . $Estudiante['EstudianteID'] . '"
+                            data-nombre-completo="' . htmlspecialchars($nombreCompleto) . '"
+                            data-nuevo-estado="1">
+                            <i class="fa fa-unlock"></i>
+                        </button>';
             } else {
                 $estadoUsuarioBadge = '<span class="badge badge-warning"><i class="fa fa-exclamation-triangle"></i> Sin usuario</span>';
                 $botonUsuario = '<button
@@ -41,6 +58,32 @@ class EstudiantesControladores
                                 </button>';
             }
 
+            $botonEditar = '<button
+                                type="button"
+                                class="btn btn-primary btn-sm btnEditarEstudiante"
+                                data-estudiante-id="' . $Estudiante['EstudianteID'] . '"
+                                title="Editar datos del estudiante">
+                                <i class="fa fa-pencil-alt"></i>
+                            </button>';
+
+            // Botón "Ver Detalle": agrupa correo, profesión, celular, usuario y
+            // contraseña en un modal, igual que en Docentes.
+            $estadoUsuarioTexto = !$tieneUsuario ? 'Sin usuario asignado' : ($Estudiante['EstadoUsuario'] == '1' ? 'Activo' : 'Bloqueado');
+            $botonDetalle = '<button type="button" class="btn btn-info btn-sm btnVerDetalleEstudiante" title="Ver detalle"
+                                data-toggle="modal" data-target="#ModalDetalleEstudiante"
+                                data-estudiante-id="' . $Estudiante['EstudianteID'] . '"
+                                data-tiene-usuario="' . ($tieneUsuario ? '1' : '0') . '"
+                                data-nombre-completo="' . htmlspecialchars($nombreCompleto) . '"
+                                data-ci-completo="' . htmlspecialchars($ciCompleto) . '"
+                                data-correo="' . htmlspecialchars($Estudiante['Correo'] ? $Estudiante['Correo'] : 'No registrado') . '"
+                                data-profesion="' . htmlspecialchars($Estudiante['NombreProfesion'] ?: 'No registrada') . '"
+                                data-celular="' . htmlspecialchars($Estudiante['Celular'] ?: 'No registrado') . '"
+                                data-usuario="' . htmlspecialchars($tieneUsuario ? $Estudiante['Usuario'] : 'No asignado') . '"
+                                data-password="' . htmlspecialchars($tieneUsuario && !empty($Estudiante['PasswordTexto']) ? $Estudiante['PasswordTexto'] : '') . '"
+                                data-estado-usuario="' . htmlspecialchars($estadoUsuarioTexto) . '">
+                                <i class="fa fa-eye"></i>
+                            </button>';
+
             echo '<tr>
                     <td class="text-center">' . $contador . '</td>
                     <td class="text-center"><strong>' . $ciCompleto . '</strong></td>
@@ -49,7 +92,7 @@ class EstudiantesControladores
                     <td>' . ($Estudiante['Correo'] ? $Estudiante['Correo'] : '<span class="text-muted">No registrado</span>') . '</td>
                     <td class="text-center">' . $Estudiante['Celular'] . '</td>
                     <td class="text-center">' . $estadoUsuarioBadge . '</td>
-                    <td class="text-center">' . $botonUsuario . '</td>
+                    <td class="text-center">' . $botonDetalle . ' ' . $botonEditar . ' ' . $botonUsuario . ' ' . $botonBloqueo . '</td>
                   </tr>';
         }
     }
@@ -102,6 +145,8 @@ class EstudiantesControladores
             "Direccion"       => strtoupper(htmlspecialchars(trim($_POST['Direccion']))),
             "Telefono"        => htmlspecialchars(trim($_POST['Telefono'])),
             "Celular"         => htmlspecialchars(trim($_POST['Celular'])),
+            "IdUniversidad"   => (!empty($_POST['IdUniversidad']) && is_numeric($_POST['IdUniversidad'])) ? (int)$_POST['IdUniversidad'] : null,
+            "FechaEgreso"     => !empty($_POST['FechaEgreso']) ? htmlspecialchars(trim($_POST['FechaEgreso'])) : null,
         );
 
             $ciestudiante = $DatosEstudiante['Ci']; 
@@ -185,6 +230,8 @@ class EstudiantesControladores
             "Direccion"       => strtoupper(htmlspecialchars(trim($_POST['Direccion']))),
             "Telefono"        => htmlspecialchars(trim($_POST['Telefono'])),
             "Celular"         => htmlspecialchars(trim($_POST['Celular'])),
+            "IdUniversidad"   => (!empty($_POST['IdUniversidad']) && is_numeric($_POST['IdUniversidad'])) ? (int)$_POST['IdUniversidad'] : null,
+            "FechaEgreso"     => !empty($_POST['FechaEgreso']) ? htmlspecialchars(trim($_POST['FechaEgreso'])) : null,
         );
 
             $ciestudiante = $DatosEstudiante['Ci']; 
@@ -273,6 +320,39 @@ class EstudiantesControladores
             }
         }
     }
+
+    /**
+     * Bloquear o habilitar el acceso al sistema (login) de un Estudiante, sin
+     * afectar sus datos academicos ni sus inscripciones/pagos.
+     */
+    public function CambiarEstadoUsuarioEstudianteControlador()
+    {
+        if (isset($_POST["cambiarEstadoUsuarioEstudiante"])) {
+            $estudianteID = intval($_POST['estudianteID']);
+            $nuevoEstado = intval($_POST['nuevoEstado']) === 1 ? 1 : 0;
+
+            $resultado = UsuarioModelos::CambiarEstadoUsuarioEstudianteModelo($estudianteID, $nuevoEstado);
+            $accionTexto = $nuevoEstado === 1 ? 'habilitado' : 'bloqueado';
+
+            if ($resultado == 'exitoso') {
+                echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                      <script>
+                      swal("EXITOSO!", "Acceso al sistema ' . $accionTexto . ' correctamente", "success")
+                      .then(function () {
+                          location.href="estudiantes";
+                      });
+                      </script>';
+            } else {
+                echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                      <script>
+                      swal("ERROR!", "No se pudo cambiar el acceso del estudiante", "error")
+                      .then(function () {
+                          location.href="estudiantes";
+                      });
+                      </script>';
+            }
+        }
+    }
 }
 
 
@@ -287,6 +367,23 @@ class ProfesionControlador {
             }
         } else {
             echo '<option value="">⚠️ No se encontraron profesiones</option>';
+        }
+    }
+}
+
+class UniversidadControlador {
+    // data-tipo en cada <option> permite mostrar el tipo (pública/privada/...)
+    // en el formulario sin otra consulta, apenas se selecciona la universidad.
+    public function ListaUniversidadControlador() {
+        $ListaUniversidad = UniversidadModelos::ListarUniversidadesModelo();
+
+        if ($ListaUniversidad && count($ListaUniversidad) > 0) {
+            foreach ($ListaUniversidad as $value) {
+                echo '<option value="' . $value["IdUniversidad"] . '" data-tipo="' . $value["TipoUniversidad"] . '">'
+                    . htmlspecialchars($value["NombreUniversidad"]) . '</option>';
+            }
+        } else {
+            echo '<option value="">⚠️ No se encontraron universidades</option>';
         }
     }
 }

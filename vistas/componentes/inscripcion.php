@@ -178,7 +178,7 @@ kt-aside--fixed kt-page--loading">
                     <div class="label-modern">C.I.</div>
                     <div class="value-modern" id="detalleCi"></div>
                   </div>
-                  <div class="col-md-3">
+                  <div class="col-md-4">
                     <div class="label-modern">Correo</div>
                     <div class="value-modern" id="detalleCorreo"></div>
                   </div>
@@ -729,6 +729,17 @@ kt-aside--fixed kt-page--loading">
     height: 1px;
     background-color: #dee2e6;
     margin: 0 14px;
+}
+
+/* #formValidarVoucher envuelve el modal-body y el modal-footer (ver comentario
+   junto a su apertura en el HTML). Bootstrap necesita que ambos sean hijos
+   directos de .modal-content para que el layout flex de modal-dialog-scrollable
+   funcione (.modal-body con flex:1 1 auto + overflow-y:auto); si quedan dentro
+   de un <form> normal, ese flex no se aplica y el contenido se corta sin poder
+   desplazarse. display:contents saca al form del árbol de cajas sin quitarlo
+   del DOM, así el scroll interno vuelve a funcionar y el submit sigue igual. */
+#formValidarVoucher {
+    display: contents;
 }
 
 /* Secciones formales dentro del detalle */

@@ -117,6 +117,26 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                                             </div>
                                         </div>
 
+                                        <!-- Filtros de la tabla de asignaciones -->
+                                        <div class="row mb-3" id="filtros-asignaciones-container" style="display:none;">
+                                            <div class="col-md-4">
+                                                <label class="small font-weight-bold mb-1" for="filtro-sede">
+                                                    <i class="fa fa-map-marker-alt"></i> Sede
+                                                </label>
+                                                <select id="filtro-sede" class="form-control form-control-sm">
+                                                    <option value="">Todas las sedes</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label class="small font-weight-bold mb-1" for="filtro-programa">
+                                                    <i class="fa fa-university"></i> Programa
+                                                </label>
+                                                <select id="filtro-programa" class="form-control form-control-sm">
+                                                    <option value="">Todos los programas</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
                                         <!-- Tabla de asignaciones -->
                                         <div id="asignaciones-container"></div>
                                     </div>
@@ -132,6 +152,9 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                                                 </h5>
                                             </div>
                                             <div class="col-md-6 text-right">
+                                                <button type="button" class="btn btn-sm btn-success" id="btn-imprimir-calificaciones" style="margin-right: 10px;">
+                                                    <i class="fa fa-print"></i> Imprimir Calificaciones
+                                                </button>
                                                 <button type="button" class="btn btn-sm btn-danger" id="btn-generar-lista-asistencia" style="margin-right: 10px;">
                                                     <i class="fa fa-file-pdf"></i> Lista de Asistencia
                                                 </button>
@@ -160,9 +183,17 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                                                         <i class="fa fa-university"></i> <strong>Programa:</strong>
                                                         <span id="programa-nombre"></span>
                                                     </p>
-                                                    <p class="mb-0">
+                                                    <p class="mb-1">
                                                         <i class="fa fa-graduation-cap"></i> <strong>Grado:</strong>
                                                         <span id="grado-nombre"></span>
+                                                    </p>
+                                                    <p class="mb-1">
+                                                        <i class="fa fa-calendar-check-o"></i> <strong>Fecha Inicio:</strong>
+                                                        <span id="modulo-fecha-inicio"></span>
+                                                    </p>
+                                                    <p class="mb-0">
+                                                        <i class="fa fa-calendar-times-o"></i> <strong>Fecha Final:</strong>
+                                                        <span id="modulo-fecha-final"></span>
                                                     </p>
                                                 </div>
                                             </div>

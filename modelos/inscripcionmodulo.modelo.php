@@ -271,7 +271,10 @@ class InscripcionModuloModelos
                     e.FechaNacimiento,
                     e.Edad,
                     e.Trabajo,
+                    e.FechaEgreso,
                     prof.NombreProfesion,
+                    univ.NombreUniversidad,
+                    univ.TipoUniversidad,
                     p.NombrePrograma,
                     p.GradoAcademico,
                     p.Codigo as CodigoPrograma,
@@ -284,6 +287,7 @@ class InscripcionModuloModelos
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
                 LEFT JOIN profesion prof ON e.IdProfesion = prof.IdProfesion
+                LEFT JOIN universidad univ ON e.IdUniversidad = univ.IdUniversidad
                 WHERE ep.idInscripcion = :idInscripcion
                 AND ep.Estado = 'ACTIVO'"
             );

@@ -1298,12 +1298,14 @@ jQuery(document).on('click', '.btnEditarDocente', function() {
         jQuery('#editSelectPais').val(pais).prop('required', true);
         jQuery('#editInputRegion').val(region).prop('required', true);
         jQuery('#editExp').prop('required', false).prop('disabled', true).val('');
+        jQuery('#editCel').attr('pattern', '[0-9]{6,15}').attr('maxlength', 15);
     } else {
         jQuery('#editCheckExtranjero').prop('checked', false);
         jQuery('#editCamposExtranjero').hide();
         jQuery('#editSelectPais').val('').prop('required', false);
         jQuery('#editInputRegion').val('').prop('required', false);
         jQuery('#editExp').prop('required', true).prop('disabled', false).val(exp);
+        jQuery('#editCel').attr('pattern', '[6-7][0-9]{7}').attr('maxlength', 8);
     }
 
     console.log('✓ Modal de edición llenado con datos del docente');
@@ -1543,6 +1545,14 @@ jQuery(document).ready(function() {
             jQuery('#inputCi').attr('pattern', '[A-Za-z0-9-]{4,20}')
                                .attr('maxlength', 20)
                                .attr('placeholder', 'Ej: AB123456');
+
+            // El celular extranjero no sigue el formato boliviano (8 dígitos, empieza
+            // con 6 o 7): se admite más dígitos (códigos de país incluidos) y sin
+            // exigir con qué número empieza.
+            jQuery('#inputCelular').attr('pattern', '[0-9]{6,15}')
+                                    .attr('maxlength', 15)
+                                    .attr('placeholder', 'Ej: 5491123456789')
+                                    .next('.invalid-feedback').text('Celular inválido (solo números, 6 a 15 dígitos).');
         } else {
             // Ocultar campos y limpiar valores
             console.log('>>> Ocultando campos de extranjero');
@@ -1561,6 +1571,12 @@ jQuery(document).ready(function() {
             jQuery('#inputCi').attr('pattern', '[0-9]{6,12}')
                                .attr('maxlength', 12)
                                .attr('placeholder', '1234567');
+
+            // Restaurar la validación del celular boliviano
+            jQuery('#inputCelular').attr('pattern', '[6-7][0-9]{7}')
+                                    .attr('maxlength', 8)
+                                    .attr('placeholder', '70123456')
+                                    .next('.invalid-feedback').text('Celular inválido (8 dígitos, empieza con 6 o 7).');
         }
     });
 
@@ -1593,6 +1609,13 @@ jQuery(document).ready(function() {
             // La Matrícula Nacional solo aplica a profesionales nacionales
             jQuery('#editMatriculaNacional').prop('required', false).prop('disabled', true).val('');
             jQuery('#editMatriculaNacionalAsterisco').hide();
+
+            // El celular extranjero no sigue el formato boliviano (8 dígitos, empieza
+            // con 6 o 7): se admite más dígitos (códigos de país incluidos) y sin
+            // exigir con qué número empieza.
+            jQuery('#editCel').attr('pattern', '[0-9]{6,15}')
+                               .attr('maxlength', 15)
+                               .attr('placeholder', 'Ej: 5491123456789');
         } else {
             console.log('>>> Ocultando campos EDITAR de extranjero');
             $camposExtranjero.hide();
@@ -1603,6 +1626,11 @@ jQuery(document).ready(function() {
             // Habilitar de nuevo la Matrícula Nacional (obligatoria para nacionales)
             jQuery('#editMatriculaNacional').prop('required', true).prop('disabled', false);
             jQuery('#editMatriculaNacionalAsterisco').show();
+
+            // Restaurar la validación del celular boliviano
+            jQuery('#editCel').attr('pattern', '[6-7][0-9]{7}')
+                               .attr('maxlength', 8)
+                               .attr('placeholder', '70123456');
         }
     });
 

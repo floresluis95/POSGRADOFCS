@@ -70,7 +70,7 @@ const NOMBRES_PLAN_REPORTE = { REGULAR: 'Regular', DESCUENTO: 'Contado (Desc.)',
 function cargarReportePagos() {
     const grado = $('#reportePagosGrado').val();
 
-    $('#tablaReportePagosBody').html('<tr><td colspan="16" class="text-center text-muted py-4"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
+    $('#tablaReportePagosBody').html('<tr><td colspan="17" class="text-center text-muted py-4"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
     $('#tablaReportePagosFooter').html('');
 
     $.ajax({
@@ -89,7 +89,7 @@ function cargarReportePagos() {
 
 function renderTablaReportePagos(datos) {
     if (!datos || datos.length === 0) {
-        $('#tablaReportePagosBody').html('<tr><td colspan="16" class="text-center text-muted py-4">No hay programas para mostrar</td></tr>');
+        $('#tablaReportePagosBody').html('<tr><td colspan="17" class="text-center text-muted py-4">No hay programas para mostrar</td></tr>');
         $('#tablaReportePagosFooter').html('');
         return;
     }
@@ -97,11 +97,12 @@ function renderTablaReportePagos(datos) {
     let html = '';
     const totales = {
         inscritos: 0, regular: 0, descuento: 0, grupal: 0, sinPlan: 0, abandonos: 0, conDescuento: 0,
-        completaron: 0, pendientes: 0, programado: 0, pagado: 0, montoDescuentos: 0, saldo: 0
+        completaron: 0, pendientes: 0, matriculas: 0, programado: 0, pagado: 0, montoDescuentos: 0, saldo: 0
     };
 
     datos.forEach(function(p) {
         const inscritos = parseInt(p.TotalInscritos) || 0;
+        const matriculas = parseFloat(p.TotalMatriculas) || 0;
         const programado = parseFloat(p.CostoTotalProgramado) || 0;
         const pagado = parseFloat(p.TotalPagado) || 0;
         const saldo = parseFloat(p.SaldoPendiente) || 0;
@@ -118,6 +119,7 @@ function renderTablaReportePagos(datos) {
         totales.conDescuento += conDescuento;
         totales.completaron += parseInt(p.CountCompletados) || 0;
         totales.pendientes += parseInt(p.CountPendientes) || 0;
+        totales.matriculas += matriculas;
         totales.programado += programado;
         totales.pagado += pagado;
         totales.montoDescuentos += montoDescuentos;
@@ -135,6 +137,7 @@ function renderTablaReportePagos(datos) {
             '<td class="text-center">' + (conDescuento > 0 ? '<span class="badge badge-info">' + conDescuento + '</span>' : '0') + '</td>' +
             '<td class="text-center"><span class="badge badge-success">' + (parseInt(p.CountCompletados) || 0) + '</span></td>' +
             '<td class="text-center"><span class="badge badge-warning">' + (parseInt(p.CountPendientes) || 0) + '</span></td>' +
+            '<td class="text-right" title="Pago de matrícula ya cancelado por los inscritos">' + formatoMoneda(matriculas) + '</td>' +
             '<td class="text-right">' + formatoMoneda(programado) + '</td>' +
             '<td class="text-right text-success">' + formatoMoneda(pagado) + '</td>' +
             '<td class="text-right">' + formatoMoneda(montoDescuentos) + '</td>' +
@@ -162,6 +165,7 @@ function renderTablaReportePagos(datos) {
             '<td class="text-center">' + totales.conDescuento + '</td>' +
             '<td class="text-center">' + totales.completaron + '</td>' +
             '<td class="text-center">' + totales.pendientes + '</td>' +
+            '<td class="text-right">' + formatoMoneda(totales.matriculas) + '</td>' +
             '<td class="text-right">' + formatoMoneda(totales.programado) + '</td>' +
             '<td class="text-right">' + formatoMoneda(totales.pagado) + '</td>' +
             '<td class="text-right">' + formatoMoneda(totales.montoDescuentos) + '</td>' +
@@ -176,7 +180,7 @@ function renderTablaReportePagos(datos) {
  */
 function verDetallePagosPrograma(programaID, programaNombre) {
     $('#detallePagosProgramaNombre').text(programaNombre || '');
-    $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="9" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
+    $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="10" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
     $('#modalDetallePagosPrograma').modal('show');
 
     $.ajax({
@@ -195,12 +199,13 @@ function verDetallePagosPrograma(programaID, programaNombre) {
 
 function renderDetallePagosEstudiante(datos) {
     if (!datos || datos.length === 0) {
-        $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="9" class="text-center text-muted py-3">Este programa no tiene estudiantes inscritos</td></tr>');
+        $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="10" class="text-center text-muted py-3">Este programa no tiene estudiantes inscritos</td></tr>');
         return;
     }
 
     let html = '';
     datos.forEach(function(e) {
+        const costoMatricula = parseFloat(e.CostoMatricula) || 0;
         const costoTotal = parseFloat(e.CostoTotal) || 0;
         const pagado = parseFloat(e.TotalPagado) || 0;
         const saldo = parseFloat(e.SaldoPendiente) || 0;
@@ -228,6 +233,7 @@ function renderDetallePagosEstudiante(datos) {
             '<td>' + (e.Ci || '') + '</td>' +
             '<td class="text-center">' + planTexto + '</td>' +
             '<td class="text-center">' + cuotasTexto + '</td>' +
+            '<td class="text-right" title="Pago de matrícula ya cancelado">' + (costoMatricula > 0 ? formatoMoneda(costoMatricula) : '-') + '</td>' +
             '<td class="text-right">' + formatoMoneda(costoTotal) + '</td>' +
             '<td class="text-right text-success">' + formatoMoneda(pagado) + '</td>' +
             '<td class="text-right">' + (descuento > 0 ? formatoMoneda(descuento) : '-') + '</td>' +

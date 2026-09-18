@@ -32,6 +32,8 @@
     require_once 'modelos/heredado.modelo.php';
     require_once 'modelos/programa.modelo.php';
     require_once 'modelos/estudiantes.modelo.php';
+    require_once 'modelos/universidad.modelo.php';
+    require_once 'modelos/historialpagos.modelo.php';
     require_once file_exists(__DIR__ . '/modelos/inscripcion.modelo.php') ? 'modelos/inscripcion.modelo.php' : 'core/inscripcion.modelo.php';
     require_once 'modelos/matricula.modelo.php';
     require_once 'modelos/inscripcionmodulo.modelo.php';

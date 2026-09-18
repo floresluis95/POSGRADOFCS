@@ -62,21 +62,27 @@ class ProgramaCuentaModelo
     }
 
     /**
-     * Listar los tipos de cuenta ya usados en cualquier programa, para
-     * ofrecerlos como sugerencia (datalist) al registrar una cuenta nueva.
+     * Listar los tipos de cuenta a sugerir (datalist) al registrar una cuenta
+     * nueva. Siempre incluye los tipos "canónicos" (los que el resto del
+     * sistema busca por nombre exacto al generar órdenes de pago: MATRICULA,
+     * CUOTAS) primero, para que no se vuelvan a escribir mal (ej. "CUOTA" en
+     * vez de "CUOTAS", que hacía que la cuenta quedara invisible aunque
+     * existiera). Los demás tipos ya usados se agregan después, tal cual.
      * @return array
      */
     public static function ListarTiposUsadosModelo()
     {
+        $canonicos = ['MATRICULA', 'CUOTAS'];
         try {
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT DISTINCT TipoCuenta FROM programacuenta ORDER BY TipoCuenta ASC"
             );
             $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $usados = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            return array_values(array_unique(array_merge($canonicos, $usados)));
         } catch (PDOException $e) {
             error_log("Error en ListarTiposUsadosModelo: " . $e->getMessage());
-            return [];
+            return $canonicos;
         }
     }
 

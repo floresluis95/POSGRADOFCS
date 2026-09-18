@@ -196,6 +196,7 @@ class ReporteModulosModelo
                         SUM(d.TieneDescuento) AS CountConDescuento,
                         COALESCE(SUM(d.CostoTotalPrograma), 0) AS CostoTotalProgramado,
                         COALESCE(SUM(d.TotalPagado), 0) AS TotalPagado,
+                        COALESCE(SUM(d.CostoMatricula), 0) AS TotalMatriculas,
                         COALESCE(SUM(d.SaldoPendiente), 0) AS SaldoPendiente,
                         COALESCE(SUM(d.MontoDescuentoTotal), 0) AS MontoTotalDescuentos
                     FROM (
@@ -204,8 +205,9 @@ class ReporteModulosModelo
                             ep.idInscripcion,
                             ep.Estado AS EstadoInscripcion,
                             pp.TipoPlan,
-                            COALESCE(pp.MontoTotalPagar, 0) AS CostoTotalPrograma,
-                            COALESCE(pagado.TotalPagadoInscripcion, 0) AS TotalPagado,
+                            (COALESCE(pp.MontoTotalPagar, 0) + COALESCE(ep.costomatricula, 0)) AS CostoTotalPrograma,
+                            (COALESCE(pagado.TotalPagadoInscripcion, 0) + COALESCE(ep.costomatricula, 0)) AS TotalPagado,
+                            COALESCE(ep.costomatricula, 0) AS CostoMatricula,
                             GREATEST(COALESCE(pp.MontoTotalPagar, 0) - COALESCE(pagado.TotalPagadoInscripcion, 0), 0) AS SaldoPendiente,
                             (COALESCE(ep.montoDescuento, 0) + COALESCE(pp.MontoDescuento, 0)) AS MontoDescuentoTotal,
                             CASE WHEN (COALESCE(ep.montoDescuento, 0) > 0 OR COALESCE(pp.PorcentajeDescuento, 0) > 0) THEN 1 ELSE 0 END AS TieneDescuento,
@@ -265,8 +267,9 @@ class ReporteModulosModelo
                         pp.NumeroCuotas,
                         pp.PorcentajeDescuento,
                         (COALESCE(ep.montoDescuento, 0) + COALESCE(pp.MontoDescuento, 0)) AS MontoDescuentoTotal,
-                        COALESCE(pp.MontoTotalPagar, 0) AS CostoTotal,
-                        COALESCE(pagado.TotalPagado, 0) AS TotalPagado,
+                        COALESCE(ep.costomatricula, 0) AS CostoMatricula,
+                        (COALESCE(pp.MontoTotalPagar, 0) + COALESCE(ep.costomatricula, 0)) AS CostoTotal,
+                        (COALESCE(pagado.TotalPagado, 0) + COALESCE(ep.costomatricula, 0)) AS TotalPagado,
                         GREATEST(COALESCE(pp.MontoTotalPagar, 0) - COALESCE(pagado.TotalPagado, 0), 0) AS SaldoPendiente,
                         COALESCE(pagado.CuotasPagadas, 0) AS CuotasPagadas
                     FROM estudianteprograma ep

@@ -128,6 +128,34 @@ function addField($pdf, $x, $y, $label, $value, $labelWidth, $dataWidth) {
     return $y + 7;
 }
 
+// Variante de addField() para valores potencialmente largos (p. ej. el nombre
+// de una universidad): en vez de dejar que el texto se salga de la hoja si no
+// entra en $dataWidth, reduce el tamaño de letra hasta que entre en una sola
+// línea (sin esto, un nombre largo podía salirse del margen derecho).
+function addFieldAjustado($pdf, $x, $y, $label, $value, $labelWidth, $dataWidth, $fontSizeMinimo = 6) {
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->SetTextColor(60, 60, 60);
+    $pdf->SetXY($x, $y);
+    $pdf->Cell($labelWidth, 6, $label, 0, 0, 'L');
+
+    $valorMayus = strtoupper($value);
+    $fontSize = 9;
+    $pdf->SetFont('helvetica', '', $fontSize);
+    while ($fontSize > $fontSizeMinimo && $pdf->GetStringWidth($valorMayus) > $dataWidth) {
+        $fontSize--;
+        $pdf->SetFont('helvetica', '', $fontSize);
+    }
+
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetDrawColor(200, 200, 200);
+    $pdf->Line($x + $labelWidth, $y + 5.5, $x + $labelWidth + $dataWidth, $y + 5.5);
+
+    $pdf->SetXY($x + $labelWidth, $y);
+    $pdf->Cell($dataWidth, 6, $valorMayus, 0, 1, 'L');
+
+    return $y + 7;
+}
+
 // Nombres
 $y = addField($pdf, $leftMargin, $y, 'NOMBRES:', $estudiante['Nombre'], $labelWidth, $dataWidth);
 
@@ -157,6 +185,20 @@ $y = addField($pdf, $leftMargin, $y, 'PROFESIÓN:', $profesion, $labelWidth, $da
 // Lugar de Trabajo
 $trabajo = !empty($estudiante['Trabajo']) ? $estudiante['Trabajo'] : 'NO ESPECIFICADO';
 $y = addField($pdf, $leftMargin, $y, 'LUGAR DE TRABAJO:', $trabajo, $labelWidth, $dataWidth);
+
+// Universidad de Egreso (nombre, tipo y fecha en una sola línea para no correr
+// el resto de la ficha: foto, firma y QR usan posiciones fijas más abajo).
+$etiquetasTipoUniversidad = ['PUBLICA' => 'Pública', 'PRIVADA' => 'Privada', 'EXTRANJERA' => 'Extranjera', 'CONVENIO' => 'De Convenio'];
+if (!empty($estudiante['NombreUniversidad'])) {
+    $tipoUniv = $etiquetasTipoUniversidad[$estudiante['TipoUniversidad']] ?? $estudiante['TipoUniversidad'];
+    $universidad = $estudiante['NombreUniversidad'] . ' (' . $tipoUniv . ')';
+    if (!empty($estudiante['FechaEgreso']) && $estudiante['FechaEgreso'] != '0000-00-00') {
+        $universidad .= ' - EGRESO: ' . date('d/m/Y', strtotime($estudiante['FechaEgreso']));
+    }
+} else {
+    $universidad = 'NO ESPECIFICADO';
+}
+$y = addFieldAjustado($pdf, $leftMargin, $y, 'UNIVERSIDAD DE EGRESO:', $universidad, $labelWidth, 130);
 
 // ========================================
 // DATOS DE CONTACTO
@@ -211,16 +253,14 @@ $y = addField($pdf, $leftMargin, $y, 'CÓDIGO DEL PROGRAMA:', $codigo, $labelWid
 $pdf->SetXY($leftMargin, $y);
 $pdf->Cell(0, 6, 'OBSERVACIONES:', 0, 1);
 
-// Primera línea
-$pdf->SetX($leftMargin);
-$pdf->Cell(0, 8, '_____________________________________________________________________________________________________', 0, 1);
-
-// Segunda línea
+// Línea (una sola: se acortó de 2 a 1 para dejar espacio al nuevo campo
+// "Universidad de Egreso" sin invadir el recuadro de la foto, que está a
+// posición fija más abajo)
 $pdf->SetX($leftMargin);
 $pdf->Cell(0, 8, '_____________________________________________________________________________________________________', 0, 1);
 
 // Actualizar Y
-$y += 20;
+$y += 12;
 
 // ========================================
 // ESPACIO PARA FOTO (6x6 cm)

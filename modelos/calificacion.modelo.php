@@ -322,11 +322,14 @@ class CalificacionModelo
                     m.estadomodulo as EstadoModulo,
                     m.ValidadoPor,
                     m.FechaValidacion,
+                    m.FechaInicio,
+                    m.FechaFinal,
                     p.ProgramaID,
                     p.NombrePrograma,
                     p.GradoAcademico,
                     p.Codigo as CodigoPrograma,
                     p.Sigla,
+                    p.Sede,
                     (SELECT COUNT(DISTINCT EstudianteID)
                      FROM estudianteprograma
                      WHERE ProgramaID = p.ProgramaID

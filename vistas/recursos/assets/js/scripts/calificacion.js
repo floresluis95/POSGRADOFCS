@@ -11,6 +11,14 @@ let asignacionSeleccionada = null;
 let estudiantesActuales = [];
 let modulosCerrados = [];
 
+// Formatear una fecha "YYYY-MM-DD" (tal como viene de la BD) a "DD/MM/AAAA"
+function formatearFechaDDMMAAAA(fecha) {
+    if (!fecha) return 'No registrada';
+    const partes = fecha.split('-');
+    if (partes.length !== 3) return fecha;
+    return partes[2] + '/' + partes[1] + '/' + partes[0];
+}
+
 $(document).ready(function() {
     // Inicializar Select2
     $('.select2-docente').select2({
@@ -27,6 +35,24 @@ $(document).ready(function() {
 
     // Usar delegación de eventos para el botón de lista de asistencia
     $(document).on('click', '#btn-generar-lista-asistencia', generarListaAsistencia);
+
+    // Imprimir calificaciones del módulo actualmente seleccionado (Paso 3),
+    // sin tener que esperar a que el módulo se cierre.
+    $(document).on('click', '#btn-imprimir-calificaciones', function() {
+        if (!asignacionSeleccionada) return;
+
+        imprimirReporteCalificaciones(
+            asignacionSeleccionada.moduloID,
+            asignacionSeleccionada.programaID,
+            asignacionSeleccionada.moduloNombre,
+            asignacionSeleccionada.moduloCodigo,
+            asignacionSeleccionada.programaNombre,
+            asignacionSeleccionada.grado,
+            docenteSeleccionado ? docenteSeleccionado.nombre : '',
+            asignacionSeleccionada.fechaInicio,
+            asignacionSeleccionada.fechaFinal
+        );
+    });
 
     console.log('Event listeners registrados correctamente');
 });
@@ -130,6 +156,11 @@ function cargarAsignacionesDocente(docenteID) {
     });
 }
 
+// Todas las asignaciones abiertas del docente actualmente seleccionado, sin
+// filtrar (la tabla se re-renderiza filtrando sobre esta copia, sin volver a
+// pedirle nada al servidor).
+let asignacionesAbiertasCompletas = [];
+
 function mostrarAsignaciones(asignaciones) {
     // Separar módulos abiertos y cerrados
     const modulosAbiertos = [];
@@ -144,6 +175,8 @@ function mostrarAsignaciones(asignaciones) {
         }
     });
 
+    asignacionesAbiertasCompletas = modulosAbiertos;
+
     // Ocultar paso 1 y mostrar paso 2
     $('#paso1-container').slideUp();
     $('#paso2-container').slideDown();
@@ -154,6 +187,58 @@ function mostrarAsignaciones(asignaciones) {
     $('#docente-especialidad').text(docenteSeleccionado.especialidad);
     $('#total-asignaciones').text(modulosAbiertos.length);
 
+    poblarFiltrosAsignaciones(modulosAbiertos);
+    renderTablaAsignacionesAbiertas(modulosAbiertos);
+}
+
+/**
+ * Llenar los selects de Sede y Programa con los valores presentes en las
+ * asignaciones del docente (Docente ya se elige en el Paso 1). Se recrean
+ * cada vez que se carga un docente distinto.
+ */
+function poblarFiltrosAsignaciones(modulosAbiertos) {
+    const $filtroSede = $('#filtro-sede');
+    const $filtroPrograma = $('#filtro-programa');
+
+    if (modulosAbiertos.length === 0) {
+        $('#filtros-asignaciones-container').hide();
+        return;
+    }
+
+    const sedeSeleccionada = $filtroSede.val();
+    const programaSeleccionado = $filtroPrograma.val();
+
+    const sedes = [...new Set(modulosAbiertos.map(a => a.Sede).filter(Boolean))].sort();
+    const programas = [...new Map(modulosAbiertos.map(a => [a.ProgramaID, a.NombrePrograma])).entries()]
+        .sort((a, b) => a[1].localeCompare(b[1]));
+
+    $filtroSede.html('<option value="">Todas las sedes</option>' +
+        sedes.map(s => `<option value="${s}">${s}</option>`).join(''));
+    $filtroPrograma.html('<option value="">Todos los programas</option>' +
+        programas.map(([id, nombre]) => `<option value="${id}">${nombre}</option>`).join(''));
+
+    // Conservar la selección previa si sigue siendo válida (ej. al recargar
+    // asignaciones del mismo docente tras guardar una calificación).
+    if (sedeSeleccionada) $filtroSede.val(sedeSeleccionada);
+    if (programaSeleccionado) $filtroPrograma.val(programaSeleccionado);
+
+    $('#filtros-asignaciones-container').show();
+}
+
+$(document).on('change', '#filtro-sede, #filtro-programa', function() {
+    const sede = $('#filtro-sede').val();
+    const programaID = $('#filtro-programa').val();
+
+    const filtradas = asignacionesAbiertasCompletas.filter(function(asig) {
+        if (sede && asig.Sede !== sede) return false;
+        if (programaID && String(asig.ProgramaID) !== String(programaID)) return false;
+        return true;
+    });
+
+    renderTablaAsignacionesAbiertas(filtradas);
+});
+
+function renderTablaAsignacionesAbiertas(modulosAbiertos) {
     // Renderizar tabla de asignaciones (solo módulos abiertos)
     let html = `
         <div class="table-responsive">
@@ -167,11 +252,15 @@ function mostrarAsignaciones(asignaciones) {
                         <th style="width: 10%;">Código</th>
                         <th style="width: 8%;">Estudiantes</th>
                         <th style="width: 15%;">Estado Calificación</th>
-                        <th style="width: 10%;">Acción</th>
+                        <th style="width: 16%;">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
+
+    if (modulosAbiertos.length === 0) {
+        html += '<tr><td colspan="8" class="text-center text-muted py-3">Ningún módulo coincide con el filtro seleccionado</td></tr>';
+    }
 
     modulosAbiertos.forEach(function(asig, index) {
         // Determinar estado de calificación
@@ -229,7 +318,9 @@ function mostrarAsignaciones(asignaciones) {
         html += '</span>' + fechaInfo;
         html += '</td>';
         html += '<td class="text-center">';
-        // Solo botón de evaluar para módulos activos
+        html += '<div class="btn-group" role="group">';
+
+        // Botón de evaluar/editar
         html += '<button class="btn btn-sm btn-brand btn-evaluar" ';
         html += 'data-modulo-id="' + asig.Idmodulo + '" ';
         html += 'data-programa-id="' + asig.ProgramaID + '" ';
@@ -237,9 +328,41 @@ function mostrarAsignaciones(asignaciones) {
         html += 'data-modulo-codigo="' + asig.codigomodulo + '" ';
         html += 'data-programa-nombre="' + asig.NombrePrograma + '" ';
         html += 'data-grado="' + asig.GradoAcademico + '" ';
+        html += 'data-fecha-inicio="' + (asig.FechaInicio || '') + '" ';
+        html += 'data-fecha-final="' + (asig.FechaFinal || '') + '" ';
         html += 'title="' + (totalCalificados > 0 ? 'Editar calificaciones' : 'Evaluar estudiantes') + '">';
         html += '<i class="la la-edit"></i> ' + (totalCalificados > 0 ? 'Editar' : 'Evaluar');
         html += '</button>';
+
+        // Botón de imprimir calificaciones (mismos datos que arriba, no hace
+        // falta entrar al módulo para imprimir).
+        html += '<button class="btn btn-sm btn-success btn-imprimir-asignacion" ';
+        html += 'data-modulo-id="' + asig.Idmodulo + '" ';
+        html += 'data-programa-id="' + asig.ProgramaID + '" ';
+        html += 'data-modulo-nombre="' + asig.nombremodulo + '" ';
+        html += 'data-modulo-codigo="' + asig.codigomodulo + '" ';
+        html += 'data-programa-nombre="' + asig.NombrePrograma + '" ';
+        html += 'data-grado="' + asig.GradoAcademico + '" ';
+        html += 'data-fecha-inicio="' + (asig.FechaInicio || '') + '" ';
+        html += 'data-fecha-final="' + (asig.FechaFinal || '') + '" ';
+        html += 'title="Imprimir calificaciones">';
+        html += '<i class="fa fa-print"></i>';
+        html += '</button>';
+
+        // Botón de lista de asistencia
+        html += '<button class="btn btn-sm btn-danger btn-asistencia-asignacion" ';
+        html += 'data-modulo-id="' + asig.Idmodulo + '" ';
+        html += 'data-programa-id="' + asig.ProgramaID + '" ';
+        html += 'data-modulo-nombre="' + asig.nombremodulo + '" ';
+        html += 'data-modulo-codigo="' + asig.codigomodulo + '" ';
+        html += 'data-programa-nombre="' + asig.NombrePrograma + '" ';
+        html += 'data-grado="' + asig.GradoAcademico + '" ';
+        html += 'data-total-estudiantes="' + totalEstudiantes + '" ';
+        html += 'title="Lista de asistencia">';
+        html += '<i class="fa fa-file-pdf"></i>';
+        html += '</button>';
+
+        html += '</div>';
         html += '</td>';
         html += '</tr>';
     });
@@ -263,27 +386,81 @@ function mostrarAsignaciones(asignaciones) {
     }
 
     $('#asignaciones-container').html(html);
-
-    // Agregar evento click a los botones de evaluar
-    $('.btn-evaluar').on('click', function() {
-        const moduloID = $(this).data('modulo-id');
-        const programaID = $(this).data('programa-id');
-
-        asignacionSeleccionada = {
-            moduloID: moduloID,
-            programaID: programaID,
-            moduloNombre: $(this).data('modulo-nombre'),
-            moduloCodigo: $(this).data('modulo-codigo'),
-            programaNombre: $(this).data('programa-nombre'),
-            grado: $(this).data('grado')
-        };
-
-        cargarEstudiantes(moduloID, programaID);
-    });
-
-    // Agregar evento click al botón de módulos cerrados
-    $('#btn-ver-modulos-cerrados').on('click', mostrarModalModulosCerrados);
 }
+
+// Delegados (la tabla de asignaciones se vuelve a renderizar completa cada vez
+// que se aplica un filtro, así que estos manejadores se registran una sola vez
+// sobre document en vez de re-atarse a mano en cada render).
+$(document).on('click', '.btn-evaluar', function() {
+    const moduloID = $(this).data('modulo-id');
+    const programaID = $(this).data('programa-id');
+
+    asignacionSeleccionada = {
+        moduloID: moduloID,
+        programaID: programaID,
+        moduloNombre: $(this).data('modulo-nombre'),
+        moduloCodigo: $(this).data('modulo-codigo'),
+        programaNombre: $(this).data('programa-nombre'),
+        grado: $(this).data('grado'),
+        fechaInicio: $(this).data('fecha-inicio'),
+        fechaFinal: $(this).data('fecha-final')
+    };
+
+    cargarEstudiantes(moduloID, programaID);
+});
+
+$(document).on('click', '#btn-ver-modulos-cerrados', mostrarModalModulosCerrados);
+
+// Imprimir calificaciones directamente desde la tabla de asignaciones, sin
+// tener que entrar primero al módulo (Paso 3).
+$(document).on('click', '.btn-imprimir-asignacion', function() {
+    const $btn = $(this);
+    imprimirReporteCalificaciones(
+        $btn.data('modulo-id'),
+        $btn.data('programa-id'),
+        $btn.data('modulo-nombre'),
+        $btn.data('modulo-codigo'),
+        $btn.data('programa-nombre'),
+        $btn.data('grado'),
+        docenteSeleccionado ? docenteSeleccionado.nombre : '',
+        $btn.data('fecha-inicio'),
+        $btn.data('fecha-final')
+    );
+});
+
+// Lista de asistencia directamente desde la tabla de asignaciones.
+$(document).on('click', '.btn-asistencia-asignacion', function() {
+    const $btn = $(this);
+    const totalEstudiantes = parseInt($btn.data('total-estudiantes'), 10) || 0;
+
+    if (totalEstudiantes === 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin estudiantes',
+            text: 'No hay estudiantes inscritos en este módulo para generar la lista de asistencia'
+        });
+        return;
+    }
+
+    const url = 'vistas/componentes/generar-lista-asistencia-pdf.php?' +
+        'moduloID=' + $btn.data('modulo-id') +
+        '&programaID=' + $btn.data('programa-id') +
+        '&moduloNombre=' + encodeURIComponent($btn.data('modulo-nombre')) +
+        '&moduloCodigo=' + encodeURIComponent($btn.data('modulo-codigo')) +
+        '&programaNombre=' + encodeURIComponent($btn.data('programa-nombre')) +
+        '&grado=' + encodeURIComponent($btn.data('grado')) +
+        '&docenteNombre=' + encodeURIComponent(docenteSeleccionado ? docenteSeleccionado.nombre : '');
+
+    const ventana = window.open(url, '_blank');
+    if (!ventana) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Ventana bloqueada',
+            html: 'El navegador bloqueó la ventana emergente.<br>Por favor, permita ventanas emergentes para este sitio.',
+            confirmButtonText: 'Entendido'
+        });
+    }
+});
 
 /**
  * ================================================================
@@ -346,6 +523,8 @@ function mostrarFormularioCalificaciones(estudiantes) {
     $('#modulo-codigo').text(asignacionSeleccionada.moduloCodigo);
     $('#programa-nombre').text(asignacionSeleccionada.programaNombre);
     $('#grado-nombre').text(asignacionSeleccionada.grado);
+    $('#modulo-fecha-inicio').text(formatearFechaDDMMAAAA(asignacionSeleccionada.fechaInicio));
+    $('#modulo-fecha-final').text(formatearFechaDDMMAAAA(asignacionSeleccionada.fechaFinal));
 
     // Renderizar tabla de estudiantes
     if (estudiantes.length === 0) {
@@ -629,7 +808,7 @@ function volverPaso2() {
  * ================================================================
  */
 
-function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, gradoAcademico, docenteNombre) {
+function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, gradoAcademico, docenteNombre, fechaInicioDB, fechaFinDB) {
     console.log('=== IMPRIMIR REPORTE ===');
     console.log('moduloID:', moduloID);
     console.log('programaID:', programaID);
@@ -658,18 +837,20 @@ function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, modul
                     <label for="fechaInicio" style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">
                         <i class="la la-calendar-check-o"></i> Fecha de Inicio:
                     </label>
-                    <input type="date" id="fechaInicio" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;">
+                    <input type="date" id="fechaInicio" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;" value="${fechaInicioDB || ''}">
                 </div>
 
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label for="fechaFin" style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">
                         <i class="la la-calendar-times-o"></i> Fecha de Finalización:
                     </label>
-                    <input type="date" id="fechaFin" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;">
+                    <input type="date" id="fechaFin" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;" value="${fechaFinDB || ''}">
                 </div>
 
                 <p style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-left: 3px solid #5867dd; font-size: 13px; color: #555;">
-                    <i class="la la-info-circle"></i> Estas fechas se mostrarán en el reporte PDF de calificaciones.
+                    <i class="la la-info-circle"></i> ${(fechaInicioDB && fechaFinDB)
+                        ? 'Se completaron con las fechas ya registradas para este módulo; puede ajustarlas si hace falta.'
+                        : 'Estas fechas se mostrarán en el reporte PDF de calificaciones.'}
                 </p>
             </div>
         `,
@@ -822,6 +1003,8 @@ function mostrarModalModulosCerrados() {
         html += `data-programa-nombre="${asig.NombrePrograma}" `;
         html += `data-grado="${asig.GradoAcademico}" `;
         html += `data-docente-nombre="${docenteSeleccionado.nombre}" `;
+        html += `data-fecha-inicio="${asig.FechaInicio || ''}" `;
+        html += `data-fecha-final="${asig.FechaFinal || ''}" `;
         html += `title="Imprimir calificaciones">`;
         html += `<i class="la la-print"></i> Imprimir`;
         html += `</button>`;
@@ -868,8 +1051,10 @@ function mostrarModalModulosCerrados() {
                 const programaNombre = $(this).data('programa-nombre');
                 const gradoAcademico = $(this).data('grado');
                 const docenteNombre = $(this).data('docente-nombre');
+                const fechaInicioDB = $(this).data('fecha-inicio');
+                const fechaFinDB = $(this).data('fecha-final');
 
-                imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, gradoAcademico, docenteNombre);
+                imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, gradoAcademico, docenteNombre, fechaInicioDB, fechaFinDB);
             });
 
             // Agregar evento a los botones de reabrir (solo para administradores)

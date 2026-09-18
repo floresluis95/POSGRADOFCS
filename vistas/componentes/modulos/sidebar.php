@@ -78,6 +78,12 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Matriculados</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="historialpagos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-time" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Historial de Pagos</span>
+                  </a>
+                </li>
 
                 <!-- CALIFICACIONES -->
                 <li class="kt-menu__section">
@@ -110,7 +116,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Buscar por Estudiante</span>
                   </a>
                 </li>
-               
+
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="historialnotaestudiante" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-list-3" style="color: #fd397a;"></i>
@@ -124,7 +130,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <i class="flaticon2-user-outline-symbol" style="color: #36a3f7;"></i> DOCENTES
                   </h4>
                 </li>
-               
+
                  <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="asignaciondocente" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-add-1" style="color: #36a3f7;"></i>
@@ -298,6 +304,12 @@ if ($_SESSION["Tipo"] == "SEC") {
                   <a href="matriculados" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-group" style="color: #6f94c9;"></i>
                     <span class="kt-menu__link-text">Matriculados</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="historialpagos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-time" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Historial de Pagos</span>
                   </a>
                 </li>
 

@@ -20,6 +20,9 @@ $sedesDisponibles = ProgramasModelos::ListarSedesModelo();
 // Profesiones disponibles, para el formulario de datos del estudiante en el PASO 1
 $listaProfesionesInicial = ProfesionModelos::ListaprofesionModelos();
 
+// Universidades disponibles (universidad de egreso), para el mismo formulario del PASO 1
+$listaUniversidadesInicial = UniversidadModelos::ListarUniversidadesModelo();
+
 function PintarFilaPreregistro($pr)
 {
     $nombreCompleto = trim(($pr['Apaterno'] ?? '') . ' ' . ($pr['Amaterno'] ?? '') . ' ' . ($pr['Nombre'] ?? ''));
@@ -387,6 +390,33 @@ kt-aside--fixed kt-page--loading">
                               </div>
                             </div>
 
+                            <!-- Universidad de egreso: opcional, no todos los estudiantes tienen
+                                 este dato al momento del pre-registro. -->
+                            <div class="row mt-2">
+                              <div class="col-md-6">
+                                <label for="IdUniversidad" class="small font-weight-bold mb-1">Universidad de Egreso</label>
+                                <div class="input-group input-group-sm">
+                                  <select class="form-control form-control-sm" id="IdUniversidad" name="IdUniversidad" form="formPreregistro">
+                                    <option value="">Seleccione una universidad...</option>
+                                    <?php foreach ($listaUniversidadesInicial as $univ): ?>
+                                      <option value="<?php echo (int)$univ['IdUniversidad']; ?>" data-tipo="<?php echo htmlspecialchars($univ['TipoUniversidad']); ?>"><?php echo htmlspecialchars($univ['NombreUniversidad']); ?></option>
+                                    <?php endforeach; ?>
+                                  </select>
+                                  <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-primary" id="btnNuevaUniversidad" title="Agregar una universidad que no está en la lista">
+                                      <i class="fa fa-plus"></i>
+                                    </button>
+                                  </div>
+                                </div>
+                                <small class="form-text text-muted" id="IdUniversidadTipo"></small>
+                              </div>
+                              <div class="col-md-3">
+                                <label for="FechaEgreso" class="small font-weight-bold mb-1">Fecha de Egreso</label>
+                                <input type="date" id="FechaEgreso" name="FechaEgreso" form="formPreregistro" class="form-control form-control-sm"
+                                       max="<?php echo date('Y-m-d'); ?>">
+                              </div>
+                            </div>
+
                           </div>
                         </div>
                         <div class="modal-footer">
@@ -555,10 +585,13 @@ kt-aside--fixed kt-page--loading">
                                   <div class="input-group-prepend">
                                     <span class="input-group-text">Bs.</span>
                                   </div>
-                                  <input type="text" class="form-control font-weight-bold" id="montoSoloMatricula" readonly>
+                                  <input type="number" step="0.01" min="0" class="form-control font-weight-bold" id="montoSoloMatricula" readonly>
                                 </div>
                                 <small class="text-muted d-block mt-1" id="textoMatriculaExonerada" style="display:none;">
                                   <i class="flaticon2-information"></i> Matrícula ya pagada / exonerada.
+                                </small>
+                                <small class="text-warning d-block mt-1" id="avisoMatriculaEditable" style="display:none;">
+                                  <i class="fa fa-unlock-alt"></i> Universidad de egreso privada, extranjera o de convenio: el monto es editable, puede incrementarlo.
                                 </small>
                               </div>
                               <div class="orden-resumen-item">
@@ -702,6 +735,43 @@ kt-aside--fixed kt-page--loading">
     </div>
   </div>
 
+  <!-- Modal: Agregar una universidad nueva al select -->
+  <div class="modal fade" id="ModalNuevaUniversidad" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border-radius: 15px 15px 0 0;">
+          <h5 class="modal-title text-white"><i class="fa fa-plus"></i> Nueva Universidad</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form id="formNuevaUniversidad">
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="font-weight-bold">Nombre de la Universidad <span class="text-danger">*</span></label>
+              <input type="text" class="form-control text-uppercase" id="inputNuevaUniversidad" maxlength="150" required autofocus>
+              <small class="form-text text-muted">Se agregará al select y quedará seleccionada.</small>
+            </div>
+            <div class="form-group mb-0">
+              <label class="font-weight-bold">Tipo de Universidad <span class="text-danger">*</span></label>
+              <select class="form-control" id="selectNuevaUniversidadTipo" required>
+                <option value="" disabled selected>Seleccione...</option>
+                <option value="PUBLICA">Pública</option>
+                <option value="PRIVADA">Privada</option>
+                <option value="EXTRANJERA">Extranjera</option>
+                <option value="CONVENIO">De convenio</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer" style="background-color: #f5f5f5; border-radius: 0 0 15px 15px;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Agregar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Detalle de la solicitud de orden de pago -->
   <div class="modal fade" id="ModalDetallePreregistro" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -814,9 +884,14 @@ function iniciarPreregistro() {
     // formulario para registrarlo ahí mismo si no existe)
     // ============================================
 
-    // Hasta que se haga una búsqueda, el formulario de datos permanece bloqueado
+    // Hasta que se haga una búsqueda, el formulario de datos permanece bloqueado.
+    // Incluye los botones "+" de Nueva Profesión y Nueva Universidad: si el
+    // estudiante ya está registrado, sus datos quedan de solo lectura, así que
+    // tampoco debe poder agregarse un valor nuevo en esos selects desde ahí.
     function habilitarCamposEstudiante(habilitar) {
         $('#datosEstudianteForm input, #datosEstudianteForm select').prop('disabled', !habilitar);
+        $('#btnNuevaProfesion').prop('disabled', !habilitar);
+        $('#btnNuevaUniversidad').prop('disabled', !habilitar);
     }
     habilitarCamposEstudiante(false);
 
@@ -836,12 +911,16 @@ function iniciarPreregistro() {
         $('#IdProfesion').val(est.IdProfesion || '');
         $('#Trabajo').val(est.Trabajo || '');
         $('#direccionInput').val(est.Direccion || '');
+        $('#IdUniversidad').val(est.IdUniversidad || '');
+        actualizarTipoUniversidad();
+        $('#FechaEgreso').val(est.FechaEgreso ? est.FechaEgreso.substring(0, 10) : '');
     }
 
     function limpiarCamposEstudiante(ciPrellenado) {
         $('#datosEstudianteForm input[type="text"], #datosEstudianteForm input[type="email"], #datosEstudianteForm input[type="tel"], #datosEstudianteForm input[type="number"], #datosEstudianteForm input[type="date"]').val('');
         $('#datosEstudianteForm select').val('');
         $('#inputCi').val(ciPrellenado || '');
+        actualizarTipoUniversidad();
     }
 
     function buscarEstudiantePorCi() {
@@ -958,6 +1037,105 @@ function iniciarPreregistro() {
     });
 
     // ============================================
+    // UNIVERSIDAD DE EGRESO: mostrar su tipo (pública/privada/extranjera/convenio)
+    // apenas se selecciona, y agregar una nueva al select (botón "+"), igual que
+    // con Profesión. Cada universidad del catálogo tiene un tipo fijo que se
+    // define al agregarla.
+    // ============================================
+    const etiquetasTipoUniversidad = {
+        PUBLICA: 'Pública',
+        PRIVADA: 'Privada',
+        EXTRANJERA: 'Extranjera',
+        CONVENIO: 'De convenio'
+    };
+
+    function actualizarTipoUniversidad() {
+        const tipo = $('#IdUniversidad').find('option:selected').data('tipo');
+        $('#IdUniversidadTipo').text(tipo ? ('Tipo: ' + (etiquetasTipoUniversidad[tipo] || tipo)) : '');
+        actualizarEditabilidadMatricula(tipo);
+    }
+
+    $('#IdUniversidad').on('change', actualizarTipoUniversidad);
+
+    // El costo de matrícula normalmente es fijo (costo del programa menos el
+    // descuento del plan). Si el estudiante egresó de una universidad PRIVADA,
+    // EXTRANJERA o DE CONVENIO, se habilita para editarlo a mano, ya que la
+    // coordinación suele cobrar un monto distinto en esos casos (solo las
+    // públicas mantienen el monto fijo). Sigue recalculándose con la fórmula
+    // normal como punto de partida; lo que cambia es que ahora se puede
+    // sobrescribir.
+    const tiposUniversidadMatriculaEditable = ['PRIVADA', 'EXTRANJERA', 'CONVENIO'];
+
+    function actualizarEditabilidadMatricula(tipoUniversidad) {
+        const esEditable = tiposUniversidadMatriculaEditable.includes(tipoUniversidad);
+        $('#montoSoloMatricula').prop('readonly', !esEditable);
+        $('#avisoMatriculaEditable').toggle(esEditable);
+    }
+
+    // Si el estudiante ya está seleccionado (autocompletado) al cargar la pestaña
+    // de pago, refleja de una vez si su universidad habilita el monto editable.
+    actualizarEditabilidadMatricula($('#IdUniversidad').find('option:selected').data('tipo'));
+
+    // Edición manual del monto de matrícula (solo posible cuando no es readonly,
+    // es decir, universidad privada): se refleja de inmediato en el monto a pagar.
+    $('#montoSoloMatricula').on('input', function() {
+        if ($(this).prop('readonly') || $(this).prop('disabled')) return;
+        $('#montoAPagar').val($(this).val());
+    });
+
+    $('#btnNuevaUniversidad').on('click', function() {
+        $('#formNuevaUniversidad')[0].reset();
+        $('#ModalNuevaUniversidad').modal('show');
+    });
+
+    $('#formNuevaUniversidad').on('submit', function(e) {
+        e.preventDefault();
+
+        const nombre = $('#inputNuevaUniversidad').val().trim();
+        const tipo = $('#selectNuevaUniversidadTipo').val();
+        if (!nombre || !tipo) {
+            return;
+        }
+
+        const btnSubmit = $(this).find('button[type="submit"]');
+        btnSubmit.prop('disabled', true);
+
+        $.ajax({
+            url: 'ajax/ordenpago.ajax.php',
+            type: 'POST',
+            data: { accion: 'registrarUniversidadRapida', nombreUniversidad: nombre, tipoUniversidad: tipo },
+            dataType: 'json',
+            success: function(resp) {
+                btnSubmit.prop('disabled', false);
+
+                if (!resp.success) {
+                    swal('Error', resp.mensaje || 'No se pudo agregar la universidad', 'error');
+                    return;
+                }
+
+                const univ = resp.universidad;
+                const yaExiste = $('#IdUniversidad option[value="' + univ.IdUniversidad + '"]').length > 0;
+                if (!yaExiste) {
+                    $('#IdUniversidad').append(
+                        $('<option></option>').attr('value', univ.IdUniversidad).attr('data-tipo', univ.TipoUniversidad).text(univ.NombreUniversidad)
+                    );
+                }
+                $('#IdUniversidad').val(univ.IdUniversidad);
+                actualizarTipoUniversidad();
+
+                $('#ModalNuevaUniversidad').modal('hide');
+                if (resp.duplicado) {
+                    swal('Atención', 'Esa universidad ya existía, se seleccionó del listado', 'info');
+                }
+            },
+            error: function() {
+                btnSubmit.prop('disabled', false);
+                swal('Error', 'No se pudo agregar la universidad', 'error');
+            }
+        });
+    });
+
+    // ============================================
     // PASO 2: SELECCIONAR SEDE, GRADO Y PROGRAMA
     // ============================================
     function cargarProgramasPorSedeYGrado() {
@@ -1020,6 +1198,9 @@ function iniciarPreregistro() {
         $('#montoAPagar').val(montoFinal.toFixed(2));
         $('#textoMatriculaExonerada').toggle(matriculaExonerada);
         $('#porcentajeDescuento').prop('disabled', matriculaExonerada);
+        // Exonerada: se deshabilita aunque sea de universidad privada, para que no
+        // quede un monto manual "fantasma" que no se vaya a cobrar en realidad.
+        $('#montoSoloMatricula').prop('disabled', matriculaExonerada);
     }
 
     // ============================================
@@ -1210,7 +1391,9 @@ function iniciarPreregistro() {
                 Trabajo: $('#Trabajo').val(),
                 Direccion: $('#direccionInput').val(),
                 Telefono: $('#inputTelefono').val(),
-                Celular: $('#inputCelular').val()
+                Celular: $('#inputCelular').val(),
+                IdUniversidad: $('#IdUniversidad').val(),
+                FechaEgreso: $('#FechaEgreso').val()
             },
             dataType: 'json',
             success: function(resp) {

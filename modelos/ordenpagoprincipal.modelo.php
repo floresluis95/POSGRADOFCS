@@ -295,23 +295,48 @@ class OrdenPagoModelos
             // en cuyo caso se espera un monto de Bs. 0 en vez de matrícula con descuento.
             $matriculaExonerada = !empty($datos['MatriculaExonerada']);
 
-            // VALIDACIÓN: Si NO es pago completo, validar que el monto corresponda a la matrícula con descuento
+            // VALIDACIÓN: Si NO es pago completo, validar que el monto corresponda a la matrícula con descuento.
+            // Excepción: si el estudiante egresó de una universidad PRIVADA, EXTRANJERA o DE CONVENIO,
+            // el monto de matrícula es editable en el formulario (la coordinación puede cobrar más),
+            // así que solo se exige que no sea MENOR al esperado, no que coincida exacto.
             if ($datos['pagoCompleto'] != 1) {
                 $montoPagado = floatval($datos['montoPagado']);
                 $montoEsperado = $matriculaExonerada ? 0 : round($costoMatriculaPrograma * (1 - $porcentajeDescuento / 100), 2);
 
-                // Validar que el monto pagado coincida con la matrícula (con pequeña tolerancia para redondeos)
-                if (abs($montoPagado - $montoEsperado) > 0.01) {
+                $stmtTipoUniv = $pdo->prepare(
+                    "SELECT u.TipoUniversidad FROM estudiante e
+                     LEFT JOIN universidad u ON e.IdUniversidad = u.IdUniversidad
+                     WHERE e.EstudianteID = :estudianteID"
+                );
+                $stmtTipoUniv->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
+                $stmtTipoUniv->execute();
+                $tipoUniversidad = $stmtTipoUniv->fetchColumn();
+
+                $matriculaEditable = in_array($tipoUniversidad, ['PRIVADA', 'EXTRANJERA', 'CONVENIO'], true);
+
+                $cumpleMonto = $matriculaEditable
+                    ? ($montoPagado - $montoEsperado) >= -0.01
+                    : abs($montoPagado - $montoEsperado) <= 0.01;
+
+                if (!$cumpleMonto) {
                     $pdo->rollBack();
                     return [
                         'status' => 'error',
-                        'mensaje' => sprintf(
-                            'El monto de matrícula debe ser Bs. %.2f (matrícula Bs. %.2f con %.2f%% de descuento). Monto ingresado: Bs. %.2f',
-                            $montoEsperado,
-                            $costoMatriculaPrograma,
-                            $porcentajeDescuento,
-                            $montoPagado
-                        )
+                        'mensaje' => $matriculaEditable
+                            ? sprintf(
+                                'El monto de matrícula no puede ser menor a Bs. %.2f (matrícula Bs. %.2f con %.2f%% de descuento). Monto ingresado: Bs. %.2f',
+                                $montoEsperado,
+                                $costoMatriculaPrograma,
+                                $porcentajeDescuento,
+                                $montoPagado
+                            )
+                            : sprintf(
+                                'El monto de matrícula debe ser Bs. %.2f (matrícula Bs. %.2f con %.2f%% de descuento). Monto ingresado: Bs. %.2f',
+                                $montoEsperado,
+                                $costoMatriculaPrograma,
+                                $porcentajeDescuento,
+                                $montoPagado
+                            )
                     ];
                 }
             }

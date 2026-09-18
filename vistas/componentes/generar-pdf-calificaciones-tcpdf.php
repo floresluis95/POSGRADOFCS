@@ -8,8 +8,21 @@
 // fechas impresas en el PDF no corresponden a la hora de Bolivia.
 date_default_timezone_set('America/La_Paz');
 
-session_start();
+// display_errors está activo en este servidor: cualquier warning/notice suelto
+// (ej. del mkdir de más abajo, o de TCPDF) se imprimía ANTES de los bytes del
+// PDF y lo corrompía para el navegador (aunque el archivo guardado en disco sí
+// quedaba bien, porque ese se escribe aparte). Con ob_start() se atrapa
+// cualquier salida accidental y se descarta justo antes de enviar el PDF real,
+// igual que ya hacen generar-lista-asistencia-pdf.php y pdfestudiante.php.
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ob_start();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
+    ob_end_clean();
     die(json_encode([
         'status' => 'error',
         'message' => 'Sesión no válida'
@@ -48,7 +61,14 @@ if ($fechaFin) {
 
 // Incluir TCPDF
 require_once __DIR__ . '/../../vendor/tecnickcom/tcpdf/tcpdf.php';
-require_once __DIR__ . '/../../modelos/conexion.modelo.php';
+// modelos/conexion.modelo.php no existe en este servidor (lo eliminó el
+// antivirus del equipo; ver el workaround documentado en el .htaccess de la
+// raíz), así que hay que caer a la copia de respaldo en core/. Sin este
+// fallback, este archivo fallaba con un error fatal en TODAS las peticiones
+// (por eso nunca se veía el PDF).
+require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php')
+    ? __DIR__ . '/../../modelos/conexion.modelo.php'
+    : __DIR__ . '/../../core/conexion.modelo.php';
 require_once __DIR__ . '/../../modelos/calificacion.modelo.php';
 
 // Obtener estudiantes y calificaciones
@@ -292,21 +312,27 @@ $pdf->Cell(0, 4, 'Documento generado automáticamente por el Sistema de Gestión
 // Crear directorio si no existe
 $dirPDFs = __DIR__ . '/../../pdfs_generados';
 if (!file_exists($dirPDFs)) {
-    mkdir($dirPDFs, 0777, true);
+    @mkdir($dirPDFs, 0777, true);
 }
 
 // Nombre del archivo
 $nombreArchivo = 'calificaciones_' . $moduloCodigo . '_' . date('Ymd_His') . '.pdf';
 $rutaCompleta = $dirPDFs . '/' . $nombreArchivo;
 
-// Guardar PDF
-$pdf->Output($rutaCompleta, 'F');
+// Obtener el PDF como string una sola vez ('S'): de ahí se guarda una copia en
+// disco (para el historial en pdfs_generados) y se envía la misma copia al
+// navegador, en vez de llamar Output() dos veces sobre el mismo objeto (guardar
+// y mostrar por separado), que en TCPDF puede dejar la segunda salida corrupta.
+$pdfContenido = $pdf->Output('', 'S');
 
-// También generar salida para el navegador
-$pdf->Output($nombreArchivo, 'I');
+if (is_dir($dirPDFs) && is_writable($dirPDFs)) {
+    @file_put_contents($rutaCompleta, $pdfContenido);
+}
 
-// Si se requiere JSON response (para AJAX)
+// Si se requiere JSON response (para AJAX), no se envía el PDF inline
 if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
+    ob_end_clean();
+    header('Content-Type: application/json; charset=utf-8');
     echo json_encode([
         'status' => 'success',
         'message' => 'PDF generado correctamente',
@@ -314,5 +340,16 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         'ruta' => 'pdfs_generados/' . $nombreArchivo,
         'totalEstudiantes' => count($estudiantes)
     ]);
+    exit;
 }
+
+// Descartar cualquier salida accidental (warnings/notices) acumulada antes de
+// enviar el PDF real, y mostrarlo inline en el navegador.
+ob_end_clean();
+header('Content-Type: application/pdf');
+header('Content-Disposition: inline; filename="' . $nombreArchivo . '"');
+header('Content-Length: ' . strlen($pdfContenido));
+header('Cache-Control: private, max-age=0, must-revalidate');
+echo $pdfContenido;
+exit;
 ?>

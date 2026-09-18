@@ -356,8 +356,7 @@
                     return;
                 }
 
-                $primeraLetra = strtoupper(substr($nombre, 0, 1));
-                $passwordTexto = $primeraLetra . $ci;
+                $passwordTexto = $this->GenerarPasswordEstudiante();
                 $password = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
 
                 error_log("Credenciales generadas - Usuario: " . $usuario . ", Password texto: " . $passwordTexto);
@@ -366,6 +365,7 @@
                     "EstudianteID" => $estudianteID,
                     "Usuario" => $usuario,
                     "Password" => $password,
+                    "PasswordTexto" => $passwordTexto,
                     "Tipo" => "EST"
                 );
 
@@ -446,6 +446,38 @@
 
             // Barajar (aleatoriamente, no con shuffle() que no es criptografico
             // pero aqui solo reordena posiciones ya elegidas al azar)
+            for ($i = count($password) - 1; $i > 0; $i--) {
+                $j = random_int(0, $i);
+                [$password[$i], $password[$j]] = [$password[$j], $password[$i]];
+            }
+
+            return implode('', $password);
+        }
+
+        /**
+         * Genera una contraseña para estudiantes: mas fuerte que "inicial + CI"
+         * (que es adivinable porque el CI es un dato publico) pero mas simple que
+         * GenerarPasswordCompleja() (sin simbolos, 8 caracteres) para que sea facil
+         * de transcribir/escribir en el celular. Garantiza al menos una mayuscula,
+         * una minuscula y un numero; no usa el nombre ni el CI del estudiante.
+         */
+        public static function GenerarPasswordEstudiante()
+        {
+            $minusculas = 'abcdefghjkmnpqrstuvwxyz';
+            $mayusculas = 'ABCDEFGHJKMNPQRSTUVWXYZ';
+            $numeros = '23456789';
+            $todos = $minusculas . $mayusculas . $numeros;
+
+            $password = [
+                $mayusculas[random_int(0, strlen($mayusculas) - 1)],
+                $minusculas[random_int(0, strlen($minusculas) - 1)],
+                $numeros[random_int(0, strlen($numeros) - 1)],
+            ];
+
+            for ($i = count($password); $i < 8; $i++) {
+                $password[] = $todos[random_int(0, strlen($todos) - 1)];
+            }
+
             for ($i = count($password) - 1; $i > 0; $i--) {
                 $j = random_int(0, $i);
                 [$password[$i], $password[$j]] = [$password[$j], $password[$i]];

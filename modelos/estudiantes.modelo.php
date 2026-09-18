@@ -19,7 +19,7 @@ class EstudiantesModelos
     public static function ListaEstudianteActivoModelo()
     {
         $stmt = Conexion::Conectar()->prepare("SELECT e.*, p.NombreProfesion,
-                                                u.Usuario, u.Estado as EstadoUsuario
+                                                u.Usuario, u.Estado as EstadoUsuario, u.PasswordTexto
                                                 FROM estudiante e
                                                 INNER JOIN profesion p ON e.IdProfesion = p.IdProfesion
                                                 LEFT JOIN usuario u ON e.EstudianteID = u.EstudianteID
@@ -60,12 +60,12 @@ class EstudiantesModelos
         INSERT INTO estudiante (
             Ci, Complemento, Exp, Nombre, Apaterno, Amaterno,
             FechaNacimiento, Edad, Lugarn, Correo, IdProfesion,
-            Trabajo, Direccion, Telefono, Celular
+            Trabajo, Direccion, Telefono, Celular, IdUniversidad, FechaEgreso
         )
         VALUES (
             :Ci, :Complemento, :Exp, :Nombre, :Apaterno, :Amaterno,
             :FechaNacimiento, :Edad, :Lugarn, :Correo, :IdProfesion,
-            :Trabajo, :Direccion, :Telefono, :Celular
+            :Trabajo, :Direccion, :Telefono, :Celular, :IdUniversidad, :FechaEgreso
         )
     ");
 
@@ -88,6 +88,12 @@ class EstudiantesModelos
     $stmt->bindParam(":Telefono", $DatosEstudiante['Telefono'], PDO::PARAM_STR);
     $stmt->bindParam(":Celular", $DatosEstudiante['Celular'], PDO::PARAM_STR);
 
+    // Universidad de egreso: opcional (algunos flujos de alta no la piden todavía).
+    $idUniversidad = $DatosEstudiante['IdUniversidad'] ?? null;
+    $fechaEgreso = $DatosEstudiante['FechaEgreso'] ?? null;
+    $stmt->bindValue(":IdUniversidad", $idUniversidad, $idUniversidad === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+    $stmt->bindValue(":FechaEgreso", $fechaEgreso, $fechaEgreso === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+
     if ($stmt->execute()) {
         return 'exitoso';
     } else {
@@ -97,6 +103,54 @@ class EstudiantesModelos
 }
     
  
+
+    /* ACTUALIZAR DATOS DE UN ESTUDIANTE EXISTENTE (no toca Ci ni Estado) */
+    public static function ActualizarEstudianteModelo($EstudianteID, $DatosEstudiante)
+    {
+        $stmt = Conexion::Conectar()->prepare("
+            UPDATE estudiante SET
+                Complemento = :Complemento,
+                Exp = :Exp,
+                Nombre = :Nombre,
+                Apaterno = :Apaterno,
+                Amaterno = :Amaterno,
+                FechaNacimiento = :FechaNacimiento,
+                Edad = :Edad,
+                Lugarn = :Lugarn,
+                Correo = :Correo,
+                IdProfesion = :IdProfesion,
+                Trabajo = :Trabajo,
+                Direccion = :Direccion,
+                Telefono = :Telefono,
+                Celular = :Celular,
+                IdUniversidad = :IdUniversidad,
+                FechaEgreso = :FechaEgreso
+            WHERE EstudianteID = :EstudianteID
+        ");
+
+        $stmt->bindParam(":Complemento", $DatosEstudiante['Complemento'], PDO::PARAM_STR);
+        $stmt->bindParam(":Exp", $DatosEstudiante['Exp'], PDO::PARAM_STR);
+        $stmt->bindParam(":Nombre", $DatosEstudiante['Nombre'], PDO::PARAM_STR);
+        $stmt->bindParam(":Apaterno", $DatosEstudiante['Apaterno'], PDO::PARAM_STR);
+        $stmt->bindParam(":Amaterno", $DatosEstudiante['Amaterno'], PDO::PARAM_STR);
+        $stmt->bindParam(":FechaNacimiento", $DatosEstudiante['FechaNacimiento'], PDO::PARAM_STR);
+        $stmt->bindParam(":Edad", $DatosEstudiante['Edad'], PDO::PARAM_INT);
+        $stmt->bindParam(":Lugarn", $DatosEstudiante['Lugarn'], PDO::PARAM_STR);
+        $stmt->bindParam(":Correo", $DatosEstudiante['Correo'], PDO::PARAM_STR);
+        $stmt->bindParam(":IdProfesion", $DatosEstudiante['IdProfesion'], PDO::PARAM_INT);
+        $stmt->bindParam(":Trabajo", $DatosEstudiante['Trabajo'], PDO::PARAM_STR);
+        $stmt->bindParam(":Direccion", $DatosEstudiante['Direccion'], PDO::PARAM_STR);
+        $stmt->bindParam(":Telefono", $DatosEstudiante['Telefono'], PDO::PARAM_STR);
+        $stmt->bindParam(":Celular", $DatosEstudiante['Celular'], PDO::PARAM_STR);
+        $stmt->bindParam(":EstudianteID", $EstudianteID, PDO::PARAM_INT);
+
+        $idUniversidad = $DatosEstudiante['IdUniversidad'] ?? null;
+        $fechaEgreso = $DatosEstudiante['FechaEgreso'] ?? null;
+        $stmt->bindValue(":IdUniversidad", $idUniversidad, $idUniversidad === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $stmt->bindValue(":FechaEgreso", $fechaEgreso, $fechaEgreso === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+
+        return $stmt->execute() ? 'exitoso' : 'error';
+    }
 
     /* CAMBIAR A INACTIVO */
     public static function CambiarEstadoEstudianteModelo($Ci)

@@ -331,7 +331,7 @@
                   <option disabled selected value="">Seleccione un cargo...</option>
                   <option value="ADM">ADMINISTRADOR</option>
                   <option value="SEC">SECRETARIA</option>
-                  <option value="DOC">DOCENTE</option>
+                
                 </select>
               </div>
             </div>

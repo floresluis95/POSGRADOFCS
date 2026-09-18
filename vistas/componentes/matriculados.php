@@ -276,7 +276,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 
 <!-- Modal unificado: Plan de Pago del Programa + Registrar Pago de Módulo -->
 <div class="modal fade" id="modalInscribirModulo" tabindex="-1" role="dialog" aria-labelledby="modalInscribirModuloLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
                 <h5 class="modal-title text-white" id="modalInscribirModuloLabel">

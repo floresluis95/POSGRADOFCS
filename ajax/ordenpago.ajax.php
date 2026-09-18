@@ -9,6 +9,9 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../modelos/estudiantes.modelo.php';
+require_once __DIR__ . '/../modelos/universidad.modelo.php';
+require_once __DIR__ . '/../modelos/usuario.modelo.php';
+require_once __DIR__ . '/../controladores/usuario.controlador.php';
 require_once __DIR__ . '/../modelos/modulopagos_core.php';
 require_once __DIR__ . '/../modelos/ordenpagoprincipal.modelo.php';
 require_once __DIR__ . '/../modelos/planpago.modelo.php';
@@ -54,8 +57,20 @@ switch ($accion) {
         registrarProfesionRapida();
         break;
 
+    case 'registrarUniversidadRapida':
+        registrarUniversidadRapida();
+        break;
+
     case 'registrarEstudianteRapido':
         registrarEstudianteRapido();
+        break;
+
+    case 'actualizarEstudiante':
+        actualizarEstudiante();
+        break;
+
+    case 'restablecerPasswordEstudiante':
+        restablecerPasswordEstudiante();
         break;
 
     case 'obtenerProgramasEstudiante':
@@ -310,6 +325,38 @@ function registrarProfesionRapida()
 }
 
 /**
+ * Registrar una universidad nueva desde el botón "+" del select de Universidad
+ * de Egreso (Estudiantes y Pre-Registro), cuando la universidad buscada no
+ * está en la lista. El tipo (pública/privada/extranjera/convenio) es obligatorio.
+ */
+function registrarUniversidadRapida()
+{
+    if (!isset($_POST['nombreUniversidad']) || trim($_POST['nombreUniversidad']) === '') {
+        echo json_encode(['success' => false, 'mensaje' => 'El nombre de la universidad es requerido']);
+        return;
+    }
+    if (!isset($_POST['tipoUniversidad']) || trim($_POST['tipoUniversidad']) === '') {
+        echo json_encode(['success' => false, 'mensaje' => 'Seleccione el tipo de universidad']);
+        return;
+    }
+
+    $nombre = strtoupper(htmlspecialchars(trim($_POST['nombreUniversidad'])));
+    $tipo = strtoupper(htmlspecialchars(trim($_POST['tipoUniversidad'])));
+    $resultado = UniversidadModelos::RegistrarUniversidadModelo($nombre, $tipo);
+
+    if ($resultado['status'] === 'exitoso' || $resultado['status'] === 'duplicado') {
+        echo json_encode([
+            'success' => true,
+            'duplicado' => $resultado['status'] === 'duplicado',
+            'mensaje' => $resultado['mensaje'],
+            'universidad' => $resultado['universidad']
+        ]);
+    } else {
+        echo json_encode(['success' => false, 'mensaje' => $resultado['mensaje']]);
+    }
+}
+
+/**
  * Registrar un estudiante nuevo directamente desde el formulario de preregistro
  * (cuando la búsqueda manual por CI no encontró datos existentes).
  */
@@ -351,6 +398,9 @@ function registrarEstudianteRapido()
             "Direccion"       => strtoupper(htmlspecialchars(trim($_POST['Direccion'] ?? ''))),
             "Telefono"        => htmlspecialchars(trim($_POST['Telefono'] ?? '')),
             "Celular"         => htmlspecialchars(trim($_POST['Celular'])),
+            // Universidad de egreso: opcional, no todos los flujos de alta la piden.
+            "IdUniversidad"   => (!empty($_POST['IdUniversidad']) && is_numeric($_POST['IdUniversidad'])) ? (int)$_POST['IdUniversidad'] : null,
+            "FechaEgreso"     => !empty($_POST['FechaEgreso']) ? htmlspecialchars(trim($_POST['FechaEgreso'])) : null,
         );
 
         $existe = EstudiantesModelos::BuscarEstudianteModelo($DatosEstudiante['Ci']);
@@ -393,6 +443,109 @@ function registrarEstudianteRapido()
             'success' => false,
             'mensaje' => 'Error al registrar el estudiante'
         ]);
+    }
+}
+
+/**
+ * Actualizar los datos de un estudiante ya existente (módulo Estudiantes,
+ * botón "Editar"). No permite cambiar el Ci: es el identificador con el que
+ * se lo busca/relaciona en el resto del sistema (matrícula, pagos, etc.).
+ */
+function actualizarEstudiante()
+{
+    if (!isset($_POST['EstudianteID']) || !is_numeric($_POST['EstudianteID'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El ID del estudiante es requerido']);
+        return;
+    }
+
+    $camposRequeridos = ['Exp', 'Nombre', 'Apaterno', 'FechaNacimiento', 'Edad', 'Lugarn', 'Correo', 'IdProfesion', 'Celular'];
+    foreach ($camposRequeridos as $campo) {
+        if (!isset($_POST[$campo]) || trim((string)$_POST[$campo]) === '') {
+            echo json_encode(['success' => false, 'mensaje' => 'Faltan datos obligatorios del estudiante']);
+            return;
+        }
+    }
+
+    if (!is_numeric($_POST['IdProfesion'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'Seleccione una profesión válida']);
+        return;
+    }
+
+    $EstudianteID = (int)$_POST['EstudianteID'];
+
+    try {
+        $existeProf = ProfesionModelos::ObtenerPorId((int)$_POST['IdProfesion']);
+        if (!$existeProf) {
+            echo json_encode(['success' => false, 'mensaje' => 'Profesión no válida (no existe)']);
+            return;
+        }
+
+        $DatosEstudiante = array(
+            "Complemento"     => strtoupper(htmlspecialchars(trim($_POST['Complemento'] ?? ''))),
+            "Exp"             => strtoupper(htmlspecialchars(trim($_POST['Exp']))),
+            "Nombre"          => strtoupper(htmlspecialchars(trim($_POST['Nombre']))),
+            "Apaterno"        => strtoupper(htmlspecialchars(trim($_POST['Apaterno']))),
+            "Amaterno"        => strtoupper(htmlspecialchars(trim($_POST['Amaterno'] ?? ''))),
+            "FechaNacimiento" => htmlspecialchars(trim($_POST['FechaNacimiento'])),
+            "Edad"            => (int)$_POST['Edad'],
+            "Lugarn"          => strtoupper(htmlspecialchars(trim($_POST['Lugarn']))),
+            "Correo"          => htmlspecialchars(trim($_POST['Correo'])),
+            "IdProfesion"     => (int)$_POST['IdProfesion'],
+            "Trabajo"         => strtoupper(htmlspecialchars(trim($_POST['Trabajo'] ?? ''))),
+            "Direccion"       => strtoupper(htmlspecialchars(trim($_POST['Direccion'] ?? ''))),
+            "Telefono"        => htmlspecialchars(trim($_POST['Telefono'] ?? '')),
+            "Celular"         => htmlspecialchars(trim($_POST['Celular'])),
+            "IdUniversidad"   => (!empty($_POST['IdUniversidad']) && is_numeric($_POST['IdUniversidad'])) ? (int)$_POST['IdUniversidad'] : null,
+            "FechaEgreso"     => !empty($_POST['FechaEgreso']) ? htmlspecialchars(trim($_POST['FechaEgreso'])) : null,
+        );
+
+        $resultado = EstudiantesModelos::ActualizarEstudianteModelo($EstudianteID, $DatosEstudiante);
+
+        if ($resultado === 'exitoso') {
+            echo json_encode(['success' => true, 'mensaje' => 'Datos del estudiante actualizados correctamente']);
+        } else {
+            echo json_encode(['success' => false, 'mensaje' => 'No se pudo actualizar al estudiante']);
+        }
+    } catch (Exception $e) {
+        error_log("Error en actualizarEstudiante: " . $e->getMessage());
+        echo json_encode(['success' => false, 'mensaje' => 'Error al actualizar el estudiante']);
+    }
+}
+
+/**
+ * Restablecer la contraseña de un estudiante que ya tiene usuario asignado.
+ * Cubre tanto "olvidó su contraseña" como las cuentas creadas antes de que se
+ * empezara a guardar PasswordTexto (esas no tienen forma de mostrar la original).
+ */
+function restablecerPasswordEstudiante()
+{
+    if (!isset($_POST['EstudianteID']) || !is_numeric($_POST['EstudianteID'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El ID del estudiante es requerido']);
+        return;
+    }
+
+    $EstudianteID = (int)$_POST['EstudianteID'];
+
+    try {
+        $usuarioActual = UsuarioModelos::VerificarUsuarioEstudianteModelo($EstudianteID);
+        if (!$usuarioActual) {
+            echo json_encode(['success' => false, 'mensaje' => 'Este estudiante no tiene un usuario asignado']);
+            return;
+        }
+
+        $passwordTexto = UsuarioControladores::GenerarPasswordEstudiante();
+        $passwordHash = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
+
+        $resultado = UsuarioModelos::RestablecerPasswordEstudianteModelo($EstudianteID, $passwordHash, $passwordTexto);
+
+        if ($resultado === 'exitoso') {
+            echo json_encode(['success' => true, 'mensaje' => 'Contraseña restablecida correctamente', 'password' => $passwordTexto]);
+        } else {
+            echo json_encode(['success' => false, 'mensaje' => 'No se pudo restablecer la contraseña']);
+        }
+    } catch (Exception $e) {
+        error_log("Error en restablecerPasswordEstudiante: " . $e->getMessage());
+        echo json_encode(['success' => false, 'mensaje' => 'Error al restablecer la contraseña']);
     }
 }
 
@@ -1025,8 +1178,15 @@ function numeroALetrasOrdenPago($numero)
         }
 
         if ($num >= 100) {
-            $resultado .= $centenas[(int)floor($num / 100)] . ' ';
-            $num %= 100;
+            // "CIEN" (no "CIENTO") cuando el resto es exactamente 100, es decir,
+            // no queda nada más después (decenas/unidades) que agregar.
+            if ($num == 100) {
+                $resultado .= 'CIEN ';
+                $num = 0;
+            } else {
+                $resultado .= $centenas[(int)floor($num / 100)] . ' ';
+                $num %= 100;
+            }
         }
 
         if ($num >= 10 && $num < 20) {

@@ -132,6 +132,22 @@
             return ($stmt->execute() && $stmt->rowCount() > 0) ? 'exitoso' : 'error';
         }
 
+        /**
+         * Bloquear o habilitar el acceso al sistema del usuario asociado a un
+         * Estudiante (no borra ni afecta sus datos academicos, solo el login).
+         * @param int $estudianteID
+         * @param int $nuevoEstado 1 = habilitado, 0 = bloqueado
+         * @return string 'exitoso'|'error'
+         */
+        public static function CambiarEstadoUsuarioEstudianteModelo($estudianteID, $nuevoEstado)
+        {
+            $stmt = Conexion::Conectar()->prepare("UPDATE usuario SET `Estado` = :estado WHERE EstudianteID = :estudianteID");
+            $stmt->bindParam(":estado", $nuevoEstado, PDO::PARAM_INT);
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+
+            return ($stmt->execute() && $stmt->rowCount() > 0) ? 'exitoso' : 'error';
+        }
+
         // Métodos para gestión de estudiantes con usuarios
         public static function ListaEstudiantesSinUsuarioModelo()
         {
@@ -151,13 +167,16 @@
                 $conexion = Conexion::Conectar();
                 $conexion->beginTransaction();
 
-                // Insertar en tabla usuario (EstudianteID para estudiantes, IdPersonal NULL)
-                $stmt = $conexion->prepare("INSERT INTO `usuario` (`IdPersonal`, `EstudianteID`, `Usuario`, `Password`, `Tipo`, `Estado`)
-                                           VALUES (NULL, :EstudianteID, :Usuario, :Password, :Tipo, '1')");
+                // Insertar en tabla usuario (EstudianteID para estudiantes, IdPersonal NULL).
+                // PasswordTexto: igual que para docentes, se guarda en texto plano para poder
+                // mostrarla después en "Ver detalle" (el Password hasheado no es reversible).
+                $stmt = $conexion->prepare("INSERT INTO `usuario` (`IdPersonal`, `EstudianteID`, `Usuario`, `Password`, `PasswordTexto`, `Tipo`, `Estado`)
+                                           VALUES (NULL, :EstudianteID, :Usuario, :Password, :PasswordTexto, :Tipo, '1')");
 
                 $stmt->bindParam(":EstudianteID", $DatosModelo['EstudianteID'], PDO::PARAM_INT);
                 $stmt->bindParam(":Usuario", $DatosModelo['Usuario'], PDO::PARAM_STR);
                 $stmt->bindParam(":Password", $DatosModelo['Password'], PDO::PARAM_STR);
+                $stmt->bindParam(":PasswordTexto", $DatosModelo['PasswordTexto'], PDO::PARAM_STR);
                 $stmt->bindParam(":Tipo", $DatosModelo['Tipo'], PDO::PARAM_STR);
 
                 if ($stmt->execute()) {
@@ -176,6 +195,23 @@
                 error_log("Exception en CrearUsuarioEstudianteModelo: " . $e->getMessage());
                 return 'error: ' . $e->getMessage();
             }
+        }
+
+        /**
+         * Restablecer la contraseña de un estudiante que ya tiene usuario asignado
+         * (usado tanto para "olvidé mi contraseña" como para las cuentas creadas
+         * antes de guardar PasswordTexto, que no tienen forma de mostrar la original).
+         * No cambia el nombre de usuario.
+         */
+        public static function RestablecerPasswordEstudianteModelo($estudianteID, $passwordHash, $passwordTexto)
+        {
+            $stmt = Conexion::Conectar()->prepare(
+                "UPDATE usuario SET Password = :password, PasswordTexto = :passwordTexto WHERE EstudianteID = :estudianteID"
+            );
+            $stmt->bindParam(":password", $passwordHash, PDO::PARAM_STR);
+            $stmt->bindParam(":passwordTexto", $passwordTexto, PDO::PARAM_STR);
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            return $stmt->execute() && $stmt->rowCount() > 0 ? 'exitoso' : 'error';
         }
 
         public static function VerificarUsuarioEstudianteModelo($estudianteID)
