@@ -66,7 +66,7 @@ ob_start();
   <!--end::Global Theme Styles -->
 
   <!--begin::Tema institucional (paleta formal, colores por grado academico) -->
-  <link href="vistas/recursos/assets/css/tema-institucional.css" rel="stylesheet" type="text/css" />
+  <link href="vistas/recursos/assets/css/tema-institucional.css?v=<?php echo filemtime(__DIR__ . '/recursos/assets/css/tema-institucional.css'); ?>" rel="stylesheet" type="text/css" />
   <!--end::Tema institucional -->
 
   <!--begin::Layout Skins(used by all pages) -->

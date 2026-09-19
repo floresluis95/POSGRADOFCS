@@ -43,6 +43,10 @@ $docenteNombre = isset($_GET['docenteNombre']) ? $_GET['docenteNombre'] : '';
 $sigla = isset($_GET['sigla']) ? $_GET['sigla'] : '';
 $fechaInicio = isset($_GET['fechaInicio']) ? $_GET['fechaInicio'] : '';
 $fechaFin = isset($_GET['fechaFin']) ? $_GET['fechaFin'] : '';
+// Fecha de "Oruro, [fecha]" junto a las firmas: es la fecha en que se firma
+// la planilla, editable por separado de la fecha de inicio/fin del módulo.
+// Si no se envía (compatibilidad), se usa la fecha de hoy.
+$fechaGeneracion = !empty($_GET['fechaGeneracion']) ? $_GET['fechaGeneracion'] : date('Y-m-d');
 
 // Formatear fechas
 $fechaInicioFormateada = '';
@@ -127,6 +131,20 @@ function numeroALetras($numero) {
     return trim($literal);
 }
 
+/**
+ * Formatea una fecha "Y-m-d" como "D de MES del AAAA" (para la línea de
+ * lugar/fecha de firma de la planilla).
+ */
+function fechaLarga($fechaYmd) {
+    $meses = [1 => 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+              'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    $ts = strtotime($fechaYmd);
+    if (!$ts) {
+        return '__________';
+    }
+    return date('j', $ts) . ' de ' . $meses[(int)date('n', $ts)] . ' del ' . date('Y', $ts);
+}
+
 // Crear PDF
 $pdf = new TCPDF('P', 'mm', 'LETTER', true, 'UTF-8', false);
 
@@ -148,25 +166,25 @@ $pdf->setPrintFooter(false);
 // Agregar página
 $pdf->AddPage();
 
-// ENCABEZADO
+// ENCABEZADO (formato oficial FORMATO_CALIFICACIONES.docx)
 $logoUTO = __DIR__ . '/../../extensiones/imagenespdf/logouto.png';
 $logoFCS = __DIR__ . '/../../extensiones/imagenespdf/logofcs.png';
 
-// Logo izquierdo y derecho: se fuerza la misma caja de 25x25mm para los dos
+// Logo izquierdo y derecho: se fuerza la misma caja de 22x22mm para los dos
 // (con $fitbox='CM' cada logo se escala manteniendo su proporción y se centra
 // dentro de la caja) porque logouto.png y logofcs.png tienen proporciones muy
 // distintas (1047x1006 vs 239x305) y, con solo el ancho fijo, salían de alturas
 // visiblemente diferentes.
 if (file_exists($logoUTO)) {
-    $pdf->Image($logoUTO, 15, 10, 25, 25, 'PNG', '', '', true, 300, '', false, false, 0, 'CM');
+    $pdf->Image($logoUTO, 15, 10, 22, 22, 'PNG', '', '', true, 300, '', false, false, 0, 'CM');
 }
 
 if (file_exists($logoFCS)) {
-    $pdf->Image($logoFCS, 170, 10, 25, 25, 'PNG', '', '', true, 300, '', false, false, 0, 'CM');
+    $pdf->Image($logoFCS, 173, 10, 22, 22, 'PNG', '', '', true, 300, '', false, false, 0, 'CM');
 }
 
 // Título centrado
-$pdf->SetFont('helvetica', 'B', 14);
+$pdf->SetFont('helvetica', 'B', 13);
 $pdf->SetY(12);
 $pdf->Cell(0, 5, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
 
@@ -175,14 +193,11 @@ $pdf->Cell(0, 5, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C');
 $pdf->Cell(0, 5, 'COORDINACIÓN POSGRADO ÁREA - ODONTOLOGÍA', 0, 1, 'C');
 
 $pdf->SetFont('helvetica', '', 8);
-// Dirección corregida: la que decía antes ("AV. Del Moreno Edificio San
-// Agustín II") no coincide con la de ningún otro documento de esta misma
-// Coordinación de Posgrado - Odontología (ver generar-lista-asistencia-pdf.php,
-// certificado-medio-magnetico-pdf.php, orden-pago-pdf-render.php), que usan
-// todos esta dirección real de la Coordinación.
-$pdf->Cell(0, 4, 'Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso', 0, 1, 'C');
-$pdf->Cell(0, 4, 'Teléfonos: 5237317 - Fax: 5247110', 0, 1, 'C');
-$pdf->Cell(0, 4, 'Oruro - Bolivia', 0, 1, 'C');
+// Dirección y teléfono según el formato oficial FORMATO_CALIFICACIONES.docx
+// proporcionado por la Coordinación de Posgrado - Odontología.
+$pdf->Cell(0, 4, 'Presidente Montes N°6390 y Aldana, edificio Posgrado UTO 2do piso', 0, 1, 'C');
+$pdf->Cell(0, 4, 'Teléfono (591)2- 52 75798 - Fax:(591) 2- 52 55443', 0, 1, 'C');
+$pdf->Cell(0, 4, 'Oruro – Bolivia', 0, 1, 'C');
 
 $pdf->Ln(5);
 
@@ -222,21 +237,27 @@ $pdf->SetFont('helvetica', 'B', 12);
 $pdf->Cell(0, 6, 'PLANILLA DE CALIFICACIONES', 0, 1, 'C');
 $pdf->Ln(2);
 
-// TABLA DE CALIFICACIONES
+// TABLA DE CALIFICACIONES (encabezado agrupado "POSGRADUANTES" / "CALIFICACION",
+// igual al formato oficial FORMATO_CALIFICACIONES.docx)
 $pdf->SetFont('helvetica', '', 8);
 
-// Definir anchos de columnas (total debe ser 185mm = ancho útil de la página)
-$w1 = 70;  // NOMBRE COMPLETO
-$w2 = 25;  // SIGLA
-$w3 = 30;  // MÓDULO
+// Definir anchos de columnas (total 185mm = ancho útil de la página)
+$w0 = 10;  // N°
+$w1 = 75;  // NOMBRE COMPLETO
+$w2 = 20;  // SIGLA
+$w3 = 20;  // MÓDULO
 $w4 = 20;  // NUM.
 $w5 = 40;  // LITERAL
 
-// Encabezados de la tabla
-$pdf->SetFillColor(102, 126, 234); // Color morado #1e3c72
-$pdf->SetTextColor(255, 255, 255); // Texto blanco
+// Fila 1 del encabezado: grupos "POSGRADUANTES" / "CALIFICACION"
+$pdf->SetFillColor(30, 60, 114); // Azul institucional
+$pdf->SetTextColor(255, 255, 255);
 $pdf->SetFont('helvetica', 'B', 9);
+$pdf->Cell($w0 + $w1 + $w2 + $w3, 6, 'POSGRADUANTES', 1, 0, 'C', true);
+$pdf->Cell($w4 + $w5, 6, 'CALIFICACION', 1, 1, 'C', true);
 
+// Fila 2 del encabezado: columnas individuales
+$pdf->Cell($w0, 7, 'N°', 1, 0, 'C', true);
 $pdf->Cell($w1, 7, 'NOMBRE COMPLETO', 1, 0, 'C', true);
 $pdf->Cell($w2, 7, 'SIGLA', 1, 0, 'C', true);
 $pdf->Cell($w3, 7, 'MÓDULO', 1, 0, 'C', true);
@@ -250,7 +271,7 @@ $pdf->SetFont('helvetica', '', 8);
 // Verificar si hay estudiantes
 if (empty($estudiantes) || count($estudiantes) === 0) {
     $pdf->SetFont('helvetica', 'I', 9);
-    $pdf->Cell($w1 + $w2 + $w3 + $w4 + $w5, 10, 'No hay estudiantes inscritos en este módulo', 1, 1, 'C');
+    $pdf->Cell($w0 + $w1 + $w2 + $w3 + $w4 + $w5, 10, 'No hay estudiantes inscritos en este módulo', 1, 1, 'C');
 } else {
     // Iterar sobre los estudiantes
     foreach ($estudiantes as $index => $estudiante) {
@@ -258,7 +279,7 @@ if (empty($estudiantes) || count($estudiantes) === 0) {
         $nombre = isset($estudiante['Nombre']) ? $estudiante['Nombre'] : '';
         $apaterno = isset($estudiante['Apaterno']) ? $estudiante['Apaterno'] : '';
         $amaterno = isset($estudiante['Amaterno']) ? $estudiante['Amaterno'] : '';
-        $nombreCompleto = trim($nombre . ' ' . $apaterno . ' ' . $amaterno);
+        $nombreCompleto = trim($apaterno . ' ' . $amaterno . ' ' . $nombre);
 
         $nota = isset($estudiante['Nota']) ? $estudiante['Nota'] : null;
 
@@ -279,6 +300,7 @@ if (empty($estudiantes) || count($estudiantes) === 0) {
         }
 
         // Dibujar fila
+        $pdf->Cell($w0, 6, $index + 1, 1, 0, 'C', true);
         $pdf->Cell($w1, 6, $nombreCompleto, 1, 0, 'L', true);
         $pdf->Cell($w2, 6, $sigla, 1, 0, 'C', true);
         $pdf->Cell($w3, 6, $moduloCodigo, 1, 0, 'C', true);
@@ -292,9 +314,10 @@ if (empty($estudiantes) || count($estudiantes) === 0) {
     }
 }
 
-// PIE DE PÁGINA: fijo al fondo de la hoja. Antes solo se imprimía justo
-// después de la tabla (con Ln(15)), así que en módulos con pocos estudiantes
-// las firmas quedaban pegadas debajo de la tabla en vez de al pie de la
+// PIE DE PÁGINA: escala de calificación + lugar/fecha + firmas, fijo al
+// fondo de la hoja. Antes la escala se imprimía justo después de la tabla y
+// las firmas por separado con Ln(15), así que en módulos con pocos
+// estudiantes quedaban pegadas debajo de la tabla en vez de al pie de la
 // página. Se reserva una altura fija y, si ya no entra en la página actual
 // (tabla muy larga), se pasa a una nueva antes de fijarla. Se desactiva el
 // salto de página automático mientras se dibuja el pie porque, con
@@ -302,37 +325,40 @@ if (empty($estudiantes) || count($estudiantes) === 0) {
 // de 15mm y puede partir el bloque del pie a la mitad al acercarse al fondo
 // real de la hoja (bug detectado: firmas en la página 1 y el resto del pie
 // solo en la página 2).
-$alturaPie = 50;
+$alturaPie = 55;
 if ($pdf->GetY() > $pdf->getPageHeight() - $pdf->getBreakMargin() - $alturaPie) {
     $pdf->AddPage();
 }
 $pdf->SetAutoPageBreak(false);
 $pdf->SetY(-$alturaPie);
+
+// ESCALA DE CALIFICACIÓN
+$pdf->SetFont('helvetica', 'B', 8);
+$pdf->Cell(45, 5, 'ESCALA DE CALIFICACION', 0, 0, 'L');
+$pdf->SetFont('helvetica', '', 8);
+$pdf->Cell(70, 5, '0  -  75    REPROBADO', 1, 0, 'C');
+$pdf->Cell(70, 5, '76  -  100    APROBADO', 1, 1, 'C');
+
+$pdf->Ln(8);
 $pdf->SetFont('helvetica', '', 9);
+// Lugar y fecha de firma (editable, independiente de inicio/fin del módulo)
+$pdf->Cell(0, 5, 'Oruro, ' . fechaLarga($fechaGeneracion), 0, 1, 'C');
 
-// Firmas
-$pdf->Cell(90, 5, '', 0, 0);
-$pdf->Cell(90, 5, '', 0, 1);
-
-$pdf->Ln(10);
+$pdf->Ln(12);
 
 $pdf->Cell(90, 1, '', 'T', 0, 'C');
 $pdf->Cell(10, 1, '', 0, 0);
 $pdf->Cell(90, 1, '', 'T', 1, 'C');
 
 $pdf->SetFont('helvetica', 'B', 9);
-$pdf->Cell(90, 5, 'Firma del Docente', 0, 0, 'C');
+$pdf->Cell(90, 5, 'DOCENTE', 0, 0, 'C');
 $pdf->Cell(10, 5, '', 0, 0);
-$pdf->Cell(90, 5, 'Sello y Firma de Autorización', 0, 1, 'C');
+$pdf->Cell(90, 5, 'COORDINADOR POSGRADO ODONTOLOGIA', 0, 1, 'C');
 
 $pdf->SetFont('helvetica', '', 8);
 $pdf->Cell(90, 4, htmlspecialchars($docenteNombre), 0, 0, 'C');
 $pdf->Cell(10, 4, '', 0, 0);
-$pdf->Cell(90, 4, 'COORDINACIÓN POSGRADO ODONTOLOGÍA', 0, 1, 'C');
-
-$pdf->Ln(5);
-$pdf->SetFont('helvetica', '', 7);
-$pdf->Cell(0, 4, 'Documento generado automáticamente por el Sistema de Gestión Académica - ' . date('d/m/Y H:i:s'), 0, 1, 'C', 0, '', 0, false, 'T', 'M');
+$pdf->Cell(90, 4, '', 0, 1, 'C');
 $pdf->SetAutoPageBreak(true, 15);
 
 // Crear directorio si no existe

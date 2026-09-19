@@ -80,7 +80,7 @@
                                         </div>
                                         <div class="filter-card__content">
                                             <label class="filter-card__label">Programa Académico</label>
-                                            <select class="form-control form-control-modern" id="select_programa_calificaciones" name="select_programa_calificaciones">
+                                            <select class="form-control form-control-modern select2-uniforme" id="select_programa_calificaciones" name="select_programa_calificaciones">
                                                 <option value="">-- Todos los Programas --</option>
                                             </select>
                                             <span class="filter-card__hint">Seleccione un programa para filtrar resultados</span>
@@ -98,7 +98,7 @@
                                         <div class="row search-section__body">
                                             <div class="col-lg-3 col-md-12">
                                                 <label class="modern-label">Criterio de Búsqueda</label>
-                                                <select class="form-control form-control-modern" id="select_filtro_tipo" name="select_filtro_tipo">
+                                                <select class="form-control form-control-modern select2-uniforme" id="select_filtro_tipo" name="select_filtro_tipo">
                                                     <option value="ci">
                                                         <i class="flaticon-id-card"></i> Cédula de Identidad
                                                     </option>
@@ -210,6 +210,8 @@
     <!-- Scripts necesarios -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="vistas/recursos/assets/js/scripts/buscar-calificaciones.js"></script>
 
     <style>
@@ -414,6 +416,43 @@
             border-color: #1e3c72;
             box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
             background: #f8f9ff;
+        }
+
+        /* Select2 con el mismo alto/borde que los demás campos "modernos" de
+           esta tarjeta de filtros (el override global del sistema usa el alto
+           estándar de Bootstrap, más bajo que estos inputs). display:flex +
+           align-items:center centra el texto sin depender de un line-height
+           calculado a mano (que quedaba mal y corría la etiqueta hacia abajo). */
+        .select2-container--default .select2-selection--single {
+            height: 49px !important;
+            display: flex !important;
+            align-items: center;
+            border: 2px solid #e8ecef !important;
+            border-radius: 8px !important;
+            padding: 0 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: normal !important;
+            /* El bundle del tema le pone padding vertical propio a este
+               elemento; hay que anular los cuatro lados (no solo left/right)
+               para que no se siga sumando y el texto no se salga de la caja. */
+            padding: 0 20px 0 16px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            /* El bundle del tema posiciona esta flecha con "top: 50%" sin
+               transform, así que queda corrida hacia arriba; top+translateY(-50%)
+               la centra sin importar el alto real de la caja. */
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            height: auto !important;
+            right: 10px !important;
+        }
+
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #1e3c72 !important;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1) !important;
         }
 
         .input-group-modern .input-group-text {

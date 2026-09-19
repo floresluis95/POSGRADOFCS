@@ -54,10 +54,10 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                     </div>
 
                     <div class="kt-portlet__body">
-                        <div class="form-group row">
-                            <label class="col-lg-2 col-form-label"><strong>SEDE:</strong></label>
-                            <div class="col-lg-3">
-                                <select class="form-control" id="selectSedeFiltro" style="width: 100%;">
+                        <div class="form-group row align-items-end mb-0">
+                            <div class="col-xl-3 col-lg-6 col-md-6 mb-2 mb-xl-0">
+                                <label class="mb-1"><strong>SEDE:</strong></label>
+                                <select class="form-control select2-uniforme" id="selectSedeFiltro" style="width: 100%;">
                                     <option value="">Todas las sedes...</option>
                                     <?php
                                     require_once 'modelos/programa.modelo.php';
@@ -69,9 +69,9 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                     ?>
                                 </select>
                             </div>
-                            <label class="col-lg-2 col-form-label"><strong>PROGRAMA:</strong></label>
-                            <div class="col-lg-3">
-                                <select class="form-control select2-programa" id="selectProgramaFiltro" style="width: 100%;">
+                            <div class="col-xl-3 col-lg-6 col-md-6 mb-2 mb-xl-0">
+                                <label class="mb-1"><strong>PROGRAMA:</strong></label>
+                                <select class="form-control select2-uniforme" id="selectProgramaFiltro" style="width: 100%;">
                                     <option value="">Todos los programas...</option>
                                     <?php
                                     $programas = ProgramasModelos::ListaProgramaModelo();
@@ -88,20 +88,18 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                     ?>
                                 </select>
                             </div>
-                            <div class="col-lg-2">
-                                <button type="button" class="btn btn-secondary btn-block" id="btnLimpiarFiltro">
-                                    <i class="fa fa-times"></i> Limpiar
-                                </button>
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <label class="col-lg-2 col-form-label"><strong>ESTADO:</strong></label>
-                            <div class="col-lg-3">
-                                <select class="form-control" id="selectEstadoFiltro" style="width: 100%;">
+                            <div class="col-xl-3 col-lg-6 col-md-6 mb-2 mb-xl-0">
+                                <label class="mb-1"><strong>ESTADO:</strong></label>
+                                <select class="form-control select2-uniforme" id="selectEstadoFiltro" style="width: 100%;">
                                     <option value="ACTIVO" selected>Activos</option>
                                     <option value="ABANDONO">Abandonos</option>
                                     <option value="TODOS">Todos</option>
                                 </select>
+                            </div>
+                            <div class="col-xl-3 col-lg-6 col-md-6">
+                                <button type="button" class="btn btn-secondary btn-block" id="btnLimpiarFiltro">
+                                    <i class="fa fa-times"></i> Limpiar
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -458,7 +456,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                 <div class="row">
                     <div class="col-lg-6 form-group">
                         <label class="small font-weight-bold mb-1">Filtrar por Programa</label>
-                        <select class="form-control form-control-sm" id="pgFiltroPrograma">
+                        <select class="form-control select2-plan-grupal" id="pgFiltroPrograma">
                             <option value="">Todos los programas...</option>
                             <?php foreach ($programas as $prog): ?>
                                 <option value="<?php echo (int)$prog['ProgramaID']; ?>">
@@ -837,17 +835,23 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 
     .select2-container--default .select2-selection--single .select2-selection__rendered {
         line-height: 36px !important;
-        padding-left: 12px !important;
-        padding-right: 28px !important;
+        /* El bundle del tema le pone padding vertical propio a este mismo
+           elemento; hay que anular los cuatro lados (no solo left/right)
+           para que no se siga sumando y el texto no se salga de la caja. */
+        padding: 0 28px 0 12px !important;
         color: #495057 !important;
         font-size: 14px !important;
         display: block !important;
     }
 
     .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 36px !important;
+        /* El bundle del tema posiciona esta flecha con "top: 50%" sin
+           transform, así que un top fijo la deja corrida hacia arriba;
+           top+translateY(-50%) la centra sin importar el alto real de la caja. */
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        height: auto !important;
         right: 5px !important;
-        top: 1px !important;
     }
 
     .select2-dropdown {
@@ -868,10 +872,16 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 $(document).ready(function() {
     console.log('=== FILTRO DE MATRICULADOS POR PROGRAMA ===');
 
-    // Inicializar Select2
-    $('.select2-programa').select2({
-        placeholder: 'Todos los programas...',
-        allowClear: true,
+    // Select2 dentro del modal "Plan Grupal": requiere dropdownParent para
+    // que el desplegable no quede recortado/oculto detrás del modal.
+    $('.select2-plan-grupal').select2({
+        width: '100%',
+        dropdownParent: $('#modalPlanGrupal')
+    });
+
+    // Inicializar Select2 (mismo tamaño/estilo en Sede, Programa y Estado)
+    $('.select2-uniforme').select2({
+        width: '100%',
         language: {
             noResults: function() {
                 return "No se encontraron resultados";
@@ -979,8 +989,10 @@ $(document).ready(function() {
     // Evento al limpiar filtro
     $('#btnLimpiarFiltro').on('click', function() {
         console.log('>>> Limpiando filtro');
-        $('#selectSedeFiltro').val('');
-        $('#selectEstadoFiltro').val('ACTIVO');
+        // trigger('change') en los tres: con Select2 un .val() plano no
+        // actualiza el texto visible del combo.
+        $('#selectSedeFiltro').val('').trigger('change');
+        $('#selectEstadoFiltro').val('ACTIVO').trigger('change');
         $('#selectProgramaFiltro').val('').trigger('change');
     });
 

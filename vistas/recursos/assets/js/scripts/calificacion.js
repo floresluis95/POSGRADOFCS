@@ -30,11 +30,31 @@ function nombreDocenteParaImprimir() {
 }
 
 $(document).ready(function() {
-    // Inicializar Select2
-    $('.select2-docente').select2({
-        placeholder: '-- Seleccione un docente --',
-        allowClear: true,
+    // Inicializar Select2 (mismo tamaño/estilo para Sede, Programa y Docente)
+    $('.select2-uniforme').select2({
         width: '100%'
+    });
+
+    // Cargar sedes y programas con asignaciones para los filtros previos al
+    // docente (la lista de docentes ya viene renderizada completa desde PHP).
+    cargarSedesFiltroDocente();
+    cargarProgramasFiltroDocente('', false);
+
+    $('#filtro-sede-docente').on('change', function() {
+        cargarProgramasFiltroDocente($(this).val(), true);
+    });
+
+    $('#filtro-programa-docente').on('change', function() {
+        actualizarCodigosFiltroDocente();
+        cargarDocentesFiltrados($('#filtro-sede-docente').val(), $(this).val(), '');
+    });
+
+    $('#filtro-codigo-docente').on('change', function() {
+        cargarDocentesFiltrados(
+            $('#filtro-sede-docente').val(),
+            $('#filtro-programa-docente').val(),
+            $(this).val()
+        );
     });
 
     // Event Listeners
@@ -98,6 +118,123 @@ function seleccionarDocente() {
 
     // Cargar asignaciones del docente
     cargarAsignacionesDocente(docenteID);
+}
+
+// Escapar texto para insertarlo de forma segura en HTML armado por
+// concatenación de strings (nombre/CI/especialidad del docente, etc.).
+function escaparHtml(valor) {
+    const div = document.createElement('div');
+    div.textContent = valor === null || valor === undefined ? '' : String(valor);
+    return div.innerHTML;
+}
+
+/**
+ * Filtro previo a la selección de docente: Sede, Programa y Código de
+ * Programa acotan el SELECT de Docente a solo aquellos con módulos asignados
+ * que coincidan (el Programa se acota a la Sede elegida y el Código, al
+ * Programa elegido).
+ */
+function cargarSedesFiltroDocente() {
+    $.ajax({
+        url: 'ajax/calificacion.ajax.php',
+        method: 'POST',
+        data: { accion: 'listarSedesAsignaciones' },
+        dataType: 'json',
+        success: function(response) {
+            if (response.status !== 'success') return;
+
+            const $sede = $('#filtro-sede-docente');
+            let opciones = '<option value="">Todas las sedes</option>';
+            response.data.forEach(function(fila) {
+                opciones += '<option value="' + escaparHtml(fila.Sede) + '">' + escaparHtml(fila.Sede) + '</option>';
+            });
+            $sede.html(opciones);
+        }
+    });
+}
+
+// Programas (con su código) devueltos para la sede actual; de aquí se arman
+// las opciones del filtro de Código sin volver a consultar al servidor.
+let programasFiltroDocente = [];
+
+function cargarProgramasFiltroDocente(sede, actualizarDocentes) {
+    $.ajax({
+        url: 'ajax/calificacion.ajax.php',
+        method: 'POST',
+        data: { accion: 'listarProgramasAsignaciones', sede: sede || '' },
+        dataType: 'json',
+        success: function(response) {
+            const $programa = $('#filtro-programa-docente');
+            let opciones = '<option value="">Todos los programas</option>';
+
+            programasFiltroDocente = response.status === 'success' ? response.data : [];
+            programasFiltroDocente.forEach(function(p) {
+                opciones += '<option value="' + p.ProgramaID + '">' +
+                    escaparHtml(p.NombrePrograma) + ' (' + escaparHtml(p.GradoAcademico) + ')</option>';
+            });
+
+            $programa.html(opciones).val('');
+            actualizarCodigosFiltroDocente();
+
+            if (actualizarDocentes) {
+                cargarDocentesFiltrados(sede, '', '');
+            }
+        }
+    });
+}
+
+// El filtro de Código depende del Programa elegido: muestra solo el código
+// de ese programa, o los de todos los programas de la sede si no hay uno.
+function actualizarCodigosFiltroDocente() {
+    const programaID = $('#filtro-programa-docente').val();
+
+    const codigos = [...new Set(
+        programasFiltroDocente
+            .filter(p => !programaID || String(p.ProgramaID) === String(programaID))
+            .map(p => p.CodigoPrograma)
+            .filter(Boolean)
+    )].sort();
+
+    $('#filtro-codigo-docente')
+        .html('<option value="">Todos los códigos</option>' +
+            codigos.map(c => '<option value="' + escaparHtml(c) + '">' + escaparHtml(c) + '</option>').join(''))
+        .val('')
+        .trigger('change.select2');
+}
+
+function cargarDocentesFiltrados(sede, programaID, codigoPrograma) {
+    $.ajax({
+        url: 'ajax/calificacion.ajax.php',
+        method: 'POST',
+        data: {
+            accion: 'listarDocentesFiltrados',
+            sede: sede || '',
+            programaID: programaID || '',
+            codigoPrograma: codigoPrograma || ''
+        },
+        dataType: 'json',
+        success: function(response) {
+            const $docente = $('#select-docente');
+            const hayDocentes = response.status === 'success' && response.data.length > 0;
+            let opciones = '<option value="">' +
+                (hayDocentes ? '-- Seleccione un docente --' : 'Ningún docente tiene asignaciones con este filtro') +
+                '</option>';
+
+            if (hayDocentes) {
+                response.data.forEach(function(d) {
+                    opciones += '<option value="' + d.DocenteID + '"' +
+                        ' data-nombre="' + escaparHtml(d.NombreCompleto) + '"' +
+                        ' data-ci="' + escaparHtml(d.CI) + '"' +
+                        ' data-especialidad="' + escaparHtml(d.Especialidad) + '"' +
+                        ' data-menciones="' + escaparHtml(d.Menciones) + '">' +
+                        escaparHtml(d.NombreCompleto) + ' - ' + escaparHtml(d.CI) +
+                        '</option>';
+                });
+            }
+
+            $docente.html(opciones).prop('disabled', !hayDocentes).val('').trigger('change');
+        }
+    });
 }
 
 /**
@@ -169,11 +306,6 @@ function cargarAsignacionesDocente(docenteID) {
     });
 }
 
-// Todas las asignaciones abiertas del docente actualmente seleccionado, sin
-// filtrar (la tabla se re-renderiza filtrando sobre esta copia, sin volver a
-// pedirle nada al servidor).
-let asignacionesAbiertasCompletas = [];
-
 function mostrarAsignaciones(asignaciones) {
     // Separar módulos abiertos y cerrados
     const modulosAbiertos = [];
@@ -188,8 +320,6 @@ function mostrarAsignaciones(asignaciones) {
         }
     });
 
-    asignacionesAbiertasCompletas = modulosAbiertos;
-
     // Ocultar paso 1 y mostrar paso 2
     $('#paso1-container').slideUp();
     $('#paso2-container').slideDown();
@@ -200,56 +330,8 @@ function mostrarAsignaciones(asignaciones) {
     $('#docente-especialidad').text(docenteSeleccionado.especialidad);
     $('#total-asignaciones').text(modulosAbiertos.length);
 
-    poblarFiltrosAsignaciones(modulosAbiertos);
     renderTablaAsignacionesAbiertas(modulosAbiertos);
 }
-
-/**
- * Llenar los selects de Sede y Programa con los valores presentes en las
- * asignaciones del docente (Docente ya se elige en el Paso 1). Se recrean
- * cada vez que se carga un docente distinto.
- */
-function poblarFiltrosAsignaciones(modulosAbiertos) {
-    const $filtroSede = $('#filtro-sede');
-    const $filtroPrograma = $('#filtro-programa');
-
-    if (modulosAbiertos.length === 0) {
-        $('#filtros-asignaciones-container').hide();
-        return;
-    }
-
-    const sedeSeleccionada = $filtroSede.val();
-    const programaSeleccionado = $filtroPrograma.val();
-
-    const sedes = [...new Set(modulosAbiertos.map(a => a.Sede).filter(Boolean))].sort();
-    const programas = [...new Map(modulosAbiertos.map(a => [a.ProgramaID, a.NombrePrograma])).entries()]
-        .sort((a, b) => a[1].localeCompare(b[1]));
-
-    $filtroSede.html('<option value="">Todas las sedes</option>' +
-        sedes.map(s => `<option value="${s}">${s}</option>`).join(''));
-    $filtroPrograma.html('<option value="">Todos los programas</option>' +
-        programas.map(([id, nombre]) => `<option value="${id}">${nombre}</option>`).join(''));
-
-    // Conservar la selección previa si sigue siendo válida (ej. al recargar
-    // asignaciones del mismo docente tras guardar una calificación).
-    if (sedeSeleccionada) $filtroSede.val(sedeSeleccionada);
-    if (programaSeleccionado) $filtroPrograma.val(programaSeleccionado);
-
-    $('#filtros-asignaciones-container').show();
-}
-
-$(document).on('change', '#filtro-sede, #filtro-programa', function() {
-    const sede = $('#filtro-sede').val();
-    const programaID = $('#filtro-programa').val();
-
-    const filtradas = asignacionesAbiertasCompletas.filter(function(asig) {
-        if (sede && asig.Sede !== sede) return false;
-        if (programaID && String(asig.ProgramaID) !== String(programaID)) return false;
-        return true;
-    });
-
-    renderTablaAsignacionesAbiertas(filtradas);
-});
 
 function renderTablaAsignacionesAbiertas(modulosAbiertos) {
     // Renderizar tabla de asignaciones (solo módulos abiertos)
@@ -272,7 +354,7 @@ function renderTablaAsignacionesAbiertas(modulosAbiertos) {
     `;
 
     if (modulosAbiertos.length === 0) {
-        html += '<tr><td colspan="8" class="text-center text-muted py-3">Ningún módulo coincide con el filtro seleccionado</td></tr>';
+        html += '<tr><td colspan="8" class="text-center text-muted py-3">Este docente no tiene módulos abiertos</td></tr>';
     }
 
     modulosAbiertos.forEach(function(asig, index) {
@@ -864,6 +946,13 @@ function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, modul
                     <input type="date" id="fechaFin" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;" value="${fechaFinDB || ''}">
                 </div>
 
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="fechaGeneracion" style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">
+                        <i class="la la-print"></i> Fecha de impresión del documento (para la firma "Oruro, ..."):
+                    </label>
+                    <input type="date" id="fechaGeneracion" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;" value="${new Date().toLocaleDateString('sv-SE')}">
+                </div>
+
                 <p style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-left: 3px solid #5867dd; font-size: 13px; color: #555;">
                     <i class="la la-info-circle"></i> ${(fechaInicioDB && fechaFinDB)
                         ? 'Se completaron con las fechas ya registradas para este módulo; puede ajustarlas si hace falta.'
@@ -871,7 +960,6 @@ function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, modul
                 </p>
             </div>
         `,
-        width: '600px',
         showCancelButton: true,
         confirmButtonColor: '#5867dd',
         cancelButtonColor: '#6c757d',
@@ -882,14 +970,16 @@ function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, modul
             console.log('preConfirm ejecutado');
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
+            const fechaGeneracion = document.getElementById('fechaGeneracion').value;
 
             console.log('Fecha Inicio capturada:', fechaInicio);
             console.log('Fecha Fin capturada:', fechaFin);
+            console.log('Fecha Generación capturada:', fechaGeneracion);
 
-            // Validar que ambas fechas estén llenas
-            if (!fechaInicio || !fechaFin) {
+            // Validar que las tres fechas estén llenas
+            if (!fechaInicio || !fechaFin || !fechaGeneracion) {
                 console.log('Validación fallida: fechas vacías');
-                Swal.showValidationMessage('Por favor, ingrese ambas fechas');
+                Swal.showValidationMessage('Por favor, complete las tres fechas');
                 return false;
             }
 
@@ -901,7 +991,7 @@ function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, modul
             }
 
             console.log('Validación exitosa, retornando fechas');
-            return { fechaInicio: fechaInicio, fechaFin: fechaFin };
+            return { fechaInicio: fechaInicio, fechaFin: fechaFin, fechaGeneracion: fechaGeneracion };
         }
     }).then((result) => {
         console.log('Then ejecutado, result completo:', result);
@@ -926,6 +1016,7 @@ function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, modul
                 '&docenteNombre=' + encodeURIComponent(docenteNombre) +
                 '&fechaInicio=' + encodeURIComponent(result.value.fechaInicio) +
                 '&fechaFin=' + encodeURIComponent(result.value.fechaFin) +
+                '&fechaGeneracion=' + encodeURIComponent(result.value.fechaGeneracion) +
                 '&sigla=' + encodeURIComponent(sigla || '');
 
             console.log('URL generada:', url);

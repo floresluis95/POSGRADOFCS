@@ -54,7 +54,9 @@
         });
 
         if (valorActual) {
-            $select.val(valorActual);
+            // trigger('change') es necesario para que Select2 actualice el
+            // texto visible (un .val() plano no repinta el widget).
+            $select.val(valorActual).trigger('change');
         }
     }
 
@@ -169,6 +171,7 @@
         // hacerlo antes rompía el resto del script si este archivo se ejecutaba
         // antes que jQuery, y con eso nunca se llegaba a llamar a cargarOrdenes().
         if (typeof $ !== 'undefined') {
+            $('.select2-uniforme').select2({ width: '100%' });
             $(document).on('change', '#filtro_programa, #filtro_tipo', aplicarFiltros);
         }
 

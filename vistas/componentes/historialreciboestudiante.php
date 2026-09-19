@@ -104,7 +104,7 @@
                                                 </label>
                                             </div>
                                             <div class="col-lg-9">
-                                                <select class="form-control" id="select_programa_vouchers" name="select_programa_vouchers" disabled style="height: 50px; border: 2px solid #E4E6EF; border-radius: 10px; font-size: 1rem; font-weight: 500;">
+                                                <select class="form-control select2-uniforme" id="select_programa_vouchers" name="select_programa_vouchers" disabled>
                                                     <option value="">Cargando programas...</option>
                                                 </select>
                                                 <small class="form-text" style="color: #B5B5C3; margin-top: 8px;">
@@ -181,6 +181,38 @@
     </script>
 
     <style>
+        /* Select2 con el mismo alto/borde que el select nativo que reemplaza
+           en esta página (el override global del sistema usa el alto estándar
+           de Bootstrap, más bajo que este). display:flex + align-items:center
+           centra el texto sin depender de un line-height calculado a mano
+           (que quedaba mal y corría la etiqueta hacia abajo). */
+        .select2-container--default .select2-selection--single {
+            height: 50px !important;
+            display: flex !important;
+            align-items: center;
+            border: 2px solid #E4E6EF !important;
+            border-radius: 10px !important;
+            padding: 0 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: normal !important;
+            /* El bundle del tema le pone padding vertical propio a este
+               elemento; hay que anular los cuatro lados (no solo left/right)
+               para que no se siga sumando y el texto no se salga de la caja. */
+            padding: 0 20px 0 16px !important;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            /* El bundle del tema posiciona esta flecha con "top: 50%" sin
+               transform, así que queda corrida hacia arriba; top+translateY(-50%)
+               la centra sin importar el alto real de la caja. */
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            height: auto !important;
+            right: 10px !important;
+        }
+
         /* Estilos personalizados */
         .voucher-card {
             background: white;

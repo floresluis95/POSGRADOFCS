@@ -88,7 +88,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                           <div class="col-md-3">
                             <div class="form-group">
                               <label><i class="fa fa-graduation-cap"></i> Grado Académico</label>
-                              <select class="form-control" id="filtroGrado" name="grado">
+                              <select class="form-control select2-uniforme" id="filtroGrado" name="grado">
                                 <option value="">Todos los grados</option>
                                 <option value="DIPLOMADO">DIPLOMADO</option>
                                 <option value="MAESTRIA">MAESTRIA</option>
@@ -100,7 +100,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                           <div class="col-md-3">
                             <div class="form-group">
                               <label><i class="fa fa-map-marker"></i> Sede</label>
-                              <select class="form-control" id="filtroSede" name="sede">
+                              <select class="form-control select2-uniforme" id="filtroSede" name="sede">
                                 <option value="">Todas las sedes</option>
                                 <?php
                                   $sedesFiltroProgramas = ProgramasModelos::ListarSedesModelo();
@@ -250,6 +250,8 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
               </div>
             </div>
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
             <script src="vistas/recursos/sweetalert.min.js"></script>
           <script>
           $(document).on('click', '#btnDetallePrograma', function() {
@@ -499,6 +501,35 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
 
 </body>
 <style>
+  /* Select2 (filtros de Grado académico y Sede): mismo alto/borde que
+     .form-control de Bootstrap. El bundle del tema le pone a
+     .select2-selection__rendered un padding vertical propio que, si no se
+     anula en los 4 lados, sigue sumandose y el texto se sale de la caja;
+     display:flex + align-items:center evita depender de un line-height
+     calculado a mano. */
+  .select2-container--default .select2-selection--single {
+    height: calc(1.5em + .75rem + 2px) !important;
+    display: flex !important;
+    align-items: center;
+    padding: 0 !important;
+    border: 1px solid #ced4da !important;
+    border-radius: .25rem !important;
+  }
+
+  .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: normal !important;
+    padding: 0 20px 0 .75rem !important;
+  }
+
+  .select2-container--default .select2-selection--single .select2-selection__arrow {
+    /* El bundle del tema posiciona esta flecha con "top: 50%" sin transform,
+       así que queda corrida hacia arriba; top+translateY(-50%) la centra
+       sin importar el alto real de la caja. */
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    height: auto !important;
+  }
+
   #DetallePrograma .modal-dialog {
     max-width: 95% !important;
   }
@@ -1048,6 +1079,11 @@ $(document).ready(function() {
             $(panelAReabrir).modal('show');
         }
     }
+
+    // Select2 (mismo tamaño/estilo en Grado académico y Sede). Se inicializa
+    // después de restaurar los valores desde la URL para que ya se muestren
+    // seleccionados desde el primer render.
+    $('.select2-uniforme').select2({ width: '100%' });
 });
 
 // JavaScript para cargar datos en el modal de edición

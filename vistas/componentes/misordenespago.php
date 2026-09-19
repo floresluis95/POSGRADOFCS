@@ -87,13 +87,13 @@
                                     <div class="row mb-3 align-items-end" id="ordenes_filtros" style="display:none;">
                                         <div class="col-md-6 col-lg-4 mb-2">
                                             <label class="small font-weight-bold mb-1">Programa</label>
-                                            <select class="form-control" id="filtro_programa">
+                                            <select class="form-control select2-uniforme" id="filtro_programa">
                                                 <option value="">Todos los programas</option>
                                             </select>
                                         </div>
                                         <div class="col-md-6 col-lg-4 mb-2">
                                             <label class="small font-weight-bold mb-1">Tipo</label>
-                                            <select class="form-control" id="filtro_tipo">
+                                            <select class="form-control select2-uniforme" id="filtro_tipo">
                                                 <option value="">Todos</option>
                                                 <option value="MATRICULA">Matrícula</option>
                                                 <option value="CUOTA">Cuota</option>

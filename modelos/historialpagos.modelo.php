@@ -33,6 +33,94 @@ class HistorialPagosModelos
                 return null;
             }
 
+            return self::ArmarHistorialDelEstudiante($estudiante);
+        } catch (PDOException $e) {
+            error_log("Error en BuscarHistorialPorCiModelo: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Buscar estudiantes cuyo nombre y/o apellidos coincidan (parcialmente, sin
+     * distinguir mayúsculas) con el término ingresado. Se usa como alternativa
+     * a la búsqueda por C.I. cuando no se conoce el carnet.
+     * @param string $termino
+     * @return array lista de estudiantes (puede ser vacía)
+     */
+    public static function BuscarEstudiantesPorNombreModelo($termino)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+
+            $like = '%' . $termino . '%';
+
+            $stmt = $pdo->prepare(
+                "SELECT EstudianteID, Ci, Complemento, Exp, Nombre, Apaterno, Amaterno, Correo, Celular
+                 FROM estudiante
+                 WHERE CONCAT(Apaterno, ' ', Amaterno, ' ', Nombre) LIKE :termino1
+                    OR CONCAT(Nombre, ' ', Apaterno, ' ', Amaterno) LIKE :termino2
+                    OR Nombre LIKE :termino3
+                    OR Apaterno LIKE :termino4
+                    OR Amaterno LIKE :termino5
+                 ORDER BY Apaterno, Amaterno, Nombre
+                 LIMIT 50"
+            );
+            $stmt->bindParam(":termino1", $like, PDO::PARAM_STR);
+            $stmt->bindParam(":termino2", $like, PDO::PARAM_STR);
+            $stmt->bindParam(":termino3", $like, PDO::PARAM_STR);
+            $stmt->bindParam(":termino4", $like, PDO::PARAM_STR);
+            $stmt->bindParam(":termino5", $like, PDO::PARAM_STR);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en BuscarEstudiantesPorNombreModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Devolver el historial de pagos completo de un estudiante ya identificado
+     * por su EstudianteID (usado tras elegir un resultado de la búsqueda por
+     * nombre).
+     * @param int $estudianteID
+     * @return array|null null si el estudiante no existe
+     */
+    public static function BuscarHistorialPorEstudianteIdModelo($estudianteID)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+
+            $stmtEst = $pdo->prepare(
+                "SELECT EstudianteID, Ci, Complemento, Exp, Nombre, Apaterno, Amaterno, Correo, Celular
+                 FROM estudiante WHERE EstudianteID = :estudianteID LIMIT 1"
+            );
+            $stmtEst->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmtEst->execute();
+            $estudiante = $stmtEst->fetch(PDO::FETCH_ASSOC);
+
+            if (!$estudiante) {
+                return null;
+            }
+
+            return self::ArmarHistorialDelEstudiante($estudiante);
+        } catch (PDOException $e) {
+            error_log("Error en BuscarHistorialPorEstudianteIdModelo: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Armar el arreglo estudiante + programas/cuotas para un estudiante ya
+     * obtenido de la BD. Lógica compartida entre la búsqueda por C.I. y por
+     * EstudianteID.
+     * @param array $estudiante
+     * @return array
+     */
+    private static function ArmarHistorialDelEstudiante($estudiante)
+    {
+        try {
+            $pdo = Conexion::Conectar();
             $estudianteID = $estudiante['EstudianteID'];
 
             $stmtProgramas = $pdo->prepare(
@@ -76,7 +164,7 @@ class HistorialPagosModelos
                 'programas' => $programas
             ];
         } catch (PDOException $e) {
-            error_log("Error en BuscarHistorialPorCiModelo: " . $e->getMessage());
+            error_log("Error en ArmarHistorialDelEstudiante: " . $e->getMessage());
             return null;
         }
     }

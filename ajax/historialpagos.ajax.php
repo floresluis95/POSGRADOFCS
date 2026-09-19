@@ -26,6 +26,14 @@ switch ($_POST['accion']) {
         buscarPorCi();
         break;
 
+    case 'buscarPorNombre':
+        buscarPorNombre();
+        break;
+
+    case 'buscarPorEstudianteId':
+        buscarPorEstudianteId();
+        break;
+
     case 'actualizarMatricula':
         actualizarMatricula();
         break;
@@ -55,6 +63,58 @@ function buscarPorCi()
     }
 
     echo json_encode(['success' => true] + $resultado);
+}
+
+/**
+ * Buscar estudiantes por nombre y/o apellidos. Si el término coincide con un
+ * único estudiante se devuelve directamente su historial completo (mismo
+ * formato que buscarPorCi); si coinciden varios, se devuelve la lista para
+ * que el usuario elija a cuál ver.
+ */
+function buscarPorNombre()
+{
+    $nombre = isset($_POST['nombre']) ? trim($_POST['nombre']) : '';
+
+    if (mb_strlen($nombre) < 3) {
+        echo json_encode(['success' => false, 'mensaje' => 'Ingrese al menos 3 caracteres para buscar']);
+        return;
+    }
+
+    $estudiantes = HistorialPagosModelos::BuscarEstudiantesPorNombreModelo($nombre);
+
+    if (empty($estudiantes)) {
+        echo json_encode(['success' => false, 'mensaje' => 'No se encontró ningún estudiante con ese nombre']);
+        return;
+    }
+
+    if (count($estudiantes) === 1) {
+        $resultado = HistorialPagosModelos::BuscarHistorialPorEstudianteIdModelo($estudiantes[0]['EstudianteID']);
+        echo json_encode(['success' => true, 'tipo' => 'unico'] + $resultado);
+        return;
+    }
+
+    echo json_encode(['success' => true, 'tipo' => 'lista', 'estudiantes' => $estudiantes]);
+}
+
+/**
+ * Obtener el historial completo de un estudiante elegido desde la lista de
+ * resultados de la búsqueda por nombre.
+ */
+function buscarPorEstudianteId()
+{
+    if (empty($_POST['estudianteId']) || !is_numeric($_POST['estudianteId'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'Estudiante no válido']);
+        return;
+    }
+
+    $resultado = HistorialPagosModelos::BuscarHistorialPorEstudianteIdModelo((int)$_POST['estudianteId']);
+
+    if ($resultado === null) {
+        echo json_encode(['success' => false, 'mensaje' => 'No se encontró al estudiante']);
+        return;
+    }
+
+    echo json_encode(['success' => true, 'tipo' => 'unico'] + $resultado);
 }
 
 /**

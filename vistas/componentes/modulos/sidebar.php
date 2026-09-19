@@ -32,21 +32,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Reporte General de Programas</span>
                   </a>
                 </li>
-
-                <!-- CALENDARIO ACADÉMICO -->
-                <li class="kt-menu__section">
-                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
-                    <i class="flaticon2-calendar-3" style="color: #6f94c9;"></i> AGENDA
-                  </h4>
-                </li>
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="calendario" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-calendar-3" style="color: #6f94c9;"></i>
-                    <span class="kt-menu__link-text">Calendario Académico</span>
-                  </a>
-                </li>
-
-                <!-- MATRICULACIÓN -->
+                   <!-- MATRICULACIÓN -->
                 <li class="kt-menu__section">
                   <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
                     <i class="flaticon2-writing" style="color: #6f94c9;"></i> MATRICULACIÓN
@@ -70,9 +56,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                     </span>
                   </a>
                 </li>
-               
-              
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="matriculados" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-group" style="color: #6f94c9;"></i>
                     <span class="kt-menu__link-text">Matriculados</span>
@@ -85,6 +69,26 @@ if ($_SESSION["Tipo"] == "ADM") {
                   </a>
                 </li>
 
+
+                <!-- CALENDARIO ACADÉMICO -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-calendar-3" style="color: #6f94c9;"></i> AGENDA
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="calendario" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-calendar-3" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Calendario Académico</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="solicitudesinscripcion" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-mail" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Solicitudes de Inscripción</span>
+                  </a>
+                </li>
+      
                 <!-- CALIFICACIONES -->
                 <li class="kt-menu__section">
                   <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
@@ -139,7 +143,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                 </li>
 
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="notasdocente" class="kt-menu__link">
+                  <a href="reportecalificaciones" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
                     <span class="kt-menu__link-text">Registro de Notas - Docentes</span>
                   </a>
@@ -301,6 +305,12 @@ if ($_SESSION["Tipo"] == "SEC") {
                   </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="solicitudesinscripcion" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-mail" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Solicitudes de Inscripción</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="matriculados" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-group" style="color: #6f94c9;"></i>
                     <span class="kt-menu__link-text">Matriculados</span>
@@ -372,7 +382,7 @@ if ($_SESSION["Tipo"] == "SEC") {
                 </li>
 
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="notasdocente" class="kt-menu__link">
+                  <a href="reportecalificaciones" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
                     <span class="kt-menu__link-text">Registro de Notas - Docentes</span>
                   </a>
@@ -505,13 +515,6 @@ if ($_SESSION["Tipo"] == "DOC") {
                     <i class="flaticon2-user-outline-symbol" style="color: #36a3f7;"></i> DOCENTES
                   </h4>
              
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="notasdocente" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">Notas Docentes</span>
-                  </a>
-                </li>
-                
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="reportecalificaciones" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-add-1" style="color: #36a3f7;"></i>

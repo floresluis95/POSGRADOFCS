@@ -160,6 +160,71 @@ class CalificacionControlador
     }
 
     /**
+     * Listar sedes con al menos un módulo asignado, para el filtro previo a
+     * elegir docente (AJAX)
+     */
+    public function ListarSedesAsignacionesControlador()
+    {
+        $sedes = CalificacionModelo::ObtenerSedesConAsignacionesModelo();
+
+        echo json_encode([
+            'status' => 'success',
+            'data' => $sedes
+        ]);
+    }
+
+    /**
+     * Listar programas con al menos un módulo asignado, opcionalmente
+     * acotado a una sede, para el filtro previo a elegir docente (AJAX)
+     */
+    public function ListarProgramasAsignacionesControlador()
+    {
+        $sede = isset($_POST['sede']) ? trim($_POST['sede']) : '';
+        $programas = CalificacionModelo::ObtenerProgramasConAsignacionesModelo($sede);
+
+        echo json_encode([
+            'status' => 'success',
+            'data' => $programas
+        ]);
+    }
+
+    /**
+     * Listar docentes cuyas asignaciones coinciden con la sede y/o el
+     * programa y/o código de programa indicados, para poblar el SELECT de
+     * docente según esos filtros (AJAX)
+     */
+    public function ListarDocentesFiltradosControlador()
+    {
+        $sede = isset($_POST['sede']) ? trim($_POST['sede']) : '';
+        $programaID = isset($_POST['programaID']) ? trim($_POST['programaID']) : '';
+        $codigoPrograma = isset($_POST['codigoPrograma']) ? trim($_POST['codigoPrograma']) : '';
+
+        $docentes = CalificacionModelo::ListarDocentesConAsignacionesFiltradoModelo($sede, $programaID, $codigoPrograma);
+
+        $data = array_map(function ($docente) {
+            $nombreCompleto = $docente['Nombre'] . ' ' . $docente['Apaterno'] . ' ' . $docente['Amaterno'];
+            $ci = $docente['Ci'];
+            if (!empty($docente['Complemento'])) {
+                $ci .= '-' . $docente['Complemento'];
+            }
+            $ci .= ' ' . $docente['Exp'];
+
+            return [
+                'DocenteID' => $docente['DocenteID'],
+                'NombreCompleto' => $nombreCompleto,
+                'CI' => $ci,
+                'Especialidad' => !empty($docente['Especialidad']) ? $docente['Especialidad'] : 'No especificada',
+                'Menciones' => !empty($docente['Menciones']) ? $docente['Menciones'] : ''
+            ];
+        }, $docentes);
+
+        echo json_encode([
+            'status' => 'success',
+            'data' => $data
+        ]);
+    }
+
+    /**
      * Obtener asignaciones de un docente (AJAX)
      */
     public function ObtenerAsignacionesDocenteControlador()

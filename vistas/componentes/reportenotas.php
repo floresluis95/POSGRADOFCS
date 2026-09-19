@@ -77,10 +77,10 @@ $csrf_token = bin2hex(random_bytes(32));
               </div>
               <div class="card-content collapse show">
                 <div class="card-body">
-                  <div class="form-group row mb-0">
-                    <label class="col-lg-1 col-form-label"><strong>Sede:</strong></label>
-                    <div class="col-lg-4">
-                      <select class="form-control" id="filtroSedeReporte">
+                  <div class="form-group row mb-0 align-items-end">
+                    <div class="col-xl-3 col-lg-6 col-md-6 mb-2 mb-xl-0">
+                      <label class="mb-1"><strong>Sede:</strong></label>
+                      <select class="form-control select2-uniforme" id="filtroSedeReporte">
                         <option value="">Todas las sedes...</option>
                         <?php
                           require_once 'modelos/programa.modelo.php';
@@ -92,9 +92,9 @@ $csrf_token = bin2hex(random_bytes(32));
                         ?>
                       </select>
                     </div>
-                    <label class="col-lg-1 col-form-label"><strong>Programa:</strong></label>
-                    <div class="col-lg-4">
-                      <select class="form-control" id="filtroProgramaReporte">
+                    <div class="col-xl-3 col-lg-6 col-md-6 mb-2 mb-xl-0">
+                      <label class="mb-1"><strong>Programa:</strong></label>
+                      <select class="form-control select2-uniforme" id="filtroProgramaReporte">
                         <option value="">Todos los programas...</option>
                         <?php
                           $programasReporteNotas = ProgramasModelos::ListaProgramaModelo();
@@ -105,12 +105,47 @@ $csrf_token = bin2hex(random_bytes(32));
                         ?>
                       </select>
                     </div>
-                    <div class="col-lg-2">
+                    <div class="col-xl-3 col-lg-6 col-md-6 mb-2 mb-xl-0">
+                      <label class="mb-1"><strong>Código:</strong></label>
+                      <select class="form-control select2-uniforme" id="filtroCodigoReporte">
+                        <option value="">Todos los códigos...</option>
+                        <?php
+                          $codigosReporteNotas = array();
+                          foreach ($programasReporteNotas as $progCodigoReporte) {
+                              $codigoValorReporte = trim($progCodigoReporte['Codigo'] ?? '');
+                              if ($codigoValorReporte !== '' && !in_array($codigoValorReporte, $codigosReporteNotas, true)) {
+                                  $codigosReporteNotas[] = $codigoValorReporte;
+                              }
+                          }
+                          sort($codigosReporteNotas);
+                          foreach ($codigosReporteNotas as $codigoOpcionReporte) {
+                              $codigoEscapadoReporte = htmlspecialchars($codigoOpcionReporte, ENT_QUOTES);
+                              echo '<option value="' . $codigoEscapadoReporte . '">' . $codigoEscapadoReporte . '</option>';
+                          }
+                        ?>
+                      </select>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6">
                       <button type="button" class="btn btn-secondary btn-block" id="btnLimpiarFiltroReporte">
                         <i class="fa fa-times"></i> Limpiar
                       </button>
                     </div>
                   </div>
+                  <script>
+                    // Relación Programa -> Código, para que el filtro de Código
+                    // se limite a los códigos del/los programa(s) seleccionado(s).
+                    window.programasParaFiltroCodigo = <?php
+                      $programasParaFiltroCodigo = array();
+                      foreach ($programasReporteNotas as $progMapReporte) {
+                          $nombreMapReporte = trim($progMapReporte['NombrePrograma'] ?? '');
+                          $codigoMapReporte = trim($progMapReporte['Codigo'] ?? '');
+                          if ($codigoMapReporte !== '') {
+                              $programasParaFiltroCodigo[] = array('nombre' => $nombreMapReporte, 'codigo' => $codigoMapReporte);
+                          }
+                      }
+                      echo json_encode($programasParaFiltroCodigo, JSON_UNESCAPED_UNICODE);
+                    ?>;
+                  </script>
                 </div>
               </div>
             </div>

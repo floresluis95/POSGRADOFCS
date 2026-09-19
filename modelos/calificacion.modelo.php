@@ -306,6 +306,117 @@ class CalificacionModelo
     }
 
     /**
+     * Sedes que tienen al menos un módulo asignado a algún docente. Se usa
+     * para el filtro previo a la selección de docente en "Registro de
+     * Calificaciones".
+     * @return array
+     */
+    public static function ObtenerSedesConAsignacionesModelo()
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT DISTINCT p.Sede
+                 FROM modulos m
+                 INNER JOIN programa p ON m.ProgramaId = p.ProgramaID
+                 WHERE p.Sede IS NOT NULL AND p.Sede <> ''
+                 ORDER BY p.Sede ASC"
+            );
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerSedesConAsignacionesModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Programas que tienen al menos un módulo asignado a algún docente,
+     * opcionalmente acotado a una sede. Se usa para el filtro previo a la
+     * selección de docente en "Registro de Calificaciones".
+     * @param string $sede
+     * @return array
+     */
+    public static function ObtenerProgramasConAsignacionesModelo($sede = '')
+    {
+        try {
+            $sql = "SELECT DISTINCT p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Codigo as CodigoPrograma
+                    FROM modulos m
+                    INNER JOIN programa p ON m.ProgramaId = p.ProgramaID";
+            $parametros = [];
+
+            if (!empty($sede)) {
+                $sql .= " WHERE p.Sede = :sede";
+                $parametros[':sede'] = $sede;
+            }
+
+            $sql .= " ORDER BY p.NombrePrograma ASC";
+
+            $stmt = Conexion::Conectar()->prepare($sql);
+            foreach ($parametros as $clave => $valor) {
+                $stmt->bindValue($clave, $valor, PDO::PARAM_STR);
+            }
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerProgramasConAsignacionesModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Docentes que tienen al menos un módulo asignado que coincide con la
+     * sede, el programa y/o el código de programa indicados (todos opcionales).
+     * Se usa para acotar el SELECT de docente de "Registro de Calificaciones"
+     * según los filtros de Sede/Programa/Código elegidos.
+     * @param string $sede
+     * @param string|int $programaID
+     * @param string $codigoPrograma
+     * @return array
+     */
+    public static function ListarDocentesConAsignacionesFiltradoModelo($sede = '', $programaID = '', $codigoPrograma = '')
+    {
+        try {
+            $sql = "SELECT DISTINCT
+                        d.DocenteID, d.Ci, d.Complemento, d.Exp, d.Nombre, d.Apaterno, d.Amaterno,
+                        d.Especialidad, d.Menciones
+                    FROM docente d
+                    INNER JOIN modulos m ON m.DocenteID = d.DocenteID
+                    INNER JOIN programa p ON m.ProgramaId = p.ProgramaID";
+            $condiciones = [];
+            $parametros = [];
+
+            if (!empty($sede)) {
+                $condiciones[] = "p.Sede = :sede";
+                $parametros[':sede'] = $sede;
+            }
+            if (!empty($programaID)) {
+                $condiciones[] = "p.ProgramaID = :programaID";
+                $parametros[':programaID'] = (int)$programaID;
+            }
+            if (!empty($codigoPrograma)) {
+                $condiciones[] = "p.Codigo = :codigoPrograma";
+                $parametros[':codigoPrograma'] = $codigoPrograma;
+            }
+
+            if (!empty($condiciones)) {
+                $sql .= " WHERE " . implode(' AND ', $condiciones);
+            }
+
+            $sql .= " ORDER BY d.Apaterno, d.Amaterno, d.Nombre ASC";
+
+            $stmt = Conexion::Conectar()->prepare($sql);
+            foreach ($parametros as $clave => $valor) {
+                $stmt->bindValue($clave, $valor, is_int($valor) ? PDO::PARAM_INT : PDO::PARAM_STR);
+            }
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ListarDocentesConAsignacionesFiltradoModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Obtener todas las asignaciones de un docente (módulos asignados con detalle)
      * @param int $docenteID
      * @return array

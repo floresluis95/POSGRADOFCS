@@ -60,10 +60,14 @@ class ReporteNotasModelo
                     m.codigomodulo,
                     m.DocenteID,
                     m.ProgramaId,
+                    m.FechaInicio,
+                    m.FechaFinal,
                     CONCAT(d.Nombre, ' ', d.Apaterno, ' ', d.Amaterno) as NombreDocente,
                     d.Especialidad as EspecialidadDocente,
+                    d.Menciones as MencionesDocente,
                     p.NombrePrograma,
                     p.GradoAcademico,
+                    p.Sigla,
                     COUNT(DISTINCT c.EstudianteID) as TotalCalificados,
                     COUNT(DISTINCT ep.EstudianteID) as TotalInscritos
                 FROM modulos m

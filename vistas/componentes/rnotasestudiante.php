@@ -67,11 +67,44 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                                     </div>
                                     <div class="card-body">
                                         <div class="row">
-                                            <div class="col-md-6">
+                                            <div class="col-md-3">
+                                                <label for="filtro-sede-docente" class="font-weight-bold">
+                                                    <i class="fa fa-map-marker-alt text-primary"></i> Sede:
+                                                </label>
+                                                <select id="filtro-sede-docente" class="form-control select2-uniforme">
+                                                    <option value="">Todas las sedes</option>
+                                                </select>
+                                                <small class="form-text text-muted">
+                                                    <i class="flaticon2-information"></i> Opcional, acota el listado de docentes
+                                                </small>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="filtro-programa-docente" class="font-weight-bold">
+                                                    <i class="fa fa-university text-primary"></i> Programa:
+                                                </label>
+                                                <select id="filtro-programa-docente" class="form-control select2-uniforme">
+                                                    <option value="">Todos los programas</option>
+                                                </select>
+                                                <small class="form-text text-muted">
+                                                    <i class="flaticon2-information"></i> Opcional, acota el listado de docentes
+                                                </small>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="filtro-codigo-docente" class="font-weight-bold">
+                                                    <i class="fa fa-code text-primary"></i> Código de Programa:
+                                                </label>
+                                                <select id="filtro-codigo-docente" class="form-control select2-uniforme">
+                                                    <option value="">Todos los códigos</option>
+                                                </select>
+                                                <small class="form-text text-muted">
+                                                    <i class="flaticon2-information"></i> Opcional, acota el listado de docentes
+                                                </small>
+                                            </div>
+                                            <div class="col-md-3">
                                                 <label for="select-docente" class="font-weight-bold">
                                                     <i class="flaticon2-user-outline-symbol text-primary"></i> Docente:
                                                 </label>
-                                                <select id="select-docente" class="form-control select2-docente">
+                                                <select id="select-docente" class="form-control select2-uniforme">
                                                     <option value="">-- Seleccione un docente --</option>
                                                     <?php
                                                         $controlador = new CalificacionControlador();
@@ -104,36 +137,29 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                                     </div>
                                     <div class="card-body">
                                         <!-- Información del docente -->
-                                        <div class="alert alert-light mb-3" id="info-docente-container">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <p class="mb-1"><strong>Docente:</strong> <span id="docente-nombre"></span></p>
-                                                    <p class="mb-0"><strong>C.I.:</strong> <span id="docente-ci"></span></p>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <p class="mb-1"><strong>Especialidad:</strong> <span id="docente-especialidad"></span></p>
-                                                    <p class="mb-0"><strong>Total Asignaciones:</strong> <span id="total-asignaciones" class="kt-badge kt-badge--brand kt-badge--inline"></span></p>
-                                                </div>
+                                        <div class="docente-info-formal mb-3" id="info-docente-container">
+                                            <div class="docente-info-item">
+                                                <i class="fa fa-user-tie"></i>
+                                                <span class="docente-info-label">Docente:</span>
+                                                <span class="docente-info-valor" id="docente-nombre"></span>
                                             </div>
-                                        </div>
-
-                                        <!-- Filtros de la tabla de asignaciones -->
-                                        <div class="row mb-3" id="filtros-asignaciones-container" style="display:none;">
-                                            <div class="col-md-4">
-                                                <label class="small font-weight-bold mb-1" for="filtro-sede">
-                                                    <i class="fa fa-map-marker-alt"></i> Sede
-                                                </label>
-                                                <select id="filtro-sede" class="form-control form-control-sm">
-                                                    <option value="">Todas las sedes</option>
-                                                </select>
+                                            <span class="docente-info-sep">|</span>
+                                            <div class="docente-info-item">
+                                                <i class="fa fa-id-card"></i>
+                                                <span class="docente-info-label">C.I.:</span>
+                                                <span class="docente-info-valor" id="docente-ci"></span>
                                             </div>
-                                            <div class="col-md-8">
-                                                <label class="small font-weight-bold mb-1" for="filtro-programa">
-                                                    <i class="fa fa-university"></i> Programa
-                                                </label>
-                                                <select id="filtro-programa" class="form-control form-control-sm">
-                                                    <option value="">Todos los programas</option>
-                                                </select>
+                                            <span class="docente-info-sep">|</span>
+                                            <div class="docente-info-item">
+                                                <i class="fa fa-graduation-cap"></i>
+                                                <span class="docente-info-label">Especialidad:</span>
+                                                <span class="docente-info-valor" id="docente-especialidad"></span>
+                                            </div>
+                                            <span class="docente-info-sep">|</span>
+                                            <div class="docente-info-item">
+                                                <i class="fa fa-book"></i>
+                                                <span class="docente-info-label">Total Asignaciones:</span>
+                                                <span class="kt-badge kt-badge--light kt-badge--inline kt-badge--bold" id="total-asignaciones"></span>
                                             </div>
                                         </div>
 
@@ -250,7 +276,7 @@ $esAdministrador = ($tipoUsuario === 'ADM');
     console.log('Usuario tipo:', tipoUsuario, '| Es Admin:', esAdministrador);
 </script>
 
-<script src="vistas/recursos/assets/js/scripts/calificacion.js?v=7.0"></script>
+<script src="vistas/recursos/assets/js/scripts/calificacion.js?v=7.1"></script>
 
 <style>
 .form-control:focus {
@@ -258,19 +284,84 @@ $esAdministrador = ($tipoUsuario === 'ADM');
     box-shadow: 0 0 0 0.15rem rgba(52, 73, 94, 0.2) !important;
 }
 
+/* Información del docente: una sola franja formal, en lugar de párrafos
+   sueltos en dos columnas. */
+.docente-info-formal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 0;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: #fff;
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(30, 60, 114, 0.2);
+}
+
+.docente-info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.docente-info-label {
+    font-weight: 700;
+}
+
+.docente-info-valor {
+    font-weight: 400;
+}
+
+.docente-info-sep {
+    opacity: .45;
+    margin: 0 18px;
+}
+
+.docente-info-formal .kt-badge {
+    background-color: rgba(255, 255, 255, 0.18) !important;
+    color: #fff !important;
+}
+
+@media (max-width: 991px) {
+    .docente-info-item {
+        white-space: normal;
+    }
+    .docente-info-sep {
+        display: none;
+        width: 100%;
+    }
+    .docente-info-formal {
+        gap: 8px 0;
+    }
+}
+
 .select2-container--default .select2-selection--single {
     height: calc(1.5em + 0.75rem + 2px) !important;
-    padding: 0.375rem 0 !important;
+    display: flex !important;
+    align-items: center;
+    padding: 0 !important;
     border: 1px solid #ced4da !important;
 }
 
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: 1.5 !important;
-    padding-left: 0.75rem !important;
+    line-height: normal !important;
+    /* El bundle del tema (demo9/style.bundle.css) le pone a este mismo
+       elemento "padding: .65rem 3rem .65rem 1rem"; si aquí solo se
+       sobreescriben padding-left/right, el padding vertical de esa regla
+       se sigue sumando y el texto se sale de la caja. Hay que anular los
+       cuatro lados con el shorthand. */
+    padding: 0 20px 0 0.75rem !important;
 }
 
 .select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 100% !important;
+    /* El bundle del tema posiciona esta flecha con "top: 50%" sin transform,
+       así que queda corrida hacia arriba; top+translateY(-50%) la centra
+       sin importar el alto real de la caja. */
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    height: auto !important;
 }
 
 .card {

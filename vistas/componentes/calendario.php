@@ -64,7 +64,7 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
                                 <div class="calendario-filtros">
                                     <div class="form-group mb-0">
                                         <label>Sede</label>
-                                        <select class="form-control form-control-sm" id="filtroSedeCalendario">
+                                        <select class="form-control select2-uniforme" id="filtroSedeCalendario">
                                             <option value="">Todas las sedes</option>
                                             <?php foreach ($sedesDisponibles as $s): ?>
                                                 <option value="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>"><?php echo htmlspecialchars($s); ?></option>
@@ -73,7 +73,7 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
                                     </div>
                                     <div class="form-group mb-0">
                                         <label>Programa</label>
-                                        <select class="form-control form-control-sm" id="filtroProgramaCalendario" style="min-width: 260px;">
+                                        <select class="form-control select2-uniforme" id="filtroProgramaCalendario" style="min-width: 260px;">
                                             <option value="">Todos los programas</option>
                                             <?php foreach ($programasDisponibles as $p): ?>
                                                 <option value="<?php echo (int)$p['ProgramaID']; ?>" data-sede="<?php echo htmlspecialchars($p['Sede'], ENT_QUOTES); ?>">
@@ -85,7 +85,7 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
                                     <?php if ($esAdminOSec): ?>
                                     <div class="form-group mb-0">
                                         <label>Docente</label>
-                                        <select class="form-control form-control-sm" id="filtroDocenteCalendario" style="min-width: 220px;">
+                                        <select class="form-control select2-uniforme" id="filtroDocenteCalendario" style="min-width: 220px;">
                                             <option value="">Todos los docentes</option>
                                         </select>
                                     </div>

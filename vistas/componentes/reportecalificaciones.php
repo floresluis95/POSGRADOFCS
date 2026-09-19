@@ -90,20 +90,28 @@ date_default_timezone_set("America/La_Paz");
 
                                 <!-- FILTROS DE LA TABLA DE M�DULOS -->
                                 <div class="row mb-3" id="filtros-modulos-container" style="display:none;">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="small font-weight-bold mb-1" for="filtro-sede-reporte">
                                             <i class="fa fa-map-marker-alt"></i> Sede
                                         </label>
-                                        <select id="filtro-sede-reporte" class="form-control form-control-sm">
+                                        <select id="filtro-sede-reporte" class="form-control select2-uniforme">
                                             <option value="">Todas las sedes</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-8">
+                                    <div class="col-md-5">
                                         <label class="small font-weight-bold mb-1" for="filtro-programa-reporte">
                                             <i class="fa fa-university"></i> Programa
                                         </label>
-                                        <select id="filtro-programa-reporte" class="form-control form-control-sm">
+                                        <select id="filtro-programa-reporte" class="form-control select2-uniforme">
                                             <option value="">Todos los programas</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="small font-weight-bold mb-1" for="filtro-modulo-reporte">
+                                            <i class="fa fa-book"></i> Módulo
+                                        </label>
+                                        <select id="filtro-modulo-reporte" class="form-control select2-uniforme">
+                                            <option value="">Todos los módulos</option>
                                         </select>
                                     </div>
                                 </div>
@@ -176,6 +184,8 @@ date_default_timezone_set("America/La_Paz");
 <!-- SCRIPTS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 <style>
@@ -256,20 +266,25 @@ $(document).ready(function() {
     actualizarFecha();
     setInterval(actualizarFecha, 60000);
 
+    // Select2 (mismo tamaño/estilo en Sede y Programa)
+    $('.select2-uniforme').select2({ width: '100%' });
+
     // Botón reporte completo
     $('#btn-reporte-completo').on('click', function() {
         generarReporteCompleto();
     });
 
-    // Filtros de Sede / Programa: se filtran los módulos ya cargados, sin
-    // volver a pedirle nada al servidor.
-    $(document).on('change', '#filtro-sede-reporte, #filtro-programa-reporte', function() {
+    // Filtros de Sede / Programa / Módulo: se filtran los módulos ya
+    // cargados, sin volver a pedirle nada al servidor.
+    $(document).on('change', '#filtro-sede-reporte, #filtro-programa-reporte, #filtro-modulo-reporte', function() {
         const sede = $('#filtro-sede-reporte').val();
         const programaID = $('#filtro-programa-reporte').val();
+        const moduloID = $('#filtro-modulo-reporte').val();
 
         const filtrados = modulosCompletos.filter(function(modulo) {
             if (sede && modulo.Sede !== sede) return false;
             if (programaID && String(modulo.ProgramaID) !== String(programaID)) return false;
+            if (moduloID && String(modulo.Idmodulo) !== String(moduloID)) return false;
             return true;
         });
 
@@ -307,12 +322,13 @@ $(document).ready(function() {
 });
 
 /**
- * Llenar los selects de Sede y Programa con los valores presentes en los
- * módulos del docente logueado.
+ * Llenar los selects de Sede, Programa y Módulo con los valores presentes en
+ * los módulos asignados al docente logueado.
  */
 function poblarFiltrosModulosReporte(modulos) {
     const $filtroSede = $('#filtro-sede-reporte');
     const $filtroPrograma = $('#filtro-programa-reporte');
+    const $filtroModulo = $('#filtro-modulo-reporte');
 
     if (modulos.length === 0) {
         $('#filtros-modulos-container').hide();
@@ -321,18 +337,28 @@ function poblarFiltrosModulosReporte(modulos) {
 
     const sedeSeleccionada = $filtroSede.val();
     const programaSeleccionado = $filtroPrograma.val();
+    const moduloSeleccionado = $filtroModulo.val();
 
     const sedes = [...new Set(modulos.map(m => m.Sede).filter(Boolean))].sort();
     const programas = [...new Map(modulos.map(m => [m.ProgramaID, m.NombrePrograma])).entries()]
         .sort((a, b) => a[1].localeCompare(b[1]));
+    const modulosOrdenados = [...modulos].sort((a, b) =>
+        (a.codigomodulo || '').localeCompare(b.codigomodulo || ''));
 
     $filtroSede.html('<option value="">Todas las sedes</option>' +
         sedes.map(s => `<option value="${s}">${s}</option>`).join(''));
     $filtroPrograma.html('<option value="">Todos los programas</option>' +
         programas.map(([id, nombre]) => `<option value="${id}">${nombre}</option>`).join(''));
+    $filtroModulo.html('<option value="">Todos los módulos</option>' +
+        modulosOrdenados.map(m =>
+            `<option value="${m.Idmodulo}">${escaparHtml((m.codigomodulo || '') + ' - ' + m.nombremodulo)}</option>`
+        ).join(''));
 
-    if (sedeSeleccionada) $filtroSede.val(sedeSeleccionada);
-    if (programaSeleccionado) $filtroPrograma.val(programaSeleccionado);
+    // trigger('change') es necesario para que Select2 actualice el texto
+    // visible (un .val() plano no repinta el widget).
+    if (sedeSeleccionada) $filtroSede.val(sedeSeleccionada).trigger('change');
+    if (programaSeleccionado) $filtroPrograma.val(programaSeleccionado).trigger('change');
+    if (moduloSeleccionado) $filtroModulo.val(moduloSeleccionado).trigger('change');
 
     $('#filtros-modulos-container').show();
 }
@@ -544,6 +570,17 @@ function mostrarTablaModulos(modulos) {
         }
 
         html += `
+                    <button type="button" class="btn btn-danger btn-sm btn-asistencia-reporte"
+                            data-modulo-id="${modulo.Idmodulo}" data-programa-id="${modulo.ProgramaID}"
+                            data-modulo-nombre="${escaparHtml(modulo.nombremodulo)}" data-modulo-codigo="${escaparHtml(modulo.codigomodulo)}"
+                            data-programa-nombre="${escaparHtml(modulo.NombrePrograma)}" data-grado="${escaparHtml(modulo.GradoAcademico)}"
+                            data-total-estudiantes="${inscritos}"
+                            title="Lista de asistencia">
+                        <i class="fa fa-file-pdf"></i> Asistencia
+                    </button>
+        `;
+
+        html += `
                 </td>
             </tr>
         `;
@@ -577,6 +614,36 @@ $(document).on('click', '.btn-imprimir-reporte', function() {
     generarPlanillaPDF(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, grado, fechaInicioDB, fechaFinalDB, sigla);
 });
 
+// Lista de asistencia directamente desde la tabla de módulos del reporte.
+$(document).on('click', '.btn-asistencia-reporte', function() {
+    const $btn = $(this);
+    const totalEstudiantes = parseInt($btn.data('total-estudiantes'), 10) || 0;
+
+    if (totalEstudiantes === 0) {
+        Swal.fire({
+            type: 'warning',
+            title: 'Sin estudiantes',
+            text: 'No hay estudiantes inscritos en este módulo para generar la lista de asistencia'
+        });
+        return;
+    }
+
+    const url = 'vistas/componentes/generar-lista-asistencia-pdf.php?' +
+        'moduloID=' + $btn.data('modulo-id') +
+        '&programaID=' + $btn.data('programa-id') +
+        '&moduloNombre=' + encodeURIComponent($btn.data('modulo-nombre')) +
+        '&moduloCodigo=' + encodeURIComponent($btn.data('modulo-codigo')) +
+        '&programaNombre=' + encodeURIComponent($btn.data('programa-nombre')) +
+        '&grado=' + encodeURIComponent($btn.data('grado')) +
+        '&docenteNombre=' + encodeURIComponent(nombreDocenteParaImprimir());
+
+    // Navegación en la misma pestaña: abrir con window.open() dentro de un
+    // manejador de clic directo (sin pasar por un .then() de Swal) es seguro,
+    // pero se usa window.location.href para evitar cualquier bloqueo de
+    // pop-ups del navegador, igual que en el resto de generadores de PDF.
+    window.location.href = url;
+});
+
 function nombreDocenteParaImprimir() {
     if (!docenteData) return '';
     return docenteData.Menciones
@@ -608,6 +675,12 @@ function generarPlanillaPDF(moduloID, programaID, moduloNombre, moduloCodigo, pr
                     </label>
                     <input type="date" id="fechaFinReporte" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;" value="${fechaFinalDB || ''}">
                 </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="fechaImpresionReporte" style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">
+                        <i class="la la-print"></i> Fecha de impresión del documento (para la firma "Oruro, ..."):
+                    </label>
+                    <input type="date" id="fechaImpresionReporte" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;" value="${new Date().toLocaleDateString('sv-SE')}">
+                </div>
                 <p style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-left: 3px solid #5867dd; font-size: 13px; color: #555;">
                     <i class="la la-info-circle"></i> ${(fechaInicioDB && fechaFinalDB)
                         ? 'Se completaron con las fechas ya registradas para este módulo; puede ajustarlas si hace falta.'
@@ -615,7 +688,6 @@ function generarPlanillaPDF(moduloID, programaID, moduloNombre, moduloCodigo, pr
                 </p>
             </div>
         `,
-        width: '600px',
         showCancelButton: true,
         confirmButtonColor: '#5867dd',
         cancelButtonColor: '#6c757d',
@@ -625,16 +697,17 @@ function generarPlanillaPDF(moduloID, programaID, moduloNombre, moduloCodigo, pr
         preConfirm: () => {
             const fechaInicio = document.getElementById('fechaInicioReporte').value;
             const fechaFin = document.getElementById('fechaFinReporte').value;
+            const fechaImpresion = document.getElementById('fechaImpresionReporte').value;
 
-            if (!fechaInicio || !fechaFin) {
-                Swal.showValidationMessage('Por favor, ingrese ambas fechas');
+            if (!fechaInicio || !fechaFin || !fechaImpresion) {
+                Swal.showValidationMessage('Por favor, complete las tres fechas');
                 return false;
             }
             if (fechaInicio > fechaFin) {
                 Swal.showValidationMessage('La fecha de inicio debe ser anterior o igual a la fecha de finalización');
                 return false;
             }
-            return { fechaInicio: fechaInicio, fechaFin: fechaFin };
+            return { fechaInicio: fechaInicio, fechaFin: fechaFin, fechaImpresion: fechaImpresion };
         }
     }).then((result) => {
         if (!result.value || result.dismiss) return;
@@ -649,12 +722,14 @@ function generarPlanillaPDF(moduloID, programaID, moduloNombre, moduloCodigo, pr
             '&docenteNombre=' + encodeURIComponent(nombreDocenteParaImprimir()) +
             '&fechaInicio=' + encodeURIComponent(result.value.fechaInicio) +
             '&fechaFin=' + encodeURIComponent(result.value.fechaFin) +
+            '&fechaGeneracion=' + encodeURIComponent(result.value.fechaImpresion) +
             '&sigla=' + encodeURIComponent(sigla || '');
 
-        const ventana = window.open(url, '_blank');
-        if (!ventana) {
-            Swal.fire({ type: 'warning', title: 'Ventana bloqueada', text: 'Permita las ventanas emergentes para ver el PDF.' });
-        }
+        // Abrir con window.open() DENTRO de un .then() de Swal es bloqueado
+        // silenciosamente por varios navegadores (la ventana nunca se abre y
+        // no muestra ningún aviso). Se navega en la misma pestaña, que es lo
+        // que sí funciona de forma confiable en todos los navegadores.
+        window.location.href = url;
     });
 }
 
@@ -965,25 +1040,33 @@ function generarReporteCompleto() {
     Swal.fire({
         title: 'Generar Reporte Completo',
         html: '<p>Se generará un reporte PDF con <strong>TODOS</strong> sus módulos asignados y sus calificaciones.</p>' +
-              '<p class="text-muted mt-2">Este reporte incluirá una página por cada módulo con su respectiva planilla de calificaciones.</p>',
+              '<p class="text-muted mt-2">Este reporte incluirá una página por cada módulo con su respectiva planilla de calificaciones.</p>' +
+              '<div class="form-group text-left" style="margin-top: 15px;">' +
+              '<label for="fechaImpresionReporteCompleto" style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">' +
+              '<i class="fa fa-print"></i> Fecha de impresión del documento (para la firma "Oruro, ..."):</label>' +
+              '<input type="date" id="fechaImpresionReporteCompleto" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;" value="' + new Date().toLocaleDateString('sv-SE') + '">' +
+              '</div>',
         type: 'info',
         showCancelButton: true,
         confirmButtonText: '<i class="fa fa-print"></i> Generar Reporte PDF',
         cancelButtonText: 'Cancelar',
         confirmButtonColor: '#dc3545',
-        cancelButtonColor: '#6c757d'
+        cancelButtonColor: '#6c757d',
+        preConfirm: () => {
+            const fechaImpresion = document.getElementById('fechaImpresionReporteCompleto').value;
+            if (!fechaImpresion) {
+                Swal.showValidationMessage('Por favor seleccione la fecha de impresión');
+                return false;
+            }
+            return fechaImpresion;
+        }
     }).then((result) => {
         if (result.isConfirmed) {
-            // Abrir el PDF en nueva pestaña
-            window.open('tcpdf/pdf/reporte-completo-docente.php', '_blank');
-
-            Swal.fire({
-                type: 'success',
-                title: 'Generando reporte...',
-                text: 'El PDF se abrirá en una nueva pestaña',
-                timer: 2000,
-                showConfirmButton: false
-            });
+            // window.open() dentro de un .then() de Swal es bloqueado
+            // silenciosamente por varios navegadores (por eso "no daba el
+            // reporte"): se navega en la misma pestaña en su lugar, que
+            // siempre funciona.
+            window.location.href = 'tcpdf/pdf/reporte-completo-docente.php?fechaGeneracion=' + encodeURIComponent(result.value);
         }
     });
 }

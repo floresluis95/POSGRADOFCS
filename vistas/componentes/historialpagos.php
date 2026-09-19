@@ -57,30 +57,30 @@ date_default_timezone_set("America/La_Paz");
 
             <div class="kt-container kt-grid__item kt-grid__item--fluid">
 
-              <!-- Buscador por C.I. -->
+              <!-- Buscador unificado de estudiante -->
               <div class="kt-portlet historialpagos-portlet">
-                <div class="kt-portlet__head">
+                <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
                   <div class="kt-portlet__head-label">
-                    <h3 class="kt-portlet__head-title">
-                      <i class="flaticon2-search"></i> Buscar estudiante por C.I.
+                    <h3 class="kt-portlet__head-title text-white">
+                      <i class="flaticon2-search"></i> Búsqueda de Estudiante
                     </h3>
                   </div>
                 </div>
-                <div class="kt-portlet__body py-3">
-                  <div class="row align-items-end">
-                    <div class="col-lg-8">
-                      <label class="filtro-label">Carnet de Identidad</label>
-                      <div class="input-group">
-                        <input type="text" id="buscarCiHistorial" class="form-control"
-                               placeholder="Ej: 7456178" maxlength="12">
+                <div class="kt-portlet__body py-4">
+                  <div class="row justify-content-center">
+                    <div class="col-lg-8 col-md-10">
+                      <label class="filtro-label d-block mb-2">Buscar estudiante</label>
+                      <div class="input-group historial-busqueda-unificada">
+                        <input type="text" id="valorBusquedaHistorial" class="form-control"
+                               placeholder="Ingrese el C.I. o el nombre y/o apellidos del estudiante" maxlength="150" autocomplete="off">
                         <div class="input-group-append">
-                          <button type="button" id="btnBuscarCiHistorial" class="btn btn-primary">
+                          <button type="button" id="btnBuscarHistorial" class="btn btn-primary">
                             <i class="flaticon2-search"></i> Buscar
                           </button>
                         </div>
                       </div>
-                      <small class="form-text text-muted">
-                        <i class="flaticon2-information"></i> Ingrese el número de C.I. sin complemento ni expedido, tal como se registró.
+                      <small class="form-text text-muted mt-2">
+                        <i class="flaticon2-information"></i> Puede buscar por número de C.I. (sin complemento ni expedido) o escribiendo el nombre y/o apellidos.
                       </small>
                     </div>
                   </div>
@@ -90,7 +90,35 @@ date_default_timezone_set("America/La_Paz");
               <!-- Estado vacío / sin búsqueda todavía -->
               <div id="historialSinBuscar" class="text-center text-muted py-5">
                 <i class="flaticon2-time" style="font-size: 3rem; color: #E4E6EF;"></i>
-                <p class="mt-3 mb-0" style="font-size: 1.05rem;">Busque un estudiante por C.I. para ver su historial de pagos</p>
+                <p class="mt-3 mb-0" style="font-size: 1.05rem;">Busque un estudiante por C.I. o por nombre/apellidos para ver su historial de pagos</p>
+              </div>
+
+              <!-- Resultado: lista de coincidencias (búsqueda por nombre con varios resultados) -->
+              <div id="historialListaResultados" style="display:none;">
+                <div class="kt-portlet historialpagos-portlet">
+                  <div class="kt-portlet__head">
+                    <div class="kt-portlet__head-label">
+                      <h3 class="kt-portlet__head-title">
+                        <i class="flaticon2-user"></i> Seleccione un estudiante
+                      </h3>
+                    </div>
+                  </div>
+                  <div class="kt-portlet__body py-3">
+                    <div class="table-responsive">
+                      <table class="table table-sm table-hover mb-0">
+                        <thead class="thead-light">
+                          <tr>
+                            <th>Apellidos y Nombre</th>
+                            <th>C.I.</th>
+                            <th>Correo</th>
+                            <th class="text-center">Acción</th>
+                          </tr>
+                        </thead>
+                        <tbody id="historialListaResultadosBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Resultado: datos del estudiante -->
@@ -197,7 +225,21 @@ date_default_timezone_set("America/La_Paz");
 .historialpagos-portlet {
     border: 1px solid #dee2e6;
     border-radius: 6px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    overflow: hidden;
+}
+
+.historial-busqueda-unificada .form-control:focus {
     box-shadow: none;
+    border-color: #2a5298;
+}
+
+.historial-busqueda-unificada .btn-primary {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border: none;
+    font-weight: 600;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
 }
 
 .programa-historial-card {
@@ -409,15 +451,61 @@ function iniciarHistorialPagos() {
         '</div>';
     }
 
+    // Último criterio usado, para poder refrescar el historial tras editar un
+    // pago sin importar si se llegó por C.I., por nombre (único) o eligiendo
+    // de la lista de coincidencias.
+    let ultimaBusqueda = null;
+
+    function mostrarResultadoEstudiante(resp) {
+        const est = resp.estudiante;
+        const nombreCompleto = est.Apaterno + ' ' + est.Amaterno + ' ' + est.Nombre;
+        let ciCompleto = est.Ci;
+        if (est.Complemento) ciCompleto += '-' + est.Complemento;
+        ciCompleto += ' ' + est.Exp;
+
+        $('#historialEstudianteNombre').text(nombreCompleto);
+        $('#historialEstudianteDatos').html(
+            '<i class="fa fa-id-card"></i> C.I. ' + ciCompleto +
+            (est.Correo ? ' &nbsp;|&nbsp; <i class="fa fa-envelope"></i> ' + est.Correo : '') +
+            (est.Celular ? ' &nbsp;|&nbsp; <i class="fa fa-mobile-alt"></i> ' + est.Celular : '')
+        );
+
+        if (!resp.programas || resp.programas.length === 0) {
+            $('#historialProgramas').html(
+                '<div class="text-center text-muted py-5"><i class="flaticon2-information" style="font-size:2.5rem;"></i>' +
+                '<p class="mt-3 mb-0">Este estudiante no tiene inscripciones registradas.</p></div>'
+            );
+        } else {
+            let html = '';
+            resp.programas.forEach(function(p) {
+                html += renderPrograma(p);
+            });
+            $('#historialProgramas').html(html);
+        }
+
+        $('#historialListaResultados').hide();
+        $('#historialSinBuscar').hide();
+        $('#historialResultado').show();
+    }
+
+    function refrescarUltimaBusqueda() {
+        if (!ultimaBusqueda) return;
+        if (ultimaBusqueda.tipo === 'ci') {
+            buscarPorCi();
+        } else {
+            buscarPorEstudianteId(ultimaBusqueda.estudianteId);
+        }
+    }
+
     function buscarPorCi() {
-        const ci = $('#buscarCiHistorial').val().trim();
+        const ci = $('#valorBusquedaHistorial').val().trim();
 
         if (!ci) {
             Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingrese un C.I. para buscar' });
             return;
         }
 
-        const $btn = $('#btnBuscarCiHistorial');
+        const $btn = $('#btnBuscarHistorial');
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Buscando...');
 
         $.ajax({
@@ -435,34 +523,8 @@ function iniciarHistorialPagos() {
                     return;
                 }
 
-                const est = resp.estudiante;
-                const nombreCompleto = est.Apaterno + ' ' + est.Amaterno + ' ' + est.Nombre;
-                let ciCompleto = est.Ci;
-                if (est.Complemento) ciCompleto += '-' + est.Complemento;
-                ciCompleto += ' ' + est.Exp;
-
-                $('#historialEstudianteNombre').text(nombreCompleto);
-                $('#historialEstudianteDatos').html(
-                    '<i class="fa fa-id-card"></i> C.I. ' + ciCompleto +
-                    (est.Correo ? ' &nbsp;|&nbsp; <i class="fa fa-envelope"></i> ' + est.Correo : '') +
-                    (est.Celular ? ' &nbsp;|&nbsp; <i class="fa fa-mobile-alt"></i> ' + est.Celular : '')
-                );
-
-                if (!resp.programas || resp.programas.length === 0) {
-                    $('#historialProgramas').html(
-                        '<div class="text-center text-muted py-5"><i class="flaticon2-information" style="font-size:2.5rem;"></i>' +
-                        '<p class="mt-3 mb-0">Este estudiante no tiene inscripciones registradas.</p></div>'
-                    );
-                } else {
-                    let html = '';
-                    resp.programas.forEach(function(p) {
-                        html += renderPrograma(p);
-                    });
-                    $('#historialProgramas').html(html);
-                }
-
-                $('#historialSinBuscar').hide();
-                $('#historialResultado').show();
+                ultimaBusqueda = { tipo: 'ci' };
+                mostrarResultadoEstudiante(resp);
             },
             error: function() {
                 $btn.prop('disabled', false).html('<i class="flaticon2-search"></i> Buscar');
@@ -471,12 +533,123 @@ function iniciarHistorialPagos() {
         });
     }
 
-    $('#btnBuscarCiHistorial').on('click', buscarPorCi);
-    $('#buscarCiHistorial').on('keypress', function(e) {
+    // Un solo campo de búsqueda con varios parámetros posibles: si lo escrito
+    // son solo dígitos se busca por C.I., si trae letras se busca por nombre
+    // y/o apellidos. Así no hace falta un selector de criterio aparte.
+    function ejecutarBusquedaHistorial() {
+        const valor = $('#valorBusquedaHistorial').val().trim();
+
+        if (!valor) {
+            Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingrese un C.I. o un nombre para buscar' });
+            return;
+        }
+
+        const esSoloDigitos = /^\d+$/.test(valor);
+
+        if (esSoloDigitos) {
+            buscarPorCi();
+        } else {
+            buscarPorNombre();
+        }
+    }
+
+    function renderListaCoincidencias(estudiantes) {
+        let filas = '';
+        estudiantes.forEach(function(est) {
+            let ciCompleto = est.Ci;
+            if (est.Complemento) ciCompleto += '-' + est.Complemento;
+            ciCompleto += ' ' + est.Exp;
+
+            filas += '<tr>' +
+                '<td>' + est.Apaterno + ' ' + est.Amaterno + ' ' + est.Nombre + '</td>' +
+                '<td>' + ciCompleto + '</td>' +
+                '<td>' + (est.Correo || '-') + '</td>' +
+                '<td class="text-center">' +
+                    '<button type="button" class="btn btn-sm btn-primary btnVerHistorialEstudiante" data-id="' + est.EstudianteID + '">' +
+                        '<i class="flaticon2-search"></i> Ver historial' +
+                    '</button>' +
+                '</td>' +
+            '</tr>';
+        });
+        $('#historialListaResultadosBody').html(filas);
+        $('#historialResultado').hide();
+        $('#historialSinBuscar').hide();
+        $('#historialListaResultados').show();
+    }
+
+    function buscarPorEstudianteId(estudianteId) {
+        $.ajax({
+            url: 'ajax/historialpagos.ajax.php',
+            type: 'POST',
+            data: { accion: 'buscarPorEstudianteId', estudianteId: estudianteId },
+            dataType: 'json',
+            success: function(resp) {
+                if (!resp.success) {
+                    Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje || 'No se encontró al estudiante' });
+                    return;
+                }
+
+                ultimaBusqueda = { tipo: 'estudianteId', estudianteId: estudianteId };
+                mostrarResultadoEstudiante(resp);
+            },
+            error: function() {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
+            }
+        });
+    }
+
+    function buscarPorNombre() {
+        const nombre = $('#valorBusquedaHistorial').val().trim();
+
+        if (nombre.length < 3) {
+            Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingrese al menos 3 caracteres para buscar' });
+            return;
+        }
+
+        const $btn = $('#btnBuscarHistorial');
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Buscando...');
+
+        $.ajax({
+            url: 'ajax/historialpagos.ajax.php',
+            type: 'POST',
+            data: { accion: 'buscarPorNombre', nombre: nombre },
+            dataType: 'json',
+            success: function(resp) {
+                $btn.prop('disabled', false).html('<i class="flaticon2-search"></i> Buscar');
+
+                if (!resp.success) {
+                    $('#historialResultado').hide();
+                    $('#historialListaResultados').hide();
+                    $('#historialSinBuscar').show();
+                    Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje || 'No se encontró ningún estudiante' });
+                    return;
+                }
+
+                if (resp.tipo === 'lista') {
+                    renderListaCoincidencias(resp.estudiantes);
+                    return;
+                }
+
+                ultimaBusqueda = { tipo: 'estudianteId', estudianteId: resp.estudiante.EstudianteID };
+                mostrarResultadoEstudiante(resp);
+            },
+            error: function() {
+                $btn.prop('disabled', false).html('<i class="flaticon2-search"></i> Buscar');
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
+            }
+        });
+    }
+
+    $('#btnBuscarHistorial').on('click', ejecutarBusquedaHistorial);
+    $('#valorBusquedaHistorial').on('keypress', function(e) {
         if (e.which === 13) {
             e.preventDefault();
-            buscarPorCi();
+            ejecutarBusquedaHistorial();
         }
+    });
+
+    $(document).on('click', '.btnVerHistorialEstudiante', function() {
+        buscarPorEstudianteId($(this).data('id'));
     });
 
     // Ver la foto en grande: se dispara desde las miniaturas (data-url/data-voucher),
@@ -557,7 +730,7 @@ function iniciarHistorialPagos() {
                 $('#modalEditarPagoHistorial').modal('hide');
                 Swal.fire({ icon: 'success', title: 'Guardado', text: resp.mensaje, timer: 1800, showConfirmButton: false })
                     .then(function() {
-                        buscarPorCi();
+                        refrescarUltimaBusqueda();
                     });
             },
             error: function() {

@@ -103,7 +103,7 @@ date_default_timezone_set("America/La_Paz");
                   <input type="hidden" name="tipo_reporte" value="por_programa">
                   <div class="form-group">
                     <label for="sede_programa">Sede (opcional):</label>
-                    <select name="sede" id="sede_programa" class="form-control select-programa-por-sede" data-target="#programa_id">
+                    <select name="sede" id="sede_programa" class="form-control select2-uniforme select-programa-por-sede" data-target="#programa_id">
                       <option value="">Todas las sedes</option>
                       <?php
                         $sedesDisponibles = ReportesModelos::ListaSedes();
@@ -115,7 +115,7 @@ date_default_timezone_set("America/La_Paz");
                   </div>
                   <div class="form-group">
                     <label for="programa_id">Programa (opcional):</label>
-                    <select name="programa_id" id="programa_id" class="form-control">
+                    <select name="programa_id" id="programa_id" class="form-control select2-uniforme">
                       <option value="">Todos los programas</option>
                       <?php
                         $programas = ReportesModelos::ListaProgramas();
@@ -152,7 +152,7 @@ date_default_timezone_set("America/La_Paz");
                   <input type="hidden" name="tipo_reporte" value="modulos">
                   <div class="form-group">
                     <label for="sede_modulos">Sede (opcional):</label>
-                    <select name="sede" id="sede_modulos" class="form-control select-programa-por-sede" data-target="#programa_id_modulos">
+                    <select name="sede" id="sede_modulos" class="form-control select2-uniforme select-programa-por-sede" data-target="#programa_id_modulos">
                       <option value="">Todas las sedes</option>
                       <?php foreach ($sedesDisponibles as $s): ?>
                         <option value="<?php echo htmlspecialchars($s); ?>"><?php echo htmlspecialchars($s); ?></option>
@@ -161,7 +161,7 @@ date_default_timezone_set("America/La_Paz");
                   </div>
                   <div class="form-group">
                     <label for="programa_id_modulos">Programa (opcional):</label>
-                    <select name="programa_id" id="programa_id_modulos" class="form-control">
+                    <select name="programa_id" id="programa_id_modulos" class="form-control select2-uniforme">
                       <option value="">Todos los programas</option>
                       <?php foreach ($programas as $prog): ?>
                         <option value="<?php echo $prog['ProgramaID']; ?>" data-sede="<?php echo htmlspecialchars($prog['Sede']); ?>"><?php echo htmlspecialchars($prog['NombrePrograma']); ?> (<?php echo htmlspecialchars($prog['Sede']); ?>)</option>
@@ -195,7 +195,7 @@ date_default_timezone_set("America/La_Paz");
                   <input type="hidden" name="tipo_reporte" value="ejecutivo">
                   <div class="form-group">
                     <label for="sede_ejecutivo">Sede (opcional):</label>
-                    <select name="sede" id="sede_ejecutivo" class="form-control select-programa-por-sede" data-target="#programa_id_ejecutivo">
+                    <select name="sede" id="sede_ejecutivo" class="form-control select2-uniforme select-programa-por-sede" data-target="#programa_id_ejecutivo">
                       <option value="">Todas las sedes</option>
                       <?php foreach ($sedesDisponibles as $s): ?>
                         <option value="<?php echo htmlspecialchars($s); ?>"><?php echo htmlspecialchars($s); ?></option>
@@ -204,7 +204,7 @@ date_default_timezone_set("America/La_Paz");
                   </div>
                   <div class="form-group">
                     <label for="programa_id_ejecutivo">Programa (opcional):</label>
-                    <select name="programa_id" id="programa_id_ejecutivo" class="form-control">
+                    <select name="programa_id" id="programa_id_ejecutivo" class="form-control select2-uniforme">
                       <option value="">Todos los programas</option>
                       <?php foreach ($programas as $prog): ?>
                         <option value="<?php echo $prog['ProgramaID']; ?>" data-sede="<?php echo htmlspecialchars($prog['Sede']); ?>"><?php echo htmlspecialchars($prog['NombrePrograma']); ?> (<?php echo htmlspecialchars($prog['Sede']); ?>)</option>
@@ -306,26 +306,52 @@ function actualizarFecha() {
 }
 actualizarFecha();
 
-// Cascada Sede -> Programa: al elegir una sede, el combo de Programa
-// de esa misma tarjeta solo muestra los programas de esa sede.
+// Select2 (mismo tamaño/estilo en los tres pares Sede/Programa)
 $(document).ready(function() {
+    $('.select2-uniforme').select2({ width: '100%' });
+});
+
+// Cascada Sede -> Programa: al elegir una sede, el combo de Programa
+// de esa misma tarjeta solo muestra los programas de esa sede. Con Select2 no
+// basta con ocultar <option> por CSS como en un <select> nativo, hay que
+// quitarlas/ponerlas del DOM.
+$(document).ready(function() {
+    $('.select-programa-por-sede').each(function() {
+        const $sede = $(this);
+        const $programa = $($sede.data('target'));
+        const cache = [];
+
+        $programa.find('option[value!=""]').each(function() {
+            cache.push({
+                value: $(this).val(),
+                sede: $(this).data('sede') || '',
+                // .html() conserva el escape que ya aplicó el servidor;
+                // .text() lo decodificaría y reinyectarlo sería un riesgo XSS.
+                html: $(this).html()
+            });
+        });
+
+        $sede.data('programasCache', cache);
+    });
+
     $('.select-programa-por-sede').on('change', function() {
         const sede = $(this).val();
         const $programa = $($(this).data('target'));
         const programaSeleccionado = $programa.val();
+        const cache = $(this).data('programasCache') || [];
 
-        $programa.find('option').each(function() {
-            if (!$(this).val()) return; // "Todos los programas"
-            const perteneceSede = !sede || $(this).data('sede') === sede;
-            $(this).toggle(perteneceSede);
-        });
-
-        if (programaSeleccionado) {
-            const $opt = $programa.find('option[value="' + programaSeleccionado + '"]');
-            if (sede && $opt.data('sede') !== sede) {
-                $programa.val('');
+        let opciones = '<option value="">Todos los programas</option>';
+        cache.forEach(function(p) {
+            if (!sede || p.sede === sede) {
+                opciones += '<option value="' + p.value + '" data-sede="' + p.sede + '">' + p.html + '</option>';
             }
+        });
+        $programa.html(opciones);
+
+        if (programaSeleccionado && $programa.find('option[value="' + programaSeleccionado + '"]').length) {
+            $programa.val(programaSeleccionado);
         }
+        $programa.trigger('change');
     });
 });
 setInterval(actualizarFecha, 60000);

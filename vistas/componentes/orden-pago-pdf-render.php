@@ -14,7 +14,7 @@ require_once __DIR__ . '/../../vendor/tecnickcom/tcpdf/tcpdf.php';
 /**
  * Dibuja un bloque completo de la orden de pago (se usa dos veces: original y copia)
  */
-function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $colorTexto)
+function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $colorTexto, $colorTitulo, $colorTituloTexto)
 {
     extract($datos);
 
@@ -78,8 +78,10 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     // ========================================
     $pdf->SetX($x_left);
     $pdf->SetFont('helvetica', 'B', 11);
+    $pdf->SetFillColor($colorTitulo[0], $colorTitulo[1], $colorTitulo[2]);
+    $pdf->SetTextColor($colorTituloTexto[0], $colorTituloTexto[1], $colorTituloTexto[2]);
+    $pdf->Cell($content_width, 7.5, 'ORDEN DE PAGO EN CAJA DE POSGRADO', 1, 1, 'C', true);
     $pdf->SetTextColor(0, 0, 0);
-    $pdf->Cell($content_width, 7.5, 'ORDEN DE PAGO EN CAJA DE POSGRADO', 1, 1, 'C');
 
     // ========================================
     // DATOS DEL POSGRADUANTE
@@ -135,8 +137,10 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     // ========================================
     $pdf->SetX($x_left);
     $pdf->SetFont('helvetica', 'B', 10);
+    $pdf->SetFillColor($colorTitulo[0], $colorTitulo[1], $colorTitulo[2]);
+    $pdf->SetTextColor($colorTituloTexto[0], $colorTituloTexto[1], $colorTituloTexto[2]);
+    $pdf->Cell($content_width, 6.5, 'DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO', 1, 1, 'C', true);
     $pdf->SetTextColor(0, 0, 0);
-    $pdf->Cell($content_width, 6.5, 'DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO', 1, 1, 'C');
 
     $W_PROGRAMA = $content_width * 0.62;
     $W_DERECHA = $content_width - $W_PROGRAMA;
@@ -155,7 +159,9 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     $pdf->Cell($W_DERECHA * 0.42, $H_ROW_A, 'Versión y/o', 1, 0, 'L');
     $pdf->SetFont('helvetica', 'B', 8.5);
     $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
-    $pdf->Cell($W_DERECHA * 0.58, $H_ROW_A, $version, 1, 1, 'L');
+    // Se deja el campo (la etiqueta y el recuadro) pero sin el dato: a
+    // pedido, ya no se imprime el valor de la versión.
+    $pdf->Cell($W_DERECHA * 0.58, $H_ROW_A, '', 1, 1, 'L');
 
     // Fila B: texto del programa (izq, multilinea) / "Cuenta auxiliar" + valor (der)
     $pdf->SetXY($x_left, $y_prog + $H_ROW_A);
@@ -193,8 +199,10 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     // ========================================
     $pdf->SetX($x_left);
     $pdf->SetFont('helvetica', 'B', 10);
+    $pdf->SetFillColor($colorTitulo[0], $colorTitulo[1], $colorTitulo[2]);
+    $pdf->SetTextColor($colorTituloTexto[0], $colorTituloTexto[1], $colorTituloTexto[2]);
+    $pdf->Cell($content_width, 6.5, 'DATOS PARA LA EMISIÓN DE FACTURA', 1, 1, 'C', true);
     $pdf->SetTextColor(0, 0, 0);
-    $pdf->Cell($content_width, 6.5, 'DATOS PARA LA EMISIÓN DE FACTURA', 1, 1, 'C');
 
     $pdf->SetX($x_left);
     $pdf->SetFont('helvetica', 'BI', 7);
@@ -215,14 +223,16 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     // ========================================
     $pdf->SetX($x_left);
     $pdf->SetFont('helvetica', 'B', 10);
+    $pdf->SetFillColor($colorTitulo[0], $colorTitulo[1], $colorTitulo[2]);
+    $pdf->SetTextColor($colorTituloTexto[0], $colorTituloTexto[1], $colorTituloTexto[2]);
+    $pdf->Cell($content_width, 6.5, 'DATOS PARA DEPOSITO EN BANCO UNION', 1, 1, 'C', true);
     $pdf->SetTextColor(0, 0, 0);
-    $pdf->Cell($content_width, 6.5, 'DATOS PARA DEPOSITO EN BANCO UNION', 1, 1, 'C');
 
     $W_BANCO_IZQ = $content_width * 0.55;
     $W_BANCO_DER = $content_width - $W_BANCO_IZQ;
 
     $pdf->SetX($x_left);
-    $pdf->SetFillColor(253, 235, 208);
+    $pdf->SetFillColor(225, 232, 245);
     $pdf->SetFont('helvetica', 'BI', 7);
     $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
     $pdf->Cell($W_BANCO_IZQ, 5.5, 'DENOMINACION DE LA CUENTA', 1, 0, 'L', true);
@@ -271,8 +281,13 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
  */
 function generarPdfOrdenPagoOficial(array $datos)
 {
-    $colorEtiqueta = [214, 106, 20]; // naranja (etiquetas del formato oficial)
-    $colorTexto = [30, 30, 30];
+    // Paleta institucional (la misma azul del resto del sistema), en vez del
+    // naranja/negro plano que tenía este documento antes: barras de sección
+    // rellenas y etiquetas en azul, para un aspecto más formal.
+    $colorTitulo = [30, 60, 114];     // azul institucional (fondo de las barras de sección)
+    $colorTituloTexto = [255, 255, 255];
+    $colorEtiqueta = [30, 60, 114];   // azul institucional (etiquetas de cada campo)
+    $colorTexto = [20, 20, 20];
 
     $nombreCompleto = trim(($datos['apaterno'] ?? '') . ' ' . ($datos['amaterno'] ?? '') . ' ' . ($datos['nombres'] ?? ''));
 
@@ -297,7 +312,7 @@ function generarPdfOrdenPagoOficial(array $datos)
     $pdf->AddPage();
 
     // ORIGINAL (mitad superior de la hoja)
-    $alturaBloque = dibujarOrdenPago($pdf, 8, false, $datos, $colorEtiqueta, $colorTexto);
+    $alturaBloque = dibujarOrdenPago($pdf, 8, false, $datos, $colorEtiqueta, $colorTexto, $colorTitulo, $colorTituloTexto);
 
     // Línea divisoria punteada entre original y copia
     $y_divisoria = 8 + $alturaBloque + 6;
@@ -306,7 +321,7 @@ function generarPdfOrdenPagoOficial(array $datos)
     $pdf->SetLineStyle(['dash' => 0]);
 
     // COPIA (mitad inferior de la hoja)
-    dibujarOrdenPago($pdf, $y_divisoria + 6, true, $datos, $colorEtiqueta, $colorTexto);
+    dibujarOrdenPago($pdf, $y_divisoria + 6, true, $datos, $colorEtiqueta, $colorTexto, $colorTitulo, $colorTituloTexto);
 
     // ========================================
     // SALIDA DEL PDF

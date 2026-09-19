@@ -82,7 +82,7 @@
                                     <div class="form-group row align-items-center mb-4">
                                         <label class="col-lg-2 col-form-label" style="font-weight: 600; color: #464E5F;">Programa:</label>
                                         <div class="col-lg-10">
-                                            <select class="form-control" id="select_programa_modulos" name="select_programa_modulos" disabled>
+                                            <select class="form-control select2-uniforme" id="select_programa_modulos" name="select_programa_modulos" disabled>
                                                 <option value="">Cargando programas...</option>
                                             </select>
                                             <small class="form-text text-muted">Seleccione un programa para visualizar el detalle completo de sus módulos</small>

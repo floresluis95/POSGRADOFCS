@@ -107,7 +107,7 @@ date_default_timezone_set("America/La_Paz");
                                     <div class="row mb-3 align-items-end">
                                         <div class="col-md-4 form-group mb-2 mb-md-0">
                                             <label class="small font-weight-bold mb-1">Grado Académico</label>
-                                            <select class="form-control form-control-sm" id="reportePagosGrado">
+                                            <select class="form-control select2-uniforme" id="reportePagosGrado">
                                                 <option value="">Todos los grados</option>
                                             </select>
                                         </div>

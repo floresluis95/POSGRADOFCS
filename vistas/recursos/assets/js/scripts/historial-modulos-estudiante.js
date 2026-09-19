@@ -9,6 +9,9 @@ console.log('=== HISTORIAL MODULOS ESTUDIANTE V2.0 CARGADO ===');
 $(document).ready(function() {
     console.log('jQuery ready - Iniciando carga de programas...');
 
+    // Select2 (mismo formato de select que el resto del sistema)
+    $('#select_programa_modulos').select2({ width: '100%' });
+
     // Cargar programas del estudiante al iniciar
     cargarProgramasEstudiante();
 

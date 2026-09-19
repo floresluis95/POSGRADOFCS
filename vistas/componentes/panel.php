@@ -704,6 +704,7 @@
                       <h3><?php echo htmlspecialchars($tituloSlide); ?></h3>
                       <p><?php echo htmlspecialchars($descSlide); ?></p>
                       <button class="btn-info-programa"
+                        data-programa-id="<?php echo (int) $s['ProgramaID']; ?>"
                         data-programa="<?php echo htmlspecialchars($s['NombrePrograma'], ENT_QUOTES); ?>"
                         data-grado="<?php echo htmlspecialchars($s['GradoAcademico'], ENT_QUOTES); ?>"
                         data-codigo="<?php echo htmlspecialchars($s['Codigo'], ENT_QUOTES); ?>"
@@ -1224,7 +1225,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <a href="inscripcion" class="btn mr-auto" style="background: var(--primary-gradient); color: #fff;">
+          <a href="autoinscripcion" id="linkInscribirmePrograma" class="btn mr-auto" style="background: var(--primary-gradient); color: #fff;">
             <i class="fa fa-file-signature"></i> Inscribirme
           </a>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>

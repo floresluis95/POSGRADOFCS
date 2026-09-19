@@ -6,6 +6,9 @@
 let estudianteData = null;
 
 $(document).ready(function() {
+    // Select2 (mismo formato de select que el resto del sistema)
+    $('#select_programa_calificaciones').select2({ width: '100%' });
+
     // Cargar información del estudiante logueado automáticamente
     cargarEstudianteLogueado();
 

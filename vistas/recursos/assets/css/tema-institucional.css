@@ -186,21 +186,40 @@
 .select2-container--default .select2-selection--single,
 .select2-container--bootstrap .select2-selection--single {
     height: calc(1.5em + .75rem + 2px) !important;
-    padding: .375rem .75rem;
+    /* display:flex + align-items:center centra el texto verticalmente sin
+       depender de calcular a mano un line-height que combine con el alto de
+       la caja: antes se sumaba el padding vertical dos veces (una en el
+       padding del contenedor y otra en el line-height del texto) y la
+       etiqueta quedaba corrida hacia abajo, saliéndose de la caja. */
+    display: flex !important;
+    align-items: center;
+    padding: 0 !important;
     border: 1px solid #ced4da !important;
     border-radius: .25rem !important;
 }
 
 .select2-container--default .select2-selection--single .select2-selection__rendered,
 .select2-container--bootstrap .select2-selection--single .select2-selection__rendered {
-    line-height: calc(1.5em + .75rem) !important;
-    padding-left: 0;
-    padding-right: 20px;
+    line-height: normal !important;
+    /* El bundle del tema (demo9/style.bundle.css) le pone a este mismo
+       elemento "padding: .65rem 3rem .65rem 1rem": si aquí solo se
+       sobreescriben padding-left/right, el padding vertical de esa regla
+       se sigue sumando y el texto vuelve a salirse de la caja. Hay que
+       anular los cuatro lados con el shorthand. */
+    padding: 0 20px 0 .75rem !important;
 }
 
 .select2-container--default .select2-selection--single .select2-selection__arrow,
 .select2-container--bootstrap .select2-selection--single .select2-selection__arrow {
-    height: calc(1.5em + .75rem) !important;
+    /* El bundle del tema posiciona esta flecha (icono de fuente, no el
+       triangulo por defecto de Select2) con "top: 50%" pero sin transform,
+       así que le queda el borde superior -no el centro- a la mitad de la
+       caja: con cualquier alto distinto al que ese bundle esperaba, se ve
+       corrida hacia arriba. top+translateY(-50%) la centra sin importar
+       el alto real de la caja. */
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    height: auto !important;
 }
 
 /* Los selects marcados form-control-sm (filtros compactos) usan un select2 mas bajo */
@@ -320,4 +339,58 @@ select.select2-hidden-accessible.form-control-sm ~ .select2-container .select2-s
    ======================================================== */
 #kt_content > div:not(#kt_subheader):not(#kt_footer) {
     flex: 1 0 auto;
+}
+
+/* ========================================================
+   MODALES ADAPTABLES A CUALQUIER TAMAÑO DE PANTALLA
+   Bootstrap solo cambia el ancho maximo del modal en saltos fijos
+   por breakpoint (576px / 992px / 1200px): en anchos intermedios
+   (tablets, laptops chicas) un modal-lg/modal-xl queda mas angosto
+   de lo necesario, y en celulares muy angostos puede quedar pegado
+   a los bordes. Se usa un ancho fluido (porcentaje del viewport)
+   con topes minimo/maximo, en vez de los saltos fijos de Bootstrap.
+   ======================================================== */
+.modal-dialog {
+    width: calc(100% - 20px);
+    max-width: calc(100% - 20px);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (min-width: 576px) {
+    .modal-dialog {
+        width: 90%;
+        max-width: 500px;
+    }
+}
+
+@media (min-width: 768px) {
+    .modal-dialog.modal-lg,
+    .modal-dialog.modal-xl {
+        max-width: 90%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .modal-dialog.modal-lg {
+        max-width: 800px;
+    }
+    .modal-dialog.modal-xl {
+        max-width: 1140px;
+    }
+}
+
+/* El contenido ancho (tablas, etc.) hace scroll horizontal solo
+   dentro del modal-body, no de toda la pagina. */
+.modal-body {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* SweetAlert2: por defecto ya respeta el ancho de pantalla
+   (max-width:100% del contenedor), pero algunos dialogos del
+   sistema fuerzan un ancho fijo en px que en celulares queda
+   pegado a los bordes sin margen. Se deja un margen minimo. */
+.swal2-popup {
+    max-width: calc(100vw - 24px) !important;
 }

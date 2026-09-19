@@ -37,6 +37,22 @@
                 $('#infoProgramaDetalleWrap').hide();
             }
 
+            // "Inscribirme" lleva el programa elegido al formulario suelto de
+            // solicitud (independiente de Pre-Registro/Inscripción): se arma
+            // con index.php?action=... para no perder los parámetros, ya que
+            // la reescritura de URLs "limpias" descarta el query string de la
+            // petición original cuando el destino ya trae uno propio.
+            var programaID = $btn.data('programa-id') || '';
+            var nombrePrograma = $btn.data('programa') || '';
+            var url = 'index.php?action=autoinscripcion';
+            if (programaID) {
+                url += '&programaID=' + encodeURIComponent(programaID);
+            }
+            if (nombrePrograma) {
+                url += '&programaNombre=' + encodeURIComponent(nombrePrograma);
+            }
+            $('#linkInscribirmePrograma').attr('href', url);
+
             $('#modalInfoPrograma').modal('show');
         });
     }

@@ -14,7 +14,9 @@ $(document).ready(function() {
     let pgCandidatos = []; // últimos candidatos cargados (idInscripcion -> costoPrograma)
 
     $('#btnAbrirPlanGrupal').on('click', function() {
-        $('#pgFiltroPrograma').val('');
+        // trigger('change') es necesario para que Select2 actualice el texto
+        // visible (un .val() plano no repinta el widget).
+        $('#pgFiltroPrograma').val('').trigger('change');
         $('#pgPorcentajeDescuento').val(0);
         $('#modalPlanGrupal').modal('show');
         cargarCandidatosPlanGrupal();

@@ -179,13 +179,13 @@ kt-aside--fixed kt-page--loading">
                         </div>
                         <div class="col-md-4 form-group mb-2 mb-md-0">
                           <label class="small font-weight-bold mb-1">Programa</label>
-                          <select class="form-control form-control-sm" id="filtroPreregistroPrograma">
+                          <select class="form-control select2-uniforme" id="filtroPreregistroPrograma">
                             <option value="">Todos los programas</option>
                           </select>
                         </div>
                         <div class="col-md-3 form-group mb-2 mb-md-0">
                           <label class="small font-weight-bold mb-1">Sede</label>
-                          <select class="form-control form-control-sm" id="filtroPreregistroSede">
+                          <select class="form-control select2-uniforme" id="filtroPreregistroSede">
                             <option value="">Todas las sedes</option>
                             <?php foreach ($sedesDisponibles as $sedeOpcion): ?>
                               <option value="<?php echo htmlspecialchars($sedeOpcion, ENT_QUOTES); ?>"><?php echo htmlspecialchars($sedeOpcion); ?></option>
@@ -1515,7 +1515,9 @@ function iniciarPreregistro() {
             opciones += '<option value="' + clave + '">' + etiqueta + '</option>';
         });
 
-        $('#filtroPreregistroPrograma').html(opciones).val(seleccionActual || '');
+        // trigger('change') es necesario para que Select2 actualice el texto
+        // visible (un .val() plano no repinta el widget).
+        $('#filtroPreregistroPrograma').html(opciones).val(seleccionActual || '').trigger('change');
     }
 
     function quitarAcentosPreregistro(texto) {
@@ -1545,12 +1547,13 @@ function iniciarPreregistro() {
     $('#filtroPreregistroPrograma, #filtroPreregistroSede').on('change', aplicarFiltrosPreregistro);
     $('#btnLimpiarFiltrosPreregistro').on('click', function() {
         $('#filtroPreregistroCi').val('');
-        $('#filtroPreregistroPrograma').val('');
-        $('#filtroPreregistroSede').val('');
+        $('#filtroPreregistroPrograma').val('').trigger('change');
+        $('#filtroPreregistroSede').val('').trigger('change');
         aplicarFiltrosPreregistro();
     });
 
     poblarFiltroProgramas();
+    $('.select2-uniforme').select2({ width: '100%' });
     aplicarFiltrosPreregistro();
 
     function cargarPreregistros() {

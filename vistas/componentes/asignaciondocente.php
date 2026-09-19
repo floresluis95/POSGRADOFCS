@@ -203,12 +203,12 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                         <div class="container">
 
                             <?php
-                            // Obtener módulos vigentes (año actual)
+                            // Obtener módulos vigentes (módulos y programas activos)
                             require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
                             $anioActual = date('Y');
 
                             // Construir consulta según tipo de usuario
-                            $sqlWhere = "m.estadomodulo = 'ACTIVO' AND p.Estado = 1 AND p.Codigo LIKE :anioActual";
+                            $sqlWhere = "m.estadomodulo = 'ACTIVO' AND p.Estado = 1";
                             if ($esDocente && $docenteIDLogueado) {
                                 $sqlWhere .= " AND m.DocenteID = :docenteID";
                             }
@@ -234,7 +234,6 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                 WHERE " . $sqlWhere . "
                                 ORDER BY p.GradoAcademico, p.NombrePrograma, m.codigomodulo
                             ");
-                            $stmtModulos->bindValue(':anioActual', '%-' . $anioActual, PDO::PARAM_STR);
                             if ($esDocente && $docenteIDLogueado) {
                                 $stmtModulos->bindValue(':docenteID', $docenteIDLogueado, PDO::PARAM_INT);
                             }
@@ -282,7 +281,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label><strong><i class="fas fa-map-marker-alt"></i> Sede</strong></label>
-                                            <select class="form-control form-control-sm" id="filtro-sede">
+                                            <select class="form-control select2-uniforme" id="filtro-sede">
                                                 <option value="">Todas las sedes</option>
                                                 <?php
                                                 $stmtSedes = Conexion::Conectar()->prepare("
@@ -290,11 +289,9 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                                     FROM programa p
                                                     INNER JOIN modulos m ON p.ProgramaID = m.ProgramaId
                                                     WHERE p.Estado = 1
-                                                    AND p.Codigo LIKE :anioActual
                                                     AND m.estadomodulo = 'ACTIVO'
                                                     ORDER BY p.Sede
                                                 ");
-                                                $stmtSedes->bindValue(':anioActual', '%-' . $anioActual, PDO::PARAM_STR);
                                                 $stmtSedes->execute();
                                                 $sedes = $stmtSedes->fetchAll(PDO::FETCH_ASSOC);
                                                 foreach ($sedes as $s) {
@@ -310,7 +307,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label><strong><i class="fas fa-graduation-cap"></i> Programa</strong></label>
-                                            <select class="form-control form-control-sm" id="filtro-programa">
+                                            <select class="form-control select2-uniforme" id="filtro-programa">
                                                 <option value="">Todos los programas</option>
                                                 <?php
                                                 $stmt = Conexion::Conectar()->prepare("
@@ -318,11 +315,9 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                                     FROM programa p
                                                     INNER JOIN modulos m ON p.ProgramaID = m.ProgramaId
                                                     WHERE p.Estado = 1
-                                                    AND p.Codigo LIKE :anioActual
                                                     AND m.estadomodulo = 'ACTIVO'
                                                     ORDER BY p.NombrePrograma
                                                 ");
-                                                $stmt->bindValue(':anioActual', '%-' . $anioActual, PDO::PARAM_STR);
                                                 $stmt->execute();
                                                 $programas = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 foreach ($programas as $prog) {
@@ -337,7 +332,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label><strong><i class="fas fa-filter"></i> Estado</strong></label>
-                                            <select class="form-control form-control-sm" id="filtro-estado">
+                                            <select class="form-control select2-uniforme" id="filtro-estado">
                                                 <option value="">Todos</option>
                                                 <option value="asignado">Con docente</option>
                                                 <option value="sin_asignar">Sin docente</option>
@@ -358,8 +353,8 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                 <?php if (empty($modulos)): ?>
                                     <div class="alert alert-info text-center">
                                         <i class="fas fa-info-circle fa-2x"></i>
-                                        <h5 class="mt-2">No hay módulos vigentes para el año <?php echo $anioActual; ?></h5>
-                                        <p>Los módulos vigentes son aquellos que pertenecen a programas del año en curso.</p>
+                                        <h5 class="mt-2">No hay módulos vigentes</h5>
+                                        <p>Los módulos vigentes son aquellos que están activos y pertenecen a un programa activo.</p>
                                     </div>
                                 <?php else: ?>
                                     <table class="table tabla-asignacion" id="tabla-modulos">
@@ -508,6 +503,24 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
     $(document).ready(function() {
         let moduloActual = null;
 
+        // Select2 (mismo tamaño/estilo en los tres filtros)
+        $('.select2-uniforme').select2({ width: '100%' });
+
+        // Copia completa de las opciones de Programa (con su Sede), para
+        // reconstruir el combo al filtrar por Sede: con Select2 no basta con
+        // ocultar <option> por CSS como en un <select> nativo, hay que
+        // quitarlas/ponerlas del DOM.
+        const programasCache = [];
+        $('#filtro-programa option[value!=""]').each(function() {
+            programasCache.push({
+                value: $(this).val(),
+                sede: $(this).data('sede') || '',
+                // .html() conserva el escape que ya aplicó el servidor;
+                // .text() lo decodificaría y reinyectarlo sería un riesgo XSS.
+                html: $(this).html()
+            });
+        });
+
         // Filtros
         $('#filtro-sede, #filtro-programa, #filtro-estado').on('change', aplicarFiltros);
         $('#filtro-buscar').on('keyup', aplicarFiltros);
@@ -518,19 +531,19 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
             const $programa = $('#filtro-programa');
             const programaSeleccionado = $programa.val();
 
-            $programa.find('option').each(function() {
-                if (!$(this).val()) return; // "Todos los programas"
-                const perteneceSede = !sede || $(this).data('sede') === sede;
-                $(this).toggle(perteneceSede);
-            });
-
-            // Si el programa seleccionado ya no pertenece a la sede elegida, reiniciar
-            if (programaSeleccionado) {
-                const $opt = $programa.find('option[value="' + programaSeleccionado + '"]');
-                if (sede && $opt.data('sede') !== sede) {
-                    $programa.val('');
+            let opciones = '<option value="">Todos los programas</option>';
+            programasCache.forEach(function(p) {
+                if (!sede || p.sede === sede) {
+                    opciones += '<option value="' + p.value + '" data-sede="' + p.sede + '">' + p.html + '</option>';
                 }
+            });
+            $programa.html(opciones);
+
+            // Conservar el programa elegido si sigue perteneciendo a la sede
+            if (programaSeleccionado && $programa.find('option[value="' + programaSeleccionado + '"]').length) {
+                $programa.val(programaSeleccionado);
             }
+            $programa.trigger('change');
         });
 
         function aplicarFiltros() {

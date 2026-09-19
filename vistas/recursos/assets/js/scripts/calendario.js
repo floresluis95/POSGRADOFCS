@@ -209,26 +209,45 @@
             inicializarPlazoCuota();
         }
 
+        // Select2 (mismo tamaño/estilo en Sede, Programa y Docente)
+        $('.select2-uniforme').select2({ width: '100%' });
+
         // ============================================
         // FILTROS: Sede -> Programa (cascada), Docente
         // ============================================
+
+        // Copia completa de las opciones de Programa (con su Sede), para
+        // reconstruir el combo al filtrar por Sede: con Select2 no basta con
+        // ocultar <option> por CSS como en un <select> nativo, hay que
+        // quitarlas/ponerlas del DOM.
+        var programasCache = [];
+        $('#filtroProgramaCalendario option[value!=""]').each(function () {
+            programasCache.push({
+                value: $(this).val(),
+                sede: $(this).data('sede') || '',
+                // .html() conserva el escape que ya aplicó el servidor;
+                // .text() lo decodificaría y reinyectarlo sería un riesgo XSS.
+                html: $(this).html()
+            });
+        });
+
         function aplicarFiltroSedeSobrePrograma() {
             var sede = $('#filtroSedeCalendario').val();
             var $programa = $('#filtroProgramaCalendario');
             var seleccionActual = $programa.val();
 
-            $programa.find('option').each(function () {
-                if (!$(this).val()) return;
-                var perteneceSede = !sede || $(this).data('sede') === sede;
-                $(this).toggle(perteneceSede);
-            });
-
-            if (seleccionActual) {
-                var $opt = $programa.find('option[value="' + seleccionActual + '"]');
-                if (sede && $opt.data('sede') !== sede) {
-                    $programa.val('');
+            var opciones = '<option value="">Todos los programas</option>';
+            programasCache.forEach(function (p) {
+                if (!sede || p.sede === sede) {
+                    opciones += '<option value="' + p.value + '" data-sede="' + p.sede + '">' + p.html + '</option>';
                 }
+            });
+            $programa.html(opciones);
+
+            if (seleccionActual && $programa.find('option[value="' + seleccionActual + '"]').length) {
+                $programa.val(seleccionActual);
             }
+            $programa.trigger('change');
         }
 
         $('#filtroSedeCalendario').on('change', function () {
@@ -260,11 +279,15 @@
 
         // Estudiante: preseleccionar su propio programa en el filtro (no restringe, solo sugiere)
         if (contexto.tipoSesion === 'EST' && contexto.programaIDsEstudiante && contexto.programaIDsEstudiante.length === 1) {
-            $('#filtroProgramaCalendario').val(String(contexto.programaIDsEstudiante[0]));
+            var programaIDInicial = String(contexto.programaIDsEstudiante[0]);
+            $('#filtroProgramaCalendario').val(programaIDInicial);
             var sedeDelPrograma = $('#filtroProgramaCalendario').find('option:selected').data('sede');
             if (sedeDelPrograma) {
-                $('#filtroSedeCalendario').val(sedeDelPrograma);
-                aplicarFiltroSedeSobrePrograma();
+                // aplicarFiltroSedeSobrePrograma conserva la selección actual
+                // de Programa si sigue perteneciendo a la sede filtrada.
+                $('#filtroSedeCalendario').val(sedeDelPrograma).trigger('change');
+            } else {
+                $('#filtroProgramaCalendario').trigger('change');
             }
         }
 

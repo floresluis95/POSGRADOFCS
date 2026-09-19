@@ -104,7 +104,7 @@
                                                 </label>
                                             </div>
                                             <div class="col-lg-9">
-                                                <select class="form-control" id="select_programa_calificaciones" name="select_programa_calificaciones" disabled style="height: 50px; border: 2px solid #E4E6EF; border-radius: 10px; font-size: 1rem; font-weight: 500;">
+                                                <select class="form-control select2-uniforme" id="select_programa_calificaciones" name="select_programa_calificaciones" disabled>
                                                     <option value="">Cargando programas...</option>
                                                 </select>
                                                 <small class="form-text" style="color: #B5B5C3; margin-top: 8px;">
@@ -167,7 +167,42 @@
     <!-- Scripts necesarios -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="vistas/recursos/assets/js/scripts/historial-estudiante.js?v=<?php echo time(); ?>"></script>
+    <style>
+        /* Select2 con el mismo alto/borde que el select nativo que reemplaza
+           en esta página (el override global del sistema usa el alto estándar
+           de Bootstrap, más bajo que este). display:flex + align-items:center
+           centra el texto sin depender de un line-height calculado a mano
+           (que quedaba mal y corría la etiqueta hacia abajo). */
+        .select2-container--default .select2-selection--single {
+            height: 50px !important;
+            display: flex !important;
+            align-items: center;
+            border: 2px solid #E4E6EF !important;
+            border-radius: 10px !important;
+            padding: 0 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: normal !important;
+            /* El bundle del tema le pone padding vertical propio a este
+               elemento; hay que anular los cuatro lados (no solo left/right)
+               para que no se siga sumando y el texto no se salga de la caja. */
+            padding: 0 20px 0 16px !important;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            /* El bundle del tema posiciona esta flecha con "top: 50%" sin
+               transform, así que queda corrida hacia arriba; top+translateY(-50%)
+               la centra sin importar el alto real de la caja. */
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            height: auto !important;
+            right: 10px !important;
+        }
+    </style>
 
     <style>
         /* Estilos personalizados mejorados */

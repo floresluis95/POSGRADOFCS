@@ -4,6 +4,9 @@
  */
 
 $(document).ready(function() {
+    // Select2 (mismo tamaño/estilo en Programa y Criterio de Búsqueda)
+    $('#select_programa_calificaciones, #select_filtro_tipo').select2({ width: '100%' });
+
     // Cargar programas con calificaciones al iniciar
     cargarProgramas();
 

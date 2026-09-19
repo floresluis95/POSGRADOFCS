@@ -21,7 +21,6 @@
                 $enlace == 'reportes'||
                 $enlace == 'rnotasestudiante'||
                 $enlace == 'reportenotas'||
-                $enlace == 'notasdocente'||
                 $enlace == 'bnotaestudiante'||
                 $enlace == 'historialnotaestudiante'||
                 $enlace == 'historialmodulosestudiante'||
@@ -33,6 +32,8 @@
 
                 $enlace == 'reportecalificaciones'||
                 $enlace == 'preregistro'||
+                $enlace == 'autoinscripcion'||
+                $enlace == 'solicitudesinscripcion'||
 
                 $enlace == 'reportecalificaciones'||
                 $enlace == 'certificadocalificaciones'||

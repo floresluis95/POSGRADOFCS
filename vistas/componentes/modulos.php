@@ -45,7 +45,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                         <div class="row filtros-modulos align-items-end">
                             <div class="col-lg-2 col-md-6 form-group mb-3">
                                 <label class="filtro-label">Sede</label>
-                                <select class="form-control" id="selectSede">
+                                <select class="form-control select2-uniforme" id="selectSede">
                                     <option value="">Todas las sedes</option>
                                     <?php
                                     foreach ($sedes as $sede) {
@@ -58,7 +58,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
 
                             <div class="col-lg-2 col-md-6 form-group mb-3">
                                 <label class="filtro-label">Grado académico</label>
-                                <select class="form-control" id="selectGrado">
+                                <select class="form-control select2-uniforme" id="selectGrado">
                                     <option value="">Todos los grados</option>
                                     <option value="DIPLOMADO">DIPLOMADO</option>
                                     <option value="MAESTRIA">MAESTRIA</option>
@@ -571,6 +571,11 @@ $(document).ready(function() {
     // ========================================
     // INICIALIZAR SELECT2 PARA PROGRAMAS
     // ========================================
+    // Mismo tamaño/estilo para Sede y Grado (el matcher de abajo sigue leyendo
+    // su valor con $().val(), sea select nativo o Select2, así que esto no
+    // afecta el filtrado en cascada).
+    $('.select2-uniforme').select2({ width: '100%' });
+
     console.log('Inicializando Select2 para programas...');
     try {
         $('.select2-programa').select2({
@@ -1293,17 +1298,23 @@ $(document).ready(function() {
 
 .select2-container--default .select2-selection--single .select2-selection__rendered {
     line-height: 30px !important;
-    padding-left: 10px !important;
-    padding-right: 28px !important;
+    /* El bundle del tema le pone padding vertical propio a este mismo
+       elemento; hay que anular los cuatro lados (no solo left/right)
+       para que no se siga sumando y el texto no se salga de la caja. */
+    padding: 0 28px 0 10px !important;
     color: #495057 !important;
     font-size: 13px !important;
     display: block !important;
 }
 
 .select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 30px !important;
+    /* El bundle del tema posiciona esta flecha con "top: 50%" sin
+       transform, así que un top fijo la deja corrida hacia arriba;
+       top+translateY(-50%) la centra sin importar el alto real de la caja. */
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    height: auto !important;
     right: 5px !important;
-    top: 1px !important;
 }
 
 .select2-dropdown {

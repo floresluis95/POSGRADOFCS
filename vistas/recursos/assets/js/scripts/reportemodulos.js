@@ -6,6 +6,9 @@
 console.log('=== Script de Reportes Cargado ===');
 
 $(document).ready(function() {
+    // Select2 (mismo tamaño/estilo que los demás filtros del sistema)
+    $('.select2-uniforme').select2({ width: '100%' });
+
     // Cargar el filtro de grados académicos y el reporte de pagos al iniciar
     cargarGradosParaReportePagos();
     cargarReportePagos();
