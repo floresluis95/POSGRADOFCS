@@ -37,7 +37,10 @@ $moduloCodigo = isset($_GET['moduloCodigo']) ? $_GET['moduloCodigo'] : '';
 $programaNombre = isset($_GET['programaNombre']) ? $_GET['programaNombre'] : '';
 $gradoAcademico = isset($_GET['gradoAcademico']) ? $_GET['gradoAcademico'] : '';
 $docenteNombre = isset($_GET['docenteNombre']) ? $_GET['docenteNombre'] : '';
-$siglaModulo = isset($_GET['siglaModulo']) ? $_GET['siglaModulo'] : '';
+// Sigla del PROGRAMA (no del módulo): antes esta columna de la tabla se
+// llenaba con "siglaModulo", un parámetro que ningún llamador enviaba nunca,
+// así que la columna "SIGLA" siempre salía vacía.
+$sigla = isset($_GET['sigla']) ? $_GET['sigla'] : '';
 $fechaInicio = isset($_GET['fechaInicio']) ? $_GET['fechaInicio'] : '';
 $fechaFin = isset($_GET['fechaFin']) ? $_GET['fechaFin'] : '';
 
@@ -149,14 +152,17 @@ $pdf->AddPage();
 $logoUTO = __DIR__ . '/../../extensiones/imagenespdf/logouto.png';
 $logoFCS = __DIR__ . '/../../extensiones/imagenespdf/logofcs.png';
 
-// Logo izquierdo
+// Logo izquierdo y derecho: se fuerza la misma caja de 25x25mm para los dos
+// (con $fitbox='CM' cada logo se escala manteniendo su proporción y se centra
+// dentro de la caja) porque logouto.png y logofcs.png tienen proporciones muy
+// distintas (1047x1006 vs 239x305) y, con solo el ancho fijo, salían de alturas
+// visiblemente diferentes.
 if (file_exists($logoUTO)) {
-    $pdf->Image($logoUTO, 15, 10, 25, 0, 'PNG');
+    $pdf->Image($logoUTO, 15, 10, 25, 25, 'PNG', '', '', true, 300, '', false, false, 0, 'CM');
 }
 
-// Logo derecho
 if (file_exists($logoFCS)) {
-    $pdf->Image($logoFCS, 170, 10, 25, 0, 'PNG');
+    $pdf->Image($logoFCS, 170, 10, 25, 25, 'PNG', '', '', true, 300, '', false, false, 0, 'CM');
 }
 
 // Título centrado
@@ -169,8 +175,13 @@ $pdf->Cell(0, 5, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C');
 $pdf->Cell(0, 5, 'COORDINACIÓN POSGRADO ÁREA - ODONTOLOGÍA', 0, 1, 'C');
 
 $pdf->SetFont('helvetica', '', 8);
-$pdf->Cell(0, 4, 'AV. Del Moreno Edificio San Agustín II (Ex Almacenes COMIBOL)', 0, 1, 'C');
-$pdf->Cell(0, 4, 'Teléfonos: 52 - 37317 - Fax: 52 - 47110', 0, 1, 'C');
+// Dirección corregida: la que decía antes ("AV. Del Moreno Edificio San
+// Agustín II") no coincide con la de ningún otro documento de esta misma
+// Coordinación de Posgrado - Odontología (ver generar-lista-asistencia-pdf.php,
+// certificado-medio-magnetico-pdf.php, orden-pago-pdf-render.php), que usan
+// todos esta dirección real de la Coordinación.
+$pdf->Cell(0, 4, 'Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso', 0, 1, 'C');
+$pdf->Cell(0, 4, 'Teléfonos: 5237317 - Fax: 5247110', 0, 1, 'C');
 $pdf->Cell(0, 4, 'Oruro - Bolivia', 0, 1, 'C');
 
 $pdf->Ln(5);
@@ -183,7 +194,7 @@ $tbl = '
 <table border="1" cellpadding="4">
     <tr>
         <td width="25%" style="font-weight:bold; background-color:#f0f0f0;">PROGRAMA:</td>
-        <td width="75%">' . htmlspecialchars($programaNombre) . '</td>
+        <td width="75%">' . htmlspecialchars($programaNombre) . ($sigla ? ' (' . htmlspecialchars($sigla) . ')' : '') . '</td>
     </tr>
     <tr>
         <td style="font-weight:bold; background-color:#f0f0f0;">MÓDULO:</td>
@@ -269,7 +280,7 @@ if (empty($estudiantes) || count($estudiantes) === 0) {
 
         // Dibujar fila
         $pdf->Cell($w1, 6, $nombreCompleto, 1, 0, 'L', true);
-        $pdf->Cell($w2, 6, $siglaModulo, 1, 0, 'C', true);
+        $pdf->Cell($w2, 6, $sigla, 1, 0, 'C', true);
         $pdf->Cell($w3, 6, $moduloCodigo, 1, 0, 'C', true);
 
         // Nota numérica en negrita
@@ -281,8 +292,22 @@ if (empty($estudiantes) || count($estudiantes) === 0) {
     }
 }
 
-// PIE DE PÁGINA
-$pdf->Ln(15);
+// PIE DE PÁGINA: fijo al fondo de la hoja. Antes solo se imprimía justo
+// después de la tabla (con Ln(15)), así que en módulos con pocos estudiantes
+// las firmas quedaban pegadas debajo de la tabla en vez de al pie de la
+// página. Se reserva una altura fija y, si ya no entra en la página actual
+// (tabla muy larga), se pasa a una nueva antes de fijarla. Se desactiva el
+// salto de página automático mientras se dibuja el pie porque, con
+// AutoPageBreak activo, cada Cell() individual vuelve a chequear el margen
+// de 15mm y puede partir el bloque del pie a la mitad al acercarse al fondo
+// real de la hoja (bug detectado: firmas en la página 1 y el resto del pie
+// solo en la página 2).
+$alturaPie = 50;
+if ($pdf->GetY() > $pdf->getPageHeight() - $pdf->getBreakMargin() - $alturaPie) {
+    $pdf->AddPage();
+}
+$pdf->SetAutoPageBreak(false);
+$pdf->SetY(-$alturaPie);
 $pdf->SetFont('helvetica', '', 9);
 
 // Firmas
@@ -308,6 +333,7 @@ $pdf->Cell(90, 4, 'COORDINACIÓN POSGRADO ODONTOLOGÍA', 0, 1, 'C');
 $pdf->Ln(5);
 $pdf->SetFont('helvetica', '', 7);
 $pdf->Cell(0, 4, 'Documento generado automáticamente por el Sistema de Gestión Académica - ' . date('d/m/Y H:i:s'), 0, 1, 'C', 0, '', 0, false, 'T', 'M');
+$pdf->SetAutoPageBreak(true, 15);
 
 // Crear directorio si no existe
 $dirPDFs = __DIR__ . '/../../pdfs_generados';

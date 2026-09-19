@@ -147,11 +147,13 @@ class CalificacionControlador
             $ci .= ' ' . $docente['Exp'];
 
             $especialidad = !empty($docente['Especialidad']) ? $docente['Especialidad'] : 'No especificada';
+            $menciones = !empty($docente['Menciones']) ? $docente['Menciones'] : '';
 
             echo '<option value="' . $docente['DocenteID'] . '"
                          data-nombre="' . htmlspecialchars($nombreCompleto) . '"
                          data-ci="' . htmlspecialchars($ci) . '"
-                         data-especialidad="' . htmlspecialchars($especialidad) . '">' .
+                         data-especialidad="' . htmlspecialchars($especialidad) . '"
+                         data-menciones="' . htmlspecialchars($menciones) . '">' .
                  htmlspecialchars($nombreCompleto) . ' - ' . htmlspecialchars($ci) .
                  '</option>';
         }

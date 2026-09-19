@@ -19,6 +19,16 @@ function formatearFechaDDMMAAAA(fecha) {
     return partes[2] + '/' + partes[1] + '/' + partes[0];
 }
 
+// Nombre del docente con sus menciones/títulos académicos adelante (ej. "Esp.
+// Lic. JUAN PÉREZ"), igual que se muestra en el listado de Docentes. Se usa
+// solo para lo que se imprime (PDF), no para el "Docente:" que se ve en pantalla.
+function nombreDocenteParaImprimir() {
+    if (!docenteSeleccionado) return '';
+    return docenteSeleccionado.menciones
+        ? docenteSeleccionado.menciones + ' ' + docenteSeleccionado.nombre
+        : docenteSeleccionado.nombre;
+}
+
 $(document).ready(function() {
     // Inicializar Select2
     $('.select2-docente').select2({
@@ -48,9 +58,10 @@ $(document).ready(function() {
             asignacionSeleccionada.moduloCodigo,
             asignacionSeleccionada.programaNombre,
             asignacionSeleccionada.grado,
-            docenteSeleccionado ? docenteSeleccionado.nombre : '',
+            nombreDocenteParaImprimir(),
             asignacionSeleccionada.fechaInicio,
-            asignacionSeleccionada.fechaFinal
+            asignacionSeleccionada.fechaFinal,
+            asignacionSeleccionada.sigla
         );
     });
 
@@ -75,12 +86,14 @@ function seleccionarDocente() {
     const nombreDocente = option.data('nombre');
     const ciDocente = option.data('ci');
     const especialidadDocente = option.data('especialidad');
+    const mencionesDocente = option.data('menciones');
 
     docenteSeleccionado = {
         id: docenteID,
         nombre: nombreDocente,
         ci: ciDocente,
-        especialidad: especialidadDocente
+        especialidad: especialidadDocente,
+        menciones: mencionesDocente
     };
 
     // Cargar asignaciones del docente
@@ -330,6 +343,7 @@ function renderTablaAsignacionesAbiertas(modulosAbiertos) {
         html += 'data-grado="' + asig.GradoAcademico + '" ';
         html += 'data-fecha-inicio="' + (asig.FechaInicio || '') + '" ';
         html += 'data-fecha-final="' + (asig.FechaFinal || '') + '" ';
+        html += 'data-sigla="' + (asig.Sigla || '') + '" ';
         html += 'title="' + (totalCalificados > 0 ? 'Editar calificaciones' : 'Evaluar estudiantes') + '">';
         html += '<i class="la la-edit"></i> ' + (totalCalificados > 0 ? 'Editar' : 'Evaluar');
         html += '</button>';
@@ -345,6 +359,7 @@ function renderTablaAsignacionesAbiertas(modulosAbiertos) {
         html += 'data-grado="' + asig.GradoAcademico + '" ';
         html += 'data-fecha-inicio="' + (asig.FechaInicio || '') + '" ';
         html += 'data-fecha-final="' + (asig.FechaFinal || '') + '" ';
+        html += 'data-sigla="' + (asig.Sigla || '') + '" ';
         html += 'title="Imprimir calificaciones">';
         html += '<i class="fa fa-print"></i>';
         html += '</button>';
@@ -403,7 +418,8 @@ $(document).on('click', '.btn-evaluar', function() {
         programaNombre: $(this).data('programa-nombre'),
         grado: $(this).data('grado'),
         fechaInicio: $(this).data('fecha-inicio'),
-        fechaFinal: $(this).data('fecha-final')
+        fechaFinal: $(this).data('fecha-final'),
+        sigla: $(this).data('sigla')
     };
 
     cargarEstudiantes(moduloID, programaID);
@@ -422,9 +438,10 @@ $(document).on('click', '.btn-imprimir-asignacion', function() {
         $btn.data('modulo-codigo'),
         $btn.data('programa-nombre'),
         $btn.data('grado'),
-        docenteSeleccionado ? docenteSeleccionado.nombre : '',
+        nombreDocenteParaImprimir(),
         $btn.data('fecha-inicio'),
-        $btn.data('fecha-final')
+        $btn.data('fecha-final'),
+        $btn.data('sigla')
     );
 });
 
@@ -449,7 +466,7 @@ $(document).on('click', '.btn-asistencia-asignacion', function() {
         '&moduloCodigo=' + encodeURIComponent($btn.data('modulo-codigo')) +
         '&programaNombre=' + encodeURIComponent($btn.data('programa-nombre')) +
         '&grado=' + encodeURIComponent($btn.data('grado')) +
-        '&docenteNombre=' + encodeURIComponent(docenteSeleccionado ? docenteSeleccionado.nombre : '');
+        '&docenteNombre=' + encodeURIComponent(nombreDocenteParaImprimir());
 
     const ventana = window.open(url, '_blank');
     if (!ventana) {
@@ -808,7 +825,7 @@ function volverPaso2() {
  * ================================================================
  */
 
-function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, gradoAcademico, docenteNombre, fechaInicioDB, fechaFinDB) {
+function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, gradoAcademico, docenteNombre, fechaInicioDB, fechaFinDB, sigla) {
     console.log('=== IMPRIMIR REPORTE ===');
     console.log('moduloID:', moduloID);
     console.log('programaID:', programaID);
@@ -908,7 +925,8 @@ function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, modul
                 '&gradoAcademico=' + encodeURIComponent(gradoAcademico) +
                 '&docenteNombre=' + encodeURIComponent(docenteNombre) +
                 '&fechaInicio=' + encodeURIComponent(result.value.fechaInicio) +
-                '&fechaFin=' + encodeURIComponent(result.value.fechaFin);
+                '&fechaFin=' + encodeURIComponent(result.value.fechaFin) +
+                '&sigla=' + encodeURIComponent(sigla || '');
 
             console.log('URL generada:', url);
 
@@ -1002,9 +1020,10 @@ function mostrarModalModulosCerrados() {
         html += `data-modulo-codigo="${asig.codigomodulo}" `;
         html += `data-programa-nombre="${asig.NombrePrograma}" `;
         html += `data-grado="${asig.GradoAcademico}" `;
-        html += `data-docente-nombre="${docenteSeleccionado.nombre}" `;
+        html += `data-docente-nombre="${nombreDocenteParaImprimir()}" `;
         html += `data-fecha-inicio="${asig.FechaInicio || ''}" `;
         html += `data-fecha-final="${asig.FechaFinal || ''}" `;
+        html += `data-sigla="${asig.Sigla || ''}" `;
         html += `title="Imprimir calificaciones">`;
         html += `<i class="la la-print"></i> Imprimir`;
         html += `</button>`;
@@ -1053,8 +1072,9 @@ function mostrarModalModulosCerrados() {
                 const docenteNombre = $(this).data('docente-nombre');
                 const fechaInicioDB = $(this).data('fecha-inicio');
                 const fechaFinDB = $(this).data('fecha-final');
+                const sigla = $(this).data('sigla');
 
-                imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, gradoAcademico, docenteNombre, fechaInicioDB, fechaFinDB);
+                imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, gradoAcademico, docenteNombre, fechaInicioDB, fechaFinDB, sigla);
             });
 
             // Agregar evento a los botones de reabrir (solo para administradores)
@@ -1219,7 +1239,7 @@ function generarListaAsistencia() {
         '&moduloCodigo=' + encodeURIComponent(asignacionSeleccionada.moduloCodigo) +
         '&programaNombre=' + encodeURIComponent(asignacionSeleccionada.programaNombre) +
         '&grado=' + encodeURIComponent(asignacionSeleccionada.grado) +
-        '&docenteNombre=' + encodeURIComponent(docenteSeleccionado.nombre);
+        '&docenteNombre=' + encodeURIComponent(nombreDocenteParaImprimir());
 
     console.log('URL generada:', url);
 

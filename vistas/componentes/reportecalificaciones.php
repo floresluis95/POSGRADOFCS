@@ -47,17 +47,17 @@ date_default_timezone_set("America/La_Paz");
                     <!-- CONTENIDO PRINCIPAL -->
                     <div class="container-fluid">
                         <div class="kt-portlet kt-portlet--mobile">
-                            <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 10px 10px 0 0;">
+                            <div class="kt-portlet__head" style="background-color: #34495e; border-radius: 4px 4px 0 0;">
                                 <div class="kt-portlet__head-label">
                                     <h3 class="kt-portlet__head-title text-white">
-                                        <i class="fa fa-chart-bar"></i> Mis Modulos Asignados - Estado de Calificaciones
+                                        <i class="fa fa-chart-bar"></i> Mis Módulos Asignados - Estado de Calificaciones
                                     </h3>
                                 </div>
                                 <div class="kt-portlet__head-toolbar">
-                                    <button type="button" class="btn btn-danger btn-lg mr-3" id="btn-reporte-completo" style="font-weight: 600;">
-                                        <i class="fa fa-file-pdf"></i> IMPRIMIR REPORTE COMPLETO
+                                    <button type="button" class="btn btn-danger btn-sm btn-accion-uniforme mr-2" id="btn-reporte-completo">
+                                        <i class="fa fa-file-pdf"></i> Reporte Completo
                                     </button>
-                                    <button type="button" class="btn btn-light btn-sm" onclick="location.reload()">
+                                    <button type="button" class="btn btn-light btn-sm btn-accion-uniforme" onclick="location.reload()">
                                         <i class="fa fa-sync-alt"></i> Actualizar
                                     </button>
                                 </div>
@@ -74,7 +74,7 @@ date_default_timezone_set("America/La_Paz");
                                 </div>
 
                                 <!-- INFORMACI�N DEL DOCENTE -->
-                                <div id="info-docente" class="alert alert-light mb-4" style="display: none; border-left: 4px solid #1e3c72;">
+                                <div id="info-docente" class="alert alert-light mb-4" style="display: none; border-left: 4px solid #34495e;">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <p class="mb-1"><strong><i class="fa fa-user"></i> Docente:</strong> <span id="docente-nombre"></span></p>
@@ -88,6 +88,26 @@ date_default_timezone_set("America/La_Paz");
                                     </div>
                                 </div>
 
+                                <!-- FILTROS DE LA TABLA DE M�DULOS -->
+                                <div class="row mb-3" id="filtros-modulos-container" style="display:none;">
+                                    <div class="col-md-4">
+                                        <label class="small font-weight-bold mb-1" for="filtro-sede-reporte">
+                                            <i class="fa fa-map-marker-alt"></i> Sede
+                                        </label>
+                                        <select id="filtro-sede-reporte" class="form-control form-control-sm">
+                                            <option value="">Todas las sedes</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="small font-weight-bold mb-1" for="filtro-programa-reporte">
+                                            <i class="fa fa-university"></i> Programa
+                                        </label>
+                                        <select id="filtro-programa-reporte" class="form-control form-control-sm">
+                                            <option value="">Todos los programas</option>
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <!-- TABLA DE M�DULOS -->
                                 <div id="tabla-modulos-container"></div>
 
@@ -95,57 +115,6 @@ date_default_timezone_set("America/La_Paz");
                         </div>
                     </div>
                     <!-- FIN DEL CONTENIDO PRINCIPAL -->
-
-<!-- MODAL PARA SELECCIONAR FECHAS DEL PDF -->
-<div class="modal fade" id="modalFechasPDF" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
-                <h5 class="modal-title text-white">
-                    <i class="fa fa-calendar"></i> Seleccionar Fechas para el PDF
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-info mb-3">
-                    <i class="fa fa-book"></i> <strong>Módulo:</strong> <span id="modal-modulo-nombre"></span>
-                </div>
-                <div class="form-group">
-                    <label for="sigla-modulo-pdf-reporte" class="font-weight-bold">
-                        <i class="fa fa-tag"></i> Sigla del Módulo:
-                    </label>
-                    <input type="text" class="form-control" id="sigla-modulo-pdf-reporte" placeholder="Ej: ODO-01, EST-02, etc." maxlength="20">
-                    <small class="form-text text-muted">Opcional: Identificador corto del módulo</small>
-                </div>
-                <div class="form-group">
-                    <label for="fecha-inicio-pdf-reporte" class="font-weight-bold">
-                        <i class="fa fa-calendar-alt"></i> Fecha de Inicio:
-                    </label>
-                    <input type="date" class="form-control" id="fecha-inicio-pdf-reporte" required>
-                </div>
-                <div class="form-group">
-                    <label for="fecha-fin-pdf-reporte" class="font-weight-bold">
-                        <i class="fa fa-calendar-check"></i> Fecha de Fin:
-                    </label>
-                    <input type="date" class="form-control" id="fecha-fin-pdf-reporte" required>
-                </div>
-                <div class="alert alert-light mt-3">
-                    <i class="fa fa-info-circle"></i> Las fechas y la sigla se incluirán en el PDF generado.
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="fa fa-times"></i> Cancelar
-                </button>
-                <button type="button" class="btn btn-danger" id="btn-confirmar-pdf-reporte">
-                    <i class="fa fa-print"></i> Generar PDF
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
                     <?php $Footer = new FuncionesControladores(); $Footer->FooterResumidoControlador(); ?>
                 </div>
@@ -158,7 +127,7 @@ date_default_timezone_set("America/La_Paz");
 <div class="modal fade" id="modalCalificar" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
+            <div class="modal-header" style="background-color: #34495e;">
                 <h5 class="modal-title text-white">
                     <i class="fa fa-graduation-cap"></i> <span id="modal-calificar-titulo">Calificaciones del Módulo</span>
                 </h5>
@@ -171,11 +140,14 @@ date_default_timezone_set("America/La_Paz");
                     <div class="row">
                         <div class="col-md-6">
                             <strong><i class="fa fa-book"></i> Módulo:</strong> <span id="modal-calificar-modulo"></span><br>
-                            <strong><i class="fa fa-code"></i> Código:</strong> <span id="modal-calificar-codigo"></span>
+                            <strong><i class="fa fa-code"></i> Código:</strong> <span id="modal-calificar-codigo"></span><br>
+                            <strong><i class="fa fa-tag"></i> Sigla:</strong> <span id="modal-calificar-sigla"></span>
                         </div>
                         <div class="col-md-6">
                             <strong><i class="fa fa-university"></i> Programa:</strong> <span id="modal-calificar-programa"></span><br>
-                            <strong><i class="fa fa-graduation-cap"></i> Grado:</strong> <span id="modal-calificar-grado"></span>
+                            <strong><i class="fa fa-graduation-cap"></i> Grado:</strong> <span id="modal-calificar-grado"></span><br>
+                            <strong><i class="fa fa-calendar-check-o"></i> Fecha Inicio:</strong> <span id="modal-calificar-fecha-inicio"></span><br>
+                            <strong><i class="fa fa-calendar-times-o"></i> Fecha Final:</strong> <span id="modal-calificar-fecha-final"></span>
                         </div>
                     </div>
                 </div>
@@ -208,48 +180,73 @@ date_default_timezone_set("America/La_Paz");
 
 <style>
 .table-modulos {
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
 .table-modulos thead {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-color: #34495e;
     color: white;
 }
 
 .table-modulos tbody tr:hover {
-    background-color: #f8f9fa;
-    transform: scale(1.002);
-    transition: all 0.2s ease;
+    background-color: #f4f5f7;
 }
 
 .btn-print-planilla {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    background-color: #c0392b;
     border: none;
     color: white;
-    font-weight: 600;
-    padding: 8px 20px;
-    border-radius: 5px;
-    transition: all 0.3s ease;
 }
 
 .btn-print-planilla:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    background-color: #a93226;
     color: white;
 }
 
 .badge-modulo {
-    padding: 8px 15px;
+    padding: 6px 12px;
     font-size: 11px;
     font-weight: 600;
-    border-radius: 20px;
+    border-radius: 3px;
+}
+
+/* Todos los botones de la vista comparten un mismo ancho mínimo, para que no
+   varíen de tamaño según el largo de su texto. */
+.btn-accion-uniforme {
+    min-width: 150px;
+}
+
+#tabla-modulos-container .btn {
+    min-width: 110px;
+    margin-bottom: 4px;
+}
+
+/* Badges puramente informativos (conteos, sigla): tono neutro; se conservan
+   en color solo los que indican un estado real (calificado/pendiente,
+   módulo abierto/cerrado), que sí aportan información útil de un vistazo. */
+.kt-badge--brand,
+.kt-badge--info,
+.kt-badge--primary {
+    background-color: #e9ecef !important;
+    color: #34495e !important;
 }
 </style>
 
 <script>
 let docenteData = null;
-let moduloParaPDF = null;
 let moduloSeleccionado = null;
+
+// Copia completa (sin filtrar) de los módulos del docente, para poder
+// filtrar por Sede/Programa en el cliente sin volver a pedirlos al servidor.
+let modulosCompletos = [];
+
+// Formatear una fecha "YYYY-MM-DD" (tal como viene de la BD) a "DD/MM/AAAA".
+function formatearFechaDDMMAAAA(fecha) {
+    if (!fecha) return 'No registrada';
+    const partes = fecha.split('-');
+    if (partes.length !== 3) return fecha;
+    return partes[2] + '/' + partes[1] + '/' + partes[0];
+}
 
 $(document).ready(function() {
     // Cargar módulos del docente
@@ -264,9 +261,19 @@ $(document).ready(function() {
         generarReporteCompleto();
     });
 
-    // Event listener para confirmar PDF con fechas
-    $('#btn-confirmar-pdf-reporte').on('click', function() {
-        generarPDFConFechas();
+    // Filtros de Sede / Programa: se filtran los módulos ya cargados, sin
+    // volver a pedirle nada al servidor.
+    $(document).on('change', '#filtro-sede-reporte, #filtro-programa-reporte', function() {
+        const sede = $('#filtro-sede-reporte').val();
+        const programaID = $('#filtro-programa-reporte').val();
+
+        const filtrados = modulosCompletos.filter(function(modulo) {
+            if (sede && modulo.Sede !== sede) return false;
+            if (programaID && String(modulo.ProgramaID) !== String(programaID)) return false;
+            return true;
+        });
+
+        mostrarTablaModulos(filtrados);
     });
 
     // Abrir modal de calificar (delegado porque la tabla se genera dinámicamente)
@@ -278,7 +285,10 @@ $(document).ready(function() {
             moduloCodigo: $(this).data('modulo-codigo'),
             programaNombre: $(this).data('programa-nombre'),
             grado: $(this).data('grado'),
-            estadoModulo: $(this).data('estado-modulo')
+            estadoModulo: $(this).data('estado-modulo'),
+            fechaInicio: $(this).data('fecha-inicio'),
+            fechaFinal: $(this).data('fecha-final'),
+            sigla: $(this).data('sigla')
         };
         abrirModalCalificar();
     });
@@ -295,6 +305,37 @@ $(document).ready(function() {
         guardarCalificacionesReporte();
     });
 });
+
+/**
+ * Llenar los selects de Sede y Programa con los valores presentes en los
+ * módulos del docente logueado.
+ */
+function poblarFiltrosModulosReporte(modulos) {
+    const $filtroSede = $('#filtro-sede-reporte');
+    const $filtroPrograma = $('#filtro-programa-reporte');
+
+    if (modulos.length === 0) {
+        $('#filtros-modulos-container').hide();
+        return;
+    }
+
+    const sedeSeleccionada = $filtroSede.val();
+    const programaSeleccionado = $filtroPrograma.val();
+
+    const sedes = [...new Set(modulos.map(m => m.Sede).filter(Boolean))].sort();
+    const programas = [...new Map(modulos.map(m => [m.ProgramaID, m.NombrePrograma])).entries()]
+        .sort((a, b) => a[1].localeCompare(b[1]));
+
+    $filtroSede.html('<option value="">Todas las sedes</option>' +
+        sedes.map(s => `<option value="${s}">${s}</option>`).join(''));
+    $filtroPrograma.html('<option value="">Todos los programas</option>' +
+        programas.map(([id, nombre]) => `<option value="${id}">${nombre}</option>`).join(''));
+
+    if (sedeSeleccionada) $filtroSede.val(sedeSeleccionada);
+    if (programaSeleccionado) $filtroPrograma.val(programaSeleccionado);
+
+    $('#filtros-modulos-container').show();
+}
 
 function escaparHtml(texto) {
     return $('<div>').text(texto == null ? '' : texto).html();
@@ -362,9 +403,12 @@ function cargarAsignaciones(docenteID) {
             $('#loading-modulos').hide();
 
             if (response.status === 'success' && response.data && response.data.length > 0) {
+                modulosCompletos = response.data;
                 $('#total-modulos').text(response.data.length);
-                mostrarTablaModulos(response.data);
+                poblarFiltrosModulosReporte(modulosCompletos);
+                mostrarTablaModulos(modulosCompletos);
             } else {
+                $('#filtros-modulos-container').hide();
                 mostrarSinModulos();
             }
         },
@@ -381,18 +425,24 @@ function mostrarTablaModulos(modulos) {
             <table class="table table-bordered table-hover table-modulos">
                 <thead>
                     <tr>
-                        <th class="text-center" style="width: 5%;">Nro</th>
-                        <th style="width: 12%;">Codigo</th>
-                        <th style="width: 20%;">Modulo</th>
-                        <th style="width: 18%;">Programa</th>
-                        <th class="text-center" style="width: 8%;">Inscritos</th>
-                        <th class="text-center" style="width: 10%;">Calificados</th>
-                        <th class="text-center" style="width: 12%;">Estado Modulo</th>
-                        <th class="text-center" style="width: 20%;">Acciones</th>
+                        <th class="text-center" style="width: 4%;">Nro</th>
+                        <th style="width: 10%;">Codigo</th>
+                        <th style="width: 16%;">Modulo</th>
+                        <th style="width: 16%;">Programa</th>
+                        <th class="text-center" style="width: 8%;">Sede</th>
+                        <th class="text-center" style="width: 12%;">Fechas</th>
+                        <th class="text-center" style="width: 7%;">Inscritos</th>
+                        <th class="text-center" style="width: 9%;">Calificados</th>
+                        <th class="text-center" style="width: 10%;">Estado Modulo</th>
+                        <th class="text-center" style="width: 18%;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
+
+    if (modulos.length === 0) {
+        html += '<tr><td colspan="10" class="text-center text-muted py-3">Ningún módulo coincide con el filtro seleccionado</td></tr>';
+    }
 
     modulos.forEach(function(modulo, index) {
         const inscritos = parseInt(modulo.TotalEstudiantes) || 0;
@@ -422,12 +472,23 @@ function mostrarTablaModulos(modulos) {
             estadoModuloIcono = 'la-unlock';
         }
 
+        const sigla = modulo.Sigla || '';
+        const fechaInicio = modulo.FechaInicio || '';
+        const fechaFinal = modulo.FechaFinal || '';
+
         html += `
             <tr>
                 <td class="text-center">${index + 1}</td>
                 <td><strong>${modulo.codigomodulo}</strong></td>
                 <td>${modulo.nombremodulo}</td>
-                <td>${modulo.NombrePrograma}<br><small class="text-muted">${modulo.GradoAcademico}</small></td>
+                <td>${modulo.NombrePrograma}${sigla ? ' <span class="kt-badge kt-badge--brand kt-badge--inline">' + sigla + '</span>' : ''}<br><small class="text-muted">${modulo.GradoAcademico}</small></td>
+                <td class="text-center"><small>${modulo.Sede || '-'}</small></td>
+                <td class="text-center">
+                    <small>
+                        <i class="fa fa-calendar-check-o text-muted"></i> ${formatearFechaDDMMAAAA(fechaInicio)}<br>
+                        <i class="fa fa-calendar-times-o text-muted"></i> ${formatearFechaDDMMAAAA(fechaFinal)}
+                    </small>
+                </td>
                 <td class="text-center">
                     <span class="kt-badge kt-badge--info kt-badge--inline">${inscritos}</span>
                 </td>
@@ -443,14 +504,14 @@ function mostrarTablaModulos(modulos) {
 
         if (moduloCerrado) {
             html += `
-                    <br><button type="button" class="btn btn-info btn-xs mt-1 btn-reabrir"
+                    <br><button type="button" class="btn btn-info btn-sm btn-reabrir"
                             data-modulo-id="${modulo.Idmodulo}" data-modulo-nombre="${escaparHtml(modulo.nombremodulo)}">
                         <i class="la la-unlock"></i> Reabrir
                     </button>
             `;
         } else if (calificados > 0) {
             html += `
-                    <br><button type="button" class="btn btn-warning btn-xs mt-1 btn-validar"
+                    <br><button type="button" class="btn btn-warning btn-sm btn-validar"
                             data-modulo-id="${modulo.Idmodulo}" data-modulo-nombre="${escaparHtml(modulo.nombremodulo)}">
                         <i class="la la-lock"></i> Validar y Cerrar
                     </button>
@@ -460,20 +521,24 @@ function mostrarTablaModulos(modulos) {
         html += `
                 </td>
                 <td class="text-center">
-                    <button type="button" class="btn btn-brand btn-sm mb-1 btn-calificar"
+                    <button type="button" class="btn btn-brand btn-sm btn-calificar"
                             data-modulo-id="${modulo.Idmodulo}" data-programa-id="${modulo.ProgramaID}"
                             data-modulo-nombre="${escaparHtml(modulo.nombremodulo)}" data-modulo-codigo="${escaparHtml(modulo.codigomodulo)}"
                             data-programa-nombre="${escaparHtml(modulo.NombrePrograma)}" data-grado="${escaparHtml(modulo.GradoAcademico)}"
-                            data-estado-modulo="${estadoModulo}">
+                            data-estado-modulo="${estadoModulo}"
+                            data-fecha-inicio="${fechaInicio}" data-fecha-final="${fechaFinal}" data-sigla="${escaparHtml(sigla)}">
                         <i class="la la-edit"></i> ${moduloCerrado ? 'Ver Notas' : 'Poner Notas'}
                     </button>
         `;
 
         if (calificados > 0) {
             html += `
-                <button type="button" class="btn btn-print-planilla btn-sm mb-1"
-                        onclick="generarPlanillaPDF(${modulo.Idmodulo}, ${modulo.ProgramaID}, '${modulo.nombremodulo}', '${modulo.codigomodulo}', '${modulo.NombrePrograma}', '${modulo.GradoAcademico}')">
-                    <i class="fa fa-print"></i> IMPRIMIR
+                <button type="button" class="btn btn-print-planilla btn-sm btn-imprimir-reporte"
+                        data-modulo-id="${modulo.Idmodulo}" data-programa-id="${modulo.ProgramaID}"
+                        data-modulo-nombre="${escaparHtml(modulo.nombremodulo)}" data-modulo-codigo="${escaparHtml(modulo.codigomodulo)}"
+                        data-programa-nombre="${escaparHtml(modulo.NombrePrograma)}" data-grado="${escaparHtml(modulo.GradoAcademico)}"
+                        data-fecha-inicio="${fechaInicio}" data-fecha-final="${fechaFinal}" data-sigla="${escaparHtml(sigla)}">
+                    <i class="fa fa-print"></i> Imprimir
                 </button>
             `;
         }
@@ -493,114 +558,104 @@ function mostrarTablaModulos(modulos) {
     $('#tabla-modulos-container').html(html);
 }
 
-function generarPlanillaPDF(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, grado) {
-    console.log('>>> Abrir modal para generar PDF');
+// Imprimir la planilla de un módulo: reutiliza el mismo generador de PDF ya
+// corregido que usa "Registro de Calificaciones" (dirección, sigla, menciones
+// y pie de página al fondo), precargando las fechas ya guardadas en el
+// módulo para que el docente solo tenga que confirmarlas.
+$(document).on('click', '.btn-imprimir-reporte', function() {
+    const $btn = $(this);
+    const moduloID = $btn.data('modulo-id');
+    const programaID = $btn.data('programa-id');
+    const moduloNombre = $btn.data('modulo-nombre');
+    const moduloCodigo = $btn.data('modulo-codigo');
+    const programaNombre = $btn.data('programa-nombre');
+    const grado = $btn.data('grado');
+    const fechaInicioDB = $btn.data('fecha-inicio');
+    const fechaFinalDB = $btn.data('fecha-final');
+    const sigla = $btn.data('sigla');
 
-    // Guardar datos del módulo
-    moduloParaPDF = {
-        moduloID: moduloID,
-        programaID: programaID,
-        moduloNombre: moduloNombre,
-        moduloCodigo: moduloCodigo,
-        programaNombre: programaNombre,
-        grado: grado
-    };
+    generarPlanillaPDF(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, grado, fechaInicioDB, fechaFinalDB, sigla);
+});
 
-    // Mostrar nombre del módulo en el modal
-    $('#modal-modulo-nombre').text(moduloNombre);
-
-    // Limpiar campos del formulario
-    $('#sigla-modulo-pdf-reporte').val('');
-    $('#fecha-inicio-pdf-reporte').val('');
-    $('#fecha-fin-pdf-reporte').val('');
-
-    // Abrir modal
-    $('#modalFechasPDF').modal('show');
+function nombreDocenteParaImprimir() {
+    if (!docenteData) return '';
+    return docenteData.Menciones
+        ? docenteData.Menciones + ' ' + docenteData.NombreCompleto
+        : docenteData.NombreCompleto;
 }
 
-function generarPDFConFechas() {
-    console.log('>>> Generando PDF con fechas');
-
-    // Validar que hay datos del módulo
-    if (!moduloParaPDF) {
-        Swal.fire({
-            type: 'error',
-            title: 'Error',
-            text: 'No hay datos del módulo seleccionado'
-        });
-        return;
-    }
-
-    // Obtener datos del formulario
-    const siglaModulo = $('#sigla-modulo-pdf-reporte').val().trim();
-    const fechaInicio = $('#fecha-inicio-pdf-reporte').val();
-    const fechaFin = $('#fecha-fin-pdf-reporte').val();
-
-    // Validar fechas
-    if (!fechaInicio || !fechaFin) {
-        Swal.fire({
-            type: 'warning',
-            title: 'Fechas requeridas',
-            text: 'Por favor ingrese ambas fechas (inicio y fin)'
-        });
-        return;
-    }
-
-    // Validar que fecha inicio sea menor o igual a fecha fin
-    if (new Date(fechaInicio) > new Date(fechaFin)) {
-        Swal.fire({
-            type: 'error',
-            title: 'Fechas inválidas',
-            text: 'La fecha de inicio debe ser menor o igual a la fecha de fin'
-        });
-        return;
-    }
-
-    console.log('>>> Datos para el PDF:');
-    console.log('>>> Módulo:', moduloParaPDF);
-    console.log('>>> Docente:', docenteData);
-    console.log('>>> Sigla:', siglaModulo);
-    console.log('>>> Fecha Inicio:', fechaInicio);
-    console.log('>>> Fecha Fin:', fechaFin);
-
-    // Cerrar modal
-    $('#modalFechasPDF').modal('hide');
-
-    // Crear formulario dinámico para POST
-    const form = $('<form>', {
-        action: 'tcpdf/pdf/generar-calificaciones-pdf.php',
-        method: 'POST',
-        target: '_blank'
-    });
-
-    // Agregar campos al formulario
-    form.append($('<input>', { type: 'hidden', name: 'programaNombre', value: moduloParaPDF.programaNombre }));
-    form.append($('<input>', { type: 'hidden', name: 'moduloNombre', value: moduloParaPDF.moduloNombre }));
-    form.append($('<input>', { type: 'hidden', name: 'moduloCodigo', value: moduloParaPDF.moduloCodigo }));
-    form.append($('<input>', { type: 'hidden', name: 'docenteNombre', value: docenteData.NombreCompleto }));
-    form.append($('<input>', { type: 'hidden', name: 'siglaModulo', value: siglaModulo }));
-    form.append($('<input>', { type: 'hidden', name: 'fechaInicio', value: fechaInicio }));
-    form.append($('<input>', { type: 'hidden', name: 'fechaFin', value: fechaFin }));
-    form.append($('<input>', { type: 'hidden', name: 'moduloID', value: moduloParaPDF.moduloID }));
-    form.append($('<input>', { type: 'hidden', name: 'programaID', value: moduloParaPDF.programaID }));
-    form.append($('<input>', { type: 'hidden', name: 'grado', value: moduloParaPDF.grado }));
-
-    // Agregar formulario al body, enviarlo y eliminarlo
-    form.appendTo('body').submit().remove();
-
-    console.log('>>> Formulario enviado para generar PDF con fechas y sigla');
-
-    // Mostrar mensaje de éxito
+function generarPlanillaPDF(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, grado, fechaInicioDB, fechaFinalDB, sigla) {
     Swal.fire({
-        type: 'success',
-        title: 'PDF generado',
-        text: 'El PDF se está generando en una nueva pestaña',
-        timer: 2000,
-        showConfirmButton: false
-    });
+        title: '<i class="la la-calendar"></i> Fechas del Módulo',
+        html: `
+            <div style="text-align: left; padding: 20px;">
+                <h5 style="color: #5867dd; margin-bottom: 15px;">
+                    <i class="la la-book"></i> ${moduloNombre}
+                </h5>
+                <p style="margin-bottom: 20px; color: #666;">
+                    <strong>Código:</strong> ${moduloCodigo}<br>
+                    <strong>Programa:</strong> ${programaNombre}${sigla ? ' (' + sigla + ')' : ''}
+                </p>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="fechaInicioReporte" style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">
+                        <i class="la la-calendar-check-o"></i> Fecha de Inicio:
+                    </label>
+                    <input type="date" id="fechaInicioReporte" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;" value="${fechaInicioDB || ''}">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="fechaFinReporte" style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">
+                        <i class="la la-calendar-times-o"></i> Fecha de Finalización:
+                    </label>
+                    <input type="date" id="fechaFinReporte" class="swal2-input" style="width: 100%; padding: 10px; margin: 0;" value="${fechaFinalDB || ''}">
+                </div>
+                <p style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-left: 3px solid #5867dd; font-size: 13px; color: #555;">
+                    <i class="la la-info-circle"></i> ${(fechaInicioDB && fechaFinalDB)
+                        ? 'Se completaron con las fechas ya registradas para este módulo; puede ajustarlas si hace falta.'
+                        : 'Estas fechas se mostrarán en el reporte PDF de calificaciones.'}
+                </p>
+            </div>
+        `,
+        width: '600px',
+        showCancelButton: true,
+        confirmButtonColor: '#5867dd',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="la la-print"></i> Generar PDF',
+        cancelButtonText: 'Cancelar',
+        focusConfirm: false,
+        preConfirm: () => {
+            const fechaInicio = document.getElementById('fechaInicioReporte').value;
+            const fechaFin = document.getElementById('fechaFinReporte').value;
 
-    // Limpiar datos temporales
-    moduloParaPDF = null;
+            if (!fechaInicio || !fechaFin) {
+                Swal.showValidationMessage('Por favor, ingrese ambas fechas');
+                return false;
+            }
+            if (fechaInicio > fechaFin) {
+                Swal.showValidationMessage('La fecha de inicio debe ser anterior o igual a la fecha de finalización');
+                return false;
+            }
+            return { fechaInicio: fechaInicio, fechaFin: fechaFin };
+        }
+    }).then((result) => {
+        if (!result.value || result.dismiss) return;
+
+        const url = 'vistas/componentes/generar-pdf-calificaciones-tcpdf.php?' +
+            'moduloID=' + moduloID +
+            '&programaID=' + programaID +
+            '&moduloNombre=' + encodeURIComponent(moduloNombre) +
+            '&moduloCodigo=' + encodeURIComponent(moduloCodigo) +
+            '&programaNombre=' + encodeURIComponent(programaNombre) +
+            '&gradoAcademico=' + encodeURIComponent(grado) +
+            '&docenteNombre=' + encodeURIComponent(nombreDocenteParaImprimir()) +
+            '&fechaInicio=' + encodeURIComponent(result.value.fechaInicio) +
+            '&fechaFin=' + encodeURIComponent(result.value.fechaFin) +
+            '&sigla=' + encodeURIComponent(sigla || '');
+
+        const ventana = window.open(url, '_blank');
+        if (!ventana) {
+            Swal.fire({ type: 'warning', title: 'Ventana bloqueada', text: 'Permita las ventanas emergentes para ver el PDF.' });
+        }
+    });
 }
 
 /**
@@ -615,6 +670,9 @@ function abrirModalCalificar() {
     $('#modal-calificar-codigo').text(moduloSeleccionado.moduloCodigo);
     $('#modal-calificar-programa').text(moduloSeleccionado.programaNombre);
     $('#modal-calificar-grado').text(moduloSeleccionado.grado);
+    $('#modal-calificar-sigla').text(moduloSeleccionado.sigla || 'No registrada');
+    $('#modal-calificar-fecha-inicio').text(formatearFechaDDMMAAAA(moduloSeleccionado.fechaInicio));
+    $('#modal-calificar-fecha-final').text(formatearFechaDDMMAAAA(moduloSeleccionado.fechaFinal));
     $('#modal-calificar-aviso').html('');
     $('#modal-calificar-footer').hide();
     $('#modal-calificar-container').html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');

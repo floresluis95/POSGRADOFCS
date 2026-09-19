@@ -292,7 +292,8 @@ class CalificacionModelo
                     Amaterno,
                     Especialidad,
                     CedulaProfesional,
-                    Direccion
+                    Direccion,
+                    Menciones
                 FROM docente
                 ORDER BY Apaterno, Amaterno, Nombre ASC"
             );
@@ -470,7 +471,8 @@ class CalificacionModelo
                     Nombre,
                     Apaterno,
                     Amaterno,
-                    Especialidad
+                    Especialidad,
+                    Menciones
                 FROM docente
                 WHERE Ci = :ci
                 LIMIT 1"
