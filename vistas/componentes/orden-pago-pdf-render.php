@@ -156,12 +156,33 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
     $pdf->Cell($W_PROGRAMA, $H_ROW_A, 'PROGRAMA:', 1, 0, 'L');
 
-    $pdf->Cell($W_DERECHA * 0.42, $H_ROW_A, 'Versión y/o', 1, 0, 'L');
-    $pdf->SetFont('helvetica', 'B', 8.5);
-    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
-    // Se deja el campo (la etiqueta y el recuadro) pero sin el dato: a
-    // pedido, ya no se imprime el valor de la versión.
-    $pdf->Cell($W_DERECHA * 0.58, $H_ROW_A, '', 1, 1, 'L');
+    $pdf->Cell($W_DERECHA * 0.42, $H_ROW_A, 'TIPO DE PAGO', 1, 0, 'L');
+
+    // Se reutiliza este campo (antes mostraba la versión, que ya no se imprime)
+    // para remarcar si la orden es de MATRÍCULA, CUOTA o PROGRAMA COMPLETO: se
+    // detecta dentro del texto ya armado de $programa y se resalta con un color
+    // propio y fondo relleno, para que sea más visible que el resto del recuadro.
+    $tipoPago = '';
+    $colorTipoPagoTexto = $colorTexto;
+    $colorTipoPagoFondo = [255, 255, 255];
+    if (stripos($programa, 'PROGRAMA COMPLETO') !== false) {
+        $tipoPago = 'PROG. COMPLETO';
+        $colorTipoPagoTexto = [27, 94, 32];    // verde oscuro
+        $colorTipoPagoFondo = [232, 245, 233]; // verde claro
+    } elseif (stripos($programa, 'MATRICULA') !== false || stripos($programa, 'MATRÍCULA') !== false) {
+        $tipoPago = 'MATRÍCULA';
+        $colorTipoPagoTexto = [204, 85, 0];    // naranja oscuro
+        $colorTipoPagoFondo = [255, 240, 224]; // naranja claro
+    } elseif (stripos($programa, 'cuota') !== false) {
+        $tipoPago = 'CUOTA';
+        $colorTipoPagoTexto = [178, 34, 34];   // rojo ladrillo
+        $colorTipoPagoFondo = [253, 232, 232]; // rojo claro
+    }
+
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->SetTextColor($colorTipoPagoTexto[0], $colorTipoPagoTexto[1], $colorTipoPagoTexto[2]);
+    $pdf->SetFillColor($colorTipoPagoFondo[0], $colorTipoPagoFondo[1], $colorTipoPagoFondo[2]);
+    $pdf->Cell($W_DERECHA * 0.58, $H_ROW_A, $tipoPago, 1, 1, 'L', true);
 
     // Fila B: texto del programa (izq, multilinea) / "Cuenta auxiliar" + valor (der)
     $pdf->SetXY($x_left, $y_prog + $H_ROW_A);

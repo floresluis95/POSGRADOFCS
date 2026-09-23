@@ -116,9 +116,13 @@ try {
         $programaTexto = $orden['NombrePrograma'] . "\n" . etiquetaCuotaOrdenPago($numeroCuota);
         $version = !empty($orden['Version']) ? $orden['Version'] : 'V-1';
     } else {
+        // No se imprime la versión "V-1": es la versión base/por defecto y no aporta
+        // información distinta al nombre del programa. Solo se muestran versiones
+        // reales (V-2, V-3, etc.).
+        $mostrarVersion = !empty($orden['Version']) && strtoupper($orden['Version']) !== 'V-1';
         $programaTexto = 'PROGRAMA DE POSGRADO EN LA ' . mb_strtoupper($orden['GradoAcademico'], 'UTF-8') .
             ' EN ' . mb_strtoupper($orden['NombrePrograma'], 'UTF-8') .
-            (!empty($orden['Version']) ? ' "' . mb_strtoupper($orden['Version'], 'UTF-8') . '"' : '') .
+            ($mostrarVersion ? ' "' . mb_strtoupper($orden['Version'], 'UTF-8') . '"' : '') .
             ' ' . ((int)$orden['PagoCompleto'] === 1 ? 'PROGRAMA COMPLETO' : 'MATRICULA');
         $version = $orden['Version'] ?: '';
     }

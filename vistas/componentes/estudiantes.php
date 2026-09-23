@@ -333,16 +333,20 @@ $csrf_token = bin2hex(random_bytes(32));
                                 <label for="Lugarn"><i class="fas fa-map-marker-alt text-info"></i> Lugar de nacimiento *</label>
                                 <select class="form-control" id="Lugarn" name="Lugarn" required>
                                     <option value="" disabled selected>Seleccione...</option>
-                                    <option value="La Paz">La Paz</option>
-                                    <option value="Cochabamba">Cochabamba</option>
-                                    <option value="Santa Cruz">Santa Cruz</option>
-                                    <option value="Oruro">Oruro</option>
-                                    <option value="Potosí">Potosí</option>
-                                    <option value="Chuquisaca">Chuquisaca</option>
-                                    <option value="Tarija">Tarija</option>
-                                    <option value="Beni">Beni</option>
-                                    <option value="Pando">Pando</option>
-                                    <option value="Otro">Otro</option>
+                                    <!-- El value va en MAYÚSCULAS porque así queda guardado en la BD
+                                         (el backend aplica strtoupper() al registrar el estudiante). -->
+                                    <option value="LA PAZ">La Paz</option>
+                                    <option value="COCHABAMBA">Cochabamba</option>
+                                    <option value="SANTA CRUZ">Santa Cruz</option>
+                                    <option value="ORURO">Oruro</option>
+                                    <!-- "í" queda así (minúscula) porque strtoupper() de PHP no convierte
+                                         acentos UTF-8: 'Potosí' termina guardado como 'POTOSí' en la BD. -->
+                                    <option value="POTOSí">Potosí</option>
+                                    <option value="CHUQUISACA">Chuquisaca</option>
+                                    <option value="TARIJA">Tarija</option>
+                                    <option value="BENI">Beni</option>
+                                    <option value="PANDO">Pando</option>
+                                    <option value="OTRO">Otro</option>
                                 </select>
                                 <div class="invalid-feedback">Seleccione el lugar de nacimiento.</div>
                             </div>
@@ -494,7 +498,8 @@ $csrf_token = bin2hex(random_bytes(32));
                 </button>
             </div>
 
-            <form method="post" id="formEditarEstudiante" class="needs-validation" novalidate>
+            <form method="post" id="formEditarEstudiante" class="needs-validation" novalidate
+                  style="display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
                 <input type="hidden" id="editarEstudianteID" name="EstudianteID">
 
                 <div class="modal-body" style="padding: 30px;">
@@ -589,16 +594,22 @@ $csrf_token = bin2hex(random_bytes(32));
                                 <label for="LugarnEditar"><i class="fas fa-map-marker-alt text-info"></i> Lugar de nacimiento *</label>
                                 <select class="form-control" id="LugarnEditar" name="Lugarn" required>
                                     <option value="" disabled>Seleccione...</option>
-                                    <option value="La Paz">La Paz</option>
-                                    <option value="Cochabamba">Cochabamba</option>
-                                    <option value="Santa Cruz">Santa Cruz</option>
-                                    <option value="Oruro">Oruro</option>
-                                    <option value="Potosí">Potosí</option>
-                                    <option value="Chuquisaca">Chuquisaca</option>
-                                    <option value="Tarija">Tarija</option>
-                                    <option value="Beni">Beni</option>
-                                    <option value="Pando">Pando</option>
-                                    <option value="Otro">Otro</option>
+                                    <!-- El value va en MAYÚSCULAS porque así queda guardado en la BD
+                                         (el backend aplica strtoupper() al registrar/editar el estudiante).
+                                         Antes estaba en formato título y por eso nunca coincidía con el
+                                         dato guardado: el campo quedaba en blanco al editar. -->
+                                    <option value="LA PAZ">La Paz</option>
+                                    <option value="COCHABAMBA">Cochabamba</option>
+                                    <option value="SANTA CRUZ">Santa Cruz</option>
+                                    <option value="ORURO">Oruro</option>
+                                    <!-- "í" queda así (minúscula) porque strtoupper() de PHP no convierte
+                                         acentos UTF-8: 'Potosí' termina guardado como 'POTOSí' en la BD. -->
+                                    <option value="POTOSí">Potosí</option>
+                                    <option value="CHUQUISACA">Chuquisaca</option>
+                                    <option value="TARIJA">Tarija</option>
+                                    <option value="BENI">Beni</option>
+                                    <option value="PANDO">Pando</option>
+                                    <option value="OTRO">Otro</option>
                                 </select>
                                 <div class="invalid-feedback">Seleccione el lugar de nacimiento.</div>
                             </div>
@@ -1116,6 +1127,23 @@ window.addEventListener('load', function() {
         jQuery('#buscarPorCiNuevoEstudiante').val('');
         jQuery('#estadoBusquedaCiNuevoEstudiante').html('');
         $btnGuardarEstudiante.prop('disabled', false);
+    });
+
+    // ============================================
+    // FIX: modales "anidados" (Nueva Profesión / Nueva Universidad, abiertos con
+    // el botón "+" desde dentro de Nuevo Estudiante o Editar Estudiante).
+    // Bootstrap 4 tiene un bug conocido: al cerrarse un modal abierto encima de
+    // otro, quita la clase "modal-open" del <body> aunque el modal de atrás siga
+    // visible. Esa clase es la que le da "overflow-y: auto" al modal (ver CSS
+    // ".modal-open .modal"); sin ella, el modal de atrás vuelve a su "overflow:
+    // hidden" por defecto y ya no se puede hacer scroll para llegar al botón de
+    // guardar. Se restaura la clase a mano si, al cerrarse, todavía queda algún
+    // modal abierto.
+    // ============================================
+    jQuery('#ModalNuevaProfesionEstudiante, #ModalNuevaUniversidadEstudiante').on('hidden.bs.modal', function() {
+        if (jQuery('.modal.show').length) {
+            jQuery('body').addClass('modal-open');
+        }
     });
 
     // ============================================

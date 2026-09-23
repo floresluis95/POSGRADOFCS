@@ -41,7 +41,7 @@ class InscripcionControladores
             error_log("ObtenerProgramasPorGradoControlador - Buscando programas para: " . $gradoAcademico);
 
             // Validar que el grado académico sea válido
-            $gradosValidos = ['DIPLOMADO', 'MAESTRIA', 'ESPECIALIDAD', 'MAESTRÍA'];
+            $gradosValidos = ['DIPLOMADO', 'MAESTRIA', 'ESPECIALIDAD', 'MAESTRÍA', 'DOCTORADO'];
             if (!in_array($gradoAcademico, $gradosValidos)) {
                 error_log("ObtenerProgramasPorGradoControlador - ERROR: Grado académico no válido: " . $gradoAcademico);
                 echo json_encode([

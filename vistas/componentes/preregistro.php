@@ -336,16 +336,22 @@ kt-aside--fixed kt-page--loading">
                                 <label for="Lugarn" class="small font-weight-bold mb-1">Lugar de nacimiento <span class="text-danger">*</span></label>
                                 <select class="form-control form-control-sm" id="Lugarn" name="Lugarn" form="formPreregistro" required>
                                   <option value="" disabled selected>Seleccione...</option>
-                                  <option value="La Paz">La Paz</option>
-                                  <option value="Cochabamba">Cochabamba</option>
-                                  <option value="Santa Cruz">Santa Cruz</option>
-                                  <option value="Oruro">Oruro</option>
-                                  <option value="Potosí">Potosí</option>
-                                  <option value="Chuquisaca">Chuquisaca</option>
-                                  <option value="Tarija">Tarija</option>
-                                  <option value="Beni">Beni</option>
-                                  <option value="Pando">Pando</option>
-                                  <option value="Otro">Otro</option>
+                                  <!-- El value va en MAYÚSCULAS porque así es como queda guardado en la BD
+                                       (el backend aplica strtoupper() al registrar/editar el estudiante).
+                                       Si no coincide exactamente, el select no puede pre-seleccionar el
+                                       valor guardado al cargar los datos de un estudiante existente. -->
+                                  <option value="LA PAZ">La Paz</option>
+                                  <option value="COCHABAMBA">Cochabamba</option>
+                                  <option value="SANTA CRUZ">Santa Cruz</option>
+                                  <option value="ORURO">Oruro</option>
+                                  <!-- "í" queda así (minúscula) porque strtoupper() de PHP no convierte
+                                       acentos UTF-8: 'Potosí' termina guardado como 'POTOSí' en la BD. -->
+                                  <option value="POTOSí">Potosí</option>
+                                  <option value="CHUQUISACA">Chuquisaca</option>
+                                  <option value="TARIJA">Tarija</option>
+                                  <option value="BENI">Beni</option>
+                                  <option value="PANDO">Pando</option>
+                                  <option value="OTRO">Otro</option>
                                 </select>
                               </div>
                               <div class="col-md-3">
@@ -459,6 +465,7 @@ kt-aside--fixed kt-page--loading">
                                   <option value="DIPLOMADO">DIPLOMADO</option>
                                   <option value="MAESTRIA">MAESTRÍA</option>
                                   <option value="ESPECIALIDAD">ESPECIALIDAD</option>
+                                  <option value="DOCTORADO">DOCTORADO</option>
                                 </select>
                               </div>
                               <div class="col-lg-6 form-group mb-2">
@@ -983,6 +990,21 @@ function iniciarPreregistro() {
         $('#estadoBusquedaEstudiante').html('');
         $('#seccionPrograma').slideUp();
         $('#seccionPago').slideUp();
+    });
+
+    // FIX: modales "anidados" (Nueva Profesión / Nueva Universidad, abiertos con
+    // el botón "+" desde dentro del modal "Paso 1: Datos del Estudiante", que a
+    // su vez es scrollable). Bootstrap 4 tiene un bug conocido: al cerrarse un
+    // modal abierto encima de otro, quita la clase "modal-open" del <body>
+    // aunque el modal de atrás siga visible. Esa clase es la que le da
+    // "overflow-y: auto" al modal (ver CSS ".modal-open .modal"); sin ella, el
+    // modal de atrás vuelve a su "overflow: hidden" por defecto y ya no se
+    // puede hacer scroll para llegar al botón de continuar/guardar. Se
+    // restaura la clase a mano si, al cerrarse, todavía queda algún modal abierto.
+    $('#ModalNuevaProfesion, #ModalNuevaUniversidad').on('hidden.bs.modal', function() {
+        if ($('.modal.show').length) {
+            $('body').addClass('modal-open');
+        }
     });
 
     // Agregar una profesión que no está en el select (botón "+")

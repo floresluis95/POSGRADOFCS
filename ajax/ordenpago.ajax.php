@@ -1135,9 +1135,13 @@ function obtenerPreregistro()
             ' ' . $preregistro['Exp']
         );
         $preregistro['MontoLiteral'] = numeroALetrasOrdenPago((float)$preregistro['MontoFinal']);
+        // No se imprime la versión "V-1": es la versión base/por defecto y no aporta
+        // información distinta al nombre del programa. Solo se muestran versiones
+        // reales (V-2, V-3, etc.).
+        $mostrarVersion = !empty($preregistro['Version']) && strtoupper($preregistro['Version']) !== 'V-1';
         $preregistro['ProgramaTexto'] = 'PROGRAMA DE POSGRADO EN LA ' . strtoupper($preregistro['GradoAcademico']) .
             ' EN ' . strtoupper($preregistro['NombrePrograma']) .
-            (!empty($preregistro['Version']) ? ' "' . strtoupper($preregistro['Version']) . '"' : '') .
+            ($mostrarVersion ? ' "' . strtoupper($preregistro['Version']) . '"' : '') .
             ' ' . ((int)$preregistro['PagoCompleto'] === 1 ? 'PROGRAMA COMPLETO' : 'MATRICULA');
 
         echo json_encode(['success' => true, 'preregistro' => $preregistro]);
