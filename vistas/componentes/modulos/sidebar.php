@@ -41,7 +41,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="preregistro" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-add-1" style="color: #6f94c9;"></i>
-                    <span class="kt-menu__link-text">Nuevo registro</span>
+                    <span class="kt-menu__link-text">Pre-registro generar orden de pago </span>
                     <span class="kt-menu__link-badge">
                       <span class="kt-badge kt-badge--success kt-badge--dot"></span>
                     </span>

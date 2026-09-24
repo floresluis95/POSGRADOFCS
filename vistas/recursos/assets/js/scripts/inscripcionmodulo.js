@@ -11,7 +11,7 @@ $(document).ready(function() {
         language: {
             url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json'
         },
-        order: [[8, 'desc']], // Ordenar por fecha descendente
+        order: [[0, 'asc']], // El modelo ya entrega las filas por fecha de inscripción descendente
         pageLength: 25
     });
 
@@ -387,24 +387,41 @@ $(document).ready(function() {
     $(document).on('click', '.btn-ver-detalles', function(e) {
         e.preventDefault();
 
-        const estudianteNombre = $(this).data('estudiante-nombre');
-        const estudianteCI = $(this).data('estudiante-ci');
-        const programaNombre = $(this).data('programa-nombre');
-        const grado = $(this).data('grado');
-        const codigo = $(this).data('codigo');
-        const costo = $(this).data('costo');
-        const voucher = $(this).data('voucher');
-        const fecha = $(this).data('fecha');
+        // jQuery convierte automáticamente el JSON de data-detalle en objeto
+        const d = $(this).data('detalle') || {};
+        const valor = function(v) { return v ? v : 'No registrado'; };
 
-        // Llenar información en el modal
-        $('#detalleEstudianteNombre').text(estudianteNombre);
-        $('#detalleEstudianteCI').text(estudianteCI);
-        $('#detalleProgramaNombre').text(programaNombre);
-        $('#detalleGrado').text(grado);
-        $('#detalleCodigo').text(codigo);
-        $('#detalleCosto').text('Bs. ' + costo);
-        $('#detalleVoucher').text(voucher);
-        $('#detalleFecha').text(fecha);
+        // Encabezado: estudiante y estado de la inscripción
+        $('#detalleEstudianteNombre').text(d.nombre);
+        $('#detalleEstudianteCI').text(d.ci);
+        $('#detalleEstado')
+            .text(d.estado)
+            .removeClass('badge-success badge-danger')
+            .addClass(d.estado === 'ACTIVO' ? 'badge-success' : 'badge-danger');
+
+        // Contacto
+        $('#detalleCelular').text(valor(d.celular));
+        $('#detalleCorreo').text(valor(d.correo));
+        $('#detalleProfesion').text(valor(d.profesion));
+
+        // Programa
+        $('#detalleProgramaNombre').text(d.grado + ' EN ' + d.programa);
+        $('#detalleCodigo').text(valor(d.codigo));
+        $('#detalleVersion').text(valor(d.version));
+        $('#detalleSede').text(valor(d.sede));
+        $('#detalleTramite').text(valor(d.tramite));
+
+        // Matrícula
+        $('#detalleFecha').text(d.fecha);
+        $('#detalleTipoPago').html(d.pagoCompleto == 1
+            ? '<span class="badge badge-success"><i class="fa fa-check-circle"></i> PAGO COMPLETO</span>'
+            : '<span class="badge badge-warning"><i class="fa fa-money"></i> SOLO MATRÍCULA</span>');
+        $('#detalleVoucher').text(valor(d.voucher));
+        $('#detalleCosto').text('Bs. ' + d.costo);
+        $('#detalleDescuento').text(d.descuento
+            ? 'Bs. ' + d.descuento + (d.porcentaje ? ' (' + d.porcentaje + '%)' : '')
+            : 'Sin descuento');
+        $('#detalleMontoPagado').text(d.montoPagado ? 'Bs. ' + d.montoPagado : '-');
 
         // Mostrar modal
         $('#modalVerDetalles').modal('show');

@@ -34,24 +34,24 @@
                 <div class="kt-body kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-grid--stretch" id="kt_body">
                     <div class="kt-content  kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
 
-                        <div class="kt-subheader kt-grid__item" id="kt_subheader" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 2rem 0;">
+                        <div class="kt-subheader kt-grid__item" id="kt_subheader">
                             <div class="kt-container">
                                 <div class="kt-subheader__main">
-                                    <h2 class="kt-subheader__title" style="color: #ffffff !important; font-size: 2rem; font-weight: 700;">
-                                        <i class="flaticon2-print" style="font-size: 2.5rem; color: #ffffff !important;"></i> MIS ÓRDENES DE PAGO
+                                    <h2 class="kt-subheader__title">
+                                        MIS ÓRDENES DE PAGO
                                     </h2>
                                     <span class="kt-subheader__separator kt-hidden"></span>
                                     <div class="kt-subheader__breadcrumbs">
-                                        <a href="#" class="kt-subheader__breadcrumbs-home" style="color: rgba(255,255,255,0.8) !important;"><i class="flaticon2-shelter"></i></a>
-                                        <span class="kt-subheader__breadcrumbs-separator" style="color: rgba(255,255,255,0.5) !important;"></span>
-                                        <h4 style="color: rgba(255,255,255,0.9) !important; font-weight: 500;">
+                                        <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
+                                        <span class="kt-subheader__breadcrumbs-separator"></span>
+                                        <h4>
                                             ACCESO ESTUDIANTIL
                                         </h4>
                                     </div>
                                 </div>
                                 <div class="kt-subheader__toolbar">
                                     <div class="kt-subheader__wrapper">
-                                        <div id="lafecha" style="font-size:13pt; color: white; font-weight: 500;"></div>
+                                        <div id="lafecha"></div>
                                     </div>
                                 </div>
                             </div>

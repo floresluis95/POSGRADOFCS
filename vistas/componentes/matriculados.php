@@ -136,16 +136,10 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                     <tr>
                                         <th class="text-center" style="color: white; width: 50px;">#</th>
                                         <th style="color: white;">ESTUDIANTE</th>
-                                        <th class="text-center" style="color: white; width: 100px;">CI</th>
                                         <th style="color: white;">PROGRAMA</th>
-                                        <th class="text-center" style="color: white; width: 120px;">GRADO</th>
-                                        <th class="text-center" style="color: white; width: 100px;">CÓDIGO</th>
                                         <th class="text-center" style="color: white; width: 100px;">SEDE</th>
-                                        <th class="text-center" style="color: white; width: 120px;">COSTO MATRÍCULA</th>
-                                        <th class="text-center" style="color: white; width: 100px;">DESCUENTO</th>
-                                        <th class="text-center" style="color: white; width: 150px;">TIPO DE PAGO</th>
-                                        <th class="text-center" style="color: white; width: 120px;">N° VOUCHER</th>
-                                        <th class="text-center" style="color: white; width: 120px;">FECHA INSCRIPCIÓN</th>
+                                        <th class="text-center" style="color: white; width: 150px;">PAGO</th>
+                                        <th class="text-center" style="color: white; width: 110px;">FECHA INSCRIPCIÓN</th>
                                         <th class="text-center" style="color: white; width: 150px;">ACCIONES</th>
                                     </tr>
                                 </thead>
@@ -177,61 +171,42 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
+            <!-- La tabla solo identifica al estudiante (nombre, CI, programa, sede,
+                 tipo de pago, fecha). Aquí va lo que NO está en la tabla: contacto,
+                 datos administrativos del programa y el desglose de la matrícula. -->
             <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <h5 class="mb-0"><i class="fa fa-user"></i> <strong id="detalleEstudianteNombre"></strong></h5>
-                        </div>
+                <div class="alert alert-info d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <h5 class="mb-0"><i class="fa fa-user"></i> <strong id="detalleEstudianteNombre"></strong></h5>
+                        <small><i class="fa fa-id-card"></i> CI: <span id="detalleEstudianteCI"></span></small>
                     </div>
+                    <span id="detalleEstado" class="badge"></span>
                 </div>
+
+                <h6 class="detalle-seccion"><i class="fa fa-address-book"></i> Contacto</h6>
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label><strong>CI:</strong></label>
-                            <p id="detalleEstudianteCI" class="form-control-plaintext"></p>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label><strong>Programa:</strong></label>
-                            <p id="detalleProgramaNombre" class="form-control-plaintext"></p>
-                        </div>
-                    </div>
+                    <div class="col-md-4"><label class="detalle-label">Celular</label><p id="detalleCelular" class="detalle-valor"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Correo</label><p id="detalleCorreo" class="detalle-valor text-break"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Profesión</label><p id="detalleProfesion" class="detalle-valor"></p></div>
                 </div>
+
+                <h6 class="detalle-seccion"><i class="fa fa-graduation-cap"></i> Programa</h6>
                 <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label><strong>Grado Académico:</strong></label>
-                            <p id="detalleGrado" class="form-control-plaintext"></p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label><strong>Código del Programa:</strong></label>
-                            <p id="detalleCodigo" class="form-control-plaintext"></p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label><strong>Costo de Matrícula:</strong></label>
-                            <p id="detalleCosto" class="form-control-plaintext text-primary font-weight-bold"></p>
-                        </div>
-                    </div>
+                    <div class="col-md-12"><p id="detalleProgramaNombre" class="detalle-valor font-weight-bold"></p></div>
+                    <div class="col-md-3"><label class="detalle-label">Código</label><p id="detalleCodigo" class="detalle-valor"></p></div>
+                    <div class="col-md-3"><label class="detalle-label">Versión</label><p id="detalleVersion" class="detalle-valor"></p></div>
+                    <div class="col-md-3"><label class="detalle-label">Sede</label><p id="detalleSede" class="detalle-valor"></p></div>
+                    <div class="col-md-3"><label class="detalle-label">N° Trámite</label><p id="detalleTramite" class="detalle-valor"></p></div>
                 </div>
+
+                <h6 class="detalle-seccion"><i class="fa fa-money"></i> Matrícula</h6>
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label><strong>N° Voucher:</strong></label>
-                            <p id="detalleVoucher" class="form-control-plaintext"></p>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label><strong>Fecha de Inscripción:</strong></label>
-                            <p id="detalleFecha" class="form-control-plaintext"></p>
-                        </div>
-                    </div>
+                    <div class="col-md-4"><label class="detalle-label">Fecha de inscripción</label><p id="detalleFecha" class="detalle-valor"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Tipo de pago</label><p id="detalleTipoPago" class="detalle-valor"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">N° Voucher</label><p id="detalleVoucher" class="detalle-valor"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Costo de matrícula</label><p id="detalleCosto" class="detalle-valor text-primary font-weight-bold"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Descuento</label><p id="detalleDescuento" class="detalle-valor"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Monto pagado</label><p id="detalleMontoPagado" class="detalle-valor font-weight-bold"></p></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -619,6 +594,26 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
         font-weight: 500;
     }
 
+    /* Modal Ver Detalles: secciones Contacto / Programa / Matrícula */
+    #modalVerDetalles .detalle-seccion {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #1e3c72;
+        border-bottom: 1px solid #e3e6f0;
+        padding-bottom: 4px;
+        margin: 14px 0 10px;
+    }
+    #modalVerDetalles .detalle-label {
+        display: block;
+        font-size: 11px;
+        color: #8a8fa3;
+        margin-bottom: 0;
+    }
+    #modalVerDetalles .detalle-valor {
+        margin-bottom: 10px;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
         #tablaMatriculados {
@@ -902,7 +897,7 @@ $(document).ready(function() {
         }
 
         // Mostrar mensaje de carga
-        $('#tablaMatriculadosBody').html('<tr><td colspan="13" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando estudiantes...</td></tr>');
+        $('#tablaMatriculadosBody').html('<tr><td colspan="7" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando estudiantes...</td></tr>');
 
         // Petición AJAX
         $.ajax({
@@ -956,7 +951,7 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error('✗ Error al cargar estudiantes:', error);
-                $('#tablaMatriculadosBody').html('<tr><td colspan="13" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los estudiantes</td></tr>');
+                $('#tablaMatriculadosBody').html('<tr><td colspan="7" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los estudiantes</td></tr>');
             }
         });
     }

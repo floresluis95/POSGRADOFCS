@@ -99,13 +99,13 @@ kt-aside--fixed kt-page--loading">
             <div class="kt-subheader kt-grid__item" id="kt_subheader">
               <div class="kt-container">
                 <div class="kt-subheader__main">
-                  <h2>PRE-REGISTRO</h2>
+                  <h2>NUEVO PRE-REGISTRO</h2>
                   <span class="kt-subheader__separator kt-hidden"></span>
                   <div class="kt-subheader__breadcrumbs">
                     <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
                     <span class="kt-subheader__breadcrumbs-separator"></span>
                     <a href="#" class="kt-subheader__breadcrumbs-link">
-                      <h3>NUEVO PRE-REGISTRO (SIN MATRÍCULA)</h3>
+                      <h3>GENERAR ORDEN DE PAGO DE MATRÍCULA</h3>
                     </a>
                   </div>
                 </div>
@@ -1651,7 +1651,33 @@ function iniciarPreregistro() {
                         '</tbody>' +
                     '</table>';
 
-                $('#detallePreregistroContenido').html(html);
+                // Cuenta a la que el estudiante debe depositar la matrícula
+                let htmlCuenta;
+                if (p.CuentaNumero) {
+                    const origenCuenta = p.CuentaElegida == 1
+                        ? 'Cuenta elegida al registrar el pre-registro'
+                        : 'No se eligió cuenta: se usa la principal de matrícula del programa';
+                    htmlCuenta = '' +
+                        '<div class="cuenta-deposito-detalle">' +
+                            '<div class="cuenta-deposito-titulo"><i class="fa fa-university"></i> Cuenta de depósito</div>' +
+                            '<div class="cuenta-deposito-numero">' + $('<span>').text(p.CuentaNumero).html() + '</div>' +
+                            '<table class="table table-sm mb-1">' +
+                                '<tbody>' +
+                                    '<tr><th style="width:45%;">Banco / Entidad</th><td>' + $('<span>').text(p.CuentaBanco || 'No registrado').html() + '</td></tr>' +
+                                    '<tr><th>Tipo de cuenta</th><td>' + $('<span>').text(p.CuentaTipo || '-').html() +
+                                        (p.CuentaPrincipal == 1 ? ' <span class="badge badge-info">Principal</span>' : '') + '</td></tr>' +
+                                    '<tr><th>Monto a depositar</th><td><strong>Bs. ' + parseFloat(p.MontoFinal || 0).toFixed(2) + '</strong></td></tr>' +
+                                    '<tr><th>Referencia</th><td>Orden N° ' + (p.NumeroOrden || '-') + ' - ' + nombreCompleto + '</td></tr>' +
+                                '</tbody>' +
+                            '</table>' +
+                            '<small class="text-muted"><i class="fa fa-info-circle"></i> ' + origenCuenta + '</small>' +
+                        '</div>';
+                } else {
+                    htmlCuenta = '<div class="alert alert-warning mb-0"><i class="fa fa-exclamation-triangle"></i> ' +
+                        'Este programa no tiene una cuenta de matrícula registrada. Regístrela en Programas &gt; Cuentas.</div>';
+                }
+
+                $('#detallePreregistroContenido').html(html + htmlCuenta);
             },
             error: function() {
                 $('#detallePreregistroContenido').html('<div class="alert alert-danger">No se pudo cargar el detalle</div>');
@@ -2216,6 +2242,34 @@ if (document.readyState === 'loading') {
     border-bottom: none;
     margin-bottom: 0;
     padding-bottom: 0;
+}
+
+/* Modal "Detalle de la Solicitud": bloque destacado con la cuenta de depósito */
+.cuenta-deposito-detalle {
+    border: 1px solid #c9d6ee;
+    border-left: 4px solid #1e3c72;
+    background: #f5f8fd;
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+.cuenta-deposito-titulo {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #1e3c72;
+    margin-bottom: 6px;
+}
+.cuenta-deposito-numero {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #1e3c72;
+    margin-bottom: 6px;
+}
+.cuenta-deposito-detalle .table th,
+.cuenta-deposito-detalle .table td {
+    border-top: 1px solid #e3e9f5;
+    font-size: 12.5px;
 }
 
 .resumen-confirmacion-titulo {

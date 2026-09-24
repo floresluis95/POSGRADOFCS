@@ -50,7 +50,7 @@ $csrf_token = bin2hex(random_bytes(32));
                   <div class="kt-subheader__breadcrumbs">
                     <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
                     <span class="kt-subheader__breadcrumbs-separator"></span>
-                    <h3>Reporte de Notas por Programa</h3>
+                    <h3>REPORTE DE NOTAS POR PROGRAMA</h3>
                   </div>
                 </div>
                 <div class="kt-subheader__toolbar">

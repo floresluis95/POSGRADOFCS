@@ -166,67 +166,45 @@ kt-aside--fixed kt-page--loading">
 
               <input type="hidden" id="detalleIdOrdenPago">
 
-              <!-- Datos del estudiante -->
+              <!-- Solo lo necesario para contrastar con el voucher físico: quién
+                   pagó, cuánto y a qué cuenta. Correo, celular, grado y sede ya se
+                   ven en Pre-Registro y no aportan a esta validación. -->
+
+              <!-- Estudiante y programa -->
               <div class="seccion-detalle mb-3">
-                <div class="seccion-detalle-titulo">Datos del estudiante</div>
+                <div class="seccion-detalle-titulo">Estudiante</div>
                 <div class="row">
-                  <div class="col-md-4">
+                  <div class="col-md-8">
                     <div class="label-modern">Nombre completo</div>
                     <div class="value-modern" id="detalleNombre"></div>
                   </div>
-                  <div class="col-md-2">
+                  <div class="col-md-4">
                     <div class="label-modern">C.I.</div>
                     <div class="value-modern" id="detalleCi"></div>
                   </div>
-                  <div class="col-md-4">
-                    <div class="label-modern">Correo</div>
-                    <div class="value-modern" id="detalleCorreo"></div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="label-modern">Celular</div>
-                    <div class="value-modern" id="detalleCelular"></div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Datos del programa -->
-              <div class="seccion-detalle mb-3">
-                <div class="seccion-detalle-titulo">Datos del programa</div>
-                <div class="row">
-                  <div class="col-md-4">
+                  <div class="col-md-12 mt-2">
                     <div class="label-modern">Programa</div>
                     <div class="value-modern"><span id="detallePrograma"></span> (<span id="detalleCodigo"></span>)</div>
                   </div>
-                  <div class="col-md-2">
-                    <div class="label-modern">Grado</div>
-                    <div class="value-modern" id="detalleGrado"></div>
-                  </div>
-                  <div class="col-md-2">
-                    <div class="label-modern">Sede</div>
-                    <div class="value-modern" id="detalleSede"></div>
-                  </div>
-                  <div class="col-md-2">
-                    <div class="label-modern">Modalidad</div>
-                    <div class="value-modern"><span class="badge badge-secondary" id="detalleModalidad"></span></div>
-                  </div>
-                  <div class="col-md-2">
-                    <div class="label-modern">Monto</div>
-                    <div class="value-modern">Bs. <span id="detalleMonto">0.00</span></div>
-                  </div>
-                </div>
-                <div class="mt-2">
-                  <span class="label-modern">Plan del programa</span><br>
-                  <span class="badge badge-warning" id="detalleEstadoPlan"><i class="fa fa-clock-o"></i> Pendiente de confirmación</span>
                 </div>
               </div>
 
-              <!-- PLAN DE PAGO DEL PROGRAMA: ya se eligió en Pre-Registro y queda
-                   definitivo al validar el voucher; aquí solo se muestra como referencia. -->
-              <div class="seccion-detalle mb-3">
-                <div class="seccion-detalle-titulo">
-                  <i class="fa fa-money"></i> Plan de pago del programa
+              <!-- Pago a verificar: monto y cuenta de depósito (para comparar con el voucher) -->
+              <div class="seccion-detalle mb-3 pago-verificar">
+                <div class="seccion-detalle-titulo"><i class="fa fa-university"></i> Pago a verificar</div>
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="label-modern">Monto de matrícula</div>
+                    <div class="pago-verificar-destacado">Bs. <span id="detalleMonto">0.00</span></div>
+                  </div>
+                  <div class="col-md-8">
+                    <div class="label-modern">N° de cuenta de depósito</div>
+                    <div class="pago-verificar-destacado" id="detalleCuentaNumero">-</div>
+                    <small class="text-muted" id="detalleCuentaDatos"></small>
+                  </div>
                 </div>
-                <div id="planPropuestaInfo"></div>
+                <!-- Plan elegido en Pre-Registro (queda definitivo al validar) -->
+                <div id="planPropuestaInfo" class="mt-2"></div>
               </div>
 
               <!-- DATOS DEL VOUCHER -->
@@ -410,14 +388,21 @@ kt-aside--fixed kt-page--loading">
                   $('#detalleIdOrdenPago').val(p.IdOrdenPago);
                   $('#detalleNombre').text(nombreCompleto);
                   $('#detalleCi').text(p.CiCompleto || '');
-                  $('#detalleCorreo').text(p.Correo || '-');
-                  $('#detalleCelular').text(p.Celular || '-');
                   $('#detallePrograma').text(p.NombrePrograma || '');
                   $('#detalleCodigo').text(p.CodigoPrograma || '');
-                  $('#detalleGrado').text(p.GradoAcademico || '');
-                  $('#detalleSede').text(p.Sede || '-');
-                  $('#detalleModalidad').text(p.Observaciones || (p.PagoCompleto == 1 ? 'Programa Completo' : 'Solo Matrícula'));
                   $('#detalleMonto').text(parseFloat(p.MontoFinal).toFixed(2));
+
+                  // Cuenta de depósito (la elegida en Pre-Registro o la principal de
+                  // matrícula del programa; ver ObtenerPreregistroModelo)
+                  if (p.CuentaNumero) {
+                      $('#detalleCuentaNumero').text(p.CuentaNumero);
+                      $('#detalleCuentaDatos').text(
+                          [p.CuentaBanco, p.CuentaTipo].filter(Boolean).join(' - ')
+                      );
+                  } else {
+                      $('#detalleCuentaNumero').text('Sin cuenta registrada');
+                      $('#detalleCuentaDatos').text('Registre la cuenta de matrícula del programa en Programas > Cuentas.');
+                  }
 
                   // Reiniciar el formulario de validación
                   $('#formValidarVoucher')[0].reset();
@@ -445,7 +430,6 @@ kt-aside--fixed kt-page--loading">
                           'No se fija ningún plan al validar este voucher: el estudiante quedará disponible para armarse ' +
                           'en un grupo después, desde <strong>Matriculados</strong>.</div>'
                       );
-                      $('#detalleEstadoPlan').html('<i class="fa fa-clock-o"></i> Pendiente (Grupal, se arma en Matriculados)');
                   } else {
                       $('#planPropuestaInfo').html(
                           '<div class="alert alert-light border py-2 px-3 mb-0" style="font-size:12px;">' +
@@ -454,7 +438,6 @@ kt-aside--fixed kt-page--loading">
                           (planPorcentaje > 0 ? ' con <strong>' + planPorcentaje.toFixed(2) + '%</strong> de descuento' : '') +
                           '. Quedará definitivo al validar el voucher.</div>'
                       );
-                      $('#detalleEstadoPlan').html('<i class="fa fa-clock-o"></i> Se confirmará al validar');
                   }
 
                   $('#ModalResultadosBusqueda').modal('hide');
@@ -748,6 +731,19 @@ kt-aside--fixed kt-page--loading">
     background-color: #fbfbfd;
     border: 1px solid #e1e3ea;
     border-radius: 6px;
+}
+
+/* Bloque "Pago a verificar": monto y N° de cuenta resaltados para compararlos
+   de un vistazo con el voucher físico */
+.pago-verificar {
+    background: #f5f8fd;
+    border-left: 4px solid #1e3c72;
+}
+.pago-verificar-destacado {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    color: #1e3c72;
 }
 
 .seccion-detalle-titulo {

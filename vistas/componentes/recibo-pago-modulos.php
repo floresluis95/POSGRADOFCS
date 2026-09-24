@@ -72,10 +72,16 @@ body{
 .logo{width:80px}
 .logo img{max-width:100%;max-height:65px}
 
+/* Título del documento: va debajo del encabezado institucional (antes el N° de
+   recibo estaba en position:absolute y quedaba encima del logo derecho). */
+.titulo-recibo{text-align:center;margin:10px 0 0}
+.titulo-recibo h2{font-size:15pt;color:#1e3c72;letter-spacing:1px;margin-bottom:4px}
+.titulo-recibo .datos-recibo{font-size:9pt;color:#555}
 .numero-recibo{
-    position:absolute;top:12px;right:12px;
-    background:#1e3c72;color:#fff;padding:5px 12px;
-    font-size:8pt;border-radius:4px;font-weight:bold
+    display:inline-block;
+    background:#1e3c72;color:#fff;padding:3px 10px;
+    font-size:8.5pt;border-radius:4px;font-weight:bold;margin-right:8px;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact
 }
 
 .info-estudiante{
@@ -117,7 +123,7 @@ body{
 }
 
 .btn-imprimir{
-    position:fixed;top:15px;right:15px;
+    position:fixed;bottom:15px;right:15px;
     background:#1e3c72;color:#fff;border:none;
     padding:10px 20px;border-radius:20px;
     font-size:11pt;cursor:pointer
@@ -132,23 +138,25 @@ body{
 <body>
 
 <button onclick="window.print()" class="btn-imprimir no-print">🖨️ Imprimir</button>
-<div class="numero-recibo">N° <?php echo $numeroRecibo; ?></div>
-
 <div class="header">
     <div class="logo"><img src="../../extensiones/imagenespdf/logouto.png"></div>
     <div class="header-content">
         <h3>UNIVERSIDAD TÉCNICA DE ORURO</h3>
         <h4>FACULTAD DE CIENCIAS DE LA SALUD</h4>
-        <h4>POSGRADO - ODONTOLOGÍA</h4>
-            <p>AV. Del Moreno Edificio San Agustin II (Ex Almacenes COMIBOL) Telefonos: 52 - 37317 - Fax: 52 - 47110 </p>
-
-        <p>Oruro - Bolivia</p>
-        <p>Emisión: <?php echo $fechaGeneracion; ?></p>
+        <h4>COORDINACIÓN DE POSGRADO - ODONTOLOGÍA</h4>
+        <p>Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso</p>
+        <p>Telf: 5237317 - Fax: 5247110 - Oruro - Bolivia</p>
     </div>
     <div class="logo"><img src="../../extensiones/imagenespdf/logofcs.png"></div>
 </div>
 
-<h3>RECIBO DE PAGO</h3>
+<div class="titulo-recibo">
+    <h2>RECIBO DE PAGO</h2>
+    <div class="datos-recibo">
+        <span class="numero-recibo">N° <?php echo $numeroRecibo; ?></span>
+        Emisión: <?php echo $fechaGeneracion; ?>
+    </div>
+</div>
 
 <div class="info-estudiante">
 <table>

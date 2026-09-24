@@ -22,7 +22,7 @@ class InscripcionModuloControladores
 
         if (empty($estudiantes)) {
             echo '<tr>
-                    <td colspan="13" class="text-center">No hay estudiantes matriculados</td>
+                    <td colspan="7" class="text-center">No hay estudiantes matriculados</td>
                   </tr>';
             return;
         }
@@ -56,27 +56,55 @@ class InscripcionModuloControladores
                 $montoMostrar = $montoPagado;
             }
 
-            // Mostrar descuento
             $montoDescuento = isset($estudiante['montoDescuento']) ? floatval($estudiante['montoDescuento']) : 0;
-            if ($montoDescuento > 0) {
-                $descuentoHTML = '<span style="color: #28a745; font-weight: bold;">Bs. ' . number_format($montoDescuento, 2) . '</span>';
-            } else {
-                $descuentoHTML = '<span style="color: #999;">-</span>';
-            }
+            $porcentajeDescuento = isset($estudiante['porcentajeDescuento']) ? floatval($estudiante['porcentajeDescuento']) : 0;
+
+            // CI completo (con complemento y expedido), igual que en la ficha de inscripción
+            $ciCompleto = $estudiante['Ci']
+                . (!empty($estudiante['Complemento']) ? '-' . $estudiante['Complemento'] : '')
+                . (!empty($estudiante['Exp']) ? ' ' . $estudiante['Exp'] : '');
+
+            // La tabla solo muestra lo necesario para identificar al estudiante y su
+            // situación de pago; el resto (contacto, montos, voucher, trámite...) va
+            // en el modal "Ver Detalles", que lo recibe todo en este JSON.
+            $detalle = [
+                'nombre'        => $nombreCompleto,
+                'ci'            => $ciCompleto,
+                'celular'       => $estudiante['Celular'] ?? '',
+                'correo'        => $estudiante['Correo'] ?? '',
+                'profesion'     => $estudiante['NombreProfesion'] ?? '',
+                'programa'      => $estudiante['NombrePrograma'],
+                'grado'         => $estudiante['GradoAcademico'],
+                'codigo'        => $estudiante['CodigoPrograma'],
+                'version'       => $estudiante['Version'] ?? '',
+                'sede'          => $estudiante['Sede'] ?? '',
+                'tramite'       => $estudiante['NumeroTramite'] ?? '',
+                'estado'        => $estudiante['Estado'],
+                'fecha'         => $fechaFormateada,
+                'costo'         => number_format((float)$estudiante['costomatricula'], 2),
+                'descuento'     => $montoDescuento > 0 ? number_format($montoDescuento, 2) : '',
+                'porcentaje'    => $porcentajeDescuento > 0 ? rtrim(rtrim(number_format($porcentajeDescuento, 2), '0'), '.') : '',
+                'montoPagado'   => $montoPagado > 0 ? number_format($montoPagado, 2) : '',
+                'pagoCompleto'  => $pagoCompleto,
+                'voucher'       => $estudiante['nvauchermatricula'] ?? ''
+            ];
 
             echo '<tr>
                     <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
-                    <td><strong>' . $nombreCompleto . '</strong>' . $badgeEstadoInscripcion . '</td>
-                    <td class="text-center"><span class="badge badge-secondary">' . $estudiante['Ci'] . '</span></td>
-                    <td>' . $estudiante['NombrePrograma'] . '</td>
-                    <td class="text-center"><span class="badge badge-info">' . $estudiante['GradoAcademico'] . '</span></td>
-                    <td class="text-center"><span class="badge badge-primary">' . $estudiante['CodigoPrograma'] . '</span></td>
+                    <td>
+                        <strong>' . $nombreCompleto . '</strong>' . $badgeEstadoInscripcion . '
+                        <br><small class="text-muted"><i class="fa fa-id-card"></i> ' . htmlspecialchars($ciCompleto) . '</small>
+                    </td>
+                    <td>
+                        ' . $estudiante['NombrePrograma'] . '
+                        <br><span class="badge badge-info">' . $estudiante['GradoAcademico'] . '</span>
+                        <span class="badge badge-primary">' . $estudiante['CodigoPrograma'] . '</span>
+                    </td>
                     <td class="text-center">' . htmlspecialchars($estudiante['Sede'] ?? '') . '</td>
-                    <td class="text-center"><strong>Bs. ' . number_format($montoMostrar, 2) . '</strong></td>
-                    <td class="text-center">' . $descuentoHTML . '</td>
-                    <td class="text-center">' . $tipoPago . '</td>
-                    <td class="text-center">' . $estudiante['nvauchermatricula'] . '</td>
-                    <td class="text-center">' . $fechaFormateada . '</td>
+                    <td class="text-center">' . $tipoPago . '
+                        <br><small><strong>Bs. ' . number_format($montoMostrar, 2) . '</strong></small>
+                    </td>
+                    <td class="text-center" data-order="' . date('Y-m-d', strtotime($estudiante['FechaInscripcion'])) . '">' . $fechaFormateada . '</td>
                     <td class="text-center">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-success btn-sm btn-gestionar-pagos" title="Gestionar Pagos del Programa"
@@ -97,15 +125,7 @@ class InscripcionModuloControladores
                             </button>
                             <div class="dropdown-menu dropdown-menu-right">
                                 <a class="dropdown-item btn-ver-detalles" href="#"
-                                   data-estudiante-id="' . $estudiante['EstudianteID'] . '"
-                                   data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
-                                   data-estudiante-ci="' . $estudiante['Ci'] . '"
-                                   data-programa-nombre="' . htmlspecialchars($estudiante['NombrePrograma']) . '"
-                                   data-grado="' . $estudiante['GradoAcademico'] . '"
-                                   data-codigo="' . $estudiante['CodigoPrograma'] . '"
-                                   data-costo="' . number_format($estudiante['costomatricula'], 2) . '"
-                                   data-voucher="' . $estudiante['nvauchermatricula'] . '"
-                                   data-fecha="' . $fechaFormateada . '">
+                                   data-detalle="' . htmlspecialchars(json_encode($detalle, JSON_UNESCAPED_UNICODE), ENT_QUOTES) . '">
                                     <i class="fa fa-eye text-info"></i> Ver Detalles
                                 </a>
                                 <a class="dropdown-item btn-ver-modulos" href="#"

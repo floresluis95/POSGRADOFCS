@@ -655,20 +655,20 @@
           <div class="kt-content  kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
 
             <!-- begin:: Subheader -->
-            <div class="kt-subheader   kt-grid__item" id="kt_subheader" style="background: transparent;">
+            <div class="kt-subheader   kt-grid__item" id="kt_subheader">
               <div class="kt-container ">
                 <div class="kt-subheader__main">
-                  <h2 style="color: #2d3436;">PANEL PRINCIPAL</h2>
+                  <h2>PANEL PRINCIPAL</h2>
                   <span class="kt-subheader__separator kt-hidden"></span>
                   <div class="kt-subheader__breadcrumbs">
                     <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
                     <span class="kt-subheader__breadcrumbs-separator"></span>
-                    <h4 style="color: #636e72;">SISTEMA DE REGISTRO Y CONTROL</h4>
+                    <h4>SISTEMA DE REGISTRO Y CONTROL</h4>
                   </div>
                 </div>
                 <div class="kt-subheader__toolbar">
                   <div class="kt-subheader__wrapper">
-                    <div id="lafecha" style="font-size:13pt; color: #2d3436; font-weight: 600;"></div>
+                    <div id="lafecha"></div>
                   </div>
                 </div>
               </div>

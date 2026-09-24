@@ -69,15 +69,15 @@ $pdf->SetFont('helvetica', '', 12);
 $pdf->SetXY(15, 22);
 $pdf->Cell(0, 8, 'COORDINACION -POSGRADO ODONTOLOGIA', 0, 1, 'C');
 
-$pdf->SetFont('helvetica', '', 12);
+$pdf->SetFont('helvetica', '', 10);
 $pdf->SetTextColor(80, 80, 80);
 $pdf->SetXY(15, 28);
-$pdf->Cell(0, 5, 'Av. del Minero Barrio San jose "Excomibol"', 0, 1, 'C');
+$pdf->Cell(0, 5, 'Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso', 0, 1, 'C');
 
-$pdf->SetFont('helvetica', '', 12);
+$pdf->SetFont('helvetica', '', 10);
 $pdf->SetTextColor(80, 80, 80);
 $pdf->SetXY(15, 33);
-$pdf->Cell(0, 5, 'Tel.(+591) 5237317 - Fax 5247110"', 0, 1, 'C');
+$pdf->Cell(0, 5, 'Telf: 5237317 - Fax: 5247110 - Oruro - Bolivia', 0, 1, 'C');
 
 // Línea decorativa horizontal
 $pdf->SetDrawColor(0, 0, 0);
@@ -107,7 +107,8 @@ $pdf->Cell(0, 6, 'DATOS PERSONALES', 0, 1, 'L');
 $y += 8;
 
 // Función helper para agregar campos
-function addField($pdf, $x, $y, $label, $value, $labelWidth, $dataWidth) {
+// $mayusculas = false para valores que deben respetar su formato original (p. ej. el correo).
+function addField($pdf, $x, $y, $label, $value, $labelWidth, $dataWidth, $mayusculas = true) {
     // Etiqueta
     $pdf->SetFont('helvetica', 'B', 9);
     $pdf->SetTextColor(60, 60, 60);
@@ -123,7 +124,7 @@ function addField($pdf, $x, $y, $label, $value, $labelWidth, $dataWidth) {
     $pdf->Line($x + $labelWidth, $y + 5.5, $x + $labelWidth + $dataWidth, $y + 5.5);
 
     $pdf->SetXY($x + $labelWidth, $y);
-    $pdf->Cell($dataWidth, 6, strtoupper($value), 0, 1, 'L');
+    $pdf->Cell($dataWidth, 6, $mayusculas ? strtoupper($value) : $value, 0, 1, 'L');
 
     return $y + 7;
 }
@@ -224,7 +225,7 @@ $y = addField($pdf, $leftMargin, $y, 'CELULAR:', $celular, $labelWidth, $dataWid
 
 // Correo Electrónico
 $correo = !empty($estudiante['Correo']) ? $estudiante['Correo'] : 'NO ESPECIFICADO';
-$y = addField($pdf, $leftMargin, $y, 'CORREO ELECTRÓNICO:', $correo, $labelWidth, $dataWidth);
+$y = addField($pdf, $leftMargin, $y, 'CORREO ELECTRÓNICO:', $correo, $labelWidth, $dataWidth, false);
 
 // ========================================
 // PROGRAMA DE POSGRADO
@@ -315,22 +316,30 @@ $pdf->Cell(60, 5, 'FECHA DE INSCRIPCIÓN: ' . $fechaInscripcion, 0, 1, 'C');
 // ========================================
 // CÓDIGO QR
 // ========================================
-$qrX = 170;
-$qrY = 225;
-$qrSize = 20; // 2 cm
+$qrX = 166;
+$qrY = 222;
+$qrSize = 26; // Más grande que antes (2 cm) porque ahora lleva más datos
 
-// Preparar datos para el QR
-$datosQR = [
-    'id' => $estudiante['EstudianteID'],
-    'ci' => $ci,
-    'nombre' => $nombreCompleto,
-    'programa' => $estudiante['NombrePrograma'],
-    'codigo' => $estudiante['CodigoPrograma'],
-    'fecha' => $fechaInscripcion
+// Datos del QR como texto con etiquetas (una línea por dato): al escanearlo con
+// el celular se lee directamente, en vez de un JSON difícil de entender.
+$programaQR = $estudiante['GradoAcademico'] . ' EN ' . $estudiante['NombrePrograma'];
+if (!empty($estudiante['Version'])) {
+    $programaQR .= ' (' . $estudiante['Version'] . ')';
+}
+
+$lineasQR = [
+    'FICHA DE INSCRIPCIÓN - POSGRADO FCS UTO',
+    'N° INSCRIPCIÓN: ' . $estudiante['idInscripcion'],
+    'ESTUDIANTE: ' . $nombreCompleto,
+    'CI: ' . $ci,
+    'PROFESIÓN: ' . $profesion,
+    'CELULAR: ' . $celular,
+    'CORREO: ' . $correo,
+    'PROGRAMA: ' . $programaQR,
+    'CÓDIGO: ' . $estudiante['CodigoPrograma'],
+    'FECHA DE INSCRIPCIÓN: ' . $fechaInscripcion,
 ];
-
-// Convertir a JSON
-$qrContent = json_encode($datosQR, JSON_UNESCAPED_UNICODE);
+$qrContent = implode("\n", $lineasQR);
 
 // Generar código QR
 // Parámetros: contenido, tipo, posición X, posición Y, ancho, alto, estilo, alineación
@@ -344,12 +353,14 @@ $style = [
     'module_height' => 1
 ];
 
-$pdf->write2DBarcode($qrContent, 'QRCODE,H', $qrX, $qrY, $qrSize, $qrSize, $style, 'N');
+// Corrección 'M' (no 'H'): con más texto, 'H' genera un QR muy denso que cuesta
+// leer impreso en 2-3 cm.
+$pdf->write2DBarcode($qrContent, 'QRCODE,M', $qrX, $qrY, $qrSize, $qrSize, $style, 'N');
 
 
 $pdf->SetFont('helvetica', '', 7);
 $pdf->SetTextColor(80, 80, 80);
-$pdf->SetXY($qrX, $qrY + $qrSize + 6);
+$pdf->SetXY($qrX, $qrY + $qrSize + 1);
 $pdf->Cell($qrSize, 3, 'Escanear para verificar', 0, 1, 'C');
 
 // ========================================

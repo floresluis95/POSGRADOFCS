@@ -33,8 +33,11 @@ class InscripcionModuloModelos
                     e.Apaterno,
                     e.Amaterno,
                     e.Ci,
+                    e.Complemento,
+                    e.Exp,
                     e.Correo,
                     e.Celular,
+                    prof.NombreProfesion,
                     p.NombrePrograma,
                     p.GradoAcademico,
                     p.Codigo as CodigoPrograma,
@@ -45,6 +48,7 @@ class InscripcionModuloModelos
                 FROM estudianteprograma ep
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
+                LEFT JOIN profesion prof ON e.IdProfesion = prof.IdProfesion
                 WHERE 1 = 1";
 
             if ($estado !== null && strtoupper($estado) !== 'TODOS') {

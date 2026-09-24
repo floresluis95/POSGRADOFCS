@@ -93,23 +93,38 @@
 .kt-subheader__main > h3,
 .kt-subheader__main > h4,
 .kt-subheader__main .kt-subheader__title {
+    font-family: Poppins, Helvetica, sans-serif !important;
     font-size: 20px !important;
     font-weight: 700 !important;
     color: #1e3c72 !important;
     margin: 0 !important;
     letter-spacing: .3px;
+    /* Algunas vistas escribian el titulo en minusculas ("Gestion de Usuarios")
+       y otras en MAYUSCULAS; se muestran todas igual. */
+    text-transform: uppercase;
 }
 
 .kt-subheader__breadcrumbs h1,
 .kt-subheader__breadcrumbs h2,
 .kt-subheader__breadcrumbs h3,
-.kt-subheader__breadcrumbs h4 {
+.kt-subheader__breadcrumbs h4,
+.kt-subheader__breadcrumbs-link {
+    font-family: Poppins, Helvetica, sans-serif !important;
     font-size: 14px !important;
     font-weight: 600 !important;
     color: #74788d !important;
     margin: 0 !important;
     text-transform: uppercase;
     letter-spacing: .2px;
+}
+
+/* Fecha a la derecha del subheader: cada vista la tenia con estilo inline
+   distinto (13pt, negrita, otro color). */
+#lafecha {
+    font-family: Poppins, Helvetica, sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #74788d !important;
 }
 
 /* El icono del titulo principal en algunas vistas quedaba a 2.5rem (fijo por

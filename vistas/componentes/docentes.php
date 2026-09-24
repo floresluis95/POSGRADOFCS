@@ -45,12 +45,12 @@ $csrf_token = bin2hex(random_bytes(32));
             <div class="kt-subheader   kt-grid__item" id="kt_subheader">
               <div class="kt-container ">
                 <div class="kt-subheader__main">
-                  <h2 class="">Gestión de Docentes</h2>
+                  <h2>GESTIÓN DE DOCENTES</h2>
                   <span class="kt-subheader__separator kt-hidden"></span>
                   <div class="kt-subheader__breadcrumbs">
-                    <a href="#" class="kt-subheader__breadcrumbs-home"><i class="fas fa-chalkboard-teacher"></i></a>
+                    <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
                     <span class="kt-subheader__breadcrumbs-separator"></span>
-                    <h3>Registro de Docentes</h3>
+                    <h3>REGISTRO DE DOCENTES</h3>
                   </div>
                 </div>
                 <div class="kt-subheader__toolbar">

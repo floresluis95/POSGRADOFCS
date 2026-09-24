@@ -31,7 +31,7 @@ date_default_timezone_set("America/La_Paz");
                                     <div class="kt-subheader__breadcrumbs">
                                         <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
                                         <span class="kt-subheader__breadcrumbs-separator"></span>
-                                        <h4>INSCRITOS POR MÓDULO</h4>
+                                        <h4>REPORTE GENERAL DE PROGRAMAS</h4>
                                     </div>
                                 </div>
                                 <div class="kt-subheader__toolbar">

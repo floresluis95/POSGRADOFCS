@@ -594,10 +594,24 @@ class OrdenPagoModelos
                          LIMIT 1),
                         p.NumeroTramite
                     ) AS NumeroTramite,
-                    p.Costo AS CostoPrograma
+                    p.Costo AS CostoPrograma,
+                    -- Detalle de la cuenta a depositar (para el modal de detalle):
+                    -- la elegida en el pre-registro o, si no se guardó, la principal
+                    -- de matrícula del programa (misma regla que NumeroTramite).
+                    op.ProgramaCuentaID IS NOT NULL AS CuentaElegida,
+                    cta.TipoCuenta AS CuentaTipo,
+                    cta.NumeroCuenta AS CuentaNumero,
+                    cta.Banco AS CuentaBanco,
+                    cta.Principal AS CuentaPrincipal
                 FROM ordenpago op
                 INNER JOIN estudiante e ON op.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON op.ProgramaID = p.ProgramaID
+                LEFT JOIN programacuenta cta ON cta.ProgramaCuentaID = COALESCE(
+                    op.ProgramaCuentaID,
+                    (SELECT pc.ProgramaCuentaID FROM programacuenta pc
+                     WHERE pc.ProgramaID = p.ProgramaID AND pc.TipoCuenta = 'MATRICULA' AND pc.Principal = 1 AND pc.Estado = 1
+                     LIMIT 1)
+                )
                 WHERE op.IdOrdenPago = :idOrdenPago AND op.Estado = 'PENDIENTE'"
             );
             $stmt->bindParam(":idOrdenPago", $idOrdenPago, PDO::PARAM_INT);

@@ -139,7 +139,7 @@ class EstudiantesControladores
             "FechaNacimiento" => htmlspecialchars(trim($_POST['FechaNacimiento'])),
             "Edad"            => (int)htmlspecialchars(trim($_POST['Edad'])),
             "Lugarn"          => strtoupper(htmlspecialchars(trim($_POST['Lugarn']))),
-            "Correo"          => htmlspecialchars(trim($_POST['Correo'])), // Correo en minúsculas
+            "Correo"          => strtolower(htmlspecialchars(trim($_POST['Correo']))), // Correo en minúsculas
             "IdProfesion"     => (int)$_POST["IdProfesion"],
             "Trabajo"         => strtoupper(htmlspecialchars(trim($_POST['Trabajo']))),
             "Direccion"       => strtoupper(htmlspecialchars(trim($_POST['Direccion']))),
@@ -224,7 +224,7 @@ class EstudiantesControladores
             "FechaNacimiento" => htmlspecialchars(trim($_POST['FechaNacimiento'])),
             "Edad"            => (int)htmlspecialchars(trim($_POST['Edad'])),
             "Lugarn"          => strtoupper(htmlspecialchars(trim($_POST['Lugarn']))),
-            "Correo"          => htmlspecialchars(trim($_POST['Correo'])), // Correo en minúsculas
+            "Correo"          => strtolower(htmlspecialchars(trim($_POST['Correo']))), // Correo en minúsculas
             "IdProfesion"     => (int)$_POST["IdProfesion"],
             "Trabajo"         => strtoupper(htmlspecialchars(trim($_POST['Trabajo']))),
             "Direccion"       => strtoupper(htmlspecialchars(trim($_POST['Direccion']))),
