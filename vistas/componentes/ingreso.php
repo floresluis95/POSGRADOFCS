@@ -351,6 +351,102 @@
             text-decoration: underline;
         }
 
+        /* Botón "ojito" para mostrar/ocultar la contraseña */
+        .form-control.con-toggle {
+            padding-right: 55px;
+        }
+
+        /* Ocultar el ojito nativo de Edge para que no se duplique con el nuestro */
+        .form-control.con-toggle::-ms-reveal,
+        .form-control.con-toggle::-ms-clear {
+            display: none;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            padding: 8px;
+            color: #888;
+            font-size: 17px;
+            cursor: pointer;
+            z-index: 1;
+            transition: color 0.2s ease;
+        }
+
+        .toggle-password:hover,
+        .toggle-password:focus {
+            color: #1e3c72;
+            outline: none;
+        }
+
+        /* Modal "¿Olvidó su contraseña?" */
+        .modal-olvido {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(15, 30, 60, 0.6);
+        }
+
+        .modal-olvido.abierto {
+            display: flex;
+        }
+
+        .modal-olvido-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 420px;
+            width: 100%;
+            padding: 35px 30px 30px;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        .modal-olvido-icono {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(30, 60, 114, 0.1);
+            color: #1e3c72;
+            font-size: 30px;
+        }
+
+        .modal-olvido-card h3 {
+            color: #1e3c72;
+            font-size: 21px;
+            margin-bottom: 12px;
+        }
+
+        .modal-olvido-card p {
+            color: #555;
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .modal-olvido-card .btn-cerrar-olvido {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 35px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
         /* Botón de login */
         .btn-login {
             width: 100%;
@@ -620,13 +716,16 @@
                             <i class="input-icon fas fa-lock"></i>
                             <input
                                 type="password"
-                                class="form-control"
+                                class="form-control con-toggle"
                                 id="password"
                                 name="IPassword"
                                 placeholder="Ingrese su contraseña"
                                 autocomplete="current-password"
                                 required
                             >
+                            <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar contraseña" title="Mostrar contraseña">
+                                <i class="fas fa-eye"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -635,7 +734,7 @@
                             <input type="checkbox" id="remember" name="remember">
                             <label for="remember">Recordarme</label>
                         </div>
-                        <a href="#" class="forgot-password">¿Olvidó su contraseña?</a>
+                        <a href="#" class="forgot-password" id="linkOlvidoPassword">¿Olvidó su contraseña?</a>
                     </div>
 
                     <button type="submit" class="btn-login" id="btnLogin">
@@ -654,6 +753,16 @@
                     <p style="margin-top: 12px;">&copy; <?php echo date('Y'); ?> Universidad Técnica de Oruro. Todos los derechos reservados.</p>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal "¿Olvidó su contraseña?": el restablecimiento lo hace el administrador -->
+    <div class="modal-olvido" id="modalOlvidoPassword" role="dialog" aria-modal="true" aria-labelledby="tituloOlvidoPassword">
+        <div class="modal-olvido-card">
+            <div class="modal-olvido-icono"><i class="fas fa-user-shield"></i></div>
+            <h3 id="tituloOlvidoPassword">¿Olvidó su contraseña?</h3>
+            <p>Para recuperar el acceso, comuníquese con el <strong>administrador del sistema</strong>, quien restablecerá su contraseña y le entregará una nueva.</p>
+            <button type="button" class="btn-cerrar-olvido" id="btnCerrarOlvido">Entendido</button>
         </div>
     </div>
 
@@ -700,6 +809,44 @@
                 e.preventDefault();
                 document.getElementById('password').focus();
             }
+        });
+
+        // Mostrar/ocultar la contraseña con el ojito
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const input = document.getElementById('password');
+            const icono = this.querySelector('i');
+            const mostrar = input.type === 'password';
+
+            input.type = mostrar ? 'text' : 'password';
+            icono.classList.toggle('fa-eye', !mostrar);
+            icono.classList.toggle('fa-eye-slash', mostrar);
+            this.title = mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña';
+            this.setAttribute('aria-label', this.title);
+            input.focus();
+        });
+
+        // Modal "¿Olvidó su contraseña?"
+        const modalOlvido = document.getElementById('modalOlvidoPassword');
+
+        function cerrarModalOlvido() {
+            modalOlvido.classList.remove('abierto');
+        }
+
+        document.getElementById('linkOlvidoPassword').addEventListener('click', function(e) {
+            e.preventDefault();
+            modalOlvido.classList.add('abierto');
+            document.getElementById('btnCerrarOlvido').focus();
+        });
+
+        document.getElementById('btnCerrarOlvido').addEventListener('click', cerrarModalOlvido);
+
+        // Cerrar al hacer clic fuera de la tarjeta o con Escape
+        modalOlvido.addEventListener('click', function(e) {
+            if (e.target === modalOlvido) cerrarModalOlvido();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') cerrarModalOlvido();
         });
     </script>
 </body>

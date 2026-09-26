@@ -69,10 +69,6 @@ switch ($accion) {
         actualizarEstudiante();
         break;
 
-    case 'restablecerPasswordEstudiante':
-        restablecerPasswordEstudiante();
-        break;
-
     case 'obtenerProgramasEstudiante':
         obtenerProgramasEstudiante();
         break;
@@ -509,43 +505,6 @@ function actualizarEstudiante()
     } catch (Exception $e) {
         error_log("Error en actualizarEstudiante: " . $e->getMessage());
         echo json_encode(['success' => false, 'mensaje' => 'Error al actualizar el estudiante']);
-    }
-}
-
-/**
- * Restablecer la contraseña de un estudiante que ya tiene usuario asignado.
- * Cubre tanto "olvidó su contraseña" como las cuentas creadas antes de que se
- * empezara a guardar PasswordTexto (esas no tienen forma de mostrar la original).
- */
-function restablecerPasswordEstudiante()
-{
-    if (!isset($_POST['EstudianteID']) || !is_numeric($_POST['EstudianteID'])) {
-        echo json_encode(['success' => false, 'mensaje' => 'El ID del estudiante es requerido']);
-        return;
-    }
-
-    $EstudianteID = (int)$_POST['EstudianteID'];
-
-    try {
-        $usuarioActual = UsuarioModelos::VerificarUsuarioEstudianteModelo($EstudianteID);
-        if (!$usuarioActual) {
-            echo json_encode(['success' => false, 'mensaje' => 'Este estudiante no tiene un usuario asignado']);
-            return;
-        }
-
-        $passwordTexto = UsuarioControladores::GenerarPasswordEstudiante();
-        $passwordHash = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
-
-        $resultado = UsuarioModelos::RestablecerPasswordEstudianteModelo($EstudianteID, $passwordHash, $passwordTexto);
-
-        if ($resultado === 'exitoso') {
-            echo json_encode(['success' => true, 'mensaje' => 'Contraseña restablecida correctamente', 'password' => $passwordTexto]);
-        } else {
-            echo json_encode(['success' => false, 'mensaje' => 'No se pudo restablecer la contraseña']);
-        }
-    } catch (Exception $e) {
-        error_log("Error en restablecerPasswordEstudiante: " . $e->getMessage());
-        echo json_encode(['success' => false, 'mensaje' => 'Error al restablecer la contraseña']);
     }
 }
 

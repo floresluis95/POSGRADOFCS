@@ -1428,12 +1428,12 @@ window.addEventListener('load', function() {
             confirmButtonText: 'Sí, restablecer',
             cancelButtonText: 'Cancelar'
         }).then(function(resultado) {
-            if (!resultado.isConfirmed) return;
+            if (!resultado.value) return; // SweetAlert2 v8: no tiene isConfirmed
 
             jQuery.ajax({
-                url: 'ajax/ordenpago.ajax.php',
+                url: 'ajax/restablecerpassword.ajax.php',
                 type: 'POST',
-                data: { accion: 'restablecerPasswordEstudiante', EstudianteID: estudianteID },
+                data: { accion: 'estudiante', id: estudianteID },
                 dataType: 'json',
                 success: function(resp) {
                     if (!resp.success) {
@@ -1480,7 +1480,7 @@ window.addEventListener('load', function() {
             cancelButtonText: 'Cancelar',
             confirmButtonColor: vaABloquear ? '#6c757d' : '#28a745'
         }).then(function(resultado) {
-            if (!resultado.isConfirmed) return;
+            if (!resultado.value) return; // SweetAlert2 v8: no tiene isConfirmed
 
             const form = jQuery('<form>', { method: 'POST', action: '' });
             form.append(jQuery('<input>', { type: 'hidden', name: 'cambiarEstadoUsuarioEstudiante', value: '1' }));

@@ -214,6 +214,44 @@
             return $stmt->execute() && $stmt->rowCount() > 0 ? 'exitoso' : 'error';
         }
 
+        /**
+         * Restablecer la contraseña de un docente que ya tiene usuario asignado.
+         * No cambia el nombre de usuario.
+         */
+        public static function RestablecerPasswordDocenteModelo($docenteID, $passwordHash, $passwordTexto)
+        {
+            $stmt = Conexion::Conectar()->prepare(
+                "UPDATE usuario SET Password = :password, PasswordTexto = :passwordTexto WHERE DocenteID = :docenteID"
+            );
+            $stmt->bindParam(":password", $passwordHash, PDO::PARAM_STR);
+            $stmt->bindParam(":passwordTexto", $passwordTexto, PDO::PARAM_STR);
+            $stmt->bindParam(":docenteID", $docenteID, PDO::PARAM_INT);
+            return $stmt->execute() && $stmt->rowCount() > 0 ? 'exitoso' : 'error';
+        }
+
+        /**
+         * Restablecer la contraseña de un usuario del personal administrativo
+         * (ADM, SEC, etc.). No cambia el nombre de usuario.
+         */
+        public static function RestablecerPasswordPersonalModelo($idPersonal, $passwordHash, $passwordTexto)
+        {
+            $stmt = Conexion::Conectar()->prepare(
+                "UPDATE usuario SET Password = :password, PasswordTexto = :passwordTexto WHERE IdPersonal = :idPersonal"
+            );
+            $stmt->bindParam(":password", $passwordHash, PDO::PARAM_STR);
+            $stmt->bindParam(":passwordTexto", $passwordTexto, PDO::PARAM_STR);
+            $stmt->bindParam(":idPersonal", $idPersonal, PDO::PARAM_INT);
+            return $stmt->execute() && $stmt->rowCount() > 0 ? 'exitoso' : 'error';
+        }
+
+        public static function VerificarUsuarioPersonalModelo($idPersonal)
+        {
+            $stmt = Conexion::Conectar()->prepare("SELECT u.IdPersonal, u.Tipo FROM usuario u WHERE u.IdPersonal = :idPersonal");
+            $stmt->bindParam(":idPersonal", $idPersonal, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch();
+        }
+
         public static function VerificarUsuarioEstudianteModelo($estudianteID)
         {
             $stmt = Conexion::Conectar()->prepare("SELECT u.EstudianteID FROM usuario u WHERE u.EstudianteID = :estudianteID");

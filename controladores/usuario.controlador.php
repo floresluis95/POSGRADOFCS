@@ -112,12 +112,23 @@
                     $passwordMostrar = $Usuario['CedulaIdentidad'];
                 }
 
+                // Restablecer contraseña: solo el administrador (si lo hiciera una
+                // secretaria, podría restablecer la del administrador y entrar como él).
+                $botonRestablecer = '';
+                if (($_SESSION['Tipo'] ?? '') === 'ADM') {
+                    $botonRestablecer = '<button type="button" class="btn btn-info btn-sm btnRestablecerPasswordPersonal" title="Restablecer contraseña"
+                            data-id-personal="'.$Usuario['IdPersonal'].'"
+                            data-nombre-completo="'.htmlspecialchars($Usuario['ApellidoPaterno'].' '.$Usuario['ApellidoMaterno'].' '.$Usuario['Nombres']).'">
+                            <i class="fa fa-key"></i>
+                        </button>';
+                }
+
                 echo '<tr>
                     <td class="text-center">'.$contador.'</td>
                     <td class="text-center"><strong>'.$Usuario["CedulaIdentidad"].'</strong></td>
                     <td>'.$Usuario['ApellidoPaterno'].' '.$Usuario["ApellidoMaterno"].' '.$Usuario["Nombres"].'</td>
                     <td><strong>'.$Usuario['Usuario'].'</strong></td>
-                    <td class="text-center"><span class="badge badge-dark">'.$passwordMostrar.'</span></td>
+                    <td class="text-center"><span class="badge badge-dark passwordPersonal">'.$passwordMostrar.'</span></td>
                     <td>'.$Usuario['Celular'].'</td>
                     <td class="text-center">'.date('d/m/Y', strtotime($Usuario['FechaIngreso'])).'</td>
                     <td class="text-center">'.$tipoBadge.'</td>
@@ -138,6 +149,7 @@
                             title="Editar usuario">
                             <i class="fa fa-edit"></i>
                         </button>
+                        '.$botonRestablecer.'
                         '.($Usuario['Estado'] == '1'
                             ? '<button data-toggle="modal" data-target="#modalu" type="button" idusr="'.$Usuario['CedulaIdentidad'].'" class="btn btn-danger btn-sm btnusr" title="Dar de baja"><i class="fa fa-ban"></i></button>'
                             : '<button data-toggle="modal" data-target="#modals" type="button" idusrs="'.$Usuario['CedulaIdentidad'].'" class="btn btn-success btn-sm btnsubir" title="Activar usuario"><i class="fa fa-check"></i></button>').'
@@ -423,7 +435,7 @@
          * secreto. $nombre y $ci se mantienen como parametros por compatibilidad
          * con el llamador, pero ya no se usan para construir la contraseña.
          */
-        private function GenerarPasswordCompleja($nombre = '', $ci = '')
+        public static function GenerarPasswordCompleja($nombre = '', $ci = '')
         {
             $minusculas = 'abcdefghjkmnpqrstuvwxyz';
             $mayusculas = 'ABCDEFGHJKMNPQRSTUVWXYZ';

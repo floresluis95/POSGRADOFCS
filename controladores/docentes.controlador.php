@@ -144,6 +144,8 @@ private function ConstruirFilaDocente($Docente, $numero)
         // contraseña en un modal, para no saturar la tabla principal.
         $botonDetalle = '<button type="button" class="btn btn-info btn-sm btnVerDetalleDocente" title="Ver detalle"
                             data-toggle="modal" data-target="#ModalDetalleDocente"
+                            data-docente-id="' . $Docente['DocenteID'] . '"
+                            data-tiene-usuario="' . ($tieneUsuario ? '1' : '0') . '"
                             data-nombre-completo="' . htmlspecialchars($nombreCompleto) . '"
                             data-ci-completo="' . htmlspecialchars($ciCompleto) . '"
                             data-correo="' . htmlspecialchars($Docente['Correo'] ? $Docente['Correo'] : 'No registrado') . '"

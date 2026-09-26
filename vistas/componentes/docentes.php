@@ -553,9 +553,16 @@ $csrf_token = bin2hex(random_bytes(32));
             <small class="text-muted d-block"><i class="fas fa-key"></i> Contraseña</small>
             <span id="detalleDocentePassword" class="badge badge-warning" style="font-size: 13px; font-family: monospace; cursor: pointer;" title="Clic para copiar"></span>
           </div>
+          <div class="col-md-12" id="detalleDocenteSinPasswordWrap" style="display:none;">
+            <small class="text-muted d-block"><i class="fas fa-key"></i> Contraseña</small>
+            <span class="text-muted small">No disponible (cuenta creada antes de guardar la contraseña). Puede restablecerla.</span>
+          </div>
         </div>
       </div>
       <div class="modal-footer" style="background-color: #f8f9fa; border-top: 2px solid #e9ecef;">
+        <button type="button" class="btn btn-outline-warning" id="btnRestablecerPasswordDocenteDetalle">
+          <i class="fa fa-key"></i> Restablecer contraseña
+        </button>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
       </div>
     </div>
@@ -1382,13 +1389,67 @@ jQuery(document).on('click', '.btnVerDetalleDocente', function() {
     jQuery('#detalleDocenteUsuario').text($btn.attr('data-usuario'));
     jQuery('#detalleDocenteEstadoUsuario').text($btn.attr('data-estado-usuario'));
 
+    const tieneUsuario = $btn.attr('data-tiene-usuario') === '1';
+
+    // Se guarda en el propio botón de restablecer para saber a quién aplica
+    // cuando se haga clic en él (el modal es compartido por todas las filas).
+    jQuery('#btnRestablecerPasswordDocenteDetalle')
+        .attr('data-docente-id', $btn.attr('data-docente-id'))
+        .toggle(tieneUsuario);
+
     const password = $btn.attr('data-password') || '';
     if (password) {
         jQuery('#detalleDocentePassword').text(password);
         jQuery('#detalleDocentePasswordWrap').show();
+        jQuery('#detalleDocenteSinPasswordWrap').hide();
     } else {
         jQuery('#detalleDocentePasswordWrap').hide();
+        jQuery('#detalleDocenteSinPasswordWrap').toggle(tieneUsuario);
     }
+});
+
+// Restablecer contraseña (cuando el docente la olvidó): genera una nueva y
+// la deja visible de inmediato para entregársela.
+jQuery(document).on('click', '#btnRestablecerPasswordDocenteDetalle', function() {
+    const docenteID = jQuery(this).attr('data-docente-id');
+    const nombre = jQuery('#detalleDocenteNombre').text();
+
+    Swal.fire({
+        type: 'warning',
+        title: '¿Restablecer contraseña?',
+        text: 'Se generará una nueva contraseña para ' + nombre + '. La anterior dejará de funcionar.',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, restablecer',
+        cancelButtonText: 'Cancelar'
+    }).then(function(resultado) {
+        if (!resultado.value) return; // SweetAlert2 v8: no tiene isConfirmed
+
+        jQuery.ajax({
+            url: 'ajax/restablecerpassword.ajax.php',
+            type: 'POST',
+            data: { accion: 'docente', id: docenteID },
+            dataType: 'json',
+            success: function(resp) {
+                if (!resp.success) {
+                    Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo restablecer la contraseña' });
+                    return;
+                }
+
+                jQuery('#detalleDocentePassword').text(resp.password);
+                jQuery('#detalleDocentePasswordWrap').show();
+                jQuery('#detalleDocenteSinPasswordWrap').hide();
+
+                // Actualizar también el botón "Ver detalle" de la fila, para que
+                // al reabrir el modal se muestre la nueva contraseña.
+                jQuery('.btnVerDetalleDocente[data-docente-id="' + docenteID + '"]').attr('data-password', resp.password);
+
+                Swal.fire({ type: 'success', title: 'Contraseña restablecida', text: 'Nueva contraseña: ' + resp.password });
+            },
+            error: function() {
+                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo restablecer la contraseña' });
+            }
+        });
+    });
 });
 
 // Copiar la contraseña del modal de detalle al hacer clic sobre ella

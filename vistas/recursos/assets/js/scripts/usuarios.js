@@ -41,3 +41,40 @@ $('.TablaUsuarios tbody').on('click', 'button.btntec', function(){
     let idusrs = $(this).attr("idusrs");
     $('#idusrs').val(idusrs);
 });
+// Restablecer contraseña de un usuario del personal (solo ADM ve el botón y el
+// servidor vuelve a validar el rol). Genera una nueva y la muestra para entregarla.
+$(document).on('click', '.TablaUsuarios button.btnRestablecerPasswordPersonal', function(){
+    const $btn = $(this);
+    const idPersonal = $btn.attr('data-id-personal');
+    const nombre = $btn.attr('data-nombre-completo');
+
+    Swal.fire({
+        type: 'warning',
+        title: '¿Restablecer contraseña?',
+        text: 'Se generará una nueva contraseña para ' + nombre + '. La anterior dejará de funcionar.',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, restablecer',
+        cancelButtonText: 'Cancelar'
+    }).then(function(resultado) {
+        if (!resultado.value) return; // SweetAlert2 v8: no tiene isConfirmed
+
+        $.ajax({
+            url: 'ajax/restablecerpassword.ajax.php',
+            type: 'POST',
+            data: { accion: 'personal', id: idPersonal },
+            dataType: 'json',
+            success: function(resp) {
+                if (!resp.success) {
+                    Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo restablecer la contraseña' });
+                    return;
+                }
+
+                $btn.closest('tr').find('.passwordPersonal').text(resp.password);
+                Swal.fire({ type: 'success', title: 'Contraseña restablecida', text: 'Nueva contraseña: ' + resp.password });
+            },
+            error: function() {
+                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo restablecer la contraseña' });
+            }
+        });
+    });
+});
