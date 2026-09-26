@@ -59,8 +59,8 @@
               </div>
 
             </div>
-                <div style="width: 200px; height: 200px;">
-<img src="vistas/recursos/assets/media//error/error.png" style="width: 1230px; height: 450px;"/>
+                <div style="width: 100%; text-align: center;">
+<img src="vistas/recursos/assets/media//error/error.png" style="width: 1230px; max-width: 100%; height: auto;"/>
 </div>
 </div>
 

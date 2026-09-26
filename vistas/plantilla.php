@@ -196,7 +196,8 @@ ob_start();
   <!--end::Page Vendors -->
 
   <!--begin::Page Scripts(used by this page) -->
-  <script src="vistas/recursos/assets/js/demo9/pages/dashboard.js" type="text/javascript"></script>
+  <!-- dashboard.js (demo de Keen) retirado: ninguna vista lo usa y mostraba
+       un aviso falso "Loading ..." de 3 s que desbordaba la página en móviles. -->
   <!--end::Page Scripts -->
   
 <!-- begin::Global Config(global config for global JS sciprts) -->

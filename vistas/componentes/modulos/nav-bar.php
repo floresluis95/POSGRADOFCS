@@ -11,23 +11,37 @@
     transition: all 0.3s ease;
 }
 
-/* Brand/Logo mejorado */
+/* Brand/Logo: el logo lleva texto oscuro, por eso va sobre un recuadro
+   blanco (igual que en el portal público y el login) y la barra conserva
+   el azul institucional. */
 .kt-header__brand {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
+    background: transparent;
 }
 
-.kt-header__brand:hover {
-    background: rgba(255, 255, 255, 0.15);
+.kt-header__brand .kt-header__brand-logo {
+    align-items: center;
+    background: #fff;
+    border-radius: 12px;
+    padding: 6px 16px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.kt-header__brand .kt-header__brand-logo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
 .kt-header__brand-logo img {
-    transition: transform 0.3s ease;
+    display: block;
+    height: 52px;
+    width: auto;
+    transition: height 0.3s ease;
 }
 
-.kt-header__brand-logo:hover img {
-    transform: scale(1.05);
+/* Cabecera minimizada al hacer scroll (60px de alto) */
+.kt-header--minimize .kt-header__brand-logo img {
+    height: 38px;
 }
 
 /* Menú de navegación mejorado */
@@ -379,7 +393,7 @@ $menuItems = obtenerMenuPorTipo($tipoUsuario);
         <!-- begin:: Brand -->
         <div class="kt-header__brand kt-grid__item" id="kt_header_brand">
             <a class="kt-header__brand-logo" href="panel">
-                <img alt="Logo" src="vistas/recursos/assets/media/logos/logo.png" width="150" />
+                <img alt="Posgrado Odontología - Universidad Técnica de Oruro" src="vistas/recursos/assets/media/logos/logo.png" />
             </a>
         </div>
         <!-- end:: Brand -->

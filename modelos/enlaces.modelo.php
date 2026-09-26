@@ -3,7 +3,8 @@
     {
         public static function EnlacesModelo($enlace)
         {
-            if($enlace == 'ingreso' ||
+            if($enlace == 'inicio' ||
+                $enlace == 'ingreso' ||
                 $enlace == 'panel' ||
                 $enlace == 'salir' ||
                 $enlace == 'usuario' ||
@@ -49,7 +50,7 @@
 
             }
             else if ($enlace == "index"){
-                $ruta = "vistas/componentes/ingreso.php"; 
+                $ruta = "vistas/componentes/inicio.php"; // Portal público
             }
             else
             {

@@ -22,8 +22,11 @@ var inicializarhor=function(){
 	tiempoHoras= (tiempoHoras<10)?"0"+tiempoHoras:tiempoHoras; 
 	tiempoMinutos=(tiempoMinutos<10)?"0"+tiempoMinutos:tiempoMinutos;
 	tiempoSegundos=(tiempoSegundos<10)?"0"+tiempoSegundos:tiempoSegundos;
-    document.getElementById("lafecha").innerHTML= diaDeHoy+" , "+diaDelMes+ " de " + esteMes +" del "+ aActual
-	document.getElementById("info").innerHTML=tiempoHoras+" : "+tiempoMinutos+" : "+tiempoSegundos+ amOpm;
+	// No todas las vistas tienen estos elementos (p. ej. el portal público)
+	var elFecha = document.getElementById("lafecha");
+	var elHora = document.getElementById("info");
+	if (elFecha) elFecha.innerHTML= diaDeHoy+" , "+diaDelMes+ " de " + esteMes +" del "+ aActual;
+	if (elHora) elHora.innerHTML=tiempoHoras+" : "+tiempoMinutos+" : "+tiempoSegundos+ amOpm;
 
 }
 inicializarhor();

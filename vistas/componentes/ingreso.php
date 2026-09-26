@@ -15,8 +15,11 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            height: 100vh;
+            /* Solo se oculta el desborde horizontal (partículas): en móviles la
+               tarjeta es más alta que la pantalla y debe poder desplazarse. */
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-height: 100vh;
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         }
 
@@ -58,6 +61,9 @@
             align-items: center;
             min-height: 100vh;
             padding: 20px;
+            /* El tema hace del body un flex en columna de alto fijo: sin esto el
+               contenedor se encoge y en móviles la tarjeta queda cortada arriba. */
+            flex-shrink: 0;
         }
 
         /* Card de login */
@@ -125,12 +131,21 @@
             margin-bottom: 40px;
         }
 
-        .logo-container img {
-            width: 120px;
-            height: 120px;
-            object-fit: contain;
-            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
+        /* Fondo blanco para que el texto oscuro del logo se lea sobre el azul */
+        .logo-container .logo-fondo {
+            display: inline-block;
+            background: #fff;
+            border-radius: 16px;
+            padding: 12px 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        .logo-container img {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            height: auto;
         }
 
         @keyframes logoFloat {
@@ -390,6 +405,19 @@
             font-size: 13px;
         }
 
+        .link-volver-inicio {
+            display: inline-block;
+            margin-top: 18px;
+            color: #2a5298;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .link-volver-inicio:hover {
+            text-decoration: underline;
+        }
+
         /* Loading state */
         .btn-login.loading {
             pointer-events: none;
@@ -446,6 +474,28 @@
             .login-header h2 {
                 font-size: 26px;
             }
+
+            .logo-container {
+                margin-bottom: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 12px;
+            }
+
+            .login-card {
+                border-radius: 20px;
+            }
+
+            .login-left {
+                padding: 30px 20px;
+            }
+
+            .login-right {
+                padding: 30px 20px;
+            }
         }
 
         /* Alertas mejoradas */
@@ -497,7 +547,9 @@
             <!-- Panel izquierdo -->
             <div class="login-left">
                 <div class="logo-container">
-                    <img src="vistas/recursos/assets/media/logos/logo0.png" alt="Logo UTO">
+                    <div class="logo-fondo">
+                        <img src="vistas/recursos/assets/media/logos/logo.png" alt="Posgrado Odontología - Universidad Técnica de Oruro">
+                    </div>
                 </div>
 
                 <div class="welcome-text">
@@ -598,7 +650,8 @@
                 ?>
 
                 <div class="login-footer">
-                    <p>&copy; <?php echo date('Y'); ?> Universidad Técnica de Oruro. Todos los derechos reservados.</p>
+                    <a href="inicio" class="link-volver-inicio"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
+                    <p style="margin-top: 12px;">&copy; <?php echo date('Y'); ?> Universidad Técnica de Oruro. Todos los derechos reservados.</p>
                 </div>
             </div>
         </div>
