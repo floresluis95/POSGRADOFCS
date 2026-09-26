@@ -58,18 +58,20 @@ try {
     // registrarOrdenPagoCuotaPrograma en ajax/ordenpago.ajax.php); el resto son
     // órdenes de matrícula/preregistro.
     $esCuota = $orden['Observaciones'] === 'CUOTA PROGRAMA';
+    // Órdenes de clínica (ver PagoClinicaModelo): monto libre en MontoTotal y cuenta CLINICA.
+    $esClinica = $orden['Observaciones'] === 'CLINICA';
 
     $nombreCompleto = trim($orden['Apaterno'] . ' ' . $orden['Amaterno'] . ' ' . $orden['Nombre']);
     $ciCompleto = trim($orden['Ci'] . (!empty($orden['Complemento']) ? '-' . $orden['Complemento'] : '') . ' ' . $orden['Exp']);
 
     // Monto: las órdenes de matrícula/preregistro guardan el monto en MontoFinal;
     // las de cuota del programa lo guardan en MontoTotal (MontoFinal les queda en 0).
-    $monto = $esCuota ? (float)$orden['MontoTotal'] : (float)$orden['MontoFinal'];
+    $monto = ($esCuota || $esClinica) ? (float)$orden['MontoTotal'] : (float)$orden['MontoFinal'];
 
     // Cuenta bancaria a la que se debe depositar: la elegida al generar la orden
     // (ProgramaCuentaID) o, si no hay, la cuenta principal del programa para el tipo
     // que corresponda (CUOTAS o MATRICULA); por último, el N° de trámite del programa.
-    $tipoCuenta = $esCuota ? 'CUOTAS' : 'MATRICULA';
+    $tipoCuenta = $esClinica ? 'CLINICA' : ($esCuota ? 'CUOTAS' : 'MATRICULA');
     $numeroCuentaDeposito = null;
 
     if (!empty($orden['ProgramaCuentaID'])) {
@@ -97,7 +99,10 @@ try {
         $numeroCuentaDeposito = !empty($orden['NumeroTramite']) ? $orden['NumeroTramite'] : '10000006050938';
     }
 
-    if ($esCuota) {
+    if ($esClinica) {
+        $programaTexto = $orden['NombrePrograma'] . "\nPago de clínica";
+        $version = !empty($orden['Version']) ? $orden['Version'] : 'V-1';
+    } elseif ($esCuota) {
         // Número de cuota al momento en que se generó esta orden: las cuotas ya
         // pagadas (PAGADO) antes de esa fecha, +1. No queda guardado en la propia
         // orden, se reconstruye igual que lo hizo el administrador al imprimirla.

@@ -184,7 +184,7 @@ class PagoModuloModelo
     {
         $stmt = $pdo->prepare(
             "SELECT IdOrdenPago, MontoTotal FROM ordenpago
-             WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND ListaModulos IS NULL
+             WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND ListaModulos IS NULL AND COALESCE(Observaciones, '') <> 'CLINICA'
              ORDER BY FechaGeneracion ASC LIMIT 1"
         );
         $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);

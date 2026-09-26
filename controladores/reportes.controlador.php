@@ -437,5 +437,165 @@ class ReportesControladores extends TCPDF
 
         $pdf->Output('Reporte_Ejecutivo_' . date('Ymd_His') . '.pdf', 'I');
     }
+
+    // Reporte 5: Recaudación por cuenta bancaria (cuánto ingresó y cuánto falta cobrar en cada cuenta)
+    public static function GenerarReporteRecaudacion($sede = null, $programaID = null, $fechaDesde = null, $fechaHasta = null)
+    {
+        $pdf = new self();
+        $pdf->SetCreator('Sistema Posgrado FCS');
+        $pdf->SetTitle('Recaudación por Cuenta');
+
+        $pdf->SetMargins(10, 40, 10);
+        $pdf->SetAutoPageBreak(TRUE, 25);
+        $pdf->AddPage('L');
+
+        // Texto del periodo: el rango de fechas solo afecta a lo recaudado
+        if ($fechaDesde && $fechaHasta) {
+            $periodo = 'Del ' . date('d/m/Y', strtotime($fechaDesde)) . ' al ' . date('d/m/Y', strtotime($fechaHasta));
+        } elseif ($fechaDesde) {
+            $periodo = 'Desde el ' . date('d/m/Y', strtotime($fechaDesde));
+        } elseif ($fechaHasta) {
+            $periodo = 'Hasta el ' . date('d/m/Y', strtotime($fechaHasta));
+        } else {
+            $periodo = 'Todo el periodo';
+        }
+
+        $pdf->SetFont('helvetica', 'B', 14);
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->Cell(0, 10, 'RECAUDACIÓN POR CUENTA BANCARIA' . ($sede ? ' - SEDE ' . mb_strtoupper($sede) : ' - TODAS LAS SEDES'), 0, 1, 'C');
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(0, 5, 'Recaudado: ' . $periodo . '  |  Por cobrar: órdenes pendientes a la fecha', 0, 1, 'C');
+        $pdf->Ln(5);
+
+        $cuentas = ReportesModelos::RecaudacionPorCuenta($sede, $programaID, $fechaDesde, $fechaHasta);
+
+        if (empty($cuentas)) {
+            $pdf->SetFont('helvetica', '', 12);
+            $pdf->Cell(0, 10, 'No hay cuentas ni pagos con los filtros seleccionados', 0, 1, 'C');
+            $pdf->Output('Recaudacion_Por_Cuenta_' . date('Ymd') . '.pdf', 'I');
+            return;
+        }
+
+        // Header de tabla (ancho útil en horizontal: 277 mm)
+        $pdf->SetFont('helvetica', 'B', 7.5);
+        $pdf->SetFillColor(30, 60, 114);
+        $pdf->SetTextColor(255);
+        $pdf->SetDrawColor(30, 60, 114);
+
+        $pdf->Cell(62, 9, 'Programa / Sede', 1, 0, 'C', true);
+        $pdf->Cell(22, 9, 'Concepto', 1, 0, 'C', true);
+        $pdf->Cell(38, 9, 'Banco', 1, 0, 'C', true);
+        $pdf->Cell(25, 9, 'Nº Cuenta', 1, 0, 'C', true);
+        $pdf->Cell(18, 9, 'Tipo', 1, 0, 'C', true);
+        $pdf->Cell(14, 9, 'Pagos', 1, 0, 'C', true);
+        $pdf->Cell(28, 9, 'Recaudado (Bs.)', 1, 0, 'C', true);
+        $pdf->Cell(28, 9, 'Por cobrar (Bs.)', 1, 0, 'C', true);
+        $pdf->Cell(20, 9, 'Pendientes', 1, 0, 'C', true);
+        $pdf->Cell(22, 9, 'Último pago', 1, 1, 'C', true);
+
+        $pdf->SetFont('helvetica', '', 7);
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->SetDrawColor(200, 200, 200);
+        $fill = false;
+
+        $sumPagos = 0;
+        $sumRecaudado = 0;
+        $sumPorCobrar = 0;
+        $sumPendientes = 0;
+        // Subtotales por concepto: la clínica se reporta aparte y no se mezcla
+        // con lo recaudado por matrícula o cuotas.
+        $porConcepto = [];
+
+        foreach ($cuentas as $c) {
+            $sinCuenta = $c['CuentaID'] === null;
+            $inactiva = !$sinCuenta && (int)$c['EstadoCuenta'] !== 1;
+
+            // Rojo claro: pagos que no tienen a qué cuenta ir (falta configurar la cuenta del programa).
+            // Amarillo: cuenta desactivada que igual tiene movimientos.
+            if ($sinCuenta) {
+                $pdf->SetFillColor(253, 235, 235);
+            } elseif ($inactiva) {
+                $pdf->SetFillColor(255, 247, 230);
+            } else {
+                $pdf->SetFillColor($fill ? 245 : 255, $fill ? 245 : 255, $fill ? 245 : 255);
+            }
+
+            if ($sinCuenta) {
+                $tipo = '-';
+            } elseif ($inactiva) {
+                $tipo = 'INACTIVA';
+            } else {
+                $tipo = $c['Principal'] ? 'PRINCIPAL' : 'ALTERNA';
+            }
+
+            // stretch = 1: si el nombre no entra, TCPDF lo comprime en vez de desbordar la celda
+            $pdf->Cell(62, 6, mb_strtoupper(mb_substr($c['NombrePrograma'], 0, 55)) . ' (' . $c['Sede'] . ')', 1, 0, 'L', true, '', 1);
+            $pdf->Cell(22, 6, $c['Concepto'], 1, 0, 'C', true);
+            $pdf->Cell(38, 6, $sinCuenta ? 'SIN CUENTA CONFIGURADA' : mb_strtoupper(mb_substr($c['Banco'], 0, 22)), 1, 0, 'L', true);
+            $pdf->Cell(25, 6, $sinCuenta ? '-' : $c['NumeroCuenta'], 1, 0, 'C', true);
+            $pdf->Cell(18, 6, $tipo, 1, 0, 'C', true);
+            $pdf->Cell(14, 6, $c['NumPagos'], 1, 0, 'C', true);
+            $pdf->Cell(28, 6, number_format($c['Recaudado'], 2), 1, 0, 'R', true);
+            $pdf->Cell(28, 6, number_format($c['PorCobrar'], 2), 1, 0, 'R', true);
+            $pdf->Cell(20, 6, $c['NumPendientes'], 1, 0, 'C', true);
+            $pdf->Cell(22, 6, $c['UltimoPago'] ? date('d/m/Y', strtotime($c['UltimoPago'])) : '-', 1, 1, 'C', true);
+
+            $sumPagos += $c['NumPagos'];
+            $sumRecaudado += $c['Recaudado'];
+            $sumPorCobrar += $c['PorCobrar'];
+            $sumPendientes += $c['NumPendientes'];
+
+            $concepto = $c['Concepto'];
+            if (!isset($porConcepto[$concepto])) {
+                $porConcepto[$concepto] = ['pagos' => 0, 'recaudado' => 0, 'porCobrar' => 0, 'pendientes' => 0];
+            }
+            $porConcepto[$concepto]['pagos'] += $c['NumPagos'];
+            $porConcepto[$concepto]['recaudado'] += $c['Recaudado'];
+            $porConcepto[$concepto]['porCobrar'] += $c['PorCobrar'];
+            $porConcepto[$concepto]['pendientes'] += $c['NumPendientes'];
+            $fill = !$fill;
+        }
+
+        // Subtotales por concepto (MATRICULA, CUOTAS, CLINICA), en ese orden
+        $ordenConceptos = ['MATRICULA' => 1, 'CUOTAS' => 2, 'CLINICA' => 3];
+        uksort($porConcepto, function ($a, $b) use ($ordenConceptos) {
+            return ($ordenConceptos[$a] ?? 9) <=> ($ordenConceptos[$b] ?? 9);
+        });
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->SetFillColor(234, 239, 247);
+        $pdf->SetTextColor(30, 60, 114);
+        foreach ($porConcepto as $concepto => $t) {
+            $pdf->Cell(165, 6, 'SUBTOTAL ' . $concepto . ':', 1, 0, 'R', true);
+            $pdf->Cell(14, 6, $t['pagos'], 1, 0, 'C', true);
+            $pdf->Cell(28, 6, number_format($t['recaudado'], 2), 1, 0, 'R', true);
+            $pdf->Cell(28, 6, number_format($t['porCobrar'], 2), 1, 0, 'R', true);
+            $pdf->Cell(20, 6, $t['pendientes'], 1, 0, 'C', true);
+            $pdf->Cell(22, 6, '', 1, 1, 'C', true);
+        }
+
+        // Totales generales
+        $pdf->SetFont('helvetica', 'B', 7.5);
+        $pdf->SetFillColor(30, 60, 114);
+        $pdf->SetTextColor(255);
+        $pdf->Cell(165, 7, 'TOTALES:', 1, 0, 'R', true);
+        $pdf->Cell(14, 7, $sumPagos, 1, 0, 'C', true);
+        $pdf->Cell(28, 7, number_format($sumRecaudado, 2), 1, 0, 'R', true);
+        $pdf->Cell(28, 7, number_format($sumPorCobrar, 2), 1, 0, 'R', true);
+        $pdf->Cell(20, 7, $sumPendientes, 1, 0, 'C', true);
+        $pdf->Cell(22, 7, '', 1, 1, 'C', true);
+
+        // Leyenda
+        $pdf->Ln(4);
+        $pdf->SetFont('helvetica', '', 7);
+        $pdf->SetTextColor(80, 80, 80);
+        $pdf->SetFillColor(253, 235, 235);
+        $pdf->Cell(5, 5, '', 1, 0, 'C', true);
+        $pdf->Cell(90, 5, ' Programa sin cuenta configurada para ese concepto', 0, 0, 'L');
+        $pdf->SetFillColor(255, 247, 230);
+        $pdf->Cell(5, 5, '', 1, 0, 'C', true);
+        $pdf->Cell(90, 5, ' Cuenta desactivada que tiene pagos u órdenes', 0, 1, 'L');
+
+        $pdf->Output('Recaudacion_Por_Cuenta_' . date('Ymd_His') . '.pdf', 'I');
+    }
 }
 ?>

@@ -6,7 +6,7 @@
  * modal aparte ("Ver anuladas"), solo como referencia.
  */
 (function () {
-    var ETIQUETAS_TIPO = { MATRICULA: 'Matrícula', CUOTA: 'Cuota', MODULOS: 'Pago de Módulos' };
+    var ETIQUETAS_TIPO = { MATRICULA: 'Matrícula', CUOTA: 'Cuota', CLINICA: 'Clínica', MODULOS: 'Pago de Módulos' };
 
     // Todas las órdenes cargadas del servidor (sin filtrar, incluye anuladas); los
     // selects de Programa y Tipo filtran sobre esta lista, sin volver a pedirlas al

@@ -218,7 +218,7 @@ class PlazoCuotaProgramaModelo
                      WHERE op.EstudianteID = ep.EstudianteID
                      AND op.ProgramaID = ep.ProgramaID
                      AND op.Estado = 'PENDIENTE'
-                     AND op.ListaModulos IS NULL
+                     AND op.ListaModulos IS NULL AND COALESCE(op.Observaciones, '') <> 'CLINICA'
                  )
                  UNION
                  SELECT
@@ -228,7 +228,7 @@ class PlazoCuotaProgramaModelo
                  INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
                  WHERE op.EstudianteID = :estudianteID2
                  AND op.Estado = 'PENDIENTE'
-                 AND op.ListaModulos IS NULL
+                 AND op.ListaModulos IS NULL AND COALESCE(op.Observaciones, '') <> 'CLINICA'
                  AND op.FechaVencimiento IS NOT NULL
                  AND op.FechaVencimiento < CURDATE()"
             );
@@ -283,7 +283,7 @@ class PlazoCuotaProgramaModelo
                      WHERE op.EstudianteID = ep.EstudianteID
                      AND op.ProgramaID = ep.ProgramaID
                      AND op.Estado = 'PENDIENTE'
-                     AND op.ListaModulos IS NULL
+                     AND op.ListaModulos IS NULL AND COALESCE(op.Observaciones, '') <> 'CLINICA'
                  )
                  ORDER BY pc.FechaPlazo ASC"
             );

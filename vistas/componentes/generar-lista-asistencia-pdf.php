@@ -161,32 +161,54 @@ $pdf->Ln(2);
 // ========================================
 $pdf->SetTextColor(70, 78, 95);
 
-$pdf->SetFont('helvetica', 'B', 9);
+// Los nombres se guardan con htmlspecialchars; se decodifican para no imprimir "&quot;"
+$programaNombre = html_entity_decode($programaNombre, ENT_QUOTES, 'UTF-8');
+$moduloNombre = html_entity_decode($moduloNombre, ENT_QUOTES, 'UTF-8');
+$docenteNombre = html_entity_decode($docenteNombre, ENT_QUOTES, 'UTF-8');
 
-// Fila 1: Programa y Grado
-$pdf->Cell(65, 5, 'PROGRAMA:', 0, 0, 'L');
-$pdf->SetFont('helvetica', '', 9);
-$pdf->Cell(130, 5, $programaNombre, 0, 0, 'L');
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->Cell(30, 5, 'GRADO:', 0, 0, 'L');
-$pdf->SetFont('helvetica', '', 9);
-$pdf->Cell(0, 5, $grado, 0, 1, 'L');
+// Anchos de columna (ancho útil de la hoja horizontal: 279.4 - 10 - 10 = 259.4 mm)
+$anchoEtiqueta = 25;
+$anchoValor = 170;
+$anchoEtiqueta2 = 20;
+$anchoValor2 = 259.4 - $anchoEtiqueta - $anchoValor - $anchoEtiqueta2;
 
-// Fila 2: Módulo y Código
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->Cell(65, 5, 'MÓDULO:', 0, 0, 'L');
-$pdf->SetFont('helvetica', '', 9);
-$pdf->Cell(130, 5, $moduloNombre, 0, 0, 'L');
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->Cell(30, 5, 'CÓDIGO:', 0, 0, 'L');
-$pdf->SetFont('helvetica', '', 9);
-$pdf->Cell(0, 5, $moduloCodigo, 0, 1, 'L');
+/**
+ * Imprime una fila "ETIQUETA: valor   ETIQUETA2: valor2". El valor usa MultiCell
+ * para que un nombre largo (ej. de un módulo) baje a una segunda línea en vez de
+ * salirse de su columna y montarse sobre la columna de la derecha.
+ */
+$filaDato = function ($etiqueta, $valor, $etiqueta2 = null, $valor2 = '') use ($pdf, $anchoEtiqueta, $anchoValor, $anchoEtiqueta2, $anchoValor2) {
+    $alto = 5;
+    $anchoPrincipal = $etiqueta2 === null ? $anchoValor + $anchoEtiqueta2 + $anchoValor2 : $anchoValor;
 
-// Fila 3: Docente
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->Cell(65, 5, 'DOCENTE:', 0, 0, 'L');
-$pdf->SetFont('helvetica', '', 9);
-$pdf->Cell(0, 5, $docenteNombre, 0, 1, 'L');
+    // Altura de la fila según el texto más alto
+    $pdf->SetFont('helvetica', '', 9);
+    $altoFila = max($alto, $pdf->getStringHeight($anchoPrincipal, $valor));
+    if ($etiqueta2 !== null) {
+        $altoFila = max($altoFila, $pdf->getStringHeight($anchoValor2, $valor2));
+    }
+
+    $x = $pdf->GetX();
+    $y = $pdf->GetY();
+
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->MultiCell($anchoEtiqueta, $alto, $etiqueta, 0, 'L', false, 0, $x, $y);
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->MultiCell($anchoPrincipal, $alto, $valor, 0, 'L', false, 0);
+
+    if ($etiqueta2 !== null) {
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->MultiCell($anchoEtiqueta2, $alto, $etiqueta2, 0, 'L', false, 0);
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->MultiCell($anchoValor2, $alto, $valor2, 0, 'L', false, 0);
+    }
+
+    $pdf->SetXY($x, $y + $altoFila);
+};
+
+$filaDato('PROGRAMA:', $programaNombre, 'GRADO:', $grado);
+$filaDato('MÓDULO:', $moduloNombre, 'CÓDIGO:', $moduloCodigo);
+$filaDato('DOCENTE:', $docenteNombre);
 
 $pdf->Ln(3);
 

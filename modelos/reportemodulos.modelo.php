@@ -198,7 +198,21 @@ class ReporteModulosModelo
                         COALESCE(SUM(d.TotalPagado), 0) AS TotalPagado,
                         COALESCE(SUM(d.CostoMatricula), 0) AS TotalMatriculas,
                         COALESCE(SUM(d.SaldoPendiente), 0) AS SaldoPendiente,
-                        COALESCE(SUM(d.MontoDescuentoTotal), 0) AS MontoTotalDescuentos
+                        COALESCE(SUM(d.MontoDescuentoTotal), 0) AS MontoTotalDescuentos,
+                        -- Clínicas: se reportan aparte, NO se suman a lo programado/pagado/saldo
+                        -- de matrícula y cuotas (ver PagoClinicaModelo)
+                        EXISTS (SELECT 1 FROM programacuenta pc
+                                WHERE pc.ProgramaID = d.ProgramaID AND pc.TipoCuenta = 'CLINICA' AND pc.Estado = 1) AS TieneClinica,
+                        (SELECT COALESCE(SUM(pcl.Monto), 0) FROM pagoclinica pcl
+                         INNER JOIN ordenpago op ON op.IdOrdenPago = pcl.IdOrdenPago
+                         WHERE op.ProgramaID = d.ProgramaID AND pcl.Estado = 'PAGADO') AS ClinicaCobrado,
+                        (SELECT COUNT(*) FROM pagoclinica pcl
+                         INNER JOIN ordenpago op ON op.IdOrdenPago = pcl.IdOrdenPago
+                         WHERE op.ProgramaID = d.ProgramaID AND pcl.Estado = 'PAGADO') AS ClinicaNumPagos,
+                        (SELECT COALESCE(SUM(op.MontoTotal), 0) FROM ordenpago op
+                         WHERE op.ProgramaID = d.ProgramaID AND op.Observaciones = 'CLINICA' AND op.Estado = 'PENDIENTE') AS ClinicaPorCobrar,
+                        (SELECT COUNT(*) FROM ordenpago op
+                         WHERE op.ProgramaID = d.ProgramaID AND op.Observaciones = 'CLINICA' AND op.Estado = 'PENDIENTE') AS ClinicaNumPendientes
                     FROM (
                         SELECT
                             p.ProgramaID, p.NombrePrograma, p.Codigo, p.GradoAcademico, p.Sede,
@@ -271,7 +285,12 @@ class ReporteModulosModelo
                         (COALESCE(pp.MontoTotalPagar, 0) + COALESCE(ep.costomatricula, 0)) AS CostoTotal,
                         (COALESCE(pagado.TotalPagado, 0) + COALESCE(ep.costomatricula, 0)) AS TotalPagado,
                         GREATEST(COALESCE(pp.MontoTotalPagar, 0) - COALESCE(pagado.TotalPagado, 0), 0) AS SaldoPendiente,
-                        COALESCE(pagado.CuotasPagadas, 0) AS CuotasPagadas
+                        COALESCE(pagado.CuotasPagadas, 0) AS CuotasPagadas,
+                        -- Clínicas del estudiante (aparte de matrícula y cuotas)
+                        (SELECT COALESCE(SUM(pcl.Monto), 0) FROM pagoclinica pcl
+                         WHERE pcl.idinscripcion = ep.idInscripcion AND pcl.Estado = 'PAGADO') AS ClinicaCobrado,
+                        (SELECT COALESCE(SUM(op.MontoTotal), 0) FROM ordenpago op
+                         WHERE op.idinscripcion = ep.idInscripcion AND op.Observaciones = 'CLINICA' AND op.Estado = 'PENDIENTE') AS ClinicaPorCobrar
                     FROM estudianteprograma ep
                     INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID
                     LEFT JOIN pagoprograma pp ON pp.idInscripcion = ep.idInscripcion

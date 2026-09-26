@@ -251,61 +251,57 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 <div class="modal fade" id="modalInscribirModulo" tabindex="-1" role="dialog" aria-labelledby="modalInscribirModuloLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
-                <h5 class="modal-title text-white" id="modalInscribirModuloLabel">
-                    <i class="fa fa-credit-card"></i> Gestión de Pagos del Programa
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+            <!-- Encabezado: estudiante y programa (fijo, sin importar la pestaña) -->
+            <div class="modal-header gp-header">
+                <div class="gp-header-info">
+                    <span class="gp-eyebrow">Gestión de pagos del programa</span>
+                    <h5 class="modal-title" id="modalInscribirModuloLabel"><span id="infoEstudianteNombre"></span></h5>
+                    <div class="gp-header-sub"><i class="fa fa-graduation-cap"></i> <span id="infoProgramaNombre"></span></div>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
 
-            <div class="modal-body">
-
-                <!-- Encabezado: estudiante + resumen de pago, visible siempre sin importar la pestaña -->
-                <div class="card bg-light border-0 mb-3">
-                    <div class="card-body py-3">
-                        <div class="row align-items-center">
-                            <div class="col-md-5 mb-2 mb-md-0">
-                                <h6 class="mb-1 font-weight-bold"><i class="fa fa-user text-primary"></i> <span id="infoEstudianteNombre"></span></h6>
-                                <small class="text-muted"><i class="fa fa-graduation-cap"></i> <span id="infoProgramaNombre"></span></small>
-                            </div>
-                            <div class="col-md-7">
-                                <div id="resumenPagoPrograma">
-                                    <div class="text-center p-2"><i class="fa fa-spinner fa-spin"></i> Cargando resumen...</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Resumen del programa (costo / pagado / saldo) y pestañas: fijos arriba del contenido -->
+            <div class="gp-top">
+                <div id="resumenPagoPrograma">
+                    <div class="gp-cargando"><i class="fa fa-spinner fa-spin"></i> Cargando resumen...</div>
                 </div>
+
+                <!-- Pestañas: Orden de Pago (paso inicial) / Cuotas / Clínicas -->
+                <ul class="nav gp-tabs" id="tabsGestionPagos" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="tab-orden-pago-link" data-toggle="tab" href="#tab-orden-pago" role="tab">
+                            <i class="fa fa-file-invoice"></i> Orden de pago
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab-pago-modulos-link" data-toggle="tab" href="#tab-pago-modulos" role="tab">
+                            <i class="fa fa-receipt"></i> Cuotas del programa
+                        </a>
+                    </li>
+                    <!-- Solo se muestra si el programa tiene una cuenta CLINICA activa (ordenpagoclinica.js) -->
+                    <li class="nav-item" id="tab-clinica-item" style="display:none;">
+                        <a class="nav-link" id="tab-clinica-link" data-toggle="tab" href="#tab-clinica" role="tab">
+                            <i class="fa fa-stethoscope"></i> Clínicas
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="modal-body">
 
                 <input type="hidden" name="estudianteID" id="estudianteID">
                 <input type="hidden" name="programaID" id="programaID">
                 <input type="hidden" name="idinscripcion" id="idinscripcion">
 
-                <!-- Pestañas: Orden de Pago (primero, es el paso inicial) / Cuotas del Programa -->
-                <ul class="nav nav-pills nav-fill mb-3" id="tabsGestionPagos" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active" id="tab-orden-pago-link" data-toggle="tab" href="#tab-orden-pago" role="tab">
-                            <i class="fa fa-file-invoice"></i> 1. Orden de Pago
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="tab-pago-modulos-link" data-toggle="tab" href="#tab-pago-modulos" role="tab">
-                            <i class="fa fa-history"></i> 2. Cuotas del Programa
-                        </a>
-                    </li>
-                </ul>
-
-                <div class="tab-content mb-3">
+                <div class="tab-content">
 
                     <!-- Pestaña: Orden de Pago (se emite ANTES de pagar, para que el estudiante pague y luego suba el voucher) -->
                     <div class="tab-pane fade show active" id="tab-orden-pago" role="tabpanel">
                         <div id="ordenPagoContenido">
-                            <div class="text-center p-4">
-                                <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
-                                <p class="mt-2">Cargando...</p>
-                            </div>
+                            <div class="gp-cargando"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>
                         </div>
                     </div>
 
@@ -315,66 +311,90 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 
                         <div id="cuotaPendienteInfo"></div>
 
-                        <div class="card mb-3">
-                            <div class="card-header bg-white py-2">
-                                <strong><i class="fa fa-upload text-primary"></i> Registrar voucher de pago</strong>
-                            </div>
-                            <div class="card-body">
-                                <form id="formPagoModulo" enctype="multipart/form-data">
-                                    <input type="hidden" name="montoCuota" id="montoCuota">
+                        <div class="gp-section">
+                            <div class="gp-section-title"><i class="fa fa-upload"></i> Registrar voucher de pago</div>
+                            <form id="formPagoModulo" enctype="multipart/form-data">
+                                <input type="hidden" name="montoCuota" id="montoCuota">
 
-                                    <div class="row">
-                                        <div class="col-lg-4">
-                                            <div class="form-group">
-                                                <label class="small font-weight-bold mb-1">FECHA DE PAGO: *</label>
-                                                <input type="date" class="form-control" name="fechaPago"
-                                                       id="fechaPago" required>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-lg-4">
-                                            <div class="form-group">
-                                                <label class="small font-weight-bold mb-1">N° VOUCHER / COMPROBANTE: *</label>
-                                                <input type="text" class="form-control" name="numeroVaucher" id="numeroVaucher"
-                                                       placeholder="Ej: 123456" required>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-lg-4">
-                                            <div class="form-group">
-                                                <label class="small font-weight-bold mb-1">FOTO/ARCHIVO DE VOUCHER: *</label>
-                                                <input type="file" class="form-control-file" name="fmodulo" id="fmodulo"
-                                                       accept="image/*,.pdf" required>
-                                                <div id="previewFotoVoucher" class="mt-2"></div>
-                                            </div>
-                                        </div>
+                                <div class="row">
+                                    <div class="col-lg-4 form-group">
+                                        <label class="gp-label" for="fechaPago">Fecha de pago <span class="gp-req">*</span></label>
+                                        <input type="date" class="form-control" name="fechaPago" id="fechaPago" required>
                                     </div>
-
-                                    <div class="text-right mb-0">
-                                        <button type="submit" id="btnGuardarPagoCuota" class="btn btn-primary" disabled>
-                                            <i class="fa fa-save"></i> Guardar Pago
-                                        </button>
+                                    <div class="col-lg-4 form-group">
+                                        <label class="gp-label" for="numeroVaucher">N° de voucher / comprobante <span class="gp-req">*</span></label>
+                                        <input type="text" class="form-control" name="numeroVaucher" id="numeroVaucher"
+                                               placeholder="Ej: 123456" required>
                                     </div>
-                                </form>
-                            </div>
+                                    <div class="col-lg-4 form-group">
+                                        <label class="gp-label" for="fmodulo">Foto o archivo del voucher <span class="gp-req">*</span></label>
+                                        <input type="file" class="form-control-file gp-file" name="fmodulo" id="fmodulo"
+                                               accept="image/*,.pdf" required>
+                                        <div id="previewFotoVoucher" class="mt-2"></div>
+                                    </div>
+                                </div>
+
+                                <div class="gp-actions">
+                                    <button type="submit" id="btnGuardarPagoCuota" class="btn btn-primary" disabled>
+                                        <i class="fa fa-save"></i> Guardar pago
+                                    </button>
+                                </div>
+                            </form>
                         </div>
 
-                        <h6 class="text-muted small text-uppercase mb-2"><i class="fa fa-history"></i> Historial de cuotas</h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-hover mb-0">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th class="text-center" style="width:60px;">N°</th>
-                                        <th class="text-center">Monto</th>
-                                        <th class="text-center">Fecha</th>
-                                        <th>Voucher</th>
-                                        <th class="text-center">Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaCuotasBody">
-                                    <tr><td colspan="5" class="text-center text-muted py-3">Sin cuotas registradas</td></tr>
-                                </tbody>
-                            </table>
+                        <div class="gp-section gp-section-flush">
+                            <div class="gp-section-title"><i class="fa fa-history"></i> Historial de cuotas</div>
+                            <div class="table-responsive">
+                                <table class="table gp-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" style="width:70px;">N°</th>
+                                            <th class="text-right">Monto</th>
+                                            <th class="text-center">Fecha</th>
+                                            <th>Voucher</th>
+                                            <th class="text-center">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaCuotasBody">
+                                        <tr><td colspan="5" class="gp-vacio">Sin cuotas registradas</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pestaña: Clínicas (orden de pago de monto libre a la cuenta CLINICA del
+                         programa; se confirma registrando su voucher). Contenido en ordenpagoclinica.js -->
+                    <div class="tab-pane fade" id="tab-clinica" role="tabpanel">
+                        <div class="gp-nota is-neutra">
+                            <i class="fa fa-info-circle"></i>
+                            <span>Los pagos de clínica son independientes: no se suman al costo, a lo pagado ni al saldo de matrícula y cuotas del programa.</span>
+                        </div>
+
+                        <div id="clinicaContenido"></div>
+
+                        <div class="gp-section gp-section-flush">
+                            <div class="gp-section-title d-flex justify-content-between">
+                                <span><i class="fa fa-history"></i> Historial de clínicas</span>
+                                <span id="clinicaTotalPagado"></span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table gp-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>N° Orden</th>
+                                            <th class="text-right">Monto</th>
+                                            <th class="text-center">Fecha pago</th>
+                                            <th>Voucher</th>
+                                            <th class="text-center">Estado</th>
+                                            <th class="text-center" style="width:60px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaClinicasBody">
+                                        <tr><td colspan="6" class="gp-vacio">Sin clínicas registradas</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
@@ -382,9 +402,9 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 
             </div>
 
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="fa fa-times"></i> Cerrar
+            <div class="modal-footer gp-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    Cerrar
                 </button>
             </div>
         </div>
@@ -485,8 +505,379 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 <script src="vistas/recursos/assets/js/scripts/inscripcionmodulo.js?v=<?php echo time(); ?>"></script>
 <script src="vistas/recursos/assets/js/scripts/planpago.js?v=<?php echo time(); ?>"></script>
 <script src="vistas/recursos/assets/js/scripts/ordenpagomodulos.js?v=<?php echo time(); ?>"></script>
+<script src="vistas/recursos/assets/js/scripts/ordenpagoclinica.js?v=<?php echo time(); ?>"></script>
 
 <style>
+    /* =========================================================
+       Modal "Gestión de Pagos del Programa" (prefijo gp-)
+       Todo queda acotado a #modalInscribirModulo para no afectar otras vistas.
+       ========================================================= */
+    #modalInscribirModulo {
+        --gp-primario: #1e3c72;
+        --gp-primario-suave: #eef2f9;
+        --gp-texto: #1f2937;
+        --gp-texto-2: #6b7280;
+        --gp-borde: #e5e7eb;
+        --gp-fondo: #f7f8fa;
+        --gp-exito: #15803d;
+        --gp-exito-suave: #ecfdf3;
+        --gp-alerta: #b45309;
+        --gp-alerta-suave: #fffbeb;
+        --gp-peligro: #b91c1c;
+    }
+    #modalInscribirModulo .modal-content {
+        border: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        color: var(--gp-texto);
+    }
+
+    /* Encabezado */
+    #modalInscribirModulo .gp-header {
+        background: var(--gp-primario);
+        color: #fff;
+        border: 0;
+        padding: 18px 24px;
+        align-items: flex-start;
+    }
+    #modalInscribirModulo .gp-eyebrow {
+        display: block;
+        font-size: 11px;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, .65);
+        margin-bottom: 2px;
+    }
+    #modalInscribirModulo .gp-header .modal-title {
+        color: #fff;
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+    #modalInscribirModulo .gp-header-sub {
+        font-size: 13px;
+        color: rgba(255, 255, 255, .8);
+        margin-top: 2px;
+    }
+    #modalInscribirModulo .gp-header .close {
+        color: #fff;
+        opacity: .7;
+        text-shadow: none;
+        margin: -6px -8px -6px auto;
+    }
+    #modalInscribirModulo .gp-header .close:hover { opacity: 1; }
+
+    /* Resumen + pestañas (zona fija bajo el encabezado) */
+    #modalInscribirModulo .gp-top {
+        background: #fff;
+        border-bottom: 1px solid var(--gp-borde);
+        padding: 16px 24px 0;
+    }
+    #modalInscribirModulo .gp-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+    #modalInscribirModulo .gp-stat {
+        background: var(--gp-fondo);
+        border-radius: 8px;
+        padding: 10px 14px;
+    }
+    #modalInscribirModulo .gp-stat-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--gp-texto-2);
+    }
+    #modalInscribirModulo .gp-stat-valor {
+        font-size: 18px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    #modalInscribirModulo .gp-stat-valor small { font-size: 12px; font-weight: 500; color: var(--gp-texto-2); }
+    #modalInscribirModulo .gp-stat.is-pagado .gp-stat-valor { color: var(--gp-exito); }
+    #modalInscribirModulo .gp-stat.is-saldo .gp-stat-valor { color: var(--gp-primario); }
+    #modalInscribirModulo .gp-progreso {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--gp-texto-2);
+    }
+    #modalInscribirModulo .gp-progreso .progress {
+        flex: 1;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--gp-borde);
+    }
+    #modalInscribirModulo .gp-progreso .progress-bar { background: var(--gp-primario); }
+    #modalInscribirModulo .gp-progreso .progress-bar.is-completo { background: var(--gp-exito); }
+    #modalInscribirModulo .gp-aviso {
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        background: var(--gp-alerta-suave);
+        color: var(--gp-alerta);
+    }
+
+    #modalInscribirModulo .gp-tabs {
+        margin-top: 14px;
+        border: 0;
+        gap: 4px;
+    }
+    #modalInscribirModulo .gp-tabs .nav-link {
+        border: 0;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--gp-texto-2);
+        background: transparent;
+    }
+    #modalInscribirModulo .gp-tabs .nav-link i { margin-right: 6px; }
+    #modalInscribirModulo .gp-tabs .nav-link:hover { color: var(--gp-texto); }
+    #modalInscribirModulo .gp-tabs .nav-link.active {
+        color: var(--gp-primario);
+        border-bottom-color: var(--gp-primario);
+        font-weight: 600;
+    }
+
+    /* Cuerpo */
+    #modalInscribirModulo .modal-body {
+        background: var(--gp-fondo);
+        padding: 20px 24px;
+    }
+    #modalInscribirModulo .gp-cargando {
+        text-align: center;
+        color: var(--gp-texto-2);
+        padding: 24px 0;
+        font-size: 13px;
+    }
+    #modalInscribirModulo .gp-section {
+        background: #fff;
+        border: 1px solid var(--gp-borde);
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin-bottom: 16px;
+    }
+    #modalInscribirModulo .tab-pane > :last-child { margin-bottom: 0; }
+    #modalInscribirModulo .gp-section-flush { padding: 0; overflow: hidden; }
+    #modalInscribirModulo .gp-section-flush .gp-section-title { padding: 14px 20px 10px; margin: 0; }
+    #modalInscribirModulo .gp-section-title {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--gp-texto-2);
+        margin-bottom: 14px;
+    }
+    #modalInscribirModulo .gp-section-title i { margin-right: 6px; }
+    #modalInscribirModulo .gp-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--gp-texto);
+        margin-bottom: 4px;
+    }
+    #modalInscribirModulo .gp-req { color: var(--gp-peligro); }
+    #modalInscribirModulo .gp-ayuda { font-size: 12px; color: var(--gp-texto-2); margin-top: 4px; }
+    #modalInscribirModulo .form-control {
+        border-color: var(--gp-borde);
+        border-radius: 6px;
+        font-size: 13px;
+    }
+    #modalInscribirModulo .form-control:focus {
+        border-color: var(--gp-primario);
+        box-shadow: 0 0 0 3px rgba(30, 60, 114, .12);
+    }
+    #modalInscribirModulo .gp-file { font-size: 12px; }
+    #modalInscribirModulo .gp-file::file-selector-button {
+        border: 1px solid var(--gp-borde);
+        background: #fff;
+        border-radius: 6px;
+        padding: 6px 12px;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+    #modalInscribirModulo .gp-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding-top: 4px;
+    }
+
+    /* Monto a generar */
+    #modalInscribirModulo .gp-monto {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    #modalInscribirModulo .gp-monto-input {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--gp-borde);
+        border-radius: 8px;
+        padding: 4px 12px;
+        background: #fff;
+    }
+    #modalInscribirModulo .gp-monto-input:focus-within {
+        border-color: var(--gp-primario);
+        box-shadow: 0 0 0 3px rgba(30, 60, 114, .12);
+    }
+    #modalInscribirModulo .gp-monto-input span { font-weight: 600; color: var(--gp-texto-2); margin-right: 6px; }
+    #modalInscribirModulo .gp-monto-input input {
+        border: 0;
+        outline: 0;
+        width: 150px;
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--gp-primario);
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        background: transparent;
+    }
+    #modalInscribirModulo .gp-monto-fijo {
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--gp-primario);
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Orden pendiente */
+    #modalInscribirModulo .gp-orden {
+        border-left: 3px solid #f59e0b;
+    }
+    #modalInscribirModulo .gp-orden-fila {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    #modalInscribirModulo .gp-orden-num { font-weight: 600; }
+    #modalInscribirModulo .gp-orden-meta { font-size: 12px; color: var(--gp-texto-2); margin-top: 2px; }
+    #modalInscribirModulo .gp-orden-monto {
+        font-size: 22px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+    }
+    #modalInscribirModulo .gp-orden .gp-actions {
+        justify-content: flex-start;
+        border-top: 1px solid var(--gp-borde);
+        margin-top: 14px;
+        padding-top: 14px;
+    }
+    #modalInscribirModulo .gp-estado-vacio {
+        text-align: center;
+        padding: 28px 16px;
+        color: var(--gp-texto-2);
+    }
+    #modalInscribirModulo .gp-estado-vacio i { font-size: 28px; margin-bottom: 10px; display: block; }
+    #modalInscribirModulo .gp-estado-vacio h6 { color: var(--gp-texto); font-weight: 600; margin-bottom: 4px; }
+    #modalInscribirModulo .gp-estado-vacio.is-exito i { color: var(--gp-exito); }
+    #modalInscribirModulo .gp-estado-vacio.is-alerta i { color: #f59e0b; }
+
+    /* Chips de estado */
+    #modalInscribirModulo .gp-chip {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        background: var(--gp-fondo);
+        color: var(--gp-texto-2);
+    }
+    #modalInscribirModulo .gp-chip.is-pendiente { background: var(--gp-alerta-suave); color: var(--gp-alerta); }
+    #modalInscribirModulo .gp-chip.is-pagado { background: var(--gp-exito-suave); color: var(--gp-exito); }
+    #modalInscribirModulo .gp-chip.is-rechazado { background: #fef2f2; color: var(--gp-peligro); }
+
+    /* Mensajes dentro de las pestañas (orden pendiente, sin orden, etc.) */
+    #modalInscribirModulo .gp-nota {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        margin-bottom: 16px;
+        background: var(--gp-primario-suave);
+        color: var(--gp-primario);
+    }
+    #modalInscribirModulo .gp-nota.is-neutra { background: #fff; border: 1px dashed var(--gp-borde); color: var(--gp-texto-2); }
+    #modalInscribirModulo .gp-nota.is-exito { background: var(--gp-exito-suave); color: var(--gp-exito); }
+
+    /* Tablas */
+    #modalInscribirModulo .gp-table { font-size: 13px; }
+    #modalInscribirModulo .gp-table thead th {
+        background: var(--gp-fondo);
+        border-top: 1px solid var(--gp-borde);
+        border-bottom: 1px solid var(--gp-borde);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--gp-texto-2);
+        padding: 8px 12px;
+    }
+    #modalInscribirModulo .gp-table td {
+        border-top: 1px solid var(--gp-borde);
+        padding: 10px 12px;
+        vertical-align: middle;
+    }
+    #modalInscribirModulo .gp-table th:first-child,
+    #modalInscribirModulo .gp-table td:first-child { padding-left: 20px; }
+    #modalInscribirModulo .gp-table th:last-child,
+    #modalInscribirModulo .gp-table td:last-child { padding-right: 20px; }
+    #modalInscribirModulo .gp-table .text-right { font-variant-numeric: tabular-nums; }
+    #modalInscribirModulo .gp-table td { white-space: nowrap; }
+    #modalInscribirModulo .gp-vacio { text-align: center; color: var(--gp-texto-2); padding: 20px !important; white-space: normal; }
+
+    /* Botones y enlaces con el color institucional (el tema usa otro primario) */
+    #modalInscribirModulo a:not(.btn):not(.nav-link) { color: var(--gp-primario); }
+    #modalInscribirModulo .btn-link { color: var(--gp-primario); }
+    #modalInscribirModulo .btn-link.text-danger,
+    #modalInscribirModulo .text-danger { color: var(--gp-peligro) !important; }
+    #modalInscribirModulo .btn-primary {
+        background: var(--gp-primario);
+        border-color: var(--gp-primario);
+        color: #fff;
+    }
+    #modalInscribirModulo .btn-primary:hover:not(:disabled),
+    #modalInscribirModulo .btn-primary:focus {
+        background: #16305c;
+        border-color: #16305c;
+        color: #fff;
+    }
+    #modalInscribirModulo .btn-primary:disabled { opacity: .45; }
+    #modalInscribirModulo .btn-outline-secondary {
+        border-color: var(--gp-borde);
+        color: var(--gp-texto);
+        background: #fff;
+    }
+    #modalInscribirModulo .btn-outline-secondary:hover { background: var(--gp-fondo); color: var(--gp-texto); }
+    #modalInscribirModulo .gp-footer .btn-light { border: 1px solid var(--gp-borde); background: #fff; }
+
+    #modalInscribirModulo .gp-footer {
+        background: #fff;
+        border-top: 1px solid var(--gp-borde);
+        padding: 12px 24px;
+    }
+
+    @media (max-width: 575.98px) {
+        #modalInscribirModulo .gp-header,
+        #modalInscribirModulo .gp-top,
+        #modalInscribirModulo .modal-body { padding-left: 16px; padding-right: 16px; }
+        #modalInscribirModulo .gp-stats { grid-template-columns: 1fr; gap: 8px; }
+        #modalInscribirModulo .gp-tabs { flex-wrap: nowrap; overflow-x: auto; }
+        #modalInscribirModulo .gp-tabs .nav-link { white-space: nowrap; }
+    }
+
     /* Estilos modernos para la tabla de matriculados */
     .kt-portlet--modern {
         border-radius: 10px;

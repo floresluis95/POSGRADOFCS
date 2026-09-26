@@ -9,6 +9,108 @@ require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ 
 
 class ModuloControlador
 {
+    // Debe coincidir con modulos.nombremodulo VARCHAR(255) (ver ampliar_nombremodulo.sql)
+    const LARGO_MAXIMO_NOMBRE = 255;
+
+    /**
+     * Deja el nombre del módulo listo para guardar: sin espacios repetidos y en
+     * mayúsculas. Se usa mb_strtoupper porque strtoupper no convierte las letras
+     * con tilde ("ácido" quedaba "áCIDO" en el historial y los certificados).
+     */
+    private static function NormalizarNombreModulo($texto)
+    {
+        $texto = preg_replace('/\s+/u', ' ', trim($texto));
+        return htmlspecialchars(mb_strtoupper($texto, 'UTF-8'));
+    }
+
+    // Quita tildes para comparar palabras ("HIALURONICO" y "HIALURÓNICO" cuentan como la misma)
+    private static function SinTildes($palabra)
+    {
+        return strtr($palabra, ['Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ü' => 'U']);
+    }
+
+    /**
+     * Revisa los nombres que se van a guardar y sugiere correcciones comparando
+     * cada palabra con las que ya aparecen en otros módulos y programas.
+     * Detecta letras de más/de menos/cambiadas ("ODNTOLOGIA" -> "ODONTOLOGÍA")
+     * y tildes que faltan. Solo sugiere: el usuario decide si guarda igual.
+     *
+     * @param array $nombres textos tal como los escribió el usuario
+     * @param int|null $excluirIdModulo módulo que se está editando
+     * @return array [['nombre' => ..., 'palabra' => ..., 'sugerencia' => ...], ...]
+     */
+    public static function SugerirCorreccionesNombres($nombres, $excluirIdModulo = null)
+    {
+        $separarPalabras = function ($texto) {
+            $texto = mb_strtoupper(html_entity_decode($texto, ENT_QUOTES, 'UTF-8'), 'UTF-8');
+            return preg_split('/[^\p{L}]+/u', $texto, -1, PREG_SPLIT_NO_EMPTY);
+        };
+
+        // Vocabulario: cuántas veces aparece cada palabra en lo ya registrado
+        $frecuencia = [];
+        foreach (ModuloModelo::ListarNombresRegistradosModelo($excluirIdModulo) as $registrado) {
+            foreach ($separarPalabras($registrado) as $palabra) {
+                $frecuencia[$palabra] = ($frecuencia[$palabra] ?? 0) + 1;
+            }
+        }
+
+        $sugerencias = [];
+        foreach ($nombres as $nombre) {
+            foreach (array_unique($separarPalabras($nombre)) as $palabra) {
+                $largo = mb_strlen($palabra, 'UTF-8');
+                if ($largo < 6) {
+                    continue; // palabras cortas ("DE", "LA", "MEDIO") dan demasiadas falsas alarmas
+                }
+
+                $vecesPalabra = $frecuencia[$palabra] ?? 0;
+                $maxDiferencia = $largo >= 9 ? 2 : 1;
+                $palabraBase = self::SinTildes($palabra);
+                $mejor = null;
+
+                foreach ($frecuencia as $conocida => $veces) {
+                    // Solo se sugiere una palabra que se usa más que la escrita
+                    if ($conocida === $palabra || $veces <= $vecesPalabra) {
+                        continue;
+                    }
+                    $conocidaBase = self::SinTildes($conocida);
+                    if (abs(strlen($conocidaBase) - strlen($palabraBase)) > $maxDiferencia) {
+                        continue;
+                    }
+                    // Singular/plural no es un error ("ADIPOSO" / "ADIPOSOS")
+                    if (in_array($conocidaBase, [$palabraBase . 'S', $palabraBase . 'ES'], true)
+                        || in_array($palabraBase, [$conocidaBase . 'S', $conocidaBase . 'ES'], true)) {
+                        continue;
+                    }
+                    // Si solo falta la tilde basta con que la palabra se haya usado una vez;
+                    // si cambian letras, debe usarse al menos 2 veces, para no proponer
+                    // como "correcta" una palabra que quedó mal escrita en un único módulo.
+                    $diferencia = levenshtein($palabraBase, $conocidaBase);
+                    if ($diferencia > 0 && $veces < 2) {
+                        continue;
+                    }
+                    if ($diferencia <= $maxDiferencia && ($mejor === null || [$diferencia, -$veces] < [$mejor[1], -$mejor[2]])) {
+                        $mejor = [$conocida, $diferencia, $veces];
+                    }
+                }
+
+                if ($mejor !== null) {
+                    $sugerencias[] = ['nombre' => $nombre, 'palabra' => $palabra, 'sugerencia' => $mejor[0]];
+                }
+            }
+        }
+
+        return $sugerencias;
+    }
+
+    public function SugerirCorreccionesNombresAjaxControlador()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        $nombres = isset($_POST['nombres']) && is_array($_POST['nombres']) ? $_POST['nombres'] : [];
+        $excluir = !empty($_POST['idmodulo']) ? (int)$_POST['idmodulo'] : null;
+        echo json_encode(['sugerencias' => self::SugerirCorreccionesNombres($nombres, $excluir)], JSON_INVALID_UTF8_SUBSTITUTE);
+        exit();
+    }
+
     /**
      * Registrar módulos de un programa (por inscripción)
      */
@@ -38,7 +140,7 @@ class ModuloControlador
                 $codigoKey = 'codigomodulo_' . $i;
 
                 if (isset($_POST[$nombreKey]) && isset($_POST[$codigoKey])) {
-                    $nombremodulo = strtoupper(htmlspecialchars(trim($_POST[$nombreKey])));
+                    $nombremodulo = self::NormalizarNombreModulo($_POST[$nombreKey]);
                     $codigomodulo = (int)$_POST[$codigoKey];
 
                     if (!empty($nombremodulo) && $codigomodulo > 0) {
@@ -220,8 +322,12 @@ class ModuloControlador
 
                 // El nombre es opcional, si está vacío usar el código como nombre
                 $nombremodulo = isset($_POST[$nombreKey]) && !empty(trim($_POST[$nombreKey]))
-                    ? strtoupper(htmlspecialchars(trim($_POST[$nombreKey])))
+                    ? self::NormalizarNombreModulo($_POST[$nombreKey])
                     : $codigomodulo;
+
+                if (mb_strlen($nombremodulo, 'UTF-8') > self::LARGO_MAXIMO_NOMBRE) {
+                    return ['estado' => 'validacion', 'mensaje' => "El nombre del módulo \"$codigomodulo\" supera los " . self::LARGO_MAXIMO_NOMBRE . " caracteres permitidos"];
+                }
 
                 $docenteID = isset($_POST[$docenteKey]) && !empty($_POST[$docenteKey])
                     ? (int)$_POST[$docenteKey]
@@ -400,8 +506,12 @@ class ModuloControlador
 
         $idmodulo = (int)$_POST['idmodulo'];
         $programaID = (int)$_POST['programaID'];
-        $nombremodulo = strtoupper(htmlspecialchars(trim($_POST['nombremodulo'])));
+        $nombremodulo = self::NormalizarNombreModulo($_POST['nombremodulo']);
         $codigomodulo = strtoupper(htmlspecialchars(trim($_POST['codigomodulo'])));
+
+        if (mb_strlen($nombremodulo, 'UTF-8') > self::LARGO_MAXIMO_NOMBRE) {
+            return ['estado' => 'validacion', 'mensaje' => 'El nombre del módulo supera los ' . self::LARGO_MAXIMO_NOMBRE . ' caracteres permitidos'];
+        }
         $docenteID = isset($_POST['docenteID']) && !empty($_POST['docenteID']) ? (int)$_POST['docenteID'] : null;
         $fechainicio = isset($_POST['fechainicio']) && !empty($_POST['fechainicio']) ? trim($_POST['fechainicio']) : null;
         $fechafin = isset($_POST['fechafin']) && !empty($_POST['fechafin']) ? trim($_POST['fechafin']) : null;

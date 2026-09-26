@@ -97,6 +97,7 @@
                                                 <option value="">Todos</option>
                                                 <option value="MATRICULA">Matrícula</option>
                                                 <option value="CUOTA">Cuota</option>
+                                                <option value="CLINICA">Clínica</option>
                                                 <option value="MODULOS">Pago de Módulos</option>
                                             </select>
                                         </div>

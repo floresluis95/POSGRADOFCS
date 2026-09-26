@@ -48,9 +48,9 @@ $(document).ready(function() {
         $('#previewFotoVoucher').html('');
 
         // Mostrar loader en el resumen de pago
-        $('#resumenPagoPrograma').html('<div class="text-center p-2"><i class="fa fa-spinner fa-spin"></i> Cargando resumen...</div>');
+        $('#resumenPagoPrograma').html('<div class="gp-cargando"><i class="fa fa-spinner fa-spin"></i> Cargando resumen...</div>');
         $('#cuotaPendienteInfo').html('');
-        $('#tablaCuotasBody').html('<tr><td colspan="5" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
+        $('#tablaCuotasBody').html('<tr><td colspan="5" class="gp-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
 
         // Establecer fecha actual
         const hoy = new Date().toISOString().split('T')[0];
@@ -79,6 +79,9 @@ $(document).ready(function() {
             if (typeof window.cargarOrdenPagoModulos === 'function') {
                 window.cargarOrdenPagoModulos(contexto);
             }
+            if (typeof window.cargarClinica === 'function') {
+                window.cargarClinica(contexto);
+            }
             cargarCuotasPrograma(programaID);
         }, 300);
     });
@@ -91,7 +94,7 @@ $(document).ready(function() {
         const idinscripcion = $('#idinscripcion').val();
 
         if (!idinscripcion) {
-            $('#resumenPagoPrograma').html('<div class="alert alert-danger mb-0">No se pudo obtener el ID de inscripción.</div>');
+            $('#resumenPagoPrograma').html('<div class="gp-aviso">No se pudo obtener el ID de inscripción.</div>');
             return;
         }
 
@@ -113,7 +116,7 @@ $(document).ready(function() {
         ).done(function(respResumen, respOrden) {
             const resp = respResumen[0];
             if (!resp || !resp.success) {
-                $('#resumenPagoPrograma').html('<div class="alert alert-danger mb-0">No se pudo cargar el resumen de pago</div>');
+                $('#resumenPagoPrograma').html('<div class="gp-aviso">No se pudo cargar el resumen de pago</div>');
                 return;
             }
 
@@ -125,16 +128,29 @@ $(document).ready(function() {
             renderCuotaPendienteInfo(r, orden);
             renderHistorialCuotas(resp.cuotas || [], r.numeroCuotasPlan);
         }).fail(function() {
-            $('#resumenPagoPrograma').html('<div class="alert alert-danger mb-0">No se pudo cargar el resumen de pago</div>');
+            $('#resumenPagoPrograma').html('<div class="gp-aviso">No se pudo cargar el resumen de pago</div>');
         });
     }
+
+    // Formato de moneda con separador de miles: Bs. 12,500.00
+    function formatoBs(monto) {
+        return 'Bs. ' + (parseFloat(monto) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    window.formatoBs = formatoBs;
+
+    // Chip de estado (PAGADO / PENDIENTE / RECHAZADO / CONFIRMADO...) con estilos del modal
+    window.chipEstadoPago = function(estado) {
+        const clases = { PAGADO: 'is-pagado', CONFIRMADO: 'is-pagado', PENDIENTE: 'is-pendiente', RECHAZADO: 'is-rechazado', VENCIDO: 'is-rechazado' };
+        const texto = String(estado || '-');
+        return '<span class="gp-chip ' + (clases[texto] || '') + '">' + texto.charAt(0) + texto.slice(1).toLowerCase() + '</span>';
+    };
 
     function renderResumenPagoPrograma(r) {
         if (!r.tienePlan) {
             $('#resumenPagoPrograma').html(
-                '<div class="alert alert-warning mb-0 py-2"><i class="fa fa-exclamation-triangle"></i> ' +
-                'Sin Plan de Pago del Programa (normalmente porque eligió Plan Grupal en Pre-Registro). ' +
-                'Use el botón "Plan Grupal" en la barra superior para armarle uno.</div>'
+                '<div class="gp-aviso"><i class="fa fa-exclamation-triangle"></i> ' +
+                'Sin plan de pago del programa (normalmente porque eligió Plan Grupal en Pre-Registro). ' +
+                'Use el botón "Plan Grupal" de la barra superior para armarle uno.</div>'
             );
             return;
         }
@@ -144,33 +160,39 @@ $(document).ready(function() {
         const saldoPendiente = parseFloat(r.saldoPendiente) || 0;
         const porcentaje = costoTotal > 0 ? Math.min(100, Math.round((totalPagado / costoTotal) * 100)) : 0;
 
-        const badgeCompletado = r.completado
-            ? '<span class="badge badge-success ml-2"><i class="fa fa-check-circle"></i> COMPLETADO</span>' : '';
-
         // Progreso de cuotas: solo tiene sentido en Plan Regular con número de cuotas definido
         const etiquetaCuotas = (!r.cuotaUnica && r.numeroCuotasPlan)
-            ? ' &middot; ' + r.cuotasPagadasCount + ' de ' + r.numeroCuotasPlan + ' cuotas'
+            ? r.cuotasPagadasCount + ' de ' + r.numeroCuotasPlan + ' cuotas'
             : '';
 
         $('#resumenPagoPrograma').html(
-            '<div class="d-flex justify-content-between align-items-baseline mb-1">' +
-                '<small class="text-muted">Costo Bs. ' + costoTotal.toFixed(2) + etiquetaCuotas + '</small>' +
-                '<span>' +
-                    '<strong class="text-success">Pagado Bs. ' + totalPagado.toFixed(2) + '</strong>' +
-                    (saldoPendiente > 0 ? ' <span class="text-muted">/ pendiente Bs. ' + saldoPendiente.toFixed(2) + '</span>' : '') +
-                    badgeCompletado +
-                '</span>' +
+            '<div class="gp-stats">' +
+                '<div class="gp-stat">' +
+                    '<div class="gp-stat-label">Costo del programa</div>' +
+                    '<div class="gp-stat-valor">' + formatoBs(costoTotal) + '</div>' +
+                '</div>' +
+                '<div class="gp-stat is-pagado">' +
+                    '<div class="gp-stat-label">Pagado</div>' +
+                    '<div class="gp-stat-valor">' + formatoBs(totalPagado) + '</div>' +
+                '</div>' +
+                '<div class="gp-stat is-saldo">' +
+                    '<div class="gp-stat-label">Saldo pendiente</div>' +
+                    '<div class="gp-stat-valor">' + (r.completado ? '<span style="color:var(--gp-exito)"><i class="fa fa-check-circle"></i> Completado</span>' : formatoBs(saldoPendiente)) + '</div>' +
+                '</div>' +
             '</div>' +
-            '<div class="progress" style="height: 10px;">' +
-                '<div class="progress-bar ' + (r.completado ? 'bg-success' : 'bg-primary') + '" role="progressbar" ' +
-                    'style="width: ' + porcentaje + '%;" aria-valuenow="' + porcentaje + '" aria-valuemin="0" aria-valuemax="100"></div>' +
+            '<div class="gp-progreso">' +
+                '<div class="progress">' +
+                    '<div class="progress-bar' + (r.completado ? ' is-completo' : '') + '" role="progressbar" ' +
+                        'style="width: ' + porcentaje + '%;" aria-valuenow="' + porcentaje + '" aria-valuemin="0" aria-valuemax="100"></div>' +
+                '</div>' +
+                '<span>' + porcentaje + '% pagado' + (etiquetaCuotas ? ' &middot; ' + etiquetaCuotas : '') + '</span>' +
             '</div>'
         );
     }
 
     function renderCuotaPendienteInfo(r, orden) {
         $('#montoCuota').val('');
-        $('#btnGuardarPagoCuota').html('<i class="fa fa-save"></i> Guardar Pago');
+        $('#btnGuardarPagoCuota').html('<i class="fa fa-save"></i> Guardar pago');
 
         if (!r.tienePlan) {
             $('#cuotaPendienteInfo').html('');
@@ -179,15 +201,15 @@ $(document).ready(function() {
         }
 
         if (r.completado) {
-            $('#cuotaPendienteInfo').html('<div class="alert alert-success"><i class="fa fa-check-circle"></i> El programa ya está pagado en su totalidad.</div>');
+            $('#cuotaPendienteInfo').html('<div class="gp-nota is-exito"><i class="fa fa-check-circle"></i> El programa ya está pagado en su totalidad.</div>');
             $('#btnGuardarPagoCuota').prop('disabled', true);
             return;
         }
 
         if (!orden) {
             $('#cuotaPendienteInfo').html(
-                '<div class="alert alert-light border"><i class="fa fa-lock"></i> No hay una orden de pago pendiente. ' +
-                '<button type="button" class="btn btn-link btn-sm p-0 align-baseline btn-ir-orden-pago">Generarla ahora</button> en la pestaña "Orden de Pago".</div>'
+                '<div class="gp-nota is-neutra"><i class="fa fa-lock"></i> <span>No hay una orden de pago pendiente. ' +
+                '<button type="button" class="btn btn-link btn-sm p-0 align-baseline btn-ir-orden-pago">Generarla ahora</button> en la pestaña "Orden de pago".</span></div>'
             );
             $('#btnGuardarPagoCuota').prop('disabled', true);
             return;
@@ -195,19 +217,17 @@ $(document).ready(function() {
 
         $('#montoCuota').val(orden.MontoTotal);
         $('#cuotaPendienteInfo').html(
-            '<div class="alert alert-info"><i class="fa fa-file-invoice"></i> Orden de pago N° ' + orden.NumeroOrden +
-            ' pendiente por <strong>Bs. ' + parseFloat(orden.MontoTotal).toFixed(2) + '</strong>. Registre el voucher para confirmarla.</div>'
+            '<div class="gp-nota"><i class="fa fa-file-invoice"></i> <span>Orden N° ' + orden.NumeroOrden +
+            ' pendiente por <strong>' + formatoBs(orden.MontoTotal) + '</strong>. Registre el voucher para confirmarla.</span></div>'
         );
         $('#btnGuardarPagoCuota').prop('disabled', false);
     }
 
     function renderHistorialCuotas(cuotas, numeroCuotasPlan) {
         if (!cuotas || cuotas.length === 0) {
-            $('#tablaCuotasBody').html('<tr><td colspan="5" class="text-center text-muted py-3">Sin cuotas registradas</td></tr>');
+            $('#tablaCuotasBody').html('<tr><td colspan="5" class="gp-vacio">Sin cuotas registradas</td></tr>');
             return;
         }
-
-        const badgeEstado = { PAGADO: 'badge-success', PENDIENTE: 'badge-warning', RECHAZADO: 'badge-danger' };
 
         let html = '';
         cuotas.forEach(function(c) {
@@ -217,15 +237,15 @@ $(document).ready(function() {
 
             const tieneImagen = c.TieneImagen === 'SI';
             const btnFoto = tieneImagen
-                ? ' <a href="#" class="btn-ver-foto-cuota" data-idpago="' + c.Idpagomodulo + '" title="Ver foto del voucher"><i class="fa fa-image text-primary"></i></a>'
+                ? ' <a href="#" class="btn-ver-foto-cuota ml-1" data-idpago="' + c.Idpagomodulo + '" title="Ver foto del voucher"><i class="fa fa-image"></i></a>'
                 : '';
 
             html += '<tr>' +
                 '<td class="text-center">' + etiquetaCuota + '</td>' +
-                '<td class="text-center">Bs. ' + parseFloat(c.montocuota).toFixed(2) + '</td>' +
+                '<td class="text-right">' + formatoBs(c.montocuota) + '</td>' +
                 '<td class="text-center">' + (c.fechapago || '-') + '</td>' +
                 '<td>' + (c.nvaucher || '-') + btnFoto + '</td>' +
-                '<td class="text-center"><span class="badge ' + (badgeEstado[c.Estado] || 'badge-secondary') + '">' + c.Estado + '</span></td>' +
+                '<td class="text-center">' + window.chipEstadoPago(c.Estado) + '</td>' +
             '</tr>';
         });
         $('#tablaCuotasBody').html(html);

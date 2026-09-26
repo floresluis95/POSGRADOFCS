@@ -14,6 +14,7 @@ $(document).ready(function() {
     cargarReportePagos();
 
     $('#reportePagosGrado').on('change', cargarReportePagos);
+    $('#reportePagosBuscar').on('input', filtrarReportePagos);
     $('#btnActualizarReportePagos').on('click', cargarReportePagos);
     $('#btnImprimirReportePagos').on('click', imprimirReportePagos);
     $('#btnImprimirDetallePagos').on('click', imprimirDetallePagos);
@@ -29,7 +30,7 @@ $(document).ready(function() {
     $(document).on('click', '.btn-detalle-pagos-programa', function() {
         const programaID = $(this).data('programa-id');
         const programaNombre = $(this).data('programa-nombre');
-        verDetallePagosPrograma(programaID, programaNombre);
+        verDetallePagosPrograma(programaID, programaNombre, $(this).data('tiene-clinica') == 1);
     });
 });
 
@@ -65,7 +66,31 @@ function formatoMoneda(valor) {
     return 'Bs. ' + (parseFloat(valor) || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function escaparHtml(texto) {
+    return $('<div>').text(texto == null ? '' : String(texto)).html();
+}
+
+function porcentaje(parte, total) {
+    return total > 0 ? Math.min(100, Math.round((parte / total) * 100)) : 0;
+}
+
+function barraAvance(pct) {
+    return '<div class="rp-barra"><span class="' + (pct >= 100 ? 'is-completo' : '') + '" style="width:' + pct + '%"></span></div>';
+}
+
+function kpi(clase, etiqueta, valor, sub, extra) {
+    return '<div class="rp-kpi ' + clase + '">' +
+        '<div class="rp-kpi-label">' + etiqueta + '</div>' +
+        '<div class="rp-kpi-valor" title="' + $('<div>').html(valor).text() + '">' + valor + '</div>' +
+        (sub ? '<div class="rp-kpi-sub">' + sub + '</div>' : '') +
+        (extra || '') +
+    '</div>';
+}
+
 const NOMBRES_PLAN_REPORTE = { REGULAR: 'Regular', DESCUENTO: 'Contado (Desc.)', GRUPAL: 'Grupal' };
+
+// Último resultado del servidor: la búsqueda por texto filtra sobre esto sin volver a pedirlo
+let datosReportePagos = [];
 
 /**
  * Cargar y renderizar el reporte de pagos por programa
@@ -73,8 +98,9 @@ const NOMBRES_PLAN_REPORTE = { REGULAR: 'Regular', DESCUENTO: 'Contado (Desc.)',
 function cargarReportePagos() {
     const grado = $('#reportePagosGrado').val();
 
-    $('#tablaReportePagosBody').html('<tr><td colspan="17" class="text-center text-muted py-4"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
+    $('#tablaReportePagosBody').html('<tr><td colspan="8" class="rp-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
     $('#tablaReportePagosFooter').html('');
+    $('#reportePagosKpis').html('');
 
     $.ajax({
         url: 'ajax/reportemodulos.ajax.php',
@@ -82,73 +108,121 @@ function cargarReportePagos() {
         data: { accion: 'obtenerReportePagosPrograma', grado: grado },
         dataType: 'json',
         success: function(response) {
-            renderTablaReportePagos(response || []);
+            datosReportePagos = Array.isArray(response) ? response : [];
+            filtrarReportePagos();
         },
         error: function() {
-            $('#tablaReportePagosBody').html('<tr><td colspan="16" class="text-center text-danger py-4">No se pudo cargar el reporte de pagos</td></tr>');
+            $('#tablaReportePagosBody').html('<tr><td colspan="8" class="rp-vacio" style="color:#b91c1c">No se pudo cargar el reporte de pagos</td></tr>');
         }
     });
 }
 
+// Búsqueda local por nombre, código o sede del programa
+function filtrarReportePagos() {
+    const texto = ($('#reportePagosBuscar').val() || '').trim().toLowerCase();
+    const filtrados = !texto ? datosReportePagos : datosReportePagos.filter(function(p) {
+        return [p.NombrePrograma, p.Codigo, p.Sede, p.GradoAcademico].join(' ').toLowerCase().indexOf(texto) !== -1;
+    });
+    renderTablaReportePagos(filtrados);
+}
+
 function renderTablaReportePagos(datos) {
+    const t = {
+        inscritos: 0, completaron: 0, pendientes: 0, abandonos: 0, conDescuento: 0,
+        matriculas: 0, programado: 0, pagado: 0, montoDescuentos: 0, saldo: 0,
+        clinicaCobrado: 0, clinicaPorCobrar: 0, clinicaPendientes: 0, programasClinica: 0
+    };
+
     if (!datos || datos.length === 0) {
-        $('#tablaReportePagosBody').html('<tr><td colspan="17" class="text-center text-muted py-4">No hay programas para mostrar</td></tr>');
+        $('#tablaReportePagosBody').html('<tr><td colspan="8" class="rp-vacio">No hay programas para mostrar</td></tr>');
         $('#tablaReportePagosFooter').html('');
+        renderKpisReportePagos(t);
         return;
     }
 
     let html = '';
-    const totales = {
-        inscritos: 0, regular: 0, descuento: 0, grupal: 0, sinPlan: 0, abandonos: 0, conDescuento: 0,
-        completaron: 0, pendientes: 0, matriculas: 0, programado: 0, pagado: 0, montoDescuentos: 0, saldo: 0
-    };
 
     datos.forEach(function(p) {
-        const inscritos = parseInt(p.TotalInscritos) || 0;
-        const matriculas = parseFloat(p.TotalMatriculas) || 0;
-        const programado = parseFloat(p.CostoTotalProgramado) || 0;
-        const pagado = parseFloat(p.TotalPagado) || 0;
-        const saldo = parseFloat(p.SaldoPendiente) || 0;
-        const montoDescuentos = parseFloat(p.MontoTotalDescuentos) || 0;
-        const abandonos = parseInt(p.CountAbandono) || 0;
-        const conDescuento = parseInt(p.CountConDescuento) || 0;
+        const n = function(v) { return parseInt(v, 10) || 0; };
+        const m = function(v) { return parseFloat(v) || 0; };
 
-        totales.inscritos += inscritos;
-        totales.regular += parseInt(p.CountRegular) || 0;
-        totales.descuento += parseInt(p.CountDescuento) || 0;
-        totales.grupal += parseInt(p.CountGrupal) || 0;
-        totales.sinPlan += parseInt(p.CountSinPlan) || 0;
-        totales.abandonos += abandonos;
-        totales.conDescuento += conDescuento;
-        totales.completaron += parseInt(p.CountCompletados) || 0;
-        totales.pendientes += parseInt(p.CountPendientes) || 0;
-        totales.matriculas += matriculas;
-        totales.programado += programado;
-        totales.pagado += pagado;
-        totales.montoDescuentos += montoDescuentos;
-        totales.saldo += saldo;
+        const inscritos = n(p.TotalInscritos);
+        const completaron = n(p.CountCompletados);
+        const pendientes = n(p.CountPendientes);
+        const abandonos = n(p.CountAbandono);
+        const conDescuento = n(p.CountConDescuento);
+        const matriculas = m(p.TotalMatriculas);
+        const programado = m(p.CostoTotalProgramado);
+        const pagado = m(p.TotalPagado);
+        const saldo = m(p.SaldoPendiente);
+        const montoDescuentos = m(p.MontoTotalDescuentos);
+        const tieneClinica = n(p.TieneClinica) === 1;
+        const clinicaCobrado = m(p.ClinicaCobrado);
+        const clinicaPorCobrar = m(p.ClinicaPorCobrar);
+        const clinicaPendientes = n(p.ClinicaNumPendientes);
+        const pct = porcentaje(pagado, programado);
 
-        html += '<tr>' +
-            '<td>' + (p.NombrePrograma || '') + ' <small class="text-muted">(' + (p.Codigo || '') + ')</small></td>' +
-            '<td class="text-center">' + (p.GradoAcademico || '') + '</td>' +
-            '<td class="text-center"><strong>' + inscritos + '</strong></td>' +
-            '<td class="text-center">' + (parseInt(p.CountRegular) || 0) + '</td>' +
-            '<td class="text-center">' + (parseInt(p.CountDescuento) || 0) + '</td>' +
-            '<td class="text-center">' + (parseInt(p.CountGrupal) || 0) + '</td>' +
-            '<td class="text-center">' + (parseInt(p.CountSinPlan) || 0) + '</td>' +
-            '<td class="text-center">' + (abandonos > 0 ? '<span class="badge badge-danger">' + abandonos + '</span>' : '0') + '</td>' +
-            '<td class="text-center">' + (conDescuento > 0 ? '<span class="badge badge-info">' + conDescuento + '</span>' : '0') + '</td>' +
-            '<td class="text-center"><span class="badge badge-success">' + (parseInt(p.CountCompletados) || 0) + '</span></td>' +
-            '<td class="text-center"><span class="badge badge-warning">' + (parseInt(p.CountPendientes) || 0) + '</span></td>' +
-            '<td class="text-right" title="Pago de matrícula ya cancelado por los inscritos">' + formatoMoneda(matriculas) + '</td>' +
-            '<td class="text-right">' + formatoMoneda(programado) + '</td>' +
-            '<td class="text-right text-success">' + formatoMoneda(pagado) + '</td>' +
-            '<td class="text-right">' + formatoMoneda(montoDescuentos) + '</td>' +
-            '<td class="text-right text-danger"><strong>' + formatoMoneda(saldo) + '</strong></td>' +
-            '<td class="text-center">' +
-                '<button type="button" class="btn btn-xs btn-outline-primary btn-detalle-pagos-programa" ' +
-                    'data-programa-id="' + p.ProgramaID + '" data-programa-nombre="' + (p.NombrePrograma || '').replace(/"/g, '&quot;') + '">' +
-                    '<i class="fa fa-list"></i> Ver' +
+        t.inscritos += inscritos;
+        t.completaron += completaron;
+        t.pendientes += pendientes;
+        t.abandonos += abandonos;
+        t.conDescuento += conDescuento;
+        t.matriculas += matriculas;
+        t.programado += programado;
+        t.pagado += pagado;
+        t.montoDescuentos += montoDescuentos;
+        t.saldo += saldo;
+        t.clinicaCobrado += clinicaCobrado;
+        t.clinicaPorCobrar += clinicaPorCobrar;
+        t.clinicaPendientes += clinicaPendientes;
+        if (tieneClinica) t.programasClinica++;
+
+        // Planes: una línea "R 12 · C 3 · G 2" (solo los que tienen estudiantes; letras en la leyenda)
+        const planes = [
+            ['R', n(p.CountRegular), 'Plan Regular'],
+            ['C', n(p.CountDescuento), 'Plan Contado (descuento)'],
+            ['G', n(p.CountGrupal), 'Plan Grupal'],
+            ['S', n(p.CountSinPlan), 'Sin plan de pago']
+        ].filter(function(x) { return x[1] > 0; })
+         .map(function(x) { return '<span title="' + x[2] + '"><b>' + x[0] + '</b> ' + x[1] + '</span>'; })
+         .join(' &middot; ');
+        const lineaPlanes = planes
+            ? '<span class="rp-planes-linea">' + planes + (conDescuento > 0 ? ' &middot; ' + conDescuento + ' c/desc.' : '') + '</span>'
+            : '';
+
+        // Estudiantes: total + completaron / con saldo / abandonos debajo
+        const estadoPago = inscritos === 0 ? '' :
+            '<div class="rp-estado">' +
+                '<span class="rp-chip is-exito" title="Completaron el pago"><i class="fa fa-check-circle"></i> ' + completaron + '</span>' +
+                '<span class="rp-chip is-alerta" title="Con saldo pendiente"><i class="fa fa-clock"></i> ' + pendientes + '</span>' +
+                (abandonos > 0 ? '<span class="rp-chip is-peligro" title="Abandonos">' + abandonos + ' aband.</span>' : '') +
+            '</div>';
+
+        // Clínicas: "No aplica" si el programa no maneja clínicas y no tiene movimientos
+        const celdasClinica = (!tieneClinica && clinicaCobrado === 0 && clinicaPorCobrar === 0)
+            ? '<td colspan="2" class="text-center rp-celda-clinica"><span class="rp-na">No aplica</span></td>'
+            : '<td class="text-right rp-celda-clinica"><span class="' + (clinicaCobrado > 0 ? 'rp-clinica-monto' : 'rp-muted') + '">' + formatoMoneda(clinicaCobrado) + '</span>' +
+                    (n(p.ClinicaNumPagos) > 0 ? '<span class="rp-sub">' + n(p.ClinicaNumPagos) + ' pago(s)</span>' : '') + '</td>' +
+              '<td class="text-right rp-celda-clinica"><span class="' + (clinicaPorCobrar > 0 ? '' : 'rp-muted') + '">' + formatoMoneda(clinicaPorCobrar) + '</span>' +
+                    (clinicaPendientes > 0 ? '<span class="rp-sub">' + clinicaPendientes + ' orden(es)</span>' : '') + '</td>';
+
+        const meta = [p.Codigo, p.GradoAcademico, p.Sede].filter(Boolean).map(escaparHtml).join(' &middot; ');
+
+        html += '<tr class="' + (inscritos === 0 ? 'rp-fila-vacia' : '') + '">' +
+            '<td><div class="rp-prog-nombre">' + escaparHtml(p.NombrePrograma) + '</div><div class="rp-prog-meta">' + meta + '</div></td>' +
+            '<td class="text-center"><span class="rp-inscritos">' + inscritos + '</span>' + estadoPago + lineaPlanes + '</td>' +
+            '<td class="text-right"><span class="' + (programado > 0 ? '' : 'rp-muted') + '">' + formatoMoneda(programado) + '</span>' +
+                (montoDescuentos > 0 ? '<span class="rp-sub">desc. ' + formatoMoneda(montoDescuentos) + '</span>' : '') + '</td>' +
+            '<td class="text-right"><span class="' + (pagado > 0 ? 'rp-cobrado' : 'rp-muted') + '">' + formatoMoneda(pagado) + '</span>' +
+                (programado > 0 ? '<div class="rp-avance">' + barraAvance(pct) + '<small>' + pct + '%</small></div>' : '') +
+                (matriculas > 0 ? '<span class="rp-sub" title="Matrícula ya cancelada, incluida en Cobrado">incl. matr. ' + formatoMoneda(matriculas) + '</span>' : '') + '</td>' +
+            '<td class="text-right"><span class="' + (saldo > 0 ? 'rp-saldo' : 'rp-muted') + '">' + formatoMoneda(saldo) + '</span></td>' +
+            celdasClinica +
+            '<td class="text-center rp-no-print">' +
+                '<button type="button" class="btn rp-btn-ver btn-detalle-pagos-programa" ' +
+                    'data-programa-id="' + p.ProgramaID + '" data-programa-nombre="' + escaparHtml(p.NombrePrograma) + '" ' +
+                    'data-tiene-clinica="' + (tieneClinica || clinicaCobrado > 0 || clinicaPorCobrar > 0 ? 1 : 0) + '">' +
+                    'Detalle <i class="fa fa-chevron-right" style="font-size:10px"></i>' +
                 '</button>' +
             '</td>' +
         '</tr>';
@@ -156,34 +230,56 @@ function renderTablaReportePagos(datos) {
 
     $('#tablaReportePagosBody').html(html);
 
+    const pctTotal = porcentaje(t.pagado, t.programado);
     $('#tablaReportePagosFooter').html(
-        '<tr class="font-weight-bold" style="background:#f4f4f4;">' +
-            '<td colspan="2">TOTALES</td>' +
-            '<td class="text-center">' + totales.inscritos + '</td>' +
-            '<td class="text-center">' + totales.regular + '</td>' +
-            '<td class="text-center">' + totales.descuento + '</td>' +
-            '<td class="text-center">' + totales.grupal + '</td>' +
-            '<td class="text-center">' + totales.sinPlan + '</td>' +
-            '<td class="text-center">' + totales.abandonos + '</td>' +
-            '<td class="text-center">' + totales.conDescuento + '</td>' +
-            '<td class="text-center">' + totales.completaron + '</td>' +
-            '<td class="text-center">' + totales.pendientes + '</td>' +
-            '<td class="text-right">' + formatoMoneda(totales.matriculas) + '</td>' +
-            '<td class="text-right">' + formatoMoneda(totales.programado) + '</td>' +
-            '<td class="text-right">' + formatoMoneda(totales.pagado) + '</td>' +
-            '<td class="text-right">' + formatoMoneda(totales.montoDescuentos) + '</td>' +
-            '<td class="text-right">' + formatoMoneda(totales.saldo) + '</td>' +
-            '<td></td>' +
+        '<tr>' +
+            '<td>Totales <span class="rp-sub">' + datos.length + ' programa(s)</span></td>' +
+            '<td class="text-center">' + t.inscritos +
+                '<div class="rp-estado">' +
+                    '<span class="rp-chip is-exito"><i class="fa fa-check-circle"></i> ' + t.completaron + '</span>' +
+                    '<span class="rp-chip is-alerta"><i class="fa fa-clock"></i> ' + t.pendientes + '</span>' +
+                '</div>' +
+            '</td>' +
+            '<td class="text-right">' + formatoMoneda(t.programado) + '</td>' +
+            '<td class="text-right"><span class="rp-cobrado">' + formatoMoneda(t.pagado) + '</span>' +
+                '<div class="rp-avance">' + barraAvance(pctTotal) + '<small>' + pctTotal + '%</small></div></td>' +
+            '<td class="text-right rp-saldo">' + formatoMoneda(t.saldo) + '</td>' +
+            '<td class="text-right rp-clinica-monto">' + formatoMoneda(t.clinicaCobrado) + '</td>' +
+            '<td class="text-right">' + formatoMoneda(t.clinicaPorCobrar) + '</td>' +
+            '<td class="rp-no-print"></td>' +
         '</tr>'
+    );
+
+    renderKpisReportePagos(t);
+}
+
+// Indicadores generales, según los programas visibles (filtro de grado + búsqueda)
+function renderKpisReportePagos(t) {
+    const pct = porcentaje(t.pagado, t.programado);
+    $('#reportePagosKpis').html(
+        kpi('', 'Estudiantes inscritos', t.inscritos,
+            t.completaron + ' completaron &middot; ' + t.pendientes + ' con saldo' + (t.abandonos ? ' &middot; ' + t.abandonos + ' aband.' : '')) +
+        kpi('', 'Total programado', formatoMoneda(t.programado),
+            t.montoDescuentos > 0 ? 'Descuentos ' + formatoMoneda(t.montoDescuentos) : 'Matrícula + cuotas') +
+        kpi('is-cobrado', 'Cobrado', formatoMoneda(t.pagado),
+            'Incluye matrículas ' + formatoMoneda(t.matriculas)) +
+        kpi('is-saldo', 'Saldo pendiente', formatoMoneda(t.saldo),
+            pct + '% cobrado', barraAvance(pct)) +
+        kpi('is-clinica', '<i class="fa fa-stethoscope"></i> Clínicas cobradas', formatoMoneda(t.clinicaCobrado),
+            t.clinicaPorCobrar > 0
+                ? 'Por cobrar ' + formatoMoneda(t.clinicaPorCobrar) + ' (' + t.clinicaPendientes + ')'
+                : (t.programasClinica > 0 ? 'Sin órdenes pendientes' : 'Ningún programa con clínica'))
     );
 }
 
 /**
  * Ver el detalle de pagos por estudiante de un programa (modal)
  */
-function verDetallePagosPrograma(programaID, programaNombre) {
+function verDetallePagosPrograma(programaID, programaNombre, tieneClinica) {
     $('#detallePagosProgramaNombre').text(programaNombre || '');
-    $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="10" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
+    $('#detallePagosKpis').html('');
+    $('#tablaDetallePagosEstudianteHead').html('');
+    $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="8" class="rp-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
     $('#modalDetallePagosPrograma').modal('show');
 
     $.ajax({
@@ -192,109 +288,210 @@ function verDetallePagosPrograma(programaID, programaNombre) {
         data: { accion: 'obtenerReportePagosEstudiantes', programaID: programaID },
         dataType: 'json',
         success: function(response) {
-            renderDetallePagosEstudiante(response || []);
+            renderDetallePagosEstudiante(Array.isArray(response) ? response : [], tieneClinica);
         },
         error: function() {
-            $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="9" class="text-center text-danger py-3">No se pudo cargar el detalle</td></tr>');
+            $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="8" class="rp-vacio" style="color:#b91c1c">No se pudo cargar el detalle</td></tr>');
         }
     });
 }
 
-function renderDetallePagosEstudiante(datos) {
+function renderDetallePagosEstudiante(datos, tieneClinica) {
+    $('#tablaDetallePagosEstudianteHead').html(
+        '<tr>' +
+            '<th>Estudiante</th>' +
+            '<th class="text-center">Plan</th>' +
+            '<th class="text-right">Costo total</th>' +
+            '<th class="text-right">Cobrado</th>' +
+            '<th class="text-right">Saldo</th>' +
+            '<th style="min-width:130px">Avance</th>' +
+            (tieneClinica ? '<th class="text-right rp-grupo-clinica">Clínica cobrada</th><th class="text-right rp-grupo-clinica">Clínica por cobrar</th>' : '') +
+        '</tr>'
+    );
+    const columnas = tieneClinica ? 8 : 6;
+
     if (!datos || datos.length === 0) {
-        $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="10" class="text-center text-muted py-3">Este programa no tiene estudiantes inscritos</td></tr>');
+        $('#detallePagosKpis').html('');
+        $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="' + columnas + '" class="rp-vacio">Este programa no tiene estudiantes inscritos</td></tr>');
         return;
     }
 
+    const t = { costo: 0, pagado: 0, saldo: 0, clinicaCobrado: 0, clinicaPorCobrar: 0, completaron: 0 };
     let html = '';
+
     datos.forEach(function(e) {
         const costoMatricula = parseFloat(e.CostoMatricula) || 0;
         const costoTotal = parseFloat(e.CostoTotal) || 0;
         const pagado = parseFloat(e.TotalPagado) || 0;
         const saldo = parseFloat(e.SaldoPendiente) || 0;
         const descuento = parseFloat(e.MontoDescuentoTotal) || 0;
+        const clinicaCobrado = parseFloat(e.ClinicaCobrado) || 0;
+        const clinicaPorCobrar = parseFloat(e.ClinicaPorCobrar) || 0;
         const abandono = e.EstadoInscripcion === 'ABANDONO';
         const tienePlan = !!e.TipoPlan;
-        const planTexto = tienePlan ? (NOMBRES_PLAN_REPORTE[e.TipoPlan] || e.TipoPlan) : '<span class="text-muted">Sin plan</span>';
-        const cuotasTexto = tienePlan
-            ? (e.NumeroCuotas ? (e.CuotasPagadas || 0) + ' de ' + e.NumeroCuotas : (e.CuotasPagadas || 0) + ' pagada(s)')
-            : '-';
         const completado = tienePlan && saldo <= 0;
-        let estadoBadge;
+        const pct = porcentaje(pagado, costoTotal);
+
+        if (!abandono) {
+            t.costo += costoTotal;
+            t.pagado += pagado;
+            t.saldo += saldo;
+            if (completado) t.completaron++;
+        }
+        t.clinicaCobrado += clinicaCobrado;
+        t.clinicaPorCobrar += clinicaPorCobrar;
+
+        const cuotasTexto = tienePlan
+            ? (e.NumeroCuotas ? (e.CuotasPagadas || 0) + ' de ' + e.NumeroCuotas + ' cuotas' : (e.CuotasPagadas || 0) + ' cuota(s) pagada(s)')
+            : '';
+
+        let estado;
         if (abandono) {
-            estadoBadge = '<span class="badge badge-danger">ABANDONÓ</span>';
+            estado = '<span class="rp-chip is-peligro">Abandonó</span>';
         } else if (!tienePlan) {
-            estadoBadge = '<span class="badge badge-secondary">SIN PLAN</span>';
+            estado = '<span class="rp-chip">Sin plan</span>';
         } else if (completado) {
-            estadoBadge = '<span class="badge badge-success">COMPLETADO</span>';
+            estado = '<span class="rp-chip is-exito"><i class="fa fa-check-circle"></i> Completado</span>';
         } else {
-            estadoBadge = '<span class="badge badge-warning">PENDIENTE</span>';
+            estado = '<div class="rp-avance">' + barraAvance(pct) + '<small>' + pct + '%</small></div>';
         }
 
-        html += '<tr' + (abandono ? ' style="background:#fdecea;"' : '') + '>' +
-            '<td>' + (e.NombreCompleto || '') + '</td>' +
-            '<td>' + (e.Ci || '') + '</td>' +
-            '<td class="text-center">' + planTexto + '</td>' +
-            '<td class="text-center">' + cuotasTexto + '</td>' +
-            '<td class="text-right" title="Pago de matrícula ya cancelado">' + (costoMatricula > 0 ? formatoMoneda(costoMatricula) : '-') + '</td>' +
-            '<td class="text-right">' + formatoMoneda(costoTotal) + '</td>' +
-            '<td class="text-right text-success">' + formatoMoneda(pagado) + '</td>' +
-            '<td class="text-right">' + (descuento > 0 ? formatoMoneda(descuento) : '-') + '</td>' +
-            '<td class="text-right text-danger">' + formatoMoneda(saldo) + '</td>' +
-            '<td class="text-center">' + estadoBadge + '</td>' +
+        html += '<tr class="' + (abandono ? 'rp-fila-abandono' : '') + '">' +
+            '<td><div class="rp-prog-nombre">' + escaparHtml(e.NombreCompleto) + '</div>' +
+                '<div class="rp-prog-meta">C.I. ' + escaparHtml(e.Ci || '-') + (e.Celular ? ' &middot; Cel. ' + escaparHtml(e.Celular) : '') + '</div></td>' +
+            '<td class="text-center">' + (tienePlan ? '<span class="rp-chip is-info">' + (NOMBRES_PLAN_REPORTE[e.TipoPlan] || escaparHtml(e.TipoPlan)) + '</span>' : '<span class="rp-muted">—</span>') +
+                (cuotasTexto ? '<span class="rp-sub">' + cuotasTexto + '</span>' : '') + '</td>' +
+            '<td class="text-right">' + formatoMoneda(costoTotal) +
+                (descuento > 0 ? '<span class="rp-sub">desc. ' + formatoMoneda(descuento) + '</span>' : '') + '</td>' +
+            '<td class="text-right"><span class="rp-cobrado">' + formatoMoneda(pagado) + '</span>' +
+                (costoMatricula > 0 ? '<span class="rp-sub">matr. ' + formatoMoneda(costoMatricula) + '</span>' : '') + '</td>' +
+            '<td class="text-right"><span class="' + (saldo > 0 ? 'rp-saldo' : 'rp-muted') + '">' + formatoMoneda(saldo) + '</span></td>' +
+            '<td>' + estado + '</td>' +
+            (tieneClinica
+                ? '<td class="text-right rp-celda-clinica"><span class="' + (clinicaCobrado > 0 ? 'rp-clinica-monto' : 'rp-muted') + '">' + formatoMoneda(clinicaCobrado) + '</span></td>' +
+                  '<td class="text-right rp-celda-clinica"><span class="' + (clinicaPorCobrar > 0 ? '' : 'rp-muted') + '">' + formatoMoneda(clinicaPorCobrar) + '</span></td>'
+                : '') +
         '</tr>';
     });
 
     $('#tablaDetallePagosEstudianteBody').html(html);
+
+    const pct = porcentaje(t.pagado, t.costo);
+    $('#detallePagosKpis').html(
+        kpi('', 'Estudiantes', datos.length, t.completaron + ' completaron el pago') +
+        kpi('is-cobrado', 'Cobrado', formatoMoneda(t.pagado), 'de ' + formatoMoneda(t.costo)) +
+        kpi('is-saldo', 'Saldo pendiente', formatoMoneda(t.saldo), pct + '% cobrado', barraAvance(pct)) +
+        (tieneClinica
+            ? kpi('is-clinica', '<i class="fa fa-stethoscope"></i> Clínicas cobradas', formatoMoneda(t.clinicaCobrado),
+                  'Por cobrar ' + formatoMoneda(t.clinicaPorCobrar))
+            : kpi('', 'Clínicas', '<span class="rp-na" style="font-size:14px">No aplica</span>', 'El programa no maneja clínicas'))
+    );
 }
 
 /**
- * Imprimir una tabla en una ventana nueva, con un título dado
+ * Imprimir en una ventana nueva: cabecera institucional (la misma de los demás
+ * formatos PDF: logos UTO/FCS, universidad, facultad, coordinación, dirección,
+ * fecha y línea azul; ver ReportesControladores::Header) + indicadores + tabla,
+ * en A4 horizontal y sin la columna de acciones.
  */
 function imprimirTabla(titulo, contenidoHtml) {
+    const logoUTO = new URL('extensiones/imagenespdf/logouto.png', document.baseURI).href;
+    const logoFCS = new URL('extensiones/imagenespdf/logofcs.png', document.baseURI).href;
+    const ahora = new Date();
+    const pad = function(n) { return String(n).padStart(2, '0'); };
+    const fecha = pad(ahora.getDate()) + '/' + pad(ahora.getMonth() + 1) + '/' + ahora.getFullYear() +
+        ' ' + pad(ahora.getHours()) + ':' + pad(ahora.getMinutes());
+
     const ventana = window.open('', '_blank');
 
     ventana.document.write(`
-        <html>
+        <!doctype html>
+        <html lang="es">
         <head>
+            <meta charset="utf-8">
             <title>${titulo}</title>
             <style>
-                body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-                th, td { border: 1px solid #999; padding: 6px 8px; text-align: left; }
-                th { background: #3b3f5c; color: white; }
-                .badge { padding: 3px 8px; border-radius: 10px; font-size: 10px; color: white; }
-                .badge-success { background: #28a745; }
-                .badge-warning { background: #e0a800; }
-                .badge-secondary { background: #6c757d; }
+                @page { size: A4 landscape; margin: 10mm 12mm 14mm; }
+                @page { @bottom-center { content: "Página " counter(page) " de " counter(pages); font: italic 8px Helvetica, Arial, sans-serif; color: #808080; } }
+                body { font-family: Helvetica, Arial, sans-serif; margin: 0; font-size: 10.5px; color: #1f2937; }
+                * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+                /* Cabecera institucional (igual a los reportes PDF) */
+                .cabecera { position: relative; text-align: center; min-height: 68px; }
+                .cabecera img { position: absolute; top: 0; width: 68px; height: 68px; object-fit: contain; }
+                .cabecera .logo-izq { left: 0; }
+                .cabecera .logo-der { right: 0; }
+                .cabecera .uni { font-size: 16px; font-weight: bold; color: #1e3c72; margin: 0; }
+                .cabecera .fac { font-size: 12px; font-weight: bold; color: #1e3c72; margin: 2px 0 0; }
+                .cabecera .dir { font-size: 9px; color: #646464; margin: 4px 0 0; }
+                .cabecera-fecha { text-align: right; font-size: 10px; color: #646464; margin-top: 4px; }
+                .cabecera-linea { border: 0; border-top: 1.5px solid #1e3c72; margin: 3px 0 12px; }
+                h2 { text-align: center; margin: 0 0 12px; font-size: 14px; color: #333333; }
+
+                .rp-kpis { display: flex; gap: 8px; margin-bottom: 12px; }
+                .rp-kpi { flex: 1; border: 1px solid #e5e7eb; border-radius: 6px; padding: 7px 10px; }
+                .rp-kpi-label { font-size: 8.5px; text-transform: uppercase; color: #6b7280; font-weight: bold; }
+                .rp-kpi-valor { font-size: 13px; font-weight: bold; margin-top: 2px; }
+                .rp-kpi-sub { font-size: 8.5px; color: #6b7280; }
+                .rp-barra { display: none; }
+                table { width: 100%; border-collapse: collapse; }
+                thead { display: table-header-group; }
+                tr { page-break-inside: avoid; }
+                th, td { border: 1px solid #d1d5db; padding: 4px 6px; text-align: left; vertical-align: middle; }
+                th { background: #1e3c72; color: #fff; font-size: 8.5px; text-transform: uppercase; }
+                th.rp-grupo-clinica { background: #0f766e; }
+                tfoot td { background: #f3f4f6; font-weight: bold; }
                 .text-right { text-align: right; }
                 .text-center { text-align: center; }
-                .text-success { color: #28a745; }
-                .text-danger { color: #dc3545; }
+                .rp-sub, .rp-prog-meta, .rp-planes-linea { display: block; font-size: 8.5px; color: #6b7280; font-weight: normal; }
+                .rp-prog-nombre { font-weight: bold; }
+                .rp-chip { display: inline-block; padding: 0 5px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 8.5px; margin: 1px; }
+                .rp-estado .rp-chip.is-exito::before { content: "Pagaron "; }
+                .rp-estado .rp-chip.is-alerta::before { content: "Con saldo "; }
+                .rp-cobrado { color: #15803d; font-weight: bold; }
+                .rp-saldo { color: #b91c1c; font-weight: bold; }
+                .rp-clinica-monto { color: #0f766e; font-weight: bold; }
+                .rp-na, .rp-muted { color: #9ca3af; }
+                .rp-avance small { font-size: 9px; }
+                .rp-no-print, .fa { display: none; }
             </style>
         </head>
         <body>
-            <h2 style="text-align:center;">${titulo}</h2>
-            <p style="text-align:center;color:#666;">Fecha de impresión: ${new Date().toLocaleDateString('es-BO')}</p>
-            <hr>
+            <div class="cabecera">
+                <img class="logo-izq" src="${logoUTO}" alt="UTO">
+                <img class="logo-der" src="${logoFCS}" alt="FCS">
+                <p class="uni">UNIVERSIDAD TÉCNICA DE ORURO</p>
+                <p class="fac">FACULTAD DE CIENCIAS DE LA SALUD</p>
+                <p class="fac">COORDINACIÓN DE POSGRADO - ODONTOLOGÍA</p>
+                <p class="dir">Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso - Telf: 5237317 - Fax: 5247110 - Oruro - Bolivia</p>
+            </div>
+            <div class="cabecera-fecha">Fecha: ${fecha}</div>
+            <hr class="cabecera-linea">
+            <h2>${titulo}</h2>
             ${contenidoHtml}
+            <script>
+                // Imprimir recién cuando los logos terminaron de cargar
+                window.onload = function() { window.focus(); window.print(); };
+            <\/script>
         </body>
         </html>
     `);
 
     ventana.document.close();
-    ventana.print();
 }
 
 function imprimirReportePagos() {
+    const kpis = document.getElementById('reportePagosKpis').outerHTML;
     const tabla = document.getElementById('tablaReportePagos').outerHTML;
-    imprimirTabla('REPORTE DE PAGOS POR PROGRAMA', tabla);
+    const grado = $('#reportePagosGrado').val();
+    imprimirTabla('REPORTE DE PAGOS POR PROGRAMA' + (grado ? ' - ' + grado : ''), kpis + tabla);
 }
 
 function imprimirDetallePagos() {
     const titulo = 'DETALLE DE PAGOS: ' + $('#detallePagosProgramaNombre').text();
+    const kpis = document.getElementById('detallePagosKpis').outerHTML;
     const tabla = document.getElementById('tablaDetallePagosEstudiante').outerHTML;
-    imprimirTabla(titulo, tabla);
+    imprimirTabla(titulo, kpis + tabla);
 }
 
 /**

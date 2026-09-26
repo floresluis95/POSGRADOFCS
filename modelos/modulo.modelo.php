@@ -328,6 +328,30 @@ class ModuloModelo
     }
 
     /**
+     * Nombres ya registrados de módulos y programas. Sirven como vocabulario
+     * para detectar errores de tipeo al registrar/editar un módulo.
+     * @param int|null $excluirIdModulo módulo que se está editando (su propio nombre no cuenta)
+     * @return array lista de textos
+     */
+    public static function ListarNombresRegistradosModelo($excluirIdModulo = null)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT nombremodulo AS Nombre FROM modulos WHERE Idmodulo <> :excluir
+                 UNION ALL
+                 SELECT NombrePrograma FROM programa"
+            );
+            $excluir = (int)$excluirIdModulo;
+            $stmt->bindParam(":excluir", $excluir, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (PDOException $e) {
+            error_log("Error en ListarNombresRegistradosModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Listar todos los módulos por ProgramaId con información del programa y docente
      * @param int|null $programaID (opcional) - Si se proporciona, filtra por ese programa
      * @return array

@@ -19,6 +19,12 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "actualizarModulo") {
     $controlador->ActualizarModuloAjaxControlador();
 }
 
+// Revisar ortografía de nombres de módulos antes de guardar (sugerencias "¿Quiso decir...?")
+if (isset($_POST["accion"]) && $_POST["accion"] == "sugerirCorreccionesNombres") {
+    $controlador = new ModuloControlador();
+    $controlador->SugerirCorreccionesNombresAjaxControlador();
+}
+
 // Obtener módulos con estado de pago por inscripción
 if (isset($_POST["programaID"]) && isset($_POST["idinscripcion"])) {
     $programaID = (int)$_POST["programaID"];

@@ -37,6 +37,24 @@ if (isset($_POST['tipo_reporte'])) {
             ReportesControladores::GenerarReporteEjecutivo($sede, $programaID);
             break;
 
+        case 'recaudacion':
+            // Recaudación por cuenta bancaria; las fechas se aceptan solo en formato AAAA-MM-DD
+            $validarFecha = function ($campo) {
+                $valor = trim($_POST[$campo] ?? '');
+                $fecha = DateTime::createFromFormat('Y-m-d', $valor);
+                return ($fecha && $fecha->format('Y-m-d') === $valor) ? $valor : null;
+            };
+            $fechaDesde = $validarFecha('fecha_desde');
+            $fechaHasta = $validarFecha('fecha_hasta');
+
+            // Si las pusieron al revés, se intercambian en lugar de mostrar un reporte vacío
+            if ($fechaDesde && $fechaHasta && $fechaDesde > $fechaHasta) {
+                list($fechaDesde, $fechaHasta) = [$fechaHasta, $fechaDesde];
+            }
+
+            ReportesControladores::GenerarReporteRecaudacion($sede, $programaID, $fechaDesde, $fechaHasta);
+            break;
+
         default:
             echo '<script>
                 swal("ERROR!", "Tipo de reporte no válido", "error")

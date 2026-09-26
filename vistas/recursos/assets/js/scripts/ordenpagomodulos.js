@@ -35,7 +35,7 @@ $(document).ready(function() {
     window.cargarOrdenPagoModulos = function(datos) {
         opContexto = datos;
 
-        $('#ordenPagoContenido').html('<div class="text-center p-4"><i class="fa fa-spinner fa-spin fa-2x text-primary"></i></div>');
+        $('#ordenPagoContenido').html('<div class="gp-cargando"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>');
 
         $.when(
             $.ajax({
@@ -53,7 +53,7 @@ $(document).ready(function() {
         ).done(function(respResumen, respOrden) {
             const resp = respResumen[0];
             if (!resp || !resp.success) {
-                $('#ordenPagoContenido').html('<div class="alert alert-danger">No se pudo cargar el resumen de pago</div>');
+                $('#ordenPagoContenido').html('<div class="gp-aviso">No se pudo cargar el resumen de pago</div>');
                 return;
             }
 
@@ -62,7 +62,7 @@ $(document).ready(function() {
 
             renderOrdenPago(resp.resumen, orden);
         }).fail(function() {
-            $('#ordenPagoContenido').html('<div class="alert alert-danger">No se pudieron cargar los datos de la orden de pago</div>');
+            $('#ordenPagoContenido').html('<div class="gp-aviso">No se pudieron cargar los datos de la orden de pago</div>');
         });
     };
 
@@ -70,13 +70,14 @@ $(document).ready(function() {
         // Cuota que corresponde según lo ya cancelado (no un plan fijo): la próxima
         // orden que se genere es la cuota N+1, siendo N las cuotas ya pagadas.
         opContexto.numeroCuotaActual = (parseInt(r.cuotasPagadasCount, 10) || 0) + 1;
+        const bs = window.formatoBs;
 
         if (!r.tienePlan) {
             $('#ordenPagoContenido').html(
-                '<div class="alert alert-warning text-center">' +
-                    '<i class="fa fa-exclamation-triangle fa-2x mb-2"></i>' +
-                    '<h6>Sin Plan de Pago del Programa</h6>' +
-                    '<p class="mb-0">Normalmente porque eligió Plan Grupal en Pre-Registro. Use el botón "Plan Grupal" en la barra superior para armarle uno.</p>' +
+                '<div class="gp-section gp-estado-vacio is-alerta">' +
+                    '<i class="fa fa-exclamation-triangle"></i>' +
+                    '<h6>Sin plan de pago del programa</h6>' +
+                    '<p class="mb-0">Normalmente porque eligió Plan Grupal en Pre-Registro. Use el botón "Plan Grupal" de la barra superior para armarle uno.</p>' +
                 '</div>'
             );
             return;
@@ -84,8 +85,8 @@ $(document).ready(function() {
 
         if (r.completado) {
             $('#ordenPagoContenido').html(
-                '<div class="alert alert-success text-center">' +
-                    '<i class="fa fa-check-circle fa-2x mb-2"></i>' +
+                '<div class="gp-section gp-estado-vacio is-exito">' +
+                    '<i class="fa fa-check-circle"></i>' +
                     '<h6>Programa pagado en su totalidad</h6>' +
                     '<p class="mb-0">No queda saldo pendiente para este estudiante.</p>' +
                 '</div>'
@@ -95,31 +96,38 @@ $(document).ready(function() {
 
         if (orden) {
             $('#ordenPagoContenido').html(
-                '<div class="card border-warning mb-0">' +
-                    '<div class="card-body text-center py-4">' +
-                        '<i class="fa fa-file-invoice fa-2x text-warning mb-2"></i>' +
-                        '<h6 class="mb-1">Orden de pago pendiente</h6>' +
-                        '<div class="h4 font-weight-bold mb-1">Bs. ' + parseFloat(orden.MontoTotal).toFixed(2) + '</div>' +
-                        '<div class="text-muted mb-3">N° ' + orden.NumeroOrden + ' &middot; generada el ' + orden.FechaGeneracion + '</div>' +
-                        '<p class="small text-muted mb-3">' +
-                            '<i class="fa fa-info-circle"></i> El estudiante debe cancelar este monto y luego usted registra el voucher ' +
-                            'en la pestaña <strong>"Cuotas del Programa"</strong> para confirmar el pago.' +
-                        '</p>' +
+                '<div class="gp-section gp-orden">' +
+                    '<div class="gp-orden-fila">' +
+                        '<div>' +
+                            '<div class="gp-section-title mb-1"><i class="fa fa-file-invoice"></i> Orden de pago pendiente</div>' +
+                            '<div class="gp-orden-num">N° ' + orden.NumeroOrden + '</div>' +
+                            '<div class="gp-orden-meta">Generada el ' + orden.FechaGeneracion +
+                                (orden.NumeroCuentaDeposito ? ' &middot; Cuenta ' + orden.NumeroCuentaDeposito : '') + '</div>' +
+                        '</div>' +
+                        '<div>' +
+                            '<div class="gp-orden-monto">' + bs(orden.MontoTotal) + '</div>' +
+                            '<div class="text-right mt-1">' + window.chipEstadoPago('PENDIENTE') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="gp-ayuda mt-3">' +
+                        'El estudiante debe cancelar este monto; luego registre su voucher en la pestaña "Cuotas del programa" para confirmar el pago.' +
+                    '</div>' +
+                    '<div class="gp-actions">' +
+                        '<button type="button" class="btn btn-primary btn-ir-cuotas-programa">' +
+                            '<i class="fa fa-upload"></i> Registrar voucher' +
+                        '</button>' +
                         '<button type="button" class="btn btn-outline-secondary" id="btnReimprimirOrdenCuota" ' +
                             'data-id="' + orden.IdOrdenPago + '" data-monto="' + orden.MontoTotal + '" ' +
                             'data-nombre-factura="' + (orden.NombreFactura || '') + '" data-nit-ci="' + (orden.NitCiFactura || '') + '" ' +
                             'data-numero-cuenta="' + (orden.NumeroCuentaDeposito || '') + '" data-firma="' + (orden.Firma || '') + '">' +
-                            '<i class="fa fa-print"></i> Reimprimir orden' +
-                        '</button> ' +
-                        '<button type="button" class="btn btn-primary ml-1 btn-ir-cuotas-programa">' +
-                            '<i class="fa fa-upload"></i> Registrar voucher' +
-                        '</button> ' +
-                        '<button type="button" class="btn btn-outline-danger ml-1" id="btnAnularOrdenCuota" ' +
+                            '<i class="fa fa-print"></i> Reimprimir' +
+                        '</button>' +
+                        '<button type="button" class="btn btn-link text-danger ml-auto" id="btnAnularOrdenCuota" ' +
                             'data-id="' + orden.IdOrdenPago + '" data-confirmando="0">' +
                             '<i class="fa fa-times"></i> Anular orden' +
                         '</button>' +
-                        '<div id="avisoAnularOrdenCuota" class="small text-danger mt-2" style="display:none;"></div>' +
                     '</div>' +
+                    '<div id="avisoAnularOrdenCuota" class="small text-danger mt-2 text-right" style="display:none;"></div>' +
                 '</div>'
             );
             return;
@@ -128,81 +136,85 @@ $(document).ready(function() {
         const saldoPendiente = parseFloat(r.saldoPendiente) || 0;
         const campoMonto = r.cuotaUnica
             ? '<input type="hidden" id="opMontoCuota" value="' + saldoPendiente.toFixed(2) + '">' +
-              '<div class="h2 font-weight-bold text-primary mb-0">Bs. ' + saldoPendiente.toFixed(2) + '</div>' +
-              '<small class="text-muted">Saldo total del programa</small>'
-            : '<div class="input-group input-group-lg justify-content-center">' +
-              '<div class="input-group-prepend"><span class="input-group-text bg-white border-0 font-weight-bold text-primary">Bs.</span></div>' +
-              '<input type="number" class="form-control text-primary font-weight-bold border-0 text-center" style="max-width:160px; font-size:1.75rem;" ' +
-              'id="opMontoCuota" min="0.01" max="' + saldoPendiente.toFixed(2) + '" step="0.01" value="' + saldoPendiente.toFixed(2) + '">' +
-              '</div><small class="text-muted">Monto de esta cuota &middot; saldo pendiente Bs. ' + saldoPendiente.toFixed(2) + '</small>';
+              '<div class="gp-monto-fijo">' + bs(saldoPendiente) + '</div>'
+            : '<div class="gp-monto-input">' +
+                  '<span>Bs.</span>' +
+                  '<input type="number" id="opMontoCuota" min="0.01" max="' + saldoPendiente.toFixed(2) + '" step="0.01" value="' + saldoPendiente.toFixed(2) + '">' +
+              '</div>';
 
         const html =
-            // Monto a generar: lo primero y más visible, estilo "checkout"
-            '<div class="card border-primary mb-3">' +
-                '<div class="card-body text-center py-3">' +
-                    '<small class="text-uppercase text-muted d-block mb-1"><i class="fa fa-tag"></i> Monto de la orden a generar</small>' +
+            // Monto a generar: lo primero y más visible
+            '<div class="gp-section">' +
+                '<div class="gp-monto">' +
+                    '<div>' +
+                        '<div class="gp-section-title mb-1"><i class="fa fa-tag"></i> Monto de la orden</div>' +
+                        '<div class="gp-ayuda mt-0">' + (r.cuotaUnica
+                            ? 'Saldo total del programa (pago único)'
+                            : 'Cuota N° ' + opContexto.numeroCuotaActual + ' &middot; saldo pendiente ' + bs(saldoPendiente)) +
+                        '</div>' +
+                    '</div>' +
                     campoMonto +
                 '</div>' +
             '</div>' +
 
-            // Datos de facturación
-            '<h6 class="text-muted small text-uppercase mb-2"><i class="fa fa-file-invoice-dollar"></i> Datos de facturación</h6>' +
-            '<div class="row">' +
-                '<div class="col-lg-6 form-group">' +
-                    '<label class="small font-weight-bold mb-1">Nombre / Razón Social</label>' +
-                    '<input type="text" class="form-control form-control-sm" id="opNombreFactura" value="' + (opContexto.estudianteNombre || '') + '">' +
+            '<div class="gp-section">' +
+                '<div class="gp-section-title"><i class="fa fa-file-invoice-dollar"></i> Datos de facturación</div>' +
+                '<div class="row">' +
+                    '<div class="col-lg-6 form-group">' +
+                        '<label class="gp-label" for="opNombreFactura">Nombre / Razón social</label>' +
+                        '<input type="text" class="form-control" id="opNombreFactura" value="' + (opContexto.estudianteNombre || '') + '">' +
+                    '</div>' +
+                    '<div class="col-lg-6 form-group">' +
+                        '<label class="gp-label" for="opNitCiFactura">NIT / C.I.</label>' +
+                        '<input type="text" class="form-control" id="opNitCiFactura" value="' + (opContexto.estudianteCi || '') + '">' +
+                    '</div>' +
                 '</div>' +
-                '<div class="col-lg-6 form-group">' +
-                    '<label class="small font-weight-bold mb-1">NIT / C.I.</label>' +
-                    '<input type="text" class="form-control form-control-sm" id="opNitCiFactura" value="' + (opContexto.estudianteCi || '') + '">' +
-                '</div>' +
-            '</div>' +
 
-            // Datos de la orden
-            '<h6 class="text-muted small text-uppercase mb-2 mt-1"><i class="fa fa-cog"></i> Datos de la orden</h6>' +
-            '<div class="row">' +
-                '<div class="col-lg-4 form-group">' +
-                    '<label class="small font-weight-bold mb-1">Responsable de la Firma</label>' +
-                    '<div class="input-group input-group-sm">' +
-                        '<select class="form-control form-control-sm" id="opFirma">' +
-                            '<option value="">Cargando...</option>' +
+                '<div class="gp-section-title mt-2"><i class="fa fa-cog"></i> Datos de la orden</div>' +
+                '<div class="row">' +
+                    '<div class="col-lg-4 form-group">' +
+                        '<label class="gp-label" for="opFirma">Responsable de la firma</label>' +
+                        '<div class="input-group">' +
+                            '<select class="form-control" id="opFirma">' +
+                                '<option value="">Cargando...</option>' +
+                            '</select>' +
+                            '<div class="input-group-append">' +
+                                '<button type="button" class="btn btn-outline-secondary" id="opBtnAgregarFirmante" title="Agregar nuevo nombre">' +
+                                    '<i class="fa fa-plus"></i>' +
+                                '</button>' +
+                            '</div>' +
+                        '</div>' +
+                        // Caja en línea (no SweetAlert): un popup con <input> lanzado sobre un
+                        // modal de Bootstrap ya abierto queda visible pero no recibe el foco del
+                        // teclado (el modal se lo roba de vuelta), igual que el caso ya
+                        // documentado de "Anular orden" más abajo en este archivo.
+                        '<div id="opNuevoFirmanteBox" class="input-group input-group-sm mt-1" style="display:none;">' +
+                            '<input type="text" class="form-control form-control-sm" id="opNuevoFirmanteNombre" placeholder="Nombre completo">' +
+                            '<div class="input-group-append">' +
+                                '<button type="button" class="btn btn-success" id="opBtnGuardarFirmante" title="Guardar"><i class="fa fa-check"></i></button>' +
+                                '<button type="button" class="btn btn-outline-secondary" id="opBtnCancelarFirmante" title="Cancelar"><i class="fa fa-times"></i></button>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="gp-ayuda">Nombre impreso en la línea de firma</div>' +
+                    '</div>' +
+                    '<div class="col-lg-4 form-group">' +
+                        '<label class="gp-label" for="opCuentaPago">Cuenta de depósito</label>' +
+                        '<select class="form-control" id="opCuentaPago">' +
+                            '<option value="">Cargando cuentas...</option>' +
                         '</select>' +
-                        '<div class="input-group-append">' +
-                            '<button type="button" class="btn btn-outline-secondary" id="opBtnAgregarFirmante" title="Agregar nuevo nombre">' +
-                                '<i class="fa fa-plus"></i>' +
-                            '</button>' +
-                        '</div>' +
                     '</div>' +
-                    // Caja en línea (no SweetAlert): un popup con <input> lanzado sobre un
-                    // modal de Bootstrap ya abierto queda visible pero no recibe el foco del
-                    // teclado (el modal se lo roba de vuelta), igual que el caso ya
-                    // documentado de "Anular orden" más abajo en este archivo.
-                    '<div id="opNuevoFirmanteBox" class="input-group input-group-sm mt-1" style="display:none;">' +
-                        '<input type="text" class="form-control form-control-sm" id="opNuevoFirmanteNombre" placeholder="Nombre completo">' +
-                        '<div class="input-group-append">' +
-                            '<button type="button" class="btn btn-success" id="opBtnGuardarFirmante" title="Guardar"><i class="fa fa-check"></i></button>' +
-                            '<button type="button" class="btn btn-outline-secondary" id="opBtnCancelarFirmante" title="Cancelar"><i class="fa fa-times"></i></button>' +
-                        '</div>' +
+                    '<div class="col-lg-4 form-group">' +
+                        '<label class="gp-label" for="opFechaVencimiento">Fecha límite de pago</label>' +
+                        '<input type="date" class="form-control" id="opFechaVencimiento" value="' + fechaPorDefectoVencimiento() + '">' +
+                        '<div class="gp-ayuda">Para el control de mora</div>' +
                     '</div>' +
-                    '<small class="form-text text-muted">Nombre que aparecerá en la línea de firma de la orden impresa</small>' +
                 '</div>' +
-                '<div class="col-lg-4 form-group">' +
-                    '<label class="small font-weight-bold mb-1">Cuenta a la que debe depositar</label>' +
-                    '<select class="form-control form-control-sm" id="opCuentaPago">' +
-                        '<option value="">Cargando cuentas...</option>' +
-                    '</select>' +
-                '</div>' +
-                '<div class="col-lg-4 form-group">' +
-                    '<label class="small font-weight-bold mb-1">Fecha límite de pago</label>' +
-                    '<input type="date" class="form-control form-control-sm" id="opFechaVencimiento" value="' + fechaPorDefectoVencimiento() + '">' +
-                    '<small class="form-text text-muted">Para el control de mora</small>' +
-                '</div>' +
-            '</div>' +
 
-            '<div class="text-right mt-2">' +
-                '<button type="button" class="btn btn-success" id="opBtnGenerarOrden">' +
-                    '<i class="fa fa-file-invoice"></i> Generar Orden de Pago' +
-                '</button>' +
+                '<div class="gp-actions">' +
+                    '<button type="button" class="btn btn-primary" id="opBtnGenerarOrden">' +
+                        '<i class="fa fa-file-invoice"></i> Generar orden de pago' +
+                    '</button>' +
+                '</div>' +
             '</div>';
 
         $('#ordenPagoContenido').html(html);
@@ -367,12 +379,12 @@ $(document).ready(function() {
                         });
                 } else {
                     Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo generar la orden de pago' });
-                    $btn.prop('disabled', false).html('<i class="fa fa-file-invoice"></i> Generar Orden de Pago');
+                    $btn.prop('disabled', false).html('<i class="fa fa-file-invoice"></i> Generar orden de pago');
                 }
             },
             error: function() {
                 Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar la orden de pago' });
-                $btn.prop('disabled', false).html('<i class="fa fa-file-invoice"></i> Generar Orden de Pago');
+                $btn.prop('disabled', false).html('<i class="fa fa-file-invoice"></i> Generar orden de pago');
             }
         });
     });

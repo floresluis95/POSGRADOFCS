@@ -839,7 +839,7 @@ function obtenerOrdenPendienteCuotaPrograma()
             FROM ordenpago op
             WHERE op.idinscripcion = :idinscripcion
             AND op.Estado = 'PENDIENTE'
-            AND op.ListaModulos IS NULL
+            AND op.ListaModulos IS NULL AND COALESCE(op.Observaciones, '') <> 'CLINICA'
             ORDER BY op.FechaGeneracion DESC
             LIMIT 1
         ");
@@ -914,7 +914,7 @@ function registrarOrdenPagoCuotaPrograma()
         // Solo una orden de cuota pendiente a la vez por inscripción
         $stmtCheck = $conexion->prepare(
             "SELECT IdOrdenPago FROM ordenpago
-             WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND ListaModulos IS NULL"
+             WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND ListaModulos IS NULL AND COALESCE(Observaciones, '') <> 'CLINICA'"
         );
         $stmtCheck->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
         $stmtCheck->execute();
@@ -1495,6 +1495,8 @@ function misOrdenesPago()
             $tipo = 'MODULOS';
         } elseif ($o['Observaciones'] === 'CUOTA PROGRAMA') {
             $tipo = 'CUOTA';
+        } elseif ($o['Observaciones'] === 'CLINICA') {
+            $tipo = 'CLINICA';
         } else {
             $tipo = 'MATRICULA';
         }

@@ -436,14 +436,17 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                             <div class="form-group">
                                 <label><strong><i class="fa fa-book"></i> Nombre del Módulo:</strong> <span class="text-danger">*</span></label>
                                 <input type="text"
-                                       class="form-control"
+                                       class="form-control nombre-modulo-input"
                                        name="nombremodulo"
                                        id="editNombreModulo"
                                        placeholder="Ej: Metodología de Investigación"
-                                       maxlength="100"
+                                       maxlength="255"
+                                       spellcheck="true"
+                                       lang="es"
                                        required>
                                 <small class="form-text text-muted">
-                                    <i class="fa fa-info-circle"></i> Campo obligatorio
+                                    <i class="fa fa-info-circle"></i> Campo obligatorio. Aparece tal cual en el historial académico y los certificados.
+                                    <span class="float-right contador-nombre-modulo"></span>
                                 </small>
                             </div>
                         </div>
@@ -1010,10 +1013,13 @@ $(document).ready(function() {
                             <div class="form-group">
                                 <label class="mb-1"><strong>Nombre del Módulo:</strong></label>
                                 <input type="text"
-                                       class="form-control form-control-sm"
+                                       class="form-control form-control-sm nombre-modulo-input"
                                        name="nombremodulo_${i}"
                                        placeholder="Ej: Metodología de Investigación"
-                                       maxlength="100">
+                                       maxlength="255"
+                                       spellcheck="true"
+                                       lang="es">
+                                <small class="form-text text-muted text-right contador-nombre-modulo"></small>
                             </div>
 
                         <div class="row">
@@ -1064,39 +1070,110 @@ $(document).ready(function() {
     }
 
     // ========================================
+    // REVISIÓN DE NOMBRES ANTES DE GUARDAR
+    // ========================================
+    // El nombre del módulo se imprime tal cual en el historial académico y en
+    // los certificados, así que antes de guardar se muestra para revisarlo y se
+    // avisa si alguna palabra parece mal escrita comparándola con los nombres ya
+    // registrados (ej. "ODNTOLOGIA" -> "ODONTOLOGÍA").
+
+    // Contador de caracteres (el límite coincide con la columna VARCHAR(255))
+    $(document).on('input', '.nombre-modulo-input', function() {
+        const largo = $(this).val().length;
+        const limite = parseInt($(this).attr('maxlength'), 10);
+        $(this).closest('.form-group').find('.contador-nombre-modulo')
+            .text(largo > 0 ? largo + ' / ' + limite : '')
+            .toggleClass('text-danger', largo >= limite);
+    });
+
+    function escaparHtml(texto) {
+        return $('<div>').text(texto).html();
+    }
+
+    /**
+     * Muestra los nombres que se van a guardar y, si las hay, las sugerencias de
+     * corrección. Devuelve una promesa que se resuelve en true si el usuario
+     * confirma guardar, o false si prefiere volver a revisar.
+     */
+    function revisarNombresModulos(nombres, idmodulo, textoConfirmar) {
+        return $.ajax({
+            url: 'ajax/modulo.ajax.php',
+            method: 'POST',
+            data: { accion: 'sugerirCorreccionesNombres', nombres: nombres, idmodulo: idmodulo || '' },
+            dataType: 'json'
+        }).then(function(resp) {
+            return resp.sugerencias || [];
+        }, function() {
+            // Si la revisión falla, no se bloquea el guardado: se confirma sin sugerencias
+            return $.Deferred().resolve([]).promise();
+        }).then(function(sugerencias) {
+            let html = '<div style="text-align:left; max-height:320px; overflow-y:auto;">';
+
+            if (sugerencias.length > 0) {
+                html += '<div class="alert alert-warning" style="font-size:14px;">' +
+                        '<strong><i class="fa fa-exclamation-triangle"></i> Posibles errores de escritura:</strong><ul class="mb-0 mt-2">';
+                sugerencias.forEach(function(s) {
+                    html += '<li><del>' + escaparHtml(s.palabra) + '</del> &rarr; ¿quiso decir <strong>' + escaparHtml(s.sugerencia) + '</strong>?</li>';
+                });
+                html += '</ul></div>';
+            }
+
+            html += '<p style="font-size:13px; color:#666;">Revise la ortografía: así aparecerán en el historial académico y en los certificados.</p><ol>';
+            nombres.forEach(function(n) {
+                // Se muestra en mayúsculas porque así se guarda
+                html += '<li style="font-size:15px; font-weight:600; margin-bottom:6px;">' + escaparHtml(n.trim().replace(/\s+/g, ' ').toUpperCase()) + '</li>';
+            });
+            html += '</ol></div>';
+
+            return Swal.fire({
+                type: sugerencias.length > 0 ? 'warning' : 'question',
+                title: sugerencias.length > 0 ? 'Revise los nombres' : 'Confirme los nombres',
+                html: html,
+                width: 650,
+                showCancelButton: true,
+                confirmButtonText: sugerencias.length > 0 ? 'Guardar de todos modos' : textoConfirmar,
+                cancelButtonText: 'Volver a corregir',
+                confirmButtonColor: sugerencias.length > 0 ? '#6c757d' : '#28a745',
+                focusCancel: sugerencias.length > 0
+            });
+        }).then(function(resultado) {
+            return !!resultado.value; // SweetAlert2 v8: no tiene isConfirmed
+        });
+    }
+
+    // ========================================
     // VALIDACIÓN Y ENVÍO DEL FORMULARIO
     // ========================================
     $('#formRegistrarModulosPorPrograma').on('submit', function(e) {
         e.preventDefault();
 
         const numModulos = parseInt($('#modalTotalModulos').val());
-        let modulosConNombre = 0;
+        const nombres = [];
 
-        // Contar cuántos módulos tienen nombre
+        // Reunir los módulos que tienen nombre
         for (let i = 1; i <= numModulos; i++) {
             const nombre = $(`input[name="nombremodulo_${i}"]`).val();
 
             if (nombre && nombre.trim() !== '') {
-                modulosConNombre++;
+                nombres.push(nombre);
             }
         }
 
-        if (modulosConNombre === 0) {
+        if (nombres.length === 0) {
             alert('Debe completar el nombre de al menos un módulo');
             return false;
         }
 
-        // Confirmar
-        const mensaje = modulosConNombre === 1
-            ? '¿Desea registrar 1 módulo para este programa?'
-            : `¿Desea registrar ${modulosConNombre} módulos para este programa?`;
+        const textoConfirmar = nombres.length === 1 ? 'Sí, registrar 1 módulo' : `Sí, registrar ${nombres.length} módulos`;
 
-        const confirmacion = confirm(mensaje);
+        revisarNombresModulos(nombres, null, textoConfirmar).then(function(confirmado) {
+            if (confirmado) {
+                enviarRegistroModulos();
+            }
+        });
+    });
 
-        if (!confirmacion) {
-            return;
-        }
-
+    function enviarRegistroModulos() {
         // Enviar por AJAX: así el modal se cierra y la tabla se refresca
         // automáticamente, sin recargar toda la página.
         const $btnGuardar = $('#btnGuardarModulosPrograma');
@@ -1130,7 +1207,7 @@ $(document).ready(function() {
                 $btnGuardar.prop('disabled', false).html('<i class="fa fa-save"></i> Guardar Módulos');
             }
         });
-    });
+    }
 
     // ========================================
     // LIMPIAR SELECT2 AL CERRAR EL MODAL
@@ -1156,7 +1233,7 @@ $(document).ready(function() {
         $('#editIdmodulo').val(datosModulo.idmodulo);
         $('#editProgramaID').val(datosModulo.programaId);
         $('#editCodigoModulo').val(datosModulo.codigomodulo);
-        $('#editNombreModulo').val(datosModulo.nombremodulo);
+        $('#editNombreModulo').val(datosModulo.nombremodulo).trigger('input'); // actualiza el contador
         $('#editFechaInicio').val(datosModulo.fechaInicio || '');
         $('#editFechaFinal').val(datosModulo.fechaFinal || '');
 
@@ -1210,13 +1287,16 @@ $(document).ready(function() {
             return false;
         }
 
-        // Confirmar actualización
-        const confirmacion = confirm('¿Está seguro de actualizar este módulo?');
+        const $formEditar = $(this);
+        const idmodulo = $formEditar.find('[name="idmodulo"]').val();
 
-        if (confirmacion) {
+        revisarNombresModulos([nombreModulo], idmodulo, 'Sí, actualizar').then(function(confirmado) {
+            if (!confirmado) {
+                console.log('✗ Actualización cancelada');
+                return;
+            }
             console.log('✓ Confirmado, enviando por AJAX...');
 
-            const $formEditar = $(this);
             const $btnActualizar = $formEditar.find('button[type="submit"]');
             $btnActualizar.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Actualizando...');
 
@@ -1248,9 +1328,7 @@ $(document).ready(function() {
                     $btnActualizar.prop('disabled', false).html('<i class="fa fa-save"></i> Actualizar Módulo');
                 }
             });
-        } else {
-            console.log('✗ Actualización cancelada');
-        }
+        });
     });
 
     // ========================================

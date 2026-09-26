@@ -44,6 +44,12 @@ class OrdenPagoModelos
                 return ['status' => 'error', 'mensaje' => 'La orden de pago no existe o ya no está pendiente'];
             }
 
+            // Una orden de clínica nunca se valida como matrícula: su pago va aparte (pagoclinica)
+            if ($orden['Observaciones'] === 'CLINICA') {
+                $pdo->rollBack();
+                return ['status' => 'error', 'mensaje' => 'Esta es una orden de clínica; su pago se registra en la pestaña Clínicas'];
+            }
+
             // Un estudiante no puede quedar inscrito dos veces (activo) en el mismo programa
             $stmtDup = $pdo->prepare(
                 "SELECT idInscripcion FROM estudianteprograma
@@ -231,7 +237,8 @@ class OrdenPagoModelos
                  WHERE EstudianteID = :estudianteID
                  AND ProgramaID = :programaID
                  AND PagoCompleto = :pagoCompleto
-                 AND Estado = 'PENDIENTE'"
+                 AND Estado = 'PENDIENTE'
+                 AND COALESCE(Observaciones, '') <> 'CLINICA'"
             );
             $stmtCheckPendiente->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
             $stmtCheckPendiente->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
@@ -724,7 +731,7 @@ class OrdenPagoModelos
                  INNER JOIN estudiante e ON e.EstudianteID = op.EstudianteID
                  INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
                  WHERE op.Estado = 'PENDIENTE'
-                 AND op.ListaModulos IS NULL
+                 AND op.ListaModulos IS NULL AND COALESCE(op.Observaciones, '') <> 'CLINICA'
                  AND op.FechaVencimiento IS NOT NULL
                  AND op.FechaVencimiento < CURDATE()
                  ORDER BY op.FechaVencimiento ASC"
@@ -790,7 +797,7 @@ class OrdenPagoModelos
                     INNER JOIN estudiante e ON e.EstudianteID = op.EstudianteID
                     INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
                     WHERE op.Estado = 'PENDIENTE'
-                    AND op.ListaModulos IS NULL
+                    AND op.ListaModulos IS NULL AND COALESCE(op.Observaciones, '') <> 'CLINICA'
                     AND op.FechaVencimiento IS NOT NULL";
 
             $params = [];

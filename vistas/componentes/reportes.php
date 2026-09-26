@@ -219,6 +219,59 @@ date_default_timezone_set("America/La_Paz");
             </div>
           </div>
 
+          <!-- Reporte 5: Recaudación por cuenta bancaria -->
+          <div class="col-md-4">
+            <div class="card shadow-sm" style="border-radius: 15px; overflow: hidden;">
+              <div class="card-header" style="background: linear-gradient(135deg, #6f42c1 0%, #8e5cd9 100%); padding: 20px;">
+                <h4 class="card-title text-white mb-0">
+                  <i class="fas fa-university"></i> Recaudación por Cuenta
+                </h4>
+              </div>
+              <div class="card-body" style="padding: 30px;">
+                <div class="text-center mb-3">
+                  <i class="fas fa-money-check-alt" style="font-size: 60px; color: #6f42c1;"></i>
+                </div>
+                <p class="text-center" style="color: #666; min-height: 60px;">
+                  Cuánto ingresó a cada cuenta bancaria (matrícula y cuotas) y cuánto está pendiente de cobro. Las fechas filtran solo lo recaudado.
+                </p>
+                <form action="ajax/reportes.ajax.php" method="POST" target="_blank">
+                  <input type="hidden" name="tipo_reporte" value="recaudacion">
+                  <div class="form-group">
+                    <label for="sede_recaudacion">Sede (opcional):</label>
+                    <select name="sede" id="sede_recaudacion" class="form-control select2-uniforme select-programa-por-sede" data-target="#programa_id_recaudacion">
+                      <option value="">Todas las sedes</option>
+                      <?php foreach ($sedesDisponibles as $s): ?>
+                        <option value="<?php echo htmlspecialchars($s); ?>"><?php echo htmlspecialchars($s); ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="programa_id_recaudacion">Programa (opcional):</label>
+                    <select name="programa_id" id="programa_id_recaudacion" class="form-control select2-uniforme">
+                      <option value="">Todos los programas</option>
+                      <?php foreach ($programas as $prog): ?>
+                        <option value="<?php echo $prog['ProgramaID']; ?>" data-sede="<?php echo htmlspecialchars($prog['Sede']); ?>"><?php echo htmlspecialchars($prog['NombrePrograma']); ?> (<?php echo htmlspecialchars($prog['Sede']); ?>)</option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group col-6">
+                      <label for="fecha_desde_recaudacion">Desde:</label>
+                      <input type="date" name="fecha_desde" id="fecha_desde_recaudacion" class="form-control">
+                    </div>
+                    <div class="form-group col-6">
+                      <label for="fecha_hasta_recaudacion">Hasta:</label>
+                      <input type="date" name="fecha_hasta" id="fecha_hasta_recaudacion" class="form-control">
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-block" style="background: linear-gradient(135deg, #6f42c1 0%, #8e5cd9 100%); border: none; padding: 12px; color: white;">
+                    <i class="fas fa-download"></i> Generar Reporte
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- Información adicional -->
