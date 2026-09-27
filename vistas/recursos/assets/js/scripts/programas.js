@@ -1,29 +1,7 @@
-      
-          $(document).on('click', '#btnDetallePrograma', function() {
-              var idprograma = $(this).attr("idcod");
+// El detalle del programa (#btnDetallePrograma) lo maneja vistas/componentes/programas.php:
+// aquí había una copia vieja que hacía una segunda consulta y sobrescribía los datos sin formato.
 
-              $.ajax({
-                  url: "ajax/programa.ajax.php",
-                  method: "POST",
-                  data: { idprograma: idprograma },
-                  dataType: "json",
-                  success: function(respuesta) {
-                      // Mostrar en el panel o modal
-                      $("#detalleNombre").text(respuesta.NombrePrograma);
-                      $("#detalleGrado").text(respuesta.GradoAcademico);
-                      $("#detalleDuracion").text(respuesta.DuracionMeses);
-                      $("#detalleModulos").text(respuesta.Modulos);
-                      $("#detalleFecha").text(respuesta.FechaInicio);
-                      $("#detalleSede").text(respuesta.Sede);
-                      $("#detalleCosto").text(respuesta.Costo);
-                      $("#detalleDetalle").text(respuesta.Detalle);
-                      
-                      // Abrir modal si no se abre automáticamente
-                      $("#DetallePrograma").modal("show");
-                  }
-              });
-          });
-          // subir programa
+// subir programa
 $(document).ready(function() {
   $(document).on('click', '.btnSubir', function() {
     let id = $(this).data('idprograma');
@@ -31,23 +9,10 @@ $(document).ready(function() {
   });
 });
 
-
-
- // bajar programa
+// bajar programa
 $(document).ready(function() {
-
-  // Cuando se hace clic en el botón rojo (papelera)
   $(document).on('click', '.btnDarBaja', function() {
     let id = $(this).data('idprograma');
     $('#idProgramaBaja').val(id); // se pasa el ID al input oculto
   });
 });
- // eliminar programa
-$(document).ready(function() {
-  $(document).on('click', '.btnEliminarprograma', function() {
-    let id = $(this).data('idprograma');
-    $('#idProgramaEliminar').val(id); // se pasa el ID al input oculto
-  });
-});
-
-

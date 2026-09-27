@@ -123,6 +123,29 @@
     padding: 1px 4px;
 }
 
+/* Texto legible sobre el fondo de color del evento: el tema (Metronic) pinta el
+   título con un gris oscuro que se perdía sobre los fondos azul, rojo o morado.
+   No aplica a la vista de lista, que muestra los eventos sobre fondo blanco. */
+.fc-daygrid-event:not(.fc-daygrid-dot-event),
+.fc-daygrid-event:not(.fc-daygrid-dot-event) *,
+.fc-timegrid-event,
+.fc-timegrid-event *,
+.fc-unthemed .fc-day-grid-event .fc-title,
+.fc-unthemed .fc-day-grid-event .fc-time,
+.fc-unthemed .fc-time-grid-event .fc-title,
+.fc-unthemed .fc-time-grid-event .fc-time {
+    color: #fff !important;
+}
+.fc-daygrid-event:not(.fc-daygrid-dot-event) .fc-event-title,
+.fc-timegrid-event .fc-event-title {
+    font-weight: 600;
+}
+/* El punto blanco que el tema agrega antes del título no aporta y resta espacio */
+.fc-daygrid-event:not(.fc-daygrid-dot-event)::before,
+.fc-unthemed .fc-day-grid-event::before {
+    display: none !important;
+}
+
 .fc-list-event:hover td {
     background: #f7f9fc !important;
 }

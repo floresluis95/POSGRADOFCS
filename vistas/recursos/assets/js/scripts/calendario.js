@@ -277,7 +277,8 @@
             });
         }
 
-        // Estudiante: preseleccionar su propio programa en el filtro (no restringe, solo sugiere)
+        // Estudiante: el filtro solo lista sus programas inscritos (el servidor además
+        // lo impone); si tiene uno solo, se preselecciona.
         if (contexto.tipoSesion === 'EST' && contexto.programaIDsEstudiante && contexto.programaIDsEstudiante.length === 1) {
             var programaIDInicial = String(contexto.programaIDsEstudiante[0]);
             $('#filtroProgramaCalendario').val(programaIDInicial);
@@ -479,7 +480,7 @@
             if (props.alcance) {
                 $('#detalleEventoAlcance').text(props.alcance);
                 $('#detalleEventoAccion').text(props.accionSugerida || '');
-                $('#detalleEventoAlcanceWrap').css('border-left-color', esPago ? '#d4a017' : '#8e44ad').show();
+                $('#detalleEventoAlcanceWrap').css('border-left-color', esPago ? '#b45309' : '#6d28d9').show();
             } else {
                 $('#detalleEventoAlcanceWrap').hide();
             }

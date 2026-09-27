@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/validar-sesion.php';
+ExigirSesionAjax();
 /**
  * AJAX para gestión del catálogo de especialidades (registrar, listar,
  * cambiar estado) sin recargar la página.

@@ -7,6 +7,9 @@
  */
 
 require_once __DIR__ . '/../modelos/plazocuotaprograma.modelo.php';
+require_once __DIR__ . '/../modelos/ordenpagoprincipal.modelo.php';
+require_once __DIR__ . '/../modelos/calendarioevento.modelo.php';
+require_once __DIR__ . '/../modelos/modulopagos_core.php';
 
 class PlazoCuotaProgramaControlador
 {
@@ -133,28 +136,88 @@ class PlazoCuotaProgramaControlador
     }
 
     /**
-     * Aviso para el Estudiante logueado: si tiene cuota(s) vencida(s) según
-     * el plazo de su(s) programa(s), para mostrarlo como notificación al
-     * ingresar al sistema.
+     * Avisos de pago del Estudiante logueado, para la burbuja emergente que se
+     * muestra en cada página (aviso-cuota-estudiante.js). Dos tipos:
+     *  - PERSONAL: sus propias órdenes de cuota pendientes con fecha límite.
+     *  - GENERAL: el plazo de cuota de cada programa donde está inscrito (el
+     *    próximo o, si ya pasaron todos, el último), aunque aún no tenga una
+     *    orden generada. No se muestra si ya pagó el programa completo.
+     * 'bloqueado' indica si ya no puede ver calificaciones (plazo vencido con
+     * orden pendiente: PlazoCuotaProgramaModelo::TieneBloqueoProgramaModelo).
      */
     public function AvisoEstudianteAjaxControlador()
     {
         header('Content-Type: application/json; charset=utf-8');
 
         $tipo = $_SESSION['Tipo'] ?? '';
-        $estudianteID = $_SESSION['EstudianteID'] ?? null;
+        $estudianteID = (int)($_SESSION['EstudianteID'] ?? 0);
 
-        if ($tipo !== 'EST' || empty($estudianteID)) {
-            echo json_encode(['success' => true, 'hayAviso' => false, 'avisos' => []]);
+        if ($tipo !== 'EST' || $estudianteID <= 0) {
+            echo json_encode(['success' => true, 'hayAviso' => false, 'avisos' => [], 'bloqueado' => false]);
             exit();
         }
 
-        $avisos = PlazoCuotaProgramaModelo::ObtenerAvisosProgramaModelo($estudianteID);
+        // El php.ini del servidor tiene otra zona horaria: los días se cuentan en hora de Bolivia
+        date_default_timezone_set('America/La_Paz');
+        $hoy = new DateTime('today');
+        $diasDesdeHoy = function ($fecha) use ($hoy) {
+            // Positivo = días de atraso; negativo = días que faltan
+            $diff = $hoy->diff(new DateTime($fecha));
+            return $diff->invert ? $diff->days : -$diff->days;
+        };
+
+        $avisos = [];
+
+        // Personales: órdenes de cuota pendientes del propio estudiante
+        foreach (OrdenPagoModelos::ObtenerVencimientosPorRangoModelo(null, null, null, null, $estudianteID) as $v) {
+            $avisos[] = [
+                'Tipo' => 'PERSONAL',
+                'ProgramaID' => (int)$v['ProgramaID'],
+                'NombrePrograma' => $v['NombrePrograma'],
+                'Fecha' => $v['FechaVencimiento'],
+                'DiasVencido' => $diasDesdeHoy($v['FechaVencimiento']),
+                'Monto' => (float)$v['MontoTotal'],
+                'NumeroOrden' => $v['NumeroOrden'],
+            ];
+        }
+
+        // Generales: plazo del programa (solo programas inscritos y aún no pagados por completo)
+        $inscripciones = CalendarioEventoModelo::ObtenerInscripcionesDeEstudianteModelo($estudianteID);
+        $plazosPorPrograma = [];
+        foreach (PlazoCuotaProgramaModelo::ObtenerPlazosParaCalendarioModelo(null, null, null, null, array_keys($inscripciones)) as $pl) {
+            $plazosPorPrograma[(int)$pl['ProgramaID']][] = $pl; // vienen ordenados por fecha
+        }
+        $hoyTexto = $hoy->format('Y-m-d');
+        foreach ($plazosPorPrograma as $programaID => $plazos) {
+            $resumen = PagoModuloModelo::ObtenerResumenPagoProgramaModelo($inscripciones[$programaID], $programaID);
+            if (!empty($resumen['completado'])) {
+                continue;
+            }
+            $elegido = end($plazos);
+            foreach ($plazos as $pl) {
+                if ($pl['FechaPlazo'] >= $hoyTexto) {
+                    $elegido = $pl;
+                    break;
+                }
+            }
+            $avisos[] = [
+                'Tipo' => 'GENERAL',
+                'ProgramaID' => $programaID,
+                'NombrePrograma' => $elegido['NombrePrograma'],
+                'Fecha' => $elegido['FechaPlazo'],
+                'DiasVencido' => $diasDesdeHoy($elegido['FechaPlazo']),
+                'Descripcion' => $elegido['Descripcion'],
+                'SaldoPendiente' => (float)($resumen['saldoPendiente'] ?? 0),
+            ];
+        }
+
+        $bloqueado = count(PlazoCuotaProgramaModelo::ObtenerAvisoEstudianteModelo($estudianteID)) > 0;
 
         echo json_encode([
             'success' => true,
             'hayAviso' => count($avisos) > 0,
-            'avisos' => $avisos
+            'avisos' => $avisos,
+            'bloqueado' => $bloqueado,
         ]);
         exit();
     }

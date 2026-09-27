@@ -423,6 +423,21 @@ class CalificacionControlador
             if ($estudiante) {
                 $programas = CalificacionModelo::ObtenerProgramasEstudianteModelo($estudianteID);
 
+                // Programas con pago vencido: su historial queda desactivado (misma regla que
+                // PlazoCuotaProgramaModelo::TieneBloqueoProgramaModelo, que el servidor aplica
+                // al pedir las calificaciones).
+                $bloqueos = [];
+                foreach (PlazoCuotaProgramaModelo::ObtenerAvisoEstudianteModelo($estudianteID) as $aviso) {
+                    $bloqueos[(int)$aviso['ProgramaID']] = $aviso;
+                }
+                foreach ($programas as &$programa) {
+                    $bloqueo = $bloqueos[(int)$programa['ProgramaID']] ?? null;
+                    $programa['Bloqueado'] = $bloqueo !== null;
+                    $programa['FechaVencida'] = $bloqueo ? $bloqueo['FechaPlazo'] : null;
+                    $programa['DiasVencido'] = $bloqueo ? (int)$bloqueo['DiasVencido'] : 0;
+                }
+                unset($programa);
+
                 echo json_encode([
                     'status' => 'success',
                     'data' => $programas,

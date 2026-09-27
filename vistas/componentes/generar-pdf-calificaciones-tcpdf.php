@@ -28,6 +28,14 @@ if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
         'message' => 'Sesión no válida'
     ]));
 }
+// Reporte de calificaciones: solo Administración, Secretaría y Docentes (no Estudiantes)
+if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'DOC'], true)) {
+    ob_end_clean();
+    die(json_encode([
+        'status' => 'error',
+        'message' => 'No tiene permisos para esta acción'
+    ]));
+}
 
 // Obtener parámetros
 $moduloID = isset($_GET['moduloID']) ? intval($_GET['moduloID']) : 0;

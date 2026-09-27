@@ -17,6 +17,24 @@ if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
     exit;
 }
 
+// Un Estudiante solo puede consultar SUS propias calificaciones (donde además se aplica
+// el bloqueo por pago vencido). Buscar notas de otros, guardar, cerrar o reabrir módulos
+// es exclusivo de Administración, Secretaría y Docentes.
+$accionesEstudiante = ['obtenerEstudianteLogueado', 'obtenerProgramasEstudiante', 'obtenerCalificacionesEstudiantePrograma'];
+$tipoSesion = $_SESSION['Tipo'] ?? '';
+$accionPedida = $_POST['accion'] ?? '';
+$permitido = $tipoSesion === 'EST'
+    ? in_array($accionPedida, $accionesEstudiante, true)
+    : in_array($tipoSesion, ['ADM', 'SEC', 'DOC'], true);
+if (!$permitido) {
+    http_response_code(403);
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'No tiene permisos para esta acción'
+    ]);
+    exit;
+}
+
 // Determinar la acción solicitada
 if (isset($_POST['accion'])) {
     $accion = $_POST['accion'];

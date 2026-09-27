@@ -9,7 +9,7 @@ require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ 
 
 class ModuloControlador
 {
-    // Debe coincidir con modulos.nombremodulo VARCHAR(255) (ver ampliar_nombremodulo.sql)
+    // Debe coincidir con modulos.nombremodulo VARCHAR(255) (ver mantenimiento/ampliar_nombremodulo.sql)
     const LARGO_MAXIMO_NOMBRE = 255;
 
     /**
@@ -387,62 +387,101 @@ class ModuloControlador
     }
 
     /**
-     * Listar módulos por programa en tabla HTML
+     * Filas de la tabla "Módulos del programa" (se cargan por AJAX al elegir un programa).
+     * Columnas: # | Módulo | Periodo | Docente | Estado | Editar.
+     * Estado según fechas (Por iniciar / En curso / Culminado) o según validación/cierre.
+     * @param int|null $programaID
      */
-    public function ListarModulosPorProgramaControlador()
+    public static function TablaModulosPorProgramaControlador($programaID)
     {
-        $modulos = ModuloModelo::ListarModulosPorProgramaModelo();
+        $modulos = ModuloModelo::ListarModulosPorProgramaModelo($programaID);
 
         if (empty($modulos)) {
-            echo '<tr>
-                    <td colspan="9" class="text-center text-muted">
-                        <i class="fa fa-info-circle"></i> No hay módulos registrados por programa
-                    </td>
-                  </tr>';
+            echo '<tr><td colspan="6" class="md-vacio">
+                    <i class="fa fa-layer-group"></i>
+                    <strong>Este programa aún no tiene módulos registrados</strong>
+                    <span>Usa "Agregar módulos" para cargarlos.</span>
+                  </td></tr>';
             return;
         }
 
-        foreach ($modulos as $key => $modulo) {
-            $estadoBadge = $modulo['estadomodulo'] == 'ACTIVO' ? 'badge-success' : 'badge-secondary';
+        $e = function ($valor) {
+            return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
+        };
+        $hoy = date('Y-m-d');
 
-            // Información del docente
-            $docenteInfo = '<span class="text-muted"><em>Sin asignar</em></span>';
-            if (!empty($modulo['NombreDocente'])) {
-                $docenteInfo = '<strong>' . htmlspecialchars($modulo['NombreDocente']) . '</strong>';
-                if (!empty($modulo['EspecialidadDocente'])) {
-                    $docenteInfo .= '<br><small class="text-muted">' . htmlspecialchars($modulo['EspecialidadDocente']) . '</small>';
-                }
+        foreach ($modulos as $i => $modulo) {
+            $inicio = $modulo['FechaInicio'] ?? null;
+            $fin = $modulo['FechaFinal'] ?? null;
+            $estadoRegistro = strtoupper((string)$modulo['estadomodulo']);
+
+            // Fechas mal cargadas (año < 2000, fin antes del inicio o más de 2 años): se marcan para revisar
+            $fechasInvalidas = !empty($inicio) && !empty($fin) && (
+                (int)substr($inicio, 0, 4) < 2000 || (int)substr($fin, 0, 4) < 2000
+                || $fin < $inicio
+                || (strtotime($fin) - strtotime($inicio)) > 730 * 86400
+            );
+
+            // Periodo y duración
+            if ($fechasInvalidas) {
+                $periodo = '<strong>' . date('d/m/Y', strtotime($inicio)) . ' – ' . date('d/m/Y', strtotime($fin)) . '</strong>'
+                         . '<small class="md-alerta"><i class="fa fa-exclamation-triangle"></i> Revisa las fechas de este módulo</small>';
+            } elseif (!empty($inicio) && !empty($fin)) {
+                $dias = (int)round((strtotime($fin) - strtotime($inicio)) / 86400) + 1;
+                $duracion = $dias >= 14 ? round($dias / 7) . ' semanas' : $dias . ' días';
+                $periodo = '<strong>' . date('d/m/Y', strtotime($inicio)) . ' – ' . date('d/m/Y', strtotime($fin)) . '</strong>'
+                         . '<small>' . $duracion . '</small>';
+            } else {
+                $periodo = '<span class="md-muted">Sin fechas definidas</span>';
             }
 
-            // Datos para el botón de editar (en JSON para pasar al modal)
-            $datosModulo = htmlspecialchars(json_encode([
+            // Estado único y claro
+            if (in_array($estadoRegistro, ['VALIDADO', 'CERRADO'], true)) {
+                $estado = ['Validado', 'is-validado', 'fa-check-double'];
+            } elseif ($fechasInvalidas) {
+                $estado = ['Revisar fechas', 'is-sin-fechas', 'fa-exclamation-triangle'];
+            } elseif (empty($inicio) || empty($fin)) {
+                $estado = ['Sin fechas', 'is-sin-fechas', 'fa-calendar-times'];
+            } elseif ($hoy < $inicio) {
+                $estado = ['Por iniciar', 'is-por-iniciar', 'fa-hourglass-start'];
+            } elseif ($hoy > $fin) {
+                $estado = ['Culminado', 'is-culminado', 'fa-flag-checkered'];
+            } else {
+                $estado = ['En curso', 'is-en-curso', 'fa-play-circle'];
+            }
+
+            // Docente
+            if (!empty($modulo['NombreDocente'])) {
+                $docente = '<strong>' . $e($modulo['NombreDocente']) . '</strong>'
+                         . (!empty($modulo['EspecialidadDocente']) ? '<small>' . $e($modulo['EspecialidadDocente']) . '</small>' : '');
+            } else {
+                $docente = '<span class="md-muted"><i class="fa fa-user-slash"></i> Sin asignar</span>';
+            }
+
+            // Datos para el modal de edición (mismas claves que antes)
+            $datosModulo = $e(json_encode([
                 'idmodulo' => $modulo['Idmodulo'],
                 'programaId' => $modulo['ProgramaId'],
                 'nombremodulo' => $modulo['nombremodulo'],
                 'codigomodulo' => $modulo['codigomodulo'],
                 'docenteID' => $modulo['DocenteID'],
-                'fechainicio' => $modulo['FechaInicio'],
-                'fechafin' => $modulo['FechaFinal'],
                 'nombrePrograma' => $modulo['NombrePrograma'],
-                'codigoPrograma' => $modulo['CodigoPrograma']
-            ]), ENT_QUOTES, 'UTF-8');
+                'fechaInicio' => $inicio,
+                'fechaFinal' => $fin,
+            ]));
 
             echo '<tr>
-                    <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
-                    <td class="text-center"><span class="badge badge-primary">' . htmlspecialchars($modulo['codigomodulo']) . '</span></td>
-                    <td><strong>' . htmlspecialchars($modulo['nombremodulo']) . '</strong></td>
-                    <td>' . htmlspecialchars($modulo['NombrePrograma']) . '</td>
-                    <td class="text-center"><span class="badge badge-info">' . htmlspecialchars($modulo['CodigoPrograma']) . '</span></td>
-                    <td>' . $docenteInfo . '</td>
-                    <td class="text-center">
-                        <span class="badge ' . $estadoBadge . '">' . htmlspecialchars($modulo['estadomodulo']) . '</span>
+                    <td class="md-num">' . ($i + 1) . '</td>
+                    <td>
+                        <span class="md-codigo">' . $e($modulo['codigomodulo']) . '</span>
+                        <div class="md-nombre">' . $e($modulo['nombremodulo']) . '</div>
                     </td>
-                    <td class="text-center">
-                        <button type="button"
-                                class="btn btn-sm btn-warning btn-editar-modulo"
-                                data-modulo=\'' . $datosModulo . '\'
-                                title="Editar módulo">
-                            <i class="fa fa-edit"></i>
+                    <td class="md-periodo">' . $periodo . '</td>
+                    <td class="md-docente">' . $docente . '</td>
+                    <td><span class="md-estado ' . $estado[1] . '"><i class="fa ' . $estado[2] . '"></i> ' . $estado[0] . '</span></td>
+                    <td class="text-right">
+                        <button type="button" class="md-accion btn-editar-modulo" data-modulo=\'' . $datosModulo . '\' title="Editar módulo" aria-label="Editar módulo">
+                            <i class="fa fa-pen"></i>
                         </button>
                     </td>
                   </tr>';

@@ -18,6 +18,10 @@ session_start();
 if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
     die('Acceso no autorizado. Sesión inválida. <br><a href="../../index.php">Ir al inicio de sesión</a>');
 }
+// Reporte de calificaciones: solo Administración, Secretaría y Docentes (no Estudiantes).
+if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'DOC'], true)) {
+    die('Acceso no autorizado.');
+}
 
 // Incluir autoload de Composer para TCPDF
 require_once '../../vendor/autoload.php';

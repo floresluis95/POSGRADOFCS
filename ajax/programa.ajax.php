@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/validar-sesion.php';
+ExigirSesionAjax();
 /**
  * AJAX para obtener datos de programas
  */

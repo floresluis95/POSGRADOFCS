@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/validar-sesion.php';
+ExigirSesionAjax();
 /**
  * AJAX: Reporte de Notas
  * Maneja las peticiones AJAX para el reporte de calificaciones

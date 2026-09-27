@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/validar-sesion.php';
+ExigirSesionAjax();
 /**
  * AJAX para gestionar inscripciones a módulos
  * Obtiene módulos inscritos por estudiante

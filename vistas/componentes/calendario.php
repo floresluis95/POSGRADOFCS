@@ -11,18 +11,25 @@ $veVencimientosPago = in_array($tipoSesion, ['ADM', 'SEC', 'EST'], true);
 $sedesDisponibles = ProgramasModelos::ListarSedesModelo();
 $programasDisponibles = ProgramasModelos::ListaProgramaModelo();
 
-// Para Estudiante: sus propios programas, para preseleccionar el filtro por defecto
-// (no se restringe la vista, solo se usa como valor inicial del select).
+// Estudiante: solo ve el calendario de los programas donde está inscrito. Los filtros
+// muestran únicamente esos programas (y sus sedes); el servidor además lo impone en
+// CalendarioEventoControlador::ListarEventosAjaxControlador.
 $programaIDsEstudiante = [];
-if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
-    $programaIDsEstudiante = CalendarioEventoModelo::ObtenerProgramaIDsDeEstudianteModelo($_SESSION['EstudianteID']);
+if ($tipoSesion === 'EST') {
+    $programaIDsEstudiante = !empty($_SESSION['EstudianteID'])
+        ? CalendarioEventoModelo::ObtenerProgramaIDsDeEstudianteModelo($_SESSION['EstudianteID'])
+        : [];
+    $programasDisponibles = array_values(array_filter($programasDisponibles, function ($p) use ($programaIDsEstudiante) {
+        return in_array((int)$p['ProgramaID'], $programaIDsEstudiante, true);
+    }));
+    $sedesDisponibles = array_values(array_unique(array_column($programasDisponibles, 'Sede')));
 }
 ?>
 <link rel="stylesheet" href="vistas/recursos/assets/vendors/custom/fullcalendar/fullcalendar.bundle.css">
 <link rel="stylesheet" href="vistas/recursos/assets/vendors/custom/fullcalendar/fullcalendar-daygrid.min.css">
 <link rel="stylesheet" href="vistas/recursos/assets/vendors/custom/fullcalendar/fullcalendar-timegrid.min.css">
 <link rel="stylesheet" href="vistas/recursos/assets/vendors/custom/fullcalendar/fullcalendar-list.min.css">
-<link rel="stylesheet" href="vistas/recursos/assets/css/calendario.css">
+<link rel="stylesheet" href="vistas/recursos/assets/css/calendario.css?v=<?php echo filemtime('vistas/recursos/assets/css/calendario.css'); ?>">
 
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
     <div class="kt-grid kt-grid--hor kt-grid--root" style="background:#E0DEDE;">
@@ -74,7 +81,7 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
                                     <div class="form-group mb-0">
                                         <label>Programa</label>
                                         <select class="form-control select2-uniforme" id="filtroProgramaCalendario" style="min-width: 260px;">
-                                            <option value="">Todos los programas</option>
+                                            <option value=""><?php echo $tipoSesion === 'EST' ? 'Todos mis programas' : 'Todos los programas'; ?></option>
                                             <?php foreach ($programasDisponibles as $p): ?>
                                                 <option value="<?php echo (int)$p['ProgramaID']; ?>" data-sede="<?php echo htmlspecialchars($p['Sede'], ENT_QUOTES); ?>">
                                                     <?php echo htmlspecialchars($p['NombrePrograma'] . ' - ' . $p['GradoAcademico'] . ' (' . $p['Codigo'] . ')'); ?>
@@ -94,12 +101,12 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
 
                                 <div class="calendario-leyenda">
                                     <span><i class="calendario-punto" style="background:#2a5298;"></i> Clase</span>
-                                    <span><i class="calendario-punto" style="background:#159895;"></i> Actividad</span>
+                                    <span><i class="calendario-punto" style="background:#0f766e;"></i> Actividad</span>
                                     <span><i class="calendario-punto" style="background:#6b2737;"></i> Clínica</span>
                                     <?php if ($veVencimientosPago): ?>
-                                    <span title="Vencimiento de la solicitud de pago de un estudiante en particular"><i class="calendario-punto" style="background:#d4a017;"></i> Vence cuota (individual)</span>
-                                    <span title="Vencimiento de la solicitud de pago de un estudiante en particular"><i class="calendario-punto" style="background:#c0392b;"></i> Cuota vencida (individual)</span>
-                                    <span title="Fecha límite general del programa: aplica a todos los estudiantes de Plan Regular con cuota pendiente"><i class="calendario-punto" style="background:#8e44ad;"></i> Plazo de cuota (todo el programa)</span>
+                                    <span title="Vencimiento de la solicitud de pago de un estudiante en particular"><i class="calendario-punto" style="background:#b45309;"></i> Vence cuota (individual)</span>
+                                    <span title="Vencimiento de la solicitud de pago de un estudiante en particular"><i class="calendario-punto" style="background:#b91c1c;"></i> Cuota vencida (individual)</span>
+                                    <span title="Fecha límite general del programa: aplica a todos los estudiantes de Plan Regular con cuota pendiente"><i class="calendario-punto" style="background:#6d28d9;"></i> Plazo de cuota (<?php echo $tipoSesion === 'EST' ? 'general de tu programa' : 'todo el programa'; ?>)</span>
                                     <?php endif; ?>
                                 </div>
 
@@ -108,14 +115,14 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
                                     <button type="button" class="btn btn-sm btn-nuevo-evento" data-tipo="CLASE" style="background:#2a5298; color:#fff;">
                                         <i class="fa fa-plus"></i> Clase
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-nuevo-evento" data-tipo="ACTIVIDAD" style="background:#159895; color:#fff;">
+                                    <button type="button" class="btn btn-sm btn-nuevo-evento" data-tipo="ACTIVIDAD" style="background:#0f766e; color:#fff;">
                                         <i class="fa fa-plus"></i> Actividad
                                     </button>
                                     <button type="button" class="btn btn-sm btn-nuevo-evento" data-tipo="CLINICA" style="background:#6b2737; color:#fff;">
                                         <i class="fa fa-plus"></i> Clínica
                                     </button>
                                     <?php if ($esAdminOSec): ?>
-                                    <button type="button" class="btn btn-sm" id="btnAbrirPlazosCuota" style="background:#8e44ad; color:#fff;">
+                                    <button type="button" class="btn btn-sm" id="btnAbrirPlazosCuota" style="background:#6d28d9; color:#fff;">
                                         <i class="fa fa-hourglass-half"></i> Plazos de Cuota
                                     </button>
                                     <?php endif; ?>
@@ -233,7 +240,7 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
                     <p class="mb-1"><i class="fa fa-chalkboard-teacher text-muted"></i> <span id="detalleEventoDocente"></span></p>
                     <p class="mb-1"><i class="fa fa-clock text-muted"></i> <span id="detalleEventoHorario"></span></p>
                     <p class="mb-0" id="detalleEventoDescripcionWrap"><i class="fa fa-align-left text-muted"></i> <span id="detalleEventoDescripcion"></span></p>
-                    <div class="mt-2 p-2" id="detalleEventoAlcanceWrap" style="display:none; border-radius:6px; background:#f8f9fa; border-left:4px solid #8e44ad;">
+                    <div class="mt-2 p-2" id="detalleEventoAlcanceWrap" style="display:none; border-radius:6px; background:#f8f9fa; border-left:4px solid #6d28d9;">
                         <p class="mb-1" style="font-size:12.5px;"><i class="fa fa-users text-muted"></i> <strong>Alcance:</strong> <span id="detalleEventoAlcance"></span></p>
                         <p class="mb-0" style="font-size:12.5px;"><i class="fa fa-info-circle text-muted"></i> <span id="detalleEventoAccion"></span></p>
                     </div>
@@ -253,7 +260,7 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
     <div class="modal fade" id="modalListaPlazosCuota" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #6b2737 0%, #8e44ad 100%); color: #fff;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #6b2737 0%, #6d28d9 100%); color: #fff;">
                     <h5 class="modal-title" style="color: #ffffff !important;"><i class="fa fa-hourglass-half"></i> Plazo de Cuota por Programa</h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
                 </div>
@@ -298,7 +305,7 @@ if ($tipoSesion === 'EST' && !empty($_SESSION['EstudianteID'])) {
     <div class="modal fade" id="modalPlazoCuota" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #6b2737 0%, #8e44ad 100%); color: #fff;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #6b2737 0%, #6d28d9 100%); color: #fff;">
                     <h5 class="modal-title" id="modalPlazoCuotaTitulo" style="color: #ffffff !important;"><i class="fa fa-hourglass-half"></i> Nuevo Plazo de Cuota</h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
                 </div>

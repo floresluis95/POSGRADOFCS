@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/validar-sesion.php';
+ExigirSesionAjax(['ADM']);
 require_once '../controladores/usuario.controlador.php';
 require_once '../modelos/usuario.modelo.php';
 class AjaxUsuarios{

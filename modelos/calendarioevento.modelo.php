@@ -212,6 +212,31 @@ class CalendarioEventoModelo
      * @param int $estudianteID
      * @return array<int>
      */
+    /**
+     * Inscripciones activas de un estudiante: [ProgramaID => idInscripcion].
+     * @param int $estudianteID
+     * @return array<int, int>
+     */
+    public static function ObtenerInscripcionesDeEstudianteModelo($estudianteID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT ProgramaID, idInscripcion FROM estudianteprograma
+                 WHERE EstudianteID = :estudianteID AND Estado = 'ACTIVO'"
+            );
+            $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+            $stmt->execute();
+            $mapa = [];
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $fila) {
+                $mapa[(int)$fila['ProgramaID']] = (int)$fila['idInscripcion'];
+            }
+            return $mapa;
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerInscripcionesDeEstudianteModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public static function ObtenerProgramaIDsDeEstudianteModelo($estudianteID)
     {
         try {

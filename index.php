@@ -25,6 +25,7 @@
     require_once 'controladores/noticiapanel.controlador.php';
     require_once 'controladores/cronogramadefensa.controlador.php';
     require_once 'controladores/carruselpanel.controlador.php';
+    require_once 'controladores/tablero.controlador.php';
     // Modelos
     require_once 'modelos/enlaces.modelo.php';
     require_once 'modelos/ingreso.modelo.php';

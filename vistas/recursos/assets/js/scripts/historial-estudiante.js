@@ -45,8 +45,12 @@ function cargarEstudianteLogueado() {
                 estudianteData = response.estudiante;
                 cargarProgramasSelect(response.data);
 
-                // Mostrar mensaje de bienvenida
-                if (response.data.length > 0) {
+                // Mostrar mensaje de bienvenida (no si todos sus programas están bloqueados:
+                // en ese caso ya se muestra el aviso de historial desactivado)
+                const todosBloqueados = response.data.length > 0 && response.data.every(function(p) { return p.Bloqueado; });
+                if (todosBloqueados) {
+                    // sin bienvenida
+                } else if (response.data.length > 0) {
                     Swal.fire({
                         icon: 'success',
                         title: '¡Bienvenido!',
@@ -103,6 +107,16 @@ function cargarProgramasSelect(programas) {
     }
 
     programas.forEach(function(programa) {
+        // Programa con pago vencido: su historial queda desactivado (no se puede elegir)
+        if (programa.Bloqueado) {
+            $select.append(
+                `<option value="${programa.ProgramaID}" disabled>
+                    🔒 ${programa.NombrePrograma} - ${programa.GradoAcademico} (bloqueado por pago vencido)
+                </option>`
+            );
+            return;
+        }
+
         const notasInfo = programa.TotalModulosConNota > 0
             ? ` (${programa.TotalModulosConNota} calificaciones)`
             : ' (Sin calificaciones)';
@@ -114,7 +128,47 @@ function cargarProgramasSelect(programas) {
         );
     });
 
+    const bloqueados = programas.filter(function(p) { return p.Bloqueado; });
+    mostrarAvisoBloqueos(bloqueados);
+
+    // Si todos sus programas están bloqueados, el historial queda desactivado por completo
+    if (bloqueados.length === programas.length) {
+        $select.prop('disabled', true);
+        mostrarBloqueoCalificaciones(null, false);
+        return;
+    }
+
     $select.prop('disabled', false);
+}
+
+/**
+ * Aviso fijo sobre la tabla con los programas cuyo historial está desactivado
+ * por tener un pago vencido.
+ */
+function mostrarAvisoBloqueos(bloqueados) {
+    $('#avisoBloqueoHistorial').remove();
+    if (!bloqueados.length) return;
+
+    const escapar = function(t) { return $('<div>').text(t == null ? '' : String(t)).html(); };
+    const lista = bloqueados.map(function(p) {
+        const fecha = p.FechaVencida ? new Date(p.FechaVencida + 'T00:00:00').toLocaleDateString('es-BO', { day: '2-digit', month: 'long', year: 'numeric' }) : '';
+        return `<li><strong>${escapar(p.NombrePrograma)}</strong>` +
+               (fecha ? ` — el pago venció el ${fecha} (${p.DiasVencido} día(s) de atraso)` : '') + `</li>`;
+    }).join('');
+
+    const $aviso = $(`
+        <div id="avisoBloqueoHistorial" role="alert" style="display:flex; gap:14px; align-items:flex-start; margin-top:16px; padding:14px 16px;
+             border-radius:12px; border:1px solid #fecaca; background:#fef2f2; color:#7f1d1d;">
+            <i class="fa fa-lock" style="font-size:20px; color:#b91c1c; margin-top:2px;"></i>
+            <div style="flex:1;">
+                <div style="font-weight:700; color:#b91c1c; margin-bottom:4px;">Historial de calificaciones desactivado</div>
+                <ul style="margin:0 0 6px; padding-left:18px; font-size:13px;">${lista}</ul>
+                <div style="font-size:13px;">Regulariza tu pago para volver a ver tus calificaciones de ${bloqueados.length === 1 ? 'este programa' : 'estos programas'}.</div>
+            </div>
+            <a href="misordenespago" class="btn btn-sm" style="background:#b91c1c; color:#fff; white-space:nowrap; font-weight:600;">Ver mis órdenes de pago</a>
+        </div>
+    `);
+    $('#select_programa_calificaciones').closest('.row').after($aviso);
 }
 
 /**
@@ -317,27 +371,31 @@ function mostrarResumenCalificaciones(resumen) {
 /**
  * Mostrar aviso de bloqueo por cuota vencida en lugar de las calificaciones
  */
-function mostrarBloqueoCalificaciones(mensaje) {
+function mostrarBloqueoCalificaciones(mensaje, conAlerta) {
     // Eliminar resumen si existe
     $('#contenido_calificaciones').prev('tr').remove();
 
+    const texto = mensaje || 'Tienes un pago vencido. Regulariza tu pago para ver tus calificaciones.';
     const $tbody = $('#contenido_calificaciones');
     $tbody.html(`
         <tr>
-            <td colspan="5" class="text-center" style="padding: 3rem; color: #c0392b;">
-                <i class="flaticon2-lock" style="font-size: 3rem; color: #c0392b;"></i>
+            <td colspan="5" class="text-center" style="padding: 3rem; color: #b91c1c;">
+                <i class="fa fa-lock" style="font-size: 3rem; color: #b91c1c;"></i>
                 <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 700;">Calificaciones no disponibles</p>
-                <p style="font-size: 0.95rem; color: #74788d;">${mensaje || 'Tiene una cuota pendiente vencida. Regularice su pago para ver sus calificaciones.'}</p>
+                <p style="font-size: 0.95rem; color: #6b7280;">${$('<div>').text(texto).html()}</p>
+                <a href="misordenespago" class="btn btn-sm" style="background:#b91c1c; color:#fff; font-weight:600;">Ver mis órdenes de pago</a>
             </td>
         </tr>
     `);
 
-    Swal.fire({
-        icon: 'warning',
-        title: 'Cuota pendiente',
-        text: mensaje || 'Tiene una cuota pendiente vencida. Regularice su pago para ver sus calificaciones.',
-        confirmButtonColor: '#c0392b'
-    });
+    if (conAlerta !== false) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Pago vencido',
+            text: texto,
+            confirmButtonColor: '#b91c1c'
+        });
+    }
 }
 
 /**

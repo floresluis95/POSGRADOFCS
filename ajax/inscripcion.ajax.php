@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/validar-sesion.php';
+ExigirSesionAjax();
 /**
  * AJAX Handler para Inscripciones
  * Maneja todas las peticiones AJAX relacionadas con inscripciones

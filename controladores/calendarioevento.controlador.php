@@ -12,6 +12,7 @@ require_once __DIR__ . '/../modelos/calendarioevento.modelo.php';
 require_once __DIR__ . '/../modelos/modulo.modelo.php';
 require_once __DIR__ . '/../modelos/ordenpagoprincipal.modelo.php';
 require_once __DIR__ . '/../modelos/plazocuotaprograma.modelo.php';
+require_once __DIR__ . '/../modelos/modulopagos_core.php';
 
 class CalendarioEventoControlador
 {
@@ -36,16 +37,37 @@ class CalendarioEventoControlador
             'hasta'      => isset($_POST['hasta']) && $_POST['hasta'] !== '' ? trim($_POST['hasta']) : null,
         ];
 
+        $tipo = $_SESSION['Tipo'] ?? '';
+
+        // Estudiante: SOLO ve el calendario de los programas donde está inscrito (activo).
+        // Se aplica aquí, en el servidor: aunque pida otro programa desde el navegador,
+        // no recibe nada que no sea de sus propios programas.
+        $inscripcionesEstudiante = [];
+        if ($tipo === 'EST') {
+            $inscripcionesEstudiante = CalendarioEventoModelo::ObtenerInscripcionesDeEstudianteModelo((int)($_SESSION['EstudianteID'] ?? 0));
+            $misProgramas = array_keys($inscripcionesEstudiante);
+
+            if ($filtros['programaID']) {
+                $misProgramas = in_array($filtros['programaID'], $misProgramas, true) ? [$filtros['programaID']] : [];
+            }
+            if (empty($misProgramas)) {
+                echo json_encode([]);
+                exit();
+            }
+            $filtros['programaIDs'] = $misProgramas;
+            $filtros['programaID'] = null;
+            $filtros['docenteID'] = null;
+        }
+
         $eventos = CalendarioEventoModelo::ListarEventosModelo($filtros);
 
         $coloresPorTipo = [
             'CLASE'     => '#2a5298',
-            'ACTIVIDAD' => '#159895',
+            'ACTIVIDAD' => '#0f766e',
             'CLINICA'   => '#6b2737',
         ];
 
         $puedeEscribir = self::puedeEscribir();
-        $tipo = $_SESSION['Tipo'] ?? '';
         $miDocenteID = isset($_SESSION['DocenteID']) ? (int)$_SESSION['DocenteID'] : null;
 
         $resultado = array_map(function ($ev) use ($coloresPorTipo, $puedeEscribir, $tipo, $miDocenteID) {
@@ -58,6 +80,7 @@ class CalendarioEventoControlador
                 'start' => $ev['FechaInicio'],
                 'end' => $ev['FechaFin'],
                 'color' => $coloresPorTipo[$ev['TipoEvento']] ?? '#2a5298',
+                'textColor' => '#ffffff',
                 'editable' => $editable,
                 'extendedProps' => [
                     'tipoEvento' => $ev['TipoEvento'],
@@ -82,11 +105,15 @@ class CalendarioEventoControlador
 
         if ($verVencimientos) {
             $estudianteIDFiltro = $esPropioEstudiante ? ($_SESSION['EstudianteID'] ?? 0) : null;
+            // Estudiante con un solo programa en el filtro: solo sus avisos de ese programa
+            $programaVencimientos = $esPropioEstudiante && count($filtros['programaIDs']) === 1
+                ? $filtros['programaIDs'][0]
+                : $filtros['programaID'];
 
             $vencimientos = OrdenPagoModelos::ObtenerVencimientosPorRangoModelo(
                 $filtros['desde'],
                 $filtros['hasta'],
-                $filtros['programaID'],
+                $programaVencimientos,
                 $filtros['sede'],
                 $estudianteIDFiltro
             );
@@ -106,7 +133,8 @@ class CalendarioEventoControlador
                     'title' => $titulo,
                     'start' => $v['FechaVencimiento'],
                     'allDay' => true,
-                    'color' => $vencido ? '#c0392b' : '#d4a017',
+                    'color' => $vencido ? '#b91c1c' : '#b45309',
+                    'textColor' => '#ffffff',
                     'editable' => false,
                     'extendedProps' => [
                         'tipoEvento' => 'PAGO',
@@ -131,25 +159,43 @@ class CalendarioEventoControlador
             }
         }
 
-        // Plazos de cuota por Programa (fecha límite general definida por
-        // Administración/Secretaría). Visibles para todos los roles que ven
-        // el calendario, como aviso informativo.
-        $plazos = PlazoCuotaProgramaModelo::ObtenerPlazosParaCalendarioModelo(
-            $filtros['desde'],
-            $filtros['hasta'],
-            $filtros['programaID'],
-            $filtros['sede']
-        );
+        // Plazos de cuota por Programa (aviso de pago GENERAL, definido por
+        // Administración/Secretaría):
+        //  - ADM/SEC: todos (control de cobranza).
+        //  - EST: solo los de sus programas inscritos, y no si ya pagó ese programa completo.
+        //  - DOC: ninguno (los avisos de pago no le corresponden).
+        $plazos = [];
+        if (in_array($tipo, ['ADM', 'SEC', 'EST'], true)) {
+            $plazos = PlazoCuotaProgramaModelo::ObtenerPlazosParaCalendarioModelo(
+                $filtros['desde'],
+                $filtros['hasta'],
+                $filtros['programaID'],
+                $filtros['sede'],
+                $tipo === 'EST' ? $filtros['programaIDs'] : null
+            );
+        }
 
+        $programaPagado = [];
         $hoy = date('Y-m-d');
         foreach ($plazos as $pl) {
+            if ($tipo === 'EST') {
+                $programaPlazo = (int)$pl['ProgramaID'];
+                if (!isset($programaPagado[$programaPlazo])) {
+                    $resumen = PagoModuloModelo::ObtenerResumenPagoProgramaModelo($inscripcionesEstudiante[$programaPlazo], $programaPlazo);
+                    $programaPagado[$programaPlazo] = !empty($resumen['completado']);
+                }
+                if ($programaPagado[$programaPlazo]) {
+                    continue;
+                }
+            }
             $vencido = $pl['FechaPlazo'] < $hoy;
             $resultado[] = [
                 'id' => 'plazo-' . $pl['IdPlazo'],
                 'title' => ($vencido ? '⛔ Plazo de cuota vencido: ' : '🗓 Plazo de cuota: ') . $pl['NombrePrograma'],
                 'start' => $pl['FechaPlazo'],
                 'allDay' => true,
-                'color' => $vencido ? '#c0392b' : '#8e44ad',
+                'color' => $vencido ? '#b91c1c' : '#6d28d9',
+                'textColor' => '#ffffff',
                 'editable' => false,
                 'extendedProps' => [
                     'tipoEvento' => 'PLAZOCUOTA',

@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/validar-sesion.php';
+ExigirSesionAjax();
     require_once '../controladores/tipo.controlador.php';
     require_once '../modelos/tipo.modelo.php';
     

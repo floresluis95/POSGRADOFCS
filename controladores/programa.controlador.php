@@ -72,164 +72,138 @@ class ProgramasControladores
     }
 
 
+    /**
+     * Estado de un programa según su campo Estado y sus fechas:
+     * Inactivo (dado de baja), Por iniciar, En curso o Concluido.
+     * @return array{clave:string, etiqueta:string, icono:string}
+     */
+    public static function EstadoProgramaControlador($programa)
+    {
+        if ($programa['Estado'] == 'INACTIVO' || $programa['Estado'] == 0) {
+            return ['clave' => 'inactivo', 'etiqueta' => 'Inactivo', 'icono' => 'fa-times-circle'];
+        }
+        $hoy = date('Y-m-d');
+        $inicio = $programa['FechaInicio'];
+        $fin = date('Y-m-d', strtotime($inicio . ' + ' . (int)$programa['DuracionMeses'] . ' months'));
+        if ($hoy < $inicio) {
+            return ['clave' => 'por-iniciar', 'etiqueta' => 'Por iniciar', 'icono' => 'fa-hourglass-start'];
+        }
+        if ($hoy <= $fin) {
+            return ['clave' => 'en-curso', 'etiqueta' => 'En curso', 'icono' => 'fa-play-circle'];
+        }
+        return ['clave' => 'concluido', 'etiqueta' => 'Concluido', 'icono' => 'fa-flag-checkered'];
+    }
+
+    /**
+     * Cantidad de programas vigentes por estado, para la franja de indicadores.
+     * @return array{total:int, en-curso:int, por-iniciar:int, concluido:int}
+     */
+    public static function ResumenEstadosProgramasControlador()
+    {
+        $resumen = ['total' => 0, 'en-curso' => 0, 'por-iniciar' => 0, 'concluido' => 0, 'inactivo' => 0];
+        foreach (ProgramasModelos::ListaProgramaModelo() as $programa) {
+            $resumen['total']++;
+            $resumen[self::EstadoProgramaControlador($programa)['clave']]++;
+        }
+        return $resumen;
+    }
+
     public function ListaProgramaControlador($grado = null, $fechaInicio = null, $fechaFin = null, $sede = null)
     {
-        // Debug activado - ver en el código fuente HTML (Ctrl+U)
-        echo "<!-- DEBUG CONTROLADOR: Grado='$grado', FechaInicio='$fechaInicio', FechaFin='$fechaFin', Sede='$sede' -->";
-
-        // Si hay filtros, usar búsqueda con filtros, sino listar todos
+        // Con filtros: búsqueda filtrada; sin filtros: todos los programas vigentes
         if ($grado !== null || $fechaInicio !== null || $fechaFin !== null || $sede !== null) {
-            echo "<!-- Usando BuscarProgramasConFiltros -->";
             $listaprogramas = ProgramasModelos::BuscarProgramasConFiltros($grado, $fechaInicio, $fechaFin, $sede);
         } else {
-            echo "<!-- Usando ListaProgramaModelo (sin filtros) -->";
             $listaprogramas = ProgramasModelos::ListaProgramaModelo();
         }
 
-        // Debug: mostrar cantidad de resultados
-        echo "<!-- Total programas encontrados: ".count($listaprogramas)." -->";
-
-        // Si no hay resultados, mostrar mensaje
         if (empty($listaprogramas)) {
-            echo '<tr>
-                    <td colspan="13" class="text-center" style="padding: 40px;">
-                        <i class="fa fa-search" style="font-size: 48px; color: #ccc;"></i>
-                        <h4 style="color: #999; margin-top: 20px;">No se encontraron programas con los filtros seleccionados</h4>
-                        <p style="color: #999;">Intenta cambiar los criterios de búsqueda</p>
-                    </td>
-                  </tr>';
+            echo '<tr class="pg-sin-resultados"><td colspan="7" class="pg-vacio">
+                    <i class="fa fa-search"></i>
+                    <strong>No se encontraron programas</strong>
+                    <span>Prueba cambiando los filtros de búsqueda</span>
+                  </td></tr>';
             return;
         }
 
-      foreach ($listaprogramas as $key => $programa) 
-{
- 
-    // Calcular el estado dinámico del programa
-    $fechaActual = date('Y-m-d');
-    $fechaInicioProg = $programa["FechaInicio"];
-    $duracionMeses = $programa["DuracionMeses"];
+        $e = function ($valor) {
+            return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
+        };
 
-    // Calcular fecha de fin
-    $fechaFin = date('Y-m-d', strtotime($fechaInicioProg . " + $duracionMeses months"));
+        foreach ($listaprogramas as $programa) {
+            $estado = self::EstadoProgramaControlador($programa);
+            $id = (int)$programa['ProgramaID'];
+            $activo = !($programa['Estado'] == 'INACTIVO' || $programa['Estado'] == 0);
+            $duracion = (int)$programa['DuracionMeses'];
 
-    $estadoPrograma = '';
-    $colorEstado = '';
-    $iconoEstado = '';
-
-    // Determinar estado basado en el campo Estado de la BD y las fechas
-    if ($programa["Estado"] == 'INACTIVO' || $programa["Estado"] == 0) {
-        $estadoPrograma = 'INACTIVO';
-        $colorEstado = '#dc3545'; // rojo
-        $iconoEstado = '<i class="fa fa-times-circle"></i>';
-    } elseif ($fechaActual < $fechaInicioProg) {
-        $estadoPrograma = 'ACTIVO';
-        $colorEstado = '#28a745'; // verde
-        $iconoEstado = '<i class="fa fa-check-circle"></i>';
-    } elseif ($fechaActual >= $fechaInicioProg && $fechaActual <= $fechaFin) {
-        $estadoPrograma = 'EN CURSO';
-        $colorEstado = '#007bff'; // azul
-        $iconoEstado = '<i class="fa fa-play-circle"></i>';
-    } else {
-        $estadoPrograma = 'CONCLUIDO';
-        $colorEstado = '#6c757d'; // gris
-        $iconoEstado = '<i class="fa fa-flag-checkered"></i>';
-    }
-
-    echo '<tr style="border-bottom: 2px solid #e9ecef;">
-        <td class="text-center align-middle"><strong>'.$programa['ProgramaID'].'</strong></td>
-        <td class="align-middle"><strong>'.$programa["NombrePrograma"].'</strong></td>
-        <td class="text-center align-middle"><span class="'.FuncionesControladores::ClaseGrado($programa["GradoAcademico"]).'">'.$programa["GradoAcademico"].'</span></td>
-        <td class="text-center align-middle"><span class="badge badge-secondary">'.$programa["Codigo"].'</span></td>
-        <td class="text-center align-middle">'.(!empty($programa["Sigla"]) ? '<span class="badge badge-info">'.htmlspecialchars($programa["Sigla"]).'</span>' : '<span class="text-muted">-</span>').'</td>
-        <td class="text-center align-middle">'.date("d/m/Y", strtotime($programa["FechaInicio"])).'</td>
-        <td class="text-center align-middle">'.$programa["Sede"].'</td>';
-
-    // Campo ESTADO con diseño mejorado
-    echo '<td class="text-center align-middle">
-            <span class="badge" style="background-color: '.$colorEstado.'; color: white; padding: 8px 12px; font-size: 11px;">
-                '.$iconoEstado.' '.$estadoPrograma.'
-            </span>
-          </td>';
-
-    // Botón DETALLE
-    echo '<td class="text-center align-middle">
-        <button type="button" id="btnDetallePrograma" idcod="'.$programa['ProgramaID'].'"
-            class="btn btn-info btn-sm" title="Ver Detalle"
-            data-toggle="modal" data-target="#DetallePrograma">
-            <i class="fa fa-eye"></i>
-        </button>
-    </td>';
-
-    // Botón CUENTAS (administrar cuentas bancarias del programa por tipo)
-    echo '<td class="text-center align-middle">
-        <button type="button" id="btnCuentasPrograma" idcod="'.$programa['ProgramaID'].'"
-            data-idprograma="'.$programa['ProgramaID'].'"
-            data-nombreprograma="'.htmlspecialchars($programa['NombrePrograma']).'"
-            class="btn btn-info btn-sm btnAbrirCuentasPrograma" title="Administrar cuentas"
-            data-toggle="modal" data-target="#gestionarCuentas">
-            <i class="fa fa-university"></i>
-        </button>
-    </td>';
-
-    // Botón EDITAR
-    echo '<td class="text-center align-middle">
-        <button type="button" class="btn btn-warning btn-sm btnEditarPrograma" title="Editar Programa"
-            data-idprograma="'.$programa['ProgramaID'].'"
-            data-nombre="'.$programa['NombrePrograma'].'"
-            data-grado="'.$programa['GradoAcademico'].'"
-            data-sigla="'.htmlspecialchars($programa['Sigla'] ?? '').'"
-            data-duracion="'.$programa['DuracionMeses'].'"
-            data-modulos="'.$programa['Modulos'].'"
-            data-fecha="'.$programa['FechaInicio'].'"
-            data-sede="'.$programa['Sede'].'"
-            data-costo="'.$programa['Costo'].'"
-            data-costomatricula="'.(isset($programa['CostoMatricula']) ? $programa['CostoMatricula'] : '').'"
-            data-detalle="'.htmlspecialchars($programa['Detalle']).'"
-            data-version="'.(isset($programa['Version']) ? $programa['Version'] : 'V-1').'"
-            data-toggle="modal" data-target="#modalEditarPrograma">
-            <i class="fa fa-edit"></i>
-        </button>
-    </td>';
-
-    // Botón SUBIR (activar programa) - solo si está inactivo
-    echo '<td class="text-center align-middle">';
-    if ($programa["Estado"] == 'ACTIVO' || $programa["Estado"] == 1) {
-        echo '<button type="button" class="btn btn-success btn-sm" disabled title="Programa Activo">
-                <i class="fa fa-check"></i>
-              </button>';
-    } else {
-        echo '<button data-toggle="modal" data-target="#modalsubir" type="button"
-                data-idprograma="'.$programa['ProgramaID'].'"
-                class="btn btn-success btn-sm btnSubir" title="Activar Programa">
-                <i class="fa fa-arrow-up"></i>
-              </button>';
-    }
-    echo '</td>';
-
-    // Botón DAR DE BAJA (desactivar programa) - solo si está activo
-    echo '<td class="text-center align-middle">';
-    if ($programa["Estado"] == 'INACTIVO' || $programa["Estado"] == 0) {
-        echo '<button type="button" class="btn btn-danger btn-sm" disabled title="Programa Inactivo">
-                <i class="fa fa-times"></i>
-              </button>';
-    } else {
-        echo '<button data-toggle="modal" data-target="#modalBorrar" type="button"
-                data-idprograma="'.$programa['ProgramaID'].'"
-                class="btn btn-danger btn-sm btnDarBaja" title="Dar de Baja">
-                <i class="fa fa-arrow-down"></i>
-              </button>';
-    }
-    echo '</td>';
-     
-
-        echo '</tr>';
-   
-        
-     }
-        
-          
+            echo '<tr>
+                <td>
+                    <div class="pg-nombre">' . $e($programa['NombrePrograma']) . '</div>
+                    <div class="pg-meta">
+                        <span class="pg-codigo">' . $e($programa['Codigo']) . '</span>'
+                        . (!empty($programa['Sigla']) ? '<span class="pg-sigla">' . $e($programa['Sigla']) . '</span>' : '')
+                        . (!empty($programa['Version']) && strtoupper($programa['Version']) !== 'V-1' ? '<span class="pg-sigla">' . $e($programa['Version']) . '</span>' : '') . '
+                    </div>
+                </td>
+                <td><span class="' . FuncionesControladores::ClaseGrado($programa['GradoAcademico']) . '">' . $e($programa['GradoAcademico']) . '</span></td>
+                <td class="pg-fecha">
+                    <strong>' . date('d/m/Y', strtotime($programa['FechaInicio'])) . '</strong>
+                    <small>' . ($duracion > 0 ? $duracion . ' meses' : 'Duración sin definir') . ' · ' . (int)$programa['Modulos'] . ' módulos</small>
+                </td>
+                <td>' . $e($programa['Sede']) . '</td>
+                <td><span class="pg-estado is-' . $estado['clave'] . '"><i class="fa ' . $estado['icono'] . '"></i> ' . $estado['etiqueta'] . '</span></td>
+                <td class="pg-costo">
+                    <strong>Bs. ' . number_format((float)$programa['Costo'], 2, ',', '.') . '</strong>
+                    <small>Matrícula Bs. ' . number_format((float)($programa['CostoMatricula'] ?? 0), 2, ',', '.') . '</small>
+                </td>
+                <td class="pg-acciones">
+                    <button type="button" id="btnDetallePrograma" idcod="' . $id . '"
+                        class="pg-accion" title="Ver detalle" aria-label="Ver detalle"
+                        data-toggle="modal" data-target="#DetallePrograma">
+                        <i class="fa fa-eye"></i>
+                    </button>
+                    <button type="button" idcod="' . $id . '"
+                        data-idprograma="' . $id . '"
+                        data-nombreprograma="' . $e($programa['NombrePrograma']) . '"
+                        class="pg-accion btnAbrirCuentasPrograma" title="Cuentas bancarias" aria-label="Cuentas bancarias"
+                        data-toggle="modal" data-target="#gestionarCuentas">
+                        <i class="fa fa-university"></i>
+                    </button>
+                    <button type="button" class="pg-accion btnEditarPrograma" title="Editar" aria-label="Editar"
+                        data-idprograma="' . $id . '"
+                        data-nombre="' . $e($programa['NombrePrograma']) . '"
+                        data-grado="' . $e($programa['GradoAcademico']) . '"
+                        data-sigla="' . $e($programa['Sigla'] ?? '') . '"
+                        data-duracion="' . $e($programa['DuracionMeses']) . '"
+                        data-modulos="' . $e($programa['Modulos']) . '"
+                        data-fecha="' . $e($programa['FechaInicio']) . '"
+                        data-sede="' . $e($programa['Sede']) . '"
+                        data-costo="' . $e($programa['Costo']) . '"
+                        data-costomatricula="' . $e($programa['CostoMatricula'] ?? '') . '"
+                        data-detalle="' . $e($programa['Detalle']) . '"
+                        data-version="' . $e($programa['Version'] ?? 'V-1') . '"
+                        data-toggle="modal" data-target="#modalEditarPrograma">
+                        <i class="fa fa-pen"></i>
+                    </button>';
+            if ($activo) {
+                echo '<button data-toggle="modal" data-target="#modalBorrar" type="button"
+                        data-idprograma="' . $id . '"
+                        data-nombre="' . $e($programa['NombrePrograma']) . '"
+                        class="pg-accion is-peligro btnDarBaja" title="Dar de baja" aria-label="Dar de baja">
+                        <i class="fa fa-arrow-down"></i>
+                      </button>';
+            } else {
+                echo '<button data-toggle="modal" data-target="#modalsubir" type="button"
+                        data-idprograma="' . $id . '"
+                        data-nombre="' . $e($programa['NombrePrograma']) . '"
+                        class="pg-accion is-exito btnSubir" title="Activar programa" aria-label="Activar programa">
+                        <i class="fa fa-arrow-up"></i>
+                      </button>';
+            }
+            echo '</td>
+            </tr>';
         }
-        
+    }
 
     public function RegistrarProgramaControlador()
     {

@@ -1,0 +1,10 @@
+# Scripts de migración y mantenimiento de una sola vez: NUNCA deben ejecutarse
+# desde el navegador (algunos borran o recrean tablas). Se ejecutan por consola
+# o se importan en phpMyAdmin. Esta carpeta no debe subirse al servidor de producción.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

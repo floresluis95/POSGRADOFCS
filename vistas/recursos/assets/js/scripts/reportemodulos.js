@@ -15,6 +15,15 @@ $(document).ready(function() {
 
     $('#reportePagosGrado').on('change', cargarReportePagos);
     $('#reportePagosBuscar').on('input', filtrarReportePagos);
+
+    // Actualizar / Imprimir solo aplican a la pestaña de pagos
+    $('#rpTabPagosLink, #rpTabProgramasLink').on('shown.bs.tab', function() {
+        $('#rpAccionesPagos').toggle(this.id === 'rpTabPagosLink');
+    });
+    // Enlace directo a la pestaña: reportemodulos#programas
+    if (window.location.hash === '#programas') {
+        $('#rpTabProgramasLink').tab('show');
+    }
     $('#btnActualizarReportePagos').on('click', cargarReportePagos);
     $('#btnImprimirReportePagos').on('click', imprimirReportePagos);
     $('#btnImprimirDetallePagos').on('click', imprimirDetallePagos);
@@ -256,19 +265,54 @@ function renderTablaReportePagos(datos) {
 // Indicadores generales, según los programas visibles (filtro de grado + búsqueda)
 function renderKpisReportePagos(t) {
     const pct = porcentaje(t.pagado, t.programado);
+    const icono = function(fa) { return '<i class="fa ' + fa + ' rp-kpi-icono"></i>'; };
     $('#reportePagosKpis').html(
-        kpi('', 'Estudiantes inscritos', t.inscritos,
+        kpi('is-violeta', icono('fa-user-graduate') + 'Estudiantes inscritos', t.inscritos,
             t.completaron + ' completaron &middot; ' + t.pendientes + ' con saldo' + (t.abandonos ? ' &middot; ' + t.abandonos + ' aband.' : '')) +
-        kpi('', 'Total programado', formatoMoneda(t.programado),
+        kpi('is-pizarra', icono('fa-file-invoice-dollar') + 'Total programado', formatoMoneda(t.programado),
             t.montoDescuentos > 0 ? 'Descuentos ' + formatoMoneda(t.montoDescuentos) : 'Matrícula + cuotas') +
-        kpi('is-cobrado', 'Cobrado', formatoMoneda(t.pagado),
+        kpi('is-cobrado', icono('fa-check-circle') + 'Cobrado', formatoMoneda(t.pagado),
             'Incluye matrículas ' + formatoMoneda(t.matriculas)) +
-        kpi('is-saldo', 'Saldo pendiente', formatoMoneda(t.saldo),
-            pct + '% cobrado', barraAvance(pct)) +
-        kpi('is-clinica', '<i class="fa fa-stethoscope"></i> Clínicas cobradas', formatoMoneda(t.clinicaCobrado),
+        kpi('is-saldo', icono('fa-hourglass-half') + 'Saldo pendiente', formatoMoneda(t.saldo),
+            (100 - pct) + '% del total programado') +
+        kpi('is-clinica', icono('fa-stethoscope') + 'Clínicas cobradas', formatoMoneda(t.clinicaCobrado),
             t.clinicaPorCobrar > 0
                 ? 'Por cobrar ' + formatoMoneda(t.clinicaPorCobrar) + ' (' + t.clinicaPendientes + ')'
                 : (t.programasClinica > 0 ? 'Sin órdenes pendientes' : 'Ningún programa con clínica'))
+    );
+    renderComposicionCobro(t);
+}
+
+/**
+ * Composición del total programado: una barra apilada (cobrado / saldo pendiente) con
+ * montos y porcentajes rotulados, leyenda y detalle al pasar el mouse. Colores
+ * validados para daltonismo (azul institucional / ámbar).
+ */
+function renderComposicionCobro(t) {
+    const $c = $('#reportePagosComposicion');
+    if (!(t.programado > 0)) {
+        $c.html('');
+        return;
+    }
+    const pctCobrado = porcentaje(t.pagado, t.programado);
+    const pctSaldo = Math.max(0, 100 - pctCobrado);
+    const segmento = function(clase, pctSeg, etiqueta, monto) {
+        if (pctSeg <= 0) return '';
+        return '<span class="rp-comp-seg ' + clase + '" style="width:' + pctSeg + '%" ' +
+            'title="' + etiqueta + ': ' + formatoMoneda(monto) + ' (' + pctSeg + '%)"></span>';
+    };
+    $c.html(
+        '<div class="rp-comp-cabecera">' +
+            '<span class="rp-comp-titulo">Composición del total programado</span>' +
+            '<span class="rp-comp-leyenda">' +
+                '<span><i class="rp-dot is-cobrado"></i> Cobrado <b>' + formatoMoneda(t.pagado) + '</b> (' + pctCobrado + '%)</span>' +
+                '<span><i class="rp-dot is-saldo"></i> Saldo pendiente <b>' + formatoMoneda(t.saldo) + '</b> (' + pctSaldo + '%)</span>' +
+            '</span>' +
+        '</div>' +
+        '<div class="rp-comp-barra" role="img" aria-label="Cobrado ' + pctCobrado + ' por ciento, saldo pendiente ' + pctSaldo + ' por ciento">' +
+            segmento('is-cobrado', pctCobrado, 'Cobrado', t.pagado) +
+            segmento('is-saldo', pctSaldo, 'Saldo pendiente', t.saldo) +
+        '</div>'
     );
 }
 
@@ -500,15 +544,9 @@ function imprimirDetallePagos() {
  * aquí solo se lista el contenido curricular del programa.
  */
 function mostrarModulosPrograma(programaID, programaNombre) {
-    $('#modalModulosProgramaLabel').html(`<i class="flaticon2-layers"></i> Módulos de: ${programaNombre}`);
+    $('#modalModulosProgramaLabel').text(programaNombre || 'Programa');
+    $('#contenido-modulos-programa').html('<div class="rp-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando módulos...</div>');
     $('#modalModulosPrograma').modal('show');
-
-    $('#contenido-modulos-programa').html(`
-        <div class="text-center p-5">
-            <div class="kt-spinner kt-spinner--lg kt-spinner--brand"></div>
-            <p class="mt-3" style="color: #667eea; font-weight: 600;">Cargando módulos...</p>
-        </div>
-    `);
 
     $.ajax({
         url: 'ajax/reportemodulos.ajax.php',
@@ -519,44 +557,26 @@ function mostrarModulosPrograma(programaID, programaNombre) {
             mostrarTarjetasModulos(response);
         },
         error: function() {
-            $('#contenido-modulos-programa').html(`
-                <div class="alert alert-danger text-center">
-                    <i class="fa fa-exclamation-circle fa-2x"></i>
-                    <h5 class="mt-2">Error al cargar módulos</h5>
-                </div>
-            `);
+            $('#contenido-modulos-programa').html('<div class="rp-vacio" style="color:#b91c1c">No se pudieron cargar los módulos</div>');
         }
     });
 }
 
 function mostrarTarjetasModulos(modulos) {
-    if (!modulos || modulos.length === 0) {
-        $('#contenido-modulos-programa').html(`
-            <div class="alert alert-warning text-center">
-                <i class="fa fa-exclamation-triangle fa-2x"></i>
-                <h5 class="mt-2">No hay módulos disponibles</h5>
-                <p>Este programa no tiene módulos registrados</p>
-            </div>
-        `);
+    if (!Array.isArray(modulos) || modulos.length === 0) {
+        $('#contenido-modulos-programa').html('<div class="rp-vacio">Este programa no tiene módulos activos registrados.</div>');
         return;
     }
 
-    let html = '';
-
-    modulos.forEach(function(modulo) {
-        html += `
-            <div class="modulo-card" style="cursor:default;">
-                <div class="modulo-card-header">
-                    <span class="modulo-codigo">
-                        <i class="flaticon2-file-1"></i> ${modulo.codigomodulo}
-                    </span>
-                </div>
-                <div class="modulo-nombre">
-                    ${modulo.nombremodulo}
-                </div>
-            </div>
-        `;
+    let html = '<ul class="rp-modulos">';
+    modulos.forEach(function(modulo, i) {
+        html += '<li>' +
+            '<span class="rp-modulo-num">' + (i + 1) + '</span>' +
+            '<div><span class="rp-chip is-info">' + escaparHtml(modulo.codigomodulo) + '</span>' +
+            '<div class="rp-modulo-nombre">' + escaparHtml(modulo.nombremodulo) + '</div></div>' +
+        '</li>';
     });
+    html += '</ul><div class="rp-modulos-total">' + modulos.length + ' módulo(s) activo(s)</div>';
 
     $('#contenido-modulos-programa').html(html);
 }

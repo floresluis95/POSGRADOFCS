@@ -118,8 +118,12 @@ class ReporteModulosModelo
             $stmtPagos->execute();
             $totalPagos = $stmtPagos->fetch(PDO::FETCH_ASSOC)['total'];
 
+            // Docentes con al menos un módulo asignado
+            $docentesAsignados = $conexion->query("SELECT COUNT(DISTINCT DocenteID) FROM modulos WHERE DocenteID IS NOT NULL")->fetchColumn();
+
             return [
                 'totalProgramas' => $totalProgramas,
+                'docentesAsignados' => (int)$docentesAsignados,
                 'totalModulos' => $totalModulos,
                 'totalEstudiantes' => $totalEstudiantes,
                 'totalDocentes' => $totalDocentes,
@@ -150,13 +154,23 @@ class ReporteModulosModelo
                     p.NombrePrograma,
                     p.Codigo,
                     p.GradoAcademico,
-                    COUNT(DISTINCT m.Idmodulo) as TotalModulos,
-                    COUNT(DISTINCT ep.EstudianteID) as TotalInscritos
+                    p.Sede,
+                    COUNT(DISTINCT CASE WHEN m.estadomodulo = 'ACTIVO' THEN m.Idmodulo END) as TotalModulos,
+                    COUNT(DISTINCT m.Idmodulo) as TotalModulosRegistrados,
+                    COUNT(DISTINCT m.DocenteID) as TotalDocentes,
+                    COUNT(DISTINCT ep.EstudianteID) as TotalInscritos,
+                    -- Avance académico por fechas (o validación/cierre del módulo)
+                    COUNT(DISTINCT CASE WHEN m.FechaFinal < CURDATE() OR m.estadomodulo IN ('VALIDADO', 'CERRADO') THEN m.Idmodulo END) as ModulosFinalizados,
+                    COUNT(DISTINCT CASE WHEN CURDATE() BETWEEN m.FechaInicio AND m.FechaFinal
+                                         AND m.estadomodulo NOT IN ('VALIDADO', 'CERRADO') THEN m.Idmodulo END) as ModulosEnCurso,
+                    -- Periodo del programa (se ignoran fechas mal cargadas, anteriores al año 2000)
+                    MIN(CASE WHEN YEAR(m.FechaInicio) >= 2000 THEN m.FechaInicio END) as FechaInicioPrograma,
+                    MAX(CASE WHEN YEAR(m.FechaFinal) >= 2000 THEN m.FechaFinal END) as FechaFinPrograma
                 FROM programa p
-                LEFT JOIN modulos m ON p.ProgramaID = m.ProgramaId AND m.estadomodulo = 'ACTIVO'
+                LEFT JOIN modulos m ON p.ProgramaID = m.ProgramaId
                 LEFT JOIN estudianteprograma ep ON p.ProgramaID = ep.ProgramaID
                 WHERE p.Estado = 1
-                GROUP BY p.ProgramaID, p.NombrePrograma, p.Codigo, p.GradoAcademico
+                GROUP BY p.ProgramaID, p.NombrePrograma, p.Codigo, p.GradoAcademico, p.Sede
                 ORDER BY p.GradoAcademico ASC, p.NombrePrograma ASC"
             );
             $stmt->execute();

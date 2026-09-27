@@ -7,380 +7,358 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        * {
+        /* ========================================
+           LOGIN (prefijo lg-)
+           Fondo: escena 3D (three.js) con una esfera de puntos conectados que gira
+           y sigue al mouse. Encima: texto institucional y tarjeta de acceso con
+           inclinación 3D. Sin WebGL queda el degradado azul de respaldo.
+        ======================================== */
+        body.lg-body {
+            --lg-primario: #1e3c72;
+            --lg-primario-2: #2a5298;
+            --lg-acento: #7fb2ff;
+            --lg-texto: #1f2937;
+            --lg-texto-2: #6b7280;
+            --lg-borde: #dfe4ec;
+            --lg-peligro: #b91c1c;
             margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            /* Solo se oculta el desborde horizontal (partículas): en móviles la
-               tarjeta es más alta que la pantalla y debe poder desplazarse. */
+            min-height: 100vh;
+            color: var(--lg-texto);
+            background:
+                radial-gradient(ellipse at 30% 40%, #25498a 0%, transparent 55%),
+                radial-gradient(ellipse at 90% 90%, #1b3a78 0%, transparent 50%),
+                linear-gradient(160deg, #0b1a3a 0%, #122a5a 55%, #0d1f45 100%);
+            background-attachment: fixed;
+            /* Solo se oculta el desborde horizontal: en móviles la tarjeta puede
+               ser más alta que la pantalla y debe poder desplazarse. */
             overflow-x: hidden;
             overflow-y: auto;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         }
+        .lg-body *, .lg-body *::before, .lg-body *::after { box-sizing: border-box; }
 
-        /* Partículas de fondo animadas */
-        .particles {
+        /* Lienzo 3D a pantalla completa, detrás del contenido */
+        #lgEscena {
             position: fixed;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden;
-            z-index: 1;
+            z-index: 0;
+            display: block;
+            pointer-events: none;
+        }
+        /* Viñeta para dar profundidad y legibilidad al texto */
+        .lg-vineta {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(5, 12, 30, .55) 100%);
         }
 
-        .particle {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: float linear infinite;
-        }
-
-        @keyframes float {
-            from {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 1;
-            }
-            to {
-                transform: translateY(-100px) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        /* Container principal */
-        .login-container {
+        .lg-pantalla {
             position: relative;
-            z-index: 2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            z-index: 1;
             min-height: 100vh;
-            padding: 20px;
+            width: 100%;
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 40px 48px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 440px);
+            gap: 64px;
+            align-items: center;
             /* El tema hace del body un flex en columna de alto fijo: sin esto el
-               contenedor se encoge y en móviles la tarjeta queda cortada arriba. */
+               contenedor se encoge y en móviles la tarjeta queda cortada. */
             flex-shrink: 0;
         }
 
-        /* Card de login */
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            width: 100%;
-            max-width: 950px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            min-height: 600px;
-            animation: slideIn 0.8s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Panel izquierdo con imagen */
-        .login-left {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            padding: 60px 40px;
+        /* Texto institucional (izquierda) */
+        .lg-intro { color: #fff; animation: lg-aparecer .9s ease both; }
+        .lg-marca {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
+            width: max-content;
             align-items: center;
-            position: relative;
-            overflow: hidden;
+            background: rgba(255, 255, 255, .95);
+            border-radius: 14px;
+            padding: 8px 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+            margin-bottom: 44px;
         }
-
-        .login-left::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse 15s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1) rotate(0deg);
-            }
-            50% {
-                transform: scale(1.1) rotate(180deg);
-            }
-        }
-
-        .logo-container {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        /* Fondo blanco para que el texto oscuro del logo se lea sobre el azul */
-        .logo-container .logo-fondo {
-            display: inline-block;
-            background: #fff;
-            border-radius: 16px;
-            padding: 12px 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            animation: logoFloat 3s ease-in-out infinite;
-        }
-
-        .logo-container img {
-            display: block;
-            width: 100%;
-            max-width: 300px;
-            height: auto;
-        }
-
-        @keyframes logoFloat {
-            0%, 100% {
-                transform: translateY(0px);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        .welcome-text {
-            position: relative;
-            z-index: 2;
-            color: white;
-            text-align: center;
-        }
-
-        .welcome-text h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            text-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            line-height: 1.3;
-        }
-
-        .welcome-text p {
-            font-size: 16px;
-            opacity: 0.9;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
-        .features {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 100%;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            color: white;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .feature-item:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateX(10px);
-        }
-
-        .feature-icon {
-            width: 45px;
-            height: 45px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .feature-text {
-            flex: 1;
-        }
-
-        .feature-text strong {
-            display: block;
-            font-size: 14px;
-            margin-bottom: 3px;
-        }
-
-        .feature-text span {
-            font-size: 12px;
-            opacity: 0.9;
-        }
-
-        /* Panel derecho con formulario */
-        .login-right {
-            padding: 60px 50px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .login-header {
-            margin-bottom: 40px;
-        }
-
-        .login-header h2 {
-            font-size: 32px;
-            color: #333;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .login-header p {
-            color: #666;
-            font-size: 15px;
-        }
-
-        /* Formulario */
-        .login-form {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        .form-group {
-            position: relative;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #444;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .input-wrapper {
-            position: relative;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #1e3c72;
-            font-size: 18px;
-            z-index: 1;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 16px 20px 16px 55px;
-            border: 2px solid #e8ecef;
-            border-radius: 15px;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #1e3c72;
-            background: white;
-            box-shadow: 0 0 0 4px rgba(30, 60, 114, 0.1);
-        }
-
-        .form-control::placeholder {
-            color: #aaa;
-        }
-
-        /* Checkbox Remember Me */
-        .remember-forgot {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: -10px;
-        }
-
-        .remember-me {
-            display: flex;
+        .lg-marca img { height: 46px; width: auto; display: block; }
+        .lg-eyebrow {
+            display: inline-flex;
             align-items: center;
             gap: 8px;
-            cursor: pointer;
-        }
-
-        .remember-me input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: #1e3c72;
-        }
-
-        .remember-me label {
-            font-size: 14px;
-            color: #666;
-            cursor: pointer;
-            margin: 0;
-        }
-
-        .forgot-password {
-            color: #1e3c72;
-            text-decoration: none;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
-            transition: all 0.3s ease;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--lg-acento);
+            margin-bottom: 16px;
         }
+        .lg-eyebrow::before { content: ''; width: 28px; height: 2px; border-radius: 2px; background: var(--lg-acento); }
+        .lg-intro h1 {
+            text-shadow: 0 2px 24px rgba(5, 12, 30, .5);
+            font-size: 46px;
+            line-height: 1.12;
+            font-weight: 700;
+            color: #fff;
+            margin: 0 0 18px;
+            max-width: 560px;
+            letter-spacing: -.01em;
+        }
+        .lg-intro h1 span {
+            background: linear-gradient(90deg, #ffffff 0%, #a9c8ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: none;
+        }
+        .lg-intro-texto {
+            font-size: 16px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, .75);
+            margin: 0 0 32px;
+            max-width: 480px;
+        }
+        .lg-chips { display: flex; flex-wrap: wrap; gap: 10px; max-width: 520px; }
+        .lg-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, .9);
+            background: rgba(255, 255, 255, .08);
+            border: 1px solid rgba(255, 255, 255, .14);
+            backdrop-filter: blur(6px);
+        }
+        .lg-chip i { color: var(--lg-acento); }
 
-        .forgot-password:hover {
-            color: #2a5298;
-            text-decoration: underline;
+        /* Tarjeta de acceso (derecha) con inclinación 3D */
+        .lg-tarjeta-escena { perspective: 1200px; animation: lg-aparecer-tarjeta 1s cubic-bezier(.2, .8, .2, 1) both .15s; }
+        .lg-tarjeta {
+            position: relative;
+            background: rgba(255, 255, 255, .97);
+            border-radius: 24px;
+            padding: 40px 38px 30px;
+            box-shadow:
+                0 1px 0 rgba(255, 255, 255, .6) inset,
+                0 30px 60px rgba(3, 10, 30, .45),
+                0 0 0 1px rgba(255, 255, 255, .25);
+            transform-style: preserve-3d;
+            transition: transform .25s ease-out;
+            will-change: transform;
         }
+        /* Brillo que sigue al mouse sobre la tarjeta */
+        .lg-tarjeta::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            background: radial-gradient(circle at var(--brillo-x, 50%) var(--brillo-y, 0%), rgba(127, 178, 255, .16) 0%, transparent 45%);
+        }
+        .lg-tarjeta > * { position: relative; z-index: 1; }
+        .lg-icono-acceso {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            font-size: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 24px rgba(30, 60, 114, .35);
+            transform: translateZ(30px);
+        }
+        .lg-tarjeta h2 { font-size: 26px; font-weight: 700; color: var(--lg-texto); margin: 0 0 6px; }
+        .lg-subtitulo { font-size: 14px; color: var(--lg-texto-2); margin: 0 0 26px; }
+
+        .login-form { display: flex; flex-direction: column; gap: 18px; }
+        .lg-campo label { display: block; font-size: 13px; font-weight: 600; color: var(--lg-texto); margin-bottom: 7px; }
+        .input-wrapper { position: relative; }
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9aa3b2;
+            font-size: 14px;
+            pointer-events: none;
+            transition: color .2s;
+        }
+        .lg-body .form-control {
+            display: block;
+            width: 100%;
+            height: 50px;
+            padding: 0 16px 0 44px;
+            border: 1.5px solid var(--lg-borde);
+            border-radius: 14px;
+            font-size: 14px;
+            color: var(--lg-texto);
+            background: #f7f9fc;
+            transition: border-color .2s, box-shadow .2s, background .2s;
+        }
+        .lg-body .form-control:hover { border-color: #c9d1de; }
+        .lg-body .form-control:focus {
+            outline: none;
+            border-color: var(--lg-primario-2);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(42, 82, 152, .14);
+        }
+        .input-wrapper:focus-within .input-icon { color: var(--lg-primario); }
+        .lg-body .form-control::placeholder { color: #a8b0bd; }
 
         /* Botón "ojito" para mostrar/ocultar la contraseña */
-        .form-control.con-toggle {
-            padding-right: 55px;
-        }
-
+        .lg-body .form-control.con-toggle { padding-right: 50px; }
         /* Ocultar el ojito nativo de Edge para que no se duplique con el nuestro */
         .form-control.con-toggle::-ms-reveal,
-        .form-control.con-toggle::-ms-clear {
-            display: none;
-        }
-
+        .form-control.con-toggle::-ms-clear { display: none; }
         .toggle-password {
             position: absolute;
-            right: 12px;
+            right: 8px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
-            border: none;
-            padding: 8px;
-            color: #888;
-            font-size: 17px;
+            border: 0;
+            border-radius: 10px;
+            width: 36px;
+            height: 36px;
+            color: #9aa3b2;
+            font-size: 15px;
             cursor: pointer;
-            z-index: 1;
-            transition: color 0.2s ease;
+        }
+        .toggle-password:hover, .toggle-password:focus-visible { color: var(--lg-primario); outline: none; background: #eef2f9; }
+
+        .remember-forgot { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .remember-me { display: flex; align-items: center; gap: 8px; }
+        .remember-me input[type="checkbox"] { width: 16px; height: 16px; margin: 0; cursor: pointer; accent-color: var(--lg-primario); }
+        .remember-me label { font-size: 13px; color: var(--lg-texto-2); cursor: pointer; margin: 0; }
+        .forgot-password { color: var(--lg-primario-2); text-decoration: none; font-size: 13px; font-weight: 600; }
+        .forgot-password:hover { text-decoration: underline; color: var(--lg-primario); }
+
+        .btn-login {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 52px;
+            margin-top: 6px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            border: 0;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 12px 24px rgba(30, 60, 114, .3);
+            transition: transform .2s, box-shadow .2s;
+        }
+        /* Reflejo que cruza el botón al pasar el mouse */
+        .btn-login::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -60%;
+            width: 40%;
+            height: 100%;
+            background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .25), transparent);
+            transform: skewX(-20deg);
+            transition: left .6s ease;
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 16px 30px rgba(30, 60, 114, .38); }
+        .btn-login:hover::after { left: 120%; }
+        .btn-login:focus-visible { outline: 3px solid rgba(42, 82, 152, .4); outline-offset: 2px; }
+        .btn-login i { transition: transform .2s; }
+        .btn-login:hover i { transform: translateX(3px); }
+        .btn-login.loading { pointer-events: none; opacity: .9; }
+        .btn-login.loading i { display: none; }
+        .btn-login.loading::before {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, .35);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: lg-giro .8s linear infinite;
+        }
+        @keyframes lg-giro { to { transform: rotate(360deg); } }
+
+        /* Mensaje de error del controlador (alerta del tema) con estilo del login */
+        .lg-tarjeta .alert {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 0;
+            line-height: 1.4;
+            padding: 12px 14px;
+            margin: 0 0 20px;
+            border-radius: 12px;
+            border: 1px solid #fecaca;
+            background: #fef2f2;
+            color: var(--lg-peligro);
+            font-size: 13px;
+            animation: lg-sacudir .4s ease;
+        }
+        /* El ícono del tema (flaticon) no carga en esta página: se reemplaza por el de Font Awesome */
+        .lg-tarjeta .alert .alert-icon { padding: 0; margin: 0; }
+        .lg-tarjeta .alert .alert-icon i { display: none; }
+        .lg-tarjeta .alert .alert-icon::before {
+            content: "\f06a";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            font-size: 15px;
+            color: var(--lg-peligro);
+        }
+        .lg-tarjeta .alert .alert-text { flex: 1; padding: 0; color: var(--lg-peligro); font-weight: 500; }
+        .lg-tarjeta .alert .alert-close { padding: 0; margin: 0; }
+        .lg-tarjeta .alert .alert-close .close { color: var(--lg-peligro); opacity: .7; padding: 0; margin: 0; line-height: 1; }
+        .lg-tarjeta .alert .alert-close .close i { display: none; }
+        .lg-tarjeta .alert .alert-close .close span::before {
+            content: "\f00d";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            font-size: 13px;
+        }
+        @keyframes lg-sacudir {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-3px); }
         }
 
-        .toggle-password:hover,
-        .toggle-password:focus {
-            color: #1e3c72;
-            outline: none;
+        .lg-pie {
+            margin-top: 26px;
+            padding-top: 18px;
+            border-top: 1px solid #eef0f4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: #9aa3b2;
+        }
+        .link-volver-inicio { color: var(--lg-primario-2); font-size: 13px; font-weight: 600; text-decoration: none; }
+        .link-volver-inicio:hover { text-decoration: underline; color: var(--lg-primario); }
+
+        .lg-direccion { position: fixed; left: 48px; bottom: 22px; z-index: 1; font-size: 12px; color: rgba(255, 255, 255, .45); }
+        .lg-direccion i { margin-right: 6px; }
+
+        @keyframes lg-aparecer {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: none; }
+        }
+        @keyframes lg-aparecer-tarjeta {
+            from { opacity: 0; transform: translateY(30px) rotateX(8deg); }
+            to { opacity: 1; transform: none; }
         }
 
         /* Modal "¿Olvidó su contraseña?" */
@@ -392,312 +370,107 @@
             align-items: center;
             justify-content: center;
             padding: 16px;
-            background: rgba(15, 30, 60, 0.6);
+            background: rgba(5, 12, 30, .6);
+            backdrop-filter: blur(4px);
         }
-
-        .modal-olvido.abierto {
-            display: flex;
-        }
-
+        .modal-olvido.abierto { display: flex; }
         .modal-olvido-card {
-            background: white;
+            background: #fff;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 420px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, .35);
+            max-width: 400px;
             width: 100%;
-            padding: 35px 30px 30px;
+            padding: 34px 28px 26px;
             text-align: center;
-            animation: slideIn 0.3s ease;
+            animation: lg-aparecer .3s ease;
         }
-
         .modal-olvido-icono {
-            width: 70px;
-            height: 70px;
-            margin: 0 auto 18px;
-            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 16px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(30, 60, 114, 0.1);
-            color: #1e3c72;
-            font-size: 30px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            font-size: 24px;
+            box-shadow: 0 10px 24px rgba(30, 60, 114, .3);
         }
-
-        .modal-olvido-card h3 {
-            color: #1e3c72;
-            font-size: 21px;
-            margin-bottom: 12px;
-        }
-
-        .modal-olvido-card p {
-            color: #555;
-            font-size: 15px;
-            line-height: 1.5;
-            margin-bottom: 25px;
-        }
-
+        .modal-olvido-card h3 { color: var(--lg-texto); font-size: 19px; font-weight: 700; margin: 0 0 10px; }
+        .modal-olvido-card p { color: var(--lg-texto-2); font-size: 14px; line-height: 1.6; margin: 0 0 22px; }
         .modal-olvido-card .btn-cerrar-olvido {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            border: none;
+            color: #fff;
+            border: 0;
             border-radius: 12px;
-            padding: 12px 35px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* Botón de login */
-        .btn-login {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            border: none;
-            border-radius: 15px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            letter-spacing: 0.5px;
-            box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-login::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .btn-login:hover::before {
-            left: 100%;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 40px rgba(30, 60, 114, 0.4);
-        }
-
-        .btn-login:active {
-            transform: translateY(0);
-        }
-
-        .btn-login i {
-            margin-left: 8px;
-        }
-
-        /* Footer */
-        .login-footer {
-            margin-top: 30px;
-            text-align: center;
-            color: #999;
-            font-size: 13px;
-        }
-
-        .link-volver-inicio {
-            display: inline-block;
-            margin-top: 18px;
-            color: #2a5298;
+            padding: 12px 30px;
             font-size: 14px;
             font-weight: 600;
-            text-decoration: none;
+            cursor: pointer;
         }
 
-        .link-volver-inicio:hover {
-            text-decoration: underline;
+        @media (max-width: 991.98px) {
+            .lg-pantalla { grid-template-columns: 1fr; gap: 32px; padding: 32px 20px 56px; max-width: 520px; align-content: center; }
+            .lg-intro { text-align: center; }
+            .lg-marca { margin: 0 auto 24px; }
+            .lg-eyebrow { justify-content: center; }
+            .lg-intro h1 { font-size: 30px; margin-left: auto; margin-right: auto; }
+            .lg-intro-texto, .lg-chips { display: none; }
+            .lg-direccion { display: none; }
         }
-
-        /* Loading state */
-        .btn-login.loading {
-            pointer-events: none;
-            opacity: 0.7;
-        }
-
-        .btn-login.loading::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            top: 50%;
-            left: 50%;
-            margin-left: -10px;
-            margin-top: -10px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .login-card {
-                grid-template-columns: 1fr;
-                max-width: 450px;
-            }
-
-            .login-left {
-                padding: 40px 30px;
-                min-height: auto;
-            }
-
-            .welcome-text h1 {
-                font-size: 22px;
-            }
-
-            .welcome-text p {
-                font-size: 14px;
-            }
-
-            .features {
-                display: none;
-            }
-
-            .login-right {
-                padding: 40px 30px;
-            }
-
-            .login-header h2 {
-                font-size: 26px;
-            }
-
-            .logo-container {
-                margin-bottom: 20px;
-            }
-        }
-
         @media (max-width: 480px) {
-            .login-container {
-                padding: 12px;
-            }
-
-            .login-card {
-                border-radius: 20px;
-            }
-
-            .login-left {
-                padding: 30px 20px;
-            }
-
-            .login-right {
-                padding: 30px 20px;
-            }
+            .lg-tarjeta { padding: 30px 22px 22px; border-radius: 20px; }
+            .lg-intro h1 { font-size: 26px; }
         }
-
-        /* Alertas mejoradas */
-        .alert {
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .alert-error {
-            background: #fee;
-            color: #c33;
-            border: 2px solid #fcc;
-        }
-
-        .alert-success {
-            background: #efe;
-            color: #3c3;
-            border: 2px solid #cfc;
-        }
-
-        .alert i {
-            font-size: 20px;
+        @media (prefers-reduced-motion: reduce) {
+            .lg-intro, .lg-tarjeta-escena, .modal-olvido-card, .lg-tarjeta .alert { animation: none; }
+            .lg-tarjeta { transition: none; }
         }
     </style>
 </head>
-<body>
-    <!-- Partículas de fondo -->
-    <div class="particles" id="particles"></div>
+<body class="lg-body">
 
-    <!-- Container principal -->
-    <div class="login-container">
-        <div class="login-card">
-            <!-- Panel izquierdo -->
-            <div class="login-left">
-                <div class="logo-container">
-                    <div class="logo-fondo">
-                        <img src="vistas/recursos/assets/media/logos/logo.png" alt="Posgrado Odontología - Universidad Técnica de Oruro">
-                    </div>
-                </div>
+    <canvas id="lgEscena" aria-hidden="true"></canvas>
+    <div class="lg-vineta" aria-hidden="true"></div>
 
-                <div class="welcome-text">
-                    <h1>Universidad Técnica de Oruro</h1>
-                    <p>Posgrado Facultad Ciencias de la Salud<br>"ODONTOLOGÍA"</p>
-                </div>
-
-                <div class="features">
-                    <div class="feature-item">
-                        <div class="feature-icon">
-                            <i class="fas fa-graduation-cap"></i>
-                        </div>
-                        <div class="feature-text">
-                            <strong>Excelencia Académica</strong>
-                            <span>Programas de calidad</span>
-                        </div>
-                    </div>
-
-                    <div class="feature-item">
-                        <div class="feature-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="feature-text">
-                            <strong>Comunidad Profesional</strong>
-                            <span>Docentes especializados</span>
-                        </div>
-                    </div>
-
-                    <div class="feature-item">
-                        <div class="feature-icon">
-                            <i class="fas fa-award"></i>
-                        </div>
-                        <div class="feature-text">
-                            <strong>Certificación</strong>
-                            <span>Títulos reconocidos</span>
-                        </div>
-                    </div>
-                </div>
+    <div class="lg-pantalla">
+        <!-- Texto institucional -->
+        <section class="lg-intro">
+            <a href="inicio" class="lg-marca">
+                <img src="vistas/recursos/assets/media/logos/logo.png" alt="Posgrado Odontología - Universidad Técnica de Oruro">
+            </a>
+            <span class="lg-eyebrow">Universidad Técnica de Oruro</span>
+            <h1>Posgrado <span>Facultad de Ciencias de la Salud</span></h1>
+            <p class="lg-intro-texto">
+                Sistema académico de la Coordinación de Posgrado en Odontología:
+                inscripciones, pagos, calificaciones y certificados en un solo lugar.
+            </p>
+            <div class="lg-chips">
+                <span class="lg-chip"><i class="fas fa-graduation-cap"></i> Especialidades y maestrías</span>
+                <span class="lg-chip"><i class="fas fa-file-invoice"></i> Órdenes de pago</span>
+                <span class="lg-chip"><i class="fas fa-award"></i> Certificados en línea</span>
             </div>
+        </section>
 
-            <!-- Panel derecho -->
-            <div class="login-right">
-                <div class="login-header">
-                    <h2>Bienvenido</h2>
-                    <p>Ingresa tus credenciales para acceder al sistema</p>
-                </div>
+        <!-- Tarjeta de acceso -->
+        <div class="lg-tarjeta-escena">
+            <main class="lg-tarjeta" id="lgTarjeta">
+                <div class="lg-icono-acceso"><i class="fas fa-user-lock"></i></div>
+                <h2>Iniciar sesión</h2>
+                <p class="lg-subtitulo">Ingresa tus credenciales para acceder al sistema</p>
+
+                <?php
+                // Valida el envío del formulario: si es correcto redirige al panel; si no,
+                // imprime aquí (arriba del formulario) la alerta de usuario o contraseña incorrectos.
+                $Ingreso = new IngresoControladores();
+                $Ingreso->ValidarIngresoControlador();
+                ?>
 
                 <form class="login-form" method="POST" id="loginForm">
-                    <div class="form-group">
+                    <div class="lg-campo">
                         <label for="usuario">Usuario</label>
                         <div class="input-wrapper">
-                            <i class="input-icon fas fa-user"></i>
                             <input
                                 type="text"
                                 class="form-control"
@@ -707,13 +480,13 @@
                                 autocomplete="username"
                                 required
                             >
+                            <i class="input-icon fas fa-user"></i>
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="lg-campo">
                         <label for="password">Contraseña</label>
                         <div class="input-wrapper">
-                            <i class="input-icon fas fa-lock"></i>
                             <input
                                 type="password"
                                 class="form-control con-toggle"
@@ -723,6 +496,7 @@
                                 autocomplete="current-password"
                                 required
                             >
+                            <i class="input-icon fas fa-lock"></i>
                             <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar contraseña" title="Mostrar contraseña">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -738,23 +512,20 @@
                     </div>
 
                     <button type="submit" class="btn-login" id="btnLogin">
-                        <span>Iniciar Sesión</span>
+                        <span>Ingresar</span>
                         <i class="fas fa-arrow-right"></i>
                     </button>
                 </form>
 
-                <?php
-                $Ingreso = new IngresoControladores();
-                $Ingreso->ValidarIngresoControlador();
-                ?>
-
-                <div class="login-footer">
+                <div class="lg-pie">
                     <a href="inicio" class="link-volver-inicio"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
-                    <p style="margin-top: 12px;">&copy; <?php echo date('Y'); ?> Universidad Técnica de Oruro. Todos los derechos reservados.</p>
+                    <span>&copy; <?php echo date('Y'); ?> Universidad Técnica de Oruro</span>
                 </div>
-            </div>
+            </main>
         </div>
     </div>
+
+    <div class="lg-direccion"><i class="fas fa-map-marker-alt"></i>Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso · Telf: 5237317 · Oruro - Bolivia</div>
 
     <!-- Modal "¿Olvidó su contraseña?": el restablecimiento lo hace el administrador -->
     <div class="modal-olvido" id="modalOlvidoPassword" role="dialog" aria-modal="true" aria-labelledby="tituloOlvidoPassword">
@@ -767,37 +538,11 @@
     </div>
 
     <script>
-        // Crear partículas animadas
-        function createParticles() {
-            const particlesContainer = document.getElementById('particles');
-            const particleCount = 30;
-
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-
-                const size = Math.random() * 60 + 20;
-                const left = Math.random() * 100;
-                const duration = Math.random() * 15 + 10;
-                const delay = Math.random() * 5;
-
-                particle.style.width = size + 'px';
-                particle.style.height = size + 'px';
-                particle.style.left = left + '%';
-                particle.style.animationDuration = duration + 's';
-                particle.style.animationDelay = delay + 's';
-
-                particlesContainer.appendChild(particle);
-            }
-        }
-
-        createParticles();
-
-        // Efecto de loading en el botón
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        // Estado de carga en el botón al enviar
+        document.getElementById('loginForm').addEventListener('submit', function() {
             const btn = document.getElementById('btnLogin');
             btn.classList.add('loading');
-            btn.querySelector('span').textContent = 'Iniciando sesión...';
+            btn.querySelector('span').textContent = 'Ingresando...';
         });
 
         // Focus automático en el campo de usuario
@@ -848,6 +593,189 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') cerrarModalOlvido();
         });
+
+        // Inclinación 3D de la tarjeta según la posición del mouse (solo escritorio)
+        (function () {
+            const tarjeta = document.getElementById('lgTarjeta');
+            const reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const puntero = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+            if (!tarjeta || reducir || !puntero) return;
+
+            tarjeta.addEventListener('mousemove', function (e) {
+                const r = tarjeta.getBoundingClientRect();
+                const x = (e.clientX - r.left) / r.width;
+                const y = (e.clientY - r.top) / r.height;
+                tarjeta.style.transform = 'rotateY(' + ((x - .5) * 8).toFixed(2) + 'deg) rotateX(' + ((.5 - y) * 8).toFixed(2) + 'deg)';
+                tarjeta.style.setProperty('--brillo-x', (x * 100).toFixed(1) + '%');
+                tarjeta.style.setProperty('--brillo-y', (y * 100).toFixed(1) + '%');
+            });
+            tarjeta.addEventListener('mouseleave', function () {
+                tarjeta.style.transform = '';
+            });
+        })();
+    </script>
+
+    <!-- Escena 3D de fondo. Si three.js no carga (sin internet o sin WebGL) queda el degradado. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        (function () {
+            const lienzo = document.getElementById('lgEscena');
+            if (!lienzo || typeof THREE === 'undefined') return;
+
+            let renderer;
+            try {
+                renderer = new THREE.WebGLRenderer({ canvas: lienzo, antialias: true, alpha: true });
+            } catch (e) {
+                return;
+            }
+
+            const reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const movil = window.innerWidth < 992;
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+
+            const escena = new THREE.Scene();
+            const camara = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+            camara.position.z = 9;
+
+            // Grupo principal: esfera de puntos conectados + anillos orbitales
+            const grupo = new THREE.Group();
+            escena.add(grupo);
+
+            // Puntos distribuidos uniformemente sobre una esfera (espiral de Fibonacci)
+            const total = movil ? 260 : 420;
+            const radio = 3;
+            const posiciones = new Float32Array(total * 3);
+            const vectores = [];
+            const oro = Math.PI * (3 - Math.sqrt(5));
+            for (let i = 0; i < total; i++) {
+                const y = 1 - (i / (total - 1)) * 2;
+                const r = Math.sqrt(1 - y * y);
+                const t = oro * i;
+                const v = new THREE.Vector3(Math.cos(t) * r * radio, y * radio, Math.sin(t) * r * radio);
+                vectores.push(v);
+                posiciones.set([v.x, v.y, v.z], i * 3);
+            }
+
+            const geoPuntos = new THREE.BufferGeometry();
+            geoPuntos.setAttribute('position', new THREE.BufferAttribute(posiciones, 3));
+            const puntos = new THREE.Points(geoPuntos, new THREE.PointsMaterial({
+                color: 0xbad3ff,
+                size: 0.055,
+                transparent: true,
+                opacity: 0.95,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            }));
+            grupo.add(puntos);
+
+            // Líneas entre puntos vecinos (red)
+            const umbral = radio * (movil ? 0.3 : 0.24);
+            const lineas = [];
+            for (let i = 0; i < total; i++) {
+                for (let j = i + 1; j < total; j++) {
+                    if (vectores[i].distanceTo(vectores[j]) < umbral) {
+                        lineas.push(vectores[i].x, vectores[i].y, vectores[i].z, vectores[j].x, vectores[j].y, vectores[j].z);
+                    }
+                }
+            }
+            const geoLineas = new THREE.BufferGeometry();
+            geoLineas.setAttribute('position', new THREE.Float32BufferAttribute(lineas, 3));
+            grupo.add(new THREE.LineSegments(geoLineas, new THREE.LineBasicMaterial({
+                color: 0x7fb2ff,
+                transparent: true,
+                opacity: 0.18,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            })));
+
+            // Núcleo luminoso tenue
+            grupo.add(new THREE.Mesh(
+                new THREE.SphereGeometry(radio * 0.96, 32, 32),
+                new THREE.MeshBasicMaterial({ color: 0x2a5298, transparent: true, opacity: 0.12 })
+            ));
+
+            // Anillos orbitales inclinados
+            function anillo(radioAnillo, inclinacionX, inclinacionY, opacidad) {
+                const m = new THREE.Mesh(
+                    new THREE.TorusGeometry(radioAnillo, 0.008, 8, 160),
+                    new THREE.MeshBasicMaterial({ color: 0x9fc2ff, transparent: true, opacity: opacidad })
+                );
+                m.rotation.x = inclinacionX;
+                m.rotation.y = inclinacionY;
+                return m;
+            }
+            const anillo1 = anillo(radio * 1.35, 1.25, 0.3, 0.35);
+            const anillo2 = anillo(radio * 1.6, 1.0, -0.6, 0.18);
+            grupo.add(anillo1, anillo2);
+
+            // Satélite que recorre el primer anillo
+            const satelite = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            anillo1.add(satelite);
+
+            // Polvo estelar de fondo
+            const totalPolvo = movil ? 250 : 500;
+            const polvo = new Float32Array(totalPolvo * 3);
+            for (let i = 0; i < totalPolvo; i++) {
+                polvo.set([(Math.random() - .5) * 40, (Math.random() - .5) * 24, -Math.random() * 20 - 2], i * 3);
+            }
+            const geoPolvo = new THREE.BufferGeometry();
+            geoPolvo.setAttribute('position', new THREE.BufferAttribute(polvo, 3));
+            const estrellas = new THREE.Points(geoPolvo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.04, transparent: true, opacity: 0.5, depthWrite: false }));
+            escena.add(estrellas);
+
+            // En escritorio la esfera queda detrás de la tarjeta (asoma alrededor del formulario
+            // y deja el texto sobre fondo limpio); en móvil, arriba y más pequeña
+            function ajustar() {
+                const w = window.innerWidth, h = window.innerHeight;
+                renderer.setSize(w, h, false);
+                camara.aspect = w / h;
+                camara.updateProjectionMatrix();
+                const esMovil = w < 992;
+                grupo.position.set(esMovil ? 0 : 3.3, esMovil ? 2.6 : 0, esMovil ? 0 : -1.5);
+                const escala = esMovil ? 0.75 : 1.2;
+                grupo.scale.set(escala, escala, escala);
+            }
+            ajustar();
+            window.addEventListener('resize', ajustar);
+
+            // El mouse inclina suavemente la escena
+            let objetivoX = 0, objetivoY = 0;
+            window.addEventListener('mousemove', function (e) {
+                objetivoX = (e.clientX / window.innerWidth - .5);
+                objetivoY = (e.clientY / window.innerHeight - .5);
+            });
+
+            let anguloSatelite = 0;
+            function dibujar() {
+                grupo.rotation.y += 0.0016;
+                grupo.rotation.x += (objetivoY * 0.35 - grupo.rotation.x) * 0.04;
+                grupo.rotation.z += (-objetivoX * 0.15 - grupo.rotation.z) * 0.04;
+                anillo1.rotation.z += 0.002;
+                anillo2.rotation.z -= 0.0012;
+                anguloSatelite += 0.012;
+                satelite.position.set(Math.cos(anguloSatelite) * radio * 1.35, Math.sin(anguloSatelite) * radio * 1.35, 0);
+                estrellas.rotation.y += 0.0002;
+                renderer.render(escena, camara);
+            }
+
+            if (reducir) {
+                dibujar();
+                return;
+            }
+
+            // Pausar cuando la pestaña no está visible (ahorra batería/CPU)
+            let activo = true;
+            document.addEventListener('visibilitychange', function () {
+                activo = !document.hidden;
+                if (activo) requestAnimationFrame(bucle);
+            });
+            function bucle() {
+                if (!activo) return;
+                dibujar();
+                requestAnimationFrame(bucle);
+            }
+            requestAnimationFrame(bucle);
+        })();
     </script>
 </body>
 </html>

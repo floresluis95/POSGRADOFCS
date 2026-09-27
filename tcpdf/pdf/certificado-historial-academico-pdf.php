@@ -18,6 +18,11 @@ session_start();
 if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
     die('Acceso no autorizado. Sesión inválida.');
 }
+// Los certificados los emite solo Administración o Secretaría (un estudiante no puede
+// generarlos, y así tampoco saltarse el bloqueo de calificaciones por pago vencido).
+if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC'], true)) {
+    die('Acceso no autorizado.');
+}
 
 require_once '../../vendor/autoload.php';
 require_once '../../modelos/certificado.modelo.php';

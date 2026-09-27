@@ -43,59 +43,71 @@ date_default_timezone_set("America/La_Paz");
                         </div>
 
                         <!-- Contenido principal -->
-                        <div class="container">
+                        <?php
+                        // Indicadores generales y programas por grado (ReporteModulosControlador::DatosResumenControlador)
+                        $resumenReporte = ReporteModulosControlador::DatosResumenControlador();
+                        $st = $resumenReporte['stats'];
+                        ?>
+                        <div class="container rp rp-pagina">
 
-                            <!-- Panel de Estadísticas -->
-                            <?php
-                            $stats = new ReporteModulosControlador();
-                            $stats->MostrarPanelEstadisticasControlador();
-                            ?>
-
-                            <!-- Estadísticas por Sede -->
-                            <div class="kt-portlet mb-3">
-                                <div class="kt-portlet__head" style="background: #fff; border-bottom: 2px solid #EBEDF3; min-height: 45px;">
-                                    <div class="kt-portlet__head-label">
-                                        <h3 style="color: #3b3f5c; margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;">
-                                            <i class="flaticon2-location" style="color: #5867dd;"></i> Programas por Sede
-                                        </h3>
-                                    </div>
-                                </div>
-                                <div class="kt-portlet__body" style="padding: 15px;">
-                                    <?php
-                                    $sedes = new ReporteModulosControlador();
-                                    $sedes->MostrarEstadisticaSedesControlador();
-                                    ?>
-                                </div>
-                            </div>
-
-                            <!-- Programas y Módulos Categorizados -->
-                            <div class="kt-portlet mb-3">
-                                <div class="kt-portlet__head" style="background: #fff; border-bottom: 2px solid #EBEDF3; min-height: 45px;">
-                                    <div class="kt-portlet__head-label">
-                                        <h3 style="color: #3b3f5c; margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;">
-                                            <i class="fa fa-th-large" style="color: #34bfa3;"></i> Programas y Módulos del Sistema
-                                        </h3>
-                                    </div>
-                                </div>
-                                <div class="kt-portlet__body" style="padding: 0;">
-                                    <?php
-                                    $tablaProgramas = new ReporteModulosControlador();
-                                    $tablaProgramas->MostrarTablaProgramasConModulosControlador();
-                                    ?>
-                                </div>
-                            </div>
-
-                            <!-- Reporte de Pagos por Programa (contenido en reportemodulos.js) -->
-                            <div class="kt-portlet rp" id="reportePagos">
-                                <div class="rp-head">
+                            <!-- Indicadores generales: una sola franja, cada uno con su color de identidad y detalle -->
+                            <div class="rp-resumen">
+                                <div class="rp-res is-azul">
+                                    <span class="rp-res-icono"><i class="fa fa-graduation-cap"></i></span>
                                     <div>
-                                        <h3 class="rp-titulo"><i class="fa fa-money-bill-wave"></i> Reporte de Pagos por Programa</h3>
-                                        <p class="rp-subtitulo">
-                                            Estado de cobro de cada programa. <strong>Cobrado</strong> incluye la matrícula ya cancelada y las cuotas pagadas.
-                                            Las <strong>clínicas</strong> se muestran aparte y no se suman a matrícula ni cuotas.
-                                        </p>
+                                        <strong><?php echo (int)$st['totalProgramas']; ?></strong>
+                                        <small>Programas activos</small>
+                                        <em><?php echo htmlspecialchars($resumenReporte['detalleGrados'] ?: 'Sin programas'); ?></em>
                                     </div>
-                                    <div class="rp-acciones">
+                                </div>
+                                <div class="rp-res is-turquesa">
+                                    <span class="rp-res-icono"><i class="fa fa-map-marker-alt"></i></span>
+                                    <div>
+                                        <strong><?php echo (int)$resumenReporte['totalSedes']; ?></strong>
+                                        <small><?php echo (int)$resumenReporte['totalSedes'] === 1 ? 'Sede' : 'Sedes'; ?></small>
+                                        <em><?php
+                                            $textoSedes = [];
+                                            foreach ($resumenReporte['sedes'] as $nombreSede => $cantidadSede) {
+                                                $textoSedes[] = mb_convert_case($nombreSede, MB_CASE_TITLE, 'UTF-8') . ' (' . $cantidadSede . ')';
+                                            }
+                                            echo htmlspecialchars($textoSedes ? implode(' · ', $textoSedes) : 'Sin sedes');
+                                        ?></em>
+                                    </div>
+                                </div>
+                                <div class="rp-res is-violeta">
+                                    <span class="rp-res-icono"><i class="fa fa-user-graduate"></i></span>
+                                    <div>
+                                        <strong><?php echo (int)$st['totalEstudiantes']; ?></strong>
+                                        <small>Estudiantes</small>
+                                        <em>En <?php echo (int)$resumenReporte['programasConInscritos']; ?> programa(s) con inscritos</em>
+                                    </div>
+                                </div>
+                                <div class="rp-res is-naranja">
+                                    <span class="rp-res-icono"><i class="fa fa-chalkboard-teacher"></i></span>
+                                    <div>
+                                        <strong><?php echo (int)$st['totalDocentes']; ?></strong>
+                                        <small>Docentes</small>
+                                        <em><?php echo (int)$st['docentesAsignados']; ?> con módulos asignados</em>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tarjeta única con pestañas -->
+                            <div class="kt-portlet rp-card" id="reportePagos">
+                                <div class="rp-tabs-head">
+                                    <ul class="nav rp-tabs" role="tablist">
+                                        <li class="nav-item">
+                                            <a class="nav-link active" data-toggle="tab" href="#rpTabPagos" role="tab" id="rpTabPagosLink">
+                                                <i class="fa fa-money-bill-wave"></i> Pagos por programa
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-toggle="tab" href="#rpTabProgramas" role="tab" id="rpTabProgramasLink">
+                                                <i class="fa fa-th-list"></i> Programas y módulos
+                                            </a>
+                                        </li>
+                                    </ul>
+                                    <div class="rp-acciones" id="rpAccionesPagos">
                                         <button type="button" class="btn btn-sm rp-btn" id="btnActualizarReportePagos" title="Actualizar">
                                             <i class="fa fa-sync"></i> Actualizar
                                         </button>
@@ -105,61 +117,162 @@ date_default_timezone_set("America/La_Paz");
                                     </div>
                                 </div>
 
-                                <div class="rp-body">
-                                    <!-- Filtros -->
-                                    <div class="rp-filtros">
-                                        <div class="rp-filtro">
-                                            <label class="rp-label" for="reportePagosGrado">Grado académico</label>
-                                            <select class="form-control select2-uniforme" id="reportePagosGrado">
-                                                <option value="">Todos los grados</option>
-                                            </select>
-                                        </div>
-                                        <div class="rp-filtro rp-filtro-busqueda">
-                                            <label class="rp-label" for="reportePagosBuscar">Buscar programa</label>
-                                            <div class="rp-buscar">
-                                                <i class="fa fa-search"></i>
-                                                <input type="search" class="form-control" id="reportePagosBuscar" placeholder="Nombre, código o sede...">
+                                <div class="tab-content">
+                                    <!-- ===== Pestaña: Pagos por programa (contenido en reportemodulos.js) ===== -->
+                                    <div class="tab-pane fade show active rp-body" id="rpTabPagos" role="tabpanel">
+                                        <div class="rp-filtros">
+                                            <div class="rp-filtro">
+                                                <select class="form-control select2-uniforme" id="reportePagosGrado" aria-label="Grado académico">
+                                                    <option value="">Todos los grados</option>
+                                                </select>
                                             </div>
+                                            <div class="rp-filtro rp-filtro-busqueda">
+                                                <div class="rp-buscar">
+                                                    <i class="fa fa-search"></i>
+                                                    <input type="search" class="form-control" id="reportePagosBuscar" placeholder="Buscar programa por nombre, código o sede..." aria-label="Buscar programa">
+                                                </div>
+                                            </div>
+                                            <span class="rp-nota" title="Cobrado incluye la matrícula ya cancelada y las cuotas pagadas. Las clínicas se muestran aparte y no se suman a matrícula ni cuotas.">
+                                                <i class="fa fa-info-circle"></i> Las clínicas no se suman a matrícula ni cuotas
+                                            </span>
+                                        </div>
+
+                                        <!-- Indicadores de cobranza (según el filtro) -->
+                                        <div class="rp-kpis" id="reportePagosKpis"></div>
+                                        <div class="rp-composicion" id="reportePagosComposicion"></div>
+
+                                        <!-- Tabla por programa -->
+                                        <div class="rp-tabla-wrap table-responsive">
+                                            <table class="table rp-tabla mb-0" id="tablaReportePagos">
+                                                <thead>
+                                                    <tr class="rp-grupos">
+                                                        <th rowspan="2" class="rp-col-programa">Programa</th>
+                                                        <th rowspan="2" class="text-center">Estudiantes</th>
+                                                        <th colspan="3" class="text-center rp-grupo-programa">Matrícula y cuotas</th>
+                                                        <th colspan="2" class="text-center rp-grupo-clinica">Clínicas</th>
+                                                        <th rowspan="2" class="rp-no-print"></th>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="text-right rp-grupo-programa">Programado</th>
+                                                        <th class="text-right rp-grupo-programa rp-col-avance">Cobrado</th>
+                                                        <th class="text-right rp-grupo-programa">Saldo</th>
+                                                        <th class="text-right rp-grupo-clinica">Cobrado</th>
+                                                        <th class="text-right rp-grupo-clinica">Por cobrar</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tablaReportePagosBody">
+                                                    <tr><td colspan="8" class="rp-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                                </tbody>
+                                                <tfoot id="tablaReportePagosFooter"></tfoot>
+                                            </table>
+                                        </div>
+
+                                        <div class="rp-leyenda">
+                                            <span><b>R</b> Regular</span>
+                                            <span><b>C</b> Contado</span>
+                                            <span><b>G</b> Grupal</span>
+                                            <span><b>S</b> Sin plan</span>
+                                            <span class="rp-leyenda-sep">&middot;</span>
+                                            <span><i class="fa fa-check-circle" style="color:#1e3c72"></i> Completaron el pago</span>
+                                            <span><i class="fa fa-clock" style="color:#64748b"></i> Con saldo pendiente</span>
                                         </div>
                                     </div>
 
-                                    <!-- Indicadores generales (según el filtro) -->
-                                    <div class="rp-kpis" id="reportePagosKpis"></div>
-
-                                    <!-- Tabla por programa -->
-                                    <div class="rp-tabla-wrap table-responsive">
-                                        <table class="table rp-tabla mb-0" id="tablaReportePagos">
-                                            <thead>
-                                                <tr class="rp-grupos">
-                                                    <th rowspan="2" class="rp-col-programa">Programa</th>
-                                                    <th rowspan="2" class="text-center">Estudiantes</th>
-                                                    <th colspan="3" class="text-center rp-grupo-programa">Matrícula y cuotas</th>
-                                                    <th colspan="2" class="text-center rp-grupo-clinica">Clínicas</th>
-                                                    <th rowspan="2" class="rp-no-print"></th>
-                                                </tr>
-                                                <tr>
-                                                    <th class="text-right rp-grupo-programa">Programado</th>
-                                                    <th class="text-right rp-grupo-programa rp-col-avance">Cobrado</th>
-                                                    <th class="text-right rp-grupo-programa">Saldo</th>
-                                                    <th class="text-right rp-grupo-clinica">Cobrado</th>
-                                                    <th class="text-right rp-grupo-clinica">Por cobrar</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="tablaReportePagosBody">
-                                                <tr><td colspan="8" class="rp-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>
-                                            </tbody>
-                                            <tfoot id="tablaReportePagosFooter"></tfoot>
-                                        </table>
-                                    </div>
-
-                                    <div class="rp-leyenda">
-                                        <span><b>R</b> Regular</span>
-                                        <span><b>C</b> Contado (descuento)</span>
-                                        <span><b>G</b> Grupal</span>
-                                        <span><b>S</b> Sin plan</span>
-                                        <span class="rp-leyenda-sep">&middot;</span>
-                                        <span><i class="fa fa-check-circle" style="color:#15803d"></i> Completaron el pago</span>
-                                        <span><i class="fa fa-clock" style="color:#b45309"></i> Con saldo pendiente</span>
+                                    <!-- ===== Pestaña: Programas y módulos ===== -->
+                                    <div class="tab-pane fade rp-body" id="rpTabProgramas" role="tabpanel">
+                                        <?php if (empty($resumenReporte['programasPorGrado'])): ?>
+                                            <div class="rp-vacio">No hay programas registrados.</div>
+                                        <?php else: ?>
+                                        <?php
+                                            $mesesCortos = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+                                            $fechaCorta = function ($fecha) use ($mesesCortos) {
+                                                $ts = strtotime($fecha);
+                                                return $mesesCortos[(int)date('n', $ts) - 1] . ' ' . date('Y', $ts);
+                                            };
+                                            $hoyTexto = date('Y-m-d');
+                                        ?>
+                                        <div class="rp-tabla-wrap table-responsive">
+                                            <table class="table rp-tabla mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Programa</th>
+                                                        <th>Periodo</th>
+                                                        <th class="rp-col-avance-mod">Avance académico</th>
+                                                        <th class="text-center">Docentes</th>
+                                                        <th class="text-center">Inscritos</th>
+                                                        <th class="rp-no-print"></th>
+                                                    </tr>
+                                                </thead>
+                                                <?php foreach ($resumenReporte['programasPorGrado'] as $grado => $programasGrado): ?>
+                                                <tbody>
+                                                    <tr class="rp-fila-grupo">
+                                                        <td colspan="6"><?php echo htmlspecialchars($grado); ?> <span><?php echo count($programasGrado); ?> programa(s)</span></td>
+                                                    </tr>
+                                                    <?php foreach ($programasGrado as $pg): ?>
+                                                    <?php
+                                                        $totalMod = (int)$pg['TotalModulosRegistrados'];
+                                                        $finalizados = (int)$pg['ModulosFinalizados'];
+                                                        $enCurso = (int)$pg['ModulosEnCurso'];
+                                                        $pctFin = $totalMod > 0 ? round($finalizados / $totalMod * 100) : 0;
+                                                        $pctCurso = $totalMod > 0 ? round($enCurso / $totalMod * 100) : 0;
+                                                        if ($totalMod === 0) {
+                                                            $estadoProg = ['Sin módulos', ''];
+                                                        } elseif ($finalizados >= $totalMod) {
+                                                            $estadoProg = ['Concluido', 'is-exito'];
+                                                        } elseif (!empty($pg['FechaInicioPrograma']) && $pg['FechaInicioPrograma'] > $hoyTexto) {
+                                                            $estadoProg = ['Por iniciar', 'is-alerta'];
+                                                        } else {
+                                                            $estadoProg = ['En desarrollo', 'is-info'];
+                                                        }
+                                                    ?>
+                                                    <tr class="<?php echo (int)$pg['TotalInscritos'] === 0 ? 'rp-fila-vacia' : ''; ?>">
+                                                        <td>
+                                                            <div class="rp-prog-nombre"><?php echo htmlspecialchars($pg['NombrePrograma']); ?></div>
+                                                            <div class="rp-prog-meta"><?php echo htmlspecialchars($pg['Codigo']); ?> &middot; <?php echo htmlspecialchars($pg['Sede'] ?: '—'); ?></div>
+                                                        </td>
+                                                        <td style="white-space:nowrap">
+                                                            <?php if (!empty($pg['FechaInicioPrograma'])): ?>
+                                                                <?php echo $fechaCorta($pg['FechaInicioPrograma']); ?> – <?php echo $fechaCorta($pg['FechaFinPrograma']); ?>
+                                                            <?php else: ?>
+                                                                <span class="rp-muted">Sin fechas</span>
+                                                            <?php endif; ?>
+                                                            <span class="rp-sub"><span class="rp-chip <?php echo $estadoProg[1]; ?>"><?php echo $estadoProg[0]; ?></span></span>
+                                                        </td>
+                                                        <td>
+                                                            <?php if ($totalMod > 0): ?>
+                                                            <div class="rp-avance-mod" title="<?php echo $finalizados; ?> finalizado(s), <?php echo $enCurso; ?> en curso, <?php echo $totalMod - $finalizados - $enCurso; ?> por iniciar">
+                                                                <div class="rp-barra-mod">
+                                                                    <?php if ($pctFin > 0): ?><span class="is-fin" style="width: <?php echo $pctFin; ?>%"></span><?php endif; ?>
+                                                                    <?php if ($pctCurso > 0): ?><span class="is-curso" style="width: <?php echo $pctCurso; ?>%"></span><?php endif; ?>
+                                                                </div>
+                                                                <small><strong><?php echo $finalizados; ?></strong> de <?php echo $totalMod; ?> módulos finalizados<?php echo $enCurso ? ' · ' . $enCurso . ' en curso' : ''; ?></small>
+                                                            </div>
+                                                            <?php else: ?>
+                                                                <span class="rp-muted">Sin módulos registrados</span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td class="text-center"><strong><?php echo (int)$pg['TotalDocentes']; ?></strong></td>
+                                                        <td class="text-center"><strong><?php echo (int)$pg['TotalInscritos']; ?></strong></td>
+                                                        <td class="text-center rp-no-print">
+                                                            <button type="button" class="btn rp-btn-ver ver-modulos-programa"
+                                                                data-programa-id="<?php echo (int)$pg['ProgramaID']; ?>"
+                                                                data-programa-nombre="<?php echo htmlspecialchars($pg['NombrePrograma'], ENT_QUOTES); ?>"
+                                                                <?php echo $totalMod === 0 ? 'disabled' : ''; ?>>
+                                                                Módulos <i class="fa fa-chevron-right" style="font-size:10px"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                                <?php endforeach; ?>
+                                            </table>
+                                        </div>
+                                        <div class="rp-leyenda">
+                                            <span><i class="rp-dot is-fin"></i> Módulos finalizados</span>
+                                            <span><i class="rp-dot is-curso"></i> En curso</span>
+                                            <span><i class="rp-dot"></i> Por iniciar</span>
+                                        </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -177,29 +290,25 @@ date_default_timezone_set("America/La_Paz");
     </div>
 
     <!-- Modal de Módulos por Programa -->
-    <div class="modal fade" id="modalModulosPrograma" tabindex="-1" role="dialog" aria-labelledby="modalModulosProgramaLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
+    <div class="modal fade rp" id="modalModulosPrograma" tabindex="-1" role="dialog" aria-labelledby="modalModulosProgramaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable" role="document">
             <div class="modal-content">
-                <div class="modal-header" style="background: #3b3f5c; color: white;">
-                    <h5 class="modal-title" id="modalModulosProgramaLabel">
-                        <i class="flaticon2-layers"></i> Módulos del Programa
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
+                <div class="modal-header rp-modal-header">
+                    <div>
+                        <span class="rp-eyebrow">Módulos del programa</span>
+                        <h5 class="modal-title" id="modalModulosProgramaLabel">Programa</h5>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body rp-body" style="padding:0;">
                     <div id="contenido-modulos-programa">
-                        <div class="text-center p-5">
-                            <div class="kt-spinner kt-spinner--lg kt-spinner--brand"></div>
-                            <p class="mt-3" style="color: #575962; font-weight: 600;">Cargando módulos...</p>
-                        </div>
+                        <div class="rp-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando módulos...</div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        <i class="fa fa-times"></i> Cerrar
-                    </button>
+                <div class="modal-footer rp-modal-footer">
+                    <button type="button" class="btn btn-sm rp-btn" data-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -245,53 +354,6 @@ date_default_timezone_set("America/La_Paz");
     <script src="vistas/recursos/assets/js/scripts/reportemodulos.js?v=<?php echo time(); ?>"></script>
 
     <style>
-        /* Estilos para modal de módulos */
-        .modulo-card {
-            background: white;
-            border-radius: 4px;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            border: 1px solid #EBEDF3;
-            border-left: 3px solid #5867dd;
-        }
-
-        .modulo-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        }
-
-        .modulo-codigo {
-            background: #f1f3f4;
-            color: #5867dd;
-            padding: 4px 12px;
-            border-radius: 3px;
-            font-weight: 700;
-            font-size: 12px;
-        }
-
-        .modulo-nombre {
-            font-size: 14px;
-            font-weight: 600;
-            color: #464E5F;
-            margin-bottom: 0.5rem;
-        }
-
-        .modulo-costo {
-            font-size: 16px;
-            font-weight: 700;
-            color: #34bfa3;
-        }
-
-        .modulo-card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 0.75rem;
-            border-top: 1px solid #f0f0f0;
-        }
-
         /* =========================================================
            Reporte de Pagos por Programa (prefijo rp-)
            Acotado a .rp (portlet del reporte y su modal de detalle).
@@ -528,5 +590,274 @@ date_default_timezone_set("America/La_Paz");
         @media (max-width: 479.98px) {
             .rp-kpis, .rp-kpis-compacto { grid-template-columns: 1fr; }
         }
+
+        /* ===== Página compacta: franja de indicadores + tarjeta con pestañas ===== */
+        .rp-pagina { padding-top: 4px; padding-bottom: 24px; }
+        .rp-resumen {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .rp-res {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fff;
+            border: 1px solid var(--rp-borde);
+            border-radius: 12px;
+            padding: 12px 14px;
+        }
+        .rp-res-icono {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--rp-primario-suave);
+            color: var(--rp-primario);
+            font-size: 15px;
+        }
+        .rp-res strong { display: block; font-size: 20px; font-weight: 700; line-height: 1.1; color: var(--rp-texto); }
+        .rp-res small { display: block; font-size: 12px; color: var(--rp-texto-2); }
+
+        .kt-portlet.rp-card { border: 1px solid var(--rp-borde); border-radius: 12px; overflow: hidden; box-shadow: none; margin-bottom: 0; }
+        .rp-tabs-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 0 18px;
+            background: #fff;
+            border-bottom: 1px solid var(--rp-borde);
+        }
+        .rp-tabs { border: 0; gap: 4px; }
+        .rp-tabs .nav-link {
+            border: 0;
+            border-bottom: 2px solid transparent;
+            border-radius: 0;
+            padding: 14px 12px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--rp-texto-2);
+            background: transparent;
+        }
+        .rp-tabs .nav-link i { margin-right: 6px; }
+        .rp-tabs .nav-link:hover { color: var(--rp-texto); }
+        .rp-tabs .nav-link.active { color: var(--rp-primario); border-bottom-color: var(--rp-primario); font-weight: 600; }
+        .rp-card .rp-body { padding: 16px 18px 18px; }
+        .rp-card .rp-filtros { align-items: center; margin-bottom: 14px; gap: 12px; }
+        .rp-card .rp-filtro { flex: 0 1 220px; min-width: 180px; }
+        .rp-card .rp-filtro-busqueda { flex: 1 1 260px; }
+        .rp-nota { font-size: 12px; color: var(--rp-texto-2); white-space: nowrap; cursor: help; }
+        .rp-nota i { color: var(--rp-clinica); }
+
+        /* Indicadores de cobranza más compactos (la franja general ya va arriba) */
+        .rp-card .rp-kpis { gap: 10px; margin-bottom: 14px; }
+        .rp-card .rp-kpi { padding: 10px 12px; }
+        .rp-card .rp-kpi-valor { font-size: 17px; }
+        .rp-card .rp-kpi-sub { font-size: 11.5px; }
+
+        /* Tabla de programas y módulos */
+        .rp-tabla td { color: var(--rp-texto); }
+        .rp-fila-grupo td {
+            background: var(--rp-primario-suave) !important;
+            color: var(--rp-primario);
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            padding: 7px 12px !important;
+        }
+        .rp-fila-grupo td span { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--rp-texto-2); margin-left: 6px; }
+        .rp .rp-btn-ver:disabled { opacity: .45; cursor: not-allowed; }
+
+        /* Modal de módulos: lista compacta */
+        .rp-modulos { list-style: none; margin: 0; padding: 0; }
+        .rp-modulos li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 20px; border-bottom: 1px solid var(--rp-borde); }
+        .rp-modulo-num {
+            flex-shrink: 0;
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--rp-fondo);
+            color: var(--rp-texto-2);
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .rp-modulo-nombre { font-size: 13.5px; font-weight: 500; color: var(--rp-texto); margin-top: 4px; line-height: 1.35; }
+        .rp-modulos-total { padding: 10px 20px; font-size: 12px; color: var(--rp-texto-2); background: var(--rp-fondo); }
+
+        @media (max-width: 991.98px) {
+            .rp-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 575.98px) {
+            .rp-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .rp-tabs .nav-link { padding: 12px 8px; font-size: 12.5px; }
+            .rp-nota { white-space: normal; }
+        }
+
+        /* ===== Color y detalle (paleta validada para daltonismo con el validador de dataviz) =====
+           Identidad: azul #2a5298 · turquesa #0d9488 · violeta #7c3aed · naranja #c2410c
+           Cobro:     cobrado azul #2a5298 · saldo pendiente ámbar #d97706
+           Los números van en color de texto; el color va en marcas (acentos, íconos, barras). */
+        .rp {
+            --rp-azul: #2a5298;
+            --rp-turquesa: #0d9488;
+            --rp-violeta: #7c3aed;
+            --rp-naranja: #c2410c;
+            --rp-ambar: #d97706;
+            --rp-pizarra: #475569;
+        }
+        .rp-pagina { background: transparent; }
+
+        /* Franja de indicadores: acento superior + ícono en su color + línea de detalle */
+        .rp-res { position: relative; overflow: hidden; border-top: 3px solid var(--rp-acento, var(--rp-azul)); padding: 14px 16px; align-items: flex-start; }
+        .rp-res::after {
+            content: '';
+            position: absolute;
+            right: -22px;
+            bottom: -22px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--rp-acento, var(--rp-azul));
+            opacity: .07;
+        }
+        .rp-res.is-azul { --rp-acento: var(--rp-azul); }
+        .rp-res.is-turquesa { --rp-acento: var(--rp-turquesa); }
+        .rp-res.is-violeta { --rp-acento: var(--rp-violeta); }
+        .rp-res.is-naranja { --rp-acento: var(--rp-naranja); }
+        .rp-res .rp-res-icono { background: var(--rp-acento); color: #fff; box-shadow: 0 6px 14px -6px var(--rp-acento); }
+        .rp-res strong { font-size: 22px; }
+        .rp-res small { font-weight: 600; color: var(--rp-texto); }
+        .rp-res em { display: block; font-style: normal; font-size: 11.5px; color: var(--rp-texto-2); margin-top: 2px; }
+
+        /* Indicadores de cobranza: fondo blanco, acento lateral e ícono de color; valor en tinta */
+        .rp-card .rp-kpi {
+            background: #fff;
+            border: 1px solid var(--rp-borde);
+            border-left: 4px solid var(--rp-acento, var(--rp-azul));
+        }
+        .rp-card .rp-kpi.is-violeta { --rp-acento: var(--rp-violeta); }
+        .rp-card .rp-kpi.is-pizarra { --rp-acento: var(--rp-pizarra); }
+        .rp-card .rp-kpi.is-cobrado { --rp-acento: var(--rp-azul); }
+        .rp-card .rp-kpi.is-saldo { --rp-acento: var(--rp-ambar); }
+        .rp-card .rp-kpi.is-clinica { --rp-acento: var(--rp-turquesa); background: #fff; }
+        .rp-card .rp-kpi .rp-kpi-valor,
+        .rp-card .rp-kpi.is-cobrado .rp-kpi-valor,
+        .rp-card .rp-kpi.is-saldo .rp-kpi-valor,
+        .rp-card .rp-kpi.is-clinica .rp-kpi-valor { color: var(--rp-texto); }
+        .rp-card .rp-kpi .rp-kpi-label { color: var(--rp-texto-2); }
+        .rp-kpi-icono { color: var(--rp-acento, var(--rp-azul)); margin-right: 6px; }
+
+        /* Composición del total programado */
+        .rp-composicion:empty { display: none; }
+        .rp-composicion {
+            background: #fff;
+            border: 1px solid var(--rp-borde);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+        }
+        .rp-comp-cabecera { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+        .rp-comp-titulo { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--rp-texto-2); }
+        .rp-comp-leyenda { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--rp-texto-2); }
+        .rp-comp-leyenda b { color: var(--rp-texto); }
+        .rp-comp-barra { display: flex; gap: 2px; height: 14px; }
+        .rp-comp-seg { height: 100%; min-width: 4px; border-radius: 2px; transition: filter .15s; cursor: default; }
+        .rp-comp-seg:first-child { border-radius: 4px 2px 2px 4px; }
+        .rp-comp-seg:last-child { border-radius: 2px 4px 4px 2px; }
+        .rp-comp-seg:only-child { border-radius: 4px; }
+        .rp-comp-seg:hover { filter: brightness(1.12); }
+        .rp-comp-seg.is-cobrado { background: var(--rp-azul); }
+        .rp-comp-seg.is-saldo { background: var(--rp-ambar); }
+
+        /* Puntos de leyenda */
+        .rp-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #d7dce4; margin-right: 4px; vertical-align: 0; }
+        .rp-dot.is-cobrado, .rp-dot.is-fin { background: var(--rp-azul); }
+        .rp-dot.is-saldo { background: var(--rp-ambar); }
+        .rp-dot.is-curso { background: #8fb0e6; }
+
+        /* Barras de avance de cobro: azul cobrado sobre pista ámbar (lo pendiente) */
+        .rp-barra { background: rgba(217, 119, 6, .28); height: 7px; }
+        .rp-barra span, .rp-barra span.is-completo { background: var(--rp-azul); }
+
+        /* Montos en la tabla: tinta + marca de color */
+        .rp-cobrado, .rp-saldo { color: var(--rp-texto); font-weight: 700; }
+        .rp-cobrado::before, .rp-saldo::before {
+            content: '';
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: 1px;
+        }
+        .rp-cobrado::before { background: var(--rp-azul); }
+        .rp-saldo::before { background: var(--rp-ambar); }
+        .rp-clinica-monto { color: var(--rp-texto); font-weight: 700; }
+        .rp-clinica-monto::before {
+            content: '';
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: 1px;
+            background: var(--rp-turquesa);
+        }
+
+        /* Encabezados de grupo de la tabla con el color de su dato */
+        .rp-tabla thead th.rp-grupo-programa { box-shadow: inset 0 -2px 0 var(--rp-azul); color: var(--rp-azul); }
+        .rp-tabla thead th.rp-grupo-clinica { box-shadow: inset 0 -2px 0 var(--rp-turquesa); color: #0f766e; background: #f0fdfa; }
+
+        /* Avance académico (Programas y módulos) */
+        .rp-col-avance-mod { min-width: 220px; }
+        .rp-avance-mod small { display: block; font-size: 12px; color: var(--rp-texto-2); margin-top: 5px; }
+        .rp-avance-mod small strong { color: var(--rp-texto); }
+        .rp-barra-mod { display: flex; gap: 2px; height: 8px; border-radius: 4px; background: #e7ebf1; overflow: hidden; }
+        .rp-barra-mod span { height: 100%; }
+        .rp-barra-mod .is-fin { background: var(--rp-azul); }
+        .rp-barra-mod .is-curso { background: #8fb0e6; }
+        .rp-fila-grupo td { border-left: 3px solid var(--rp-azul); }
+
+        /* ===== Estilo formal: un solo tono institucional (azul marino + grises) =====
+           El color queda solo donde codifica información (cobrado vs pendiente). */
+        .rp {
+            --rp-azul: #1e3c72;
+            --rp-ambar: #cbd5e1;      /* "pendiente" pasa a gris azulado */
+            --rp-turquesa: #64748b;   /* clínicas en gris pizarra */
+            --rp-violeta: #1e3c72;
+            --rp-naranja: #1e3c72;
+            --rp-pizarra: #1e3c72;
+        }
+        /* Indicadores generales: sin barra de color ni círculo decorativo */
+        .rp-res { border-top: 1px solid var(--rp-borde); }
+        .rp-res::after { display: none; }
+        .rp-res .rp-res-icono { background: var(--rp-primario-suave); color: var(--rp-primario); box-shadow: none; }
+        /* Indicadores de cobranza: borde neutro, íconos en azul marino */
+        .rp-card .rp-kpi { border-left: 1px solid var(--rp-borde); }
+        .rp-kpi-icono { color: var(--rp-primario); }
+        /* Barras y puntos */
+        .rp-barra { background: #e2e8f0; }
+        .rp-dot.is-curso, .rp-barra-mod .is-curso { background: #94a3b8; }
+        .rp-comp-seg.is-saldo { background: #cbd5e1; }
+        .rp-dot.is-saldo, .rp-saldo::before { background: #94a3b8; }
+        /* Encabezados de grupo sobrios */
+        .rp-tabla thead th.rp-grupo-programa { color: var(--rp-primario); box-shadow: inset 0 -2px 0 var(--rp-primario); }
+        .rp-tabla thead th.rp-grupo-clinica { color: #475569; background: #f8fafc; box-shadow: inset 0 -2px 0 #94a3b8; }
+        .rp-tabla td.rp-celda-clinica, .rp-tabla tbody tr:hover td.rp-celda-clinica { background: transparent; }
+        .rp-nota i { color: var(--rp-texto-2); }
+        /* Etiquetas de estado apagadas */
+        .rp-chip.is-exito, .rp-chip.is-alerta, .rp-chip.is-info, .rp-chip.is-clinica { background: #f1f5f9; color: #334155; }
+        .rp-chip.is-peligro { background: #fef2f2; color: #991b1b; }
+        .rp-chip.is-exito { background: var(--rp-primario-suave); color: var(--rp-primario); }
     </style>
 </body>

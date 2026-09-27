@@ -135,15 +135,20 @@ class PlazoCuotaProgramaModelo
 
     /**
      * Plazos de cuota dentro de un rango de fechas, para mostrarlos como
-     * marcadores en el Calendario Académico (todos los roles).
+     * marcadores en el Calendario Académico.
      * @param string|null $desde
      * @param string|null $hasta
      * @param int|null $programaID
      * @param string|null $sede
+     * @param int[]|null $programaIDs Solo estos programas (Estudiante: sus programas inscritos).
+     *        null = sin restricción; un array vacío no devuelve nada.
      * @return array
      */
-    public static function ObtenerPlazosParaCalendarioModelo($desde = null, $hasta = null, $programaID = null, $sede = null)
+    public static function ObtenerPlazosParaCalendarioModelo($desde = null, $hasta = null, $programaID = null, $sede = null, $programaIDs = null)
     {
+        if (is_array($programaIDs) && empty($programaIDs)) {
+            return [];
+        }
         try {
             $sql = "SELECT
                         pc.IdPlazo, pc.ProgramaID, pc.FechaPlazo, pc.Descripcion,
@@ -168,6 +173,14 @@ class PlazoCuotaProgramaModelo
             if (!empty($sede)) {
                 $sql .= " AND p.Sede = :sede";
                 $params[':sede'] = $sede;
+            }
+            if (is_array($programaIDs)) {
+                $marcas = [];
+                foreach (array_values($programaIDs) as $i => $pid) {
+                    $marcas[] = ':pid' . $i;
+                    $params[':pid' . $i] = (int)$pid;
+                }
+                $sql .= " AND pc.ProgramaID IN (" . implode(',', $marcas) . ")";
             }
 
             $sql .= " ORDER BY pc.FechaPlazo ASC";

@@ -47,260 +47,112 @@ $sedes = ProgramasModelos::ListarSedesModelo();
       </div>
     </div>
 
-    <div class="kt-container kt-container--fluid kt-grid__item kt-grid__item--fluid">
+    <div class="kt-container md">
 
-        <!-- Sección de Selección de Programa -->
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="kt-portlet">
-                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
-                        <div class="kt-portlet__head-label">
-                            <h4 style="color: white; margin: 0;">
-                                <i class="fa fa-graduation-cap"></i> CARGAR MÓDULOS DE UN PROGRAMA
-                            </h4>
-                        </div>
-                    </div>
-
-                    <div class="kt-portlet__body">
-                        <div class="row filtros-modulos align-items-end">
-                            <div class="col-lg-2 col-md-6 form-group mb-3">
-                                <label class="filtro-label">Sede</label>
-                                <select class="form-control select2-uniforme" id="selectSede">
-                                    <option value="">Todas las sedes</option>
-                                    <?php
-                                    foreach ($sedes as $sede) {
-                                        $sedeVal = htmlspecialchars($sede, ENT_QUOTES);
-                                        echo '<option value="' . $sedeVal . '">' . $sedeVal . '</option>';
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-
-                            <div class="col-lg-2 col-md-6 form-group mb-3">
-                                <label class="filtro-label">Grado académico</label>
-                                <select class="form-control select2-uniforme" id="selectGrado">
-                                    <option value="">Todos los grados</option>
-                                    <option value="DIPLOMADO">DIPLOMADO</option>
-                                    <option value="MAESTRIA">MAESTRIA</option>
-                                    <option value="ESPECIALIDAD">ESPECIALIDAD</option>
-                                    <option value="DOCTORADO">DOCTORADO</option>
-                                </select>
-                            </div>
-
-                            <div class="col-lg-6 col-md-8 form-group mb-3">
-                                <label class="filtro-label">Programa</label>
-                                <select class="form-control select2-programa" id="selectPrograma" style="width: 100%;">
-                                    <option value="">Buscar programa...</option>
-                                    <?php
-                                    $programas = ProgramasModelos::ListaProgramaModelo();
-                                    foreach ($programas as $prog) {
-                                        $programaID = htmlspecialchars($prog['ProgramaID'] ?? '', ENT_QUOTES);
-                                        $nombrePrograma = htmlspecialchars($prog['NombrePrograma'] ?? '', ENT_QUOTES);
-                                        $codigo = htmlspecialchars($prog['Codigo'] ?? '', ENT_QUOTES);
-                                        $grado = htmlspecialchars($prog['GradoAcademico'] ?? '', ENT_QUOTES);
-                                        $modulos = htmlspecialchars($prog['Modulos'] ?? 0, ENT_QUOTES);
-                                        $costo = htmlspecialchars($prog['Costo'] ?? 0, ENT_QUOTES);
-                                        $sedePrograma = htmlspecialchars($prog['Sede'] ?? '', ENT_QUOTES);
-                                        $fechaInicioPrograma = htmlspecialchars($prog['FechaInicio'] ?? '', ENT_QUOTES);
-
-                                        echo '<option value="' . $programaID . '"
-                                                    data-nombre="' . $nombrePrograma . '"
-                                                    data-codigo="' . $codigo . '"
-                                                    data-grado="' . $grado . '"
-                                                    data-modulos="' . $modulos . '"
-                                                    data-costo="' . $costo . '"
-                                                    data-sede="' . $sedePrograma . '"
-                                                    data-fechainicio="' . $fechaInicioPrograma . '">';
-                                        echo $nombrePrograma . ' - ' . $grado . ' (' . $codigo . ') - ' . $sedePrograma;
-                                        echo '</option>';
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-
-                            <div class="col-lg-2 col-md-4 form-group mb-3">
-                                <button type="button" class="btn btn-success btn-block" id="btnAbrirModalModulos" disabled>
-                                    <i class="fa fa-plus"></i> Agregar Módulos
-                                </button>
-                            </div>
-                        </div>
-
-                        <style>
-                            .filtros-modulos .filtro-label {
-                                font-size: 0.72rem;
-                                font-weight: 600;
-                                color: #6c757d;
-                                text-transform: uppercase;
-                                letter-spacing: 0.3px;
-                                margin-bottom: 4px;
-                            }
-
-                            .filtros-modulos .form-control {
-                                font-size: 0.9rem;
-                            }
-                        </style>
-
-
-<style>
-    /* Ficha de información del programa seleccionado: compacta y formal */
-    .card-modern {
-        border-radius: 6px;
-        overflow: hidden;
-        border: 1px solid #dee2e6;
-    }
-
-    .header-modern {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-        padding: 10px 16px;
-    }
-
-    .header-modern h4 {
-        font-size: 0.95rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-    }
-
-    .program-title {
-        font-size: 1.05rem;
-        font-weight: 700;
-        border-left: 3px solid #6c757d;
-        padding-left: 10px;
-    }
-
-    .label-modern {
-        font-size: 0.72rem;
-        font-weight: 600;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-    }
-
-    .value-modern {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: #2b2b2b;
-    }
-
-    .modulo-highlight {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: #2b2b2b;
-    }
-</style>
-
-
-<div id="infoProgramaSeleccionadoNuevo"
-     style="display:none;"
-     class="card card-modern mt-4">
-
-    <!-- Header -->
-    <div class="card-header header-modern d-flex justify-content-between align-items-center">
-
-        <div class="d-flex align-items-center">
-            <i class="bi bi-journal-bookmark me-2 text-muted"></i>
-            <h4 class="mb-0 text-dark">Programa Seleccionado</h4>
-        </div>
-
-        <span class="badge badge-success">Activo</span>
-
-    </div>
-
-    <!-- Body -->
-    <div class="card-body px-3 py-3">
-
-        <!-- Título -->
-        <h2 class="program-title text-dark mb-3" id="infoNombrePrograma">
-            [Nombre del Programa]
-        </h2>
-
-        <div class="row">
-
-            <!-- Grado -->
-            <div class="col-md-4">
-                <div class="label-modern mb-1">Grado</div>
-                <div class="value-modern mb-2" id="infoGradoPrograma">
-                    [Grado]
+        <div class="md-card">
+            <!-- Cabecera: título + agregar módulos -->
+            <div class="md-card-head">
+                <div>
+                    <h3>Módulos por programa</h3>
+                    <p>Elige un programa para ver, cargar y editar sus módulos.</p>
                 </div>
-                <div class="label-modern mb-1">Código del programa</div>
-                <div class="value-modern" id="infoCodigoPrograma">
-                    [0]
+                <button type="button" class="md-btn md-btn-primario" id="btnAbrirModalModulos" disabled>
+                    <i class="fa fa-plus"></i> Agregar módulos
+                </button>
+            </div>
+
+            <!-- Filtros en una fila -->
+            <div class="md-filtros">
+                <div class="md-filtro">
+                    <label for="selectSede">Sede</label>
+                    <select class="form-control select2-uniforme" id="selectSede">
+                        <option value="">Todas las sedes</option>
+                        <?php foreach ($sedes as $sede): ?>
+                            <option value="<?php echo htmlspecialchars($sede, ENT_QUOTES); ?>"><?php echo htmlspecialchars($sede); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="md-filtro">
+                    <label for="selectGrado">Grado académico</label>
+                    <select class="form-control select2-uniforme" id="selectGrado">
+                        <option value="">Todos los grados</option>
+                        <option value="DIPLOMADO">Diplomado</option>
+                        <option value="ESPECIALIDAD">Especialidad</option>
+                        <option value="MAESTRIA">Maestría</option>
+                        <option value="DOCTORADO">Doctorado</option>
+                    </select>
+                </div>
+                <div class="md-filtro md-filtro-programa">
+                    <label for="selectPrograma">Programa</label>
+                    <select class="form-control select2-programa" id="selectPrograma" style="width: 100%;">
+                        <option value="">Buscar programa...</option>
+                        <?php foreach (ProgramasModelos::ListaProgramaModelo() as $prog): ?>
+                            <?php
+                                $h = function ($v) { return htmlspecialchars((string)$v, ENT_QUOTES); };
+                            ?>
+                            <option value="<?php echo $h($prog['ProgramaID'] ?? ''); ?>"
+                                data-nombre="<?php echo $h($prog['NombrePrograma'] ?? ''); ?>"
+                                data-codigo="<?php echo $h($prog['Codigo'] ?? ''); ?>"
+                                data-grado="<?php echo $h($prog['GradoAcademico'] ?? ''); ?>"
+                                data-modulos="<?php echo $h($prog['Modulos'] ?? 0); ?>"
+                                data-costo="<?php echo $h($prog['Costo'] ?? 0); ?>"
+                                data-sede="<?php echo $h($prog['Sede'] ?? ''); ?>"
+                                data-fechainicio="<?php echo $h($prog['FechaInicio'] ?? ''); ?>">
+                                <?php echo $h($prog['NombrePrograma'] ?? '') . ' - ' . $h($prog['GradoAcademico'] ?? '') . ' (' . $h($prog['Codigo'] ?? '') . ') - ' . $h($prog['Sede'] ?? ''); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
             </div>
 
-            <!-- Número de módulos -->
-            <div class="col-md-4">
-                <div class="label-modern mb-1">N° de Módulos</div>
-                <span id="infoNumModulosPrograma" class="modulo-highlight">
-                    [0]
-                </span>
-                <div id="avisoModulosCompletos" class="mt-2" style="display:none;">
-                    <span class="badge badge-success"><i class="fa fa-check-circle"></i> Módulos completos</span>
+            <!-- Programa seleccionado (lo muestra el JS al elegir un programa) -->
+            <div id="infoProgramaSeleccionadoNuevo" class="md-programa" style="display:none;">
+                <div class="md-programa-titulo">
+                    <span class="md-eyebrow">Programa seleccionado</span>
+                    <h4 id="infoNombrePrograma"></h4>
+                    <div class="md-programa-meta">
+                        <span class="md-chip" id="infoGradoPrograma"></span>
+                        <span class="md-chip is-claro" id="infoCodigoPrograma"></span>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Costo Total del Programa -->
-            <div class="col-md-4">
-                <div class="label-modern mb-1">Costo Total</div>
-                <div class="value-modern" id="infoCostoPrograma">
-                    Bs. 0.00
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="card-footer text-center bg-transparent py-2">
-        <small class="text-muted">
-            Información relevante para la matrícula.
-        </small>
-    </div>
-</div>
+                <div class="md-programa-datos">
+                    <div>
+                        <small>Módulos registrados</small>
+                        <strong><span id="infoModulosRegistrados">0</span> de <span id="infoNumModulosPrograma">0</span></strong>
+                        <div class="md-barra"><span id="infoBarraModulos" style="width:0%"></span></div>
+                        <span id="avisoModulosCompletos" class="md-completo" style="display:none;"><i class="fa fa-check-circle"></i> Módulos completos</span>
+                    </div>
+                    <div>
+                        <small>Costo total del programa</small>
+                        <strong id="infoCostoPrograma">Bs. 0,00</strong>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Tabla de Módulos Registrados -->
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="kt-portlet">
-                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
-                        <div class="kt-portlet__head-label">
-                            <h4 style="color: white; margin: 0;">
-                                <i class="fa fa-list"></i> Módulos Registrados
-                            </h4>
-                        </div>
-                    </div>
-
-                    <div class="kt-portlet__body">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-bordered table-hover" id="tablaModulos" style="width: 100%;">
-                                <thead style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
-                                    <tr>
-                                        <th class="text-center" style="color: white; width: 50px;">#</th>
-                                        <th class="text-center" style="color: white; width: 120px;">CÓDIGO</th>
-                                        <th style="color: white; min-width: 180px;">NOMBRE MÓDULO</th>
-                                        <th style="color: white; min-width: 180px;">PROGRAMA</th>
-                                        <th class="text-center" style="color: white; width: 130px;">FECHAS</th>
-                                        <th class="text-center" style="color: white; width: 110px;">ESTADO MÓDULO</th>
-                                        <th style="color: white; min-width: 150px;">DOCENTE ASIGNADO</th>
-                                        <th class="text-center" style="color: white; width: 100px;">ESTADO</th>
-                                        <th class="text-center" style="color: white; width: 120px;">ACCIONES</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaModulosBody">
-                                    <tr>
-                                        <td colspan="9" class="text-center text-muted">
-                                            <i class="fa fa-hand-pointer-o"></i> Seleccione un programa para ver los módulos registrados
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+            <!-- Tabla de módulos del programa -->
+            <div class="md-tabla-wrap">
+                <div class="table-responsive">
+                    <table class="table md-tabla mb-0" id="tablaModulos" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th class="md-num">#</th>
+                                <th>Módulo</th>
+                                <th>Periodo</th>
+                                <th>Docente</th>
+                                <th>Estado</th>
+                                <th class="text-right">Editar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaModulosBody">
+                            <tr>
+                                <td colspan="6" class="md-vacio">
+                                    <i class="fa fa-hand-pointer"></i>
+                                    <strong>Selecciona un programa</strong>
+                                    <span>Sus módulos registrados aparecerán aquí.</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -737,7 +589,7 @@ $(document).ready(function() {
         $('#btnAbrirModalModulos').prop('disabled', true);
 
         // Limpiar tabla y volver al mensaje inicial
-        $('#tablaModulosBody').html('<tr><td colspan="7" class="text-center text-muted"><i class="fa fa-hand-pointer-o"></i> Seleccione un programa para ver los módulos registrados</td></tr>');
+        $('#tablaModulosBody').html('<tr><td colspan="6" class="md-vacio"><i class="fa fa-hand-pointer"></i><strong>Selecciona un programa</strong><span>Sus módulos registrados aparecerán aquí.</span></td></tr>');
 
         // Destruir DataTable si existe
         if ($.fn.DataTable.isDataTable('#tablaModulos')) {
@@ -814,6 +666,11 @@ $(document).ready(function() {
         const modulosEsperados = parseInt($('#btnAbrirModalModulos').data('modulos')) || 0;
         const completos = modulosEsperados > 0 && modulosRegistrados >= modulosEsperados;
 
+        // Contador "X de N módulos registrados" y su barra de avance
+        $('#infoModulosRegistrados').text(modulosRegistrados);
+        const pctRegistrados = modulosEsperados > 0 ? Math.min(100, Math.round(modulosRegistrados / modulosEsperados * 100)) : 0;
+        $('#infoBarraModulos').css('width', pctRegistrados + '%');
+
         if (completos) {
             $('#btnAbrirModalModulos').prop('disabled', true).attr('title', 'Este programa ya tiene todos sus módulos registrados');
             $('#avisoModulosCompletos').show();
@@ -832,7 +689,7 @@ $(document).ready(function() {
         }
 
         // Mostrar mensaje de carga
-        $('#tablaModulosBody').html('<tr><td colspan="7" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando módulos...</td></tr>');
+        $('#tablaModulosBody').html('<tr><td colspan="6" class="md-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando módulos...</td></tr>');
 
         // Petición AJAX
         $.ajax({
@@ -892,7 +749,7 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error('✗ Error al cargar módulos:', error);
-                $('#tablaModulosBody').html('<tr><td colspan="9" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los módulos</td></tr>');
+                $('#tablaModulosBody').html('<tr><td colspan="6" class="md-vacio" style="color:#991b1b"><i class="fa fa-exclamation-triangle"></i> Error al cargar los módulos</td></tr>');
             }
         });
     }
@@ -1712,4 +1569,236 @@ $(document).ready(function() {
     margin-bottom: 5px;
     z-index: 1000;
 }
+
+/* =========================================================
+   MÓDULOS (prefijo md-): tarjeta única con filtros, programa
+   seleccionado y tabla. Estilo formal: azul marino + grises.
+   ========================================================= */
+.md, #modalRegistrarModulos, #modalEditarModulo {
+    --md-primario: #1e3c72;
+    --md-primario-suave: #eef2f9;
+    --md-texto: #1f2937;
+    --md-texto-2: #6b7280;
+    --md-borde: #e5e7eb;
+    --md-fondo: #f7f8fa;
+}
+.md { color: var(--md-texto); padding-bottom: 24px; }
+.md-card { background: #fff; border: 1px solid var(--md-borde); border-radius: 12px; overflow: hidden; }
+.md-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--md-borde);
+}
+.md-card-head h3 { font-size: 16px; font-weight: 700; margin: 0; color: var(--md-texto); }
+.md-card-head p { font-size: 12.5px; color: var(--md-texto-2); margin: 2px 0 0; }
+
+.md-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.md-btn-primario { background: var(--md-primario); color: #fff; }
+.md-btn-primario:hover:not(:disabled) { background: #16305c; }
+.md-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Filtros */
+.md-filtros {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 14px 20px;
+    background: var(--md-fondo);
+    border-bottom: 1px solid var(--md-borde);
+}
+.md-filtro { flex: 0 1 200px; min-width: 160px; }
+.md-filtro-programa { flex: 1 1 360px; }
+.md-filtro label { display: block; font-size: 11.5px; font-weight: 600; color: var(--md-texto-2); margin-bottom: 4px; }
+.md .form-control { height: 38px; border: 1px solid var(--md-borde); border-radius: 8px; font-size: 13px; }
+
+/* Programa seleccionado */
+.md-programa {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--md-borde);
+}
+.md-eyebrow { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--md-texto-2); }
+.md-programa-titulo h4 { font-size: 16px; font-weight: 700; margin: 2px 0 6px; color: var(--md-texto); }
+.md-programa-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.md-chip { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: var(--md-primario); color: #fff; }
+.md-chip.is-claro { background: #f1f5f9; color: #475569; }
+.md-programa-datos { display: flex; gap: 12px; flex-wrap: wrap; }
+.md-programa-datos > div { min-width: 190px; padding: 10px 14px; border: 1px solid var(--md-borde); border-radius: 10px; }
+.md-programa-datos small { display: block; font-size: 11px; color: var(--md-texto-2); }
+.md-programa-datos strong { font-size: 16px; font-variant-numeric: tabular-nums; }
+.md-barra { height: 6px; border-radius: 3px; background: #e2e8f0; overflow: hidden; margin-top: 6px; }
+.md-barra span { display: block; height: 100%; background: var(--md-primario); border-radius: 3px; transition: width .3s; }
+.md-completo { display: inline-block; margin-top: 6px; font-size: 11.5px; font-weight: 600; color: var(--md-primario); }
+
+/* Tabla */
+.md-tabla-wrap { padding: 4px 0 0; }
+.md-tabla { font-size: 13px; color: var(--md-texto); }
+.md-tabla thead th {
+    background: #fff;
+    border-top: 0;
+    border-bottom: 1px solid var(--md-borde) !important;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--md-texto-2);
+    padding: 10px 14px;
+    white-space: nowrap;
+}
+.md-tabla td { border-top: 1px solid var(--md-borde); padding: 12px 14px; vertical-align: middle; }
+.md-tabla tbody tr:hover td { background: #fafbfd; }
+.md-tabla th:first-child, .md-tabla td:first-child { padding-left: 20px; }
+.md-tabla th:last-child, .md-tabla td:last-child { padding-right: 20px; }
+.md-num { width: 44px; color: var(--md-texto-2); font-weight: 600; }
+.md-codigo { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 6px; background: var(--md-primario-suave); color: var(--md-primario); }
+.md-nombre { font-weight: 600; line-height: 1.35; margin-top: 4px; }
+.md-periodo strong, .md-docente strong { display: block; font-weight: 600; white-space: nowrap; }
+.md-periodo small, .md-docente small { display: block; font-size: 11.5px; color: var(--md-texto-2); }
+.md-muted { color: var(--md-texto-2); font-size: 12.5px; }
+.md-periodo small.md-alerta { color: #991b1b; font-weight: 600; }
+.md-tabla th:last-child { min-width: 70px; }
+.md-estado { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.md-estado.is-en-curso { background: var(--md-primario-suave); color: var(--md-primario); }
+.md-estado.is-por-iniciar { background: #f1f5f9; color: #334155; }
+.md-estado.is-culminado, .md-estado.is-validado { background: #f1f5f9; color: #64748b; }
+.md-estado.is-sin-fechas { background: #fef2f2; color: #991b1b; }
+.md-accion {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--md-borde);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--md-primario);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.md-accion:hover { background: var(--md-primario); border-color: var(--md-primario); color: #fff; }
+.md-vacio { text-align: center; padding: 40px 20px !important; color: var(--md-texto-2); }
+.md-vacio i { display: block; font-size: 26px; color: #c7cdd8; margin-bottom: 10px; }
+.md-vacio strong { display: block; color: var(--md-texto); }
+.md-vacio span { font-size: 12.5px; }
+
+/* Controles de DataTables (buscador, cantidad, paginación) */
+.md .dataTables_wrapper .row:first-child, .md .dataTables_wrapper .row:last-child { padding: 10px 20px; margin: 0; }
+.md .dataTables_wrapper .dataTables_filter input,
+.md .dataTables_wrapper .dataTables_length select { border: 1px solid var(--md-borde); border-radius: 8px; height: 34px; }
+.md .dataTables_wrapper .dataTables_info { font-size: 12px; color: var(--md-texto-2); }
+.md .page-item.active .page-link { background: var(--md-primario); border-color: var(--md-primario); }
+.md .page-link { color: var(--md-primario); }
+
+/* Ventanas de registrar y editar módulo: encabezado liso y formal */
+#modalRegistrarModulos .modal-content, #modalEditarModulo .modal-content { border: 0; border-radius: 14px; overflow: hidden; }
+#modalRegistrarModulos .modal-header, #modalEditarModulo .modal-header { background: var(--md-primario) !important; border: 0; padding: 16px 22px; }
+#modalRegistrarModulos .modal-footer, #modalEditarModulo .modal-footer { border-top: 1px solid var(--md-borde); }
+#modalRegistrarModulos .form-control, #modalEditarModulo .form-control { border: 1px solid var(--md-borde); border-radius: 8px; }
+#modalRegistrarModulos .btn-primary, #modalEditarModulo .btn-primary,
+#modalRegistrarModulos .btn-success, #modalEditarModulo .btn-success { background: var(--md-primario); border-color: var(--md-primario); }
+
+@media (max-width: 767.98px) {
+    .md-filtro, .md-filtro-programa { flex-basis: 100%; }
+    .md-programa-datos > div { flex: 1 1 100%; }
+}
+
+  /* ===== Selectores (select2): alto uniforme, flecha y "×" centradas, texto largo recortado ===== */
+  .md .select2-container--default .select2-selection--single {
+    height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    position: relative;
+    padding: 0 !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    background: #fff !important;
+  }
+  .md .select2-container--default .select2-selection--single .select2-selection__rendered {
+    flex: 1;
+    line-height: 36px !important;
+    padding: 0 56px 0 12px !important;
+    font-size: 13px !important;
+    color: #1f2937 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .md .select2-container--default .select2-selection--single .select2-selection__placeholder { color: #9aa3b2 !important; }
+  .md .select2-container--default .select2-selection--single .select2-selection__arrow:before,
+  .md .select2-container--default .select2-selection--single .select2-selection__arrow b { color: #6b7280 !important; border-top-color: #6b7280 !important; }
+  .md .select2-container--default .select2-selection--single .select2-selection__arrow {
+    position: absolute !important;
+    top: 50% !important;
+    right: 8px !important;
+    transform: translateY(-50%) !important;
+    width: 20px !important;
+    height: 20px !important;
+    line-height: 20px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+  }
+  .md .select2-container--default .select2-selection--single .select2-selection__clear {
+    position: absolute !important;
+    top: 50% !important;
+    right: 30px !important;
+    transform: translateY(-50%);
+    margin: 0 !important;
+    padding: 0 4px !important;
+    height: auto !important;
+    line-height: 1 !important;
+    font-size: 15px;
+    color: #9aa3b2;
+    background: transparent;
+    border: 0;
+    z-index: 1;
+  }
+  .md .select2-container--default .select2-selection--single .select2-selection__clear:hover { color: #991b1b; }
+  .md .select2-container--focus .select2-selection--single,
+  .md .select2-container--open .select2-selection--single {
+    border-color: #1e3c72 !important;
+    box-shadow: 0 0 0 3px rgba(30, 60, 114, .12);
+  }
+  /* Lista desplegable (se agrega al final del <body>, fuera del contenedor) */
+  .select2-container--open .select2-dropdown {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .12);
+  }
+  .select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px !important;
+    height: 34px;
+  }
+  .select2-results__option { font-size: 13px; padding: 8px 12px !important; }
+  .select2-container--default .select2-results__option--highlighted[aria-selected],
+  .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background: #1e3c72 !important;
+    color: #fff !important;
+  }
+  .select2-container--default .select2-results__option[aria-selected=true],
+  .select2-container--default .select2-results__option--selected {
+    background: #eef2f9;
+    color: #1e3c72;
+  }
 </style>

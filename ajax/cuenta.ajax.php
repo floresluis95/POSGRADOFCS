@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/validar-sesion.php';
+ExigirSesionAjax();
 /**
  * AJAX para gestión de cuentas (registrar, listar, cambiar estado)
  * Evita recargar la página completa mientras el modal de cuentas

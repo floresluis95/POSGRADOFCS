@@ -24,6 +24,11 @@ if (!isset($_SESSION['Validar']) || !$_SESSION['Validar']) {
     ob_end_clean();
     die('Acceso denegado. Sesión no válida.');
 }
+// Listas de asistencia/calificaciones: solo Administración, Secretaría y Docentes
+if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'DOC'], true)) {
+    ob_end_clean();
+    die('Acceso denegado.');
+}
 
 // Incluir archivos necesarios
 try {
