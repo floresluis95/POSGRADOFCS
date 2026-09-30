@@ -682,8 +682,8 @@ $csrf_token = bin2hex(random_bytes(32));
 
           <div class="alert mb-3" style="background-color: #fff3cd; border: 1px solid #ffe08a; border-radius: 8px; padding: 12px 16px;">
             <i class="fas fa-key text-warning mr-2"></i>
-            <strong>Contraseña:</strong> se generará de forma aleatoria y segura al confirmar. Podrá verla en el
-            aviso de confirmación y, más adelante, también en la columna "Contraseña" de la lista de docentes.
+            <strong>Contraseña:</strong> se generará de forma aleatoria y segura al confirmar. Se mostrará
+            <strong>una única vez</strong> en el aviso de confirmación, así que anótela. Si se olvida, use "Restablecer contraseña".
           </div>
 
           <div class="form-group">

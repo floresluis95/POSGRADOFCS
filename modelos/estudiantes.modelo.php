@@ -19,7 +19,7 @@ class EstudiantesModelos
     public static function ListaEstudianteActivoModelo()
     {
         $stmt = Conexion::Conectar()->prepare("SELECT e.*, p.NombreProfesion,
-                                                u.Usuario, u.Estado as EstadoUsuario, u.PasswordTexto
+                                                u.Usuario, u.Estado as EstadoUsuario
                                                 FROM estudiante e
                                                 INNER JOIN profesion p ON e.IdProfesion = p.IdProfesion
                                                 LEFT JOIN usuario u ON e.EstudianteID = u.EstudianteID

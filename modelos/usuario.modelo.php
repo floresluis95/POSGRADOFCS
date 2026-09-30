@@ -168,15 +168,14 @@
                 $conexion->beginTransaction();
 
                 // Insertar en tabla usuario (EstudianteID para estudiantes, IdPersonal NULL).
-                // PasswordTexto: igual que para docentes, se guarda en texto plano para poder
-                // mostrarla después en "Ver detalle" (el Password hasheado no es reversible).
-                $stmt = $conexion->prepare("INSERT INTO `usuario` (`IdPersonal`, `EstudianteID`, `Usuario`, `Password`, `PasswordTexto`, `Tipo`, `Estado`)
-                                           VALUES (NULL, :EstudianteID, :Usuario, :Password, :PasswordTexto, :Tipo, '1')");
+                // Solo se guarda el Password hasheado; la contraseña en claro se muestra
+                // una única vez al crearla y nunca se persiste.
+                $stmt = $conexion->prepare("INSERT INTO `usuario` (`IdPersonal`, `EstudianteID`, `Usuario`, `Password`, `Tipo`, `Estado`)
+                                           VALUES (NULL, :EstudianteID, :Usuario, :Password, :Tipo, '1')");
 
                 $stmt->bindParam(":EstudianteID", $DatosModelo['EstudianteID'], PDO::PARAM_INT);
                 $stmt->bindParam(":Usuario", $DatosModelo['Usuario'], PDO::PARAM_STR);
                 $stmt->bindParam(":Password", $DatosModelo['Password'], PDO::PARAM_STR);
-                $stmt->bindParam(":PasswordTexto", $DatosModelo['PasswordTexto'], PDO::PARAM_STR);
                 $stmt->bindParam(":Tipo", $DatosModelo['Tipo'], PDO::PARAM_STR);
 
                 if ($stmt->execute()) {
@@ -199,17 +198,16 @@
 
         /**
          * Restablecer la contraseña de un estudiante que ya tiene usuario asignado
-         * (usado tanto para "olvidé mi contraseña" como para las cuentas creadas
-         * antes de guardar PasswordTexto, que no tienen forma de mostrar la original).
+         * (para "olvidó su contraseña"). Solo guarda el hash; la contraseña en claro
+         * se devuelve al llamador para mostrarla una única vez, no se persiste.
          * No cambia el nombre de usuario.
          */
-        public static function RestablecerPasswordEstudianteModelo($estudianteID, $passwordHash, $passwordTexto)
+        public static function RestablecerPasswordEstudianteModelo($estudianteID, $passwordHash)
         {
             $stmt = Conexion::Conectar()->prepare(
-                "UPDATE usuario SET Password = :password, PasswordTexto = :passwordTexto WHERE EstudianteID = :estudianteID"
+                "UPDATE usuario SET Password = :password WHERE EstudianteID = :estudianteID"
             );
             $stmt->bindParam(":password", $passwordHash, PDO::PARAM_STR);
-            $stmt->bindParam(":passwordTexto", $passwordTexto, PDO::PARAM_STR);
             $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
             return $stmt->execute() && $stmt->rowCount() > 0 ? 'exitoso' : 'error';
         }
@@ -218,13 +216,12 @@
          * Restablecer la contraseña de un docente que ya tiene usuario asignado.
          * No cambia el nombre de usuario.
          */
-        public static function RestablecerPasswordDocenteModelo($docenteID, $passwordHash, $passwordTexto)
+        public static function RestablecerPasswordDocenteModelo($docenteID, $passwordHash)
         {
             $stmt = Conexion::Conectar()->prepare(
-                "UPDATE usuario SET Password = :password, PasswordTexto = :passwordTexto WHERE DocenteID = :docenteID"
+                "UPDATE usuario SET Password = :password WHERE DocenteID = :docenteID"
             );
             $stmt->bindParam(":password", $passwordHash, PDO::PARAM_STR);
-            $stmt->bindParam(":passwordTexto", $passwordTexto, PDO::PARAM_STR);
             $stmt->bindParam(":docenteID", $docenteID, PDO::PARAM_INT);
             return $stmt->execute() && $stmt->rowCount() > 0 ? 'exitoso' : 'error';
         }
@@ -233,13 +230,12 @@
          * Restablecer la contraseña de un usuario del personal administrativo
          * (ADM, SEC, etc.). No cambia el nombre de usuario.
          */
-        public static function RestablecerPasswordPersonalModelo($idPersonal, $passwordHash, $passwordTexto)
+        public static function RestablecerPasswordPersonalModelo($idPersonal, $passwordHash)
         {
             $stmt = Conexion::Conectar()->prepare(
-                "UPDATE usuario SET Password = :password, PasswordTexto = :passwordTexto WHERE IdPersonal = :idPersonal"
+                "UPDATE usuario SET Password = :password WHERE IdPersonal = :idPersonal"
             );
             $stmt->bindParam(":password", $passwordHash, PDO::PARAM_STR);
-            $stmt->bindParam(":passwordTexto", $passwordTexto, PDO::PARAM_STR);
             $stmt->bindParam(":idPersonal", $idPersonal, PDO::PARAM_INT);
             return $stmt->execute() && $stmt->rowCount() > 0 ? 'exitoso' : 'error';
         }
@@ -280,13 +276,12 @@
                 $conexion->beginTransaction();
 
                 // Insertar en tabla usuario (DocenteID para docentes, IdPersonal y EstudianteID NULL)
-                $stmt = $conexion->prepare("INSERT INTO `usuario` (`IdPersonal`, `EstudianteID`, `DocenteID`, `Usuario`, `Password`, `PasswordTexto`, `Tipo`, `Estado`)
-                                           VALUES (NULL, NULL, :DocenteID, :Usuario, :Password, :PasswordTexto, :Tipo, '1')");
+                $stmt = $conexion->prepare("INSERT INTO `usuario` (`IdPersonal`, `EstudianteID`, `DocenteID`, `Usuario`, `Password`, `Tipo`, `Estado`)
+                                           VALUES (NULL, NULL, :DocenteID, :Usuario, :Password, :Tipo, '1')");
 
                 $stmt->bindParam(":DocenteID", $DatosModelo['DocenteID'], PDO::PARAM_INT);
                 $stmt->bindParam(":Usuario", $DatosModelo['Usuario'], PDO::PARAM_STR);
                 $stmt->bindParam(":Password", $DatosModelo['Password'], PDO::PARAM_STR);
-                $stmt->bindParam(":PasswordTexto", $DatosModelo['PasswordTexto'], PDO::PARAM_STR);
                 $stmt->bindParam(":Tipo", $DatosModelo['Tipo'], PDO::PARAM_STR);
 
                 if ($stmt->execute()) {

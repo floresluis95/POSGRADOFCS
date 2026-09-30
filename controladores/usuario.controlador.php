@@ -102,15 +102,9 @@
                     ? '<span class="badge badge-success"><i class="fa fa-check"></i> Activo</span>'
                     : '<span class="badge badge-danger"><i class="fa fa-times"></i> Inactivo</span>';
 
-                // Determinar la contraseña a mostrar
-                $passwordMostrar = '';
-                if (!empty($Usuario['PasswordTexto'])) {
-                    // Si existe PasswordTexto, mostrarlo
-                    $passwordMostrar = $Usuario['PasswordTexto'];
-                } else {
-                    // Si no existe, la contraseña inicial es el CI
-                    $passwordMostrar = $Usuario['CedulaIdentidad'];
-                }
+                // Por seguridad la contraseña ya no se almacena en claro ni se muestra
+                // en la lista: solo se ve una vez al crearla o restablecerla.
+                $passwordMostrar = '••••••';
 
                 // Restablecer contraseña: solo el administrador (si lo hiciera una
                 // secretaria, podría restablecer la del administrador y entrar como él).
@@ -371,17 +365,12 @@
                 $passwordTexto = $this->GenerarPasswordEstudiante();
                 $password = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
 
-                error_log("Credenciales generadas - Usuario: " . $usuario . ", Password texto: " . $passwordTexto);
-
                 $DatosModelo = array(
                     "EstudianteID" => $estudianteID,
                     "Usuario" => $usuario,
                     "Password" => $password,
-                    "PasswordTexto" => $passwordTexto,
                     "Tipo" => "EST"
                 );
-
-                error_log("Datos a insertar: " . print_r($DatosModelo, true));
 
                 $resultado = UsuarioModelos::CrearUsuarioEstudianteModelo($DatosModelo);
                 error_log("Resultado del modelo: " . $resultado);
@@ -553,17 +542,12 @@
                 $passwordTexto = $this->GenerarPasswordCompleja($nombre, $ci);
                 $password = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
 
-                error_log("Credenciales generadas - Usuario: " . $usuario . ", Password texto: " . $passwordTexto);
-
                 $DatosModelo = array(
                     "DocenteID" => $docenteID,
                     "Usuario" => $usuario,
                     "Password" => $password,
-                    "PasswordTexto" => $passwordTexto,
                     "Tipo" => "DOC"
                 );
-
-                error_log("Datos a insertar: " . print_r($DatosModelo, true));
 
                 $resultado = UsuarioModelos::CrearUsuarioDocenteModelo($DatosModelo);
                 error_log("Resultado del modelo: " . $resultado);

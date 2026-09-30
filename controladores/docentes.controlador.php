@@ -153,7 +153,6 @@ private function ConstruirFilaDocente($Docente, $numero)
                             data-cedula="' . htmlspecialchars($Docente['CedulaProfesional'] ?: 'No registrada') . '"
                             data-matricula-nacional="' . htmlspecialchars($Docente['MatriculaNacional'] ?: 'No registrada') . '"
                             data-usuario="' . htmlspecialchars($tieneUsuario ? $Docente['Usuario'] : 'No asignado') . '"
-                            data-password="' . htmlspecialchars($tieneUsuario && !empty($Docente['PasswordTexto']) ? $Docente['PasswordTexto'] : '') . '"
                             data-estado-usuario="' . htmlspecialchars($estadoUsuarioTexto) . '">
                             <i class="fa fa-eye"></i>
                         </button>';

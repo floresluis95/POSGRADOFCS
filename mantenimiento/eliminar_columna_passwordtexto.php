@@ -1,6 +1,10 @@
 <?php
 /**
- * Script para agregar columna PasswordTexto a la tabla usuario
+ * Script para ELIMINAR la columna PasswordTexto de la tabla usuario.
+ *
+ * Por seguridad ya no se almacena la contraseña en texto plano: solo se
+ * conserva el hash (columna Password) y la contraseña en claro se muestra
+ * una única vez al crearla o restablecerla. Ejecutar una sola vez.
  */
 
 require_once 'modelos/conexion.modelo.php';
@@ -8,18 +12,16 @@ require_once 'modelos/conexion.modelo.php';
 try {
     $conexion = Conexion::Conectar();
 
-    // Verificar si la columna ya existe
+    // Verificar si la columna existe
     $stmt = $conexion->prepare("SHOW COLUMNS FROM usuario LIKE 'PasswordTexto'");
     $stmt->execute();
     $existe = $stmt->fetch();
 
-    if ($existe) {
-        echo "✓ La columna 'PasswordTexto' ya existe en la tabla 'usuario'.\n";
+    if (!$existe) {
+        echo "✓ La columna 'PasswordTexto' ya no existe en la tabla 'usuario'.\n";
     } else {
-        // Agregar la columna
-        $sql = "ALTER TABLE usuario ADD COLUMN PasswordTexto VARCHAR(50) DEFAULT NULL AFTER Password";
-        $conexion->exec($sql);
-        echo "✓ Columna 'PasswordTexto' agregada exitosamente a la tabla 'usuario'.\n";
+        $conexion->exec("ALTER TABLE usuario DROP COLUMN PasswordTexto");
+        echo "✓ Columna 'PasswordTexto' eliminada exitosamente de la tabla 'usuario'.\n";
     }
 
     echo "\n=== Estructura actual de la tabla usuario ===\n";

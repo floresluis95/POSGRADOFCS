@@ -47,7 +47,7 @@ try {
             }
             $passwordTexto = UsuarioControladores::GenerarPasswordEstudiante();
             $passwordHash = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
-            $resultado = UsuarioModelos::RestablecerPasswordEstudianteModelo($id, $passwordHash, $passwordTexto);
+            $resultado = UsuarioModelos::RestablecerPasswordEstudianteModelo($id, $passwordHash);
             break;
 
         case 'docente':
@@ -61,7 +61,7 @@ try {
             }
             $passwordTexto = UsuarioControladores::GenerarPasswordCompleja();
             $passwordHash = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
-            $resultado = UsuarioModelos::RestablecerPasswordDocenteModelo($id, $passwordHash, $passwordTexto);
+            $resultado = UsuarioModelos::RestablecerPasswordDocenteModelo($id, $passwordHash);
             break;
 
         case 'personal':
@@ -75,7 +75,7 @@ try {
             }
             $passwordTexto = UsuarioControladores::GenerarPasswordCompleja();
             $passwordHash = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
-            $resultado = UsuarioModelos::RestablecerPasswordPersonalModelo($id, $passwordHash, $passwordTexto);
+            $resultado = UsuarioModelos::RestablecerPasswordPersonalModelo($id, $passwordHash);
             break;
 
         default:

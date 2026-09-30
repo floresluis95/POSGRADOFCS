@@ -870,14 +870,29 @@ $csrf_token = bin2hex(random_bytes(32));
       <form method="post" enctype="multipart/form-data">
         <div class="modal-body" style="padding: 30px;">
 
-          <div class="alert alert-info" style="border-left: 4px solid #17a2b8; background-color: #d1ecf1;">
-            <i class="fas fa-info-circle mr-2"></i>
-            <strong>Credenciales que se generarán automáticamente:</strong>
-            <ul class="mb-0 mt-2">
-              <li><strong>Usuario:</strong> Número de Carnet (C.I.)</li>
-              <li><strong>Contraseña:</strong> aleatoria (8 caracteres, letras y números). Se muestra una única vez al confirmar.</li>
-              <li><strong>Cargo:</strong> EST (Estudiante)</li>
-            </ul>
+          <div style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.05); font-size: 13px;">
+            <div style="background-color: #f1f5f9; padding: 7px 12px; border-bottom: 1px solid #dee2e6; display: flex; align-items: center;">
+              <i class="fas fa-shield-alt" style="color: #28a745; margin-right: 7px; font-size: 13px;"></i>
+              <span style="color: #212529; font-weight: 600; font-size: 13px;">Credenciales que se generarán automáticamente</span>
+            </div>
+            <div style="padding: 2px 12px 8px 12px;">
+              <div style="display: flex; padding: 6px 0; border-bottom: 1px solid #f1f3f5;">
+                <div style="flex: 0 0 110px; color: #6c757d; font-weight: 600;"><i class="fas fa-user-circle mr-1" style="color:#28a745;"></i> Usuario</div>
+                <div style="color: #212529;">Número de Carnet (C.I.)</div>
+              </div>
+              <div style="display: flex; padding: 6px 0; border-bottom: 1px solid #f1f3f5;">
+                <div style="flex: 0 0 110px; color: #6c757d; font-weight: 600;"><i class="fas fa-key mr-1" style="color:#28a745;"></i> Contraseña</div>
+                <div style="color: #212529;">Aleatoria de 8 caracteres (letras y números).
+                  <span style="display:block; color:#856404; background:#fff3cd; border:1px solid #ffe08a; border-radius:5px; padding:3px 7px; margin-top:4px; font-size:11.5px;">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> Se muestra una <strong>única vez</strong> al confirmar. Anótela.
+                  </span>
+                </div>
+              </div>
+              <div style="display: flex; padding: 6px 0;">
+                <div style="flex: 0 0 110px; color: #6c757d; font-weight: 600;"><i class="fas fa-id-badge mr-1" style="color:#28a745;"></i> Cargo</div>
+                <div style="color: #212529;">EST (Estudiante)</div>
+              </div>
+            </div>
           </div>
 
           <input type="hidden" id="estudiante_id" name="estudiante_id">
@@ -1414,8 +1429,8 @@ window.addEventListener('load', function() {
     });
 
     // Restablecer contraseña: genera una nueva y la deja visible de inmediato
-    // (cubre tanto "olvidó su contraseña" como cuentas creadas antes de guardar
-    // PasswordTexto, que no tienen forma de mostrar la original).
+    // (una única vez). La contraseña no se almacena en claro; si se vuelve a olvidar,
+    // se restablece de nuevo.
     jQuery(document).on('click', '#btnRestablecerPasswordEstudianteDetalle', function() {
         const estudianteID = jQuery(this).attr('data-estudiante-id');
         const nombre = jQuery('#detalleEstudianteNombre').text();

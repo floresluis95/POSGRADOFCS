@@ -79,7 +79,6 @@ class EstudiantesControladores
                                 data-profesion="' . htmlspecialchars($Estudiante['NombreProfesion'] ?: 'No registrada') . '"
                                 data-celular="' . htmlspecialchars($Estudiante['Celular'] ?: 'No registrado') . '"
                                 data-usuario="' . htmlspecialchars($tieneUsuario ? $Estudiante['Usuario'] : 'No asignado') . '"
-                                data-password="' . htmlspecialchars($tieneUsuario && !empty($Estudiante['PasswordTexto']) ? $Estudiante['PasswordTexto'] : '') . '"
                                 data-estado-usuario="' . htmlspecialchars($estadoUsuarioTexto) . '">
                                 <i class="fa fa-eye"></i>
                             </button>';
