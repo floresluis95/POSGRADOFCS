@@ -8,405 +8,7 @@
 kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed 
 kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
 
-  <!-- Header móvil -->
-  <div id="kt_header_mobile" class="kt-header-mobile kt-header-mobile--fixed">
-    <div class="kt-header-mobile__logo">
-      <a href="index.php">
-        <img alt="Logo" src="vistas/recursos/assets/media/logos/logo0.png" width="40" />
-      </a>
-    </div>
-    <div class="kt-header-mobile__toolbar">
-      <button class="kt-header-mobile__toolbar-toggler kt-header-mobile__toolbar-toggler--left" id="kt_aside_mobile_toggler">
-        <span></span>
-      </button>
-      <button class="kt-header-mobile__toolbar-toggler" id="kt_header_mobile_toggler">
-        <span></span>
-      </button>
-      <button class="kt-header-mobile__toolbar-topbar-toggler" id="kt_header_mobile_topbar_toggler">
-        <i class="flaticon-more-1"></i>
-      </button>
-    </div>
-  </div>
-  <!-- end:: Header Mobile -->
-
-  <div class="kt-grid kt-grid--hor kt-grid--root" style="background:#E0DEDE;">
-    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
-      <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
-
-        <?php
-          $NavBar = new FuncionesControladores();
-          $NavBar->NavBarControlador();
-        ?>
-
-        <button class="kt-aside-close" id="kt_aside_close_btn"><i class="la la-close"></i></button>
-
-        <?php
-          $Sidebar = new FuncionesControladores();
-          $Sidebar->SidebarControlador();
-        ?>
-
-        <div class="kt-body kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-grid--stretch" id="kt_body">
-          <div class="kt-content kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
-
-            <!-- begin:: Subheader -->
-            <div class="kt-subheader kt-grid__item" id="kt_subheader">
-              <div class="kt-container">
-                <div class="kt-subheader__main">
-                  <h2>PROGRAMAS</h2>
-                  <span class="kt-subheader__separator kt-hidden"></span>
-                  <div class="kt-subheader__breadcrumbs">
-                    <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
-                    <span class="kt-subheader__breadcrumbs-separator"></span>
-                    <h4>DETALLE DE PROGRAMAS HABILITADOS</h4>
-                  </div>
-                </div>
-                <div class="kt-subheader__toolbar">
-                  <div class="kt-subheader__wrapper">
-                    <div id="lafecha" style="font-size:13pt"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- end:: Subheader -->
-
-            <!-- begin:: Content -->
-            <?php
-              // Filtros de búsqueda (vienen por GET; se escapan al volver a mostrarlos)
-              $grado = !empty($_GET['grado']) ? $_GET['grado'] : null;
-              $fechaInicio = !empty($_GET['fechaInicio']) ? $_GET['fechaInicio'] : null;
-              $fechaFin = !empty($_GET['fechaFin']) ? $_GET['fechaFin'] : null;
-              $sede = !empty($_GET['sede']) ? $_GET['sede'] : null;
-              $hayFiltros = $grado || $fechaInicio || $fechaFin || $sede;
-              $resumenProgramas = ProgramasControladores::ResumenEstadosProgramasControlador();
-            ?>
-            <div class="kt-container pg">
-
-              <!-- Indicadores por estado -->
-              <div class="pg-resumen">
-                <div class="pg-res is-azul">
-                  <span class="pg-res-icono"><i class="fa fa-graduation-cap"></i></span>
-                  <div><strong><?php echo (int)$resumenProgramas['total']; ?></strong><small>Programas vigentes</small></div>
-                </div>
-                <div class="pg-res is-en-curso">
-                  <span class="pg-res-icono"><i class="fa fa-play-circle"></i></span>
-                  <div><strong><?php echo (int)$resumenProgramas['en-curso']; ?></strong><small>En curso</small></div>
-                </div>
-                <div class="pg-res is-por-iniciar">
-                  <span class="pg-res-icono"><i class="fa fa-hourglass-start"></i></span>
-                  <div><strong><?php echo (int)$resumenProgramas['por-iniciar']; ?></strong><small>Por iniciar</small></div>
-                </div>
-                <div class="pg-res is-concluido">
-                  <span class="pg-res-icono"><i class="fa fa-flag-checkered"></i></span>
-                  <div><strong><?php echo (int)$resumenProgramas['concluido']; ?></strong><small>Concluidos</small></div>
-                </div>
-              </div>
-
-              <div class="pg-card">
-                <!-- Cabecera: título + nuevo programa -->
-                <div class="pg-card-head">
-                  <div>
-                    <h3>Programas de posgrado</h3>
-                    <p>Administra los programas, sus cuentas bancarias y su estado.</p>
-                  </div>
-                  <button type="button" class="pg-btn pg-btn-primario" data-toggle="modal" data-target="#nprograma">
-                    <i class="fa fa-plus"></i> Nuevo programa
-                  </button>
-                </div>
-
-                <!-- Filtros en una sola fila -->
-                <form id="formBusquedaProgramas" method="GET" class="pg-filtros" onsubmit="return false;">
-                  <div class="pg-filtro">
-                    <label for="filtroGrado">Grado</label>
-                    <select class="form-control select2-uniforme" id="filtroGrado" name="grado">
-                      <option value="">Todos los grados</option>
-                      <option value="DIPLOMADO">Diplomado</option>
-                      <option value="ESPECIALIDAD">Especialidad</option>
-                      <option value="MAESTRIA">Maestría</option>
-                      <option value="DOCTORADO">Doctorado</option>
-                    </select>
-                  </div>
-                  <div class="pg-filtro">
-                    <label for="filtroSede">Sede</label>
-                    <select class="form-control select2-uniforme" id="filtroSede" name="sede">
-                      <option value="">Todas las sedes</option>
-                      <?php foreach (ProgramasModelos::ListarSedesModelo() as $sedeFiltroOpcion): ?>
-                        <option value="<?php echo htmlspecialchars($sedeFiltroOpcion, ENT_QUOTES); ?>"><?php echo htmlspecialchars($sedeFiltroOpcion); ?></option>
-                      <?php endforeach; ?>
-                    </select>
-                  </div>
-                  <div class="pg-filtro pg-filtro-fecha">
-                    <label for="filtroFechaInicio">Inicio desde</label>
-                    <input type="date" class="form-control" id="filtroFechaInicio" name="fechaInicio">
-                  </div>
-                  <div class="pg-filtro pg-filtro-fecha">
-                    <label for="filtroFechaFin">Inicio hasta</label>
-                    <input type="date" class="form-control" id="filtroFechaFin" name="fechaFin">
-                  </div>
-                  <div class="pg-filtro-botones">
-                    <button type="button" id="btnBuscar" class="pg-btn pg-btn-secundario"><i class="fa fa-filter"></i> Filtrar</button>
-                    <?php if ($hayFiltros): ?>
-                      <button type="button" id="btnLimpiar" class="pg-btn pg-btn-link"><i class="fa fa-times"></i> Limpiar</button>
-                    <?php else: ?>
-                      <button type="button" id="btnLimpiar" class="pg-btn pg-btn-link" style="display:none">Limpiar</button>
-                    <?php endif; ?>
-                  </div>
-                  <div class="pg-buscar">
-                    <i class="fa fa-search"></i>
-                    <input type="text" class="form-control" id="buscadorTablaProgramas" placeholder="Buscar por nombre, sigla, código..." aria-label="Buscar en la tabla">
-                  </div>
-                </form>
-
-                <!-- Tabla -->
-                <div class="table-responsive">
-                  <table class="table pg-tabla mb-0" id="tabladetalle">
-                    <thead>
-                      <tr>
-                        <th>Programa</th>
-                        <th>Grado</th>
-                        <th>Inicio</th>
-                        <th>Sede</th>
-                        <th>Estado</th>
-                        <th class="text-right">Costo</th>
-                        <th class="text-right">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody id="tablaProgramasBody">
-                      <?php
-                        $listaprogramas = new ProgramasControladores();
-                        $listaprogramas->ListaProgramaControlador($grado, $fechaInicio, $fechaFin, $sede);
-                      ?>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div class="pg-leyenda">
-                  <span><i class="fa fa-eye"></i> Detalle</span>
-                  <span><i class="fa fa-university"></i> Cuentas bancarias</span>
-                  <span><i class="fa fa-pen"></i> Editar</span>
-                  <span><i class="fa fa-arrow-down"></i> Dar de baja</span>
-                </div>
-              </div>
-            </div>
-            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-            <script src="vistas/recursos/sweetalert.min.js"></script>
-          <script>
-          $(document).on('click', '#btnDetallePrograma', function() {
-              var idprograma = $(this).attr("idcod");
-
-              $.ajax({
-                  url: "ajax/programa.ajax.php",
-                  method: "POST",
-                  data: { idprograma: idprograma },
-                  dataType: "json",
-                  success: function(respuesta) {
-                      // Montos con separador de miles (12.500,00) y fecha dd/mm/aaaa
-                      var moneda = function(valor) {
-                          var n = parseFloat(valor);
-                          return isNaN(n) ? '—' : n.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                      };
-                      var fecha = (respuesta.FechaInicio || '').split('-');
-                      var fechaTexto = fecha.length === 3 ? fecha[2] + '/' + fecha[1] + '/' + fecha[0] : (respuesta.FechaInicio || '—');
-
-                      $("#detalleNombre").text(respuesta.NombrePrograma);
-                      $("#detalleCodigo").text(respuesta.Codigo || '');
-                      $("#detalleSigla").text(respuesta.Sigla || '').toggle(!!respuesta.Sigla);
-                      $("#detalleGrado").text(respuesta.GradoAcademico);
-                      $("#detalleDuracion").text(respuesta.DuracionMeses);
-                      $("#detalleModulos").text(respuesta.Modulos);
-                      $("#detalleFecha").text(fechaTexto);
-                      $("#detalleSede").text(respuesta.Sede);
-                      $("#detalleCosto").text(moneda(respuesta.Costo));
-                      $("#detalleCostoMatricula").text(respuesta.CostoMatricula ? moneda(respuesta.CostoMatricula) : 'No especificado');
-                      $("#detalleDetalle").text(respuesta.Detalle || 'Sin detalle registrado.');
-
-                      // Abrir modal si no se abre automáticamente
-                      $("#DetallePrograma").modal("show");
-                  }
-              });
-          });
-          </script>
-            <!-- end:: Content -->
-
-            <!-- Modal Registrar nuevo programa -->
-            <?php
-              // Sedes para los formularios de programa: las ya registradas + las ciudades habituales
-              $sedesFormularioPrograma = array_values(array_unique(array_merge(
-                  ['ORURO', 'LA PAZ', 'COCHABAMBA'],
-                  ProgramasModelos::ListarSedesModelo()
-              )));
-            ?>
-            <div class="modal fade pgm" id="nprograma" tabindex="-1" role="dialog" aria-labelledby="tituloNuevoPrograma" aria-hidden="true">
-              <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-                <div class="modal-content">
-                  <div class="modal-header pgm-header">
-                    <div>
-                      <span class="pgm-eyebrow">Programas de posgrado</span>
-                      <h5 class="modal-title" id="tituloNuevoPrograma">Nuevo programa</h5>
-                    </div>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
-                  </div>
-
-                  <form method="post">
-                    <div class="modal-body pgm-body">
-                      <div class="pgm-seccion-titulo"><i class="fa fa-graduation-cap"></i> Datos generales</div>
-                      <div class="pgm-grid">
-                        <div class="pgm-campo pgm-col-12">
-                          <label for="NombreProgramaNuevo">Nombre del programa <span class="pgm-req">*</span></label>
-                          <input type="text" class="form-control" id="NombreProgramaNuevo" name="NombrePrograma" autocomplete="off" required placeholder="Ej: Maestría en Ortodoncia">
-                        </div>
-                        <div class="pgm-campo pgm-col-4">
-                          <label for="GradoAcademicoNuevo">Grado académico <span class="pgm-req">*</span></label>
-                          <select class="form-control" id="GradoAcademicoNuevo" name="GradoAcademico" required>
-                            <option value="" disabled selected>Elija el grado</option>
-                            <option value="DIPLOMADO">DIPLOMADO</option>
-                            <option value="ESPECIALIDAD">ESPECIALIDAD</option>
-                            <option value="MAESTRIA">MAESTRIA</option>
-                            <option value="DOCTORADO">DOCTORADO</option>
-                          </select>
-                        </div>
-                        <div class="pgm-campo pgm-col-4">
-                          <label for="SedeNuevo">Sede <span class="pgm-req">*</span></label>
-                          <select class="form-control" id="SedeNuevo" name="Sede" required>
-                            <option value="" disabled selected>Elija la sede</option>
-                            <?php foreach ($sedesFormularioPrograma as $sedeOpcion): ?>
-                              <option value="<?php echo htmlspecialchars($sedeOpcion, ENT_QUOTES); ?>"><?php echo htmlspecialchars($sedeOpcion); ?></option>
-                            <?php endforeach; ?>
-                          </select>
-                        </div>
-                        <div class="pgm-campo pgm-col-2">
-                          <label for="SiglaNuevo">Sigla</label>
-                          <input type="text" class="form-control" id="SiglaNuevo" name="Sigla" autocomplete="off" maxlength="20" placeholder="Ej: ODO-01" style="text-transform: uppercase;">
-                        </div>
-                        <div class="pgm-campo pgm-col-2">
-                          <label for="VersionNuevo">Versión</label>
-                          <select class="form-control" id="VersionNuevo" name="Version">
-                            <?php for ($v = 1; $v <= 10; $v++): ?>
-                              <option value="V-<?php echo $v; ?>"<?php echo $v === 1 ? ' selected' : ''; ?>>V-<?php echo $v; ?></option>
-                            <?php endfor; ?>
-                          </select>
-                        </div>
-                        <div class="pgm-col-12 pgm-ayuda"><i class="fa fa-info-circle"></i> La sigla es un identificador corto: se muestra en el listado y en la planilla de calificaciones.</div>
-                      </div>
-
-                      <div class="pgm-seccion-titulo"><i class="fa fa-calendar-alt"></i> Estructura y costos</div>
-                      <div class="pgm-grid">
-                        <div class="pgm-campo pgm-col-4">
-                          <label for="FechaInicioNuevo">Fecha de inicio <span class="pgm-req">*</span></label>
-                          <input type="date" class="form-control" id="FechaInicioNuevo" name="FechaInicio" required>
-                        </div>
-                        <div class="pgm-campo pgm-col-4">
-                          <label for="DuracionNuevo">Duración <span class="pgm-req">*</span></label>
-                          <div class="pgm-sufijo"><input type="number" class="form-control" id="DuracionNuevo" name="DuracionMeses" min="1" required placeholder="Ej: 12"><span>meses</span></div>
-                        </div>
-                        <div class="pgm-campo pgm-col-4">
-                          <label for="ModulosNuevo">Módulos <span class="pgm-req">*</span></label>
-                          <input type="number" class="form-control" id="ModulosNuevo" name="Modulos" min="1" required placeholder="Ej: 6">
-                        </div>
-                        <div class="pgm-campo pgm-col-6">
-                          <label for="CostoNuevo">Costo del programa (sin matrícula) <span class="pgm-req">*</span></label>
-                          <div class="pgm-prefijo"><span>Bs.</span><input type="number" class="form-control" id="CostoNuevo" name="Costo" step="0.01" min="0" required></div>
-                        </div>
-                        <div class="pgm-campo pgm-col-6">
-                          <label for="CostoMatriculaNuevo">Costo de la matrícula <span class="pgm-req">*</span></label>
-                          <div class="pgm-prefijo"><span>Bs.</span><input type="number" class="form-control" id="CostoMatriculaNuevo" name="CostoMatricula" step="0.01" min="0" required></div>
-                        </div>
-                        <div class="pgm-campo pgm-col-12">
-                          <label for="DetalleNuevo">Detalle</label>
-                          <textarea class="form-control" id="DetalleNuevo" name="Detalle" rows="3" placeholder="Modalidad, horarios u otra información del programa"></textarea>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="modal-footer pgm-footer">
-                      <button type="button" class="pgm-btn pgm-btn-claro" data-dismiss="modal">Cancelar</button>
-                      <button type="submit" class="pgm-btn pgm-btn-primario"><i class="fa fa-save"></i> Registrar programa</button>
-                      <?php
-                        $registroprograma = new ProgramasControladores();
-                        $registroprograma->RegistrarProgramaControlador();
-                      ?>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-            <!-- end:: Modal -->
-
-            <!-- Modal Gestionar cuentas (por programa) -->
-            <div class="modal fade" id="gestionarCuentas" tabindex="-1" role="dialog" aria-labelledby="gestionarCuentasLabel" aria-hidden="true">
-              <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="gestionarCuentasLabel">Administrar cuentas — <span id="cuentasProgramaNombre"></span></h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>
-
-                  <div class="modal-body">
-                    <p class="text-muted" style="font-size: 12px;">
-                      <i class="fa fa-info-circle"></i> Un programa puede tener varias cuentas por tipo
-                      (ej. Matrícula, Cuotas, Clínicas). La cuenta marcada como <strong>Principal</strong> de
-                      cada tipo es la que se imprime automáticamente en las órdenes de pago.
-                    </p>
-
-                    <input type="hidden" id="cuentasProgramaID">
-
-                    <form id="formRegistrarCuentaPrograma" class="form-row align-items-end mb-3">
-                      <div class="col-md-3 mb-2">
-                        <label class="mb-1">Tipo de cuenta</label>
-                        <input type="text" class="form-control" id="inputTipoCuenta" name="TipoCuenta" list="listaTiposCuenta" placeholder="Ej: MATRICULA" required>
-                        <datalist id="listaTiposCuenta"></datalist>
-                      </div>
-                      <div class="col-md-3 mb-2">
-                        <label class="mb-1">Número de cuenta</label>
-                        <input type="text" class="form-control" id="inputNumeroCuenta" name="NumeroCuenta" placeholder="Número de cuenta" required>
-                      </div>
-                      <div class="col-md-3 mb-2">
-                        <label class="mb-1">Banco</label>
-                        <input type="text" class="form-control" id="inputBancoCuenta" name="Banco" placeholder="Banco (opcional)">
-                      </div>
-                      <div class="col-md-3 mb-2">
-                        <button type="submit" class="btn btn-success btn-block"><i class="fa fa-plus"></i> Agregar cuenta</button>
-                      </div>
-                    </form>
-
-                    <table class="table table-bordered table-sm">
-                      <thead>
-                        <tr>
-                          <th>Tipo</th>
-                          <th>N° Cuenta</th>
-                          <th>Banco</th>
-                          <th class="text-center">Principal</th>
-                          <th class="text-center">Estado</th>
-                        </tr>
-                      </thead>
-                      <tbody id="tablaCuentasBody">
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- end:: Modal -->
-
-            <?php
-              $Footer = new FuncionesControladores();
-              $Footer->FooterResumidoControlador();
-            ?>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-</body>
+<!-- Estilos de la vista: van antes del contenido para que no se vea sin estilo al cargar -->
 <style>
   /* Select2 (filtros de Grado académico y Sede): mismo alto/borde que
      .form-control de Bootstrap. El bundle del tema le pone a
@@ -1085,6 +687,405 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
   }
 </style>
 
+  <!-- Header móvil -->
+  <div id="kt_header_mobile" class="kt-header-mobile kt-header-mobile--fixed">
+    <div class="kt-header-mobile__logo">
+      <a href="index.php">
+        <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
+      </a>
+    </div>
+    <div class="kt-header-mobile__toolbar">
+      <button class="kt-header-mobile__toolbar-toggler kt-header-mobile__toolbar-toggler--left" id="kt_aside_mobile_toggler">
+        <span></span>
+      </button>
+      <button class="kt-header-mobile__toolbar-toggler" id="kt_header_mobile_toggler">
+        <span></span>
+      </button>
+      <button class="kt-header-mobile__toolbar-topbar-toggler" id="kt_header_mobile_topbar_toggler">
+        <i class="flaticon-more-1"></i>
+      </button>
+    </div>
+  </div>
+  <!-- end:: Header Mobile -->
+
+  <div class="kt-grid kt-grid--hor kt-grid--root" style="background:#E0DEDE;">
+    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
+      <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+
+        <?php
+          $NavBar = new FuncionesControladores();
+          $NavBar->NavBarControlador();
+        ?>
+
+        <button class="kt-aside-close" id="kt_aside_close_btn"><i class="la la-close"></i></button>
+
+        <?php
+          $Sidebar = new FuncionesControladores();
+          $Sidebar->SidebarControlador();
+        ?>
+
+        <div class="kt-body kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-grid--stretch" id="kt_body">
+          <div class="kt-content kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
+
+            <!-- begin:: Subheader -->
+            <div class="kt-subheader kt-grid__item" id="kt_subheader">
+              <div class="kt-container">
+                <div class="kt-subheader__main">
+                  <h2>PROGRAMAS</h2>
+                  <span class="kt-subheader__separator kt-hidden"></span>
+                  <div class="kt-subheader__breadcrumbs">
+                    <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
+                    <span class="kt-subheader__breadcrumbs-separator"></span>
+                    <h4>DETALLE DE PROGRAMAS HABILITADOS</h4>
+                  </div>
+                </div>
+                <div class="kt-subheader__toolbar">
+                  <div class="kt-subheader__wrapper">
+                    <div id="lafecha" style="font-size:13pt"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- end:: Subheader -->
+
+            <!-- begin:: Content -->
+            <?php
+              // Filtros de búsqueda (vienen por GET; se escapan al volver a mostrarlos)
+              $grado = !empty($_GET['grado']) ? $_GET['grado'] : null;
+              $fechaInicio = !empty($_GET['fechaInicio']) ? $_GET['fechaInicio'] : null;
+              $fechaFin = !empty($_GET['fechaFin']) ? $_GET['fechaFin'] : null;
+              $sede = !empty($_GET['sede']) ? $_GET['sede'] : null;
+              $hayFiltros = $grado || $fechaInicio || $fechaFin || $sede;
+              $resumenProgramas = ProgramasControladores::ResumenEstadosProgramasControlador();
+            ?>
+            <div class="kt-container pg">
+
+              <!-- Indicadores por estado -->
+              <div class="pg-resumen">
+                <div class="pg-res is-azul">
+                  <span class="pg-res-icono"><i class="fa fa-graduation-cap"></i></span>
+                  <div><strong><?php echo (int)$resumenProgramas['total']; ?></strong><small>Programas vigentes</small></div>
+                </div>
+                <div class="pg-res is-en-curso">
+                  <span class="pg-res-icono"><i class="fa fa-play-circle"></i></span>
+                  <div><strong><?php echo (int)$resumenProgramas['en-curso']; ?></strong><small>En curso</small></div>
+                </div>
+                <div class="pg-res is-por-iniciar">
+                  <span class="pg-res-icono"><i class="fa fa-hourglass-start"></i></span>
+                  <div><strong><?php echo (int)$resumenProgramas['por-iniciar']; ?></strong><small>Por iniciar</small></div>
+                </div>
+                <div class="pg-res is-concluido">
+                  <span class="pg-res-icono"><i class="fa fa-flag-checkered"></i></span>
+                  <div><strong><?php echo (int)$resumenProgramas['concluido']; ?></strong><small>Concluidos</small></div>
+                </div>
+              </div>
+
+              <div class="pg-card">
+                <!-- Cabecera: título + nuevo programa -->
+                <div class="pg-card-head">
+                  <div>
+                    <h3>Programas de posgrado</h3>
+                    <p>Administra los programas, sus cuentas bancarias y su estado.</p>
+                  </div>
+                  <button type="button" class="pg-btn pg-btn-primario" data-toggle="modal" data-target="#nprograma">
+                    <i class="fa fa-plus"></i> Nuevo programa
+                  </button>
+                </div>
+
+                <!-- Filtros en una sola fila -->
+                <form id="formBusquedaProgramas" method="GET" class="pg-filtros" onsubmit="return false;">
+                  <div class="pg-filtro">
+                    <label for="filtroGrado">Grado</label>
+                    <select class="form-control select2-uniforme" id="filtroGrado" name="grado">
+                      <option value="">Todos los grados</option>
+                      <option value="DIPLOMADO">Diplomado</option>
+                      <option value="ESPECIALIDAD">Especialidad</option>
+                      <option value="MAESTRIA">Maestría</option>
+                      <option value="DOCTORADO">Doctorado</option>
+                    </select>
+                  </div>
+                  <div class="pg-filtro">
+                    <label for="filtroSede">Sede</label>
+                    <select class="form-control select2-uniforme" id="filtroSede" name="sede">
+                      <option value="">Todas las sedes</option>
+                      <?php foreach (ProgramasModelos::ListarSedesModelo() as $sedeFiltroOpcion): ?>
+                        <option value="<?php echo htmlspecialchars($sedeFiltroOpcion, ENT_QUOTES); ?>"><?php echo htmlspecialchars($sedeFiltroOpcion); ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+                  <div class="pg-filtro pg-filtro-fecha">
+                    <label for="filtroFechaInicio">Inicio desde</label>
+                    <input type="date" class="form-control" id="filtroFechaInicio" name="fechaInicio">
+                  </div>
+                  <div class="pg-filtro pg-filtro-fecha">
+                    <label for="filtroFechaFin">Inicio hasta</label>
+                    <input type="date" class="form-control" id="filtroFechaFin" name="fechaFin">
+                  </div>
+                  <div class="pg-filtro-botones">
+                    <button type="button" id="btnBuscar" class="pg-btn pg-btn-secundario"><i class="fa fa-filter"></i> Filtrar</button>
+                    <?php if ($hayFiltros): ?>
+                      <button type="button" id="btnLimpiar" class="pg-btn pg-btn-link"><i class="fa fa-times"></i> Limpiar</button>
+                    <?php else: ?>
+                      <button type="button" id="btnLimpiar" class="pg-btn pg-btn-link" style="display:none">Limpiar</button>
+                    <?php endif; ?>
+                  </div>
+                  <div class="pg-buscar">
+                    <i class="fa fa-search"></i>
+                    <input type="text" class="form-control" id="buscadorTablaProgramas" placeholder="Buscar por nombre, sigla, código..." aria-label="Buscar en la tabla">
+                  </div>
+                </form>
+
+                <!-- Tabla -->
+                <div class="table-responsive">
+                  <table class="table pg-tabla mb-0" id="tabladetalle">
+                    <thead>
+                      <tr>
+                        <th>Programa</th>
+                        <th>Grado</th>
+                        <th>Inicio</th>
+                        <th>Sede</th>
+                        <th>Estado</th>
+                        <th class="text-right">Costo</th>
+                        <th class="text-right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tablaProgramasBody">
+                      <?php
+                        $listaprogramas = new ProgramasControladores();
+                        $listaprogramas->ListaProgramaControlador($grado, $fechaInicio, $fechaFin, $sede);
+                      ?>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="pg-leyenda">
+                  <span><i class="fa fa-eye"></i> Detalle</span>
+                  <span><i class="fa fa-university"></i> Cuentas bancarias</span>
+                  <span><i class="fa fa-pen"></i> Editar</span>
+                  <span><i class="fa fa-arrow-down"></i> Dar de baja</span>
+                </div>
+              </div>
+            </div>
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+            <script src="vistas/recursos/sweetalert.min.js"></script>
+          <script>
+          $(document).on('click', '#btnDetallePrograma', function() {
+              var idprograma = $(this).attr("idcod");
+
+              $.ajax({
+                  url: "ajax/programa.ajax.php",
+                  method: "POST",
+                  data: { idprograma: idprograma },
+                  dataType: "json",
+                  success: function(respuesta) {
+                      // Montos con separador de miles (12.500,00) y fecha dd/mm/aaaa
+                      var moneda = function(valor) {
+                          var n = parseFloat(valor);
+                          return isNaN(n) ? '—' : n.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                      };
+                      var fecha = (respuesta.FechaInicio || '').split('-');
+                      var fechaTexto = fecha.length === 3 ? fecha[2] + '/' + fecha[1] + '/' + fecha[0] : (respuesta.FechaInicio || '—');
+
+                      $("#detalleNombre").text(respuesta.NombrePrograma);
+                      $("#detalleCodigo").text(respuesta.Codigo || '');
+                      $("#detalleSigla").text(respuesta.Sigla || '').toggle(!!respuesta.Sigla);
+                      $("#detalleGrado").text(respuesta.GradoAcademico);
+                      $("#detalleDuracion").text(respuesta.DuracionMeses);
+                      $("#detalleModulos").text(respuesta.Modulos);
+                      $("#detalleFecha").text(fechaTexto);
+                      $("#detalleSede").text(respuesta.Sede);
+                      $("#detalleCosto").text(moneda(respuesta.Costo));
+                      $("#detalleCostoMatricula").text(respuesta.CostoMatricula ? moneda(respuesta.CostoMatricula) : 'No especificado');
+                      $("#detalleDetalle").text(respuesta.Detalle || 'Sin detalle registrado.');
+
+                      // Abrir modal si no se abre automáticamente
+                      $("#DetallePrograma").modal("show");
+                  }
+              });
+          });
+          </script>
+            <!-- end:: Content -->
+
+            <!-- Modal Registrar nuevo programa -->
+            <?php
+              // Sedes para los formularios de programa: las ya registradas + las ciudades habituales
+              $sedesFormularioPrograma = array_values(array_unique(array_merge(
+                  ['ORURO', 'LA PAZ', 'COCHABAMBA'],
+                  ProgramasModelos::ListarSedesModelo()
+              )));
+            ?>
+            <div class="modal fade pgm" id="nprograma" tabindex="-1" role="dialog" aria-labelledby="tituloNuevoPrograma" aria-hidden="true">
+              <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                <div class="modal-content">
+                  <div class="modal-header pgm-header">
+                    <div>
+                      <span class="pgm-eyebrow">Programas de posgrado</span>
+                      <h5 class="modal-title" id="tituloNuevoPrograma">Nuevo programa</h5>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                  </div>
+
+                  <form method="post">
+                    <div class="modal-body pgm-body">
+                      <div class="pgm-seccion-titulo"><i class="fa fa-graduation-cap"></i> Datos generales</div>
+                      <div class="pgm-grid">
+                        <div class="pgm-campo pgm-col-12">
+                          <label for="NombreProgramaNuevo">Nombre del programa <span class="pgm-req">*</span></label>
+                          <input type="text" class="form-control" id="NombreProgramaNuevo" name="NombrePrograma" autocomplete="off" required placeholder="Ej: Maestría en Ortodoncia">
+                        </div>
+                        <div class="pgm-campo pgm-col-4">
+                          <label for="GradoAcademicoNuevo">Grado académico <span class="pgm-req">*</span></label>
+                          <select class="form-control" id="GradoAcademicoNuevo" name="GradoAcademico" required>
+                            <option value="" disabled selected>Elija el grado</option>
+                            <option value="DIPLOMADO">DIPLOMADO</option>
+                            <option value="ESPECIALIDAD">ESPECIALIDAD</option>
+                            <option value="MAESTRIA">MAESTRIA</option>
+                            <option value="DOCTORADO">DOCTORADO</option>
+                          </select>
+                        </div>
+                        <div class="pgm-campo pgm-col-4">
+                          <label for="SedeNuevo">Sede <span class="pgm-req">*</span></label>
+                          <select class="form-control" id="SedeNuevo" name="Sede" required>
+                            <option value="" disabled selected>Elija la sede</option>
+                            <?php foreach ($sedesFormularioPrograma as $sedeOpcion): ?>
+                              <option value="<?php echo htmlspecialchars($sedeOpcion, ENT_QUOTES); ?>"><?php echo htmlspecialchars($sedeOpcion); ?></option>
+                            <?php endforeach; ?>
+                          </select>
+                        </div>
+                        <div class="pgm-campo pgm-col-2">
+                          <label for="SiglaNuevo">Sigla</label>
+                          <input type="text" class="form-control" id="SiglaNuevo" name="Sigla" autocomplete="off" maxlength="20" placeholder="Ej: ODO-01" style="text-transform: uppercase;">
+                        </div>
+                        <div class="pgm-campo pgm-col-2">
+                          <label for="VersionNuevo">Versión</label>
+                          <select class="form-control" id="VersionNuevo" name="Version">
+                            <?php for ($v = 1; $v <= 10; $v++): ?>
+                              <option value="V-<?php echo $v; ?>"<?php echo $v === 1 ? ' selected' : ''; ?>>V-<?php echo $v; ?></option>
+                            <?php endfor; ?>
+                          </select>
+                        </div>
+                        <div class="pgm-col-12 pgm-ayuda"><i class="fa fa-info-circle"></i> La sigla es un identificador corto: se muestra en el listado y en la planilla de calificaciones.</div>
+                      </div>
+
+                      <div class="pgm-seccion-titulo"><i class="fa fa-calendar-alt"></i> Estructura y costos</div>
+                      <div class="pgm-grid">
+                        <div class="pgm-campo pgm-col-4">
+                          <label for="FechaInicioNuevo">Fecha de inicio <span class="pgm-req">*</span></label>
+                          <input type="date" class="form-control" id="FechaInicioNuevo" name="FechaInicio" required>
+                        </div>
+                        <div class="pgm-campo pgm-col-4">
+                          <label for="DuracionNuevo">Duración <span class="pgm-req">*</span></label>
+                          <div class="pgm-sufijo"><input type="number" class="form-control" id="DuracionNuevo" name="DuracionMeses" min="1" required placeholder="Ej: 12"><span>meses</span></div>
+                        </div>
+                        <div class="pgm-campo pgm-col-4">
+                          <label for="ModulosNuevo">Módulos <span class="pgm-req">*</span></label>
+                          <input type="number" class="form-control" id="ModulosNuevo" name="Modulos" min="1" required placeholder="Ej: 6">
+                        </div>
+                        <div class="pgm-campo pgm-col-6">
+                          <label for="CostoNuevo">Costo del programa (sin matrícula) <span class="pgm-req">*</span></label>
+                          <div class="pgm-prefijo"><span>Bs.</span><input type="number" class="form-control" id="CostoNuevo" name="Costo" step="0.01" min="0" required></div>
+                        </div>
+                        <div class="pgm-campo pgm-col-6">
+                          <label for="CostoMatriculaNuevo">Costo de la matrícula <span class="pgm-req">*</span></label>
+                          <div class="pgm-prefijo"><span>Bs.</span><input type="number" class="form-control" id="CostoMatriculaNuevo" name="CostoMatricula" step="0.01" min="0" required></div>
+                        </div>
+                        <div class="pgm-campo pgm-col-12">
+                          <label for="DetalleNuevo">Detalle</label>
+                          <textarea class="form-control" id="DetalleNuevo" name="Detalle" rows="3" placeholder="Modalidad, horarios u otra información del programa"></textarea>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="modal-footer pgm-footer">
+                      <button type="button" class="pgm-btn pgm-btn-claro" data-dismiss="modal">Cancelar</button>
+                      <button type="submit" class="pgm-btn pgm-btn-primario"><i class="fa fa-save"></i> Registrar programa</button>
+                      <?php
+                        $registroprograma = new ProgramasControladores();
+                        $registroprograma->RegistrarProgramaControlador();
+                      ?>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <!-- end:: Modal -->
+
+            <!-- Modal Gestionar cuentas (por programa) -->
+            <div class="modal fade" id="gestionarCuentas" tabindex="-1" role="dialog" aria-labelledby="gestionarCuentasLabel" aria-hidden="true">
+              <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="gestionarCuentasLabel">Administrar cuentas — <span id="cuentasProgramaNombre"></span></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+
+                  <div class="modal-body">
+                    <p class="text-muted" style="font-size: 12px;">
+                      <i class="fa fa-info-circle"></i> Un programa puede tener varias cuentas por tipo
+                      (ej. Matrícula, Cuotas, Clínicas). La cuenta marcada como <strong>Principal</strong> de
+                      cada tipo es la que se imprime automáticamente en las órdenes de pago.
+                    </p>
+
+                    <input type="hidden" id="cuentasProgramaID">
+
+                    <form id="formRegistrarCuentaPrograma" class="form-row align-items-end mb-3">
+                      <div class="col-md-3 mb-2">
+                        <label class="mb-1">Tipo de cuenta</label>
+                        <input type="text" class="form-control" id="inputTipoCuenta" name="TipoCuenta" list="listaTiposCuenta" placeholder="Ej: MATRICULA" required>
+                        <datalist id="listaTiposCuenta"></datalist>
+                      </div>
+                      <div class="col-md-3 mb-2">
+                        <label class="mb-1">Número de cuenta</label>
+                        <input type="text" class="form-control" id="inputNumeroCuenta" name="NumeroCuenta" placeholder="Número de cuenta" required>
+                      </div>
+                      <div class="col-md-3 mb-2">
+                        <label class="mb-1">Banco</label>
+                        <input type="text" class="form-control" id="inputBancoCuenta" name="Banco" placeholder="Banco (opcional)">
+                      </div>
+                      <div class="col-md-3 mb-2">
+                        <button type="submit" class="btn btn-success btn-block"><i class="fa fa-plus"></i> Agregar cuenta</button>
+                      </div>
+                    </form>
+
+                    <table class="table table-bordered table-sm">
+                      <thead>
+                        <tr>
+                          <th>Tipo</th>
+                          <th>N° Cuenta</th>
+                          <th>Banco</th>
+                          <th class="text-center">Principal</th>
+                          <th class="text-center">Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaCuentasBody">
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- end:: Modal -->
+
+            <?php
+              $Footer = new FuncionesControladores();
+              $Footer->FooterResumidoControlador();
+            ?>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</body>
 <!-- Modal Detalle Programa -->
 <div class="modal fade pgm" id="DetallePrograma" tabindex="-1" aria-labelledby="detalleProgramaLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">

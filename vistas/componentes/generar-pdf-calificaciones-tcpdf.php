@@ -29,7 +29,7 @@ if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
     ]));
 }
 // Reporte de calificaciones: solo Administración, Secretaría y Docentes (no Estudiantes)
-if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'DOC'], true)) {
+if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX', 'DOC'], true)) {
     ob_end_clean();
     die(json_encode([
         'status' => 'error',

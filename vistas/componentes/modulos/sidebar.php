@@ -485,6 +485,189 @@ if ($_SESSION["Tipo"] == "SEC") {
 }
  ?>
 
+<!-- AUXILIAR: matriculación y pagos, calificaciones, docentes y estudiantes.
+     Sin Usuarios, Certificados ni Reportes PDF (bloqueados también en enlaces.controlador.php) -->
+<?php
+if ($_SESSION["Tipo"] == "AUX") {
+ ?>
+        <div class="kt-aside kt-aside--fixed kt-grid__item kt-grid kt-grid--desktop kt-grid--hor-desktop" id="kt_aside" style="background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);">
+          <!-- begin:: Aside Menu -->
+          <div class="kt-aside-menu-wrapper kt-grid__item kt-grid__item--fluid" id="kt_aside_menu_wrapper">
+            <div id="kt_aside_menu" class="kt-aside-menu" data-ktmenu-vertical="1" data-ktmenu-scroll="1">
+
+              <ul class="kt-menu__nav">
+
+                <!-- PROGRAMAS DE POSGRADO -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-layers-1" style="color: #6f94c9;"></i> PROGRAMAS DE POSGRADO
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="programas" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-box-1" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Programas</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="modulos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-layers-2" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Módulos</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="reportemodulos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-file-1" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Reporte General de Programas</span>
+                  </a>
+                </li>
+
+                <!-- CALENDARIO ACADÉMICO -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-calendar-3" style="color: #6f94c9;"></i> AGENDA
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="calendario" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-calendar-3" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Calendario Académico</span>
+                  </a>
+                </li>
+
+                <!-- MATRICULACIÓN -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-writing" style="color: #6f94c9;"></i> MATRICULACIÓN
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="preregistro" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-file-2" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Pre-registro / Orden de Pago</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="inscripcion" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-add-1" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Nueva Inscripción</span>
+                    <span class="kt-menu__link-badge">
+                      <span class="kt-badge kt-badge--success kt-badge--dot"></span>
+                    </span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="solicitudesinscripcion" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-mail" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Solicitudes de Inscripción</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="matriculados" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-group" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Matriculados</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="historialpagos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-time" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Historial de Pagos</span>
+                  </a>
+                </li>
+
+                <!-- CALIFICACIONES -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-chart2" style="color: #a9b4bd;"></i> CALIFICACIONES
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="rnotasestudiante" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-edit" style="color: #a9b4bd;"></i>
+                    <span class="kt-menu__link-text">Registrar Notas</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="reportenotas" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-document" style="color: #a9b4bd;"></i>
+                    <span class="kt-menu__link-text">Reporte de Notas</span>
+                  </a>
+                </li>
+
+                <!-- NOTAS ESTUDIANTES -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-analytics-1" style="color: #fd397a;"></i> CONSULTA DE NOTAS
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="bnotaestudiante" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-search-1" style="color: #fd397a;"></i>
+                    <span class="kt-menu__link-text">Buscar por Estudiante</span>
+                  </a>
+                </li>
+               
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="historialnotaestudiante" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-list-3" style="color: #fd397a;"></i>
+                    <span class="kt-menu__link-text">Historial de Notas - Estudiantes</span>
+                  </a>
+                </li>
+
+                <!-- DOCENTES -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-user-outline-symbol" style="color: #36a3f7;"></i> DOCENTES
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="docentes" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
+                    <span class="kt-menu__link-text">Lista de Docentes</span>
+                  </a>
+                </li>
+                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="asignaciondocente" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-add-1" style="color: #36a3f7;"></i>
+                    <span class="kt-menu__link-text">Asignación de Modulos</span>
+                  </a>
+                </li>
+
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="reportecalificaciones" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
+                    <span class="kt-menu__link-text">Registro de Notas - Docentes</span>
+                  </a>
+                </li>
+             
+
+              
+
+                <!-- PERSONAL -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-user" style="color: #9c27b0;"></i> PERSONAL
+                  </h4>
+                </li>
+               
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="estudiantes" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-group" style="color: #9c27b0;"></i>
+                    <span class="kt-menu__link-text">Estudiantes</span>
+                  </a>
+                </li>
+
+
+              </ul>
+            </div>
+          </div>
+          <!-- end:: Aside Menu -->
+        </div>
+        <!-- end:: Aside -->
+<?php
+}
+ ?>
+
 <!-- DOCENTES -->
 <?php
 if ($_SESSION["Tipo"] == "DOC") {

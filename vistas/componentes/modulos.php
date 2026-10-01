@@ -11,6 +11,26 @@ $docentes = ModuloModelo::ListarDocentesActivosModelo();
 // Obtener lista de sedes para el select de filtro
 $sedes = ProgramasModelos::ListarSedesModelo();
 ?>
+  <!-- Header móvil: botón para desplegar el menú lateral en pantallas pequeñas -->
+  <div id="kt_header_mobile" class="kt-header-mobile kt-header-mobile--fixed">
+    <div class="kt-header-mobile__logo">
+      <a href="index.php">
+        <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
+      </a>
+    </div>
+    <div class="kt-header-mobile__toolbar">
+      <button class="kt-header-mobile__toolbar-toggler kt-header-mobile__toolbar-toggler--left" id="kt_aside_mobile_toggler">
+        <span></span>
+      </button>
+      <button class="kt-header-mobile__toolbar-toggler" id="kt_header_mobile_toggler">
+        <span></span>
+      </button>
+      <button class="kt-header-mobile__toolbar-topbar-toggler" id="kt_header_mobile_topbar_toggler">
+        <i class="flaticon-more-1"></i>
+      </button>
+    </div>
+  </div>
+
  <?php
           $NavBar = new FuncionesControladores();
           $NavBar->NavBarControlador();

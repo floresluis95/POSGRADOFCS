@@ -87,6 +87,9 @@
                     case 'SEC':
                         $tipoBadge = '<span class="badge badge-info">SECRETARIA</span>';
                         break;
+                    case 'AUX':
+                        $tipoBadge = '<span class="badge badge-warning">AUXILIAR</span>';
+                        break;
                     case 'DOC':
                         $tipoBadge = '<span class="badge badge-primary">DOCENTE</span>';
                         break;
@@ -140,6 +143,7 @@
                             Direccion="'.$Usuario["Direccion"].'"
                             Celular="'.$Usuario["Celular"].'"
                             Telefono="'.$Usuario["Telefono"].'"
+                            Correo="'.htmlspecialchars($Usuario["Correo"] ?? '').'"
                             title="Editar usuario">
                             <i class="fa fa-edit"></i>
                         </button>
@@ -155,8 +159,39 @@
         public function InsertarUsuarioControlador()
         {
             if(isset($_POST['ci']))
-            {    
-           
+            {
+                    // Solo los cargos del personal (docentes y estudiantes tienen su propio registro)
+                    if (!in_array($_POST['UICargo'] ?? '', ['ADM', 'SEC', 'AUX'], true)) {
+                        echo'
+                        <script src="vistas/recursos/sweetalert.min.js"></script>
+                        <script>
+                        swal("ERROR!", "Seleccione un cargo válido", "error")
+                        .then(function () {
+                            location.href="usuario";
+                          })
+                          ;
+                         </script>';
+                        return;
+                    }
+
+                    // El correo es el medio para recuperar la contraseña
+                    $correo = self::CorreoValido($_POST['correo'] ?? '');
+                    $errorPassword = $correo === null
+                        ? 'Ingrese un correo electrónico válido'
+                        : self::ValidarPasswordPersonal($_POST['password'] ?? '', $_POST['password_confirmar'] ?? '');
+                    if ($errorPassword !== null) {
+                        echo'
+                        <script src="vistas/recursos/sweetalert.min.js"></script>
+                        <script>
+                        swal("ERROR!", '.json_encode($errorPassword).', "error")
+                        .then(function () {
+                            location.href="usuario";
+                          })
+                          ;
+                         </script>';
+                        return;
+                    }
+
                     // Capturar el IdPersonal Maximo de la tabla personal
                     $item = 'IdPersonal';
                     $tabla = 'personal';
@@ -173,14 +208,14 @@
                         "Nombres" => strtoupper($_POST['nombres']),
                         "Direccion" => strtoupper($_POST['direccion']),
                         "Celular" => $_POST['celular'],
-                        "Telefono" => $_POST['telefono']
+                        "Telefono" => $_POST['telefono'],
+                        "Correo" => $correo
                     );
                 
                     $InsertarPersonal = UsuarioModelos::InsertarPersonalModelo($TablaPersonal, $DatosPersonal);
 
-                    // La contraseña del usuario sera igual a su Cedula de Identidad
-                    // Usar password_hash con bcrypt (más seguro que crypt)
-                    $encriptar = password_hash($_POST['ci'], PASSWORD_BCRYPT, ['cost' => 12]);
+                    // Contraseña escrita por el administrador en el formulario (no se genera)
+                    $encriptar = password_hash($_POST['password'], PASSWORD_BCRYPT, ['cost' => 12]);
 
                     // Enviar datos del Usuario
                     $TablaUsuario = 'usuario';
@@ -228,6 +263,21 @@
         {
             if(isset($_POST['editarci']))
             {
+                // Opcional al editar (el personal anterior no tenía correo), pero si se escribe debe ser válido
+                $correoEditado = trim($_POST['editarcorreo'] ?? '');
+                if ($correoEditado !== '' && self::CorreoValido($correoEditado) === null) {
+                    echo'
+                    <script src="vistas/recursos/sweetalert.min.js"></script>
+                    <script>
+                    swal("ERROR!", "El correo electrónico no es válido", "error")
+                    .then(function () {
+                        location.href="usuario";
+                      })
+                      ;
+                     </script>';
+                    return;
+                }
+
                 $DatosPersonal = array(
                     "CedulaIdentidad" => $_POST['editarci'],
                     "ApellidoPaterno" => strtoupper($_POST['editarapaterno']),
@@ -235,7 +285,8 @@
                     "Nombres" => strtoupper($_POST['editarnombres']),
                     "Direccion" => strtoupper($_POST['editardireccion']),
                     "Celular" => $_POST['editarcelular'],
-                    "Telefono" => $_POST['editartelefono']
+                    "Telefono" => $_POST['editartelefono'],
+                    "Correo" => self::CorreoValido($correoEditado)
                 );
 
                 $EditarPersonal = UsuarioModelos::EditarUsuaario($DatosPersonal);
@@ -408,6 +459,36 @@
             } else {
                 error_log("No se recibió estudiante_id o estudiante_ci en POST");
             }
+        }
+
+        /**
+         * Correo en minúsculas si es válido; null si está vacío o no es un correo.
+         * @return string|null
+         */
+        public static function CorreoValido($correo)
+        {
+            $correo = strtolower(trim($correo));
+            return filter_var($correo, FILTER_VALIDATE_EMAIL) ? $correo : null;
+        }
+
+        /**
+         * Valida una contraseña escrita a mano: la que el administrador pone a un
+         * usuario del personal (ADM, SEC, AUX) al crearlo o restablecerla, y la que
+         * cualquier usuario elige al recuperar su contraseña por correo.
+         * @return string|null Mensaje de error, o null si es válida
+         */
+        public static function ValidarPasswordPersonal($password, $confirmacion)
+        {
+            if (strlen($password) < 8) {
+                return 'La contraseña debe tener al menos 8 caracteres';
+            }
+            if (!preg_match('/[A-Za-z]/', $password) || !preg_match('/[0-9]/', $password)) {
+                return 'La contraseña debe tener al menos una letra y un número';
+            }
+            if ($password !== $confirmacion) {
+                return 'Las contraseñas no coinciden';
+            }
+            return null;
         }
 
         /**

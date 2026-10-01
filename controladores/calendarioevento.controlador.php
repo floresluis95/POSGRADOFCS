@@ -19,7 +19,7 @@ class CalendarioEventoControlador
     private static function puedeEscribir()
     {
         $tipo = $_SESSION['Tipo'] ?? '';
-        return in_array($tipo, ['ADM', 'SEC', 'DOC'], true);
+        return in_array($tipo, ['ADM', 'SEC', 'AUX', 'DOC'], true);
     }
 
     /**
@@ -100,7 +100,7 @@ class CalendarioEventoControlador
         // Vencimientos de cuota (fechas límite de pago). Administrador/Secretaría ven
         // los de todos (para cobranza, con WhatsApp); el Estudiante ve únicamente los
         // suyos (para saber cuándo le vence a él, sin ver la deuda de otros).
-        $verVencimientos = in_array($tipo, ['ADM', 'SEC', 'EST'], true);
+        $verVencimientos = in_array($tipo, ['ADM', 'SEC', 'AUX', 'EST'], true);
         $esPropioEstudiante = $tipo === 'EST';
 
         if ($verVencimientos) {
@@ -165,7 +165,7 @@ class CalendarioEventoControlador
         //  - EST: solo los de sus programas inscritos, y no si ya pagó ese programa completo.
         //  - DOC: ninguno (los avisos de pago no le corresponden).
         $plazos = [];
-        if (in_array($tipo, ['ADM', 'SEC', 'EST'], true)) {
+        if (in_array($tipo, ['ADM', 'SEC', 'AUX', 'EST'], true)) {
             $plazos = PlazoCuotaProgramaModelo::ObtenerPlazosParaCalendarioModelo(
                 $filtros['desde'],
                 $filtros['hasta'],

@@ -8,7 +8,7 @@
   <div id="kt_header_mobile" class="kt-header-mobile  kt-header-mobile--fixed ">
 	<div class="kt-header-mobile__logo">
 	  <a href="demo9/index.html">
-	  <img alt="Logo" src="vistas/recursos/assets/media/logos/logo0.png" width="40" />>
+	  <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
 	  </a>
 	</div>
 	<div class="kt-header-mobile__toolbar">

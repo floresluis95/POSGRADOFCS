@@ -3,7 +3,8 @@
  * Validación de sesión común para los endpoints AJAX.
  * Se incluye como primera línea de cada archivo de ajax/ y corta la petición
  * (401/403 con JSON) si no hay una sesión iniciada o el tipo de usuario no está
- * permitido. Ninguna página pública (login) llama a ajax/, así que todos exigen sesión.
+ * permitido. La única excepción es recuperarpassword.ajax.php (recuperar la
+ * contraseña desde el login), que no exige sesión.
  *
  * Uso:
  *   require_once __DIR__ . '/validar-sesion.php';

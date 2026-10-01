@@ -25,7 +25,7 @@ $tipoSesion = $_SESSION['Tipo'] ?? '';
 $accionPedida = $_POST['accion'] ?? '';
 $permitido = $tipoSesion === 'EST'
     ? in_array($accionPedida, $accionesEstudiante, true)
-    : in_array($tipoSesion, ['ADM', 'SEC', 'DOC'], true);
+    : in_array($tipoSesion, ['ADM', 'SEC', 'AUX', 'DOC'], true);
 if (!$permitido) {
     http_response_code(403);
     echo json_encode([

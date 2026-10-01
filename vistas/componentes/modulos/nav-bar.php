@@ -302,6 +302,31 @@
         margin-right: 0;
     }
 }
+
+/* Hasta 1024px el tema convierte el menú del header en un panel lateral de
+   fondo blanco: ahí el texto blanco de arriba no se vería, se usa el azul
+   institucional. */
+@media (max-width: 1024px) {
+    #kt_header_menu .kt-menu__nav .kt-menu__item {
+        margin: 2px 10px;
+    }
+
+    #kt_header_menu .kt-menu__nav .kt-menu__link,
+    #kt_header_menu .kt-menu__nav .kt-menu__link .kt-menu__link-text,
+    #kt_header_menu .kt-menu__nav .kt-menu__link .kt-menu__link-icon {
+        color: #1e3c72 !important;
+    }
+
+    #kt_header_menu .kt-menu__nav .kt-menu__link:hover {
+        background: #eef2f9;
+        transform: none;
+        box-shadow: none;
+    }
+
+    #kt_header_menu .kt-menu__nav .kt-menu__link::before {
+        display: none;
+    }
+}
 </style>
 
 <?php
@@ -322,6 +347,7 @@ function obtenerRolFormateado($tipo) {
     $roles = [
         'ADM' => ['nombre' => 'Administrador', 'icono' => 'fas fa-user-shield'],
         'SEC' => ['nombre' => 'Secretaría', 'icono' => 'fas fa-user-tie'],
+        'AUX' => ['nombre' => 'Auxiliar', 'icono' => 'fas fa-user-cog'],
         'DOC' => ['nombre' => 'Docente', 'icono' => 'fas fa-chalkboard-teacher'],
         'EST' => ['nombre' => 'Estudiante', 'icono' => 'fas fa-user-graduate']
     ];

@@ -409,6 +409,41 @@
             font-weight: 600;
             cursor: pointer;
         }
+        .modal-olvido-card .btn-cerrar-olvido:disabled { opacity: .6; cursor: wait; }
+        .olvido-paso { display: flex; flex-direction: column; gap: 10px; }
+        .olvido-paso[hidden] { display: none; }
+        .olvido-paso p { margin-bottom: 6px !important; }
+        .olvido-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #d8dde8;
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none;
+        }
+        .olvido-input:focus { border-color: #2a5298; box-shadow: 0 0 0 3px rgba(42, 82, 152, .15); }
+        .olvido-codigo { text-align: center; font-size: 22px; font-weight: 700; letter-spacing: 8px; }
+        .olvido-codigo::placeholder { font-size: 15px; font-weight: 400; letter-spacing: normal; }
+        .olvido-ayuda { color: var(--lg-texto-2); font-size: 12px; text-align: left; }
+        .olvido-error { color: #c62828; font-size: 13px; min-height: 0; }
+        .olvido-error:empty { display: none; }
+        .olvido-prueba {
+            background: #fff8e1;
+            border: 1px dashed #f0b400;
+            border-radius: 10px;
+            padding: 8px;
+            font-size: 13px;
+            color: #6d5200;
+        }
+        .olvido-link {
+            background: none;
+            border: 0;
+            color: #2a5298;
+            font-size: 13px;
+            margin-top: 8px;
+            cursor: pointer;
+        }
+        .olvido-link:hover { text-decoration: underline; }
 
         @media (max-width: 991.98px) {
             .lg-pantalla { grid-template-columns: 1fr; gap: 32px; padding: 32px 20px 56px; max-width: 520px; align-content: center; }
@@ -527,13 +562,39 @@
 
     <div class="lg-direccion"><i class="fas fa-map-marker-alt"></i>Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso · Telf: 5237317 · Oruro - Bolivia</div>
 
-    <!-- Modal "¿Olvidó su contraseña?": el restablecimiento lo hace el administrador -->
+    <!-- Modal "¿Olvidó su contraseña?": recuperación con un código enviado al correo
+         registrado (ajax/recuperarpassword.ajax.php). Paso 1: usuario o C.I.;
+         paso 2: código + contraseña nueva; paso 3: confirmación. -->
     <div class="modal-olvido" id="modalOlvidoPassword" role="dialog" aria-modal="true" aria-labelledby="tituloOlvidoPassword">
         <div class="modal-olvido-card">
-            <div class="modal-olvido-icono"><i class="fas fa-user-shield"></i></div>
+            <div class="modal-olvido-icono"><i class="fas fa-key"></i></div>
             <h3 id="tituloOlvidoPassword">¿Olvidó su contraseña?</h3>
-            <p>Para recuperar el acceso, comuníquese con el <strong>administrador del sistema</strong>, quien restablecerá su contraseña y le entregará una nueva.</p>
-            <button type="button" class="btn-cerrar-olvido" id="btnCerrarOlvido">Entendido</button>
+
+            <form id="olvidoPaso1" class="olvido-paso" novalidate>
+                <p>Escriba su usuario o C.I. y le enviaremos un código a su <strong>correo registrado</strong>.</p>
+                <input type="text" id="olvidoIdentificador" class="olvido-input" placeholder="Usuario o C.I." autocomplete="username" required>
+                <div class="olvido-error" id="olvidoError1"></div>
+                <button type="submit" class="btn-cerrar-olvido" id="btnOlvidoEnviar">Enviar código</button>
+            </form>
+
+            <form id="olvidoPaso2" class="olvido-paso" novalidate hidden>
+                <p id="olvidoMensaje2"></p>
+                <div class="olvido-prueba" id="olvidoPrueba" hidden></div>
+                <input type="text" id="olvidoCodigo" class="olvido-input olvido-codigo" placeholder="Código de 6 dígitos" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+                <input type="password" id="olvidoPassword" class="olvido-input" placeholder="Nueva contraseña" autocomplete="new-password" required>
+                <input type="password" id="olvidoConfirmar" class="olvido-input" placeholder="Confirmar contraseña" autocomplete="new-password" required>
+                <small class="olvido-ayuda">Mínimo 8 caracteres, con al menos una letra y un número</small>
+                <div class="olvido-error" id="olvidoError2"></div>
+                <button type="submit" class="btn-cerrar-olvido" id="btnOlvidoCambiar">Cambiar contraseña</button>
+                <button type="button" class="olvido-link" id="btnOlvidoReenviar">Solicitar otro código</button>
+            </form>
+
+            <div id="olvidoPaso3" class="olvido-paso" hidden>
+                <p id="olvidoMensaje3"></p>
+                <button type="button" class="btn-cerrar-olvido" id="btnOlvidoListo">Ir a ingresar</button>
+            </div>
+
+            <button type="button" class="olvido-link" id="btnCerrarOlvido">Cancelar</button>
         </div>
     </div>
 
@@ -570,17 +631,130 @@
             input.focus();
         });
 
-        // Modal "¿Olvidó su contraseña?"
+        // Modal "¿Olvidó su contraseña?" (recuperación por correo)
         const modalOlvido = document.getElementById('modalOlvidoPassword');
+
+        function mostrarPasoOlvido(numero) {
+            [1, 2, 3].forEach(function(n) {
+                document.getElementById('olvidoPaso' + n).hidden = n !== numero;
+            });
+            document.getElementById('btnCerrarOlvido').hidden = numero === 3;
+        }
 
         function cerrarModalOlvido() {
             modalOlvido.classList.remove('abierto');
         }
 
+        function abrirModalOlvido() {
+            ['olvidoCodigo', 'olvidoPassword', 'olvidoConfirmar'].forEach(function(id) {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('olvidoError1').textContent = '';
+            document.getElementById('olvidoError2').textContent = '';
+            // Si ya escribió su usuario en el login, se aprovecha
+            const usuarioLogin = document.getElementById('usuario').value.trim();
+            if (usuarioLogin) document.getElementById('olvidoIdentificador').value = usuarioLogin;
+            mostrarPasoOlvido(1);
+            modalOlvido.classList.add('abierto');
+            document.getElementById('olvidoIdentificador').focus();
+        }
+
+        function enviarOlvido(datos) {
+            const cuerpo = new FormData();
+            Object.keys(datos).forEach(function(k) { cuerpo.append(k, datos[k]); });
+            return fetch('ajax/recuperarpassword.ajax.php', { method: 'POST', body: cuerpo })
+                .then(function(r) { return r.json(); })
+                .catch(function() { return { success: false, mensaje: 'No se pudo conectar con el servidor' }; });
+        }
+
+        function solicitarCodigoOlvido() {
+            const identificador = document.getElementById('olvidoIdentificador').value.trim();
+            const error = document.getElementById('olvidoError1');
+            if (!identificador) {
+                error.textContent = 'Ingrese su usuario o C.I.';
+                return;
+            }
+            const btn = document.getElementById('btnOlvidoEnviar');
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+            error.textContent = '';
+
+            enviarOlvido({ accion: 'solicitarCodigo', identificador: identificador }).then(function(resp) {
+                btn.disabled = false;
+                btn.textContent = 'Enviar código';
+                if (!resp.success) {
+                    error.textContent = resp.mensaje;
+                    return;
+                }
+                document.getElementById('olvidoMensaje2').textContent = resp.mensaje;
+                const prueba = document.getElementById('olvidoPrueba');
+                prueba.hidden = !resp.codigoPrueba;
+                prueba.textContent = resp.codigoPrueba ? 'Modo prueba (no se envió correo). Código: ' + resp.codigoPrueba : '';
+                mostrarPasoOlvido(2);
+                document.getElementById('olvidoCodigo').focus();
+            });
+        }
+
         document.getElementById('linkOlvidoPassword').addEventListener('click', function(e) {
             e.preventDefault();
-            modalOlvido.classList.add('abierto');
-            document.getElementById('btnCerrarOlvido').focus();
+            abrirModalOlvido();
+        });
+
+        document.getElementById('olvidoPaso1').addEventListener('submit', function(e) {
+            e.preventDefault();
+            solicitarCodigoOlvido();
+        });
+
+        document.getElementById('btnOlvidoReenviar').addEventListener('click', function() {
+            mostrarPasoOlvido(1);
+            solicitarCodigoOlvido();
+        });
+
+        document.getElementById('olvidoCodigo').addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 6);
+        });
+
+        document.getElementById('olvidoPaso2').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const codigo = document.getElementById('olvidoCodigo').value.trim();
+            const password = document.getElementById('olvidoPassword').value;
+            const confirmacion = document.getElementById('olvidoConfirmar').value;
+            const error = document.getElementById('olvidoError2');
+
+            // Misma regla que el servidor (UsuarioControladores::ValidarPasswordPersonal)
+            if (!/^\d{6}$/.test(codigo)) { error.textContent = 'El código debe tener 6 dígitos'; return; }
+            if (password.length < 8) { error.textContent = 'La contraseña debe tener al menos 8 caracteres'; return; }
+            if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) { error.textContent = 'La contraseña debe tener al menos una letra y un número'; return; }
+            if (password !== confirmacion) { error.textContent = 'Las contraseñas no coinciden'; return; }
+
+            const btn = document.getElementById('btnOlvidoCambiar');
+            btn.disabled = true;
+            btn.textContent = 'Guardando...';
+            error.textContent = '';
+
+            enviarOlvido({
+                accion: 'cambiarPassword',
+                identificador: document.getElementById('olvidoIdentificador').value.trim(),
+                codigo: codigo,
+                password: password,
+                confirmacion: confirmacion
+            }).then(function(resp) {
+                btn.disabled = false;
+                btn.textContent = 'Cambiar contraseña';
+                if (!resp.success) {
+                    error.textContent = resp.mensaje;
+                    return;
+                }
+                document.getElementById('olvidoMensaje3').textContent = resp.mensaje;
+                mostrarPasoOlvido(3);
+            });
+        });
+
+        document.getElementById('btnOlvidoListo').addEventListener('click', function() {
+            cerrarModalOlvido();
+            document.getElementById('usuario').value = document.getElementById('olvidoIdentificador').value.trim();
+            document.getElementById('password').value = '';
+            document.getElementById('password').focus();
         });
 
         document.getElementById('btnCerrarOlvido').addEventListener('click', cerrarModalOlvido);

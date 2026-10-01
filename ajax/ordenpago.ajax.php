@@ -650,7 +650,7 @@ function obtenerModulosPagados()
 function obtenerOrdenesVencidas()
 {
     // Información de cobranza (nombres, celulares, montos): solo Administrador y Secretaría.
-    if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC'], true)) {
+    if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX'], true)) {
         echo json_encode(['success' => false, 'mensaje' => 'No tiene permiso para ver esta información']);
         return;
     }

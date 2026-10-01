@@ -30,8 +30,8 @@
             // Validar nombre de tabla
             $TablaPersonal = self::ValidarNombreTabla($TablaPersonal);
 
-            $stmt = Conexion::Conectar()->prepare("INSERT INTO `$TablaPersonal` (`IdPersonal`, `CedulaIdentidad`, `ApellidoPaterno`, `ApellidoMaterno`, `Nombres`, `Direccion`, `Celular`, `Telefono`)
-            VALUES (:IdPersonal, :CedulaIdentidad, :ApellidoPaterno, :ApellidoMaterno, :Nombres, :Direccion, :Celular, :Telefono)");
+            $stmt = Conexion::Conectar()->prepare("INSERT INTO `$TablaPersonal` (`IdPersonal`, `CedulaIdentidad`, `ApellidoPaterno`, `ApellidoMaterno`, `Nombres`, `Direccion`, `Celular`, `Telefono`, `Correo`)
+            VALUES (:IdPersonal, :CedulaIdentidad, :ApellidoPaterno, :ApellidoMaterno, :Nombres, :Direccion, :Celular, :Telefono, :Correo)");
 
             $stmt -> bindParam(":IdPersonal", $DatosModelo['IdPersonal'], PDO::PARAM_INT);
             $stmt -> bindParam(":CedulaIdentidad", $DatosModelo['CedulaIdentidad'], PDO::PARAM_STR);
@@ -41,6 +41,7 @@
             $stmt -> bindParam(":Direccion", $DatosModelo['Direccion'], PDO::PARAM_STR);
             $stmt -> bindParam(":Celular", $DatosModelo['Celular'], PDO::PARAM_STR);
             $stmt -> bindParam(":Telefono", $DatosModelo['Telefono'], PDO::PARAM_STR);
+            $stmt -> bindValue(":Correo", $DatosModelo['Correo'], $DatosModelo['Correo'] === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
 
             if ($stmt -> execute())
             {
@@ -79,7 +80,7 @@
         {
             $stmt = Conexion::Conectar()->prepare("UPDATE `personal` SET `ApellidoPaterno`=:ApellidoPaterno,
             `ApellidoMaterno`=:ApellidoMaterno, `Nombres`=:Nombres,
-            `Direccion`=:Direccion, `Celular`=:Celular, `Telefono`=:Telefono
+            `Direccion`=:Direccion, `Celular`=:Celular, `Telefono`=:Telefono, `Correo`=:Correo
             WHERE `CedulaIdentidad`=:CedulaIdentidad");
 
             $stmt -> bindParam(":CedulaIdentidad", $DatosModelo['CedulaIdentidad'], PDO::PARAM_STR);
@@ -89,6 +90,7 @@
             $stmt -> bindParam(":Direccion", $DatosModelo['Direccion'], PDO::PARAM_STR);
             $stmt -> bindParam(":Celular", $DatosModelo['Celular'], PDO::PARAM_STR);
             $stmt -> bindParam(":Telefono", $DatosModelo['Telefono'], PDO::PARAM_STR);
+            $stmt -> bindValue(":Correo", $DatosModelo['Correo'], $DatosModelo['Correo'] === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
 
             if ($stmt -> execute())
             {

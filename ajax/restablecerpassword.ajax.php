@@ -2,8 +2,8 @@
 /**
  * AJAX para restablecer contraseñas desde la administración.
  * El usuario que olvidó su contraseña la solicita al administrador, quien
- * genera una nueva desde el detalle del estudiante/docente o desde la lista
- * de usuarios del personal.
+ * genera una nueva desde el detalle del estudiante/docente, o la escribe a mano
+ * desde la lista de usuarios del personal (ADM, SEC, AUX).
  *
  * Permisos:
  *  - Estudiantes y docentes: ADM y SEC (son quienes gestionan esas páginas).
@@ -37,7 +37,7 @@ if ($id <= 0) {
 try {
     switch ($accion) {
         case 'estudiante':
-            if (!in_array($tipoSesion, ['ADM', 'SEC'])) {
+            if (!in_array($tipoSesion, ['ADM', 'SEC', 'AUX'])) {
                 echo json_encode(['success' => false, 'mensaje' => 'No tiene permisos para esta acción']);
                 exit;
             }
@@ -51,7 +51,7 @@ try {
             break;
 
         case 'docente':
-            if (!in_array($tipoSesion, ['ADM', 'SEC'])) {
+            if (!in_array($tipoSesion, ['ADM', 'SEC', 'AUX'])) {
                 echo json_encode(['success' => false, 'mensaje' => 'No tiene permisos para esta acción']);
                 exit;
             }
@@ -73,8 +73,14 @@ try {
                 echo json_encode(['success' => false, 'mensaje' => 'Este personal no tiene un usuario asignado']);
                 exit;
             }
-            $passwordTexto = UsuarioControladores::GenerarPasswordCompleja();
-            $passwordHash = password_hash($passwordTexto, PASSWORD_BCRYPT, ['cost' => 12]);
+            // Al personal la contraseña nueva la escribe el administrador (no se genera)
+            $errorPassword = UsuarioControladores::ValidarPasswordPersonal($_POST['password'] ?? '', $_POST['confirmacion'] ?? '');
+            if ($errorPassword !== null) {
+                echo json_encode(['success' => false, 'mensaje' => $errorPassword]);
+                exit;
+            }
+            $passwordTexto = null; // ya la conoce quien la escribió: no se devuelve
+            $passwordHash = password_hash($_POST['password'], PASSWORD_BCRYPT, ['cost' => 12]);
             $resultado = UsuarioModelos::RestablecerPasswordPersonalModelo($id, $passwordHash);
             break;
 
@@ -84,7 +90,11 @@ try {
     }
 
     if ($resultado === 'exitoso') {
-        echo json_encode(['success' => true, 'mensaje' => 'Contraseña restablecida correctamente', 'password' => $passwordTexto]);
+        $respuesta = ['success' => true, 'mensaje' => 'Contraseña restablecida correctamente'];
+        if ($passwordTexto !== null) {
+            $respuesta['password'] = $passwordTexto;
+        }
+        echo json_encode($respuesta);
     } else {
         echo json_encode(['success' => false, 'mensaje' => 'No se pudo restablecer la contraseña']);
     }

@@ -84,7 +84,7 @@ function crearSolicitud()
 function validarPersonalAdministrativo()
 {
     $tipo = $_SESSION['Tipo'] ?? '';
-    return ($tipo === 'ADM' || $tipo === 'SEC');
+    return in_array($tipo, ['ADM', 'SEC', 'AUX'], true);
 }
 
 function listarSolicitudes()

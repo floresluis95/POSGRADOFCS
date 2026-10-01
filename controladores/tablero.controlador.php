@@ -29,6 +29,13 @@ class TableroControlador
             ['reportemodulos', 'fa-chart-bar', 'Reporte de pagos', 'Cobranza por programa'],
             ['reportes', 'fa-file-pdf', 'Reportes PDF', 'Listados y recaudación'],
         ],
+        'AUX' => [
+            ['preregistro', 'fa-user-plus', 'Pre-Registro', 'Nuevas órdenes de matrícula'],
+            ['matriculados', 'fa-credit-card', 'Matriculados', 'Pagos, cuotas y clínicas'],
+            ['inscripcion', 'fa-file-signature', 'Inscripción', 'Validar vouchers'],
+            ['calendario', 'fa-calendar-alt', 'Calendario', 'Clases y actividades'],
+            ['reportemodulos', 'fa-chart-bar', 'Reporte de pagos', 'Cobranza por programa'],
+        ],
         'DOC' => [
             ['reportecalificaciones', 'fa-clipboard-check', 'Calificaciones', 'Registrar notas'],
             ['calendario', 'fa-calendar-alt', 'Calendario', 'Mis clases y actividades'],
@@ -54,7 +61,7 @@ class TableroControlador
         $hora = (int)date('G');
         $saludo = $hora < 12 ? 'Buenos días' : ($hora < 19 ? 'Buenas tardes' : 'Buenas noches');
 
-        $roles = ['ADM' => 'Administrador', 'SEC' => 'Secretaría', 'DOC' => 'Docente', 'EST' => 'Estudiante'];
+        $roles = ['ADM' => 'Administrador', 'SEC' => 'Secretaría', 'AUX' => 'Auxiliar', 'DOC' => 'Docente', 'EST' => 'Estudiante'];
 
         $datos = [
             'tipo' => $tipo,
@@ -65,7 +72,7 @@ class TableroControlador
             'eventos' => [],
         ];
 
-        if (in_array($tipo, ['ADM', 'SEC'], true)) {
+        if (in_array($tipo, ['ADM', 'SEC', 'AUX'], true)) {
             $datos['resumen'] = TableroModelo::ResumenGestionModelo();
             $datos['ultimosPagos'] = TableroModelo::UltimosPagosModelo(6);
             $datos['eventos'] = TableroModelo::ProximosEventosModelo(null, null, 30, 6);

@@ -16,7 +16,7 @@ class PlazoCuotaProgramaControlador
     private static function puedeEscribir()
     {
         $tipo = $_SESSION['Tipo'] ?? '';
-        return in_array($tipo, ['ADM', 'SEC'], true);
+        return in_array($tipo, ['ADM', 'SEC', 'AUX'], true);
     }
 
     /**

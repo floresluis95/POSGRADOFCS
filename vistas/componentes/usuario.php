@@ -8,7 +8,7 @@
   <div id="kt_header_mobile" class="kt-header-mobile  kt-header-mobile--fixed " >
     <div class="kt-header-mobile__logo">
       <a href="demo9/index.html">
-         <img alt="Logo" src="vistas/recursos/assets/media/logos/logo0.png" width="40" />
+         <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
       </a>
     </div>
     <div class="kt-header-mobile__toolbar">
@@ -302,13 +302,26 @@
             </div>
           </div>
 
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="UICorreo">
+                  <i class="fas fa-envelope text-success"></i> Correo electrónico *
+                </label>
+                <input type="email" id="UICorreo" name="correo" class="form-control"
+                       placeholder="Ej: juan.garcia@gmail.com" required maxlength="150">
+                <small class="text-muted">Aquí recibirá el código si olvida su contraseña</small>
+              </div>
+            </div>
+          </div>
+
           <h4 class="form-section">
             <i class="fas fa-user-lock mr-2"></i> Credenciales de Acceso
           </h4>
 
           <div class="alert alert-info" style="border-left: 4px solid #17a2b8; background-color: #d1ecf1;">
             <i class="fas fa-info-circle mr-2"></i>
-            <strong>Nota:</strong> La contraseña inicial será el número de cédula. El usuario deberá cambiarla en el primer acceso.
+            <strong>Nota:</strong> Escriba la contraseña del usuario: mínimo 8 caracteres, con al menos una letra y un número. No se podrá volver a ver; si se olvida, el administrador debe restablecerla.
           </div>
 
           <div class="row">
@@ -331,8 +344,33 @@
                   <option disabled selected value="">Seleccione un cargo...</option>
                   <option value="ADM">ADMINISTRADOR</option>
                   <option value="SEC">SECRETARIA</option>
-                
+                  <option value="AUX">AUXILIAR</option>
+
                 </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="UIPassword">
+                  <i class="fas fa-key text-warning"></i> Contraseña *
+                </label>
+                <input type="password" id="UIPassword" name="password" class="form-control"
+                       minlength="8" autocomplete="new-password" required
+                       pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}"
+                       title="Mínimo 8 caracteres, con al menos una letra y un número">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="UIPasswordConfirmar">
+                  <i class="fas fa-key text-warning"></i> Confirmar contraseña *
+                </label>
+                <input type="password" id="UIPasswordConfirmar" name="password_confirmar" class="form-control"
+                       minlength="8" autocomplete="new-password" required>
+                <small id="UIPasswordAviso" class="text-danger" style="display:none;">Las contraseñas no coinciden</small>
               </div>
             </div>
           </div>
@@ -432,6 +470,15 @@
                   <i class="fas fa-phone text-success"></i> Teléfono
                 </label>
                 <input type="text" id="UETelefono" name="editartelefono" class="form-control">
+              </div>
+            </div>
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="UECorreo">
+                  <i class="fas fa-envelope text-success"></i> Correo electrónico
+                </label>
+                <input type="email" id="UECorreo" name="editarcorreo" class="form-control" maxlength="150"
+                       placeholder="Necesario para recuperar la contraseña por correo">
               </div>
             </div>
           </div>
