@@ -39,9 +39,9 @@ class TableroModelo
                     (SELECT COUNT(DISTINCT DocenteID) FROM modulos WHERE DocenteID IS NOT NULL AND estadomodulo = 'ACTIVO') AS docentesConModulo,
                     (SELECT COUNT(*) FROM ordenpago WHERE Estado = 'PENDIENTE' AND idinscripcion IS NULL) AS preregistrosPendientes,
                     (SELECT COUNT(*) FROM solicitudinscripcion WHERE Estado = 'PENDIENTE') AS solicitudesPendientes,
-                    (SELECT COUNT(*) FROM ordenpago WHERE Estado = 'PENDIENTE' AND idinscripcion IS NOT NULL AND ListaModulos IS NULL) AS ordenesPendientes,
-                    (SELECT COALESCE(SUM(MontoTotal), 0) FROM ordenpago WHERE Estado = 'PENDIENTE' AND idinscripcion IS NOT NULL AND ListaModulos IS NULL) AS montoOrdenesPendientes,
-                    (SELECT COUNT(*) FROM ordenpago WHERE Estado = 'PENDIENTE' AND ListaModulos IS NULL
+                    (SELECT COUNT(*) FROM ordenpago WHERE Estado = 'PENDIENTE' AND idinscripcion IS NOT NULL AND ListaModulos IS NULL AND COALESCE(Observaciones, '') <> 'CLINICA') AS ordenesPendientes,
+                    (SELECT COALESCE(SUM(MontoTotal), 0) FROM ordenpago WHERE Estado = 'PENDIENTE' AND idinscripcion IS NOT NULL AND ListaModulos IS NULL AND COALESCE(Observaciones, '') <> 'CLINICA') AS montoOrdenesPendientes,
+                    (SELECT COUNT(*) FROM ordenpago WHERE Estado = 'PENDIENTE' AND ListaModulos IS NULL AND COALESCE(Observaciones, '') <> 'CLINICA'
                         AND FechaVencimiento IS NOT NULL AND FechaVencimiento < CURDATE()) AS ordenesVencidas,
                     (
                         (SELECT COALESCE(SUM(montocuota), 0) FROM pagomodulo
@@ -174,7 +174,7 @@ class TableroModelo
             $stmtOrden = $pdo->prepare(
                 "SELECT COUNT(*) AS cantidad, COALESCE(SUM(MontoTotal), 0) AS monto, MIN(FechaVencimiento) AS vence
                  FROM ordenpago
-                 WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND ListaModulos IS NULL"
+                 WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND ListaModulos IS NULL AND COALESCE(Observaciones, '') <> 'CLINICA'"
             );
 
             foreach ($programas as &$programa) {
