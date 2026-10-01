@@ -1346,11 +1346,25 @@ function validarVoucherMatricula()
         $sinMatricula
     );
 
+    // Requisitos de matriculación que el estudiante entregó al inscribirse
+    // (requisitos[IdRequisito][entregado|fecha]). Se guardan aparte: si fallan,
+    // la inscripción ya hecha no se revierte, solo se avisa.
+    $requisitos = null;
+    if ($resultado['status'] === 'exitoso' && !empty($resultado['idInscripcion']) && !empty($_POST['requisitos'])) {
+        require_once __DIR__ . '/../controladores/requisito.controlador.php';
+        $requisitos = RequisitoControlador::GuardarControlador(
+            $resultado['idInscripcion'],
+            $_POST['requisitos'],
+            RequisitoControlador::UsuarioSesion()
+        );
+    }
+
     echo json_encode([
         'success' => $resultado['status'] === 'exitoso',
         'mensaje' => $resultado['mensaje'],
         'estudianteID' => $resultado['estudianteID'] ?? null,
-        'programaID' => $resultado['programaID'] ?? null
+        'programaID' => $resultado['programaID'] ?? null,
+        'requisitos' => $requisitos
     ]);
 }
 

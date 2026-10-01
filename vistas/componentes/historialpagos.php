@@ -5,9 +5,275 @@ date_default_timezone_set("America/La_Paz");
 ?>
 
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
+
+<!-- Estilos de la vista: van antes del contenido para que no se vea sin estilo al cargar -->
+<style>
+/* =========================================================
+   HISTORIAL DE PAGOS (prefijo hp-): matrícula y cuotas de un estudiante.
+   Mismo lenguaje visual que Inscripción y Programas: tarjetas blancas,
+   azul institucional y botones del formato unificado del sistema.
+   ========================================================= */
+.hp {
+    --hp-primario: #1e3c72;
+    --hp-primario-suave: #eef2f9;
+    --hp-texto: #1f2937;
+    --hp-texto-2: #64748b;
+    --hp-borde: #e3e7ef;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.hp-card {
+    background: #fff;
+    border: 1px solid var(--hp-borde);
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, .05);
+    overflow: hidden;
+    margin-bottom: 18px;
+}
+.hp-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--hp-borde);
+}
+.hp-card-head h3 { font-size: 16px; font-weight: 700; margin: 0; color: var(--hp-texto); }
+.hp-card-head h3 i { color: var(--hp-primario); margin-right: 4px; }
+.hp-card-head p { font-size: 12.5px; color: var(--hp-texto-2); margin: 3px 0 0; }
+.hp-card-body { padding: 22px 24px 20px; }
+
+/* ---------- Buscador ---------- */
+.hp-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--hp-texto);
+    margin-bottom: 6px;
+}
+.hp-buscador { position: relative; display: flex; gap: 10px; }
+.hp-buscador-icono {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+}
+.hp-buscador .form-control {
+    height: 46px;
+    padding-left: 40px;
+    border: 1px solid #d8dde8;
+    border-radius: 10px;
+    font-size: 14px;
+}
+.hp-buscador .form-control:focus {
+    border-color: var(--hp-primario);
+    box-shadow: 0 0 0 3px rgba(30, 60, 114, .12);
+}
+.hp-buscador .hp-btn-primario { height: 46px; padding: 0 22px; }
+.hp-ayuda {
+    margin: 12px 0 0;
+    padding: 10px 14px;
+    background: var(--hp-primario-suave);
+    border-radius: 10px;
+    font-size: 12.5px;
+    color: #334155;
+}
+.hp-ayuda i { color: var(--hp-primario); margin-right: 4px; }
+
+/* Botón principal de la vista (Buscar, Ver historial): azul institucional */
+.hp-btn-primario {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: #1e3c72;
+    border: 1px solid #1e3c72;
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.hp-btn-primario:hover, .hp-btn-primario:focus {
+    background: #16305c;
+    border-color: #16305c;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(30, 60, 114, .25);
+}
+
+/* ---------- Estado vacío ---------- */
+.hp-vacio { text-align: center; padding: 42px 20px; color: var(--hp-texto-2); }
+.hp-vacio i { display: block; font-size: 34px; color: #c7cdd8; margin-bottom: 12px; }
+.hp-vacio strong { display: block; color: var(--hp-texto); font-size: 15px; margin-bottom: 4px; }
+.hp-vacio span { font-size: 13px; }
+
+/* ---------- Lista de coincidencias ---------- */
+.hp-resultados { display: flex; flex-direction: column; gap: 10px; }
+.hp-resultado {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--hp-borde);
+    border-radius: 12px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.hp-resultado:hover { border-color: #b9c6dd; box-shadow: 0 4px 12px rgba(15, 23, 42, .06); }
+.hp-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--hp-primario-suave);
+    color: var(--hp-primario);
+    font-weight: 700;
+    font-size: 13px;
+}
+.hp-resultado-datos { flex: 1; min-width: 0; }
+.hp-resultado-datos strong { display: block; color: var(--hp-texto); font-size: 14px; }
+.hp-resultado-datos small { color: var(--hp-texto-2); font-size: 12px; margin-right: 14px; }
+.hp-resultado-datos small i { color: #94a3b8; margin-right: 3px; }
+.hp-resultado .hp-btn-primario { height: 36px; padding: 0 14px; font-size: 12.5px; }
+
+/* ---------- Ficha del estudiante ---------- */
+.hp-estudiante { display: flex; align-items: center; gap: 16px; padding: 18px 24px; }
+.hp-estudiante .hp-avatar { width: 54px; height: 54px; font-size: 17px; }
+.hp-estudiante h4 { margin: 0 0 6px; font-size: 18px; font-weight: 700; color: var(--hp-texto); }
+.hp-datos { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--hp-texto-2); }
+.hp-datos i { color: #94a3b8; margin-right: 4px; }
+
+/* ---------- Programa ---------- */
+.hp-programa-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--hp-borde);
+    border-left: 4px solid var(--hp-primario);
+}
+.hp-programa-head h5 { margin: 0; font-size: 15px; font-weight: 700; color: var(--hp-texto); }
+.hp-programa-head h5 i { color: var(--hp-primario); margin-right: 6px; }
+.hp-programa-head small { display: block; margin-top: 3px; font-size: 12px; color: var(--hp-texto-2); }
+
+.hp-resumen {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 18px 24px 4px;
+}
+.hp-resumen-item {
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid var(--hp-borde);
+    border-radius: 10px;
+}
+.hp-resumen-item span { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; color: var(--hp-texto-2); }
+.hp-resumen-item strong { display: block; margin-top: 2px; font-size: 18px; color: var(--hp-primario); }
+.hp-resumen-item small { font-size: 12px; color: var(--hp-texto-2); }
+
+.hp-seccion { padding: 16px 24px 4px; }
+.hp-seccion:last-child { padding-bottom: 22px; }
+.hp-seccion-titulo {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--hp-primario);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 10px;
+}
+.hp-seccion-titulo i { margin-right: 4px; }
+.hp-seccion-titulo span { color: var(--hp-texto-2); font-weight: 500; text-transform: none; letter-spacing: 0; }
+
+.hp-tabla { margin: 0; font-size: 13px; }
+.hp-tabla thead th {
+    background: #f8fafc;
+    color: var(--hp-texto-2);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    border-top: 0;
+    border-bottom: 1px solid var(--hp-borde);
+    white-space: nowrap;
+}
+.hp-tabla td { vertical-align: middle; border-color: #eef1f6; color: var(--hp-texto); }
+.hp-tabla-marco { border: 1px solid var(--hp-borde); border-radius: 10px; overflow: hidden; }
+.hp-nota { font-size: 12.5px; color: var(--hp-texto-2); padding: 12px 14px; background: #f8fafc; border-radius: 10px; }
+
+/* Etiquetas de estado y de plan */
+.hp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: #475569;
+    white-space: nowrap;
+}
+.hp-chip.is-ok { background: #e7f6ee; color: #2f855a; }
+.hp-chip.is-pendiente { background: #fff6e0; color: #b7791f; }
+.hp-chip.is-rechazado { background: #fdecec; color: #c53030; }
+.hp-chip.is-plan { background: var(--hp-primario-suave); color: var(--hp-primario); }
+
+.foto-voucher-thumb {
+    width: 46px;
+    height: 46px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--hp-borde, #e3e7ef);
+    cursor: zoom-in;
+    transition: transform .15s ease;
+}
+.foto-voucher-thumb:hover { transform: scale(1.06); }
+
+/* ---------- Ventanas ---------- */
+.hp-modal-head {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border-bottom: 0;
+    align-items: flex-start;
+}
+.hp-modal-head small {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: #fff;
+    opacity: .75;
+}
+.hp-modal-head .modal-title,
+.hp-modal-head .modal-title i { color: #fff !important; font-weight: 700; opacity: 1; }
+.hp-modal-head .close,
+.hp-modal-head .close span { color: #fff !important; opacity: .9; text-shadow: none; }
+.hp-modal-head .close:hover { opacity: 1; }
+#modalEditarPagoHistorial .form-control { height: 40px; border-radius: 8px; }
+#modalEditarPagoHistorial .custom-file-label { border-radius: 8px; }
+#modalEditarPagoHistorial .custom-file-label::after { content: "Examinar"; }
+.hp-voucher-numero { display: inline-block; padding: 6px 14px; background: var(--hp-primario-suave, #eef2f9); border-radius: 8px; color: #1e3c72; }
+
+@media (max-width: 767.98px) {
+    .hp-card-head { flex-direction: column; align-items: flex-start; }
+    .hp-buscador { flex-direction: column; }
+    .hp-buscador-icono { top: 23px; }
+    .hp-resultado { flex-wrap: wrap; }
+    .hp-resultado .hp-btn-primario { width: 100%; }
+    .hp-resumen { grid-template-columns: 1fr; }
+    .hp-estudiante { align-items: flex-start; }
+}
+</style>
+
   <div id="kt_header_mobile" class="kt-header-mobile  kt-header-mobile--fixed ">
     <div class="kt-header-mobile__logo">
-      <a href="demo9/index.html">
+      <a href="panel">
       <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
       </a>
     </div>
@@ -43,7 +309,7 @@ date_default_timezone_set("America/La_Paz");
                     <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
                     <span class="kt-subheader__breadcrumbs-separator"></span>
                     <a href="#" class="kt-subheader__breadcrumbs-link">
-                      <h3>CONSULTA POR C.I.</h3>
+                      <h3>CONSULTA POR ESTUDIANTE</h3>
                     </a>
                   </div>
                 </div>
@@ -56,89 +322,72 @@ date_default_timezone_set("America/La_Paz");
             </div>
 
             <div class="kt-container kt-grid__item kt-grid__item--fluid">
+              <div class="hp">
 
-              <!-- Buscador unificado de estudiante -->
-              <div class="kt-portlet historialpagos-portlet">
-                <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
-                  <div class="kt-portlet__head-label">
-                    <h3 class="kt-portlet__head-title text-white">
-                      <i class="flaticon2-search"></i> Búsqueda de Estudiante
-                    </h3>
-                  </div>
-                </div>
-                <div class="kt-portlet__body py-4">
-                  <div class="row justify-content-center">
-                    <div class="col-lg-8 col-md-10">
-                      <label class="filtro-label d-block mb-2">Buscar estudiante</label>
-                      <div class="input-group historial-busqueda-unificada">
-                        <input type="text" id="valorBusquedaHistorial" class="form-control"
-                               placeholder="Ingrese el C.I. o el nombre y/o apellidos del estudiante" maxlength="150" autocomplete="off">
-                        <div class="input-group-append">
-                          <button type="button" id="btnBuscarHistorial" class="btn btn-primary">
-                            <i class="flaticon2-search"></i> Buscar
-                          </button>
-                        </div>
-                      </div>
-                      <small class="form-text text-muted mt-2">
-                        <i class="flaticon2-information"></i> Puede buscar por número de C.I. (sin complemento ni expedido) o escribiendo el nombre y/o apellidos.
-                      </small>
+                <!-- Buscador unificado de estudiante -->
+                <div class="hp-card">
+                  <div class="hp-card-head">
+                    <div>
+                      <h3><i class="fa fa-search"></i> Buscar estudiante</h3>
+                      <p>Consulte la matrícula y las cuotas pagadas de un estudiante en cada programa.</p>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <!-- Estado vacío / sin búsqueda todavía -->
-              <div id="historialSinBuscar" class="text-center text-muted py-5">
-                <i class="flaticon2-time" style="font-size: 3rem; color: #E4E6EF;"></i>
-                <p class="mt-3 mb-0" style="font-size: 1.05rem;">Busque un estudiante por C.I. o por nombre/apellidos para ver su historial de pagos</p>
-              </div>
-
-              <!-- Resultado: lista de coincidencias (búsqueda por nombre con varios resultados) -->
-              <div id="historialListaResultados" style="display:none;">
-                <div class="kt-portlet historialpagos-portlet">
-                  <div class="kt-portlet__head">
-                    <div class="kt-portlet__head-label">
-                      <h3 class="kt-portlet__head-title">
-                        <i class="flaticon2-user"></i> Seleccione un estudiante
-                      </h3>
+                  <div class="hp-card-body">
+                    <label class="hp-label" for="valorBusquedaHistorial">C.I., nombre o apellidos</label>
+                    <div class="hp-buscador">
+                      <i class="fa fa-id-card hp-buscador-icono"></i>
+                      <input type="text" id="valorBusquedaHistorial" class="form-control"
+                             placeholder="Ej: 1234567 o Pérez" maxlength="150" autocomplete="off">
+                      <button type="button" id="btnBuscarHistorial" class="btn hp-btn-primario">
+                        <i class="fa fa-search"></i> Buscar
+                      </button>
                     </div>
-                  </div>
-                  <div class="kt-portlet__body py-3">
-                    <div class="table-responsive">
-                      <table class="table table-sm table-hover mb-0">
-                        <thead class="thead-light">
-                          <tr>
-                            <th>Apellidos y Nombre</th>
-                            <th>C.I.</th>
-                            <th>Correo</th>
-                            <th class="text-center">Acción</th>
-                          </tr>
-                        </thead>
-                        <tbody id="historialListaResultadosBody"></tbody>
-                      </table>
-                    </div>
+                    <p class="hp-ayuda">
+                      <i class="fa fa-info-circle"></i> Busque por número de C.I. (sin complemento ni expedido) o escriba el nombre y/o apellidos.
+                    </p>
                   </div>
                 </div>
-              </div>
 
-              <!-- Resultado: datos del estudiante -->
-              <div id="historialResultado" style="display:none;">
+                <!-- Estado vacío / sin búsqueda todavía -->
+                <div id="historialSinBuscar" class="hp-card">
+                  <div class="hp-vacio">
+                    <i class="fa fa-history"></i>
+                    <strong>Aún no hay ninguna consulta</strong>
+                    <span>Busque un estudiante para ver su historial de pagos.</span>
+                  </div>
+                </div>
 
-                <div class="kt-portlet historialpagos-portlet">
-                  <div class="kt-portlet__body py-3">
-                    <div class="row align-items-center">
-                      <div class="col-md-8">
-                        <h4 class="mb-1 font-weight-bold" id="historialEstudianteNombre"></h4>
-                        <small class="text-muted" id="historialEstudianteDatos"></small>
+                <!-- Resultado: lista de coincidencias (búsqueda por nombre con varios resultados) -->
+                <div id="historialListaResultados" class="hp-card" style="display:none;">
+                  <div class="hp-card-head">
+                    <div>
+                      <h3><i class="fa fa-users"></i> Seleccione un estudiante</h3>
+                      <p id="historialListaResultadosResumen"></p>
+                    </div>
+                  </div>
+                  <div class="hp-card-body">
+                    <div class="hp-resultados" id="historialListaResultadosBody"></div>
+                  </div>
+                </div>
+
+                <!-- Resultado: datos del estudiante -->
+                <div id="historialResultado" style="display:none;">
+
+                  <div class="hp-card">
+                    <div class="hp-estudiante">
+                      <span class="hp-avatar" id="historialEstudianteIniciales"></span>
+                      <div>
+                        <h4 id="historialEstudianteNombre"></h4>
+                        <div class="hp-datos" id="historialEstudianteDatos"></div>
                       </div>
                     </div>
                   </div>
+
+                  <div id="historialProgramas"></div>
+
                 </div>
 
-                <div id="historialProgramas"></div>
-
               </div>
-
             </div>
           </div>
         </div>
@@ -151,22 +400,21 @@ date_default_timezone_set("America/La_Paz");
       </div>
     </div>
   </div>
-</div>
 
 <!-- Modal: Foto del voucher (matrícula o cuota, según a quién se invoque) -->
 <div class="modal fade" id="modalFotoHistorialPago" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
-      <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
-        <h5 class="modal-title text-white"><i class="fa fa-image"></i> Foto del Voucher</h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+      <div class="modal-header hp-modal-head">
+        <h5 class="modal-title"><i class="fa fa-image"></i> Foto del voucher</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body text-center">
-        <p class="mb-2" id="infoVoucherHistorialPago" style="display:none;">
-          <span class="text-muted small d-block">N° VOUCHER</span>
-          <strong id="numeroVoucherHistorialPagoGrande" style="font-size:1.1rem;"></strong>
+        <p class="mb-3" id="infoVoucherHistorialPago" style="display:none;">
+          <span class="text-muted small d-block mb-1">N° de voucher</span>
+          <strong id="numeroVoucherHistorialPagoGrande" class="hp-voucher-numero"></strong>
         </p>
         <img id="imagenHistorialPagoGrande" src="" alt="Foto del voucher"
              style="max-width:100%; max-height:70vh; border-radius:10px; background:#f8f9fa;">
@@ -182,9 +430,12 @@ date_default_timezone_set("America/La_Paz");
 <div class="modal fade" id="modalEditarPagoHistorial" tabindex="-1" role="dialog" data-backdrop="static" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
-      <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
-        <h5 class="modal-title text-white" id="tituloEditarPagoHistorial"><i class="fa fa-pencil-alt"></i> Editar pago</h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+      <div class="modal-header hp-modal-head">
+        <div>
+          <small>Corregir datos del pago</small>
+          <h5 class="modal-title" id="tituloEditarPagoHistorial"><i class="fa fa-pencil-alt"></i> Editar pago</h5>
+        </div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -193,116 +444,36 @@ date_default_timezone_set("America/La_Paz");
         <input type="hidden" id="editPagoId">
         <div class="modal-body">
           <div class="form-group">
-            <label class="small font-weight-bold mb-1">N° de Voucher <span class="text-danger">*</span></label>
+            <label class="hp-label" for="editPagoVoucher">N° de voucher <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="editPagoVoucher" maxlength="100" required>
           </div>
           <div class="row">
             <div class="col-md-6 form-group">
-              <label class="small font-weight-bold mb-1">Fecha de pago <span class="text-danger">*</span></label>
+              <label class="hp-label" for="editPagoFecha">Fecha de pago <span class="text-danger">*</span></label>
               <input type="date" class="form-control" id="editPagoFecha" max="<?php echo date('Y-m-d'); ?>" required>
             </div>
             <div class="col-md-6 form-group">
-              <label class="small font-weight-bold mb-1">Monto (Bs.) <span class="text-danger">*</span></label>
+              <label class="hp-label" for="editPagoMonto">Monto (Bs.) <span class="text-danger">*</span></label>
               <input type="number" step="0.01" min="0.01" class="form-control" id="editPagoMonto" required>
             </div>
           </div>
           <div class="form-group mb-0">
-            <label class="small font-weight-bold mb-1">Foto del voucher</label>
-            <input type="file" class="form-control-file" id="editPagoFoto" accept="image/*">
+            <label class="hp-label" for="editPagoFoto">Foto del voucher</label>
+            <div class="custom-file">
+              <input type="file" class="custom-file-input" id="editPagoFoto" accept="image/*">
+              <label class="custom-file-label" for="editPagoFoto" id="editPagoFotoLabel">Conservar la foto actual</label>
+            </div>
             <small class="form-text text-muted">Opcional: solo si desea reemplazar la foto actual (máx. 5MB).</small>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Guardar Cambios</button>
+          <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Guardar cambios</button>
         </div>
       </form>
     </div>
   </div>
 </div>
-
-<style>
-.historialpagos-portlet {
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-    overflow: hidden;
-}
-
-.historial-busqueda-unificada .form-control:focus {
-    box-shadow: none;
-    border-color: #2a5298;
-}
-
-.historial-busqueda-unificada .btn-primary {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    border: none;
-    font-weight: 600;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-}
-
-.programa-historial-card {
-    background: #fff;
-    border: 1px solid #e1e3ea;
-    border-radius: 10px;
-    margin-bottom: 1.5rem;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
-
-.programa-historial-head {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    color: #fff;
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.programa-historial-head h5 {
-    color: #fff;
-    margin: 0;
-    font-weight: 700;
-}
-
-.programa-historial-body {
-    padding: 1.5rem;
-}
-
-.seccion-detalle-pago {
-    background-color: #fbfbfd;
-    border: 1px solid #e1e3ea;
-    border-radius: 6px;
-    padding: 1rem 1.25rem;
-    margin-bottom: 1rem;
-}
-
-.seccion-detalle-pago-titulo {
-    font-size: 12px;
-    font-weight: 700;
-    color: #6c757d;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    margin-bottom: 10px;
-}
-
-.foto-voucher-thumb {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-    cursor: pointer;
-}
-
-.badge-tipo-plan {
-    font-size: 12px;
-    padding: 6px 12px;
-}
-</style>
 
 <script>
 function iniciarHistorialPagos() {
@@ -321,17 +492,11 @@ function iniciarHistorialPagos() {
         GRUPAL: 'Plan Grupal'
     };
 
-    const badgeTipoPlan = {
-        REGULAR: 'badge-primary',
-        DESCUENTO: 'badge-success',
-        GRUPAL: 'badge-info'
-    };
-
-    const badgeEstadoCuota = {
-        PAGADO: 'badge-success',
-        PENDIENTE: 'badge-warning',
-        RECHAZADO: 'badge-danger',
-        ANULADO: 'badge-secondary'
+    const chipEstadoCuota = {
+        PAGADO: 'is-ok',
+        PENDIENTE: 'is-pendiente',
+        RECHAZADO: 'is-rechazado',
+        ANULADO: ''
     };
 
     function formatearFecha(fecha) {
@@ -341,112 +506,131 @@ function iniciarHistorialPagos() {
         return partes[2] + '/' + partes[1] + '/' + partes[0];
     }
 
-    // Escapar un valor para usarlo dentro de un atributo HTML armado por
-    // concatenación de strings (data-voucher, etc.), evitando que comillas u
-    // otros caracteres del voucher rompan el markup.
+    function formatoBs(monto) {
+        return 'Bs. ' + (parseFloat(monto) || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Escapar un valor para insertarlo en HTML armado por concatenación de
+    // strings (texto o atributos como data-voucher), evitando que comillas u
+    // otros caracteres de los datos rompan el markup.
     function escaparAtributo(valor) {
         const div = document.createElement('div');
-        div.textContent = String(valor);
+        div.textContent = valor == null ? '' : String(valor);
         return div.innerHTML.replace(/"/g, '&quot;');
+    }
+
+    function iniciales(apaterno, nombre) {
+        return ((apaterno || '').charAt(0) + (nombre || '').charAt(0)).toUpperCase();
+    }
+
+    function botonEditar(tipo, id, fecha, voucher, monto, titulo) {
+        return '<button type="button" class="btn btn-sm btn-warning btnEditarPagoHistorial" title="' + escaparAtributo(titulo) + '" ' +
+                   'data-tipo="' + tipo + '" data-id="' + id + '" ' +
+                   'data-fecha="' + escaparAtributo(fecha || '') + '" data-voucher="' + escaparAtributo(voucher || '') + '" ' +
+                   'data-monto="' + (parseFloat(monto) || 0).toFixed(2) + '" ' +
+                   'data-titulo="' + escaparAtributo(titulo) + '">' +
+                   '<i class="fa fa-pencil-alt"></i>' +
+               '</button>';
+    }
+
+    function miniaturaFoto(tieneFoto, urlBase, voucher, alt) {
+        return tieneFoto
+            ? '<img src="' + urlBase + '&thumb=1" class="foto-voucher-thumb" alt="' + alt + '" ' +
+              'data-url="' + urlBase + '" data-voucher="' + escaparAtributo(voucher || '-') + '">'
+            : '<span class="text-muted small">Sin foto</span>';
     }
 
     function renderPrograma(programa) {
         const tipoPlan = programa.TipoPlan
-            ? '<span class="badge ' + (badgeTipoPlan[programa.TipoPlan] || 'badge-secondary') + ' badge-tipo-plan">' +
-                (etiquetasTipoPlan[programa.TipoPlan] || programa.TipoPlan) + '</span>'
-            : '<span class="badge badge-light badge-tipo-plan">Sin plan definido</span>';
+            ? '<span class="hp-chip is-plan"><i class="fa fa-list-ol"></i> ' + escaparAtributo(etiquetasTipoPlan[programa.TipoPlan] || programa.TipoPlan) + '</span>'
+            : '<span class="hp-chip">Sin plan definido</span>';
 
-        const fotoMatriculaHtml = programa.TieneFotoMatricula === 'SI'
-            ? '<img src="ajax/obtener-foto-matricula.php?idInscripcion=' + programa.idInscripcion + '&thumb=1" ' +
-              'class="foto-voucher-thumb" alt="Foto voucher matrícula" ' +
-              'data-url="ajax/obtener-foto-matricula.php?idInscripcion=' + programa.idInscripcion + '" ' +
-              'data-voucher="' + escaparAtributo(programa.nvauchermatricula || '-') + '">'
-            : '<span class="text-muted small">Sin foto</span>';
+        const cuotas = programa.Cuotas || [];
+        const cuotasPagadas = cuotas.filter(function(c) { return c.Estado === 'PAGADO'; });
+        const totalCuotasPagadas = cuotasPagadas.reduce(function(suma, c) { return suma + (parseFloat(c.Monto) || 0); }, 0);
+        const matriculaExonerada = programa.EstadoInscripcion && parseFloat(programa.costomatricula) === 0 && !programa.nvauchermatricula;
 
         let filasCuotas = '';
-        if (programa.Cuotas && programa.Cuotas.length > 0) {
-            programa.Cuotas.forEach(function(c) {
-                const fotoCuotaHtml = c.TieneFoto === 'SI'
-                    ? '<img src="ajax/obtener-voucher-imagen.php?id=' + c.Idpagomodulo + '&thumb=1" ' +
-                      'class="foto-voucher-thumb" alt="Foto voucher cuota" ' +
-                      'data-url="ajax/obtener-voucher-imagen.php?id=' + c.Idpagomodulo + '" ' +
-                      'data-voucher="' + escaparAtributo(c.NumeroVoucher || '-') + '">'
-                    : '<span class="text-muted small">Sin foto</span>';
-
+        if (cuotas.length > 0) {
+            cuotas.forEach(function(c) {
                 filasCuotas += '<tr>' +
-                    '<td class="text-center">' + (c.NumeroCuota || '-') + '</td>' +
-                    '<td class="text-center">Bs. ' + parseFloat(c.Monto).toFixed(2) + '</td>' +
+                    '<td class="text-center"><strong>' + escaparAtributo(c.NumeroCuota || '-') + '</strong></td>' +
+                    '<td class="text-right">' + formatoBs(c.Monto) + '</td>' +
                     '<td class="text-center">' + formatearFecha(c.FechaPago) + '</td>' +
-                    '<td>' + (c.NumeroVoucher || '-') + '</td>' +
-                    '<td class="text-center"><span class="badge ' + (badgeEstadoCuota[c.Estado] || 'badge-secondary') + '">' + c.Estado + '</span></td>' +
-                    '<td class="text-center">' + fotoCuotaHtml + '</td>' +
-                    '<td class="text-center">' +
-                        '<button type="button" class="btn btn-sm btn-outline-warning btnEditarPagoHistorial" title="Editar cuota" ' +
-                            'data-tipo="cuota" data-id="' + c.Idpagomodulo + '" ' +
-                            'data-fecha="' + (c.FechaPago || '') + '" data-voucher="' + (c.NumeroVoucher ? c.NumeroVoucher.replace(/"/g, '&quot;') : '') + '" ' +
-                            'data-monto="' + parseFloat(c.Monto).toFixed(2) + '" ' +
-                            'data-titulo="Editar cuota' + (c.NumeroCuota ? ' N° ' + c.NumeroCuota : '') + '">' +
-                            '<i class="fa fa-pencil-alt"></i>' +
-                        '</button>' +
-                    '</td>' +
+                    '<td>' + escaparAtributo(c.NumeroVoucher || '-') + '</td>' +
+                    '<td class="text-center"><span class="hp-chip ' + (chipEstadoCuota[c.Estado] || '') + '">' + escaparAtributo(c.Estado) + '</span></td>' +
+                    '<td class="text-center">' + miniaturaFoto(c.TieneFoto === 'SI', 'ajax/obtener-voucher-imagen.php?id=' + c.Idpagomodulo, c.NumeroVoucher, 'Foto voucher cuota') + '</td>' +
+                    '<td class="text-center">' + botonEditar('cuota', c.Idpagomodulo, c.FechaPago, c.NumeroVoucher, c.Monto,
+                        'Editar cuota' + (c.NumeroCuota ? ' N° ' + c.NumeroCuota : '')) + '</td>' +
                 '</tr>';
             });
         } else {
             filasCuotas = '<tr><td colspan="7" class="text-center text-muted py-3">Sin cuotas registradas</td></tr>';
         }
 
-        const matriculaExonerada = programa.EstadoInscripcion && parseFloat(programa.costomatricula) === 0 && !programa.nvauchermatricula;
+        const seccionMatricula = matriculaExonerada
+            ? '<div class="hp-nota"><i class="fa fa-info-circle"></i> Sin voucher de matrícula: se inscribió sin pago de matrícula y el programa completo se cobra por cuotas.</div>'
+            : '<div class="hp-tabla-marco table-responsive">' +
+                '<table class="table hp-tabla">' +
+                    '<thead><tr>' +
+                        '<th class="text-right">Monto</th>' +
+                        '<th class="text-center">Fecha</th>' +
+                        '<th>N° voucher</th>' +
+                        '<th class="text-center">Foto</th>' +
+                        '<th class="text-center" style="width:90px;">Acción</th>' +
+                    '</tr></thead>' +
+                    '<tbody><tr>' +
+                        '<td class="text-right"><strong>' + formatoBs(programa.costomatricula) + '</strong></td>' +
+                        '<td class="text-center">' + formatearFecha(programa.FechaInscripcion) + '</td>' +
+                        '<td>' + escaparAtributo(programa.nvauchermatricula || '-') + '</td>' +
+                        '<td class="text-center">' + miniaturaFoto(programa.TieneFotoMatricula === 'SI', 'ajax/obtener-foto-matricula.php?idInscripcion=' + programa.idInscripcion, programa.nvauchermatricula, 'Foto voucher matrícula') + '</td>' +
+                        '<td class="text-center">' + botonEditar('matricula', programa.idInscripcion, programa.FechaInscripcion, programa.nvauchermatricula, programa.costomatricula, 'Editar matrícula') + '</td>' +
+                    '</tr></tbody>' +
+                '</table>' +
+              '</div>';
 
-        return '<div class="programa-historial-card">' +
-            '<div class="programa-historial-head">' +
-                '<h5><i class="fa fa-graduation-cap"></i> ' + programa.NombrePrograma + ' (' + programa.GradoAcademico + ')</h5>' +
+        return '<div class="hp-card">' +
+            '<div class="hp-programa-head">' +
+                '<div>' +
+                    '<h5><i class="fa fa-graduation-cap"></i>' + escaparAtributo(programa.NombrePrograma) + '</h5>' +
+                    '<small>' + escaparAtributo(programa.GradoAcademico || '') + '</small>' +
+                '</div>' +
                 tipoPlan +
             '</div>' +
-            '<div class="programa-historial-body">' +
 
-                '<div class="seccion-detalle-pago">' +
-                    '<div class="seccion-detalle-pago-titulo"><i class="fa fa-file-invoice"></i> Matrícula</div>' +
-                    (matriculaExonerada
-                        ? '<div class="text-muted small">Sin voucher de matrícula (inscrito sin pago de matrícula; el programa completo se cobra por cuotas).</div>'
-                        : '<div class="row align-items-center">' +
-                            '<div class="col-md-2"><small class="text-muted d-block">Monto</small><strong>Bs. ' + parseFloat(programa.costomatricula || 0).toFixed(2) + '</strong></div>' +
-                            '<div class="col-md-2"><small class="text-muted d-block">Fecha</small><strong>' + formatearFecha(programa.FechaInscripcion) + '</strong></div>' +
-                            '<div class="col-md-3"><small class="text-muted d-block">N° Voucher</small><strong>' + (programa.nvauchermatricula || '-') + '</strong></div>' +
-                            '<div class="col-md-2"><small class="text-muted d-block">Foto</small>' + fotoMatriculaHtml + '</div>' +
-                            '<div class="col-md-3 text-md-right">' +
-                                '<button type="button" class="btn btn-sm btn-outline-warning btnEditarPagoHistorial" title="Editar matrícula" ' +
-                                    'data-tipo="matricula" data-id="' + programa.idInscripcion + '" ' +
-                                    'data-fecha="' + (programa.FechaInscripcion || '') + '" data-voucher="' + (programa.nvauchermatricula ? programa.nvauchermatricula.replace(/"/g, '&quot;') : '') + '" ' +
-                                    'data-monto="' + parseFloat(programa.costomatricula || 0).toFixed(2) + '" ' +
-                                    'data-titulo="Editar matrícula">' +
-                                    '<i class="fa fa-pencil-alt"></i> Editar' +
-                                '</button>' +
-                            '</div>' +
-                          '</div>') +
+            '<div class="hp-resumen">' +
+                '<div class="hp-resumen-item"><span>Matrícula</span><strong>' + (matriculaExonerada ? 'Sin pago' : formatoBs(programa.costomatricula)) + '</strong>' +
+                    '<small>' + (matriculaExonerada ? 'Inscrito sin matrícula' : 'Pagada el ' + formatearFecha(programa.FechaInscripcion)) + '</small></div>' +
+                '<div class="hp-resumen-item"><span>Cuotas pagadas</span><strong>' + cuotasPagadas.length +
+                    (programa.NumeroCuotasPlan ? ' <small>de ' + escaparAtributo(programa.NumeroCuotasPlan) + '</small>' : '') + '</strong>' +
+                    '<small>' + cuotas.length + ' registrada(s)</small></div>' +
+                '<div class="hp-resumen-item"><span>Total pagado en cuotas</span><strong>' + formatoBs(totalCuotasPagadas) + '</strong>' +
+                    '<small>Solo cuotas en estado PAGADO</small></div>' +
+            '</div>' +
+
+            '<div class="hp-seccion">' +
+                '<div class="hp-seccion-titulo"><i class="fa fa-file-invoice"></i> Matrícula</div>' +
+                seccionMatricula +
+            '</div>' +
+
+            '<div class="hp-seccion">' +
+                '<div class="hp-seccion-titulo"><i class="fa fa-history"></i> Cuotas del programa' +
+                    (programa.NumeroCuotasPlan ? ' <span>(plan: ' + escaparAtributo(programa.NumeroCuotasPlan) + ' cuotas)</span>' : '') +
                 '</div>' +
-
-                '<div class="seccion-detalle-pago mb-0">' +
-                    '<div class="seccion-detalle-pago-titulo"><i class="fa fa-history"></i> Cuotas del programa' +
-                        (programa.NumeroCuotasPlan ? ' <span class="text-muted font-weight-normal">(plan: ' + programa.NumeroCuotasPlan + ' cuotas)</span>' : '') +
-                    '</div>' +
-                    '<div class="table-responsive">' +
-                        '<table class="table table-sm table-bordered table-hover mb-0">' +
-                            '<thead class="thead-light">' +
-                                '<tr>' +
-                                    '<th class="text-center" style="width:60px;">N°</th>' +
-                                    '<th class="text-center">Monto</th>' +
-                                    '<th class="text-center">Fecha</th>' +
-                                    '<th>Voucher</th>' +
-                                    '<th class="text-center">Estado</th>' +
-                                    '<th class="text-center">Foto</th>' +
-                                    '<th class="text-center">Acción</th>' +
-                                '</tr>' +
-                            '</thead>' +
-                            '<tbody>' + filasCuotas + '</tbody>' +
-                        '</table>' +
-                    '</div>' +
+                '<div class="hp-tabla-marco table-responsive">' +
+                    '<table class="table hp-tabla">' +
+                        '<thead><tr>' +
+                            '<th class="text-center" style="width:60px;">N°</th>' +
+                            '<th class="text-right">Monto</th>' +
+                            '<th class="text-center">Fecha</th>' +
+                            '<th>Voucher</th>' +
+                            '<th class="text-center">Estado</th>' +
+                            '<th class="text-center">Foto</th>' +
+                            '<th class="text-center" style="width:90px;">Acción</th>' +
+                        '</tr></thead>' +
+                        '<tbody>' + filasCuotas + '</tbody>' +
+                    '</table>' +
                 '</div>' +
-
             '</div>' +
         '</div>';
     }
@@ -456,24 +640,29 @@ function iniciarHistorialPagos() {
     // de la lista de coincidencias.
     let ultimaBusqueda = null;
 
+    function ciCompletoDe(est) {
+        let ci = est.Ci;
+        if (est.Complemento) ci += '-' + est.Complemento;
+        return ci + ' ' + (est.Exp || '');
+    }
+
     function mostrarResultadoEstudiante(resp) {
         const est = resp.estudiante;
         const nombreCompleto = est.Apaterno + ' ' + est.Amaterno + ' ' + est.Nombre;
-        let ciCompleto = est.Ci;
-        if (est.Complemento) ciCompleto += '-' + est.Complemento;
-        ciCompleto += ' ' + est.Exp;
 
+        $('#historialEstudianteIniciales').text(iniciales(est.Apaterno, est.Nombre));
         $('#historialEstudianteNombre').text(nombreCompleto);
         $('#historialEstudianteDatos').html(
-            '<i class="fa fa-id-card"></i> C.I. ' + ciCompleto +
-            (est.Correo ? ' &nbsp;|&nbsp; <i class="fa fa-envelope"></i> ' + est.Correo : '') +
-            (est.Celular ? ' &nbsp;|&nbsp; <i class="fa fa-mobile-alt"></i> ' + est.Celular : '')
+            '<span><i class="fa fa-id-card"></i>C.I. ' + escaparAtributo(ciCompletoDe(est)) + '</span>' +
+            (est.Correo ? '<span><i class="fa fa-envelope"></i>' + escaparAtributo(est.Correo) + '</span>' : '') +
+            (est.Celular ? '<span><i class="fa fa-mobile-alt"></i>' + escaparAtributo(est.Celular) + '</span>' : '') +
+            '<span><i class="fa fa-graduation-cap"></i>' + ((resp.programas || []).length) + ' programa(s)</span>'
         );
 
         if (!resp.programas || resp.programas.length === 0) {
             $('#historialProgramas').html(
-                '<div class="text-center text-muted py-5"><i class="flaticon2-information" style="font-size:2.5rem;"></i>' +
-                '<p class="mt-3 mb-0">Este estudiante no tiene inscripciones registradas.</p></div>'
+                '<div class="hp-card"><div class="hp-vacio"><i class="fa fa-folder-open"></i>' +
+                '<strong>Sin inscripciones</strong><span>Este estudiante no tiene inscripciones registradas.</span></div></div>'
             );
         } else {
             let html = '';
@@ -497,11 +686,13 @@ function iniciarHistorialPagos() {
         }
     }
 
+    const htmlBotonBuscar = '<i class="fa fa-search"></i> Buscar';
+
     function buscarPorCi() {
         const ci = $('#valorBusquedaHistorial').val().trim();
 
         if (!ci) {
-            Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingrese un C.I. para buscar' });
+            Swal.fire({ type: 'warning', title: 'Atención', text: 'Ingrese un C.I. para buscar' });
             return;
         }
 
@@ -514,12 +705,13 @@ function iniciarHistorialPagos() {
             data: { accion: 'buscarPorCi', ci: ci },
             dataType: 'json',
             success: function(resp) {
-                $btn.prop('disabled', false).html('<i class="flaticon2-search"></i> Buscar');
+                $btn.prop('disabled', false).html(htmlBotonBuscar);
 
                 if (!resp.success) {
                     $('#historialResultado').hide();
+                    $('#historialListaResultados').hide();
                     $('#historialSinBuscar').show();
-                    Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje || 'No se encontró al estudiante' });
+                    Swal.fire({ type: 'warning', title: 'Atención', text: resp.mensaje || 'No se encontró al estudiante' });
                     return;
                 }
 
@@ -527,8 +719,8 @@ function iniciarHistorialPagos() {
                 mostrarResultadoEstudiante(resp);
             },
             error: function() {
-                $btn.prop('disabled', false).html('<i class="flaticon2-search"></i> Buscar');
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
+                $btn.prop('disabled', false).html(htmlBotonBuscar);
+                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
             }
         });
     }
@@ -540,13 +732,11 @@ function iniciarHistorialPagos() {
         const valor = $('#valorBusquedaHistorial').val().trim();
 
         if (!valor) {
-            Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingrese un C.I. o un nombre para buscar' });
+            Swal.fire({ type: 'warning', title: 'Atención', text: 'Ingrese un C.I. o un nombre para buscar' });
             return;
         }
 
-        const esSoloDigitos = /^\d+$/.test(valor);
-
-        if (esSoloDigitos) {
+        if (/^\d+$/.test(valor)) {
             buscarPorCi();
         } else {
             buscarPorNombre();
@@ -554,24 +744,22 @@ function iniciarHistorialPagos() {
     }
 
     function renderListaCoincidencias(estudiantes) {
-        let filas = '';
+        let html = '';
         estudiantes.forEach(function(est) {
-            let ciCompleto = est.Ci;
-            if (est.Complemento) ciCompleto += '-' + est.Complemento;
-            ciCompleto += ' ' + est.Exp;
-
-            filas += '<tr>' +
-                '<td>' + est.Apaterno + ' ' + est.Amaterno + ' ' + est.Nombre + '</td>' +
-                '<td>' + ciCompleto + '</td>' +
-                '<td>' + (est.Correo || '-') + '</td>' +
-                '<td class="text-center">' +
-                    '<button type="button" class="btn btn-sm btn-primary btnVerHistorialEstudiante" data-id="' + est.EstudianteID + '">' +
-                        '<i class="flaticon2-search"></i> Ver historial' +
-                    '</button>' +
-                '</td>' +
-            '</tr>';
+            html += '<div class="hp-resultado">' +
+                '<span class="hp-avatar">' + escaparAtributo(iniciales(est.Apaterno, est.Nombre)) + '</span>' +
+                '<div class="hp-resultado-datos">' +
+                    '<strong>' + escaparAtributo(est.Apaterno + ' ' + est.Amaterno + ' ' + est.Nombre) + '</strong>' +
+                    '<small><i class="fa fa-id-card"></i>' + escaparAtributo(ciCompletoDe(est)) + '</small>' +
+                    (est.Correo ? '<small><i class="fa fa-envelope"></i>' + escaparAtributo(est.Correo) + '</small>' : '') +
+                '</div>' +
+                '<button type="button" class="btn hp-btn-primario btnVerHistorialEstudiante" data-id="' + est.EstudianteID + '">' +
+                    'Ver historial <i class="fa fa-arrow-right"></i>' +
+                '</button>' +
+            '</div>';
         });
-        $('#historialListaResultadosBody').html(filas);
+        $('#historialListaResultadosResumen').text(estudiantes.length + ' estudiantes coinciden con la búsqueda.');
+        $('#historialListaResultadosBody').html(html);
         $('#historialResultado').hide();
         $('#historialSinBuscar').hide();
         $('#historialListaResultados').show();
@@ -585,7 +773,7 @@ function iniciarHistorialPagos() {
             dataType: 'json',
             success: function(resp) {
                 if (!resp.success) {
-                    Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje || 'No se encontró al estudiante' });
+                    Swal.fire({ type: 'warning', title: 'Atención', text: resp.mensaje || 'No se encontró al estudiante' });
                     return;
                 }
 
@@ -593,7 +781,7 @@ function iniciarHistorialPagos() {
                 mostrarResultadoEstudiante(resp);
             },
             error: function() {
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
+                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
             }
         });
     }
@@ -602,7 +790,7 @@ function iniciarHistorialPagos() {
         const nombre = $('#valorBusquedaHistorial').val().trim();
 
         if (nombre.length < 3) {
-            Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingrese al menos 3 caracteres para buscar' });
+            Swal.fire({ type: 'warning', title: 'Atención', text: 'Ingrese al menos 3 caracteres para buscar' });
             return;
         }
 
@@ -615,13 +803,13 @@ function iniciarHistorialPagos() {
             data: { accion: 'buscarPorNombre', nombre: nombre },
             dataType: 'json',
             success: function(resp) {
-                $btn.prop('disabled', false).html('<i class="flaticon2-search"></i> Buscar');
+                $btn.prop('disabled', false).html(htmlBotonBuscar);
 
                 if (!resp.success) {
                     $('#historialResultado').hide();
                     $('#historialListaResultados').hide();
                     $('#historialSinBuscar').show();
-                    Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje || 'No se encontró ningún estudiante' });
+                    Swal.fire({ type: 'warning', title: 'Atención', text: resp.mensaje || 'No se encontró ningún estudiante' });
                     return;
                 }
 
@@ -634,8 +822,8 @@ function iniciarHistorialPagos() {
                 mostrarResultadoEstudiante(resp);
             },
             error: function() {
-                $btn.prop('disabled', false).html('<i class="flaticon2-search"></i> Buscar');
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
+                $btn.prop('disabled', false).html(htmlBotonBuscar);
+                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
             }
         });
     }
@@ -654,7 +842,7 @@ function iniciarHistorialPagos() {
 
     // Ver la foto en grande: se dispara desde las miniaturas (data-url/data-voucher),
     // mostrando también el N° de voucher arriba de la imagen para que coincida con
-    // el dato que ya se ve en la fila/tarjeta.
+    // el dato que ya se ve en la fila.
     $(document).on('click', '.foto-voucher-thumb', function() {
         const $img = $(this);
         const numeroVoucher = $img.data('voucher');
@@ -673,22 +861,29 @@ function iniciarHistorialPagos() {
 
     // ============================================
     // EDITAR PAGO (matrícula o cuota): corrige fecha, N° de voucher, monto y,
-    // opcionalmente, la foto. Al guardar, se vuelve a buscar el mismo C.I. para
-    // refrescar el historial con los datos corregidos.
+    // opcionalmente, la foto. Al guardar, se vuelve a buscar el mismo estudiante
+    // para refrescar el historial con los datos corregidos.
     // ============================================
     $(document).on('click', '.btnEditarPagoHistorial', function() {
         const $btn = $(this);
 
-        $('#tituloEditarPagoHistorial').html('<i class="fa fa-pencil-alt"></i> ' + $btn.data('titulo'));
+        $('#tituloEditarPagoHistorial').html('<i class="fa fa-pencil-alt"></i> ' + escaparAtributo($btn.data('titulo')));
         $('#editPagoTipo').val($btn.data('tipo'));
         $('#editPagoId').val($btn.data('id'));
         $('#editPagoVoucher').val($btn.data('voucher'));
         $('#editPagoFecha').val($btn.data('fecha'));
         $('#editPagoMonto').val($btn.data('monto'));
         $('#editPagoFoto').val('');
+        $('#editPagoFotoLabel').text('Conservar la foto actual');
 
         $('#modalEditarPagoHistorial').modal('show');
     });
+
+    $('#editPagoFoto').on('change', function() {
+        $('#editPagoFotoLabel').text(this.files[0] ? this.files[0].name : 'Conservar la foto actual');
+    });
+
+    const htmlBotonGuardar = '<i class="fa fa-save"></i> Guardar cambios';
 
     $('#formEditarPagoHistorial').on('submit', function(e) {
         e.preventDefault();
@@ -720,22 +915,22 @@ function iniciarHistorialPagos() {
             contentType: false,
             dataType: 'json',
             success: function(resp) {
-                $btnSubmit.prop('disabled', false).html('<i class="fa fa-save"></i> Guardar Cambios');
+                $btnSubmit.prop('disabled', false).html(htmlBotonGuardar);
 
                 if (!resp.success) {
-                    Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo guardar el cambio' });
+                    Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo guardar el cambio' });
                     return;
                 }
 
                 $('#modalEditarPagoHistorial').modal('hide');
-                Swal.fire({ icon: 'success', title: 'Guardado', text: resp.mensaje, timer: 1800, showConfirmButton: false })
+                Swal.fire({ type: 'success', title: 'Guardado', text: resp.mensaje, timer: 1800, showConfirmButton: false })
                     .then(function() {
                         refrescarUltimaBusqueda();
                     });
             },
             error: function() {
-                $btnSubmit.prop('disabled', false).html('<i class="fa fa-save"></i> Guardar Cambios');
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar el cambio' });
+                $btnSubmit.prop('disabled', false).html(htmlBotonGuardar);
+                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo guardar el cambio' });
             }
         });
     });

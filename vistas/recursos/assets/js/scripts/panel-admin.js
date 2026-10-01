@@ -40,14 +40,14 @@
 
         function eliminarNoticia(idNoticia) {
             Swal.fire({
-                icon: 'warning',
+                type: 'warning',
                 title: '¿Eliminar esta noticia?',
                 text: 'Esta acción no se puede deshacer.',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, eliminar',
                 cancelButtonText: 'Cancelar'
             }).then(function (result) {
-                if (!result.isConfirmed) return;
+                if (!result.value) return; // SweetAlert2 v8: no tiene isConfirmed
                 $.ajax({
                     url: 'ajax/noticiapanel.ajax.php',
                     method: 'POST',
@@ -55,14 +55,14 @@
                     dataType: 'json',
                     success: function (resp) {
                         if (resp.success) {
-                            Swal.fire({ icon: 'success', title: 'Eliminada', timer: 1200, showConfirmButton: false })
+                            Swal.fire({ type: 'success', title: 'Eliminada', timer: 1200, showConfirmButton: false })
                                 .then(function () { location.reload(); });
                         } else {
-                            Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo eliminar' });
+                            Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo eliminar' });
                         }
                     },
                     error: function () {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar la noticia' });
+                        Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo eliminar la noticia' });
                     }
                 });
             });
@@ -109,15 +109,15 @@
                 success: function (resp) {
                     $btnSubmit.prop('disabled', false);
                     if (resp.success) {
-                        Swal.fire({ icon: 'success', title: 'Listo', text: resp.mensaje, timer: 1400, showConfirmButton: false })
+                        Swal.fire({ type: 'success', title: 'Listo', text: resp.mensaje, timer: 1400, showConfirmButton: false })
                             .then(function () { location.reload(); });
                     } else {
-                        Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo guardar la noticia' });
+                        Swal.fire({ type: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo guardar la noticia' });
                     }
                 },
                 error: function () {
                     $btnSubmit.prop('disabled', false);
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar la noticia' });
+                    Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo guardar la noticia' });
                 }
             });
         });
@@ -149,14 +149,14 @@
 
         function eliminarDefensa(idDefensa) {
             Swal.fire({
-                icon: 'warning',
+                type: 'warning',
                 title: '¿Eliminar esta defensa del cronograma?',
                 text: 'Esta acción no se puede deshacer.',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, eliminar',
                 cancelButtonText: 'Cancelar'
             }).then(function (result) {
-                if (!result.isConfirmed) return;
+                if (!result.value) return; // SweetAlert2 v8: no tiene isConfirmed
                 $.ajax({
                     url: 'ajax/cronogramadefensa.ajax.php',
                     method: 'POST',
@@ -164,14 +164,14 @@
                     dataType: 'json',
                     success: function (resp) {
                         if (resp.success) {
-                            Swal.fire({ icon: 'success', title: 'Eliminada', timer: 1200, showConfirmButton: false })
+                            Swal.fire({ type: 'success', title: 'Eliminada', timer: 1200, showConfirmButton: false })
                                 .then(function () { location.reload(); });
                         } else {
-                            Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo eliminar' });
+                            Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo eliminar' });
                         }
                     },
                     error: function () {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar la defensa' });
+                        Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo eliminar la defensa' });
                     }
                 });
             });
@@ -217,15 +217,15 @@
                 success: function (resp) {
                     $btnSubmit.prop('disabled', false);
                     if (resp.success) {
-                        Swal.fire({ icon: 'success', title: 'Listo', text: resp.mensaje, timer: 1400, showConfirmButton: false })
+                        Swal.fire({ type: 'success', title: 'Listo', text: resp.mensaje, timer: 1400, showConfirmButton: false })
                             .then(function () { location.reload(); });
                     } else {
-                        Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo guardar la defensa' });
+                        Swal.fire({ type: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo guardar la defensa' });
                     }
                 },
                 error: function () {
                     $btnSubmit.prop('disabled', false);
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar la defensa' });
+                    Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo guardar la defensa' });
                 }
             });
         });
@@ -305,14 +305,14 @@
 
         function eliminarSlide(idSlide) {
             Swal.fire({
-                icon: 'warning',
+                type: 'warning',
                 title: '¿Eliminar esta diapositiva?',
                 text: 'Esta acción no se puede deshacer.',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, eliminar',
                 cancelButtonText: 'Cancelar'
             }).then(function (result) {
-                if (!result.isConfirmed) return;
+                if (!result.value) return; // SweetAlert2 v8: no tiene isConfirmed
                 $.ajax({
                     url: 'ajax/carruselpanel.ajax.php',
                     method: 'POST',
@@ -322,14 +322,14 @@
                         if (resp.success) {
                             $('#modalCarruselSlide').modal('hide');
                             cargarCarrusel();
-                            Swal.fire({ icon: 'success', title: 'Eliminada', timer: 1200, showConfirmButton: false })
+                            Swal.fire({ type: 'success', title: 'Eliminada', timer: 1200, showConfirmButton: false })
                                 .then(function () { location.reload(); });
                         } else {
-                            Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo eliminar' });
+                            Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo eliminar' });
                         }
                     },
                     error: function () {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar la diapositiva' });
+                        Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo eliminar la diapositiva' });
                     }
                 });
             });
@@ -385,15 +385,15 @@
                 success: function (resp) {
                     $btnSubmit.prop('disabled', false);
                     if (resp.success) {
-                        Swal.fire({ icon: 'success', title: 'Listo', text: resp.mensaje, timer: 1400, showConfirmButton: false })
+                        Swal.fire({ type: 'success', title: 'Listo', text: resp.mensaje, timer: 1400, showConfirmButton: false })
                             .then(function () { location.reload(); });
                     } else {
-                        Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo guardar la diapositiva' });
+                        Swal.fire({ type: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo guardar la diapositiva' });
                     }
                 },
                 error: function () {
                     $btnSubmit.prop('disabled', false);
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar la diapositiva' });
+                    Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo guardar la diapositiva' });
                 }
             });
         });

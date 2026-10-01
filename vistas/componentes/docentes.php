@@ -15,9 +15,10 @@ $csrf_token = bin2hex(random_bytes(32));
 ?>
 
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
+<!-- Estilos compartidos de Estudiantes, Docentes y Usuarios (antes un <style> copiado en cada vista).     Van al inicio para que la página no se vea sin estilo al cargar. --><link rel="stylesheet" href="vistas/recursos/assets/css/gestion-registros.css?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/css/gestion-registros.css'); ?>">
   <div id="kt_header_mobile" class="kt-header-mobile  kt-header-mobile--fixed " >
     <div class="kt-header-mobile__logo">
-      <a href="demo9/index.html">
+      <a href="panel">
          <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
       </a>
     </div>
@@ -132,87 +133,6 @@ $csrf_token = bin2hex(random_bytes(32));
   </div>
 </div>
 
-<style>
-  .table thead.thead-dark th {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    color: white;
-    font-weight: 600;
-    border: none;
-    padding: 15px 10px;
-    font-size: 13px;
-    vertical-align: middle;
-  }
-
-  .table tbody tr {
-    transition: all 0.2s ease;
-  }
-
-  .table tbody tr:hover {
-    background-color: #f8f9fa;
-    transform: scale(1.005);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  }
-
-  .table tbody td {
-    padding: 12px 10px;
-    vertical-align: middle;
-    border-color: #e9ecef;
-    font-size: 13px;
-  }
-
-  .card.shadow-sm {
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
-    border: none;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-
-  .card-header.bg-gradient-primary {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    padding: 20px;
-    border: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .btn-sm {
-    padding: 5px 10px;
-    font-size: 12px;
-  }
-
-  .badge {
-    padding: 6px 12px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  .modal-header.bg-gradient-info {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-    color: white;
-    border: none;
-  }
-
-  .modal-header.bg-gradient-success {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: white;
-    border: none;
-  }
-
-  .form-section {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    color: white;
-    padding: 10px 15px;
-    border-radius: 5px;
-    margin: 20px 0 15px 0;
-  }
-
-  .form-group label {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 8px;
-  }
-</style>
 
 <!-- Modal: Nuevo Docente -->
 <div class="modal fade" id="ModalInsertarDocente" tabindex="-1" role="dialog"
@@ -1330,7 +1250,7 @@ jQuery(document).on('click', '.btnDarDeBaja', function() {
     swal({
         title: '¿Dar de baja al docente?',
         text: 'Docente: ' + nombreCompleto + '\n\nNOTA: Si el docente tiene módulos asignados, no se podrá dar de baja.',
-        icon: 'warning',
+        type: 'warning',
         buttons: {
             cancel: {
                 text: 'Cancelar',
@@ -1472,7 +1392,7 @@ jQuery(document).on('click', '.btnBloquearAccesoDocente', function() {
         text: 'Docente: ' + nombreCompleto + (vaABloquear
             ? '\n\nNo podrá iniciar sesión hasta que se le vuelva a habilitar. Sus datos académicos no se ven afectados.'
             : '\n\nPodrá volver a iniciar sesión con su usuario y contraseña.'),
-        icon: 'warning',
+        type: 'warning',
         buttons: {
             cancel: {
                 text: 'Cancelar',

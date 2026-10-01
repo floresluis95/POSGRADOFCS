@@ -18,3 +18,4 @@ Ejecutar en este orden, **con respaldo previo de la base de datos**:
 2. `crear_pagoclinica.sql`: tabla `pagoclinica` (vouchers de las órdenes de clínica).
 3. `eliminar_columna_passwordtexto.php`: elimina `usuario.PasswordTexto` (contraseñas en texto plano). Ya ejecutado en la BD local.
 4. `crear_recuperacionpassword.sql`: columna `personal.Correo` y tabla `recuperacionpassword` (códigos de recuperación de contraseña por correo).
+5. `crear_requisitos.sql`: tablas `requisito` (catálogo, con los 6 requisitos iniciales) y `requisitoinscripcion` (requisitos entregados por cada matriculado).

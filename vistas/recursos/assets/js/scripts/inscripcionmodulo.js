@@ -328,17 +328,17 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(resp) {
                 if (resp.estado === 'exitoso') {
-                    Swal.fire({ icon: 'success', title: 'Pago registrado', text: resp.mensaje, timer: 1800, showConfirmButton: false })
+                    Swal.fire({ type: 'success', title: 'Pago registrado', text: resp.mensaje, timer: 1800, showConfirmButton: false })
                         .then(function() {
                             cargarCuotasPrograma(programaID);
                         });
                 } else {
-                    Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje });
+                    Swal.fire({ type: 'warning', title: 'Atención', text: resp.mensaje });
                     $btn.prop('disabled', false).html('<i class="fa fa-save"></i> Guardar Pago');
                 }
             },
             error: function() {
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo registrar el pago' });
+                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo registrar el pago' });
                 $btn.prop('disabled', false).html('<i class="fa fa-save"></i> Guardar Pago');
             }
         });
@@ -362,7 +362,7 @@ $(document).ready(function() {
         const esAbandono = nuevoEstado === 'ABANDONO';
 
         Swal.fire({
-            icon: 'warning',
+            type: 'warning',
             title: esAbandono ? '¿Marcar como Abandono?' : '¿Reactivar estudiante?',
             html: esAbandono
                 ? '<strong>' + nombre + '</strong> dejará de aparecer como activo en Matriculados. Su historial de pagos no se modifica.'
@@ -371,7 +371,7 @@ $(document).ready(function() {
             confirmButtonText: esAbandono ? 'Sí, marcar abandono' : 'Sí, reactivar',
             cancelButtonText: 'Cancelar'
         }).then(function(result) {
-            if (!result.isConfirmed) {
+            if (!result.value) { // SweetAlert2 v8: no tiene isConfirmed
                 return;
             }
 
@@ -386,16 +386,16 @@ $(document).ready(function() {
                 dataType: 'json',
                 success: function(resp) {
                     if (resp.success) {
-                        Swal.fire({ icon: 'success', title: 'Listo', text: resp.mensaje, timer: 1600, showConfirmButton: false });
+                        Swal.fire({ type: 'success', title: 'Listo', text: resp.mensaje, timer: 1600, showConfirmButton: false });
                         if (typeof window.refrescarTablaMatriculados === 'function') {
                             window.refrescarTablaMatriculados();
                         }
                     } else {
-                        Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo actualizar el estado' });
+                        Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo actualizar el estado' });
                     }
                 },
                 error: function() {
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el estado' });
+                    Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo actualizar el estado' });
                 }
             });
         });

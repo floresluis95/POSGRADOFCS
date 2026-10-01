@@ -6,13 +6,13 @@ date_default_timezone_set("America/La_Paz");
 require_once 'modelos/certificado.modelo.php';
 ?>
 
-<link rel="stylesheet" href="vistas/recursos/assets/css/certificados.css">
+<link rel="stylesheet" href="vistas/recursos/assets/css/certificados.css?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/css/certificados.css'); ?>">
 
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
   <!-- Header móvil: botón para desplegar el menú lateral en pantallas pequeñas -->
   <div id="kt_header_mobile" class="kt-header-mobile kt-header-mobile--fixed">
     <div class="kt-header-mobile__logo">
-      <a href="index.php">
+      <a href="panel">
         <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
       </a>
     </div>
@@ -206,7 +206,7 @@ require_once 'modelos/certificado.modelo.php';
             limpiarResultadoBusqueda();
 
             if (!ci) {
-                Swal.fire({ icon: 'warning', title: 'Ingrese un carnet', text: 'Escriba el número de carnet del estudiante' });
+                Swal.fire({ type: 'warning', title: 'Ingrese un carnet', text: 'Escriba el número de carnet del estudiante' });
                 return;
             }
 
@@ -251,7 +251,7 @@ require_once 'modelos/certificado.modelo.php';
                     }
                 },
                 error: function() {
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
+                    Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
                 }
             });
         }
@@ -310,8 +310,8 @@ require_once 'modelos/certificado.modelo.php';
                         var fecha = mod.FechaRegistro ? mod.FechaRegistro.split('-').reverse().join('/') : '-';
                         $tbody.append(
                             '<tr>' +
-                            '<td>' + mod.codigomodulo + '</td>' +
-                            '<td>' + mod.nombremodulo + '</td>' +
+                            '<td>' + $('<div>').text(mod.codigomodulo || '').html() + '</td>' +
+                            '<td>' + $('<div>').text(mod.nombremodulo || '').html() + '</td>' +
                             '<td class="text-center">' + parseInt(mod.Nota) + '</td>' +
                             '<td class="text-center">' + fecha + '</td>' +
                             '</tr>'
@@ -321,7 +321,7 @@ require_once 'modelos/certificado.modelo.php';
                     $('#btn-generar-certificado').prop('disabled', false);
                 },
                 error: function() {
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudieron obtener las calificaciones' });
+                    Swal.fire({ type: 'error', title: 'Error', text: 'No se pudieron obtener las calificaciones' });
                 }
             });
         });
@@ -331,15 +331,15 @@ require_once 'modelos/certificado.modelo.php';
             var fecha = $('#input-fecha').val();
 
             if (!vaucher) {
-                Swal.fire({ icon: 'warning', title: 'Falta el N° de Vaucher', text: 'Ingrese el número de vaucher antes de generar el historial' });
+                Swal.fire({ type: 'warning', title: 'Falta el N° de Vaucher', text: 'Ingrese el número de vaucher antes de generar el historial' });
                 return;
             }
             if (!fecha) {
-                Swal.fire({ icon: 'warning', title: 'Falta la fecha', text: 'Seleccione la fecha del historial' });
+                Swal.fire({ type: 'warning', title: 'Falta la fecha', text: 'Seleccione la fecha del historial' });
                 return;
             }
             if (!modulosActuales.length) {
-                Swal.fire({ icon: 'warning', title: 'Sin calificaciones', text: 'El estudiante no tiene módulos calificados en este programa' });
+                Swal.fire({ type: 'warning', title: 'Sin calificaciones', text: 'El estudiante no tiene módulos calificados en este programa' });
                 return;
             }
 

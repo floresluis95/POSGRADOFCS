@@ -15,9 +15,10 @@ $csrf_token = bin2hex(random_bytes(32));
 ?>
 
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
+<!-- Estilos compartidos de Estudiantes, Docentes y Usuarios (antes un <style> copiado en cada vista).     Van al inicio para que la página no se vea sin estilo al cargar. --><link rel="stylesheet" href="vistas/recursos/assets/css/gestion-registros.css?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/css/gestion-registros.css'); ?>">
   <div id="kt_header_mobile" class="kt-header-mobile  kt-header-mobile--fixed " >
     <div class="kt-header-mobile__logo">
-      <a href="demo9/index.html">
+      <a href="panel">
          <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
       </a>
     </div>
@@ -128,87 +129,6 @@ $csrf_token = bin2hex(random_bytes(32));
   </div>
 </div>
 
-<style>
-  .table thead.thead-dark th {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    color: white;
-    font-weight: 600;
-    border: none;
-    padding: 15px 10px;
-    font-size: 13px;
-    vertical-align: middle;
-  }
-
-  .table tbody tr {
-    transition: all 0.2s ease;
-  }
-
-  .table tbody tr:hover {
-    background-color: #f8f9fa;
-    transform: scale(1.005);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  }
-
-  .table tbody td {
-    padding: 12px 10px;
-    vertical-align: middle;
-    border-color: #e9ecef;
-    font-size: 13px;
-  }
-
-  .card.shadow-sm {
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
-    border: none;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-
-  .card-header.bg-gradient-primary {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    padding: 20px;
-    border: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .btn-sm {
-    padding: 5px 10px;
-    font-size: 12px;
-  }
-
-  .badge {
-    padding: 6px 12px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  .modal-header.bg-gradient-info {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-    color: white;
-    border: none;
-  }
-
-  .modal-header.bg-gradient-success {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: white;
-    border: none;
-  }
-
-  .form-section {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    color: white;
-    padding: 10px 15px;
-    border-radius: 5px;
-    margin: 20px 0 15px 0;
-  }
-
-  .form-group label {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 8px;
-  }
-</style>
 
 <!-- Modal: Nuevo Estudiante -->
 <div class="modal fade" id="ModalInsertarEstudiante" tabindex="-1" role="dialog"
@@ -1085,7 +1005,7 @@ window.addEventListener('load', function() {
         const ci = jQuery('#buscarPorCiNuevoEstudiante').val().trim();
 
         if (!ci) {
-            Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingrese un CI para verificar' });
+            Swal.fire({ type: 'warning', title: 'Atención', text: 'Ingrese un CI para verificar' });
             return;
         }
 
@@ -1109,7 +1029,7 @@ window.addEventListener('load', function() {
                         '<span class="badge badge-danger"><i class="fa fa-times"></i> Ya registrado: ' + nombreExistente + '</span>'
                     );
                     $btnGuardarEstudiante.prop('disabled', true);
-                    Swal.fire({ icon: 'error', title: 'Ya existe', text: 'Ese CI ya está registrado como ' + nombreExistente + '. No puede registrarlo de nuevo.' });
+                    Swal.fire({ type: 'error', title: 'Ya existe', text: 'Ese CI ya está registrado como ' + nombreExistente + '. No puede registrarlo de nuevo.' });
                 } else {
                     jQuery('#estadoBusquedaCiNuevoEstudiante').html('<span class="badge badge-success"><i class="fa fa-check"></i> CI disponible</span>');
                     jQuery('#inputCi').val(ci);
@@ -1192,7 +1112,7 @@ window.addEventListener('load', function() {
                 $btnSubmit.prop('disabled', false);
 
                 if (!resp.success) {
-                    Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo agregar la profesión' });
+                    Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo agregar la profesión' });
                     return;
                 }
 
@@ -1207,12 +1127,12 @@ window.addEventListener('load', function() {
 
                 jQuery('#ModalNuevaProfesionEstudiante').modal('hide');
                 if (resp.duplicado) {
-                    Swal.fire({ icon: 'info', title: 'Atención', text: 'Esa profesión ya existía, se seleccionó del listado' });
+                    Swal.fire({ type: 'info', title: 'Atención', text: 'Esa profesión ya existía, se seleccionó del listado' });
                 }
             },
             error: function() {
                 $btnSubmit.prop('disabled', false);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo agregar la profesión' });
+                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo agregar la profesión' });
             }
         });
     });
@@ -1268,7 +1188,7 @@ window.addEventListener('load', function() {
                 $btnSubmit.prop('disabled', false);
 
                 if (!resp.success) {
-                    Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo agregar la universidad' });
+                    Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo agregar la universidad' });
                     return;
                 }
 
@@ -1283,12 +1203,12 @@ window.addEventListener('load', function() {
 
                 jQuery('#ModalNuevaUniversidadEstudiante').modal('hide');
                 if (resp.duplicado) {
-                    Swal.fire({ icon: 'info', title: 'Atención', text: 'Esa universidad ya existía, se seleccionó del listado' });
+                    Swal.fire({ type: 'info', title: 'Atención', text: 'Esa universidad ya existía, se seleccionó del listado' });
                 }
             },
             error: function() {
                 $btnSubmit.prop('disabled', false);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo agregar la universidad' });
+                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo agregar la universidad' });
             }
         });
     });
@@ -1309,7 +1229,7 @@ window.addEventListener('load', function() {
             dataType: 'json',
             success: function(resp) {
                 if (!resp.success || !resp.estudiante) {
-                    Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudieron cargar los datos del estudiante' });
+                    Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudieron cargar los datos del estudiante' });
                     return;
                 }
 
@@ -1337,7 +1257,7 @@ window.addEventListener('load', function() {
                 jQuery('#ModalEditarEstudiante').modal('show');
             },
             error: function() {
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudieron cargar los datos del estudiante' });
+                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudieron cargar los datos del estudiante' });
             }
         });
     });
@@ -1383,15 +1303,15 @@ window.addEventListener('load', function() {
                 $btnGuardar.prop('disabled', false).html('<i class="fas fa-save"></i> Guardar Cambios');
 
                 if (resp.success) {
-                    Swal.fire({ icon: 'success', title: 'Guardado', text: resp.mensaje, timer: 1800, showConfirmButton: false })
+                    Swal.fire({ type: 'success', title: 'Guardado', text: resp.mensaje, timer: 1800, showConfirmButton: false })
                         .then(function() { location.href = 'estudiantes'; });
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo actualizar al estudiante' });
+                    Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo actualizar al estudiante' });
                 }
             },
             error: function() {
                 $btnGuardar.prop('disabled', false).html('<i class="fas fa-save"></i> Guardar Cambios');
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar al estudiante' });
+                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo actualizar al estudiante' });
             }
         });
     });
@@ -1436,7 +1356,7 @@ window.addEventListener('load', function() {
         const nombre = jQuery('#detalleEstudianteNombre').text();
 
         Swal.fire({
-            icon: 'warning',
+            type: 'warning',
             title: '¿Restablecer contraseña?',
             text: 'Se generará una nueva contraseña para ' + nombre + '. La anterior dejará de funcionar.',
             showCancelButton: true,
@@ -1452,7 +1372,7 @@ window.addEventListener('load', function() {
                 dataType: 'json',
                 success: function(resp) {
                     if (!resp.success) {
-                        Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo restablecer la contraseña' });
+                        Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo restablecer la contraseña' });
                         return;
                     }
 
@@ -1460,10 +1380,10 @@ window.addEventListener('load', function() {
                     jQuery('#detalleEstudiantePasswordWrap').show();
                     jQuery('#detalleEstudianteSinPasswordWrap').hide();
 
-                    Swal.fire({ icon: 'success', title: 'Contraseña restablecida', text: 'Nueva contraseña: ' + resp.password });
+                    Swal.fire({ type: 'success', title: 'Contraseña restablecida', text: 'Nueva contraseña: ' + resp.password });
                 },
                 error: function() {
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo restablecer la contraseña' });
+                    Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo restablecer la contraseña' });
                 }
             });
         });
@@ -1485,7 +1405,7 @@ window.addEventListener('load', function() {
         const vaABloquear = nuevoEstado === '0';
 
         Swal.fire({
-            icon: 'warning',
+            type: 'warning',
             title: vaABloquear ? '¿Bloquear el acceso al sistema?' : '¿Habilitar el acceso al sistema?',
             text: 'Estudiante: ' + nombreCompleto + (vaABloquear
                 ? '. No podrá iniciar sesión hasta que se le vuelva a habilitar. Sus datos académicos no se ven afectados.'

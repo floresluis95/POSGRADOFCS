@@ -14,10 +14,244 @@ $esAdministrador = ($tipoUsuario === 'ADM');
 
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
 
+<!-- Estilos de la vista: van antes del contenido para que no se vea sin estilo al cargar -->
+<style>
+/* =========================================================
+   REGISTRAR NOTAS (prefijo rn-): docente → módulo → notas finales.
+   Mismo lenguaje visual que Inscripción e Historial de Pagos. Las tablas
+   las arma vistas/recursos/assets/js/scripts/calificacion.js (solo usa los
+   id de este HTML, no sus clases).
+   ========================================================= */
+.rn {
+    --rn-primario: #1e3c72;
+    --rn-primario-suave: #eef2f9;
+    --rn-texto: #1f2937;
+    --rn-texto-2: #64748b;
+    --rn-borde: #e3e7ef;
+    max-width: 1240px;
+    margin: 0 auto;
+}
+
+/* ---------- Pasos ---------- */
+.rn-pasos { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.rn-paso { display: flex; align-items: center; gap: 12px; }
+.rn-paso strong { display: block; font-size: 13.5px; color: var(--rn-texto-2); }
+.rn-paso small { display: block; font-size: 12px; color: #94a3b8; }
+.rn-paso-num {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-weight: 700;
+    font-size: 14px;
+    background: #fff;
+    border: 2px solid #cbd5e1;
+    color: #94a3b8;
+}
+.rn-paso.is-hecho .rn-paso-num { border-color: var(--rn-primario); color: var(--rn-primario); }
+.rn-paso.is-hecho strong { color: var(--rn-texto); }
+.rn-paso.active .rn-paso-num {
+    background: var(--rn-primario);
+    border-color: var(--rn-primario);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(30, 60, 114, .3);
+}
+.rn-paso.active strong { color: var(--rn-primario); }
+.rn-paso.active small { color: var(--rn-texto-2); }
+.rn-paso-linea { flex: 1; height: 2px; background: #d8dde8; border-radius: 2px; }
+
+/* ---------- Tarjetas ---------- */
+.rn-card {
+    background: #fff;
+    border: 1px solid var(--rn-borde);
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, .05);
+    overflow: hidden;
+    margin-bottom: 18px;
+}
+.rn-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--rn-borde);
+}
+.rn-card-head h3 { font-size: 16px; font-weight: 700; margin: 0; color: var(--rn-texto); }
+.rn-card-head h3 i { color: var(--rn-primario); margin-right: 4px; }
+.rn-card-head p { font-size: 12.5px; color: var(--rn-texto-2); margin: 3px 0 0; }
+.rn-card-head .rn-acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.rn-card-body { padding: 22px 24px; }
+
+.rn-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rn-texto);
+    margin-bottom: 6px;
+}
+.rn-label i { color: var(--rn-primario); width: 14px; }
+.rn-ayuda-campo { display: block; margin-top: 5px; font-size: 11.5px; color: var(--rn-texto-2); }
+.rn .form-control:focus {
+    border-color: var(--rn-primario) !important;
+    box-shadow: 0 0 0 3px rgba(30, 60, 114, .12) !important;
+}
+
+/* ---------- Ficha del docente ---------- */
+.rn-ficha {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.rn-ficha-item {
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid var(--rn-borde);
+    border-radius: 10px;
+    min-width: 0;
+}
+.rn-ficha-item > span { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; color: var(--rn-texto-2); }
+.rn-ficha-item > span i { color: #94a3b8; margin-right: 3px; }
+.rn-ficha-item strong { display: block; margin-top: 3px; font-size: 13.5px; color: var(--rn-texto); overflow-wrap: anywhere; }
+.rn-ficha-item.is-destacado { background: var(--rn-primario-suave); border-color: #d5deee; }
+.rn-ficha-item.is-destacado strong { color: var(--rn-primario); font-size: 18px; }
+.rn-ficha .kt-badge { background: transparent !important; color: inherit !important; padding: 0; font-size: inherit; height: auto; }
+
+/* ---------- Tablas (armadas por calificacion.js) ---------- */
+.rn .table-calificaciones {
+    margin: 0;
+    font-size: 13px;
+    border: 1px solid var(--rn-borde);
+    border-radius: 10px;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    box-shadow: none;
+}
+.rn .table-calificaciones thead,
+.rn .table-calificaciones thead th {
+    background: #f8fafc;
+    color: var(--rn-texto-2);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    border-color: var(--rn-borde);
+    border-top: 0;
+    white-space: nowrap;
+}
+.rn .table-calificaciones td { vertical-align: middle; border-color: #eef1f6; color: var(--rn-texto); }
+.rn .table-calificaciones tbody tr:hover { background-color: #f8fafc; }
+.rn .asignacion-row { cursor: pointer; }
+
+.input-nota {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.05rem;
+    height: 40px;
+    border-radius: 8px;
+    max-width: 120px;
+    margin: 0 auto;
+}
+.input-nota.is-valid {
+    border-color: #1e3c72 !important;
+    background-color: #f0fdf4 !important;
+}
+.input-nota.is-invalid {
+    border-color: #c53030 !important;
+    background-color: #fef2f2 !important;
+}
+
+/* Badges informativos (Grado, Código): tono neutro; se conservan en color
+   solo los badges de estado de calificación (sin calificar/parcial/completo,
+   aprobado/reprobado), que sí aportan información útil de un vistazo. */
+.kt-badge--primary,
+.kt-badge--dark {
+    background-color: #eef2f9 !important;
+    color: #1e3c72 !important;
+}
+
+/* ---------- Pie de "Guardar calificaciones" ---------- */
+.rn-pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-top: 1px solid var(--rn-borde);
+}
+.rn-pie-aviso { font-size: 12.5px; color: #8a6116; }
+.rn-pie-aviso i { color: #d69e2e; margin-right: 4px; }
+.rn-btn-guardar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 26px;
+    background: #1e3c72;
+    border: 1px solid #1e3c72;
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 600;
+}
+.rn-btn-guardar:hover, .rn-btn-guardar:focus {
+    background: #16305c;
+    border-color: #16305c;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(30, 60, 114, .25);
+}
+
+.rn-vacio { text-align: center; padding: 30px 20px; color: var(--rn-texto-2); background: #f8fafc; border-radius: 10px; }
+.rn-vacio i { display: block; font-size: 28px; color: #c7cdd8; margin-bottom: 8px; }
+
+/* ---------- Select2: alto uniforme ---------- */
+.select2-container--default .select2-selection--single {
+    height: 40px !important;
+    display: flex !important;
+    align-items: center;
+    padding: 0 !important;
+    border: 1px solid #d8dde8 !important;
+    border-radius: 8px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: normal !important;
+    /* El bundle del tema (demo9/style.bundle.css) le pone a este mismo
+       elemento "padding: .65rem 3rem .65rem 1rem"; si aquí solo se
+       sobreescriben padding-left/right, el padding vertical de esa regla
+       se sigue sumando y el texto se sale de la caja. Hay que anular los
+       cuatro lados con el shorthand. */
+    padding: 0 20px 0 0.75rem !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    /* El bundle del tema posiciona esta flecha con "top: 50%" sin transform,
+       así que queda corrida hacia arriba; top+translateY(-50%) la centra
+       sin importar el alto real de la caja. */
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    height: auto !important;
+}
+
+@media (max-width: 991.98px) {
+    .rn-ficha { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767.98px) {
+    .rn-paso small { display: none; }
+    .rn-paso strong { font-size: 12px; }
+    .rn-ficha { grid-template-columns: 1fr; }
+    .rn-card-head .rn-acciones { width: 100%; }
+}
+</style>
+
   <!-- Header móvil: botón para desplegar el menú lateral en pantallas pequeñas -->
   <div id="kt_header_mobile" class="kt-header-mobile kt-header-mobile--fixed">
     <div class="kt-header-mobile__logo">
-      <a href="index.php">
+      <a href="panel">
         <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
       </a>
     </div>
@@ -66,211 +300,165 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                     </div>
 
                     <!-- CONTENIDO PRINCIPAL -->
-                    <div class="container-fluid">
-                        <div class="kt-portlet kt-portlet--mobile">
-                            <div class="kt-portlet__head" style="background-color: #34495e; border-radius: 4px 4px 0 0;">
-                                <div class="kt-portlet__head-label">
-                                    <h3 class="kt-portlet__head-title text-white">
-                                        <i class="fa fa-graduation-cap"></i> Registro de Calificaciones Finales
-                                    </h3>
+                    <div class="kt-container kt-grid__item kt-grid__item--fluid">
+                        <div class="rn">
+
+                            <!-- Indicador de pasos: lo actualiza actualizarPasosNotas() según
+                                 cuál de los tres contenedores muestra calificacion.js -->
+                            <div class="rn-pasos">
+                                <div class="rn-paso active" id="rnPaso1">
+                                    <span class="rn-paso-num">1</span>
+                                    <div><strong>Docente</strong><small>Seleccionar docente</small></div>
+                                </div>
+                                <div class="rn-paso-linea"></div>
+                                <div class="rn-paso" id="rnPaso2">
+                                    <span class="rn-paso-num">2</span>
+                                    <div><strong>Módulo</strong><small>Elegir la asignación</small></div>
+                                </div>
+                                <div class="rn-paso-linea"></div>
+                                <div class="rn-paso" id="rnPaso3">
+                                    <span class="rn-paso-num">3</span>
+                                    <div><strong>Calificaciones</strong><small>Registrar notas finales</small></div>
                                 </div>
                             </div>
 
-                            <div class="kt-portlet__body" style="padding: 2rem;">
-
-                                <!-- PASO 1: SELECCIÓN DE DOCENTE -->
-                                <div id="paso1-container" class="card mb-4" style="border-left: 4px solid #34495e; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
-                                    <div class="card-header" style="background-color: #f8f9fa;">
-                                        <h5 class="mb-0" style="color: #34495e;">
-                                            <i class="flaticon2-user-outline-symbol"></i> Paso 1: Seleccionar Docente
-                                        </h5>
+                            <!-- PASO 1: SELECCIÓN DE DOCENTE -->
+                            <div id="paso1-container" class="rn-card">
+                                <div class="rn-card-head">
+                                    <div>
+                                        <h3><i class="fa fa-chalkboard-teacher"></i> Seleccionar docente</h3>
+                                        <p>Los filtros son opcionales: acotan la lista de docentes por sede, programa o código.</p>
                                     </div>
-                                    <div class="card-body">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label for="filtro-sede-docente" class="font-weight-bold">
-                                                    <i class="fa fa-map-marker-alt text-primary"></i> Sede:
-                                                </label>
-                                                <select id="filtro-sede-docente" class="form-control select2-uniforme">
-                                                    <option value="">Todas las sedes</option>
-                                                </select>
-                                                <small class="form-text text-muted">
-                                                    <i class="flaticon2-information"></i> Opcional, acota el listado de docentes
-                                                </small>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label for="filtro-programa-docente" class="font-weight-bold">
-                                                    <i class="fa fa-university text-primary"></i> Programa:
-                                                </label>
-                                                <select id="filtro-programa-docente" class="form-control select2-uniforme">
-                                                    <option value="">Todos los programas</option>
-                                                </select>
-                                                <small class="form-text text-muted">
-                                                    <i class="flaticon2-information"></i> Opcional, acota el listado de docentes
-                                                </small>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label for="filtro-codigo-docente" class="font-weight-bold">
-                                                    <i class="fa fa-code text-primary"></i> Código de Programa:
-                                                </label>
-                                                <select id="filtro-codigo-docente" class="form-control select2-uniforme">
-                                                    <option value="">Todos los códigos</option>
-                                                </select>
-                                                <small class="form-text text-muted">
-                                                    <i class="flaticon2-information"></i> Opcional, acota el listado de docentes
-                                                </small>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label for="select-docente" class="font-weight-bold">
-                                                    <i class="flaticon2-user-outline-symbol text-primary"></i> Docente:
-                                                </label>
-                                                <select id="select-docente" class="form-control select2-uniforme">
-                                                    <option value="">-- Seleccione un docente --</option>
-                                                    <?php
-                                                        $controlador = new CalificacionControlador();
-                                                        $controlador->ListarDocentesSelectControlador();
-                                                    ?>
-                                                </select>
-                                                <small class="form-text text-muted">
-                                                    <i class="flaticon2-information"></i> Seleccione el docente para ver sus módulos asignados
-                                                </small>
-                                            </div>
+                                </div>
+                                <div class="rn-card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3 mb-md-0">
+                                            <label for="filtro-sede-docente" class="rn-label"><i class="fa fa-map-marker-alt"></i> Sede</label>
+                                            <select id="filtro-sede-docente" class="form-control select2-uniforme">
+                                                <option value="">Todas las sedes</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-3 mb-md-0">
+                                            <label for="filtro-programa-docente" class="rn-label"><i class="fa fa-university"></i> Programa</label>
+                                            <select id="filtro-programa-docente" class="form-control select2-uniforme">
+                                                <option value="">Todos los programas</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-3 mb-md-0">
+                                            <label for="filtro-codigo-docente" class="rn-label"><i class="fa fa-code"></i> Código de programa</label>
+                                            <select id="filtro-codigo-docente" class="form-control select2-uniforme">
+                                                <option value="">Todos los códigos</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="select-docente" class="rn-label"><i class="fa fa-user-tie"></i> Docente <span class="text-danger">*</span></label>
+                                            <select id="select-docente" class="form-control select2-uniforme">
+                                                <option value="">-- Seleccione un docente --</option>
+                                                <?php
+                                                    $controlador = new CalificacionControlador();
+                                                    $controlador->ListarDocentesSelectControlador();
+                                                ?>
+                                            </select>
+                                            <small class="rn-ayuda-campo">Al elegirlo se muestran sus módulos asignados.</small>
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- PASO 2: INFORMACIÓN DEL DOCENTE Y SUS ASIGNACIONES -->
-                                <div id="paso2-container" class="card mb-4" style="display: none; border-left: 4px solid #34495e; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
-                                    <div class="card-header" style="background-color: #f8f9fa;">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-8">
-                                                <h5 class="mb-0" style="color: #34495e;">
-                                                    <i class="flaticon2-user"></i> Paso 2: Asignaciones del Docente
-                                                </h5>
-                                            </div>
-                                            <div class="col-md-4 text-right">
-                                                <button class="btn btn-sm btn-secondary" id="btn-cambiar-docente">
-                                                    <i class="la la-refresh"></i> Cambiar Docente
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card-body">
-                                        <!-- Información del docente -->
-                                        <div class="docente-info-formal mb-3" id="info-docente-container">
-                                            <div class="docente-info-item">
-                                                <i class="fa fa-user-tie"></i>
-                                                <span class="docente-info-label">Docente:</span>
-                                                <span class="docente-info-valor" id="docente-nombre"></span>
-                                            </div>
-                                            <span class="docente-info-sep">|</span>
-                                            <div class="docente-info-item">
-                                                <i class="fa fa-id-card"></i>
-                                                <span class="docente-info-label">C.I.:</span>
-                                                <span class="docente-info-valor" id="docente-ci"></span>
-                                            </div>
-                                            <span class="docente-info-sep">|</span>
-                                            <div class="docente-info-item">
-                                                <i class="fa fa-graduation-cap"></i>
-                                                <span class="docente-info-label">Especialidad:</span>
-                                                <span class="docente-info-valor" id="docente-especialidad"></span>
-                                            </div>
-                                            <span class="docente-info-sep">|</span>
-                                            <div class="docente-info-item">
-                                                <i class="fa fa-book"></i>
-                                                <span class="docente-info-label">Total Asignaciones:</span>
-                                                <span class="kt-badge kt-badge--light kt-badge--inline kt-badge--bold" id="total-asignaciones"></span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Tabla de asignaciones -->
-                                        <div id="asignaciones-container"></div>
-                                    </div>
-                                </div>
-
-                                <!-- PASO 3: ESTUDIANTES DEL MÓDULO SELECCIONADO -->
-                                <div id="paso3-container" class="card mb-4" style="display: none; border-left: 4px solid #34495e; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
-                                    <div class="card-header" style="background-color: #f8f9fa;">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-6">
-                                                <h5 class="mb-0" style="color: #34495e;">
-                                                    <i class="flaticon2-edit"></i> Paso 3: Ingresar Calificaciones
-                                                </h5>
-                                            </div>
-                                            <div class="col-md-6 text-right">
-                                                <button type="button" class="btn btn-sm btn-success" id="btn-imprimir-calificaciones" style="margin-right: 10px;">
-                                                    <i class="fa fa-print"></i> Imprimir Calificaciones
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-danger" id="btn-generar-lista-asistencia" style="margin-right: 10px;">
-                                                    <i class="fa fa-file-pdf"></i> Lista de Asistencia
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-secondary" id="btn-volver-asignaciones">
-                                                    <i class="la la-arrow-left"></i> Volver a Asignaciones
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card-body">
-                                        <!-- Información del módulo seleccionado -->
-                                        <div class="alert alert-info mb-3">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <p class="mb-1">
-                                                        <i class="fa fa-book"></i> <strong>Módulo:</strong>
-                                                        <span id="modulo-nombre"></span>
-                                                    </p>
-                                                    <p class="mb-0">
-                                                        <i class="fa fa-code"></i> <strong>Código:</strong>
-                                                        <span id="modulo-codigo"></span>
-                                                    </p>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <p class="mb-1">
-                                                        <i class="fa fa-university"></i> <strong>Programa:</strong>
-                                                        <span id="programa-nombre"></span>
-                                                    </p>
-                                                    <p class="mb-1">
-                                                        <i class="fa fa-graduation-cap"></i> <strong>Grado:</strong>
-                                                        <span id="grado-nombre"></span>
-                                                    </p>
-                                                    <p class="mb-1">
-                                                        <i class="fa fa-calendar-check-o"></i> <strong>Fecha Inicio:</strong>
-                                                        <span id="modulo-fecha-inicio"></span>
-                                                    </p>
-                                                    <p class="mb-0">
-                                                        <i class="fa fa-calendar-times-o"></i> <strong>Fecha Final:</strong>
-                                                        <span id="modulo-fecha-final"></span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Tabla de estudiantes -->
-                                        <div id="estudiantes-container">
-                                            <div class="alert alert-secondary text-center">
-                                                <i class="flaticon-edit"></i> Seleccione un módulo para cargar los estudiantes
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- FOOTER CON BOTÓN DE GUARDAR -->
-                                    <div class="card-footer" id="footer-guardar" style="display: none;">
-                                        <div class="row align-items-center">
-                                            <div class="col-lg-6 kt-align-left">
-                                                <span class="text-danger small">
-                                                    <i class="fa fa-exclamation-triangle"></i> Verifique todas las notas antes de guardar.
-                                                </span>
-                                            </div>
-                                            <div class="col-lg-6 kt-align-right">
-                                                <button class="btn btn-success" id="btn-guardar-notas" style="padding: 0.6rem 2rem;">
-                                                    <i class="fa fa-save"></i> Guardar Calificaciones
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
                             </div>
+
+                            <!-- PASO 2: INFORMACIÓN DEL DOCENTE Y SUS ASIGNACIONES -->
+                            <div id="paso2-container" class="rn-card" style="display: none;">
+                                <div class="rn-card-head">
+                                    <div>
+                                        <h3><i class="fa fa-book"></i> Módulos asignados</h3>
+                                        <p>Pulse <strong>Evaluar</strong> en el módulo cuyas notas desea registrar.</p>
+                                    </div>
+                                    <button class="btn btn-abrir-panel" id="btn-cambiar-docente">
+                                        <i class="fa fa-exchange-alt"></i> Cambiar docente
+                                    </button>
+                                </div>
+                                <div class="rn-card-body">
+                                    <!-- Información del docente -->
+                                    <div class="rn-ficha" id="info-docente-container">
+                                        <div class="rn-ficha-item">
+                                            <span><i class="fa fa-user-tie"></i> Docente</span>
+                                            <strong id="docente-nombre"></strong>
+                                        </div>
+                                        <div class="rn-ficha-item">
+                                            <span><i class="fa fa-id-card"></i> C.I.</span>
+                                            <strong id="docente-ci"></strong>
+                                        </div>
+                                        <div class="rn-ficha-item">
+                                            <span><i class="fa fa-graduation-cap"></i> Especialidad</span>
+                                            <strong id="docente-especialidad"></strong>
+                                        </div>
+                                        <div class="rn-ficha-item is-destacado">
+                                            <span><i class="fa fa-book"></i> Asignaciones</span>
+                                            <strong><span class="kt-badge" id="total-asignaciones"></span></strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tabla de asignaciones -->
+                                    <div id="asignaciones-container"></div>
+                                </div>
+                            </div>
+
+                            <!-- PASO 3: ESTUDIANTES DEL MÓDULO SELECCIONADO -->
+                            <div id="paso3-container" class="rn-card" style="display: none;">
+                                <div class="rn-card-head">
+                                    <div>
+                                        <h3><i class="fa fa-edit"></i> Registrar calificaciones</h3>
+                                        <p>Nota final de 0 a 100; se aprueba con 76 o más.</p>
+                                    </div>
+                                    <div class="rn-acciones">
+                                        <button type="button" class="btn btn-abrir-panel" id="btn-imprimir-calificaciones">
+                                            <i class="fa fa-print"></i> Imprimir calificaciones
+                                        </button>
+                                        <button type="button" class="btn btn-abrir-panel" id="btn-volver-asignaciones">
+                                            <i class="fa fa-arrow-left"></i> Volver a módulos
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="rn-card-body">
+                                    <!-- Información del módulo seleccionado -->
+                                    <div class="rn-ficha">
+                                        <div class="rn-ficha-item">
+                                            <span><i class="fa fa-book"></i> Módulo</span>
+                                            <strong id="modulo-nombre"></strong>
+                                            <span class="mt-1" style="text-transform:none;font-weight:500;"><i class="fa fa-code"></i> <span id="modulo-codigo"></span></span>
+                                        </div>
+                                        <div class="rn-ficha-item">
+                                            <span><i class="fa fa-university"></i> Programa</span>
+                                            <strong id="programa-nombre"></strong>
+                                        </div>
+                                        <div class="rn-ficha-item">
+                                            <span><i class="fa fa-graduation-cap"></i> Grado</span>
+                                            <strong id="grado-nombre"></strong>
+                                        </div>
+                                        <div class="rn-ficha-item">
+                                            <span><i class="fa fa-calendar-alt"></i> Periodo</span>
+                                            <strong><span id="modulo-fecha-inicio"></span> – <span id="modulo-fecha-final"></span></strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tabla de estudiantes -->
+                                    <div id="estudiantes-container">
+                                        <div class="rn-vacio">
+                                            <i class="fa fa-user-graduate"></i> Seleccione un módulo para cargar los estudiantes
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- PIE CON BOTÓN DE GUARDAR -->
+                                <div class="rn-pie" id="footer-guardar" style="display: none;">
+                                    <span class="rn-pie-aviso">
+                                        <i class="fa fa-exclamation-triangle"></i> Verifique todas las notas antes de guardar.
+                                    </span>
+                                    <button class="btn rn-btn-guardar" id="btn-guardar-notas">
+                                        <i class="fa fa-save"></i> Guardar calificaciones
+                                    </button>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                     <!-- FIN DEL CONTENIDO PRINCIPAL -->
@@ -293,209 +481,44 @@ $esAdministrador = ($tipoUsuario === 'ADM');
     // Variable global para verificar si el usuario es administrador
     const esAdministrador = <?php echo $esAdministrador ? 'true' : 'false'; ?>;
     const tipoUsuario = '<?php echo $tipoUsuario; ?>';
-    console.log('Usuario tipo:', tipoUsuario, '| Es Admin:', esAdministrador);
 </script>
 
 <script src="vistas/recursos/assets/js/scripts/calificacion.js?v=7.1"></script>
 
-<style>
-.form-control:focus {
-    border-color: #34495e !important;
-    box-shadow: 0 0 0 0.15rem rgba(52, 73, 94, 0.2) !important;
-}
-
-/* Información del docente: una sola franja formal, en lugar de párrafos
-   sueltos en dos columnas. */
-.docente-info-formal {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px 0;
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    color: #fff;
-    border-radius: 8px;
-    padding: 14px 20px;
-    font-size: 14px;
-    box-shadow: 0 2px 8px rgba(30, 60, 114, 0.2);
-}
-
-.docente-info-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-}
-
-.docente-info-label {
-    font-weight: 700;
-}
-
-.docente-info-valor {
-    font-weight: 400;
-}
-
-.docente-info-sep {
-    opacity: .45;
-    margin: 0 18px;
-}
-
-.docente-info-formal .kt-badge {
-    background-color: rgba(255, 255, 255, 0.18) !important;
-    color: #fff !important;
-}
-
-@media (max-width: 991px) {
-    .docente-info-item {
-        white-space: normal;
-    }
-    .docente-info-sep {
-        display: none;
-        width: 100%;
-    }
-    .docente-info-formal {
-        gap: 8px 0;
-    }
-}
-
-.select2-container--default .select2-selection--single {
-    height: calc(1.5em + 0.75rem + 2px) !important;
-    display: flex !important;
-    align-items: center;
-    padding: 0 !important;
-    border: 1px solid #ced4da !important;
-}
-
-.select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: normal !important;
-    /* El bundle del tema (demo9/style.bundle.css) le pone a este mismo
-       elemento "padding: .65rem 3rem .65rem 1rem"; si aquí solo se
-       sobreescriben padding-left/right, el padding vertical de esa regla
-       se sigue sumando y el texto se sale de la caja. Hay que anular los
-       cuatro lados con el shorthand. */
-    padding: 0 20px 0 0.75rem !important;
-}
-
-.select2-container--default .select2-selection--single .select2-selection__arrow {
-    /* El bundle del tema posiciona esta flecha con "top: 50%" sin transform,
-       así que queda corrida hacia arriba; top+translateY(-50%) la centra
-       sin importar el alto real de la caja. */
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    height: auto !important;
-}
-
-.card {
-    transition: box-shadow 0.2s ease;
-}
-
-.table-calificaciones {
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-}
-
-.table-calificaciones thead {
-    background-color: #34495e;
-    color: white;
-}
-
-.table-calificaciones tbody tr:hover {
-    background-color: #f4f5f7;
-}
-
-.input-nota {
-    text-align: center;
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.input-nota.is-valid {
-    border-color: #1e3c72 !important;
-    background-color: #f0fdf4 !important;
-}
-
-.input-nota.is-invalid {
-    border-color: #fd397a !important;
-    background-color: #fef2f2 !important;
-}
-
-.resultado-docente {
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.resultado-docente:hover {
-    background-color: #f4f5f7;
-}
-
-.asignacion-row {
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.asignacion-row:hover {
-    background-color: #eef1f4 !important;
-}
-
-/* Badges informativos (Grado, Código): tono neutro; se conservan en color
-   solo los badges de estado de calificación (sin calificar/parcial/completo),
-   que sí aportan información útil de un vistazo. */
-.kt-badge--primary,
-.kt-badge--dark {
-    background-color: #e9ecef !important;
-    color: #34495e !important;
-}
-</style>
-
 <script>
 // Actualizar fecha
 function actualizarFecha() {
-    const opciones = {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    };
+    const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const fecha = new Date().toLocaleDateString('es-ES', opciones);
     $('#lafecha').text(fecha.charAt(0).toUpperCase() + fecha.slice(1));
 }
 
+// Indicador de pasos: calificacion.js muestra/oculta #paso1/2/3-container con
+// slideUp/slideDown; aquí solo se observa cuál quedó visible para marcar el
+// paso actual (y los anteriores como hechos), sin tocar esa lógica.
+function actualizarPasosNotas() {
+    let actual = 1;
+    if ($('#paso3-container').is(':visible')) actual = 3;
+    else if ($('#paso2-container').is(':visible')) actual = 2;
+
+    [1, 2, 3].forEach(function(n) {
+        $('#rnPaso' + n).toggleClass('active', n === actual).toggleClass('is-hecho', n < actual);
+    });
+}
+
 $(document).ready(function() {
-    // Actualizar fecha
     actualizarFecha();
-    setInterval(actualizarFecha, 1000);
+    setInterval(actualizarFecha, 60000);
 
-    // DEBUG: Verificar botón de lista de asistencia
-    console.log('=== DEBUG VISTA RNOTASESTUDIANTE ===');
-
-    // Verificar si el botón existe inicialmente
-    const botonInicial = $('#btn-generar-lista-asistencia');
-    console.log('Botón encontrado al cargar:', botonInicial.length > 0 ? 'SÍ' : 'NO');
-
-    // Verificar periódicamente si el botón aparece
-    setInterval(function() {
-        const botonActual = $('#btn-generar-lista-asistencia');
-        if (botonActual.length > 0 && botonActual.is(':visible')) {
-            console.log('✅ Botón de lista de asistencia está visible');
-        }
-    }, 5000);
-
-    // Test manual del botón
-    window.testBotonAsistencia = function() {
-        console.log('=== TEST MANUAL DEL BOTÓN ===');
-        const boton = $('#btn-generar-lista-asistencia');
-        console.log('Botón existe:', boton.length > 0);
-        console.log('Botón visible:', boton.is(':visible'));
-        console.log('Elemento:', boton[0]);
-
-        if (boton.length > 0) {
-            console.log('Intentando hacer clic programáticamente...');
-            boton.trigger('click');
-        }
-    };
-
-    console.log('Para probar manualmente, escribe en consola: testBotonAsistencia()');
+    const observador = new MutationObserver(function() {
+        // Espera a que termine la animación de slideDown/slideUp
+        setTimeout(actualizarPasosNotas, 450);
+    });
+    ['paso1-container', 'paso2-container', 'paso3-container'].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) observador.observe(el, { attributes: true, attributeFilter: ['style'] });
+    });
+    actualizarPasosNotas();
 });
 </script>
 

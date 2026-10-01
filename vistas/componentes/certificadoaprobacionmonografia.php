@@ -6,13 +6,13 @@ date_default_timezone_set("America/La_Paz");
 require_once 'modelos/certificado.modelo.php';
 ?>
 
-<link rel="stylesheet" href="vistas/recursos/assets/css/certificados.css">
+<link rel="stylesheet" href="vistas/recursos/assets/css/certificados.css?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/css/certificados.css'); ?>">
 
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
   <!-- Header móvil: botón para desplegar el menú lateral en pantallas pequeñas -->
   <div id="kt_header_mobile" class="kt-header-mobile kt-header-mobile--fixed">
     <div class="kt-header-mobile__logo">
-      <a href="index.php">
+      <a href="panel">
         <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
       </a>
     </div>
@@ -292,7 +292,7 @@ require_once 'modelos/certificado.modelo.php';
             limpiarResultadoBusqueda();
 
             if (!ci) {
-                Swal.fire({ icon: 'warning', title: 'Ingrese un carnet', text: 'Escriba el número de carnet del estudiante' });
+                Swal.fire({ type: 'warning', title: 'Ingrese un carnet', text: 'Escriba el número de carnet del estudiante' });
                 return;
             }
 
@@ -336,7 +336,7 @@ require_once 'modelos/certificado.modelo.php';
                     }
                 },
                 error: function() {
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
+                    Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
                 }
             });
         }
@@ -377,19 +377,19 @@ require_once 'modelos/certificado.modelo.php';
             var calificacion = $('#input-calificacion').val();
 
             if (!nombre) {
-                Swal.fire({ icon: 'warning', title: 'Falta el estudiante', text: 'Busque y seleccione un estudiante' });
+                Swal.fire({ type: 'warning', title: 'Falta el estudiante', text: 'Busque y seleccione un estudiante' });
                 return;
             }
             if (!titulo) {
-                Swal.fire({ icon: 'warning', title: 'Falta el título', text: 'Ingrese el título del trabajo monográfico' });
+                Swal.fire({ type: 'warning', title: 'Falta el título', text: 'Ingrese el título del trabajo monográfico' });
                 return;
             }
             if (!vaucher) {
-                Swal.fire({ icon: 'warning', title: 'Falta el N° de recibo', text: 'Ingrese el número de recibo de caja' });
+                Swal.fire({ type: 'warning', title: 'Falta el N° de recibo', text: 'Ingrese el número de recibo de caja' });
                 return;
             }
             if (!calificacion) {
-                Swal.fire({ icon: 'warning', title: 'Falta la calificación', text: 'Ingrese la calificación numeral' });
+                Swal.fire({ type: 'warning', title: 'Falta la calificación', text: 'Ingrese la calificación numeral' });
                 return;
             }
 
@@ -403,7 +403,7 @@ require_once 'modelos/certificado.modelo.php';
             });
 
             if (tribunal.length === 0) {
-                Swal.fire({ icon: 'warning', title: 'Falta el tribunal', text: 'Registre al menos un miembro del tribunal' });
+                Swal.fire({ type: 'warning', title: 'Falta el tribunal', text: 'Registre al menos un miembro del tribunal' });
                 return;
             }
 

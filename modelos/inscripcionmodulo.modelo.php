@@ -14,7 +14,7 @@ class InscripcionModuloModelos
      * @param string $estado 'ACTIVO' (por defecto), 'ABANDONO', o 'TODOS' para no filtrar por estado
      * @return array
      */
-    public static function ListarEstudiantesMatriculadosModelo($programaID = null, $sede = null, $estado = 'ACTIVO')
+    public static function ListarEstudiantesMatriculadosModelo($programaID = null, $sede = null, $estado = 'ACTIVO', $requisitos = null)
     {
         try {
             $sql = "SELECT
@@ -44,7 +44,12 @@ class InscripcionModuloModelos
                     p.Version,
                     p.NumeroTramite,
                     p.Costo as CostoPrograma,
-                    p.Sede
+                    p.Sede,
+                    (SELECT COUNT(*) FROM requisito r WHERE r.Estado = 1 AND r.Obligatorio = 1) AS RequisitosTotal,
+                    (SELECT COUNT(*) FROM requisitoinscripcion ri
+                     INNER JOIN requisito r ON r.IdRequisito = ri.IdRequisito
+                     WHERE ri.idInscripcion = ep.idInscripcion AND ri.Entregado = 1
+                     AND r.Estado = 1 AND r.Obligatorio = 1) AS RequisitosEntregados
                 FROM estudianteprograma ep
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
@@ -63,6 +68,13 @@ class InscripcionModuloModelos
             // Si se proporciona sede, agregar filtro
             if ($sede !== null && $sede !== '') {
                 $sql .= " AND p.Sede = :sede";
+            }
+
+            // Requisitos de matriculación entregados (ver requisito.modelo.php)
+            if ($requisitos === 'INCOMPLETOS') {
+                $sql .= " HAVING RequisitosEntregados < RequisitosTotal";
+            } elseif ($requisitos === 'COMPLETOS') {
+                $sql .= " HAVING RequisitosEntregados >= RequisitosTotal";
             }
 
             $sql .= " ORDER BY ep.FechaInscripcion DESC";
@@ -260,6 +272,7 @@ class InscripcionModuloModelos
                     ep.ProgramaID,
                     ep.FechaInscripcion,
                     ep.costomatricula,
+                    ep.montoPagado,
                     ep.nvauchermatricula,
                     ep.Estado,
                     e.Nombre,

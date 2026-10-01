@@ -4,529 +4,8 @@
 	date_default_timezone_set("America/La_Paz");
 require_once 'controladores/inscripcionmodulo.controlador.php';
 ?>
-  <!-- Header móvil: botón para desplegar el menú lateral en pantallas pequeñas -->
-  <div id="kt_header_mobile" class="kt-header-mobile kt-header-mobile--fixed">
-    <div class="kt-header-mobile__logo">
-      <a href="index.php">
-        <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
-      </a>
-    </div>
-    <div class="kt-header-mobile__toolbar">
-      <button class="kt-header-mobile__toolbar-toggler kt-header-mobile__toolbar-toggler--left" id="kt_aside_mobile_toggler">
-        <span></span>
-      </button>
-      <button class="kt-header-mobile__toolbar-toggler" id="kt_header_mobile_toggler">
-        <span></span>
-      </button>
-      <button class="kt-header-mobile__toolbar-topbar-toggler" id="kt_header_mobile_topbar_toggler">
-        <i class="flaticon-more-1"></i>
-      </button>
-    </div>
-  </div>
 
-	<?php
-			$NavBar = new FuncionesControladores();
-			$NavBar -> NavBarControlador();
-		?>
-        <button class="kt-aside-close " id="kt_aside_close_btn"><i class="la la-close"></i></button>
-		<?php
-			$Sidebar = new FuncionesControladores();
-			$Sidebar -> SidebarControlador();
-		?>
-
-<!-- Content -->
-<div class="kt-content kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
-
-    <!-- Subheader -->
-    <div class="kt-subheader kt-grid__item" id="kt_subheader">
-      <div class="kt-container">
-        <div class="kt-subheader__main">
-          <h2>MATRICULADOS</h2>
-          <span class="kt-subheader__separator kt-hidden"></span>
-          <div class="kt-subheader__breadcrumbs">
-            <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
-            <span class="kt-subheader__breadcrumbs-separator"></span>
-            <a href="#" class="kt-subheader__breadcrumbs-link">
-              <h3>ESTUDIANTES MATRICULADOS</h3>
-            </a>
-          </div>
-        </div>
-        <div class="kt-subheader__toolbar">
-          <div class="kt-subheader__wrapper">
-            <div id="lafecha" style="font-size:13pt"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="kt-container kt-container--fluid kt-grid__item kt-grid__item--fluid">
-
-        <!-- Sección de Filtro por Programa -->
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="kt-portlet">
-                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
-                        <div class="kt-portlet__head-label">
-                            <h4 style="color: white; margin: 0;">
-                                <i class="fa fa-filter"></i> FILTRAR POR PROGRAMA
-                            </h4>
-                        </div>
-                    </div>
-
-                    <div class="kt-portlet__body">
-                        <div class="form-group row align-items-end mb-0">
-                            <div class="col-xl-3 col-lg-6 col-md-6 mb-2 mb-xl-0">
-                                <label class="mb-1"><strong>SEDE:</strong></label>
-                                <select class="form-control select2-uniforme" id="selectSedeFiltro" style="width: 100%;">
-                                    <option value="">Todas las sedes...</option>
-                                    <?php
-                                    require_once 'modelos/programa.modelo.php';
-                                    $sedesMatriculados = ProgramasModelos::ListarSedesModelo();
-                                    foreach ($sedesMatriculados as $sedeOpcion) {
-                                        $sedeValor = htmlspecialchars($sedeOpcion, ENT_QUOTES);
-                                        echo '<option value="' . $sedeValor . '">' . $sedeValor . '</option>';
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-                            <div class="col-xl-3 col-lg-6 col-md-6 mb-2 mb-xl-0">
-                                <label class="mb-1"><strong>PROGRAMA:</strong></label>
-                                <select class="form-control select2-uniforme" id="selectProgramaFiltro" style="width: 100%;">
-                                    <option value="">Todos los programas...</option>
-                                    <?php
-                                    $programas = ProgramasModelos::ListaProgramaModelo();
-                                    foreach ($programas as $prog) {
-                                        $programaID = htmlspecialchars($prog['ProgramaID'] ?? '', ENT_QUOTES);
-                                        $nombrePrograma = htmlspecialchars($prog['NombrePrograma'] ?? '', ENT_QUOTES);
-                                        $codigo = htmlspecialchars($prog['Codigo'] ?? '', ENT_QUOTES);
-                                        $grado = htmlspecialchars($prog['GradoAcademico'] ?? '', ENT_QUOTES);
-
-                                        echo '<option value="' . $programaID . '">';
-                                        echo $nombrePrograma . ' - ' . $grado . ' (' . $codigo . ')';
-                                        echo '</option>';
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-                            <div class="col-xl-3 col-lg-6 col-md-6 mb-2 mb-xl-0">
-                                <label class="mb-1"><strong>ESTADO:</strong></label>
-                                <select class="form-control select2-uniforme" id="selectEstadoFiltro" style="width: 100%;">
-                                    <option value="ACTIVO" selected>Activos</option>
-                                    <option value="ABANDONO">Abandonos</option>
-                                    <option value="TODOS">Todos</option>
-                                </select>
-                            </div>
-                            <div class="col-xl-3 col-lg-6 col-md-6">
-                                <button type="button" class="btn btn-secondary btn-block" id="btnLimpiarFiltro">
-                                    <i class="fa fa-times"></i> Limpiar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tabla de Estudiantes Matriculados -->
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="kt-portlet kt-portlet--modern">
-                    <div class="kt-portlet__head" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
-                        <div class="kt-portlet__head-label">
-                            <h3 class="kt-portlet__head-title" style="color: white;">
-                                <i class="fa fa-list-alt"></i> LISTA DE ESTUDIANTES MATRICULADOS EN PROGRAMAS
-                            </h3>
-                        </div>
-                        <div class="kt-portlet__head-toolbar">
-                            <div class="kt-portlet__head-wrapper">
-                                <button type="button" class="btn btn-sm btn-light mr-2" id="btnAbrirPlanGrupal">
-                                    <i class="fa fa-users"></i> Plan Grupal
-                                </button>
-                                <span style="color: white; font-size: 11px;">
-                                    <i class="fa fa-users" style="color: #28a745;"></i> ACTIVOS
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="kt-portlet__body">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-bordered" id="tablaMatriculados" style="background: white;">
-                                <thead style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
-                                    <tr>
-                                        <th class="text-center" style="color: white; width: 50px;">#</th>
-                                        <th style="color: white;">ESTUDIANTE</th>
-                                        <th style="color: white;">PROGRAMA</th>
-                                        <th class="text-center" style="color: white; width: 100px;">SEDE</th>
-                                        <th class="text-center" style="color: white; width: 150px;">PAGO</th>
-                                        <th class="text-center" style="color: white; width: 110px;">FECHA INSCRIPCIÓN</th>
-                                        <th class="text-center" style="color: white; width: 150px;">ACCIONES</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaMatriculadosBody">
-                                    <?php
-                                        $listar = new InscripcionModuloControladores();
-                                        $listar->ListarEstudiantesMatriculadosControlador();
-                                    ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<!-- Modal Ver Detalles del Estudiante Matriculado -->
-<div class="modal fade" id="modalVerDetalles" tabindex="-1" role="dialog" aria-labelledby="modalVerDetallesLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
-                <h5 class="modal-title text-white" id="modalVerDetallesLabel">
-                    <i class="fa fa-user-circle"></i> Detalles del Estudiante Matriculado
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <!-- La tabla solo identifica al estudiante (nombre, CI, programa, sede,
-                 tipo de pago, fecha). Aquí va lo que NO está en la tabla: contacto,
-                 datos administrativos del programa y el desglose de la matrícula. -->
-            <div class="modal-body">
-                <div class="alert alert-info d-flex justify-content-between align-items-center flex-wrap">
-                    <div>
-                        <h5 class="mb-0"><i class="fa fa-user"></i> <strong id="detalleEstudianteNombre"></strong></h5>
-                        <small><i class="fa fa-id-card"></i> CI: <span id="detalleEstudianteCI"></span></small>
-                    </div>
-                    <span id="detalleEstado" class="badge"></span>
-                </div>
-
-                <h6 class="detalle-seccion"><i class="fa fa-address-book"></i> Contacto</h6>
-                <div class="row">
-                    <div class="col-md-4"><label class="detalle-label">Celular</label><p id="detalleCelular" class="detalle-valor"></p></div>
-                    <div class="col-md-4"><label class="detalle-label">Correo</label><p id="detalleCorreo" class="detalle-valor text-break"></p></div>
-                    <div class="col-md-4"><label class="detalle-label">Profesión</label><p id="detalleProfesion" class="detalle-valor"></p></div>
-                </div>
-
-                <h6 class="detalle-seccion"><i class="fa fa-graduation-cap"></i> Programa</h6>
-                <div class="row">
-                    <div class="col-md-12"><p id="detalleProgramaNombre" class="detalle-valor font-weight-bold"></p></div>
-                    <div class="col-md-3"><label class="detalle-label">Código</label><p id="detalleCodigo" class="detalle-valor"></p></div>
-                    <div class="col-md-3"><label class="detalle-label">Versión</label><p id="detalleVersion" class="detalle-valor"></p></div>
-                    <div class="col-md-3"><label class="detalle-label">Sede</label><p id="detalleSede" class="detalle-valor"></p></div>
-                    <div class="col-md-3"><label class="detalle-label">N° Trámite</label><p id="detalleTramite" class="detalle-valor"></p></div>
-                </div>
-
-                <h6 class="detalle-seccion"><i class="fa fa-money"></i> Matrícula</h6>
-                <div class="row">
-                    <div class="col-md-4"><label class="detalle-label">Fecha de inscripción</label><p id="detalleFecha" class="detalle-valor"></p></div>
-                    <div class="col-md-4"><label class="detalle-label">Tipo de pago</label><p id="detalleTipoPago" class="detalle-valor"></p></div>
-                    <div class="col-md-4"><label class="detalle-label">N° Voucher</label><p id="detalleVoucher" class="detalle-valor"></p></div>
-                    <div class="col-md-4"><label class="detalle-label">Costo de matrícula</label><p id="detalleCosto" class="detalle-valor text-primary font-weight-bold"></p></div>
-                    <div class="col-md-4"><label class="detalle-label">Descuento</label><p id="detalleDescuento" class="detalle-valor"></p></div>
-                    <div class="col-md-4"><label class="detalle-label">Monto pagado</label><p id="detalleMontoPagado" class="detalle-valor font-weight-bold"></p></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="fa fa-times"></i> Cerrar
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Ver Módulos Inscritos -->
-<div class="modal fade" id="modalVerModulos" tabindex="-1" role="dialog" aria-labelledby="modalVerModulosLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
-                <h5 class="modal-title text-white" id="modalVerModulosLabel">
-                    <i class="fa fa-list"></i> Módulos Inscritos - <span id="modulosEstudianteNombre"></span>
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div id="contenidoModulos">
-                    <div class="text-center">
-                        <i class="fa fa-spinner fa-spin fa-3x text-primary"></i>
-                        <p class="mt-3">Cargando módulos...</p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="fa fa-times"></i> Cerrar
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal unificado: Plan de Pago del Programa + Registrar Pago de Módulo -->
-<div class="modal fade" id="modalInscribirModulo" tabindex="-1" role="dialog" aria-labelledby="modalInscribirModuloLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
-        <div class="modal-content">
-            <!-- Encabezado: estudiante y programa (fijo, sin importar la pestaña) -->
-            <div class="modal-header gp-header">
-                <div class="gp-header-info">
-                    <span class="gp-eyebrow">Gestión de pagos del programa</span>
-                    <h5 class="modal-title" id="modalInscribirModuloLabel"><span id="infoEstudianteNombre"></span></h5>
-                    <div class="gp-header-sub"><i class="fa fa-graduation-cap"></i> <span id="infoProgramaNombre"></span></div>
-                </div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-
-            <!-- Resumen del programa (costo / pagado / saldo) y pestañas: fijos arriba del contenido -->
-            <div class="gp-top">
-                <div id="resumenPagoPrograma">
-                    <div class="gp-cargando"><i class="fa fa-spinner fa-spin"></i> Cargando resumen...</div>
-                </div>
-
-                <!-- Pestañas: Orden de Pago (paso inicial) / Cuotas / Clínicas -->
-                <ul class="nav gp-tabs" id="tabsGestionPagos" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active" id="tab-orden-pago-link" data-toggle="tab" href="#tab-orden-pago" role="tab">
-                            <i class="fa fa-file-invoice"></i> Orden de pago
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="tab-pago-modulos-link" data-toggle="tab" href="#tab-pago-modulos" role="tab">
-                            <i class="fa fa-receipt"></i> Cuotas del programa
-                        </a>
-                    </li>
-                    <!-- Solo se muestra si el programa tiene una cuenta CLINICA activa (ordenpagoclinica.js) -->
-                    <li class="nav-item" id="tab-clinica-item" style="display:none;">
-                        <a class="nav-link" id="tab-clinica-link" data-toggle="tab" href="#tab-clinica" role="tab">
-                            <i class="fa fa-stethoscope"></i> Clínicas
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="modal-body">
-
-                <input type="hidden" name="estudianteID" id="estudianteID">
-                <input type="hidden" name="programaID" id="programaID">
-                <input type="hidden" name="idinscripcion" id="idinscripcion">
-
-                <div class="tab-content">
-
-                    <!-- Pestaña: Orden de Pago (se emite ANTES de pagar, para que el estudiante pague y luego suba el voucher) -->
-                    <div class="tab-pane fade show active" id="tab-orden-pago" role="tabpanel">
-                        <div id="ordenPagoContenido">
-                            <div class="gp-cargando"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>
-                        </div>
-                    </div>
-
-                    <!-- Pestaña: Cuotas del Programa (antes "Pago de Módulos"; las cuotas ya no
-                         están ligadas a módulos, su número y monto son libres) -->
-                    <div class="tab-pane fade" id="tab-pago-modulos" role="tabpanel">
-
-                        <div id="cuotaPendienteInfo"></div>
-
-                        <div class="gp-section">
-                            <div class="gp-section-title"><i class="fa fa-upload"></i> Registrar voucher de pago</div>
-                            <form id="formPagoModulo" enctype="multipart/form-data">
-                                <input type="hidden" name="montoCuota" id="montoCuota">
-
-                                <div class="row">
-                                    <div class="col-lg-4 form-group">
-                                        <label class="gp-label" for="fechaPago">Fecha de pago <span class="gp-req">*</span></label>
-                                        <input type="date" class="form-control" name="fechaPago" id="fechaPago" required>
-                                    </div>
-                                    <div class="col-lg-4 form-group">
-                                        <label class="gp-label" for="numeroVaucher">N° de voucher / comprobante <span class="gp-req">*</span></label>
-                                        <input type="text" class="form-control" name="numeroVaucher" id="numeroVaucher"
-                                               placeholder="Ej: 123456" required>
-                                    </div>
-                                    <div class="col-lg-4 form-group">
-                                        <label class="gp-label" for="fmodulo">Foto o archivo del voucher <span class="gp-req">*</span></label>
-                                        <input type="file" class="form-control-file gp-file" name="fmodulo" id="fmodulo"
-                                               accept="image/*,.pdf" required>
-                                        <div id="previewFotoVoucher" class="mt-2"></div>
-                                    </div>
-                                </div>
-
-                                <div class="gp-actions">
-                                    <button type="submit" id="btnGuardarPagoCuota" class="btn btn-primary" disabled>
-                                        <i class="fa fa-save"></i> Guardar pago
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div class="gp-section gp-section-flush">
-                            <div class="gp-section-title"><i class="fa fa-history"></i> Historial de cuotas</div>
-                            <div class="table-responsive">
-                                <table class="table gp-table mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-center" style="width:70px;">N°</th>
-                                            <th class="text-right">Monto</th>
-                                            <th class="text-center">Fecha</th>
-                                            <th>Voucher</th>
-                                            <th class="text-center">Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tablaCuotasBody">
-                                        <tr><td colspan="5" class="gp-vacio">Sin cuotas registradas</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Pestaña: Clínicas (orden de pago de monto libre a la cuenta CLINICA del
-                         programa; se confirma registrando su voucher). Contenido en ordenpagoclinica.js -->
-                    <div class="tab-pane fade" id="tab-clinica" role="tabpanel">
-                        <div class="gp-nota is-neutra">
-                            <i class="fa fa-info-circle"></i>
-                            <span>Los pagos de clínica son independientes: no se suman al costo, a lo pagado ni al saldo de matrícula y cuotas del programa.</span>
-                        </div>
-
-                        <div id="clinicaContenido"></div>
-
-                        <div class="gp-section gp-section-flush">
-                            <div class="gp-section-title d-flex justify-content-between">
-                                <span><i class="fa fa-history"></i> Historial de clínicas</span>
-                                <span id="clinicaTotalPagado"></span>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table gp-table mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>N° Orden</th>
-                                            <th class="text-right">Monto</th>
-                                            <th class="text-center">Fecha pago</th>
-                                            <th>Voucher</th>
-                                            <th class="text-center">Estado</th>
-                                            <th class="text-center" style="width:60px;"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tablaClinicasBody">
-                                        <tr><td colspan="6" class="gp-vacio">Sin clínicas registradas</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="modal-footer gp-footer">
-                <button type="button" class="btn btn-light" data-dismiss="modal">
-                    Cerrar
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Foto del voucher (vista previa antes de guardar, o del historial de
-     cuotas ya registradas). Tamaño de imagen fijo por CSS para que todas se vean
-     igual sin importar su resolución original. -->
-<div class="modal fade" id="modalFotoVoucher" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fa fa-image"></i> Foto del Voucher</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body text-center">
-                <img id="imagenVoucherGrande" src="" alt="Foto del voucher" style="width:500px; max-width:100%; height:500px; object-fit:contain; border-radius:10px; background:#f8f9fa;">
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Plan Grupal (seleccionar a los estudiantes que entran en el plan) -->
-<div class="modal fade" id="modalPlanGrupal" tabindex="-1" role="dialog" aria-labelledby="modalPlanGrupalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
-                <h5 class="modal-title text-white" id="modalPlanGrupalLabel">
-                    <i class="fa fa-users"></i> Plan Grupal - Seleccionar Estudiantes
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <small class="text-muted d-block mb-3">
-                    <i class="fa fa-info-circle"></i> Seleccione a los estudiantes matriculados que cancelarán el programa
-                    juntos bajo este plan grupal. Solo se listan estudiantes que aún no tienen un plan de pago del programa registrado.
-                </small>
-
-                <div class="row">
-                    <div class="col-lg-6 form-group">
-                        <label class="small font-weight-bold mb-1">Filtrar por Programa</label>
-                        <select class="form-control select2-plan-grupal" id="pgFiltroPrograma">
-                            <option value="">Todos los programas...</option>
-                            <?php foreach ($programas as $prog): ?>
-                                <option value="<?php echo (int)$prog['ProgramaID']; ?>">
-                                    <?php echo htmlspecialchars($prog['NombrePrograma'] . ' - ' . $prog['GradoAcademico']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-lg-6 form-group">
-                        <label class="small font-weight-bold mb-1">% Descuento Grupal</label>
-                        <input type="number" class="form-control form-control-sm" id="pgPorcentajeDescuento" min="0" max="100" step="0.01" value="0">
-                    </div>
-                </div>
-
-                <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
-                    <table class="table table-sm table-bordered table-hover mb-0">
-                        <thead class="thead-light">
-                            <tr>
-                                <th class="text-center" style="width:36px;"></th>
-                                <th>Estudiante</th>
-                                <th>CI</th>
-                                <th>Programa</th>
-                                <th class="text-center">Costo Programa</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pgListaEstudiantes">
-                            <tr><td colspan="5" class="text-center text-muted py-3">Cargando...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <small class="d-block text-right mt-2">
-                    Seleccionados: <strong id="pgContadorSeleccionados">0</strong> &nbsp;|&nbsp;
-                    Monto por estudiante: <strong>Bs. <span id="pgMontoPorEstudiante">0.00</span></strong>
-                </small>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="pgBtnCrearPlan"><i class="fa fa-save"></i> Crear Plan Grupal</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Scripts -->
-<script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
-<script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="vistas/recursos/assets/js/scripts/inscripcionmodulo.js?v=<?php echo time(); ?>"></script>
-<script src="vistas/recursos/assets/js/scripts/planpago.js?v=<?php echo time(); ?>"></script>
-<script src="vistas/recursos/assets/js/scripts/ordenpagomodulos.js?v=<?php echo time(); ?>"></script>
-<script src="vistas/recursos/assets/js/scripts/ordenpagoclinica.js?v=<?php echo time(); ?>"></script>
-
+<!-- Estilos de la vista: van antes del contenido para que no se vea sin estilo al cargar -->
 <style>
     /* =========================================================
        Modal "Gestión de Pagos del Programa" (prefijo gp-)
@@ -898,85 +377,130 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
         #modalInscribirModulo .gp-tabs .nav-link { white-space: nowrap; }
     }
 
-    /* Estilos modernos para la tabla de matriculados */
-    .kt-portlet--modern {
-        border-radius: 10px;
+    /* =========================================================
+       PÁGINA DE MATRICULADOS (prefijo mt-): filtros y lista.
+       Mismo lenguaje visual que Programas, Reporte de Notas y Estudiantes.
+       Las filas las arma InscripcionModuloControladores (badges con estilo
+       en línea: por eso algunos ajustes llevan !important).
+       ========================================================= */
+    .mt {
+        --mt-primario: #1e3c72;
+        --mt-primario-suave: #eef2f9;
+        --mt-texto: #1f2937;
+        --mt-texto-2: #64748b;
+        --mt-borde: #e3e7ef;
+    }
+
+    .mt-card {
+        background: #fff;
+        border: 1px solid var(--mt-borde);
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, .05);
         overflow: hidden;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
+        margin-bottom: 18px;
     }
-
-    .kt-portlet__head {
-        border-radius: 10px 10px 0 0;
-        padding: 15px 25px;
+    .mt-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--mt-borde);
     }
+    .mt-card-head h3 { font-size: 16px; font-weight: 700; margin: 0; color: var(--mt-texto); }
+    .mt-card-head h3 i { color: var(--mt-primario); margin-right: 4px; }
+    .mt-card-head p { font-size: 12.5px; color: var(--mt-texto-2); margin: 3px 0 0; }
+    .mt-card-head .btn-abrir-panel { height: 40px; display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; }
+    .mt-card-body { padding: 20px 24px; }
 
-    #tablaMatriculados {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 0;
-    }
-
-    #tablaMatriculados thead th {
+    .mt-label {
+        display: block;
+        font-size: 12px;
         font-weight: 600;
-        text-transform: uppercase;
-        font-size: 11px;
-        letter-spacing: 0.5px;
-        vertical-align: middle;
-        padding: 12px 8px;
-        border: none;
+        color: var(--mt-texto);
+        margin-bottom: 6px;
     }
+    .mt-label i { color: var(--mt-primario); width: 14px; }
+    .mt .btn-abrir-panel.btn-block { height: 38px; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
-    #tablaMatriculados tbody tr {
-        transition: all 0.3s ease;
-    }
-
-    #tablaMatriculados tbody tr:hover {
-        background-color: #f8f9fa !important;
-        transform: scale(1.005);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    #tablaMatriculados tbody td {
-        vertical-align: middle;
+    /* ---------- Tabla ---------- */
+    .mt-tabla {
+        margin-bottom: 0;
         font-size: 13px;
-        padding: 10px 8px;
+        border: 1px solid var(--mt-borde);
+        border-radius: 10px;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
     }
-
-    /* Estilos para los botones dropdown */
-    .btn-actions-dropdown {
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    .mt-tabla thead th {
+        background: #f8fafc;
+        color: var(--mt-texto-2);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        border-top: 0;
+        border-bottom: 1px solid var(--mt-borde);
+        vertical-align: middle;
+        padding: 12px 10px;
     }
-
-    .btn-actions-dropdown:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    .mt-tabla td {
+        vertical-align: middle;
+        border-color: #eef1f6;
+        color: var(--mt-texto);
+        padding: 11px 10px;
     }
+    .mt-tabla tbody tr { transition: background-color .15s ease; }
+    .mt-tabla tbody tr:hover { background-color: #f8fafc; }
 
+    /* Etiquetas de la fila (tipo de pago, estado): pastillas suaves */
+    .mt-tabla .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px !important;
+        border-radius: 999px;
+        font-size: 11px !important;
+        font-weight: 600;
+    }
+    .mt-tabla .badge-success { background: #e7f6ee; color: #2f855a; }
+    .mt-tabla .badge-warning { background: #fff6e0; color: #b7791f; }
+    .mt-tabla .badge-danger  { background: #fdecec; color: #c53030; }
+    .mt-tabla .badge-info,
+    .mt-tabla .badge-primary { background: var(--mt-primario-suave); color: var(--mt-primario); }
+
+    /* Menú de acciones de cada fila */
     .dropdown-menu {
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-        border: none;
-        border-radius: 8px;
+        border: 1px solid var(--mt-borde, #e3e7ef);
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
+        padding: 6px;
     }
-
     .dropdown-item {
-        padding: 8px 20px;
-        transition: all 0.2s ease;
+        border-radius: 6px;
+        padding: 8px 14px;
+        font-size: 13px;
     }
+    .dropdown-item:hover { background-color: #eef2f9; color: #1e3c72; }
+    .dropdown-item i { width: 20px; margin-right: 8px; color: #1e3c72; }
 
-    .dropdown-item:hover {
-        background-color: #1e3c72;
-        color: white;
-        padding-left: 25px;
-    }
+    .btn-gestionar-pagos { white-space: nowrap; }
 
-    .dropdown-item i {
-        width: 20px;
-        margin-right: 8px;
+    /* ---------- Ventanas secundarias (detalles, módulos, foto, plan grupal) ---------- */
+    .mt-modal-head {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        border-bottom: 0;
     }
-
-    .btn-gestionar-pagos {
-        white-space: nowrap;
-    }
+    .mt-modal-head .modal-title,
+    .mt-modal-head .modal-title i { color: #fff !important; font-weight: 700; }
+    .mt-modal-head .close,
+    .mt-modal-head .close span { color: #fff !important; opacity: .9; text-shadow: none; }
+    #modalVerDetalles .modal-content,
+    #modalVerModulos .modal-content,
+    #modalFotoVoucher .modal-content,
+    #modalPlanGrupal .modal-content { border: 0; border-radius: 14px; overflow: hidden; }
 
     .modal-header.bg-primary {
         background-color: #1e3c72 !important;
@@ -987,14 +511,51 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
         border-left: 4px solid #1e3c72;
     }
 
-    /* Animaciones */
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+    /* Modal Ver Detalles: cabecera del estudiante y secciones Contacto / Programa / Matrícula */
+    #modalVerDetalles .alert-info {
+        background: #eef2f9;
+        border: 0;
+        border-left: 4px solid #1e3c72;
+        border-radius: 10px;
+        color: #1f2937;
+    }
+    /* Etiquetas del detalle (estado, tipo de pago): pastillas suaves como en la tabla */
+    #modalVerDetalles .badge { padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    #modalVerDetalles .badge-success { background: #e7f6ee; color: #2f855a; }
+    #modalVerDetalles .badge-warning { background: #fff6e0; color: #b7791f; }
+    #modalVerDetalles .badge-danger  { background: #fdecec; color: #c53030; }
+
+    #modalVerDetalles .detalle-seccion {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #1e3c72;
+        border-bottom: 1px solid #e3e7ef;
+        padding-bottom: 6px;
+        margin: 16px 0 10px;
+    }
+    #modalVerDetalles .detalle-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        color: #64748b;
+        margin-bottom: 0;
+    }
+    #modalVerDetalles .detalle-valor {
+        margin-bottom: 10px;
+        color: #1f2937;
     }
 
-    #tablaMatriculados tbody tr {
-        animation: fadeIn 0.5s ease;
+    /* Plan grupal: lista de estudiantes con el mismo encabezado claro */
+    #modalPlanGrupal .table thead th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .4px;
     }
 
     /* Badge para mostrar información */
@@ -1005,36 +566,9 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
         font-weight: 500;
     }
 
-    /* Modal Ver Detalles: secciones Contacto / Programa / Matrícula */
-    #modalVerDetalles .detalle-seccion {
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: #1e3c72;
-        border-bottom: 1px solid #e3e6f0;
-        padding-bottom: 4px;
-        margin: 14px 0 10px;
-    }
-    #modalVerDetalles .detalle-label {
-        display: block;
-        font-size: 11px;
-        color: #8a8fa3;
-        margin-bottom: 0;
-    }
-    #modalVerDetalles .detalle-valor {
-        margin-bottom: 10px;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        #tablaMatriculados {
-            font-size: 11px;
-        }
-
-        .btn-sm {
-            padding: 4px 8px;
-            font-size: 10px;
-        }
+    @media (max-width: 767.98px) {
+        .mt-card-head { flex-direction: column; align-items: flex-start; }
+        .mt-card-head, .mt-card-body { padding-left: 16px; padding-right: 16px; }
     }
 
     /* ====================================
@@ -1271,7 +805,625 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
         background-color: #1e3c72 !important;
         color: white !important;
     }
+    /* =========================================================
+       REQUISITOS DE MATRICULACIÓN (prefijo rq- y .mt-requisitos)
+       ========================================================= */
+    /* Celda de la tabla: pastilla que abre la ventana de requisitos */
+    .mt-requisitos {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .mt-requisitos.is-completo { background: #e7f6ee; color: #2f855a; }
+    .mt-requisitos.is-pendiente { background: #fff6e0; color: #b7791f; }
+    .mt-requisitos:hover { border-color: currentColor; box-shadow: 0 2px 6px rgba(15, 23, 42, .1); }
+
+    #modalRequisitos .modal-content { border: 0; border-radius: 14px; overflow: hidden; }
+    .rq-barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .rq-contador { font-size: 13px; color: #b7791f; }
+    .rq-contador.is-completo { color: #2f855a; }
+    .rq-lista { display: flex; flex-direction: column; gap: 8px; }
+    .rq-item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+        align-items: center;
+        gap: 6px 14px;
+        padding: 10px 14px;
+        border: 1px solid #e3e7ef;
+        border-radius: 12px;
+        background: #fff;
+        transition: background-color .15s ease, border-color .15s ease;
+    }
+    .rq-item.is-entregado { background: #f3faf6; border-color: #c6e9d4; }
+    .rq-check { display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer; }
+    .rq-check input { position: absolute; opacity: 0; pointer-events: none; }
+    .rq-caja {
+        width: 22px;
+        height: 22px;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #cbd5e1;
+        border-radius: 6px;
+        background: #fff;
+        color: transparent;
+        font-size: 11px;
+        transition: all .15s ease;
+    }
+    .rq-check input:checked + .rq-caja { background: #2f855a; border-color: #2f855a; color: #fff; }
+    .rq-check input:focus-visible + .rq-caja { box-shadow: 0 0 0 3px rgba(30, 60, 114, .2); }
+    .rq-nombre { font-size: 13.5px; font-weight: 600; color: #1f2937; }
+    .rq-nombre small { color: #64748b; font-weight: 500; }
+    .rq-datos { display: flex; gap: 8px; }
+    .rq-datos .rq-fecha { max-width: 160px; }
+    .rq-datos .form-control { height: 36px; font-size: 13px; border-radius: 8px; border: 1px solid #d8dde8; }
+    .rq-registro { grid-column: 1 / -1; font-size: 11.5px; color: #64748b; padding-left: 32px; }
+    .rq-ayuda { margin: 14px 0 0; padding: 10px 14px; background: #eef2f9; border-radius: 10px; font-size: 12.5px; color: #334155; }
+    .rq-ayuda i { color: #1e3c72; margin-right: 4px; }
+    .rq-vacio { text-align: center; padding: 24px; color: #64748b; }
+
+    @media (max-width: 767.98px) {
+        .rq-item { grid-template-columns: 1fr; }
+        .rq-datos { flex-direction: column; }
+        .rq-datos .rq-fecha { max-width: none; }
+    }
+
 </style>
+  <!-- Header móvil: botón para desplegar el menú lateral en pantallas pequeñas -->
+  <div id="kt_header_mobile" class="kt-header-mobile kt-header-mobile--fixed">
+    <div class="kt-header-mobile__logo">
+      <a href="panel">
+        <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
+      </a>
+    </div>
+    <div class="kt-header-mobile__toolbar">
+      <button class="kt-header-mobile__toolbar-toggler kt-header-mobile__toolbar-toggler--left" id="kt_aside_mobile_toggler">
+        <span></span>
+      </button>
+      <button class="kt-header-mobile__toolbar-toggler" id="kt_header_mobile_toggler">
+        <span></span>
+      </button>
+      <button class="kt-header-mobile__toolbar-topbar-toggler" id="kt_header_mobile_topbar_toggler">
+        <i class="flaticon-more-1"></i>
+      </button>
+    </div>
+  </div>
+
+	<?php
+			$NavBar = new FuncionesControladores();
+			$NavBar -> NavBarControlador();
+		?>
+        <button class="kt-aside-close " id="kt_aside_close_btn"><i class="la la-close"></i></button>
+		<?php
+			$Sidebar = new FuncionesControladores();
+			$Sidebar -> SidebarControlador();
+		?>
+
+<!-- Content -->
+<div class="kt-content kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
+
+    <!-- Subheader -->
+    <div class="kt-subheader kt-grid__item" id="kt_subheader">
+      <div class="kt-container">
+        <div class="kt-subheader__main">
+          <h2>MATRICULADOS</h2>
+          <span class="kt-subheader__separator kt-hidden"></span>
+          <div class="kt-subheader__breadcrumbs">
+            <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
+            <span class="kt-subheader__breadcrumbs-separator"></span>
+            <a href="#" class="kt-subheader__breadcrumbs-link">
+              <h3>ESTUDIANTES MATRICULADOS</h3>
+            </a>
+          </div>
+        </div>
+        <div class="kt-subheader__toolbar">
+          <div class="kt-subheader__wrapper">
+            <div id="lafecha" style="font-size:13pt"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kt-container kt-container--fluid kt-grid__item kt-grid__item--fluid">
+      <div class="mt">
+
+        <!-- Filtros -->
+        <div class="mt-card">
+            <div class="mt-card-head">
+                <div>
+                    <h3><i class="fa fa-filter"></i> Filtrar matriculados</h3>
+                    <p>Acote la lista por sede, programa o estado de la inscripción.</p>
+                </div>
+            </div>
+            <div class="mt-card-body">
+                <div class="row align-items-end">
+                    <div class="col-xl-2 col-lg-6 col-md-6 mb-3 mb-xl-0">
+                        <label class="mt-label" for="selectSedeFiltro"><i class="fa fa-map-marker-alt"></i> Sede</label>
+                        <select class="form-control select2-uniforme" id="selectSedeFiltro" style="width: 100%;">
+                            <option value="">Todas las sedes...</option>
+                            <?php
+                            require_once 'modelos/programa.modelo.php';
+                            $sedesMatriculados = ProgramasModelos::ListarSedesModelo();
+                            foreach ($sedesMatriculados as $sedeOpcion) {
+                                $sedeValor = htmlspecialchars($sedeOpcion, ENT_QUOTES);
+                                echo '<option value="' . $sedeValor . '">' . $sedeValor . '</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6 mb-3 mb-xl-0">
+                        <label class="mt-label" for="selectProgramaFiltro"><i class="fa fa-university"></i> Programa</label>
+                        <select class="form-control select2-uniforme" id="selectProgramaFiltro" style="width: 100%;">
+                            <option value="">Todos los programas...</option>
+                            <?php
+                            $programas = ProgramasModelos::ListaProgramaModelo();
+                            foreach ($programas as $prog) {
+                                $programaID = htmlspecialchars($prog['ProgramaID'] ?? '', ENT_QUOTES);
+                                $nombrePrograma = htmlspecialchars($prog['NombrePrograma'] ?? '', ENT_QUOTES);
+                                $codigo = htmlspecialchars($prog['Codigo'] ?? '', ENT_QUOTES);
+                                $grado = htmlspecialchars($prog['GradoAcademico'] ?? '', ENT_QUOTES);
+
+                                echo '<option value="' . $programaID . '">';
+                                echo $nombrePrograma . ' - ' . $grado . ' (' . $codigo . ')';
+                                echo '</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3 mb-xl-0">
+                        <label class="mt-label" for="selectEstadoFiltro"><i class="fa fa-user-check"></i> Estado</label>
+                        <select class="form-control select2-uniforme" id="selectEstadoFiltro" style="width: 100%;">
+                            <option value="ACTIVO" selected>Activos</option>
+                            <option value="ABANDONO">Abandonos</option>
+                            <option value="TODOS">Todos</option>
+                        </select>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3 mb-md-0">
+                        <label class="mt-label" for="selectRequisitosFiltro"><i class="fa fa-clipboard-check"></i> Requisitos</label>
+                        <select class="form-control select2-uniforme" id="selectRequisitosFiltro" style="width: 100%;">
+                            <option value="" selected>Todos</option>
+                            <option value="INCOMPLETOS">Incompletos</option>
+                            <option value="COMPLETOS">Completos</option>
+                        </select>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6">
+                        <button type="button" class="btn btn-abrir-panel btn-block" id="btnLimpiarFiltro">
+                            <i class="fa fa-times"></i> Limpiar filtros
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Estudiantes Matriculados -->
+        <div class="mt-card">
+            <div class="mt-card-head">
+                <div>
+                    <h3><i class="fa fa-user-graduate"></i> Estudiantes matriculados</h3>
+                    <p>Pulse <strong>Pagos</strong> para gestionar la matrícula, las cuotas y las clínicas de cada estudiante.</p>
+                </div>
+                <button type="button" class="btn btn-abrir-panel" id="btnAbrirPlanGrupal">
+                    <i class="fa fa-users"></i> Plan grupal
+                </button>
+            </div>
+
+            <div class="mt-card-body">
+                <div class="table-responsive">
+                    <table class="table mt-tabla" id="tablaMatriculados">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width: 50px;">#</th>
+                                <th>Estudiante</th>
+                                <th>Programa</th>
+                                <th class="text-center" style="width: 100px;">Sede</th>
+                                <th class="text-center" style="width: 150px;">Pago</th>
+                                <th class="text-center" style="width: 110px;">Requisitos</th>
+                                <th class="text-center" style="width: 110px;">Fecha inscripción</th>
+                                <th class="text-center" style="width: 150px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaMatriculadosBody">
+                            <?php
+                                $listar = new InscripcionModuloControladores();
+                                $listar->ListarEstudiantesMatriculadosControlador();
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+      </div>
+    </div>
+</div>
+
+<!-- Modal Ver Detalles del Estudiante Matriculado -->
+<div class="modal fade" id="modalVerDetalles" tabindex="-1" role="dialog" aria-labelledby="modalVerDetallesLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header mt-modal-head">
+                <h5 class="modal-title text-white" id="modalVerDetallesLabel">
+                    <i class="fa fa-user-circle"></i> Detalles del Estudiante Matriculado
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <!-- La tabla solo identifica al estudiante (nombre, CI, programa, sede,
+                 tipo de pago, fecha). Aquí va lo que NO está en la tabla: contacto,
+                 datos administrativos del programa y el desglose de la matrícula. -->
+            <div class="modal-body">
+                <div class="alert alert-info d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <h5 class="mb-0"><i class="fa fa-user"></i> <strong id="detalleEstudianteNombre"></strong></h5>
+                        <small><i class="fa fa-id-card"></i> CI: <span id="detalleEstudianteCI"></span></small>
+                    </div>
+                    <span id="detalleEstado" class="badge"></span>
+                </div>
+
+                <h6 class="detalle-seccion"><i class="fa fa-address-book"></i> Contacto</h6>
+                <div class="row">
+                    <div class="col-md-4"><label class="detalle-label">Celular</label><p id="detalleCelular" class="detalle-valor"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Correo</label><p id="detalleCorreo" class="detalle-valor text-break"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Profesión</label><p id="detalleProfesion" class="detalle-valor"></p></div>
+                </div>
+
+                <h6 class="detalle-seccion"><i class="fa fa-graduation-cap"></i> Programa</h6>
+                <div class="row">
+                    <div class="col-md-12"><p id="detalleProgramaNombre" class="detalle-valor font-weight-bold"></p></div>
+                    <div class="col-md-3"><label class="detalle-label">Código</label><p id="detalleCodigo" class="detalle-valor"></p></div>
+                    <div class="col-md-3"><label class="detalle-label">Versión</label><p id="detalleVersion" class="detalle-valor"></p></div>
+                    <div class="col-md-3"><label class="detalle-label">Sede</label><p id="detalleSede" class="detalle-valor"></p></div>
+                    <div class="col-md-3"><label class="detalle-label">N° Trámite</label><p id="detalleTramite" class="detalle-valor"></p></div>
+                </div>
+
+                <h6 class="detalle-seccion"><i class="fa fa-money"></i> Matrícula</h6>
+                <div class="row">
+                    <div class="col-md-4"><label class="detalle-label">Fecha de inscripción</label><p id="detalleFecha" class="detalle-valor"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Tipo de pago</label><p id="detalleTipoPago" class="detalle-valor"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">N° Voucher</label><p id="detalleVoucher" class="detalle-valor"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Costo de matrícula</label><p id="detalleCosto" class="detalle-valor text-primary font-weight-bold"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Descuento</label><p id="detalleDescuento" class="detalle-valor"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Monto pagado</label><p id="detalleMontoPagado" class="detalle-valor font-weight-bold"></p></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ver Módulos Inscritos -->
+<div class="modal fade" id="modalVerModulos" tabindex="-1" role="dialog" aria-labelledby="modalVerModulosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header mt-modal-head">
+                <h5 class="modal-title text-white" id="modalVerModulosLabel">
+                    <i class="fa fa-list"></i> Módulos Inscritos - <span id="modulosEstudianteNombre"></span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="contenidoModulos">
+                    <div class="text-center">
+                        <i class="fa fa-spinner fa-spin fa-3x text-primary"></i>
+                        <p class="mt-3">Cargando módulos...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal unificado: Plan de Pago del Programa + Registrar Pago de Módulo -->
+<div class="modal fade" id="modalInscribirModulo" tabindex="-1" role="dialog" aria-labelledby="modalInscribirModuloLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <!-- Encabezado: estudiante y programa (fijo, sin importar la pestaña) -->
+            <div class="modal-header gp-header">
+                <div class="gp-header-info">
+                    <span class="gp-eyebrow">Gestión de pagos del programa</span>
+                    <h5 class="modal-title" id="modalInscribirModuloLabel"><span id="infoEstudianteNombre"></span></h5>
+                    <div class="gp-header-sub"><i class="fa fa-graduation-cap"></i> <span id="infoProgramaNombre"></span></div>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- Resumen del programa (costo / pagado / saldo) y pestañas: fijos arriba del contenido -->
+            <div class="gp-top">
+                <div id="resumenPagoPrograma">
+                    <div class="gp-cargando"><i class="fa fa-spinner fa-spin"></i> Cargando resumen...</div>
+                </div>
+
+                <!-- Pestañas: Orden de Pago (paso inicial) / Cuotas / Clínicas -->
+                <ul class="nav gp-tabs" id="tabsGestionPagos" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="tab-orden-pago-link" data-toggle="tab" href="#tab-orden-pago" role="tab">
+                            <i class="fa fa-file-invoice"></i> Orden de pago
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab-pago-modulos-link" data-toggle="tab" href="#tab-pago-modulos" role="tab">
+                            <i class="fa fa-receipt"></i> Cuotas del programa
+                        </a>
+                    </li>
+                    <!-- Solo se muestra si el programa tiene una cuenta CLINICA activa (ordenpagoclinica.js) -->
+                    <li class="nav-item" id="tab-clinica-item" style="display:none;">
+                        <a class="nav-link" id="tab-clinica-link" data-toggle="tab" href="#tab-clinica" role="tab">
+                            <i class="fa fa-stethoscope"></i> Clínicas
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="modal-body">
+
+                <input type="hidden" name="estudianteID" id="estudianteID">
+                <input type="hidden" name="programaID" id="programaID">
+                <input type="hidden" name="idinscripcion" id="idinscripcion">
+
+                <div class="tab-content">
+
+                    <!-- Pestaña: Orden de Pago (se emite ANTES de pagar, para que el estudiante pague y luego suba el voucher) -->
+                    <div class="tab-pane fade show active" id="tab-orden-pago" role="tabpanel">
+                        <div id="ordenPagoContenido">
+                            <div class="gp-cargando"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>
+                        </div>
+                    </div>
+
+                    <!-- Pestaña: Cuotas del Programa (antes "Pago de Módulos"; las cuotas ya no
+                         están ligadas a módulos, su número y monto son libres) -->
+                    <div class="tab-pane fade" id="tab-pago-modulos" role="tabpanel">
+
+                        <div id="cuotaPendienteInfo"></div>
+
+                        <div class="gp-section">
+                            <div class="gp-section-title"><i class="fa fa-upload"></i> Registrar voucher de pago</div>
+                            <form id="formPagoModulo" enctype="multipart/form-data">
+                                <input type="hidden" name="montoCuota" id="montoCuota">
+
+                                <div class="row">
+                                    <div class="col-lg-4 form-group">
+                                        <label class="gp-label" for="fechaPago">Fecha de pago <span class="gp-req">*</span></label>
+                                        <input type="date" class="form-control" name="fechaPago" id="fechaPago" required>
+                                    </div>
+                                    <div class="col-lg-4 form-group">
+                                        <label class="gp-label" for="numeroVaucher">N° de voucher / comprobante <span class="gp-req">*</span></label>
+                                        <input type="text" class="form-control" name="numeroVaucher" id="numeroVaucher"
+                                               placeholder="Ej: 123456" required>
+                                    </div>
+                                    <div class="col-lg-4 form-group">
+                                        <label class="gp-label" for="fmodulo">Foto o archivo del voucher <span class="gp-req">*</span></label>
+                                        <input type="file" class="form-control-file gp-file" name="fmodulo" id="fmodulo"
+                                               accept="image/*,.pdf" required>
+                                        <div id="previewFotoVoucher" class="mt-2"></div>
+                                    </div>
+                                </div>
+
+                                <div class="gp-actions">
+                                    <button type="submit" id="btnGuardarPagoCuota" class="btn btn-primary" disabled>
+                                        <i class="fa fa-save"></i> Guardar pago
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="gp-section gp-section-flush">
+                            <div class="gp-section-title"><i class="fa fa-history"></i> Historial de cuotas</div>
+                            <div class="table-responsive">
+                                <table class="table gp-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" style="width:70px;">N°</th>
+                                            <th class="text-right">Monto</th>
+                                            <th class="text-center">Fecha</th>
+                                            <th>Voucher</th>
+                                            <th class="text-center">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaCuotasBody">
+                                        <tr><td colspan="5" class="gp-vacio">Sin cuotas registradas</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pestaña: Clínicas (orden de pago de monto libre a la cuenta CLINICA del
+                         programa; se confirma registrando su voucher). Contenido en ordenpagoclinica.js -->
+                    <div class="tab-pane fade" id="tab-clinica" role="tabpanel">
+                        <div class="gp-nota is-neutra">
+                            <i class="fa fa-info-circle"></i>
+                            <span>Los pagos de clínica son independientes: no se suman al costo, a lo pagado ni al saldo de matrícula y cuotas del programa.</span>
+                        </div>
+
+                        <div id="clinicaContenido"></div>
+
+                        <div class="gp-section gp-section-flush">
+                            <div class="gp-section-title d-flex justify-content-between">
+                                <span><i class="fa fa-history"></i> Historial de clínicas</span>
+                                <span id="clinicaTotalPagado"></span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table gp-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>N° Orden</th>
+                                            <th class="text-right">Monto</th>
+                                            <th class="text-center">Fecha pago</th>
+                                            <th>Voucher</th>
+                                            <th class="text-center">Estado</th>
+                                            <th class="text-center" style="width:60px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaClinicasBody">
+                                        <tr><td colspan="6" class="gp-vacio">Sin clínicas registradas</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer gp-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Foto del voucher (vista previa antes de guardar, o del historial de
+     cuotas ya registradas). Tamaño de imagen fijo por CSS para que todas se vean
+     igual sin importar su resolución original. -->
+<div class="modal fade" id="modalFotoVoucher" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header mt-modal-head">
+                <h5 class="modal-title"><i class="fa fa-image"></i> Foto del voucher</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="imagenVoucherGrande" src="" alt="Foto del voucher" style="width:500px; max-width:100%; height:500px; object-fit:contain; border-radius:10px; background:#f8f9fa;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Plan Grupal (seleccionar a los estudiantes que entran en el plan) -->
+<div class="modal fade" id="modalPlanGrupal" tabindex="-1" role="dialog" aria-labelledby="modalPlanGrupalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header mt-modal-head">
+                <h5 class="modal-title text-white" id="modalPlanGrupalLabel">
+                    <i class="fa fa-users"></i> Plan Grupal - Seleccionar Estudiantes
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <small class="text-muted d-block mb-3">
+                    <i class="fa fa-info-circle"></i> Seleccione a los estudiantes matriculados que cancelarán el programa
+                    juntos bajo este plan grupal. Solo se listan estudiantes que aún no tienen un plan de pago del programa registrado.
+                </small>
+
+                <div class="row">
+                    <div class="col-lg-6 form-group">
+                        <label class="small font-weight-bold mb-1">Filtrar por Programa</label>
+                        <select class="form-control select2-plan-grupal" id="pgFiltroPrograma">
+                            <option value="">Todos los programas...</option>
+                            <?php foreach ($programas as $prog): ?>
+                                <option value="<?php echo (int)$prog['ProgramaID']; ?>">
+                                    <?php echo htmlspecialchars($prog['NombrePrograma'] . ' - ' . $prog['GradoAcademico']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-lg-6 form-group">
+                        <label class="small font-weight-bold mb-1">% Descuento Grupal</label>
+                        <input type="number" class="form-control form-control-sm" id="pgPorcentajeDescuento" min="0" max="100" step="0.01" value="0">
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th class="text-center" style="width:36px;"></th>
+                                <th>Estudiante</th>
+                                <th>CI</th>
+                                <th>Programa</th>
+                                <th class="text-center">Costo Programa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pgListaEstudiantes">
+                            <tr><td colspan="5" class="text-center text-muted py-3">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <small class="d-block text-right mt-2">
+                    Seleccionados: <strong id="pgContadorSeleccionados">0</strong> &nbsp;|&nbsp;
+                    Monto por estudiante: <strong>Bs. <span id="pgMontoPorEstudiante">0.00</span></strong>
+                </small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="pgBtnCrearPlan"><i class="fa fa-save"></i> Crear Plan Grupal</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Requisitos de matriculación (requisitos.js) -->
+<div class="modal fade" id="modalRequisitos" tabindex="-1" role="dialog" aria-labelledby="modalRequisitosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header mt-modal-head">
+                <div>
+                    <small style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#fff;opacity:.75;">Requisitos de matriculación</small>
+                    <h5 class="modal-title" id="modalRequisitosLabel"><i class="fa fa-clipboard-check"></i> <span id="rqEstudiante"></span></h5>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="rq-barra">
+                    <span id="rqContador" class="rq-contador"></span>
+                    <button type="button" class="btn btn-abrir-panel btn-sm" id="rqMarcarTodos"><i class="fa fa-check-double"></i> Marcar todos</button>
+                </div>
+                <div id="rqLista" class="rq-lista"></div>
+                <p class="rq-ayuda"><i class="fa fa-info-circle"></i> Marque los documentos que el estudiante ya entregó. Si falta alguno, la inscripción sigue vigente: la tabla solo lo marca como pendiente.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="rqGuardar"><i class="fa fa-save"></i> Guardar requisitos</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="vistas/recursos/assets/js/scripts/inscripcionmodulo.js?v=<?php echo time(); ?>"></script>
+<script src="vistas/recursos/assets/js/scripts/planpago.js?v=<?php echo time(); ?>"></script>
+<script src="vistas/recursos/assets/js/scripts/ordenpagomodulos.js?v=<?php echo time(); ?>"></script>
+<script src="vistas/recursos/assets/js/scripts/ordenpagoclinica.js?v=<?php echo time(); ?>"></script>
+<script src="vistas/recursos/assets/js/scripts/requisitos.js?v=<?php echo time(); ?>"></script>
+
 
 <!-- Script para filtro por programa -->
 <script>
@@ -1308,7 +1460,7 @@ $(document).ready(function() {
         }
 
         // Mostrar mensaje de carga
-        $('#tablaMatriculadosBody').html('<tr><td colspan="7" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando estudiantes...</td></tr>');
+        $('#tablaMatriculadosBody').html('<tr><td colspan="8" class="text-center"><i class="fa fa-spinner fa-spin"></i> Cargando estudiantes...</td></tr>');
 
         // Petición AJAX
         $.ajax({
@@ -1318,7 +1470,8 @@ $(document).ready(function() {
                 accion: 'cargarTablaMatriculados',
                 programaIDFiltro: programaID || '',
                 sedeFiltro: sede || '',
-                estadoFiltro: estado || 'ACTIVO'
+                estadoFiltro: estado || 'ACTIVO',
+                requisitosFiltro: $('#selectRequisitosFiltro').val() || ''
             },
             success: function(response) {
                 console.log('✓ Estudiantes cargados correctamente');
@@ -1362,7 +1515,7 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error('✗ Error al cargar estudiantes:', error);
-                $('#tablaMatriculadosBody').html('<tr><td colspan="7" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los estudiantes</td></tr>');
+                $('#tablaMatriculadosBody').html('<tr><td colspan="8" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Error al cargar los estudiantes</td></tr>');
             }
         });
     }
@@ -1399,7 +1552,12 @@ $(document).ready(function() {
         // actualiza el texto visible del combo.
         $('#selectSedeFiltro').val('').trigger('change');
         $('#selectEstadoFiltro').val('ACTIVO').trigger('change');
+        $('#selectRequisitosFiltro').val('').trigger('change.select2');
         $('#selectProgramaFiltro').val('').trigger('change');
+    });
+
+    $('#selectRequisitosFiltro').on('change', function() {
+        window.refrescarTablaMatriculados();
     });
 
     // Expuesto globalmente para que inscripcionmodulo.js pueda refrescar la tabla

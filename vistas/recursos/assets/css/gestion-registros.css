@@ -1,0 +1,221 @@
+/* ========================================================
+   VISTAS DE GESTIÓN DE REGISTROS (Estudiantes, Docentes, Usuarios)
+   Estilo compartido, con el mismo lenguaje visual que Programas,
+   Inscripción y Reporte de Notas: tarjeta blanca con encabezado claro,
+   tabla con encabezado suave, ventanas con encabezado azul institucional
+   y los botones del formato unificado (tema-institucional.css).
+   Reemplaza el bloque <style> que cada una de las tres vistas tenía copiado.
+   ======================================================== */
+
+:root {
+    --gr-primario: #1e3c72;
+    --gr-primario-suave: #eef2f9;
+    --gr-texto: #1f2937;
+    --gr-texto-2: #64748b;
+    --gr-borde: #e3e7ef;
+}
+
+/* ---------- Tarjeta principal ---------- */
+.card.shadow-sm {
+    background: #fff;
+    border: 1px solid var(--gr-borde);
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, .05) !important;
+    overflow: hidden;
+}
+
+.card-header.bg-gradient-primary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    padding: 18px 24px;
+    background: #fff;
+    border-bottom: 1px solid var(--gr-borde);
+}
+
+.card-header.bg-gradient-primary .card-title,
+.card-header.bg-gradient-primary .card-title.text-white {
+    color: var(--gr-texto) !important;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.card-header.bg-gradient-primary .card-title i {
+    color: var(--gr-primario);
+    margin-right: 4px;
+}
+
+.card-header.bg-gradient-primary .heading-elements .btn {
+    height: 40px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-body.card-dashboard { padding: 20px 24px; }
+
+/* ---------- Tabla ---------- */
+.table thead.thead-dark th {
+    background: #f8fafc;
+    color: var(--gr-texto-2);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    border: 0;
+    border-bottom: 1px solid var(--gr-borde);
+    padding: 13px 10px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.table thead.thead-dark th i { color: #94a3b8; margin-right: 3px; }
+
+.table.table-bordered {
+    border: 1px solid var(--gr-borde);
+    border-radius: 10px;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+}
+
+.table.table-bordered td,
+.table.table-bordered th {
+    border-left: 0;
+    border-right: 0;
+}
+
+.table tbody td {
+    padding: 11px 10px;
+    vertical-align: middle;
+    border-color: #eef1f6;
+    color: var(--gr-texto);
+    font-size: 13px;
+}
+
+.table tbody tr { transition: background-color .15s ease; }
+.table tbody tr:hover { background-color: #f8fafc; }
+
+/* Etiquetas: pastilla suave; los colores de estado se conservan atenuados */
+.table .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.table .badge-success { background: #e7f6ee; color: #2f855a; }
+.table .badge-warning { background: #fff6e0; color: #b7791f; }
+.table .badge-danger  { background: #fdecec; color: #c53030; }
+.table .badge-info,
+.table .badge-primary { background: var(--gr-primario-suave); color: var(--gr-primario); }
+.table .badge-secondary,
+.table .badge-light   { background: #f1f5f9; color: #475569; }
+.table .badge-dark    { background: #334155; color: #fff; }
+
+/* ---------- Ventanas ---------- */
+.modal-content {
+    border: 0;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+/* Un solo encabezado para todas las ventanas de estas vistas (antes había
+   celeste, verde, gris y azul según la ventana, algunos escritos en línea). */
+.modal-header,
+.modal-header.bg-gradient-info,
+.modal-header.bg-gradient-success {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+    color: #fff !important;
+    border: 0 !important;
+}
+
+.modal-header .modal-title,
+.modal-header .modal-title i,
+.modal-header h4,
+.modal-header h5 {
+    color: #fff !important;
+    font-weight: 700;
+}
+
+.modal-header .close,
+.modal-header .close span {
+    color: #fff !important;
+    opacity: .9;
+    text-shadow: none;
+}
+
+/* Dar de baja (Usuarios): se mantiene en rojo, avisa una acción delicada */
+#modalu .modal-header {
+    background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%) !important;
+}
+
+/* Subtítulos de sección dentro de los formularios: título azul con línea,
+   en vez de una franja azul sólida en cada sección */
+.form-section {
+    background: none;
+    color: var(--gr-primario);
+    font-size: 12.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: 0 0 8px;
+    margin: 22px 0 14px;
+    border-bottom: 1px solid var(--gr-borde);
+    border-radius: 0;
+}
+
+.form-section:first-child { margin-top: 0; }
+.form-section i { color: var(--gr-primario); }
+
+.modal-body .form-group label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--gr-texto);
+    margin-bottom: 6px;
+}
+
+.modal-body .form-control {
+    border: 1px solid #d8dde8;
+    border-radius: 8px;
+}
+
+.modal-body .form-control:focus {
+    border-color: var(--gr-primario);
+    box-shadow: 0 0 0 3px rgba(30, 60, 114, .12);
+}
+
+.modal-body .alert-info {
+    background: var(--gr-primario-suave) !important;
+    border: 0 !important;
+    border-left: 4px solid var(--gr-primario) !important;
+    color: #334155;
+    border-radius: 10px;
+}
+
+.modal-footer { background: #f8fafc !important; border-top: 1px solid var(--gr-borde) !important; }
+
+@media (max-width: 767.98px) {
+    .card-header.bg-gradient-primary { padding: 16px; }
+    .card-body.card-dashboard { padding: 16px; }
+}
+
+/* Botones principales dentro de los formularios (ej. "Verificar" C.I.):
+   azul institucional en vez del morado del tema */
+.modal-body .btn-primary {
+    background: var(--gr-primario);
+    border-color: var(--gr-primario);
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.modal-body .btn-primary:hover,
+.modal-body .btn-primary:focus {
+    background: #16305c;
+    border-color: #16305c;
+    color: #fff;
+}

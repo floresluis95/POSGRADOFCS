@@ -16,13 +16,13 @@ class InscripcionModuloControladores
      * @param string|null $sede
      * @param string $estado 'ACTIVO' (por defecto), 'ABANDONO', o 'TODOS'
      */
-    public function ListarEstudiantesMatriculadosControlador($programaID = null, $sede = null, $estado = 'ACTIVO')
+    public function ListarEstudiantesMatriculadosControlador($programaID = null, $sede = null, $estado = 'ACTIVO', $requisitos = null)
     {
-        $estudiantes = InscripcionModuloModelos::ListarEstudiantesMatriculadosModelo($programaID, $sede, $estado);
+        $estudiantes = InscripcionModuloModelos::ListarEstudiantesMatriculadosModelo($programaID, $sede, $estado, $requisitos);
 
         if (empty($estudiantes)) {
             echo '<tr>
-                    <td colspan="7" class="text-center">No hay estudiantes matriculados</td>
+                    <td colspan="8" class="text-center">No hay estudiantes matriculados</td>
                   </tr>';
             return;
         }
@@ -89,6 +89,17 @@ class InscripcionModuloControladores
                 'voucher'       => $estudiante['nvauchermatricula'] ?? ''
             ];
 
+            // Requisitos de matriculación entregados (obligatorios): abre la ventana "Requisitos"
+            $reqTotal = (int)($estudiante['RequisitosTotal'] ?? 0);
+            $reqEntregados = (int)($estudiante['RequisitosEntregados'] ?? 0);
+            $reqCompleto = $reqEntregados >= $reqTotal;
+            $celdaRequisitos = '<button type="button" class="mt-requisitos btn-requisitos ' . ($reqCompleto ? 'is-completo' : 'is-pendiente') . '"'
+                . ' title="' . ($reqCompleto ? 'Requisitos completos' : 'Faltan ' . ($reqTotal - $reqEntregados) . ' requisito(s)') . '"'
+                . ' data-idinscripcion="' . $estudiante['idInscripcion'] . '"'
+                . ' data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '">'
+                . '<i class="fa ' . ($reqCompleto ? 'fa-check-circle' : 'fa-clipboard-list') . '"></i> ' . $reqEntregados . '/' . $reqTotal
+                . '</button>';
+
             echo '<tr>
                     <td class="text-center"><strong>' . ($key + 1) . '</strong></td>
                     <td>
@@ -104,6 +115,7 @@ class InscripcionModuloControladores
                     <td class="text-center">' . $tipoPago . '
                         <br><small><strong>Bs. ' . number_format($montoMostrar, 2) . '</strong></small>
                     </td>
+                    <td class="text-center" data-order="' . $reqEntregados . '">' . $celdaRequisitos . '</td>
                     <td class="text-center" data-order="' . date('Y-m-d', strtotime($estudiante['FechaInscripcion'])) . '">' . $fechaFormateada . '</td>
                     <td class="text-center">
                         <div class="btn-group" role="group">
@@ -135,6 +147,11 @@ class InscripcionModuloControladores
                                    data-programa-id="' . $estudiante['ProgramaID'] . '"
                                    data-programa-nombre="' . htmlspecialchars($estudiante['NombrePrograma']) . '">
                                     <i class="fa fa-list text-success"></i> Ver Módulos Inscritos
+                                </a>
+                                <a class="dropdown-item btn-requisitos" href="#"
+                                   data-idinscripcion="' . $estudiante['idInscripcion'] . '"
+                                   data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '">
+                                    <i class="fa fa-clipboard-check"></i> Requisitos
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="vistas/componentes/recibo-pago-modulos.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">

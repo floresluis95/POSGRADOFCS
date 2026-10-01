@@ -409,3 +409,192 @@ select.select2-hidden-accessible.form-control-sm ~ .select2-container .select2-s
 .swal2-popup {
     max-width: calc(100vw - 24px) !important;
 }
+
+/* El bundle del tema (demo9/style.bundle.css) fuerza
+   ".swal2-container { overflow-y: hidden !important }": un dialogo mas
+   alto que la pantalla (ej. "Fechas del Modulo" al imprimir calificaciones
+   en un celular) quedaba cortado sin poder bajar hasta sus botones. Se
+   devuelve el desplazamiento vertical al contenedor del dialogo. */
+.swal2-container {
+    overflow-y: auto !important;
+}
+
+/* =========================================================
+   BOTONES DE ACCIÓN EN TABLAS: un solo formato en todo el sistema
+   (el de Programas): fondo blanco, borde gris fino e ícono de color;
+   al pasar el mouse se rellena del color. Se aplica a cualquier botón
+   dentro de una celda de tabla y conserva el significado del color que
+   ya tiene cada uno:
+     azul  = ver / detalle / imprimir / otros (primary, info, brand, light, secondary)
+     ámbar = editar (warning)
+     verde = acción positiva: habilitar, pagar, generar (success)
+     rojo  = eliminar / anular / dar de baja (danger)
+   ========================================================= */
+:root {
+    --acc-azul: #1e3c72;
+    --acc-ambar: #b7791f;
+    --acc-verde: #2f855a;
+    --acc-rojo: #c53030;
+    --acc-borde: #d8dde8;
+}
+
+td .btn:not(.btn-link):not(.dropdown-item) {
+    --acc-color: var(--acc-azul);
+    height: 32px;
+    min-width: 32px;
+    padding: 0 9px;
+    margin: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid var(--acc-borde);
+    border-radius: 8px;
+    color: var(--acc-color);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    box-shadow: none;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+td .btn:not(.btn-link):not(.dropdown-item) i {
+    font-size: 13px;
+    color: inherit;
+    padding: 0;
+    margin: 0;
+}
+
+td .btn.btn-warning:not(.btn-link), td .btn.btn-outline-warning:not(.btn-link) { --acc-color: var(--acc-ambar); }
+td .btn.btn-success:not(.btn-link), td .btn.btn-outline-success:not(.btn-link) { --acc-color: var(--acc-verde); }
+td .btn.btn-danger:not(.btn-link), td .btn.btn-outline-danger:not(.btn-link),
+td .btn.text-danger:not(.btn-link), td .btn.btn-print-planilla { --acc-color: var(--acc-rojo); }
+
+td .btn:not(.btn-link):not(.dropdown-item):hover,
+td .btn:not(.btn-link):not(.dropdown-item):focus,
+td .btn:not(.btn-link):not(.dropdown-item):not(:disabled):not(.disabled):active,
+td .show > .btn.dropdown-toggle:not(.btn-link) {
+    background: var(--acc-color);
+    border-color: var(--acc-color);
+    color: #fff;
+    box-shadow: none;
+}
+
+td .btn:not(.btn-link):not(.dropdown-item):disabled,
+td .btn:not(.btn-link):not(.dropdown-item).disabled {
+    background: #fff;
+    border-color: var(--acc-borde);
+    color: var(--acc-color);
+    opacity: .45;
+}
+
+/* Los botones de una celda de acciones van en una sola fila (la columna se
+   ensancha lo necesario en vez de apilarlos en 2 o 3 renglones). */
+td:has(> .btn:not(.btn-link)),
+td :is(div, span):has(> .btn:not(.btn-link)) {
+    white-space: nowrap;
+    flex-wrap: nowrap;
+}
+
+/* =========================================================
+   BOTONES DE GUARDAR Y DE ABRIR PANELES: un solo formato
+     Guardar (envía a la BD) : azul institucional sólido
+     Cancelar / cerrar        : contorno gris
+     Eliminar / dar de baja   : rojo sólido (se conserva, avisa que es destructivo)
+     Abrir panel / ventana    : blanco con texto azul ("Nuevo …", "Agregar …")
+   Los botones dentro de tablas tienen su propio formato (arriba).
+   ========================================================= */
+
+/* --- Guardar: acción principal del pie de una ventana y botones submit --- */
+.modal-footer .btn:not(.btn-link):not(.close):not([data-dismiss]):not(.btn-secondary):not(.btn-light):not(.btn-outline-secondary):not(.btn-danger):not(.btn-outline-danger),
+form .btn[type="submit"]:not(.btn-link):not(.btn-danger):not(.btn-outline-danger):not(td *) {
+    background: var(--acc-azul);
+    border: 1px solid var(--acc-azul);
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.modal-footer .btn:not(.btn-link):not(.close):not([data-dismiss]):not(.btn-secondary):not(.btn-light):not(.btn-outline-secondary):not(.btn-danger):not(.btn-outline-danger):not(:disabled):hover,
+.modal-footer .btn:not(.btn-link):not(.close):not([data-dismiss]):not(.btn-secondary):not(.btn-light):not(.btn-outline-secondary):not(.btn-danger):not(.btn-outline-danger):not(:disabled):focus,
+.modal-footer .btn:not(.btn-link):not(.close):not([data-dismiss]):not(.btn-secondary):not(.btn-light):not(.btn-outline-secondary):not(.btn-danger):not(.btn-outline-danger):not(:disabled):active,
+form .btn[type="submit"]:not(.btn-link):not(.btn-danger):not(.btn-outline-danger):not(td *):not(:disabled):hover,
+form .btn[type="submit"]:not(.btn-link):not(.btn-danger):not(.btn-outline-danger):not(td *):not(:disabled):focus,
+form .btn[type="submit"]:not(.btn-link):not(.btn-danger):not(.btn-outline-danger):not(td *):not(:disabled):active {
+    background: #16305c;
+    border-color: #16305c;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(30, 60, 114, .25);
+}
+
+/* --- Cancelar / cerrar en el pie de una ventana --- */
+.modal-footer .btn[data-dismiss]:not(.btn-link),
+.modal-footer .btn.btn-secondary,
+.modal-footer .btn.btn-light,
+.modal-footer .btn.btn-outline-secondary {
+    background: #fff;
+    border: 1px solid var(--acc-borde);
+    color: #475569;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.modal-footer .btn[data-dismiss]:not(.btn-link):hover,
+.modal-footer .btn.btn-secondary:hover,
+.modal-footer .btn.btn-light:hover,
+.modal-footer .btn.btn-outline-secondary:hover {
+    background: #f1f4f9;
+    border-color: #c5ccda;
+    color: #1f2937;
+}
+
+/* --- Eliminar / dar de baja: mismo contorno redondeado, color rojo --- */
+.modal-footer .btn.btn-danger,
+form .btn.btn-danger[type="submit"]:not(td *) {
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+/* --- Abrir panel / ventana: botones de los encabezados de tarjeta ("Nuevo …",
+       "Agregar …", "Actualizar", "Plan Grupal") y los que abren una ventana --- */
+:is(.card-header, .kt-portlet__head, .heading-elements, .md-card-head, .pg-card-head) .btn:not(.btn-link):not(.close):not(.dropdown-item),
+.btn[data-toggle="modal"]:not(.btn-link):not(td *):not(.modal *),
+.md-card-head .md-btn-primario,
+.pg-btn.pg-btn-primario,
+.btn-abrir-panel {
+    background: #fff;
+    border: 1px solid var(--acc-azul);
+    color: var(--acc-azul);
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+:is(.card-header, .kt-portlet__head, .heading-elements, .md-card-head, .pg-card-head) .btn:not(.btn-link):not(.close):not(.dropdown-item) i,
+.btn[data-toggle="modal"]:not(.btn-link):not(td *):not(.modal *) i,
+.md-card-head .md-btn-primario i,
+.pg-btn.pg-btn-primario i,
+.btn-abrir-panel i {
+    color: inherit;
+}
+
+:is(.card-header, .kt-portlet__head, .heading-elements, .md-card-head, .pg-card-head) .btn:not(.btn-link):not(.close):not(.dropdown-item):not(:disabled):hover,
+.btn[data-toggle="modal"]:not(.btn-link):not(td *):not(.modal *):not(:disabled):hover,
+.md-card-head .md-btn-primario:not(:disabled):hover,
+.pg-btn.pg-btn-primario:hover,
+.btn-abrir-panel:not(:disabled):hover {
+    background: #eef2f9;
+    border-color: var(--acc-azul);
+    color: #16305c;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .12);
+}
+
+.md-card-head .md-btn-primario:disabled {
+    background: #fff;
+    border-color: var(--acc-borde);
+    color: #9aa3b5;
+}

@@ -60,7 +60,8 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
         : 'ACTIVO';
 
     $listar = new InscripcionModuloControladores();
-    $listar->ListarEstudiantesMatriculadosControlador($programaID, $sede, $estado);
+    $requisitos = in_array($_POST["requisitosFiltro"] ?? "", ["INCOMPLETOS", "COMPLETOS"], true) ? $_POST["requisitosFiltro"] : null;
+    $listar->ListarEstudiantesMatriculadosControlador($programaID, $sede, $estado, $requisitos);
     exit();
 }
 

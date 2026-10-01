@@ -89,6 +89,11 @@
     font-size: 16px;
 }
 
+/* El texto de cada opción del encabezado en un solo renglón ("REPORTES PDF") */
+#kt_header_menu .kt-menu__link-text {
+    white-space: nowrap;
+}
+
 /* Avatar de usuario moderno */
 .user-avatar-modern {
     width: 45px;
@@ -356,24 +361,20 @@ function obtenerRolFormateado($tipo) {
 
 // Función helper para obtener menú según tipo de usuario
 function obtenerMenuPorTipo($tipo) {
-    $menus = [
+    // Inicio y Calendario para todos los roles (todos tienen acceso al calendario)
+    $comunes = [
+        ['url' => 'panel', 'icono' => 'fas fa-home', 'texto' => 'INICIO'],
+        ['url' => 'calendario', 'icono' => 'fas fa-calendar-alt', 'texto' => 'CALENDARIO']
+    ];
+    $extras = [
         'ADM' => [
-            ['url' => 'panel', 'icono' => 'fas fa-home', 'texto' => 'INICIO'],
             ['url' => 'reportes', 'icono' => 'fas fa-file-pdf', 'texto' => 'REPORTES PDF']
         ],
         'SEC' => [
-            ['url' => 'panel', 'icono' => 'fas fa-home', 'texto' => 'INICIO'],
             ['url' => 'consultas', 'icono' => 'fas fa-search', 'texto' => 'CONSULTAS']
-        ],
-        'DOC' => [
-            ['url' => 'panel', 'icono' => 'fas fa-home', 'texto' => 'INICIO']
-        ],
-        'EST' => [
-            ['url' => 'panel', 'icono' => 'fas fa-home', 'texto' => 'INICIO'],
-           
         ]
     ];
-    return $menus[$tipo] ?? [['url' => 'panel', 'icono' => 'fas fa-home', 'texto' => 'INICIO']];
+    return array_merge($comunes, $extras[$tipo] ?? []);
 }
 
 // Obtener datos de sesión

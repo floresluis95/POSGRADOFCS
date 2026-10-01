@@ -83,6 +83,12 @@ $(document).ready(function() {
     });
 
     // Evento: Ver módulos del programa
+    // Escapar texto de la BD para usarlo dentro de HTML o de un atributo data-*
+    // (un nombre con comillas rompía el botón de imprimir)
+    function escAttr(valor) {
+        return $('<div>').text(valor == null ? '' : String(valor)).html().replace(/"/g, '&quot;');
+    }
+
     $(document).on('click', '.btnVerModulos', function() {
         const programaID = $(this).data('programa-id');
         const programaNombre = $(this).data('programa-nombre');
@@ -136,9 +142,9 @@ $(document).ready(function() {
 
                         html += '<tr>';
                         html += '<td class="text-center">' + contador + '</td>';
-                        html += '<td><strong>' + (modulo.codigomodulo || 'N/A') + '</strong></td>';
-                        html += '<td>' + modulo.nombremodulo + '</td>';
-                        html += '<td>' + (modulo.NombreDocente || '<span class="text-muted">Sin docente</span>') + '</td>';
+                        html += '<td><strong>' + escAttr(modulo.codigomodulo || 'N/A') + '</strong></td>';
+                        html += '<td>' + escAttr(modulo.nombremodulo) + '</td>';
+                        html += '<td>' + (modulo.NombreDocente ? escAttr(modulo.NombreDocente) : '<span class="text-muted">Sin docente</span>') + '</td>';
                         html += '<td class="text-center"><span class="badge badge-info">' + inscritos + '</span></td>';
                         html += '<td class="text-center"><span class="badge badge-primary">' + calificados + '</span></td>';
                         html += '<td class="text-center">' + estadoBadge + '</td>';
@@ -149,24 +155,24 @@ $(document).ready(function() {
                             html += '<button type="button" class="btn btn-danger btn-sm btnGenerarPDF" ' +
                                    'data-modulo-id="' + modulo.Idmodulo + '" ' +
                                    'data-programa-id="' + (modulo.ProgramaId || programaID) + '" ' +
-                                   'data-modulo-nombre="' + modulo.nombremodulo + '" ' +
-                                   'data-modulo-codigo="' + (modulo.codigomodulo || '') + '" ' +
-                                   'data-programa-nombre="' + (modulo.NombrePrograma || programaNombre) + '" ' +
-                                   'data-docente-nombre="' + (modulo.NombreDocente || '') + '" ' +
-                                   'data-menciones-docente="' + (modulo.MencionesDocente || '') + '" ' +
-                                   'data-grado="' + (modulo.GradoAcademico || '') + '" ' +
+                                   'data-modulo-nombre="' + escAttr(modulo.nombremodulo) + '" ' +
+                                   'data-modulo-codigo="' + escAttr((modulo.codigomodulo || '')) + '" ' +
+                                   'data-programa-nombre="' + escAttr((modulo.NombrePrograma || programaNombre)) + '" ' +
+                                   'data-docente-nombre="' + escAttr((modulo.NombreDocente || '')) + '" ' +
+                                   'data-menciones-docente="' + escAttr((modulo.MencionesDocente || '')) + '" ' +
+                                   'data-grado="' + escAttr((modulo.GradoAcademico || '')) + '" ' +
                                    'data-fecha-inicio="' + (modulo.FechaInicio || '') + '" ' +
                                    'data-fecha-final="' + (modulo.FechaFinal || '') + '" ' +
-                                   'data-sigla="' + (modulo.Sigla || '') + '" ' +
+                                   'data-sigla="' + escAttr((modulo.Sigla || '')) + '" ' +
                                    'title="Imprimir Planilla de Calificaciones">' +
-                                   '<i class="fas fa-print"></i> IMPRIMIR' +
+                                   '<i class="fas fa-print"></i> Imprimir' +
                                    '</button>';
                             html += '<button type="button" class="btn btn-info btn-sm btnVerAuditoria" ' +
                                    'data-modulo-id="' + modulo.Idmodulo + '" ' +
                                    'data-programa-id="' + (modulo.ProgramaId || programaID) + '" ' +
-                                   'data-modulo-nombre="' + modulo.nombremodulo + '" ' +
+                                   'data-modulo-nombre="' + escAttr(modulo.nombremodulo) + '" ' +
                                    'title="Ver Panel de Auditoría">' +
-                                   '<i class="fas fa-history"></i> AUDITORÍA' +
+                                   '<i class="fas fa-history"></i> Auditoría' +
                                    '</button>';
                             html += '</div>';
                         } else {
@@ -182,8 +188,8 @@ $(document).ready(function() {
                     html += '</tbody></table></div>';
                     $('#contenedorModulos').html(html);
                 } else {
-                    $('#contenedorModulos').html('<div class="alert alert-warning text-center">' +
-                        '<i class="fas fa-exclamation-triangle"></i> Este programa no tiene módulos registrados.' +
+                    $('#contenedorModulos').html('<div class="rnt-vacio">' +
+                        '<i class="fas fa-book"></i> Este programa no tiene módulos registrados.' +
                         '</div>');
                 }
             },
@@ -297,7 +303,7 @@ $(document).ready(function() {
                 return { fechaInicio, fechaFin, fechaImpresion };
             }
             }).then((result) => {
-                if (!result.isConfirmed) {
+                if (!result.value) { // SweetAlert2 v8: no tiene isConfirmed (value trae las fechas)
                     // Canceló: volver a abrir el modal de módulos donde estaba.
                     $modalModulos.modal('show');
                     return;
@@ -357,34 +363,21 @@ $(document).ready(function() {
                 if (response.status === 'success') {
                     // Mostrar resumen
                     if (response.resumen) {
-                        let resumenHTML = '<div class="card mb-4" style="border-left: 4px solid #f5576c;">';
-                        resumenHTML += '<div class="card-body">';
-                        resumenHTML += '<h5 class="card-title"><i class="fas fa-chart-bar"></i> Resumen de Auditoría</h5>';
-                        resumenHTML += '<div class="row">';
-                        resumenHTML += '<div class="col-md-3">';
-                        resumenHTML += '<p class="mb-1"><strong>Total Calificaciones:</strong></p>';
-                        resumenHTML += '<h4 class="text-primary">' + (response.resumen.TotalCalificaciones || 0) + '</h4>';
-                        resumenHTML += '</div>';
-                        resumenHTML += '<div class="col-md-3">';
-                        resumenHTML += '<p class="mb-1"><strong>Modificadas:</strong></p>';
-                        resumenHTML += '<h4 class="text-warning">' + (response.resumen.TotalModificadas || 0) + '</h4>';
-                        resumenHTML += '</div>';
-                        resumenHTML += '<div class="col-md-3">';
-                        resumenHTML += '<p class="mb-1"><strong>Primera Fecha Registro:</strong></p>';
-                        resumenHTML += '<p>' + (response.resumen.PrimeraFechaRegistro || 'N/A') + '</p>';
-                        resumenHTML += '</div>';
-                        resumenHTML += '<div class="col-md-3">';
-                        resumenHTML += '<p class="mb-1"><strong>Última Modificación:</strong></p>';
-                        resumenHTML += '<p>' + (response.resumen.UltimaModificacion || 'N/A') + '</p>';
-                        resumenHTML += '</div>';
-                        resumenHTML += '</div></div></div>';
+                        const r = response.resumen;
+                        const modificadas = parseInt(r.TotalModificadas) || 0;
+                        let resumenHTML = '<div class="rnt-resumen">' +
+                            '<div class="rnt-resumen-item"><span>Calificaciones</span><strong>' + (parseInt(r.TotalCalificaciones) || 0) + '</strong></div>' +
+                            '<div class="rnt-resumen-item' + (modificadas > 0 ? ' is-alerta' : '') + '"><span>Modificadas</span><strong>' + modificadas + '</strong></div>' +
+                            '<div class="rnt-resumen-item"><span>Primer registro</span><strong class="is-texto">' + escAttr(r.PrimeraFechaRegistro || 'N/A') + '</strong></div>' +
+                            '<div class="rnt-resumen-item"><span>Última modificación</span><strong class="is-texto">' + escAttr(r.UltimaModificacion || 'N/A') + '</strong></div>' +
+                        '</div>';
                         $('#resumenAuditoria').html(resumenHTML);
                     }
 
                     // Mostrar tabla de auditoría
                     if (response.data && response.data.length > 0) {
                         let html = '<div class="table-responsive"><table class="table table-striped table-bordered table-hover" id="tablaAuditoria">';
-                        html += '<thead class="thead-dark">';
+                        html += '<thead>';
                         html += '<tr>';
                         html += '<th class="text-center" style="width: 5%;">Nº</th>';
                         html += '<th>Estudiante</th>';
@@ -407,15 +400,15 @@ $(document).ready(function() {
 
                             html += '<tr>';
                             html += '<td class="text-center">' + contador + '</td>';
-                            html += '<td>' + item.NombreEstudiante + '</td>';
-                            html += '<td class="text-center"><strong>' + (item.Nota || 'N/A') + '</strong></td>';
-                            html += '<td>' + (item.UsuarioRegistro || '<span class="text-muted">No registrado</span>');
+                            html += '<td>' + escAttr(item.NombreEstudiante) + '</td>';
+                            html += '<td class="text-center"><strong>' + escAttr(item.Nota || 'N/A') + '</strong></td>';
+                            html += '<td>' + (item.UsuarioRegistro ? escAttr(item.UsuarioRegistro) : '<span class="text-muted">No registrado</span>');
                             if (item.TipoUsuarioRegistro) {
                                 html += ' <span class="badge badge-secondary badge-sm">' + item.TipoUsuarioRegistro + '</span>';
                             }
                             html += '</td>';
                             html += '<td class="text-center">' + (item.FechaRegistro || 'N/A') + '</td>';
-                            html += '<td>' + (item.UsuarioModificacion || '<span class="text-muted">No modificado</span>');
+                            html += '<td>' + (item.UsuarioModificacion ? escAttr(item.UsuarioModificacion) : '<span class="text-muted">No modificado</span>');
                             if (item.TipoUsuarioModificacion) {
                                 html += ' <span class="badge badge-secondary badge-sm">' + item.TipoUsuarioModificacion + '</span>';
                             }
@@ -447,8 +440,8 @@ $(document).ready(function() {
                             pageLength: 10
                         });
                     } else {
-                        $('#contenedorAuditoria').html('<div class="alert alert-info text-center">' +
-                            '<i class="fas fa-info-circle"></i> No hay datos de auditoría para este módulo.' +
+                        $('#contenedorAuditoria').html('<div class="rnt-vacio">' +
+                            '<i class="fas fa-history"></i> No hay datos de auditoría para este módulo.' +
                             '</div>');
                     }
                 } else {
