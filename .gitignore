@@ -1,2 +1,5 @@
 # Credenciales locales (ver config/correo.ejemplo.php)
 config/correo.php
+
+# PDFs generados por el sistema
+pdfs_generados/*.pdf
