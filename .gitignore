@@ -8,3 +8,11 @@ pdfs_generados/*.pdf
 composer.phar
 
 .phpunit.result.cache
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
