@@ -252,7 +252,7 @@ function mostrarCalificaciones(calificaciones, resumen) {
         let estadoBadge = '';
         let notaClasses = '';
 
-        if (nota >= 51) {
+        if (nota >= (window.NOTA_APROBACION || 76)) {
             estadoBadge = '<span class="badge-estado badge-aprobado">APROBADO</span>';
             notaClasses = 'nota-destacada nota-aprobado';
         } else {
@@ -303,7 +303,7 @@ function mostrarResumenCalificaciones(resumen) {
         ? ((modulosAprobados / totalModulos) * 100).toFixed(1)
         : 0;
 
-    let gradientePromedio = promedioGeneral >= 51
+    let gradientePromedio = promedioGeneral >= (window.NOTA_APROBACION || 76)
         ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)'
         : 'linear-gradient(135deg, #ee0979 0%, #ff6a00 100%)';
 

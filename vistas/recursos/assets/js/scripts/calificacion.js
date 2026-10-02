@@ -704,17 +704,17 @@ function mostrarFormularioCalificaciones(estudiantes) {
 
 function getEstadoClass(nota) {
     if (nota === '' || nota === null) return 'kt-badge--secondary';
-    return parseInt(nota) >= 76 ? 'kt-badge--success' : 'kt-badge--danger';
+    return parseInt(nota) >= (window.NOTA_APROBACION || 76) ? 'kt-badge--success' : 'kt-badge--danger';
 }
 
 function getEstadoTexto(nota) {
     if (nota === '' || nota === null) return 'Pendiente';
-    return parseInt(nota) >= 76 ? 'Aprobado' : 'Reprobado';
+    return parseInt(nota) >= (window.NOTA_APROBACION || 76) ? 'Aprobado' : 'Reprobado';
 }
 
 function getNotaInputClass(nota) {
     if (nota === '' || nota === null) return '';
-    return parseInt(nota) >= 76 ? 'is-valid' : 'is-invalid';
+    return parseInt(nota) >= (window.NOTA_APROBACION || 76) ? 'is-valid' : 'is-invalid';
 }
 
 function validarNota(input) {
@@ -734,8 +734,8 @@ function validarNota(input) {
         return;
     }
 
-    // Validar aprobado/reprobado (nota mínima 76)
-    if (nota >= 76) {
+    // Validar aprobado/reprobado (nota mínima configurable: window.NOTA_APROBACION)
+    if (nota >= (window.NOTA_APROBACION || 76)) {
         $(input).addClass('is-valid');
         estadoBadge.removeClass('kt-badge--danger kt-badge--warning kt-badge--secondary')
                    .addClass('kt-badge--success')

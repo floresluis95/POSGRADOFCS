@@ -9,6 +9,9 @@ ob_start();
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <!-- Nota mínima de aprobación configurada por el ADM (tabla configuracion):
+       la usan los scripts de calificaciones en lugar de un número fijo. -->
+  <script>window.NOTA_APROBACION = <?php echo class_exists('ConfiguracionModelo') ? (int)ConfiguracionModelo::NotaAprobacion() : 76; ?>;</script>
   <title>SISTEMA - POSGRADOFCS</title>
   <meta name="description" content="Latest updates and statistic charts">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">

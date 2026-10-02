@@ -5,6 +5,7 @@
  */
 
 require_once 'conexion.modelo.php';
+require_once __DIR__ . '/configuracion.modelo.php'; // nota mínima de aprobación
 
 class CalificacionModelo
 {
@@ -936,8 +937,8 @@ class CalificacionModelo
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT
                     COUNT(*) as TotalModulos,
-                    SUM(CASE WHEN c.Nota >= 76 THEN 1 ELSE 0 END) as ModulosAprobados,
-                    SUM(CASE WHEN c.Nota < 76 THEN 1 ELSE 0 END) as ModulosReprobados,
+                    SUM(CASE WHEN c.Nota >= " . ConfiguracionModelo::NotaAprobacion() . " THEN 1 ELSE 0 END) as ModulosAprobados,
+                    SUM(CASE WHEN c.Nota < " . ConfiguracionModelo::NotaAprobacion() . " THEN 1 ELSE 0 END) as ModulosReprobados,
                     ROUND(AVG(c.Nota), 0) as PromedioGeneral,
                     MAX(c.Nota) as NotaMaxima,
                     MIN(c.Nota) as NotaMinima

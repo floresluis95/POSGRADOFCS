@@ -25,6 +25,7 @@ $baseDir = realpath(__DIR__ . '/../../../');
 require_once $baseDir . '/vendor/autoload.php';
 require_once $baseDir . '/modelos/inscripcionmodulo.modelo.php';
 require_once $baseDir . '/modelos/autoridad.modelo.php';
+require_once $baseDir . '/modelos/configuracion.modelo.php'; // nota mínima de aprobación
 // Solo por numeroALetrasOrdenPagoOficial() (montos en letras).
 require_once $baseDir . '/vistas/componentes/orden-pago-pdf-render.php';
 
@@ -189,7 +190,8 @@ $clausulas = [
         . 'académicas de la Dirección de Posgrado y la Universidad Técnica de Oruro, el postulante al firmar el presente '
         . 'documento se compromete a pagar el monto del curso según se describe en la cláusula segunda.',
 
-    'CUARTA:' => '<b>Compromiso académico.-</b> Se informa que la calificación mínima de aprobación es de 76 pts (SETENTA Y SEIS PUNTOS). '
+    'CUARTA:' => '<b>Compromiso académico.-</b> Se informa que la calificación mínima de aprobación es de ' . ConfiguracionModelo::NotaAprobacion() . ' pts ('
+        . preg_replace(['/ 00\/100 BOLIVIANOS$/', '/UNO$/'], ['', 'UN'], numeroALetrasOrdenPagoOficial(ConfiguracionModelo::NotaAprobacion())) . ' PUNTOS). '
         . 'El participante se compromete a participar en cada una de las actividades programadas de acuerdo al cronograma, '
         . 'así mismo a desarrollar y presentar puntualmente las actividades en cada módulo; en caso de incumplimiento el '
         . 'participante será declarado alumno en abandono y no tendrá derecho a la calificación del módulo, quedando como '

@@ -8,6 +8,7 @@
 // Validar sesión
 
 session_start();
+require_once __DIR__ . '/../../modelos/configuracion.modelo.php'; // nota mínima de aprobación
 if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true
     || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX', 'DOC'], true)) {
     die('Acceso denegado');
@@ -536,7 +537,7 @@ th {
                         $totalNotas++;
                         $sumaNotas += $notaInt;
 
-                        if ($notaInt >= 76) {
+                        if ($notaInt >= ConfiguracionModelo::NotaAprobacion()) {
                             $estadoClase = 'badge-aprobado';
                             $estadoTexto = 'Aprobado';
                             $aprobados++;

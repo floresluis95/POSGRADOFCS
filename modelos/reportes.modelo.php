@@ -1,5 +1,6 @@
 <?php
 require_once file_exists(__DIR__ . '/conexion.modelo.php') ? __DIR__ . '/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
+require_once __DIR__ . '/configuracion.modelo.php'; // nota mínima de aprobación
 
 class ReportesModelos
 {
@@ -78,8 +79,8 @@ class ReportesModelos
                 p.Sede,
                 CONCAT(d.Nombre, ' ', d.Apaterno) as Docente,
                 (SELECT COUNT(*) FROM calificacion c WHERE c.Idmodulo = m.Idmodulo AND c.Nota IS NOT NULL) as TotalCalificados,
-                (SELECT COUNT(*) FROM calificacion c WHERE c.Idmodulo = m.Idmodulo AND c.Nota >= 76) as TotalAprobados,
-                (SELECT COUNT(*) FROM calificacion c WHERE c.Idmodulo = m.Idmodulo AND c.Nota IS NOT NULL AND c.Nota < 76) as TotalReprobados
+                (SELECT COUNT(*) FROM calificacion c WHERE c.Idmodulo = m.Idmodulo AND c.Nota >= " . ConfiguracionModelo::NotaAprobacion() . ") as TotalAprobados,
+                (SELECT COUNT(*) FROM calificacion c WHERE c.Idmodulo = m.Idmodulo AND c.Nota IS NOT NULL AND c.Nota < " . ConfiguracionModelo::NotaAprobacion() . ") as TotalReprobados
             FROM modulos m
             INNER JOIN programa p ON m.ProgramaId = p.ProgramaID
             LEFT JOIN docente d ON m.DocenteID = d.DocenteID
@@ -186,8 +187,8 @@ class ReportesModelos
 
                 -- Calificaciones
                 (SELECT COUNT(*) FROM calificacion c WHERE c.ProgramaId = p.ProgramaID AND c.Nota IS NOT NULL) as TotalCalificados,
-                (SELECT COUNT(*) FROM calificacion c WHERE c.ProgramaId = p.ProgramaID AND c.Nota >= 76) as TotalAprobados,
-                (SELECT COUNT(*) FROM calificacion c WHERE c.ProgramaId = p.ProgramaID AND c.Nota IS NOT NULL AND c.Nota < 76) as TotalReprobados
+                (SELECT COUNT(*) FROM calificacion c WHERE c.ProgramaId = p.ProgramaID AND c.Nota >= " . ConfiguracionModelo::NotaAprobacion() . ") as TotalAprobados,
+                (SELECT COUNT(*) FROM calificacion c WHERE c.ProgramaId = p.ProgramaID AND c.Nota IS NOT NULL AND c.Nota < " . ConfiguracionModelo::NotaAprobacion() . ") as TotalReprobados
 
             FROM programa p
             WHERE " . implode(' AND ', $condiciones) . "

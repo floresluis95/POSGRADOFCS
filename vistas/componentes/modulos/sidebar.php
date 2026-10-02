@@ -180,7 +180,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="autoridades" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-correct" style="color: #9c27b0;"></i>
-                    <span class="kt-menu__link-text">Autoridades</span>
+                    <span class="kt-menu__link-text">Configuración</span>
                   </a>
                 </li>
                   <!-- CERTIFICADOS -->

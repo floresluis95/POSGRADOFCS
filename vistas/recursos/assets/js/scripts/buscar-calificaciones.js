@@ -8,8 +8,8 @@
  * programa antes de buscar.
  */
 
-// Nota mínima de aprobación (la misma del registro de notas y los reportes)
-const NOTA_APROBACION = 76;
+// Nota mínima de aprobación: la configurada por el ADM (la publica la plantilla)
+const NOTA_APROBACION = window.NOTA_APROBACION || 76;
 const MIN_CARACTERES = 3;
 
 let temporizadorBusqueda = null;

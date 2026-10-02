@@ -842,9 +842,9 @@ function renderizarFormularioCalificarReporte(estudiantes, puedeEditar) {
     estudiantes.forEach(function(estudiante, index) {
         const nombreCompleto = escaparHtml(`${estudiante.Nombre} ${estudiante.Apaterno} ${estudiante.Amaterno}`);
         const notaActual = estudiante.Nota !== null ? parseFloat(estudiante.Nota) : '';
-        const estadoClass = notaActual === '' ? 'kt-badge--secondary' : (parseFloat(notaActual) >= 76 ? 'kt-badge--success' : 'kt-badge--danger');
-        const estadoTexto = notaActual === '' ? 'Pendiente' : (parseFloat(notaActual) >= 76 ? 'Aprobado' : 'Reprobado');
-        const notaInputClass = notaActual === '' ? '' : (parseFloat(notaActual) >= 76 ? 'is-valid' : 'is-invalid');
+        const estadoClass = notaActual === '' ? 'kt-badge--secondary' : (parseFloat(notaActual) >= (window.NOTA_APROBACION || 76) ? 'kt-badge--success' : 'kt-badge--danger');
+        const estadoTexto = notaActual === '' ? 'Pendiente' : (parseFloat(notaActual) >= (window.NOTA_APROBACION || 76) ? 'Aprobado' : 'Reprobado');
+        const notaInputClass = notaActual === '' ? '' : (parseFloat(notaActual) >= (window.NOTA_APROBACION || 76) ? 'is-valid' : 'is-invalid');
 
         html += `
             <tr>
@@ -886,7 +886,7 @@ function validarNotaReporte(input) {
         return;
     }
 
-    if (nota >= 76) {
+    if (nota >= (window.NOTA_APROBACION || 76)) {
         $(input).addClass('is-valid');
         estadoBadge.removeClass('kt-badge--danger kt-badge--warning kt-badge--secondary').addClass('kt-badge--success').text('Aprobado');
     } else {

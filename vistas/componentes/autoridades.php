@@ -41,12 +41,12 @@
             <div class="kt-subheader   kt-grid__item" id="kt_subheader">
               <div class="kt-container ">
                 <div class="kt-subheader__main">
-                  <h2>AUTORIDADES</h2>
+                  <h2>CONFIGURACIÓN</h2>
                   <span class="kt-subheader__separator kt-hidden"></span>
                   <div class="kt-subheader__breadcrumbs">
                     <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
                     <span class="kt-subheader__breadcrumbs-separator"></span>
-                    <h3>FIRMAS DE DOCUMENTOS</h3>
+                    <h3>AUTORIDADES Y PARÁMETROS</h3>
                   </div>
                 </div>
                 <div class="kt-subheader__toolbar">
@@ -100,6 +100,39 @@
               <div class="text-right">
                 <button type="submit" class="btn btn-success" id="btnGuardarAutoridades">
                   <i class="fas fa-save"></i> Guardar cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Parámetros académicos (tabla configuracion) -->
+        <div class="card shadow-sm mt-4">
+          <div class="card-header bg-gradient-primary">
+            <h4 class="card-title text-white mb-0">
+              <i class="fas fa-sliders-h"></i> Parámetros académicos
+            </h4>
+          </div>
+          <div class="card-body">
+            <form id="formParametros" autocomplete="off">
+              <div class="row align-items-end">
+                <div class="col-md-4 form-group">
+                  <label for="notaAprobacion"><strong>Nota mínima de aprobación</strong> <small class="text-muted">(sobre 100)</small></label>
+                  <input type="number" class="form-control" id="notaAprobacion" name="notaAprobacion" min="1" max="100" step="1" required>
+                </div>
+                <div class="col-md-8 form-group">
+                  <p class="text-muted mb-1" style="font-size:13px;">
+                    Con esta nota o más el módulo cuenta como <strong>APROBADO</strong> en el registro de notas, la
+                    búsqueda de notas, "Mis calificaciones" del estudiante, Matriculados, los reportes y el
+                    Documento de compromiso. Las notas ya registradas no cambian: solo cambia si se consideran
+                    aprobadas o no.
+                  </p>
+                  <small class="text-muted" id="actualizadoNota"></small>
+                </div>
+              </div>
+              <div class="text-right">
+                <button type="submit" class="btn btn-success" id="btnGuardarParametros">
+                  <i class="fas fa-save"></i> Guardar nota mínima
                 </button>
               </div>
             </form>
@@ -166,7 +199,60 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // ---- Parámetros académicos ----
+    var notaGuardada = null;
+
+    function cargarParametros() {
+        $.post('ajax/autoridad.ajax.php', { accion: 'obtenerParametros' }, function (resp) {
+            if (!resp || !resp.success) return;
+            notaGuardada = resp.notaAprobacion;
+            $('#notaAprobacion').val(resp.notaAprobacion);
+            var d = resp.detalle;
+            $('#actualizadoNota').text(d && d.ResponsableActualizacion
+                ? 'Actualizado: ' + d.FechaActualizacion + ' por ' + d.ResponsableActualizacion : '');
+        }, 'json');
+    }
+
+    $('#formParametros').on('submit', function (e) {
+        e.preventDefault();
+        var nueva = parseInt($('#notaAprobacion').val(), 10);
+        if (isNaN(nueva) || nueva < 1 || nueva > 100) {
+            Swal.fire('Atención', 'La nota mínima debe ser un número entero entre 1 y 100', 'warning');
+            return;
+        }
+        if (nueva === notaGuardada) {
+            Swal.fire({ type: 'info', title: 'Sin cambios', text: 'La nota mínima ya es ' + nueva, timer: 1500, showConfirmButton: false });
+            return;
+        }
+        // Afecta a todo el sistema: se confirma antes de guardar
+        Swal.fire({
+            type: 'warning',
+            title: '¿Cambiar la nota mínima de ' + notaGuardada + ' a ' + nueva + '?',
+            text: 'Desde ahora, en todo el sistema, un módulo se aprobará con ' + nueva + ' o más. Las notas registradas no cambian.',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cambiar',
+            cancelButtonText: 'Cancelar'
+        }).then(function (r) {
+            if (!r.value) return; // SweetAlert2 v8
+            var $btn = $('#btnGuardarParametros').prop('disabled', true);
+            $.post('ajax/autoridad.ajax.php', { accion: 'guardarNotaAprobacion', notaAprobacion: nueva }, function (resp) {
+                if (resp && resp.success) {
+                    window.NOTA_APROBACION = nueva;
+                    Swal.fire({ type: 'success', title: resp.mensaje, timer: 1800, showConfirmButton: false });
+                    cargarParametros();
+                } else {
+                    Swal.fire('Atención', (resp && resp.mensaje) || 'No se pudo guardar', 'warning');
+                }
+            }, 'json').fail(function () {
+                Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+            }).always(function () {
+                $btn.prop('disabled', false);
+            });
+        });
+    });
+
     cargar();
+    cargarParametros();
 });
 </script>
 

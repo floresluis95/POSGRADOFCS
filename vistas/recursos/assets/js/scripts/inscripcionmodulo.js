@@ -561,8 +561,8 @@ $(document).ready(function() {
                                     Total de módulos inscritos: <strong>${response.length}</strong>
                                 </div>
                                 <div class="col-md-6 text-right">
-                                    <span class="badge badge-success mr-2"><i class="fa fa-check"></i> Aprobado: >= 51</span>
-                                    <span class="badge badge-danger"><i class="fa fa-times"></i> Reprobado: < 51</span>
+                                    <span class="badge badge-success mr-2"><i class="fa fa-check"></i> Aprobado: >= ${window.NOTA_APROBACION || 76}</span>
+                                    <span class="badge badge-danger"><i class="fa fa-times"></i> Reprobado: &lt; ${window.NOTA_APROBACION || 76}</span>
                                 </div>
                             </div>
                         </div>

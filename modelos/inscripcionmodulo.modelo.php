@@ -1,6 +1,7 @@
 <?php
 require_once 'conexion.modelo.php';
-require_once __DIR__ . '/requisito.modelo.php'; // RequisitoModelo::CondicionGrado() (conteo de requisitos por grado)
+require_once __DIR__ . '/requisito.modelo.php';
+require_once __DIR__ . '/configuracion.modelo.php'; // nota mínima de aprobación // RequisitoModelo::CondicionGrado() (conteo de requisitos por grado)
 
 /**
  * Modelo de Inscripción a Módulos
@@ -237,7 +238,7 @@ class InscripcionModuloModelos
                     c.Nota,
                     CASE
                         WHEN c.Nota IS NULL THEN 'SIN CALIFICACIÓN'
-                        WHEN c.Nota >= 51 THEN 'APROBADO'
+                        WHEN c.Nota >= " . ConfiguracionModelo::NotaAprobacion() . " THEN 'APROBADO'
                         ELSE 'REPROBADO'
                     END as EstadoAprobacion,
                     -- Orden de cuota que cubre el módulo (solo control; ver ordenpagomodulo)
