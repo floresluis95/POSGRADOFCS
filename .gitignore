@@ -6,3 +6,5 @@ pdfs_generados/*.pdf
 
 # Composer local (se ejecuta con C:\xampp\php\php.exe composer.phar)
 composer.phar
+
+.phpunit.result.cache
