@@ -285,6 +285,7 @@ kt-aside--fixed kt-page--loading">
 }
 .in-requisito input { width: 16px; height: 16px; accent-color: #2f855a; }
 .in-requisito:has(input:checked) { background: #f3faf6; border-color: #c6e9d4; }
+.in-requisito-auto { cursor: default; }
 .in-link { background: none; border: 0; padding: 0; color: #1e3c72; font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; cursor: pointer; }
 .in-link:hover { text-decoration: underline; }
 @media (max-width: 575.98px) { .in-requisitos { grid-template-columns: 1fr; } }
@@ -721,24 +722,33 @@ kt-aside--fixed kt-page--loading">
       }
 
       // ============================================
-      // REQUISITOS DE MATRICULACIÓN: catálogo de casillas del modal de validación
+      // REQUISITOS DE MATRICULACIÓN: casillas del modal de validación. Se cargan al
+      // elegir el preregistro, con los requisitos del grado académico de su programa
+      // (en doctorado se piden más documentos).
       // ============================================
+      function cargarRequisitosInscripcion(programaID) {
+      $('#seccionRequisitos').hide();
+      $('#listaRequisitosInscripcion').empty();
       $.ajax({
           url: 'ajax/requisito.ajax.php',
           type: 'POST',
           dataType: 'json',
-          data: { accion: 'catalogo' },
+          data: { accion: 'catalogo', programaID: programaID },
           success: function(resp) {
               if (!resp.success || !resp.requisitos || !resp.requisitos.length) return;
               let html = '';
               resp.requisitos.forEach(function(r) {
-                  html += '<label class="in-requisito"><input type="checkbox" class="chk-requisito" value="' + parseInt(r.IdRequisito) + '">' +
-                          '<span>' + escaparHtml(r.Nombre) + '</span></label>';
+                  // Los automáticos (ficha, documento de compromiso) los marca el sistema al validar
+                  const auto = parseInt(r.Automatico) === 1;
+                  html += '<label class="in-requisito' + (auto ? ' in-requisito-auto' : '') + '"' + (auto ? ' title="Se marca automáticamente al validar el voucher"' : '') + '>' +
+                          '<input type="checkbox" class="chk-requisito" value="' + parseInt(r.IdRequisito) + '"' + (auto ? ' checked disabled' : '') + '>' +
+                          '<span>' + escaparHtml(r.Nombre) + (auto ? ' <small class="text-muted">(automático)</small>' : '') + '</span></label>';
               });
               $('#listaRequisitosInscripcion').html(html);
               $('#seccionRequisitos').show();
           }
       });
+      }
 
       $('#btnMarcarTodosRequisitos').on('click', function() {
           $('#listaRequisitosInscripcion .chk-requisito').prop('checked', true);
@@ -793,6 +803,7 @@ kt-aside--fixed kt-page--loading">
 
                   // Reiniciar el formulario de validación
                   $('#formValidarVoucher')[0].reset();
+                  cargarRequisitosInscripcion(p.ProgramaID);
                   $('#voucherFecha').val(new Date().toISOString().split('T')[0]);
                   $('#voucherFotoLabel').text('Seleccionar imagen...');
                   $('#voucherFotoPreview').hide();

@@ -572,7 +572,7 @@ body.portal-publico {
               </td>
               <td>
                 <strong><?php echo htmlspecialchars($d['NombreEstudiante']); ?></strong>
-                <?php if (!empty($d['Detalle'])): ?><br><small class="text-muted"><?php echo htmlspecialchars($d['Detalle']); ?></small><?php endif; ?>
+                <?php if (!empty($d['TituloDefensa'])): ?><br><small class="text-muted"><?php echo htmlspecialchars($d['TituloDefensa']); ?></small><?php endif; ?>
               </td>
               <td><?php echo htmlspecialchars($programaTexto); ?></td>
               <td><i class="far fa-clock text-muted"></i> <?php echo htmlspecialchars($horaDefensa); ?></td>

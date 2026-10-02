@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/validar-sesion.php';
-ExigirSesionAjax();
+ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni docentes)
 /**
  * AJAX: Reporte de Notas
  * Maneja las peticiones AJAX para el reporte de calificaciones

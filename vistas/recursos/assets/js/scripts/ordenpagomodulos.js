@@ -103,6 +103,9 @@ $(document).ready(function() {
                             '<div class="gp-orden-num">N° ' + orden.NumeroOrden + '</div>' +
                             '<div class="gp-orden-meta">Generada el ' + orden.FechaGeneracion +
                                 (orden.NumeroCuentaDeposito ? ' &middot; Cuenta ' + orden.NumeroCuentaDeposito : '') + '</div>' +
+                            (orden.ModulosCubiertos
+                                ? '<div class="gp-orden-meta"><i class="fa fa-book"></i> Cubre: ' + $('<div>').text(orden.ModulosCubiertos).html() + '</div>'
+                                : '') +
                         '</div>' +
                         '<div>' +
                             '<div class="gp-orden-monto">' + bs(orden.MontoTotal) + '</div>' +
@@ -155,6 +158,14 @@ $(document).ready(function() {
                     '</div>' +
                     campoMonto +
                 '</div>' +
+            '</div>' +
+
+            // Módulo(s) a los que corresponde la cuota: solo control, no cambia la orden
+            '<div class="gp-section">' +
+                '<div class="gp-section-title"><i class="fa fa-book"></i> Módulo(s) que cubre esta cuota</div>' +
+                '<div class="gp-ayuda mt-0 mb-2">Solo para controlar los módulos del estudiante; no cambia el monto ni la orden impresa. ' +
+                    'Opcional: una cuota puede cubrir más de un módulo (p. ej. 12 módulos en 10 cuotas).</div>' +
+                '<div id="opModulosCuota" class="op-modulos-cuota"><span class="text-muted"><i class="fa fa-spinner fa-spin"></i> Cargando módulos...</span></div>' +
             '</div>' +
 
             '<div class="gp-section">' +
@@ -220,6 +231,52 @@ $(document).ready(function() {
         $('#ordenPagoContenido').html(html);
         cargarOpcionesCuentaPago();
         cargarOpcionesFirmante();
+        cargarModulosCuota(r.cuotaUnica);
+    }
+
+    // ========================================
+    // Módulos del programa para marcar a cuál(es) corresponde la cuota. Los que ya
+    // tienen una orden vigente (pagada o pendiente) se muestran marcados y bloqueados.
+    // Se sugiere el siguiente módulo sin cuota (o todos, si es pago único del saldo).
+    // ========================================
+    function cargarModulosCuota(cuotaUnica) {
+        $.ajax({
+            url: 'ajax/ordenpago.ajax.php',
+            method: 'POST',
+            dataType: 'json',
+            data: { accion: 'modulosParaCuota', idinscripcion: opContexto.idInscripcion, programaID: opContexto.programaID },
+            success: function(resp) {
+                const $cont = $('#opModulosCuota');
+                if (!resp || !resp.success || !resp.modulos.length) {
+                    $cont.html('<span class="text-muted">El programa no tiene módulos registrados.</span>');
+                    return;
+                }
+                const esc = function(t) { return $('<div>').text(t == null ? '' : String(t)).html(); };
+                let sugeridoUno = false;
+                let html = '';
+                resp.modulos.forEach(function(m) {
+                    const cubierto = !!m.NumeroOrden;
+                    let marcar = cubierto;
+                    if (!cubierto && (cuotaUnica || !sugeridoUno)) {
+                        marcar = true;
+                        sugeridoUno = true;
+                    }
+                    const estado = !cubierto ? ''
+                        : ' <small class="' + (m.EstadoOrden === 'CONFIRMADO' ? 'text-success' : 'text-warning') + '">(' +
+                            (m.EstadoOrden === 'CONFIRMADO' ? 'pagada' : (m.EstadoOrden === 'VENCIDO' ? 'vencida' : 'pendiente')) +
+                            ' · ' + esc(m.NumeroOrden) + ')</small>';
+                    html += '<label class="op-modulo' + (cubierto ? ' is-cubierto' : '') + '" title="' + esc(m.Nombre) + '">' +
+                        '<input type="checkbox" class="op-chk-modulo" value="' + parseInt(m.Idmodulo, 10) + '"' +
+                            (marcar ? ' checked' : '') + (cubierto ? ' disabled' : '') + '>' +
+                        '<span><strong>' + esc(m.Codigo) + '</strong> ' + esc(m.Nombre) + estado + '</span>' +
+                    '</label>';
+                });
+                $cont.html(html);
+            },
+            error: function() {
+                $('#opModulosCuota').html('<span class="text-muted">No se pudieron cargar los módulos (la orden se puede generar igual).</span>');
+            }
+        });
     }
 
     // ========================================
@@ -353,7 +410,9 @@ $(document).ready(function() {
                 firma: firma,
                 nombreFactura: nombreFactura,
                 nitCiFactura: nitCiFactura,
-                fechaVencimiento: fechaVencimiento
+                fechaVencimiento: fechaVencimiento,
+                // Solo los módulos elegidos ahora (los bloqueados ya tienen su cuota)
+                modulos: $('#opModulosCuota .op-chk-modulo:checked:not(:disabled)').map(function() { return this.value; }).get()
             },
             dataType: 'json',
             success: function(resp) {

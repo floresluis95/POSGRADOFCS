@@ -42,7 +42,10 @@
                 $enlace == 'certificadoaprobacionmonografia'||
                 $enlace == 'certificadomediomagnetico'||
                 $enlace == 'registrodocumentos'||
-                $enlace == 'calendario'
+                $enlace == 'calendario'||
+                $enlace == 'autoridades'||
+                $enlace == 'requisitos'||
+                $enlace == 'misrequisitos'
 
                 )
             {

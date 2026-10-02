@@ -23,6 +23,16 @@ if (!isset($_GET['id'])) {
 }
 
 $idPago = (int)$_GET['id'];
+
+// El personal ve cualquier voucher; el estudiante solo los de sus inscripciones
+// (antes bastaba cambiar el id en la URL para ver el voucher de otro).
+$tipoSesion = $_SESSION['Tipo'] ?? '';
+$esPersonal = in_array($tipoSesion, ['ADM', 'SEC', 'AUX'], true);
+$esSuyo = $tipoSesion === 'EST' && VoucherModelo::VoucherEsDelEstudianteModelo($idPago, $_SESSION['EstudianteID'] ?? 0);
+if (!$esPersonal && !$esSuyo) {
+    header('HTTP/1.1 403 Forbidden');
+    exit('Acceso denegado');
+}
 $esThumbnail = isset($_GET['thumb']) && $_GET['thumb'] == '1';
 
 // Obtener la imagen desde la base de datos

@@ -8,7 +8,8 @@
 // Validar sesión
 
 session_start();
-if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
+if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true
+    || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX', 'DOC'], true)) {
     die('Acceso denegado');
 }
 

@@ -1,5 +1,6 @@
 <?php
 require_once 'conexion.modelo.php';
+require_once __DIR__ . '/requisito.modelo.php'; // RequisitoModelo::CondicionGrado() (conteo de requisitos por grado)
 
 /**
  * Modelo de Inscripción a Módulos
@@ -45,11 +46,14 @@ class InscripcionModuloModelos
                     p.NumeroTramite,
                     p.Costo as CostoPrograma,
                     p.Sede,
-                    (SELECT COUNT(*) FROM requisito r WHERE r.Estado = 1 AND r.Obligatorio = 1) AS RequisitosTotal,
+                    -- Solo cuentan los requisitos obligatorios del grado académico del programa
+                    (SELECT COUNT(*) FROM requisito r WHERE r.Estado = 1 AND r.Obligatorio = 1
+                     AND " . RequisitoModelo::CondicionGrado() . ") AS RequisitosTotal,
                     (SELECT COUNT(*) FROM requisitoinscripcion ri
                      INNER JOIN requisito r ON r.IdRequisito = ri.IdRequisito
                      WHERE ri.idInscripcion = ep.idInscripcion AND ri.Entregado = 1
-                     AND r.Estado = 1 AND r.Obligatorio = 1) AS RequisitosEntregados
+                     AND r.Estado = 1 AND r.Obligatorio = 1
+                     AND " . RequisitoModelo::CondicionGrado() . ") AS RequisitosEntregados
                 FROM estudianteprograma ep
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
@@ -235,7 +239,16 @@ class InscripcionModuloModelos
                         WHEN c.Nota IS NULL THEN 'SIN CALIFICACIÓN'
                         WHEN c.Nota >= 51 THEN 'APROBADO'
                         ELSE 'REPROBADO'
-                    END as EstadoAprobacion
+                    END as EstadoAprobacion,
+                    -- Orden de cuota que cubre el módulo (solo control; ver ordenpagomodulo)
+                    (SELECT op.NumeroOrden FROM ordenpagomodulo opm
+                     INNER JOIN ordenpago op ON op.IdOrdenPago = opm.IdOrdenPago
+                     WHERE opm.IdModulo = m.Idmodulo AND op.idinscripcion = :idInscripcionCuota AND op.Estado <> 'ANULADO'
+                     ORDER BY op.IdOrdenPago DESC LIMIT 1) AS CuotaOrden,
+                    (SELECT op.Estado FROM ordenpagomodulo opm
+                     INNER JOIN ordenpago op ON op.IdOrdenPago = opm.IdOrdenPago
+                     WHERE opm.IdModulo = m.Idmodulo AND op.idinscripcion = :idInscripcionCuota2 AND op.Estado <> 'ANULADO'
+                     ORDER BY op.IdOrdenPago DESC LIMIT 1) AS CuotaEstado
                 FROM modulos m
                 LEFT JOIN docente d ON m.DocenteID = d.DocenteID
                 LEFT JOIN calificacion c ON c.EstudianteID = :estudianteID
@@ -243,12 +256,14 @@ class InscripcionModuloModelos
                     AND c.ProgramaId = :programaID
                 WHERE m.ProgramaId = :programaIDFiltro
                 AND m.estadomodulo = 'ACTIVO'
-                ORDER BY m.codigomodulo ASC";
+                ORDER BY m.Idmodulo ASC"; // por número de módulo (como texto, IX quedaba antes que V)
 
             $stmt = Conexion::Conectar()->prepare($sql);
             $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
             $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
             $stmt->bindParam(":programaIDFiltro", $programaID, PDO::PARAM_INT);
+            $stmt->bindValue(":idInscripcionCuota", $idInscripcion, $idInscripcion ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $stmt->bindValue(":idInscripcionCuota2", $idInscripcion, $idInscripcion ? PDO::PARAM_INT : PDO::PARAM_NULL);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -298,13 +313,20 @@ class InscripcionModuloModelos
                     p.DuracionMeses,
                     p.Modulos,
                     p.Costo,
+                    p.CostoMatricula,
                     p.Version,
-                    p.NumeroTramite
+                    p.NumeroTramite,
+                    ep.pagoCompleto,
+                    pp.TipoPlan,
+                    pp.NumeroCuotas,
+                    pp.PorcentajeDescuento AS PlanPorcentajeDescuento,
+                    pp.MontoTotalPagar AS PlanMontoTotal
                 FROM estudianteprograma ep
                 INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
                 INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
                 LEFT JOIN profesion prof ON e.IdProfesion = prof.IdProfesion
                 LEFT JOIN universidad univ ON e.IdUniversidad = univ.IdUniversidad
+                LEFT JOIN pagoprograma pp ON pp.idInscripcion = ep.idInscripcion AND pp.Estado != 'ANULADO'
                 WHERE ep.idInscripcion = :idInscripcion
                 AND ep.Estado = 'ACTIVO'"
             );

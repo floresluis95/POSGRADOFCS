@@ -89,6 +89,128 @@ class RequisitoControlador
         ];
     }
 
+    /**
+     * Al validar el voucher de matrícula: marcar como entregados los requisitos
+     * automáticos (los genera el sistema: ficha, documento de compromiso...).
+     * @param string|null $fecha Fecha de inscripción (AAAA-MM-DD); hoy si no viene
+     */
+    public static function MarcarAutomaticosControlador($idInscripcion, $fecha, $responsable)
+    {
+        $fecha = ($fecha && preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) ? $fecha : date('Y-m-d');
+        return RequisitoModelo::MarcarAutomaticosModelo((int)$idInscripcion, $fecha, $responsable);
+    }
+
+    /**
+     * Crear o editar un requisito del catálogo.
+     * @param array $entrada idRequisito, nombre, obligatorio ('1'/'0'), automatico ('1'/'0'), orden,
+     *                       grados[] (DOCTORADO, MAESTRIA...; vacío = todos los grados)
+     */
+    public static function GuardarCatalogoControlador($entrada)
+    {
+        $idRequisito = (int)($entrada['idRequisito'] ?? 0);
+        $nombre = trim(preg_replace('/\s+/', ' ', $entrada['nombre'] ?? ''));
+        $orden = trim($entrada['orden'] ?? '');
+
+        if ($nombre === '') {
+            return ['success' => false, 'mensaje' => 'Ingrese el nombre del requisito'];
+        }
+        if (mb_strlen($nombre, 'UTF-8') > 150) {
+            return ['success' => false, 'mensaje' => 'El nombre no puede pasar de 150 caracteres'];
+        }
+        if ($orden !== '' && (!ctype_digit($orden) || (int)$orden > 999)) {
+            return ['success' => false, 'mensaje' => 'El orden debe ser un número entre 0 y 999'];
+        }
+        $grados = array_values(array_intersect(RequisitoModelo::GRADOS, (array)($entrada['grados'] ?? [])));
+        if (count($grados) === count(RequisitoModelo::GRADOS)) {
+            $grados = []; // marcar todos es lo mismo que "todos los grados"
+        }
+        if (RequisitoModelo::ExisteNombreModelo($nombre, $idRequisito)) {
+            return ['success' => false, 'mensaje' => 'Ya existe un requisito con ese nombre'];
+        }
+
+        $ok = RequisitoModelo::GuardarCatalogoModelo(
+            $idRequisito,
+            $nombre,
+            ($entrada['obligatorio'] ?? '0') === '1',
+            ($entrada['automatico'] ?? '0') === '1',
+            $orden === '' ? null : (int)$orden,
+            $grados
+        );
+
+        return $ok
+            ? ['success' => true, 'mensaje' => $idRequisito > 0 ? 'Requisito actualizado' : 'Requisito agregado']
+            : ['success' => false, 'mensaje' => 'No se pudo guardar el requisito'];
+    }
+
+    public static function CambiarEstadoControlador($idRequisito, $estado)
+    {
+        $idRequisito = (int)$idRequisito;
+        if ($idRequisito <= 0) {
+            return ['success' => false, 'mensaje' => 'Requisito no válido'];
+        }
+        $activar = $estado === '1';
+        return RequisitoModelo::CambiarEstadoModelo($idRequisito, $activar)
+            ? ['success' => true, 'mensaje' => $activar ? 'Requisito activado' : 'Requisito desactivado']
+            : ['success' => false, 'mensaje' => 'No se pudo cambiar el estado'];
+    }
+
+    /**
+     * Requisitos del estudiante en sesión, agrupados por programa (solo lectura).
+     */
+    public static function MisRequisitosControlador($estudianteID)
+    {
+        $programas = [];
+        foreach (RequisitoModelo::ListarInscripcionesEstudianteModelo($estudianteID) as $inscripcion) {
+            $requisitos = RequisitoModelo::ListarPorInscripcionModelo($inscripcion['idInscripcion']);
+            // Al estudiante no se le muestra quién registró la entrega
+            $requisitos = array_map(function ($r) {
+                return [
+                    'Nombre' => $r['Nombre'],
+                    'Obligatorio' => (int)$r['Obligatorio'],
+                    'Entregado' => (int)$r['Entregado'],
+                    'FechaEntrega' => $r['FechaEntrega'],
+                    'Observacion' => $r['Observacion'],
+                ];
+            }, $requisitos);
+
+            $programas[] = [
+                'idInscripcion' => (int)$inscripcion['idInscripcion'],
+                'programa' => $inscripcion['NombrePrograma'],
+                'grado' => $inscripcion['GradoAcademico'],
+                'fechaInscripcion' => $inscripcion['FechaInscripcion'],
+                'situacion' => self::SituacionPrograma($inscripcion),
+                'requisitos' => $requisitos,
+            ] + self::Resumen($requisitos);
+        }
+
+        // Primero los programas en curso, luego culminados y abandonados
+        // (dentro de cada grupo, el más reciente primero: ya viene así).
+        $prioridad = ['EN CURSO' => 0, 'CULMINADO' => 1, 'ABANDONO' => 2];
+        usort($programas, function ($a, $b) use ($prioridad) {
+            return $prioridad[$a['situacion']] <=> $prioridad[$b['situacion']];
+        });
+
+        return ['success' => true, 'programas' => $programas];
+    }
+
+    /**
+     * Situación del programa para el estudiante: ABANDONO si así se marcó la
+     * inscripción; CULMINADO si el programa ya tiene todos sus módulos con fecha
+     * y el último terminó; si no, EN CURSO.
+     */
+    private static function SituacionPrograma(array $inscripcion)
+    {
+        if ($inscripcion['Estado'] === 'ABANDONO') {
+            return 'ABANDONO';
+        }
+        $todosConFecha = (int)$inscripcion['ModulosConFecha'] > 0
+            && (int)$inscripcion['ModulosConFecha'] >= (int)$inscripcion['ModulosPrograma'];
+        if ($todosConFecha && $inscripcion['FinUltimoModulo'] && $inscripcion['FinUltimoModulo'] < date('Y-m-d')) {
+            return 'CULMINADO';
+        }
+        return 'EN CURSO';
+    }
+
     public static function UsuarioSesion()
     {
         $nombre = trim(($_SESSION['Nombres'] ?? '') . ' ' . ($_SESSION['ApellidoPaterno'] ?? ''));

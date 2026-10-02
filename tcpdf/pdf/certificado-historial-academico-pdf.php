@@ -3,11 +3,9 @@
  * Historial Académico - PDF
  * Se imprime SOLO el contenido (sin membrete propio) porque el papel ya viene
  * pre-impreso desde Posgrado Central (Universidad Técnica de Oruro), en hoja
- * oficio horizontal (14 x 8.5 in).
- * Las coordenadas se calibraron a partir del documento de referencia que ya
- * usan (HISTORIAL_ACADEMICO.docx) y de una copia impresa de ejemplo; es un
- * primer ajuste y es normal que necesite un retoque de milímetros luego de
- * una impresión de prueba sobre el papel real (ver bloque "COORDENADAS").
+ * oficio boliviano horizontal (13 x 8.5 in = 330.2 x 215.9 mm).
+ * Las coordenadas se midieron sobre el formato escaneado; si la impresora
+ * corre el papel unos milímetros, se ajustan en el bloque "COORDENADAS".
  */
 
 error_reporting(E_ALL);
@@ -70,28 +68,75 @@ $timestampFecha = strtotime($fecha);
 $fechaTexto = (int) date('j', $timestampFecha) . ' de ' . $mesesEspanolMinuscula[(int) date('n', $timestampFecha)] . ' de ' . date('Y', $timestampFecha);
 
 // ===================================
-// COORDENADAS (mm) - Hoja Oficio horizontal (355.6 x 215.9 mm)
+// COORDENADAS (mm) - Hoja OFICIO boliviano horizontal (330.2 x 215.9 mm)
+// Medidas tomadas del formato escaneado (img20261002_11102292.pdf, 2026-10-02).
+// Todo se escribe DENTRO de las celdas/líneas del papel, con margen interno,
+// y la letra se achica sola si el texto no entra.
 // ===================================
-$X_NOMBRE = 78;      $Y_NOMBRE = 27;      $W_NOMBRE = 130;
-$X_VAUCHER = 270;    $Y_VAUCHER = 27;     $W_VAUCHER = 37;
-$X_PROGRAMA = 53;    $Y_PROGRAMA = 34;    $W_PROGRAMA = 92;
-$X_NIVEL = 47;       $Y_NIVEL = 40;       $W_NIVEL = 45;
-$X_FECHA = 248;      $Y_FECHA = 40;       $W_FECHA = 79;
+const HIST_ANCHO_HOJA = 330.2;
+const HIST_ALTO_HOJA = 215.9;
+const HIST_PADDING = 1.5;          // separación del texto respecto a las líneas impresas
 
-$Y_TABLA = 66;
-// Ancho de cada columna dentro de un bloque (izquierdo o derecho)
-$W_SIGLA = 22.0;
-$W_NOMBREMOD = 83.4;
-$W_NUM = 12.6;
-$W_FECHAMOD = 25.9;
-// Posicion inicial (X) de cada bloque de 6 modulos
-$X_SIGLA_IZQ = 31.6;   // Bloque izquierdo: MOD.I - MOD.VI
-$X_SIGLA_DER = 181.5;  // Bloque derecho: MOD.VII - MOD.XII
+// Campos del encabezado: [x inicial, x final, línea base]
+$CAMPOS = [
+    'nombre'   => [60.0, 212.0, 46.0],
+    'vaucher'  => [223.0, 314.0, 46.0],
+    'programa' => [39.0, 314.0, 53.0],
+    'nivel'    => [27.0, 189.0, 59.5],
+    'fecha'    => [206.0, 314.0, 59.5],
+];
+
+// Cuerpo de la tabla (debajo de la cabecera "Módulo / Asignatura / Calif. / Fecha")
+$Y_CUERPO_INI = 76.5;
+$Y_CUERPO_FIN = 176.0;
+
+// Columnas de cada bloque: [x inicial, x final]
+$BLOQUES = [
+    // Bloque izquierdo: MOD.I - MOD.VI
+    ['sigla' => [14.0, 40.0], 'nombre' => [40.0, 122.5], 'nota' => [122.5, 139.0], 'fecha' => [139.0, 164.5]],
+    // Bloque derecho: MOD.VII - MOD.XII
+    ['sigla' => [164.5, 190.5], 'nombre' => [190.5, 273.0], 'nota' => [273.0, 289.5], 'fecha' => [289.5, 315.5]],
+];
+$MODULOS_POR_BLOQUE = 6;
+
+/**
+ * Escribe un texto en una línea del encabezado, sin pasarse del final de la
+ * línea impresa: si no entra, reduce la letra (hasta 6 pt).
+ */
+function campoHistorial($pdf, array $campo, $texto, $estilo, $tamano)
+{
+    [$xIni, $xFin, $base] = $campo;
+    $ancho = $xFin - $xIni - HIST_PADDING;
+    $pdf->SetFont('helvetica', $estilo, $tamano);
+    while ($tamano > 6 && $pdf->GetStringWidth($texto) > $ancho) {
+        $tamano -= 0.5;
+        $pdf->SetFont('helvetica', $estilo, $tamano);
+    }
+    $alto = $tamano * 0.3528 * 1.25;            // alto de la línea según la letra
+    $pdf->SetXY($xIni + HIST_PADDING / 2, $base - $alto + 0.6);
+    $pdf->Cell($ancho, $alto, $texto, 0, 0, 'L', false, '', 1); // 1 = comprime si aún no entra
+}
+
+/**
+ * Alto que necesita cada fila (módulo) de un bloque con la letra dada.
+ */
+function altosFilasHistorial($pdf, array $filas, array $bloque, $tamano)
+{
+    $pdf->SetFont('helvetica', '', $tamano);
+    $anchoNombre = $bloque['nombre'][1] - $bloque['nombre'][0] - 2 * HIST_PADDING;
+    $altoLinea = $tamano * 0.3528 * 1.2;
+    $altos = [];
+    foreach ($filas as $fila) {
+        $lineas = max(1, $pdf->getNumLines($fila['nombre'], $anchoNombre, false, true, 0, 0));
+        $altos[] = $lineas * $altoLinea + 2 * HIST_PADDING;
+    }
+    return $altos;
+}
 
 // ===================================
 // GENERACIÓN DEL PDF
 // ===================================
-$pdf = new TCPDF('L', 'mm', array(355.6, 215.9), true, 'UTF-8', false);
+$pdf = new TCPDF('L', 'mm', array(HIST_ALTO_HOJA, HIST_ANCHO_HOJA), true, 'UTF-8', false);
 $pdf->SetCreator('Sistema de Gestión Académica - Posgrado FCS');
 $pdf->SetAuthor('Posgrado FCS - Universidad Técnica de Oruro');
 $pdf->SetTitle('Historial Académico - ' . $nombre);
@@ -101,71 +146,79 @@ $pdf->setPrintHeader(false);
 $pdf->setPrintFooter(false);
 $pdf->SetMargins(0, 0, 0);
 $pdf->SetAutoPageBreak(false);
+$pdf->setCellPaddings(0, 0, 0, 0);
 
-$modulosPorHoja = array_chunk($modulos, 12);
+$modulosPorHoja = array_chunk($modulos, $MODULOS_POR_BLOQUE * count($BLOQUES));
 
 foreach ($modulosPorHoja as $chunk) {
     $pdf->AddPage();
     $pdf->SetTextColor(0, 0, 0);
 
-    // Bloque de datos del encabezado (se repite en cada hoja)
-    $pdf->SetFont('helvetica', 'B', 12);
-    $pdf->SetXY($X_NOMBRE, $Y_NOMBRE);
-    $pdf->Cell($W_NOMBRE, 6, mb_strtoupper($nombre, 'UTF-8'), 0, 0, 'L');
+    // Encabezado (se repite en cada hoja)
+    campoHistorial($pdf, $CAMPOS['nombre'], mb_strtoupper($nombre, 'UTF-8'), 'B', 11);
+    campoHistorial($pdf, $CAMPOS['vaucher'], mb_strtoupper($vaucher, 'UTF-8'), '', 10);
+    campoHistorial($pdf, $CAMPOS['programa'], mb_strtoupper($programa, 'UTF-8'), 'B', 10);
+    campoHistorial($pdf, $CAMPOS['nivel'], mb_strtoupper($nivel, 'UTF-8'), 'B', 10);
+    campoHistorial($pdf, $CAMPOS['fecha'], $fechaTexto, '', 10);
 
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->SetXY($X_VAUCHER, $Y_VAUCHER);
-    $pdf->Cell($W_VAUCHER, 6, mb_strtoupper($vaucher, 'UTF-8'), 0, 0, 'L');
+    // Filas de cada bloque (6 módulos a la izquierda, 6 a la derecha)
+    $altoDisponible = $Y_CUERPO_FIN - $Y_CUERPO_INI - 2 * HIST_PADDING;
 
-    $pdf->SetFont('helvetica', 'B', 11);
-    $pdf->SetXY($X_PROGRAMA, $Y_PROGRAMA);
-    $pdf->Cell($W_PROGRAMA, 6, mb_strtoupper($programa, 'UTF-8'), 0, 0, 'L');
-
-    $pdf->SetXY($X_NIVEL, $Y_NIVEL);
-    $pdf->Cell($W_NIVEL, 6, mb_strtoupper($nivel, 'UTF-8'), 0, 0, 'L');
-
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->SetXY($X_FECHA, $Y_FECHA);
-    $pdf->Cell($W_FECHA, 6, $fechaTexto, 0, 0, 'L');
-
-    // Los 12 módulos del chunk se reparten en dos bloques de 6 (izquierda/derecha)
-    $mitadIzquierda = array_slice($chunk, 0, 6);
-    $mitadDerecha = array_slice($chunk, 6, 6);
-
-    $bloques = [
-        ['modulos' => $mitadIzquierda, 'xSigla' => $X_SIGLA_IZQ],
-        ['modulos' => $mitadDerecha, 'xSigla' => $X_SIGLA_DER],
-    ];
-
-    foreach ($bloques as $bloque) {
-        if (empty($bloque['modulos'])) {
+    foreach ($BLOQUES as $i => $bloque) {
+        $filas = [];
+        foreach (array_slice($chunk, $i * $MODULOS_POR_BLOQUE, $MODULOS_POR_BLOQUE) as $mod) {
+            $filas[] = [
+                'sigla' => siglaModuloHistorial($mod['codigomodulo']),
+                'nombre' => mb_strtoupper(trim($mod['nombremodulo']), 'UTF-8'),
+                'nota' => (string)intval($mod['Nota']),
+                'fecha' => !empty($mod['FechaRegistro']) ? date('d/m/Y', strtotime($mod['FechaRegistro'])) : '-',
+            ];
+        }
+        if (!$filas) {
             continue;
         }
 
-        // Se dibuja como una sola tabla de 4 columnas (sin bordes: la cuadricula
-        // ya esta impresa en el papel) para que las filas se alineen
-        // automaticamente aunque el nombre del modulo ocupe varias lineas
-        $anchoBloque = $W_SIGLA + $W_NOMBREMOD + $W_NUM + $W_FECHAMOD;
-        $pctSigla = round($W_SIGLA / $anchoBloque * 100, 2);
-        $pctNombre = round($W_NOMBREMOD / $anchoBloque * 100, 2);
-        $pctNum = round($W_NUM / $anchoBloque * 100, 2);
-        $pctFecha = round($W_FECHAMOD / $anchoBloque * 100, 2);
-
-        $filasHtml = '';
-        foreach ($bloque['modulos'] as $mod) {
-            $nota = intval($mod['Nota']);
-            $fechaAprob = !empty($mod['FechaRegistro']) ? date('d/m/Y', strtotime($mod['FechaRegistro'])) : '-';
-            $filasHtml .= '<tr>
-                <td width="' . $pctSigla . '%" style="font-weight:bold;">' . htmlspecialchars(siglaModuloHistorial($mod['codigomodulo'])) . '</td>
-                <td width="' . $pctNombre . '%">' . htmlspecialchars(mb_strtoupper($mod['nombremodulo'], 'UTF-8')) . '</td>
-                <td width="' . $pctNum . '%" style="font-weight:bold; text-align:center;">' . $nota . '</td>
-                <td width="' . $pctFecha . '%" style="text-align:center;">' . $fechaAprob . '</td>
-            </tr>';
+        // Letra más grande con la que las filas entran en el cuerpo de la tabla
+        $tamano = 9;
+        $altos = altosFilasHistorial($pdf, $filas, $bloque, $tamano);
+        while ($tamano > 6 && array_sum($altos) > $altoDisponible) {
+            $tamano -= 0.5;
+            $altos = altosFilasHistorial($pdf, $filas, $bloque, $tamano);
         }
 
-        $pdf->SetFont('helvetica', '', 9);
-        $tablaHtml = '<table cellpadding="1.2" style="font-size:9pt;">' . $filasHtml . '</table>';
-        $pdf->writeHTMLCell($anchoBloque, 0, $bloque['xSigla'], $Y_TABLA, $tablaHtml, 0, 0, false, true, 'L');
+        // Si sobra espacio, las filas se reparten parejas (como renglones);
+        // si no, cada una ocupa lo que necesita.
+        $altoParejo = $altoDisponible / $MODULOS_POR_BLOQUE;
+        if (max($altos) <= $altoParejo) {
+            $altos = array_fill(0, count($filas), $altoParejo);
+        }
+
+        $altoLinea = $tamano * 0.3528 * 1.2;
+        $y = $Y_CUERPO_INI + HIST_PADDING;
+        foreach ($filas as $k => $fila) {
+            $yTexto = $y + HIST_PADDING;
+
+            $pdf->SetFont('helvetica', 'B', $tamano);
+            [$x0, $x1] = $bloque['sigla'];
+            $pdf->SetXY($x0 + HIST_PADDING, $yTexto);
+            $pdf->Cell($x1 - $x0 - 2 * HIST_PADDING, $altoLinea, $fila['sigla'], 0, 0, 'L', false, '', 1);
+
+            $pdf->SetFont('helvetica', '', $tamano);
+            [$x0, $x1] = $bloque['nombre'];
+            $pdf->MultiCell($x1 - $x0 - 2 * HIST_PADDING, $altoLinea, $fila['nombre'], 0, 'L', false, 0, $x0 + HIST_PADDING, $yTexto);
+
+            $pdf->SetFont('helvetica', 'B', $tamano);
+            [$x0, $x1] = $bloque['nota'];
+            $pdf->SetXY($x0 + HIST_PADDING, $yTexto);
+            $pdf->Cell($x1 - $x0 - 2 * HIST_PADDING, $altoLinea, $fila['nota'], 0, 0, 'C', false, '', 1);
+
+            $pdf->SetFont('helvetica', '', $tamano);
+            [$x0, $x1] = $bloque['fecha'];
+            $pdf->SetXY($x0 + HIST_PADDING, $yTexto);
+            $pdf->Cell($x1 - $x0 - 2 * HIST_PADDING, $altoLinea, $fila['fecha'], 0, 0, 'C', false, '', 1);
+
+            $y += $altos[$k];
+        }
     }
 }
 

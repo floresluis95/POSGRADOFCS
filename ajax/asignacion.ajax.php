@@ -1,9 +1,13 @@
 <?php
+require_once __DIR__ . '/validar-sesion.php';
+ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni docentes)
 /**
  * AJAX para asignación de docentes a módulos
  */
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Verificar sesión
 if (!isset($_SESSION['Validar']) || !$_SESSION['Validar']) {

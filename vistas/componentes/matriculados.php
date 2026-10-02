@@ -216,6 +216,13 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
         gap: 16px;
         flex-wrap: wrap;
     }
+    /* Módulo(s) que cubre la cuota (ordenpagomodulos.js): casillas en dos columnas */
+    #modalInscribirModulo .op-modulos-cuota { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; max-height: 260px; overflow-y: auto; }
+    #modalInscribirModulo .op-modulo { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 7px 10px; border: 1px solid var(--gp-borde); border-radius: 8px; font-size: 12.5px; cursor: pointer; background: #fff; }
+    #modalInscribirModulo .op-modulo input { margin-top: 2px; width: 15px; height: 15px; accent-color: #1e3c72; flex-shrink: 0; }
+    #modalInscribirModulo .op-modulo:has(input:checked:not(:disabled)) { background: #eef3fb; border-color: #c9d6ee; }
+    #modalInscribirModulo .op-modulo.is-cubierto { background: #f6f7f9; color: #6b7280; cursor: default; }
+    @media (max-width: 575.98px) { #modalInscribirModulo .op-modulos-cuota { grid-template-columns: 1fr; } }
     #modalInscribirModulo .gp-monto-input {
         display: flex;
         align-items: center;

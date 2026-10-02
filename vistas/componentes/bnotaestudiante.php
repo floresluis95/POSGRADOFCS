@@ -73,53 +73,26 @@
                                 </div>
                                 <div class="kt-portlet__body kt-portlet__body--modern">
 
-                                    <!-- Filtro por Programa -->
-                                    <div class="filter-card">
-                                        <div class="filter-card__icon">
-                                            <i class="flaticon2-layers-1"></i>
-                                        </div>
-                                        <div class="filter-card__content">
-                                            <label class="filter-card__label">Programa Académico</label>
-                                            <select class="form-control form-control-modern select2-uniforme" id="select_programa_calificaciones" name="select_programa_calificaciones">
-                                                <option value="">-- Todos los Programas --</option>
-                                            </select>
-                                            <span class="filter-card__hint">Seleccione un programa para filtrar resultados</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="kt-separator kt-separator--dashed kt-separator--space-lg"></div>
-
-                                    <!-- Búsqueda Avanzada -->
+                                    <!-- Un solo buscador: C.I., nombre o apellido (en cualquier orden). El
+                                         programa no se filtra antes: aparece en cada resultado, agrupado. -->
                                     <div class="search-section">
                                         <div class="search-section__header">
                                             <i class="flaticon-user-settings"></i>
                                             <h5>Búsqueda de Estudiante</h5>
                                         </div>
                                         <div class="row search-section__body">
-                                            <div class="col-lg-3 col-md-12">
-                                                <label class="modern-label">Criterio de Búsqueda</label>
-                                                <select class="form-control form-control-modern select2-uniforme" id="select_filtro_tipo" name="select_filtro_tipo">
-                                                    <option value="ci">
-                                                        <i class="flaticon-id-card"></i> Cédula de Identidad
-                                                    </option>
-                                                    <option value="nombre">
-                                                        <i class="flaticon-user"></i> Nombre
-                                                    </option>
-                                                    <option value="apellido">
-                                                        <i class="flaticon-users"></i> Apellido
-                                                    </option>
-                                                </select>
-                                            </div>
-                                            <div class="col-lg-6 col-md-12">
-                                                <label class="modern-label">Valor de Búsqueda</label>
+                                            <div class="col-lg-9 col-md-12">
+                                                <label class="modern-label" for="input_filtro_valor">C.I., nombre o apellido</label>
                                                 <div class="input-group input-group-modern">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">
                                                             <i class="flaticon-search"></i>
                                                         </span>
                                                     </div>
-                                                    <input type="text" class="form-control form-control-modern" id="input_filtro_valor" name="input_filtro_valor" placeholder="Ingrese el valor a buscar...">
+                                                    <input type="text" class="form-control form-control-modern" id="input_filtro_valor" name="input_filtro_valor"
+                                                           placeholder="Ej.: 7456178 · Ala Valdivia · Ilsen" autocomplete="off">
                                                 </div>
+                                                <small class="text-muted d-block mt-1" id="ayuda_busqueda">Escriba al menos 3 caracteres; los resultados aparecen mientras escribe.</small>
                                             </div>
                                             <div class="col-lg-3 col-md-12 d-flex align-items-end">
                                                 <button type="button" class="btn btn-search-modern" id="btn_buscar_calificaciones">
@@ -158,11 +131,11 @@
                                                 <tr>
                                                     <th>
                                                         <i class="flaticon-user"></i>
-                                                        <span>CI / Estudiante</span>
+                                                        <span>Módulo</span>
                                                     </th>
                                                     <th>
                                                         <i class="flaticon-book"></i>
-                                                        <span>Módulo / Asignatura</span>
+                                                        <span>Asignatura</span>
                                                     </th>
                                                     <th class="text-center">
                                                         <i class="flaticon2-percentage"></i>
@@ -186,7 +159,7 @@
                                                                 <i class="flaticon2-search"></i>
                                                             </div>
                                                             <h4>No hay resultados para mostrar</h4>
-                                                            <p>Realice una búsqueda o seleccione un programa para ver las calificaciones</p>
+                                                            <p>Escriba el C.I., nombre o apellido del estudiante para ver sus calificaciones</p>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -212,7 +185,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="vistas/recursos/assets/js/scripts/buscar-calificaciones.js"></script>
+    <script src="vistas/recursos/assets/js/scripts/buscar-calificaciones.js?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/js/scripts/buscar-calificaciones.js'); ?>"></script>
 
     <style>
         /* ========================================

@@ -384,17 +384,22 @@ function numeroALetrasOrdenPagoOficial($numero)
 
         if ($num >= 1000) {
             $miles = (int)floor($num / 1000);
-            $resultado .= ($miles == 1) ? 'MIL ' : $convertirEntero($miles) . ' MIL ';
+            // Delante de "MIL" el "UNO" se apocopa: "TREINTA Y UN MIL", "VEINTIUN MIL"
+            $resultado .= ($miles == 1) ? 'MIL ' : preg_replace('/UNO$/', 'UN', $convertirEntero($miles)) . ' MIL ';
             $num %= 1000;
         }
 
         if ($num >= 100) {
-            $resultado .= $centenas[(int)floor($num / 100)] . ' ';
+            // Un cien exacto tras los miles: "DOS MIL CIEN", no "DOS MIL CIENTO"
+            $resultado .= ($num == 100 ? 'CIEN' : $centenas[(int)floor($num / 100)]) . ' ';
             $num %= 100;
         }
 
         if ($num >= 10 && $num < 20) {
             $resultado .= $especiales[$num - 10] . ' ';
+        } elseif ($num > 20 && $num < 30) {
+            // 21-29 se escriben en una palabra: VEINTIUNO, VEINTIDOS...
+            $resultado .= 'VEINTI' . $unidades[$num - 20] . ' ';
         } elseif ($num >= 20) {
             $resultado .= $decenas[(int)floor($num / 10)];
             if ($num % 10 > 0) $resultado .= ' Y ' . $unidades[$num % 10];

@@ -1,5 +1,7 @@
 <?php
-session_start(); if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) die('Acceso denegado');
+if (session_status() === PHP_SESSION_NONE) session_start();
+// Solo el personal (se abre desde Matriculados)
+if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX'], true)) die('Acceso denegado');
 
 $idinscripcion = isset($_GET['idinscripcion']) ? intval($_GET['idinscripcion']) : 0;
 if ($idinscripcion === 0) die('ID de inscripción inválido');

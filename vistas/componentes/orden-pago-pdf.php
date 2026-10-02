@@ -10,7 +10,8 @@ session_start();
 date_default_timezone_set('America/La_Paz');
 
 // Validar sesión
-if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
+if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true
+    || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX', 'EST'], true)) {
     die('Acceso denegado');
 }
 

@@ -65,6 +65,27 @@ class VoucherModelo
      * @param int $idPago
      * @return mixed
      */
+    /**
+     * ¿El pago (voucher) es de una inscripción de ese estudiante? Para que un
+     * estudiante solo pueda ver SUS vouchers aunque cambie el id en la URL.
+     * @return bool
+     */
+    public static function VoucherEsDelEstudianteModelo($idPago, $estudianteID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT 1 FROM pagomodulo pm
+                 INNER JOIN estudianteprograma ep ON ep.idInscripcion = pm.idinscripcion
+                 WHERE pm.Idpagomodulo = :idPago AND ep.EstudianteID = :estudianteID"
+            );
+            $stmt->execute([':idPago' => (int)$idPago, ':estudianteID' => (int)$estudianteID]);
+            return (bool)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("Error en VoucherEsDelEstudianteModelo: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public static function ObtenerImagenVoucherModelo($idPago)
     {
         try {

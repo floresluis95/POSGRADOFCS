@@ -16,9 +16,13 @@ class CronogramaDefensaModelo
     {
         try {
             $stmt = Conexion::Conectar()->prepare(
-                "SELECT cd.*, p.NombrePrograma, p.GradoAcademico
+                // TituloDefensa: el título guardado del trabajo de grado del estudiante
+                // (se actualiza solo si cambia); en defensas sin estudiante ligado, el Detalle.
+                "SELECT cd.*, p.NombrePrograma, p.GradoAcademico,
+                        COALESCE(NULLIF(tg.TituloTrabajo, ''), cd.Detalle) AS TituloDefensa
                  FROM cronogramadefensa cd
                  LEFT JOIN programa p ON p.ProgramaID = cd.ProgramaID
+                 LEFT JOIN trabajogrado tg ON tg.EstudianteID = cd.EstudianteID AND tg.ProgramaID = cd.ProgramaID
                  WHERE cd.Estado = 'ACTIVO'
                  ORDER BY cd.FechaDefensa ASC, cd.HoraDefensa ASC"
             );
@@ -49,16 +53,23 @@ class CronogramaDefensaModelo
     }
 
     /**
-     * @param array $datos NombreEstudiante, ProgramaID, FechaDefensa, HoraDefensa, Lugar, Detalle, CreadoPorUsuarioID
+     * @param array $datos EstudianteID, NombreEstudiante, ProgramaID, FechaDefensa, HoraDefensa, Lugar, Detalle, CreadoPorUsuarioID
      * @return int|false
      */
     public static function RegistrarModelo($datos)
     {
         try {
-            $stmt = Conexion::Conectar()->prepare(
-                "INSERT INTO cronogramadefensa (NombreEstudiante, ProgramaID, FechaDefensa, HoraDefensa, Lugar, Detalle, CreadoPorUsuarioID)
-                 VALUES (:nombre, :programaID, :fecha, :hora, :lugar, :detalle, :creadoPor)"
+            // Misma conexión para el INSERT y lastInsertId() (con otra devolvía 0)
+            $pdo = Conexion::Conectar();
+            $stmt = $pdo->prepare(
+                "INSERT INTO cronogramadefensa (EstudianteID, NombreEstudiante, ProgramaID, FechaDefensa, HoraDefensa, Lugar, Detalle, CreadoPorUsuarioID)
+                 VALUES (:estudianteID, :nombre, :programaID, :fecha, :hora, :lugar, :detalle, :creadoPor)"
             );
+            if (!empty($datos['EstudianteID'])) {
+                $stmt->bindValue(":estudianteID", (int)$datos['EstudianteID'], PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue(":estudianteID", null, PDO::PARAM_NULL);
+            }
             $stmt->bindParam(":nombre", $datos['NombreEstudiante'], PDO::PARAM_STR);
             if (!empty($datos['ProgramaID'])) {
                 $stmt->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
@@ -86,7 +97,7 @@ class CronogramaDefensaModelo
             if (!$stmt->execute()) {
                 return false;
             }
-            return (int)Conexion::Conectar()->lastInsertId();
+            return (int)$pdo->lastInsertId();
         } catch (PDOException $e) {
             error_log("Error en RegistrarModelo (cronogramadefensa): " . $e->getMessage());
             return false;
@@ -94,7 +105,7 @@ class CronogramaDefensaModelo
     }
 
     /**
-     * @param array $datos IdDefensa, NombreEstudiante, ProgramaID, FechaDefensa, HoraDefensa, Lugar, Detalle
+     * @param array $datos IdDefensa, EstudianteID, NombreEstudiante, ProgramaID, FechaDefensa, HoraDefensa, Lugar, Detalle
      * @return bool
      */
     public static function ActualizarModelo($datos)
@@ -102,6 +113,7 @@ class CronogramaDefensaModelo
         try {
             $stmt = Conexion::Conectar()->prepare(
                 "UPDATE cronogramadefensa SET
+                    EstudianteID = :estudianteID,
                     NombreEstudiante = :nombre,
                     ProgramaID = :programaID,
                     FechaDefensa = :fecha,
@@ -110,6 +122,11 @@ class CronogramaDefensaModelo
                     Detalle = :detalle
                  WHERE IdDefensa = :id"
             );
+            if (!empty($datos['EstudianteID'])) {
+                $stmt->bindValue(":estudianteID", (int)$datos['EstudianteID'], PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue(":estudianteID", null, PDO::PARAM_NULL);
+            }
             $stmt->bindParam(":nombre", $datos['NombreEstudiante'], PDO::PARAM_STR);
             if (!empty($datos['ProgramaID'])) {
                 $stmt->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);

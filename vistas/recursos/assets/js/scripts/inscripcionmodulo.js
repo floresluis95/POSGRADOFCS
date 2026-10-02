@@ -498,6 +498,7 @@ $(document).ready(function() {
                                         <th style="color: white;">MÓDULO</th>
                                         <th class="text-center" style="color: white;">CÓDIGO</th>
                                         <th style="color: white;">DOCENTE</th>
+                                        <th class="text-center" style="color: white;">CUOTA</th>
                                         <th class="text-center" style="color: white;">CALIFICACIÓN</th>
                                         <th class="text-center" style="color: white;">ESTADO</th>
                                     </tr>
@@ -527,12 +528,22 @@ $(document).ready(function() {
                             estadoBadge = '<span class="badge badge-secondary badge-lg"><i class="fa fa-clock-o"></i> SIN CALIFICACIÓN</span>';
                         }
 
+                        // Cuota que cubre el módulo (marcada al generar la orden de cuota)
+                        let cuotaBadge = '<span class="badge badge-light" title="Ninguna orden de cuota marca este módulo">Sin cuota</span>';
+                        if (modulo.CuotaOrden) {
+                            const pagada = modulo.CuotaEstado === 'CONFIRMADO';
+                            const vencida = modulo.CuotaEstado === 'VENCIDO';
+                            cuotaBadge = `<span class="badge ${pagada ? 'badge-success' : (vencida ? 'badge-danger' : 'badge-warning')}">` +
+                                `${pagada ? 'Pagada' : (vencida ? 'Vencida' : 'Pendiente')}</span><br><small class="text-muted">${modulo.CuotaOrden}</small>`;
+                        }
+
                         tabla += `
                             <tr>
                                 <td class="text-center"><strong>${index + 1}</strong></td>
                                 <td><strong>${modulo.NombreModulo || 'N/A'}</strong></td>
                                 <td class="text-center"><span class="badge badge-primary">${modulo.Codigo || 'N/A'}</span></td>
                                 <td>${docenteInfo}</td>
+                                <td class="text-center">${cuotaBadge}</td>
                                 <td class="text-center">${notaDisplay}</td>
                                 <td class="text-center">${estadoBadge}</td>
                             </tr>

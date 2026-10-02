@@ -58,6 +58,37 @@ class CertificadoModelo
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * El título del trabajo de grado se guarda siempre en MAYÚSCULAS y sin
+     * espacios de más, venga de donde venga (certificado de aprobación, defensas,
+     * registro de documentos), para que salga igual en todos los documentos.
+     */
+    public static function NormalizarTitulo($titulo)
+    {
+        return mb_strtoupper(trim(preg_replace('/\s+/u', ' ', (string)$titulo)), 'UTF-8');
+    }
+
+    /**
+     * Guardar SOLO el título (crea el trabajo de grado si aún no existe, sin
+     * tocar tribunal, calificación ni fechas). Lo usan "Guardar título" de la
+     * Aprobación Programa de Posgrado y el Cronograma de defensas.
+     * @return bool
+     */
+    public static function GuardarTituloModelo($estudianteID, $programaID, $titulo, $usuarioID = null)
+    {
+        $stmt = Conexion::Conectar()->prepare("
+            INSERT INTO trabajogrado (EstudianteID, ProgramaID, TituloTrabajo, UsuarioRegistroID)
+            VALUES (:estudianteID, :programaID, :titulo, :usuarioID)
+            ON DUPLICATE KEY UPDATE TituloTrabajo = VALUES(TituloTrabajo)
+        ");
+        return $stmt->execute([
+            ':estudianteID' => (int)$estudianteID,
+            ':programaID' => (int)$programaID,
+            ':titulo' => self::NormalizarTitulo($titulo),
+            ':usuarioID' => $usuarioID,
+        ]);
+    }
+
     /* Trabajo de grado (Tesis/Monografía) registrado para un estudiante+programa */
     public static function ObtenerTrabajoGradoModelo($estudianteID, $programaID)
     {
@@ -81,21 +112,26 @@ class CertificadoModelo
         $stmt = Conexion::Conectar()->prepare("
             INSERT INTO trabajogrado
                 (EstudianteID, ProgramaID, TituloTrabajo, TipoTrabajo, Tribunal,
-                 CalificacionNumeral, FechaEntrega, FechaAprobacion, UsuarioRegistroID)
+                 CalificacionNumeral, FechaEntrega, HoraEntrega, FechaAprobacion, UsuarioRegistroID)
             VALUES
                 (:estudianteID, :programaID, :titulo, :tipoTrabajo, :tribunal,
-                 :calificacion, :fechaEntrega, :fechaAprobacion, :usuarioID)
+                 :calificacion, :fechaEntrega, :horaEntrega, :fechaAprobacion, :usuarioID)
             ON DUPLICATE KEY UPDATE
                 TituloTrabajo = VALUES(TituloTrabajo),
                 TipoTrabajo = VALUES(TipoTrabajo),
                 Tribunal = VALUES(Tribunal),
                 CalificacionNumeral = VALUES(CalificacionNumeral),
                 FechaEntrega = VALUES(FechaEntrega),
+                HoraEntrega = VALUES(HoraEntrega),
                 FechaAprobacion = VALUES(FechaAprobacion),
                 UsuarioRegistroID = VALUES(UsuarioRegistroID)
         ");
 
+        $datos['titulo'] = self::NormalizarTitulo($datos['titulo']);
         $fechaEntrega = !empty($datos['fechaEntrega']) ? $datos['fechaEntrega'] : null;
+        // Hora de entrega del informe final (HH:MM); solo tiene sentido con fecha
+        $horaEntrega = ($fechaEntrega && !empty($datos['horaEntrega']) && preg_match('/^\d{2}:\d{2}$/', $datos['horaEntrega']))
+            ? $datos['horaEntrega'] : null;
         $fechaAprobacion = !empty($datos['fechaAprobacion']) ? $datos['fechaAprobacion'] : date('Y-m-d');
         $calificacion = $datos['calificacion'] !== '' ? $datos['calificacion'] : null;
 
@@ -106,6 +142,7 @@ class CertificadoModelo
         $stmt->bindParam(':tribunal', $datos['tribunal'], PDO::PARAM_STR);
         $stmt->bindParam(':calificacion', $calificacion);
         $stmt->bindParam(':fechaEntrega', $fechaEntrega);
+        $stmt->bindParam(':horaEntrega', $horaEntrega);
         $stmt->bindParam(':fechaAprobacion', $fechaAprobacion);
         $stmt->bindParam(':usuarioID', $datos['usuarioID'], PDO::PARAM_INT);
 
@@ -123,6 +160,7 @@ class CertificadoModelo
             WHERE IdTrabajo = :idTrabajo
         ");
         $calificacionValor = $calificacion !== '' ? $calificacion : null;
+        $titulo = self::NormalizarTitulo($titulo);
         $stmt->bindParam(':titulo', $titulo, PDO::PARAM_STR);
         $stmt->bindParam(':calificacion', $calificacionValor);
         $stmt->bindParam(':tribunal', $tribunal, PDO::PARAM_STR);
@@ -136,7 +174,7 @@ class CertificadoModelo
         return [
             'CALIFICACIONES' => 'Certificado de Calificaciones',
             'HISTORIAL_ACADEMICO' => 'Historial Académico',
-            'APROBACION_MONOGRAFIA' => 'Aprobación de Monografía',
+            'APROBACION_MONOGRAFIA' => 'Aprobación Programa de Posgrado', // la clave se conserva (historial)
             'MEDIO_MAGNETICO' => 'Medio Magnético',
         ];
     }

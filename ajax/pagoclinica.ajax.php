@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/validar-sesion.php';
+ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni docentes)
 /**
  * AJAX para Pago de Clínicas (pestaña "Clínicas" del modal Gestión de Pagos).
  * La anulación de una orden pendiente reutiliza 'anularPreregistro' de ordenpago.ajax.php.

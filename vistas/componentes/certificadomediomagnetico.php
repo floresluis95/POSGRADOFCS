@@ -4,6 +4,12 @@ $Validar->ValidarSessionControlador();
 date_default_timezone_set("America/La_Paz");
 
 require_once 'modelos/certificado.modelo.php';
+require_once 'modelos/autoridad.modelo.php';
+
+// Firmas: los nombres vigentes de la pantalla "Autoridades" (se pueden ajustar aquí antes de imprimir)
+$autoridadesCarta = AutoridadModelo::ListarModelo();
+$coordinadorCarta = AutoridadModelo::NombreParaDocumento($autoridadesCarta, 'COORDINADOR');
+$directorCarta = AutoridadModelo::NombreParaDocumento($autoridadesCarta, 'DIRECTOR');
 ?>
 
 <link rel="stylesheet" href="vistas/recursos/assets/css/certificados.css?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/css/certificados.css'); ?>">
@@ -148,7 +154,7 @@ require_once 'modelos/certificado.modelo.php';
 
                                 <div class="form-group">
                                     <label><strong>Título del Trabajo</strong></label>
-                                    <textarea class="form-control" id="input-titulo" rows="3" placeholder="Escriba el título completo del trabajo"></textarea>
+                                    <textarea class="form-control" id="input-titulo" rows="3" spellcheck="true" lang="es" placeholder="ESCRIBA EL TÍTULO COMPLETO DEL TRABAJO"></textarea>
                                 </div>
 
                                 <div class="row">
@@ -161,13 +167,13 @@ require_once 'modelos/certificado.modelo.php';
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label><strong>Coordinador de Posgrado (nombre y grado)</strong></label>
-                                            <input type="text" class="form-control" id="input-coordinador" value="M. Sc. Dr. Milton Mamani Morales">
+                                            <input type="text" class="form-control" id="input-coordinador" value="<?php echo htmlspecialchars($coordinadorCarta, ENT_QUOTES); ?>">
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label><strong>Director de Posgrado (nombre y grado)</strong></label>
-                                            <input type="text" class="form-control" id="input-director" value="M. Sc. Ing. Carlos Antezana Garcia">
+                                            <input type="text" class="form-control" id="input-director" value="<?php echo htmlspecialchars($directorCarta, ENT_QUOTES); ?>">
                                         </div>
                                     </div>
                                 </div>
@@ -210,6 +216,24 @@ require_once 'modelos/certificado.modelo.php';
     <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
     <script>
     $(document).ready(function() {
+
+        // "Ha realizado el curso de:" como en el formato: ESPECIALIDAD EN ARMONIZACION OROFACIAL.
+        // El nombre del programa ya trae el grado (ESPECIALIDAD DE ...), así que no se repite.
+        function cursoRealizado(grado, programa) {
+            grado = String(grado || '').toUpperCase().trim();
+            programa = String(programa || '').toUpperCase().trim();
+            if (grado && programa.indexOf(grado + ' ') === 0) {
+                return programa.replace(new RegExp('^' + grado + ' DE '), grado + ' EN ');
+            }
+            return grado ? grado + ' EN ' + programa : programa;
+        }
+
+        // El título va en MAYÚSCULAS (igual que en el trabajo de grado)
+        $('#input-titulo').on('input', function() {
+            var inicio = this.selectionStart, fin = this.selectionEnd;
+            var mayus = this.value.toLocaleUpperCase('es');
+            if (mayus !== this.value) { this.value = mayus; this.setSelectionRange(inicio, fin); }
+        });
         var hoy = new Date();
         $('#input-fecha').val(hoy.toISOString().split('T')[0]);
 
@@ -257,7 +281,7 @@ require_once 'modelos/certificado.modelo.php';
                             .val(insc.EstudianteID)
                             .attr('data-programa-id', insc.ProgramaID)
                             .attr('data-nombre', nombreCompleto)
-                            .attr('data-curso', insc.GradoAcademico + ' EN ' + insc.NombrePrograma)
+                            .attr('data-curso', cursoRealizado(insc.GradoAcademico, insc.NombrePrograma))
                             .text(etiqueta);
 
                         $select.append($option);
@@ -320,7 +344,7 @@ require_once 'modelos/certificado.modelo.php';
                         }
                         $('#input-titulo').before(
                             '<div class="alert alert-success py-2" id="alerta-titulo-automatico">' +
-                            '<i class="fas fa-check-circle"></i> Título completado automáticamente desde el trabajo de grado registrado (Certificado de Aprobación de Monografía). Puede editarlo si es necesario.' +
+                            '<i class="fas fa-check-circle"></i> Título completado automáticamente desde el trabajo de grado registrado (Certificado de Aprobación Programa de Posgrado). Puede editarlo si es necesario.' +
                             '</div>'
                         );
                     }

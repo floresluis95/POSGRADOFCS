@@ -649,6 +649,7 @@ class CalificacionModelo
                         c.Nota,
                         c.estado as Estado,
                         c.FechaRegistro,
+                        p.ProgramaID,
                         p.NombrePrograma,
                         p.GradoAcademico
                     FROM calificacion c
@@ -661,6 +662,20 @@ class CalificacionModelo
 
             // Agregar condición según tipo de búsqueda
             switch ($tipoBusqueda) {
+                // Un solo buscador: números = C.I. (empieza por); texto = cada palabra
+                // debe estar en el nombre completo, en cualquier orden ("ala ilsen").
+                case 'general':
+                    if (preg_match('/^\d+$/', $valor)) {
+                        $sql .= " AND e.Ci LIKE :valor";
+                        $params[':valor'] = $valor . '%';
+                    } else {
+                        $palabras = array_slice(preg_split('/\s+/u', $valor, -1, PREG_SPLIT_NO_EMPTY), 0, 5);
+                        foreach ($palabras as $i => $palabra) {
+                            $sql .= " AND CONCAT_WS(' ', e.Nombre, e.Apaterno, e.Amaterno) LIKE :p$i";
+                            $params[":p$i"] = '%' . $palabra . '%';
+                        }
+                    }
+                    break;
                 case 'ci':
                     $sql .= " AND e.Ci LIKE :valor";
                     $params[':valor'] = "%$valor%";
@@ -681,7 +696,8 @@ class CalificacionModelo
                 $params[':programaID'] = $programaID;
             }
 
-            $sql .= " ORDER BY e.Apaterno, e.Amaterno, e.Nombre, p.NombrePrograma, m.codigomodulo";
+            // Orden de los módulos por su número (MODULO II antes que MODULO X)
+            $sql .= " ORDER BY e.Apaterno, e.Amaterno, e.Nombre, p.NombrePrograma, m.Idmodulo LIMIT 500";
 
             $stmt = Conexion::Conectar()->prepare($sql);
 

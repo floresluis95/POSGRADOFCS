@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/validar-sesion.php';
+ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni docentes)
 /**
  * AJAX para buscar docentes en toda la base de datos (no solo los
  * ya cargados/paginados en la vista de la lista de docentes).

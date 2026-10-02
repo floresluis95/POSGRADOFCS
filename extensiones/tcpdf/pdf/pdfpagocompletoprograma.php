@@ -13,10 +13,21 @@ error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
+// Antes se podía descargar sin iniciar sesión (con solo el idinscripcion en la URL):
+// tiene datos personales y de pagos, así que es solo para el personal.
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (empty($_SESSION['Validar']) || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX'], true)) {
+    http_response_code(403);
+    die('Acceso denegado. Inicie sesión en el sistema.');
+}
+
 // Rutas base
 $baseDir = realpath(__DIR__ . '/../../../');
 require_once $baseDir . '/vendor/autoload.php';
-require_once $baseDir . '/modelos/conexion.modelo.php';
+// La conexión está en core/ (modelos/conexion.modelo.php ya no existe; antes este PDF salía en blanco)
+require_once file_exists($baseDir . '/modelos/conexion.modelo.php') ? $baseDir . '/modelos/conexion.modelo.php' : $baseDir . '/core/conexion.modelo.php';
 
 // Validar ID de inscripción
 if (!isset($_GET['idinscripcion']) || empty($_GET['idinscripcion'])) {

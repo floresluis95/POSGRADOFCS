@@ -125,9 +125,17 @@
         // ============================================
         // CRONOGRAMA DE DEFENSA
         // ============================================
+        // Liga (o desliga) la defensa con un estudiante buscado por C.I.
+        function ligarEstudianteDefensa(estudianteID, aviso) {
+            $('#defensaEstudianteID').val(estudianteID || '');
+            $('#defensaEstudianteAviso').text(aviso || 'Opcional: si lo busca, el título del trabajo se completa solo.');
+        }
+
         function abrirModalNuevaDefensa() {
             $('#formDefensa')[0].reset();
             $('#defensaIdDefensa').val('');
+            $('#defensaInscripcion').hide().empty();
+            ligarEstudianteDefensa(null);
             $('#modalDefensaTitulo').html('<i class="fa fa-user-graduate"></i> Nueva Defensa');
             $('#btnEliminarDefensa').hide();
             $('#modalDefensa').modal('show');
@@ -142,6 +150,9 @@
             $('#defensaHora').val($btn.data('hora'));
             $('#defensaLugar').val($btn.data('lugar'));
             $('#defensaDetalle').val($btn.data('detalle'));
+            $('#defensaInscripcion').hide().empty();
+            ligarEstudianteDefensa($btn.data('estudiante') || null,
+                $btn.data('estudiante') ? 'Estudiante ligado: el título es el de su trabajo de grado.' : null);
             $('#modalDefensaTitulo').html('<i class="fa fa-edit"></i> Editar Defensa');
             $('#btnEliminarDefensa').show().data('id', $btn.data('id'));
             $('#modalDefensa').modal('show');
@@ -179,6 +190,67 @@
 
         $('#btnNuevaDefensa').on('click', abrirModalNuevaDefensa);
 
+        // Buscar al estudiante por C.I. (mismo buscador que los certificados)
+        function buscarEstudianteDefensa() {
+            var ci = $('#defensaBuscarCi').val().trim();
+            if (!ci) return;
+            $.post('ajax/certificado.ajax.php', { accion: 'buscarPorCI', ci: ci }, function (data) {
+                var $sel = $('#defensaInscripcion').empty();
+                if (!data || !data.success || !data.resultados || !data.resultados.length) {
+                    $sel.hide();
+                    ligarEstudianteDefensa(null, 'No se encontró un estudiante inscrito con ese C.I.');
+                    return;
+                }
+                if (data.resultados.length > 1) $sel.append('<option value="">-- Elija el programa --</option>');
+                data.resultados.forEach(function (r) {
+                    var nombre = [r.Apaterno, r.Amaterno, r.Nombre].join(' ').replace(/\s+/g, ' ').trim();
+                    $('<option></option>').val(r.EstudianteID)
+                        .attr('data-programa', r.ProgramaID)
+                        .attr('data-nombre', nombre)
+                        .text(nombre + ' - ' + r.NombrePrograma)
+                        .appendTo($sel);
+                });
+                $sel.show();
+                if (data.resultados.length === 1) $sel.trigger('change');
+            }, 'json');
+        }
+
+        $('#btnDefensaBuscarCi').on('click', buscarEstudianteDefensa);
+        $('#defensaBuscarCi').on('keypress', function (e) {
+            if (e.which === 13) { e.preventDefault(); buscarEstudianteDefensa(); }
+        });
+
+        // Al elegir la inscripción: nombre, programa y el título guardado del trabajo
+        $('#defensaInscripcion').on('change', function () {
+            var $opt = $(this).find('option:selected');
+            var estudianteID = $(this).val();
+            if (!estudianteID) { ligarEstudianteDefensa(null); return; }
+            var programaID = $opt.data('programa');
+            $('#defensaNombre').val($opt.data('nombre'));
+            $('#defensaPrograma').val(String(programaID));
+            $.post('ajax/certificado.ajax.php', { accion: 'obtenerTrabajoGrado', estudianteID: estudianteID, programaID: programaID }, function (data) {
+                var titulo = data && data.trabajo ? data.trabajo.TituloTrabajo : '';
+                $('#defensaDetalle').val(titulo || '');
+                ligarEstudianteDefensa(estudianteID, titulo
+                    ? 'Título tomado de su trabajo de grado.'
+                    : 'El estudiante aún no tiene título registrado: escríbalo y se guardará en su trabajo de grado.');
+            }, 'json');
+        });
+
+        // Si se cambia el programa a mano, la defensa deja de estar ligada al estudiante
+        $('#defensaPrograma').on('change', function () {
+            if ($('#defensaEstudianteID').val()) {
+                ligarEstudianteDefensa(null, 'Se cambió el programa: busque de nuevo al estudiante para ligar su título.');
+            }
+        });
+
+        // El título del trabajo va en MAYÚSCULAS
+        $('#defensaDetalle').on('input', function () {
+            var inicio = this.selectionStart, fin = this.selectionEnd;
+            var mayus = this.value.toLocaleUpperCase('es');
+            if (mayus !== this.value) { this.value = mayus; this.setSelectionRange(inicio, fin); }
+        });
+
         $(document).on('click', '.btn-editar-defensa', function () {
             abrirModalEditarDefensa($(this));
         });
@@ -198,6 +270,7 @@
             var datos = {
                 accion: idDefensa ? 'actualizar' : 'registrar',
                 idDefensa: idDefensa,
+                estudianteID: $('#defensaEstudianteID').val(),
                 nombreEstudiante: $('#defensaNombre').val().trim(),
                 programaID: $('#defensaPrograma').val(),
                 fechaDefensa: $('#defensaFecha').val(),

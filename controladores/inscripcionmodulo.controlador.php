@@ -155,17 +155,20 @@ class InscripcionModuloControladores
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="vistas/componentes/recibo-pago-modulos.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
-                                    <i class="fa fa-file-text text-success"></i> Ver Recibo de Pagos
+                                    <i class="fa fa-file-invoice-dollar text-success"></i> Ver Recibo de Pagos
                                 </a>
                                 <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfestudiante.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
                                     <i class="fa fa-print text-warning"></i> Imprimir Ficha
+                                </a>
+                                <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfcompromiso.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
+                                    <i class="fa fa-file-signature text-info"></i> Documento de Compromiso
                                 </a>';
 
             // Agregar opción de comprobante de pago completo solo si pagoCompleto = 1
             if ($pagoCompleto == 1) {
                 echo '
                                 <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfpagocompletoprograma.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank" style="background-color: #e7f3ff;">
-                                    <i class="fa fa-file-pdf-o text-primary"></i> <strong>Comprobante Pago Completo</strong>
+                                    <i class="fa fa-file-pdf text-primary"></i> <strong>Comprobante Pago Completo</strong>
                                 </a>';
             }
 

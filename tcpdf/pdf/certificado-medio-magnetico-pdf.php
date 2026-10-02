@@ -1,6 +1,7 @@
 <?php
 /**
  * Certificado de Medio Magnético - Carta de Certificación (PDF)
+ * Formato: CARTA_FORMATO MEDIO MAGNETICO.docx (entregado por Coordinación, 2026-10-02).
  * A diferencia de los otros 3 certificados, esta carta se genera completa
  * (con su propio membrete institucional), ya que no se imprime sobre un
  * formato pre-impreso de Posgrado Central.
@@ -55,6 +56,10 @@ $fechaTexto = 'Oruro, ' . (int) date('j', $timestampFecha) . ' de ' . $mesesEspa
 
 // ===================================
 // GENERACIÓN DEL PDF
+// Réplica del formato "CARTA_FORMATO MEDIO MAGNETICO.docx": hoja carta,
+// márgenes laterales de 30 mm, membrete en Arial Narrow (aquí Helvetica
+// angostada), cuerpo en Times New Roman 12 con interlineado 1,5 y los datos
+// alineados a 62,5 mm del margen, como las tabulaciones del Word.
 // ===================================
 $pdf = new TCPDF('P', 'mm', 'LETTER', true, 'UTF-8', false);
 $pdf->SetCreator('Sistema de Gestión Académica - Posgrado FCS');
@@ -64,111 +69,118 @@ $pdf->SetSubject('Certificación de entrega de medio físico y digital');
 
 $pdf->setPrintHeader(false);
 $pdf->setPrintFooter(false);
-$pdf->SetMargins(20, 15, 20);
-$pdf->SetAutoPageBreak(true, 15);
+$pdf->SetMargins(30, 12, 30);
+$pdf->SetAutoPageBreak(true, 20);
 $pdf->AddPage();
 $pdf->SetTextColor(0, 0, 0);
+
+$margenIzq = 30;
+$anchoTexto = 215.9 - 30 - 30;   // 155,9 mm
+$xValor = $margenIzq + 62.5;     // columna de los datos (tabulación del Word)
+$anchoValor = $margenIzq + $anchoTexto - $xValor;
+$interlineado = 7.3;             // Times 12 con interlineado 1,5
 
 // ===================================
 // MEMBRETE
 // ===================================
 $logoUTO = '../../extensiones/imagenespdf/logouto.png';
 $logoFCS = '../../extensiones/imagenespdf/logofcs.png';
-
 if (file_exists($logoUTO)) {
-    $pdf->Image($logoUTO, 15, 10, 22, 0, 'PNG');
+    $pdf->Image($logoUTO, 32, 12.5, 21.7, 21.7, 'PNG');
 }
 if (file_exists($logoFCS)) {
-    $pdf->Image($logoFCS, 175, 10, 22, 0, 'PNG');
+    $pdf->Image($logoFCS, 170, 12.5, 18.2, 23.5, 'PNG');
 }
 
+// Arial Narrow: Helvetica al 82 % de ancho
+$pdf->setFontStretching(82);
+$pdf->SetY(12.5);
+$pdf->SetFont('helvetica', 'B', 18);
+$pdf->Cell(0, 7.2, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
+$pdf->Cell(0, 7.2, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C');
 $pdf->SetFont('helvetica', 'B', 14);
-$pdf->SetY(12);
-$pdf->Cell(0, 5, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
-
-$pdf->SetFont('helvetica', 'B', 11);
-$pdf->Cell(0, 5, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C');
-$pdf->Cell(0, 5, 'COORDINACION DE POSGRADO - ODONTOLOGIA', 0, 1, 'C');
-
+$pdf->Cell(0, 5.8, 'COORDINACION DE POSGRADO - ODONTOLOGIA', 0, 1, 'C');
+$pdf->Ln(2.5);
 $pdf->SetFont('helvetica', '', 8);
-$pdf->Cell(0, 4, 'C. Presidente Montes entre C/ Murguia y Aldana Edificio de Posgrado UTO 2do Piso, Teléfonos: 5237317- Fax 5247110', 0, 1, 'C');
-$pdf->Cell(0, 4, 'Oruro – Bolivia', 0, 1, 'C');
+$pdf->Cell(0, 3.6, 'C. Presidente Montes entre C/ Murguia y Aldana Edificio de Posgrado UTO 2do Piso, Teléfonos: 5237317- Fax 5247110', 0, 1, 'C');
+$pdf->Cell(0, 3.6, 'Oruro – Bolivia', 0, 1, 'C');
+$pdf->setFontStretching(100);
 
-$pdf->Ln(3);
-$pdf->SetLineWidth(0.6);
-$pdf->Line(15, $pdf->GetY(), 197, $pdf->GetY());
+// Línea gruesa (3 pt) bajo el membrete, de margen a margen
+$pdf->Ln(1.5);
+$pdf->SetLineWidth(1.06);
+$pdf->Line($margenIzq, $pdf->GetY(), $margenIzq + $anchoTexto, $pdf->GetY());
 $pdf->SetLineWidth(0.2);
-$pdf->Ln(16);
 
 // ===================================
 // TÍTULO
 // ===================================
-$pdf->SetFont('helvetica', 'B', 16);
+$pdf->SetY($pdf->GetY() + 12);
+$pdf->SetFont('times', 'B', 15);
 $pdf->Cell(0, 8, 'CERTIFICACIÓN', 0, 1, 'C');
-$pdf->Ln(12);
+$pdf->Ln(8);
 
 // ===================================
 // CUERPO
 // ===================================
-$xLabel = 20;
-$wLabel = 55;
-$xValor = 75;
-$wValor = 122;
+$pdf->SetFont('times', '', 12);
+$pdf->MultiCell(0, $interlineado, 'La Dirección de Posgrado de la Universidad Técnica de Oruro certifica que:', 0, 'L', false, 1);
 
-$pdf->SetFont('helvetica', '', 11);
-$pdf->MultiCell(0, 6, 'La Dirección de Posgrado de la Universidad Técnica de Oruro certifica que:', 0, 'L', false, 1);
-$pdf->Ln(8);
+// "Etiqueta:   VALOR" con el valor en la columna de 62,5 mm (si no entra en
+// una línea, continúa debajo en la misma columna, como la sangría francesa del Word)
+function filaCertificacion($pdf, $etiqueta, $valor, $xValor, $anchoValor, $alto)
+{
+    $y = $pdf->GetY();
+    $pdf->SetFont('times', '', 12);
+    $pdf->SetXY(30, $y);
+    $pdf->Cell($xValor - 30, $alto, $etiqueta, 0, 0, 'L');
+    $pdf->MultiCell($anchoValor, $alto, mb_strtoupper($valor, 'UTF-8'), 0, 'L', false, 1, $xValor, $y);
+}
 
-$pdf->SetFont('helvetica', '', 11);
-$pdf->SetX($xLabel);
-$pdf->Cell($wLabel - 20, 6, $tratamiento, 0, 0, 'L');
-$pdf->SetFont('helvetica', 'B', 11);
-$pdf->SetX($xValor);
-$pdf->MultiCell($wValor, 6, mb_strtoupper($nombre, 'UTF-8'), 0, 'L');
-$pdf->Ln(5);
+filaCertificacion($pdf, $tratamiento, $nombre, $xValor, $anchoValor, $interlineado);
+filaCertificacion($pdf, 'Ha realizado el curso de:', $curso, $xValor, $anchoValor, $interlineado);
+filaCertificacion($pdf, 'Ha entregado el respectivo:', $tipoTrabajo, $xValor, $anchoValor, $interlineado);
+$pdf->Ln($interlineado);
 
-$pdf->SetFont('helvetica', '', 11);
-$pdf->SetX($xLabel);
-$pdf->Cell($wLabel, 6, 'Ha realizado el curso de:', 0, 0, 'L');
-$pdf->SetFont('helvetica', 'B', 11);
-$pdf->SetX($xValor);
-$pdf->MultiCell($wValor, 6, mb_strtoupper($curso, 'UTF-8'), 0, 'L');
-$pdf->Ln(5);
+$pdf->SetFont('times', 'B', 12);
+$pdf->MultiCell(0, 5.5, mb_strtoupper($titulo, 'UTF-8'), 0, 'J', false, 1);
+$pdf->Ln(3);
 
-$pdf->SetFont('helvetica', '', 11);
-$pdf->SetX($xLabel);
-$pdf->Cell($wLabel, 6, 'Ha entregado el respectivo:', 0, 0, 'L');
-$pdf->SetFont('helvetica', 'B', 11);
-$pdf->SetX($xValor);
-$pdf->MultiCell($wValor, 6, mb_strtoupper($tipoTrabajo, 'UTF-8'), 0, 'L');
-$pdf->Ln(8);
-
-$pdf->SetFont('helvetica', 'B', 11);
-$pdf->MultiCell(0, 6, mb_strtoupper($titulo, 'UTF-8'), 0, 'J', false, 1);
-$pdf->Ln(8);
-
-$pdf->SetFont('helvetica', '', 11);
+$pdf->SetFont('times', '', 12);
 $pdf->MultiCell(0, 6, 'Cumpliendo el requisito para tramitar su respectivo Diploma Académico.', 0, 'L', false, 1);
-$pdf->Ln(4);
+$pdf->Ln(2);
 $pdf->MultiCell(0, 6, 'Es cuanto corresponde certificar para fines consiguientes:', 0, 'L', false, 1);
-$pdf->Ln(24);
+$pdf->Ln(14);
 
 $pdf->Cell(0, 6, $fechaTexto, 0, 1, 'L');
-$pdf->Ln(24);
 
 // ===================================
-// FIRMAS
+// FIRMAS (dos columnas: Coordinador a la izquierda, Director a la derecha)
 // ===================================
-$yFirmas = $pdf->GetY();
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->SetXY(20, $yFirmas);
-$pdf->MultiCell(80, 5, $coordinador . "\nCOORDINADOR DE POSGRADO\nODONTOLOGÍA\nUNIVERSIDAD TÉCNICA DE ORURO", 0, 'C');
+$yFirmas = $pdf->GetY() + 26;   // espacio para firmar y sellar
+if ($yFirmas + 30 > 279.4 - 20) {
+    $pdf->AddPage();
+    $yFirmas = 40;
+}
 
-$pdf->SetXY(115, $yFirmas);
-$pdf->MultiCell(80, 5, $director . "\nDIRECTOR POSGRADO\nUNIVERSIDAD TÉCNICA DE ORURO", 0, 'C');
+function firmaMedioMagnetico($pdf, $x, $y, $ancho, $nombreFirma, array $cargos)
+{
+    $pdf->SetFont('times', '', 12);
+    $pdf->SetXY($x, $y);
+    $pdf->MultiCell($ancho, 5.5, $nombreFirma, 0, 'C', false, 1, $x, $y);
+    $pdf->SetFont('times', 'B', 9);
+    foreach ($cargos as $cargo) {
+        $pdf->SetX($x);
+        $pdf->Cell($ancho, 4, $cargo, 0, 1, 'C');
+    }
+}
 
-$pdf->Ln(15);
-$pdf->SetFont('helvetica', '', 11);
+firmaMedioMagnetico($pdf, 26, $yFirmas, 80, $coordinador, ['COORDINADOR DE POSGRADO ODONTOLOGÍA', 'UNIVERSIDAD TÉCNICA DE ORURO']);
+firmaMedioMagnetico($pdf, 111, $yFirmas, 80, $director, ['DIRECTOR POSGRADO', 'UNIVERSIDAD TÉCNICA DE ORURO']);
+
+// N° de recibo al pie, a la izquierda
+$pdf->SetY($yFirmas + 24);
+$pdf->SetFont('times', '', 12);
 $pdf->Cell(0, 6, 'N° ' . mb_strtoupper($vaucher, 'UTF-8'), 0, 1, 'L');
 
 if (ob_get_contents()) {

@@ -1,6 +1,7 @@
 <?php
 /**
- * Certificado de Aprobación de Trabajo Monográfico - PDF
+ * Certificado de Aprobación Programa de Posgrado - PDF
+ * (antes "de Monografía": el trabajo de grado no siempre es una monografía)
  * Se imprime SOLO el contenido (sin membrete propio) porque el papel ya viene
  * pre-impreso desde Posgrado Central (Universidad Técnica de Oruro), en hoja
  * oficio vertical (8.5 x 14 in).
@@ -34,9 +35,11 @@ $nombre = $_POST['nombre'] ?? '';
 $programa = $_POST['programa'] ?? '';
 $curso = $_POST['curso'] ?? '';
 $vaucher = $_POST['vaucher'] ?? '';
-$titulo = $_POST['titulo'] ?? '';
+// Siempre en MAYÚSCULAS, igual que se guarda en trabajogrado
+$titulo = CertificadoModelo::NormalizarTitulo($_POST['titulo'] ?? '');
 $tribunalRaw = $_POST['tribunal'] ?? '';
 $entrega = $_POST['entrega'] ?? '';
+$horaEntrega = $_POST['horaEntrega'] ?? '';
 $calificacion = $_POST['calificacion'] ?? '';
 
 if (empty($nombre) || empty($titulo) || empty($vaucher) || $calificacion === '') {
@@ -56,6 +59,7 @@ if ($estudianteID && $programaID) {
         'tribunal' => $tribunalRaw,
         'calificacion' => $calificacion,
         'fechaEntrega' => $entrega,
+        'horaEntrega' => $horaEntrega,
         'fechaAprobacion' => date('Y-m-d'),
         'usuarioID' => $_SESSION['IdUsuario'] ?? null,
     ]);
@@ -120,6 +124,10 @@ function numeroALetrasMonografia($numero)
 
 $calificacionLiteral = numeroALetrasMonografia($calificacion);
 $fechaEntregaTexto = !empty($entrega) ? date('d/m/Y', strtotime($entrega)) : '';
+// Con hora: "15/10/2026 - 10:30 HRS."
+if ($fechaEntregaTexto !== '' && preg_match('/^\d{2}:\d{2}$/', $horaEntrega)) {
+    $fechaEntregaTexto .= ' - ' . $horaEntrega . ' HRS.';
+}
 
 // ===================================
 // COORDENADAS (mm) - Hoja Oficio vertical (215.9 x 355.6 mm)
@@ -143,8 +151,8 @@ $X_RECIBO = 52;          $Y_RECIBO = 303.6;    $W_RECIBO = 55;
 $pdf = new TCPDF('P', 'mm', array(215.9, 355.6), true, 'UTF-8', false);
 $pdf->SetCreator('Sistema de Gestión Académica - Posgrado FCS');
 $pdf->SetAuthor('Posgrado FCS - Universidad Técnica de Oruro');
-$pdf->SetTitle('Certificado de Aprobación de Monografía - ' . $nombre);
-$pdf->SetSubject('Certificado de Aprobación de Trabajo Monográfico');
+$pdf->SetTitle('Certificado de Aprobación Programa de Posgrado - ' . $nombre);
+$pdf->SetSubject('Certificado de Aprobación Programa de Posgrado');
 
 $pdf->setPrintHeader(false);
 $pdf->setPrintFooter(false);
@@ -158,7 +166,7 @@ $pdf->SetFont('helvetica', 'B', 13);
 $pdf->SetXY(0, $Y_NOMBRE);
 $pdf->Cell(215.9, 7, mb_strtoupper($nombre, 'UTF-8'), 0, 0, 'C');
 
-// Programa / Curso
+// Programa / Curso (en el espacio de "curso" va el grado académico del programa)
 $pdf->SetFont('helvetica', '', 11);
 $pdf->SetXY($X_PROGRAMA, $Y_PROGRAMA);
 $pdf->Cell($W_PROGRAMA, 6, mb_strtoupper($programa, 'UTF-8'), 0, 0, 'L');
@@ -166,7 +174,7 @@ $pdf->Cell($W_PROGRAMA, 6, mb_strtoupper($programa, 'UTF-8'), 0, 0, 'L');
 $pdf->SetXY($X_CURSO, $Y_CURSO);
 $pdf->Cell($W_CURSO, 6, mb_strtoupper($curso, 'UTF-8'), 0, 0, 'L');
 
-// Título del trabajo monográfico
+// Título del trabajo de grado
 $pdf->SetFont('helvetica', '', 10);
 $pdf->MultiCell($W_TITULO, 6, mb_strtoupper($titulo, 'UTF-8'), 0, 'L', false, 1, $X_TITULO, $Y_TITULO);
 
@@ -197,6 +205,6 @@ if (ob_get_contents()) {
     ob_end_clean();
 }
 
-$nombreArchivo = 'Certificado_Aprobacion_Monografia_' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $nombre) . '_' . date('Ymd') . '.pdf';
+$nombreArchivo = 'Certificado_Aprobacion_Posgrado_' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $nombre) . '_' . date('Ymd') . '.pdf';
 $pdf->Output($nombreArchivo, 'I');
 exit;

@@ -296,17 +296,17 @@ class CalificacionControlador
             $valorBusqueda = trim($_POST['valorBusqueda']);
             $programaID = isset($_POST['programaID']) ? $_POST['programaID'] : null;
 
-            // Validar que el valor de búsqueda no esté vacío
-            if (empty($valorBusqueda)) {
+            // Validar que el valor de búsqueda no esté vacío (mínimo 3 caracteres)
+            if (empty($valorBusqueda) || mb_strlen($valorBusqueda, 'UTF-8') < 3) {
                 echo json_encode([
                     'status' => 'error',
-                    'message' => 'Debe ingresar un valor para buscar'
+                    'message' => 'Escriba al menos 3 caracteres (C.I., nombre o apellido)'
                 ]);
                 return;
             }
 
             // Validar tipo de búsqueda
-            $tiposValidos = ['ci', 'nombre', 'apellido'];
+            $tiposValidos = ['general', 'ci', 'nombre', 'apellido'];
             if (!in_array($tipoBusqueda, $tiposValidos)) {
                 echo json_encode([
                     'status' => 'error',

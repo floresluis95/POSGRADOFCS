@@ -16,8 +16,9 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Validar sesión
-if (!isset($_SESSION['Validar']) || !$_SESSION['Validar']) {
-    error_log("PDF: Acceso denegado - sesión no válida");
+// Solo el personal genera órdenes de pago
+if (!isset($_SESSION['Validar']) || !$_SESSION['Validar'] || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX'], true)) {
+    error_log("PDF: Acceso denegado - sesión no válida o sin permiso");
     die('Acceso denegado - Por favor inicie sesión nuevamente');
 }
 

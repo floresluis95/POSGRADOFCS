@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/validar-sesion.php';
-ExigirSesionAjax();
+ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni docentes)
 /**
  * AJAX para gestionar inscripciones a módulos
  * Obtiene módulos inscritos por estudiante
@@ -29,7 +29,10 @@ if (isset($_POST["accion"]) && $_POST["accion"] === "obtenerModulosInscritos" &&
                 'NombreDocente' => $modulo['NombreDocente'] ?? 'Sin asignar',
                 'EspecialidadDocente' => $modulo['EspecialidadDocente'] ?? '',
                 'Nota' => $modulo['Nota'],
-                'EstadoAprobacion' => $modulo['EstadoAprobacion']
+                'EstadoAprobacion' => $modulo['EstadoAprobacion'],
+                // Orden de cuota que cubre el módulo (solo control, ver ordenpagomodulo)
+                'CuotaOrden' => $modulo['CuotaOrden'] ?? null,
+                'CuotaEstado' => $modulo['CuotaEstado'] ?? null
             ];
         }, $modulos);
 

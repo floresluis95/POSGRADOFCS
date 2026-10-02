@@ -63,6 +63,12 @@ if ($_SESSION["Tipo"] == "ADM") {
                   </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="requisitos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-checking" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Catálogo de Requisitos</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="historialpagos" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-time" style="color: #6f94c9;"></i>
                     <span class="kt-menu__link-text">Historial de Pagos</span>
@@ -142,12 +148,6 @@ if ($_SESSION["Tipo"] == "ADM") {
                   </a>
                 </li>
 
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="reportecalificaciones" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">Registro de Notas - Docentes</span>
-                  </a>
-                </li>
              
 
               
@@ -177,6 +177,12 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Usuarios</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="autoridades" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-correct" style="color: #9c27b0;"></i>
+                    <span class="kt-menu__link-text">Autoridades</span>
+                  </a>
+                </li>
                   <!-- CERTIFICADOS -->
                 <li class="kt-menu__section">
                   <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
@@ -198,7 +204,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="certificadoaprobacionmonografia" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-contract" style="color: #d9a941;"></i>
-                    <span class="kt-menu__link-text">Aprobación de Monografía</span>
+                    <span class="kt-menu__link-text">Aprobación Programa de Posgrado</span>
                   </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
@@ -381,12 +387,6 @@ if ($_SESSION["Tipo"] == "SEC") {
                   </a>
                 </li>
 
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="reportecalificaciones" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">Registro de Notas - Docentes</span>
-                  </a>
-                </li>
              
 
               
@@ -438,7 +438,7 @@ if ($_SESSION["Tipo"] == "SEC") {
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="certificadoaprobacionmonografia" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-contract" style="color: #d9a941;"></i>
-                    <span class="kt-menu__link-text">Aprobación de Monografía</span>
+                    <span class="kt-menu__link-text">Aprobación Programa de Posgrado</span>
                   </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
@@ -633,12 +633,6 @@ if ($_SESSION["Tipo"] == "AUX") {
                   </a>
                 </li>
 
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="reportecalificaciones" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">Registro de Notas - Docentes</span>
-                  </a>
-                </li>
              
 
               
@@ -765,6 +759,18 @@ if ($_SESSION["Tipo"] == "EST") {
                   <a href="historialmodulosestudiante" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-list-3" style="color: #fd397a;"></i>
                     <span class="kt-menu__link-text">HISTORIAL DE PAGOS</span>
+                  </a>
+                </li>
+
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-checking" style="color: #fd397a;"></i> MI MATRÍCULA
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="misrequisitos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-checking" style="color: #fd397a;"></i>
+                    <span class="kt-menu__link-text">MIS REQUISITOS</span>
                   </a>
                 </li>
                
@@ -1111,3 +1117,68 @@ if ($_SESSION["Tipo"] == "EST") {
   }
 }
 </style>
+
+<!-- ===== Sección actual en el menú lateral =====
+     Marca la opción de la página abierta (y el título de su sección) y desplaza
+     el menú hasta ella, para no perderse entre tantas secciones. -->
+<style>
+.kt-aside .menu-item-modern.menu-item-actual > .kt-menu__link {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-left: 4px solid #ffd166 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+.kt-aside .menu-item-modern.menu-item-actual > .kt-menu__link .kt-menu__link-text {
+  font-weight: 700 !important;
+  color: #ffffff !important;
+}
+.kt-aside .menu-item-modern.menu-item-actual > .kt-menu__link .kt-menu__link-icon {
+  color: #ffd166 !important;
+}
+.kt-aside .kt-menu__section.seccion-actual {
+  background: rgba(255, 209, 102, 0.14);
+  border-left-color: #ffd166 !important;
+}
+</style>
+<script>
+(function () {
+  // Página abierta (index.php?action=... o URL amigable /pagina)
+  var parametros = new URLSearchParams(window.location.search);
+  var pagina = parametros.get('action') || window.location.pathname.split('/').pop() || 'panel';
+  if (pagina === 'index.php' || pagina === '') pagina = 'panel';
+
+  // Páginas que no están en el menú: se marca la opción con la que se relacionan
+  var relacionadas = {
+    'orden-generada': 'preregistro',
+    'historialreciboestudiante': 'historialmodulosestudiante',
+    'matriculas': 'matriculados',
+    'detalles': 'matriculados'
+  };
+  pagina = relacionadas[pagina] || pagina;
+
+  var enlace = document.querySelector('#kt_aside_menu a.kt-menu__link[href="' + pagina + '"]');
+  if (!enlace) return;
+
+  var item = enlace.closest('.kt-menu__item');
+  item.classList.add('menu-item-actual', 'kt-menu__item--active');
+
+  // Título de la sección: el primer .kt-menu__section que aparece antes de la opción
+  var anterior = item.previousElementSibling;
+  while (anterior && !anterior.classList.contains('kt-menu__section')) {
+    anterior = anterior.previousElementSibling;
+  }
+  if (anterior) anterior.classList.add('seccion-actual');
+
+  // Desplazar el menú hasta la opción (después de que el tema arme su barra de desplazamiento)
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      var menu = document.getElementById('kt_aside_menu');
+      if (!menu) return;
+      // Posición de la opción dentro del menú, para dejarla al centro
+      var desdeArriba = item.getBoundingClientRect().top - menu.getBoundingClientRect().top + menu.scrollTop;
+      menu.scrollTop = Math.max(0, desdeArriba - menu.clientHeight / 2 + item.offsetHeight / 2);
+      // La barra del tema (perfect-scrollbar) se actualiza con el evento scroll
+      menu.dispatchEvent(new Event('scroll'));
+    }, 150);
+  });
+})();
+</script>

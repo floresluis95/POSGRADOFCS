@@ -29,6 +29,18 @@ if (!isset($_SESSION['Validar']) || !$_SESSION['Validar']) {
     exit;
 }
 
+// Permisos por acción: el estudiante solo ve SUS órdenes (misOrdenesPago);
+// todo lo demás (pre-registro, validar vouchers, planes, firmantes...) es del personal.
+$tipoSesionOrden = $_SESSION['Tipo'] ?? '';
+$permitidoOrden = $tipoSesionOrden === 'EST'
+    ? (($_POST['accion'] ?? '') === 'misOrdenesPago')
+    : in_array($tipoSesionOrden, ['ADM', 'SEC', 'AUX'], true);
+if (!$permitidoOrden) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'mensaje' => 'No tiene permisos para esta acción']);
+    exit;
+}
+
 // Manejar acciones
 if (!isset($_POST['accion'])) {
     echo json_encode([
@@ -95,6 +107,10 @@ switch ($accion) {
 
     case 'obtenerOrdenPendienteCuotaPrograma':
         obtenerOrdenPendienteCuotaPrograma();
+        break;
+
+    case 'modulosParaCuota':
+        modulosParaCuota();
         break;
 
     case 'registrarOrdenPagoCuotaPrograma':
@@ -830,6 +846,9 @@ function obtenerOrdenPendienteCuotaPrograma()
 
         $stmt = $conexion->prepare("
             SELECT op.IdOrdenPago, op.NumeroOrden, op.MontoTotal, op.FechaGeneracion, op.NombreFactura, op.NitCiFactura, op.Firma,
+                (SELECT GROUP_CONCAT(m.codigomodulo ORDER BY m.Idmodulo SEPARATOR ', ')
+                 FROM ordenpagomodulo opm INNER JOIN modulos m ON m.Idmodulo = opm.IdModulo
+                 WHERE opm.IdOrdenPago = op.IdOrdenPago) AS ModulosCubiertos,
                 COALESCE(
                     (SELECT pc.NumeroCuenta FROM programacuenta pc WHERE pc.ProgramaCuentaID = op.ProgramaCuentaID),
                     (SELECT pc.NumeroCuenta FROM programacuenta pc
@@ -851,6 +870,40 @@ function obtenerOrdenPendienteCuotaPrograma()
     } catch (Exception $e) {
         error_log("Error en obtenerOrdenPendienteCuotaPrograma: " . $e->getMessage());
         echo json_encode(['success' => false, 'mensaje' => 'Error al obtener la orden de pago pendiente']);
+    }
+}
+
+/**
+ * Módulos del programa con la orden de cuota vigente que cubre a cada uno (si
+ * hay), para elegir a qué módulo(s) corresponde la cuota que se va a generar.
+ */
+function modulosParaCuota()
+{
+    $idinscripcion = (int)($_POST['idinscripcion'] ?? 0);
+    $programaID = (int)($_POST['programaID'] ?? 0);
+    if (!$idinscripcion || !$programaID) {
+        echo json_encode(['success' => false, 'mensaje' => 'Faltan datos de la inscripción']);
+        return;
+    }
+
+    try {
+        require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
+        $stmt = Conexion::Conectar()->prepare(
+            "SELECT m.Idmodulo, m.codigomodulo AS Codigo, m.nombremodulo AS Nombre,
+                    op.NumeroOrden, op.Estado AS EstadoOrden
+             FROM modulos m
+             LEFT JOIN ordenpagomodulo opm ON opm.IdModulo = m.Idmodulo
+                AND opm.IdOrdenPago IN (SELECT IdOrdenPago FROM ordenpago
+                                        WHERE idinscripcion = :idinscripcion AND Estado <> 'ANULADO')
+             LEFT JOIN ordenpago op ON op.IdOrdenPago = opm.IdOrdenPago
+             WHERE m.ProgramaId = :programaID AND m.estadomodulo = 'ACTIVO'
+             ORDER BY m.Idmodulo"
+        );
+        $stmt->execute([':idinscripcion' => $idinscripcion, ':programaID' => $programaID]);
+        echo json_encode(['success' => true, 'modulos' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+    } catch (Exception $e) {
+        error_log("Error en modulosParaCuota: " . $e->getMessage());
+        echo json_encode(['success' => false, 'mensaje' => 'No se pudieron cargar los módulos']);
     }
 }
 
@@ -911,6 +964,36 @@ function registrarOrdenPagoCuotaPrograma()
             }
         }
 
+        // Módulo(s) a los que corresponde esta cuota: SOLO para control de los
+        // módulos del estudiante (opcional). No cambia la orden (monto, PDF).
+        // Deben ser módulos activos del programa y no estar ya cubiertos por otra
+        // orden vigente (las anuladas no cuentan).
+        $modulosCuota = array_values(array_unique(array_filter(array_map('intval', (array)($_POST['modulos'] ?? [])))));
+        if ($modulosCuota) {
+            $marcadores = implode(',', array_fill(0, count($modulosCuota), '?'));
+            $stmtMod = $conexion->prepare(
+                "SELECT m.Idmodulo,
+                        (SELECT op2.NumeroOrden FROM ordenpagomodulo opm2
+                         INNER JOIN ordenpago op2 ON op2.IdOrdenPago = opm2.IdOrdenPago
+                         WHERE opm2.IdModulo = m.Idmodulo AND op2.idinscripcion = ? AND op2.Estado <> 'ANULADO'
+                         LIMIT 1) AS YaCubiertoPor
+                 FROM modulos m
+                 WHERE m.ProgramaId = ? AND m.estadomodulo = 'ACTIVO' AND m.Idmodulo IN ($marcadores)"
+            );
+            $stmtMod->execute(array_merge([$idinscripcion, $programaID], $modulosCuota));
+            $validos = $stmtMod->fetchAll(PDO::FETCH_ASSOC);
+            if (count($validos) !== count($modulosCuota)) {
+                echo json_encode(['success' => false, 'mensaje' => 'Alguno de los módulos elegidos no pertenece a este programa']);
+                return;
+            }
+            foreach ($validos as $v) {
+                if (!empty($v['YaCubiertoPor'])) {
+                    echo json_encode(['success' => false, 'mensaje' => 'Uno de los módulos ya está cubierto por la orden ' . $v['YaCubiertoPor'] . '. Recargue la pestaña e intente de nuevo']);
+                    return;
+                }
+            }
+        }
+
         // Solo una orden de cuota pendiente a la vez por inscripción
         $stmtCheck = $conexion->prepare(
             "SELECT IdOrdenPago FROM ordenpago
@@ -960,17 +1043,31 @@ function registrarOrdenPagoCuotaPrograma()
         $stmt->bindParam(':nitCiFactura', $nitCiFactura, PDO::PARAM_STR);
         $stmt->bindParam(':numeroOrden', $numeroOrden, PDO::PARAM_STR);
 
+        // La orden y sus módulos se guardan juntos: si falla una parte no queda la otra
+        $conexion->beginTransaction();
         if ($stmt->execute()) {
+            $idOrdenPago = (int)$conexion->lastInsertId();
+            if ($modulosCuota) {
+                $stmtOpm = $conexion->prepare("INSERT INTO ordenpagomodulo (IdOrdenPago, IdModulo) VALUES (:orden, :modulo)");
+                foreach ($modulosCuota as $idModulo) {
+                    $stmtOpm->execute([':orden' => $idOrdenPago, ':modulo' => $idModulo]);
+                }
+            }
+            $conexion->commit();
             echo json_encode([
                 'success' => true,
                 'mensaje' => 'Orden de pago registrada exitosamente',
                 'numeroOrden' => $numeroOrden,
-                'idOrdenPago' => $conexion->lastInsertId()
+                'idOrdenPago' => $idOrdenPago
             ]);
         } else {
+            $conexion->rollBack();
             echo json_encode(['success' => false, 'mensaje' => 'Error al registrar la orden de pago']);
         }
     } catch (Exception $e) {
+        if (isset($conexion) && $conexion->inTransaction()) {
+            $conexion->rollBack();
+        }
         error_log("Error en registrarOrdenPagoCuotaPrograma: " . $e->getMessage());
         echo json_encode([
             'success' => false,
@@ -1350,11 +1447,20 @@ function validarVoucherMatricula()
     // (requisitos[IdRequisito][entregado|fecha]). Se guardan aparte: si fallan,
     // la inscripción ya hecha no se revierte, solo se avisa.
     $requisitos = null;
-    if ($resultado['status'] === 'exitoso' && !empty($resultado['idInscripcion']) && !empty($_POST['requisitos'])) {
+    if ($resultado['status'] === 'exitoso' && !empty($resultado['idInscripcion'])) {
         require_once __DIR__ . '/../controladores/requisito.controlador.php';
-        $requisitos = RequisitoControlador::GuardarControlador(
+        if (!empty($_POST['requisitos'])) {
+            $requisitos = RequisitoControlador::GuardarControlador(
+                $resultado['idInscripcion'],
+                $_POST['requisitos'],
+                RequisitoControlador::UsuarioSesion()
+            );
+        }
+        // Ficha de inscripción, Documento de compromiso y demás requisitos
+        // automáticos: quedan entregados siempre al validar el voucher.
+        RequisitoControlador::MarcarAutomaticosControlador(
             $resultado['idInscripcion'],
-            $_POST['requisitos'],
+            $fechaInscripcion,
             RequisitoControlador::UsuarioSesion()
         );
     }

@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/validar-sesion.php';
-ExigirSesionAjax();
+ExigirSesionAjax(['ADM', 'SEC']); // Solo Administración y Secretaría (igual que su página)
 /**
  * AJAX Handler para Reportes PDF
  * Procesa las solicitudes de generación de reportes

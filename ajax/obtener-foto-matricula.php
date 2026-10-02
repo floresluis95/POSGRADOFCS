@@ -10,7 +10,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../modelos/historialpagos.modelo.php';
 
-if (!isset($_SESSION['Validar']) || !$_SESSION['Validar']) {
+// Solo el personal ve las fotos de matrícula
+if (!isset($_SESSION['Validar']) || !$_SESSION['Validar'] || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX'], true)) {
     header('HTTP/1.1 403 Forbidden');
     exit('Acceso denegado');
 }

@@ -413,6 +413,9 @@
                         <span class="pn-fecha-caja"><strong><?php echo date('d', $tsDefensa); ?></strong><small><?php echo $mesesCortos[(int)date('n', $tsDefensa) - 1]; ?></small></span>
                         <div class="pn-item-cuerpo">
                           <strong><?php echo htmlspecialchars($d['NombreEstudiante']); ?></strong>
+                          <?php if (!empty($d['TituloDefensa'])): ?>
+                            <small class="d-block" style="font-style:italic;"><?php echo htmlspecialchars($d['TituloDefensa']); ?></small>
+                          <?php endif; ?>
                           <small>
                             <?php echo $horaDefensa ? $horaDefensa . ' · ' : ''; ?><?php echo htmlspecialchars($d['Lugar']); ?>
                             <?php echo !empty($d['NombrePrograma']) ? ' · ' . htmlspecialchars($d['NombrePrograma']) : ''; ?>
@@ -427,7 +430,8 @@
                             data-fecha="<?php echo htmlspecialchars($d['FechaDefensa'], ENT_QUOTES); ?>"
                             data-hora="<?php echo htmlspecialchars($d['HoraDefensa'] ?? '', ENT_QUOTES); ?>"
                             data-lugar="<?php echo htmlspecialchars($d['Lugar'], ENT_QUOTES); ?>"
-                            data-detalle="<?php echo htmlspecialchars($d['Detalle'] ?? '', ENT_QUOTES); ?>">
+                            data-estudiante="<?php echo (int)($d['EstudianteID'] ?? 0); ?>"
+                            data-detalle="<?php echo htmlspecialchars($d['TituloDefensa'] ?? '', ENT_QUOTES); ?>">
                             <i class="la la-edit"></i>
                           </button>
                           <button type="button" class="pn-btn-icono is-peligro btn-eliminar-defensa" title="Eliminar" data-id="<?php echo (int)$d['IdDefensa']; ?>">
@@ -538,7 +542,21 @@
         </div>
         <form id="formDefensa">
           <input type="hidden" id="defensaIdDefensa" value="">
+          <input type="hidden" id="defensaEstudianteID" value="">
           <div class="modal-body">
+            <!-- Buscar al estudiante por C.I.: llena nombre, programa y el título guardado
+                 de su trabajo de grado (el mismo del Certificado de Aprobación Programa de Posgrado). -->
+            <div class="form-group">
+              <label class="font-weight-bold">Buscar estudiante por C.I.</label>
+              <div class="input-group">
+                <input type="text" class="form-control" id="defensaBuscarCi" placeholder="Número de carnet">
+                <div class="input-group-append">
+                  <button type="button" class="btn btn-primary" id="btnDefensaBuscarCi"><i class="fa fa-search"></i></button>
+                </div>
+              </div>
+              <select class="form-control mt-2" id="defensaInscripcion" style="display:none;"></select>
+              <small class="text-muted" id="defensaEstudianteAviso">Opcional: si lo busca, el título del trabajo se completa solo.</small>
+            </div>
             <div class="form-group">
               <label class="font-weight-bold">Nombre del estudiante <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="defensaNombre" maxlength="150" required>
@@ -573,8 +591,9 @@
               <input type="text" class="form-control" id="defensaLugar" maxlength="150" placeholder="Ej: Auditorio FCS-UTO">
             </div>
             <div class="form-group">
-              <label class="font-weight-bold">Detalle (opcional)</label>
-              <input type="text" class="form-control" id="defensaDetalle" maxlength="255" placeholder="Ej: Título del trabajo de grado">
+              <label class="font-weight-bold">Título del trabajo</label>
+              <textarea class="form-control" id="defensaDetalle" maxlength="255" rows="2" placeholder="Se completa al buscar al estudiante"></textarea>
+              <small class="text-muted">Si el estudiante fue buscado por C.I., este título se guarda también en su trabajo de grado.</small>
             </div>
           </div>
           <div class="modal-footer">

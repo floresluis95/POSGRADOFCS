@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/validar-sesion.php';
+ExigirSesionAjax(['EST']); // Solo el estudiante: consulta sus propios vouchers (por su sesión)
+
 /**
  * AJAX para gestión de vouchers
  */

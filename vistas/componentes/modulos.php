@@ -286,7 +286,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
 
                     <!-- Formulario de edición -->
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label><strong><i class="fa fa-code"></i> Código del Módulo:</strong></label>
                                 <input type="text"
@@ -304,18 +304,21 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <!-- El nombre puede ser largo (hasta 255): área de texto a todo el ancho
+                             que crece con el contenido, para verlo y corregirlo completo -->
+                        <div class="col-md-12">
                             <div class="form-group">
                                 <label><strong><i class="fa fa-book"></i> Nombre del Módulo:</strong> <span class="text-danger">*</span></label>
-                                <input type="text"
-                                       class="form-control nombre-modulo-input"
+                                <textarea class="form-control nombre-modulo-input nombre-modulo-editar"
                                        name="nombremodulo"
                                        id="editNombreModulo"
+                                       rows="2"
                                        placeholder="Ej: Metodología de Investigación"
                                        maxlength="255"
                                        spellcheck="true"
                                        lang="es"
-                                       required>
+                                       style="resize: none; overflow: hidden; line-height: 1.45;"
+                                       required></textarea>
                                 <small class="form-text text-muted">
                                     <i class="fa fa-info-circle"></i> Campo obligatorio. Aparece tal cual en el historial académico y los certificados.
                                     <span class="float-right contador-nombre-modulo"></span>
@@ -385,6 +388,8 @@ $sedes = ProgramasModelos::ListarSedesModelo();
 <script src="vistas/recursos/sweetalert.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Mayúsculas y corrector de ortografía para el nombre del módulo (compartido) -->
+<script src="vistas/recursos/assets/js/scripts/revision-ortografica.js?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/js/scripts/revision-ortografica.js'); ?>"></script>
 
 <script>
 // Pasar datos de docentes de PHP a JavaScript
@@ -954,6 +959,10 @@ $(document).ready(function() {
     // avisa si alguna palabra parece mal escrita comparándola con los nombres ya
     // registrados (ej. "ODNTOLOGIA" -> "ODONTOLOGÍA").
 
+    // El nombre se escribe en MAYÚSCULAS (así se guarda e imprime) y se revisa su
+    // ortografía mientras se escribe (ver revision-ortografica.js)
+    RevisionOrtografica.activar('.nombre-modulo-input');
+
     // Contador de caracteres (el límite coincide con la columna VARCHAR(255))
     $(document).on('input', '.nombre-modulo-input', function() {
         const largo = $(this).val().length;
@@ -972,7 +981,9 @@ $(document).ready(function() {
      * corrección. Devuelve una promesa que se resuelve en true si el usuario
      * confirma guardar, o false si prefiere volver a revisar.
      */
-    function revisarNombresModulos(nombres, idmodulo, textoConfirmar) {
+    function revisarNombresModulos(nombres, idmodulo, textoConfirmar, $campos) {
+        // Palabras que marcó el corrector de ortografía en los campos
+        const marcadasCorrector = $campos ? RevisionOrtografica.erroresPendientes($campos) : [];
         return $.ajax({
             url: 'ajax/modulo.ajax.php',
             method: 'POST',
@@ -984,13 +995,21 @@ $(document).ready(function() {
             // Si la revisión falla, no se bloquea el guardado: se confirma sin sugerencias
             return $.Deferred().resolve([]).promise();
         }).then(function(sugerencias) {
+            // Se suman las del corrector que no estén ya en la lista
+            marcadasCorrector.forEach(function(palabra) {
+                if (!sugerencias.some(function(s) { return s.palabra === palabra; })) {
+                    sugerencias.push({ palabra: palabra, sugerencia: null });
+                }
+            });
             let html = '<div style="text-align:left; max-height:320px; overflow-y:auto;">';
 
             if (sugerencias.length > 0) {
                 html += '<div class="alert alert-warning" style="font-size:14px;">' +
                         '<strong><i class="fa fa-exclamation-triangle"></i> Posibles errores de escritura:</strong><ul class="mb-0 mt-2">';
                 sugerencias.forEach(function(s) {
-                    html += '<li><del>' + escaparHtml(s.palabra) + '</del> &rarr; ¿quiso decir <strong>' + escaparHtml(s.sugerencia) + '</strong>?</li>';
+                    html += s.sugerencia
+                        ? '<li><del>' + escaparHtml(s.palabra) + '</del> &rarr; ¿quiso decir <strong>' + escaparHtml(s.sugerencia) + '</strong>?</li>'
+                        : '<li><del>' + escaparHtml(s.palabra) + '</del> <small>(marcada por el corrector de ortografía)</small></li>';
                 });
                 html += '</ul></div>';
             }
@@ -1043,7 +1062,7 @@ $(document).ready(function() {
 
         const textoConfirmar = nombres.length === 1 ? 'Sí, registrar 1 módulo' : `Sí, registrar ${nombres.length} módulos`;
 
-        revisarNombresModulos(nombres, null, textoConfirmar).then(function(confirmado) {
+        revisarNombresModulos(nombres, null, textoConfirmar, $('#formRegistrarModulosPorPrograma .nombre-modulo-input')).then(function(confirmado) {
             if (confirmado) {
                 enviarRegistroModulos();
             }
@@ -1110,17 +1129,45 @@ $(document).ready(function() {
         $('#editIdmodulo').val(datosModulo.idmodulo);
         $('#editProgramaID').val(datosModulo.programaId);
         $('#editCodigoModulo').val(datosModulo.codigomodulo);
-        $('#editNombreModulo').val(datosModulo.nombremodulo).trigger('input'); // actualiza el contador
+        // Sin la revisión ortográfica del módulo que se editó antes
+        const $panelPrevio = $('#editNombreModulo').data('panelOrtografia');
+        if ($panelPrevio) $panelPrevio.hide();
+        $('#editNombreModulo').data('erroresOrtografia', []);
+        $('#editNombreModulo').val(datosModulo.nombremodulo).trigger('input'); // contador, alto y revisión ortográfica
         $('#editFechaInicio').val(datosModulo.fechaInicio || '');
         $('#editFechaFinal').val(datosModulo.fechaFinal || '');
 
-        // Establecer el docente seleccionado
-        $('#editDocenteID').val(datosModulo.docenteID || '');
+        // Establecer el docente seleccionado. Si está dado de baja no figura entre
+        // los activos: se agrega como opción para no perder la asignación al editar.
+        $('#editDocenteID option.docente-inactivo').remove();
+        if (datosModulo.docenteID && !$('#editDocenteID option[value="' + datosModulo.docenteID + '"]').length) {
+            $('<option class="docente-inactivo"></option>')
+                .val(datosModulo.docenteID)
+                .text((datosModulo.nombreDocente || 'Docente asignado') + ' (inactivo)')
+                .appendTo('#editDocenteID');
+        }
+        $('#editDocenteID').val(datosModulo.docenteID ? String(datosModulo.docenteID) : '');
 
         // Abrir el modal
         $('#modalEditarModulo').modal('show');
 
         console.log('✓ Modal de edición abierto');
+    });
+
+    // Nombre del módulo en el modal de edición: crece con el texto y no admite
+    // saltos de línea (es un nombre de una sola línea en los documentos)
+    $('#editNombreModulo').on('input', function() {
+        if (/[\r\n]/.test(this.value)) {
+            this.value = this.value.replace(/[\r\n]+/g, ' ');
+        }
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight + 2) + 'px';
+    }).on('keydown', function(e) {
+        if (e.key === 'Enter') e.preventDefault();
+    });
+    // Al abrir el modal ya se conoce el ancho real: recalcular el alto
+    $('#modalEditarModulo').on('shown.bs.modal', function() {
+        $('#editNombreModulo').trigger('input');
     });
 
     // Inicializar Select2 cuando el modal de edición se muestra
@@ -1167,7 +1214,7 @@ $(document).ready(function() {
         const $formEditar = $(this);
         const idmodulo = $formEditar.find('[name="idmodulo"]').val();
 
-        revisarNombresModulos([nombreModulo], idmodulo, 'Sí, actualizar').then(function(confirmado) {
+        revisarNombresModulos([nombreModulo], idmodulo, 'Sí, actualizar', $('#editNombreModulo')).then(function(confirmado) {
             if (!confirmado) {
                 console.log('✗ Actualización cancelada');
                 return;
@@ -1741,7 +1788,8 @@ $(document).ready(function() {
 }
 
   /* ===== Selectores (select2): alto uniforme, flecha y "×" centradas, texto largo recortado ===== */
-  .md .select2-container--default .select2-selection--single {
+  .md .select2-container--default .select2-selection--single,
+  #modalEditarModulo .select2-container--default .select2-selection--single {
     height: 38px !important;
     display: flex !important;
     align-items: center !important;
@@ -1751,7 +1799,8 @@ $(document).ready(function() {
     border-radius: 8px !important;
     background: #fff !important;
   }
-  .md .select2-container--default .select2-selection--single .select2-selection__rendered {
+  .md .select2-container--default .select2-selection--single .select2-selection__rendered,
+  #modalEditarModulo .select2-container--default .select2-selection--single .select2-selection__rendered {
     flex: 1;
     line-height: 36px !important;
     padding: 0 56px 0 12px !important;
@@ -1761,10 +1810,14 @@ $(document).ready(function() {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .md .select2-container--default .select2-selection--single .select2-selection__placeholder { color: #9aa3b2 !important; }
+  .md .select2-container--default .select2-selection--single .select2-selection__placeholder,
+  #modalEditarModulo .select2-container--default .select2-selection--single .select2-selection__placeholder { color: #9aa3b2 !important; }
   .md .select2-container--default .select2-selection--single .select2-selection__arrow:before,
-  .md .select2-container--default .select2-selection--single .select2-selection__arrow b { color: #6b7280 !important; border-top-color: #6b7280 !important; }
-  .md .select2-container--default .select2-selection--single .select2-selection__arrow {
+  #modalEditarModulo .select2-container--default .select2-selection--single .select2-selection__arrow:before,
+  .md .select2-container--default .select2-selection--single .select2-selection__arrow b,
+  #modalEditarModulo .select2-container--default .select2-selection--single .select2-selection__arrow b { color: #6b7280 !important; border-top-color: #6b7280 !important; }
+  .md .select2-container--default .select2-selection--single .select2-selection__arrow,
+  #modalEditarModulo .select2-container--default .select2-selection--single .select2-selection__arrow {
     position: absolute !important;
     top: 50% !important;
     right: 8px !important;
@@ -1777,7 +1830,8 @@ $(document).ready(function() {
     justify-content: center;
     color: #6b7280;
   }
-  .md .select2-container--default .select2-selection--single .select2-selection__clear {
+  .md .select2-container--default .select2-selection--single .select2-selection__clear,
+  #modalEditarModulo .select2-container--default .select2-selection--single .select2-selection__clear {
     position: absolute !important;
     top: 50% !important;
     right: 30px !important;
@@ -1792,9 +1846,12 @@ $(document).ready(function() {
     border: 0;
     z-index: 1;
   }
-  .md .select2-container--default .select2-selection--single .select2-selection__clear:hover { color: #991b1b; }
+  .md .select2-container--default .select2-selection--single .select2-selection__clear:hover,
+  #modalEditarModulo .select2-container--default .select2-selection--single .select2-selection__clear:hover { color: #991b1b; }
   .md .select2-container--focus .select2-selection--single,
-  .md .select2-container--open .select2-selection--single {
+  #modalEditarModulo .select2-container--focus .select2-selection--single,
+  .md .select2-container--open .select2-selection--single,
+  #modalEditarModulo .select2-container--open .select2-selection--single {
     border-color: #1e3c72 !important;
     box-shadow: 0 0 0 3px rgba(30, 60, 114, .12);
   }

@@ -465,6 +465,7 @@ class ModuloControlador
                 'nombremodulo' => $modulo['nombremodulo'],
                 'codigomodulo' => $modulo['codigomodulo'],
                 'docenteID' => $modulo['DocenteID'],
+                'nombreDocente' => $modulo['NombreDocente'] ?? null, // por si está inactivo y no figura en el select
                 'nombrePrograma' => $modulo['NombrePrograma'],
                 'fechaInicio' => $inicio,
                 'fechaFinal' => $fin,
