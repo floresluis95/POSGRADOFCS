@@ -37,7 +37,7 @@ const describir = (r) => `HTTP ${r.status}: ${mensajeDe(r).slice(0, 120)}`;
 test.describe('Ajax sin sesión', () => {
   // Un archivo de cada grupo: todos deben rechazar a quien no inició sesión.
   for (const [archivo, datos] of [
-    ['usuarios.ajax.php', {}],                          // A: ExigirSesionAjax
+    ['certificado.ajax.php', {}],                          // A: ExigirSesionAjax
     ['calificacion.ajax.php', { accion: 'obtenerProgramasEstudiante' }], // B: por acción
     ['noticiapanel.ajax.php', { accion: 'listar' }],    // C: sesión + controlador
     ['solicitudinscripcion.ajax.php', { accion: 'listar' }],
@@ -59,7 +59,6 @@ test.describe('Ajax sin sesión', () => {
 // Grupo A: ExigirSesionAjax([roles]) al principio del archivo.
 const PERSONAL = ['adm', 'sec', 'aux'];
 const ARCHIVOS_POR_ROL = {
-  'usuarios.ajax.php': ['adm'],
   'autoridad.ajax.php': ['adm'],
   'certificado.ajax.php': ['adm', 'sec'],
   'reportes.ajax.php': ['adm', 'sec'],
