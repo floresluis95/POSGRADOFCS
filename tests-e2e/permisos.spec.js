@@ -1,10 +1,10 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { ingresar } from './ayudantes.js';
 
 // Permisos de páginas por rol (controladores/enlaces.controlador.php), probados de punta a punta:
 // un usuario real inicia sesión y escribe la URL a mano.
 // Requiere los usuarios de prueba: tests-e2e/datos/usuarios-prueba.sql
-const CONTRASENA = 'Prueba123';
 
 // Al negar una página la URL NO cambia; se reconoce por el contenido que se muestra.
 const PANEL = (page) => page.locator('section.pn-bienvenida');
@@ -29,14 +29,6 @@ const CASOS = [
   ['est', 'usuario', 'panel'],
   ['est', 'matriculados', 'panel'],
 ];
-
-async function ingresar(page, rol) {
-  await page.goto('ingreso');
-  await page.getByLabel('Usuario').fill(`prueba_${rol}`);
-  await page.getByLabel('Contraseña', { exact: true }).fill(CONTRASENA);
-  await page.locator('#btnLogin').click();
-  await expect(page).toHaveURL(/panel$/);
-}
 
 test.describe('Permisos de páginas por rol', () => {
 
