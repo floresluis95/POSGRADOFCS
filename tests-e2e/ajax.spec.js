@@ -10,7 +10,18 @@ import { ingresar } from './ayudantes.js';
 
 const ID_INEXISTENTE = '999999';
 
-/** POST a un archivo de ajax/ con la sesión del navegador (o sin sesión). */
+/**
+ * Respuesta de un archivo de ajax/ (json es null si no respondió JSON).
+ * @typedef {{ status: number, json: any, texto: string }} Respuesta
+ */
+
+/**
+ * POST a un archivo de ajax/ con la sesión del navegador (o sin sesión).
+ * @param {import('@playwright/test').APIRequestContext} request
+ * @param {string} archivo
+ * @param {Record<string, string>} [datos]
+ * @returns {Promise<Respuesta>}
+ */
 async function llamar(request, archivo, datos = {}) {
   const respuesta = await request.post(`ajax/${archivo}`, { form: datos });
   const texto = await respuesta.text();
@@ -19,30 +30,32 @@ async function llamar(request, archivo, datos = {}) {
   return { status: respuesta.status(), json, texto };
 }
 
+/** @param {Respuesta} r */
 function mensajeDe(r) {
   return String(r.json?.mensaje ?? r.json?.message ?? r.json?.error ?? r.texto);
 }
 
 // Hay dos estilos de negar: código 401/403 (ExigirSesionAjax y permisos por acción)
 // o 200 con success:false y un mensaje de permiso (revisión dentro del controlador).
+/** @param {Respuesta} r */
 function fueNegado(r) {
   if (r.status === 401 || r.status === 403) return true;
   const fallo = r.json?.success === false || r.json?.status === 'error';
   return fallo && /permiso|administrador|sesión no válida/i.test(mensajeDe(r));
 }
 
-const describir = (r) => `HTTP ${r.status}: ${mensajeDe(r).slice(0, 120)}`;
+const describir = (/** @type {Respuesta} */ r) => `HTTP ${r.status}: ${mensajeDe(r).slice(0, 120)}`;
 
 // ---------------------------------------------------------------------------
 test.describe('Ajax sin sesión', () => {
   // Un archivo de cada grupo: todos deben rechazar a quien no inició sesión.
-  for (const [archivo, datos] of [
+  for (const [archivo, datos] of /** @type {Array<[string, Record<string, string>]>} */ ([
     ['certificado.ajax.php', {}],                          // A: ExigirSesionAjax
     ['calificacion.ajax.php', { accion: 'obtenerProgramasEstudiante' }], // B: por acción
     ['noticiapanel.ajax.php', { accion: 'listar' }],    // C: sesión + controlador
     ['solicitudinscripcion.ajax.php', { accion: 'listar' }],
     ['restablecerpassword.ajax.php', { accion: 'estudiante', id: ID_INEXISTENTE }],
-  ]) {
+  ])) {
     test(`${archivo} rechaza sin sesión`, async ({ request }) => {
       const r = await llamar(request, archivo, datos);
       expect(fueNegado(r), describir(r)).toBe(true);
@@ -99,6 +112,7 @@ test.describe('Ajax grupo A: permiso por archivo', () => {
 // ---------------------------------------------------------------------------
 // Grupos B y C: el permiso depende de la acción (en el ajax o en el controlador).
 // [rol, archivo, datos, 'permitido' | 'negado']
+/** @type {Array<[string, string, Record<string, string>, 'permitido' | 'negado']>} */
 const CASOS_POR_ACCION = [
   // B: calificacion — el EST solo consulta lo suyo
   ['est', 'calificacion.ajax.php', { accion: 'obtenerProgramasEstudiante' }, 'permitido'],
