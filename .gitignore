@@ -3,3 +3,19 @@ config/correo.php
 
 # PDFs generados por el sistema
 pdfs_generados/*.pdf
+
+# Composer local (se ejecuta con C:\xampp\php\php.exe composer.phar)
+composer.phar
+
+.phpunit.result.cache
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+bd/proyecto.sql
+bd/localhost (3).sql

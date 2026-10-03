@@ -21,3 +21,7 @@ Options All -Indexes
 RewriteEngine on
 
 RewriteRule ^([-a-zA-Z0-9]+)$ index.php?action=$1
+# Bloquear descarga de respaldos y scripts de base de datos
+<FilesMatch "\.sql$">
+    Require all denied
+</FilesMatch>

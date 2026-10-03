@@ -80,7 +80,9 @@
                        exit();
                     }
                 }
-                else 
+
+                // Si llegó aquí no ingresó: usuario inexistente, inactivo o contraseña incorrecta.
+                // (Antes solo avisaba cuando el usuario no existía.)
                 {
                     echo '
                     <div class="alert alert-primary fade show" role="alert">
