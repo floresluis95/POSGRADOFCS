@@ -29,7 +29,6 @@ ob_start();
    
   <!--end:: Global Mandatory Vendors -->
   <link href="vistas/recursos/assets/css/demo9/pages/wizard/wizard-1.css" rel="stylesheet" type="text/css" />
-  <link href="./assets/vendors/general/perfect-scrollbar/css/perfect-scrollbar.css" rel="stylesheet" type="text/css" />
 
   <!--begin:: Global Optional Vendors -->
   <link href="vistas/recursos/assets/vendors/general/tether/dist/css/tether.css" rel="stylesheet" type="text/css" />
