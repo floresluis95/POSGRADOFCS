@@ -194,8 +194,6 @@ ob_start();
 
   <!--begin::Page Vendors(used by this page) -->
   <script src="vistas/recursos/assets/vendors/custom/fullcalendar/fullcalendar.bundle.js" type="text/javascript"></script>
-  <script src="//maps.google.com/maps/api/js?key=AIzaSyBTGnKT7dt597vo9QgeQ7BFhvSRP4eiMSM" type="text/javascript"></script>
-  <script src="vistas/recursos/assets/vendors/custom/gmaps/gmaps.js" type="text/javascript"></script>
   <!--end::Page Vendors -->
 
   <!--begin::Page Scripts(used by this page) -->
