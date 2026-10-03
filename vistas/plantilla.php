@@ -183,7 +183,7 @@ ob_start();
   <?php endif; ?>
   <script src="vistas/recursos/assets/vendors/general/jquery.repeater/src/lib.js" type="text/javascript"></script>
   <script src="vistas/recursos/assets/vendors/general/jquery.repeater/src/jquery.input.js" type="text/javascript"></script>
-  <script src="vistas/recursos/assets/vendors/general/jquery.repeater/srca/repeater.js" type="text/javascript"></script>
+  <script src="vistas/recursos/assets/vendors/general/jquery.repeater/src/repeater.js" type="text/javascript"></script>
   <script src="vistas/recursos/assets/vendors/general/dompurify/dist/purify.js" type="text/javascript"></script>
   <!--end:: Global Optional Vendors -->
 
@@ -225,8 +225,6 @@ var KTAppOptions = {"colors":{"state":{"brand":"#591df1","light":"#ffffff","dark
       <script src="vistas/recursos/assets/js/demo9/pages/crud/datatables/extensions/buttons.js" type="text/javascript"></script>
                         <!--end::Page Scripts -->
                         <script src="vistas/recursos/assets/js/demo9/pages/wizard/wizard-1.js" type="text/javascript"></script>
-                        <script src="vistas/recursos/assets/js/scripts/solicitud.js" type="text/javascript"></script>                       
-                        <script src="vistas/recursos/assets/js/scripts/detallenota.js" type="text/javascript"></script>                        
                         <script src="vistas/recursos/assets/js/scripts/app.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/scripts/chart/canvasjs.min.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/scripts/usuarios.js" type="text/javascript"></script>
@@ -236,7 +234,6 @@ var KTAppOptions = {"colors":{"state":{"brand":"#591df1","light":"#ffffff","dark
                         <?php if ($action !== 'ordenpago' && $action !== 'orden-generada' && $action !== 'preregistro' && $action !== 'inscripcion' && $action !== 'docentes'): ?>
                         <script src="vistas/recursos/assets/js/demo9/pages/components/extended/sweetalert2.js" type="text/javascript"></script>
                         <?php endif; ?>
-                        <script src="vistas/recursos/assets/js/demo9/pages/components/extended/filtrar.select.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/demo9/pages/components/extended/canvasjs.min.js" type="text/javascript"></script>
 
                          <!--Scripts-paginaposgrado -->
