@@ -74,7 +74,7 @@ ob_start();
   <!--begin::Layout Skins(used by all pages) -->
   <!--end::Layout Skins -->
 
-  <link rel="shortcut icon" href="vistas/recursos/assets/media/logos/" />
+  <link rel="shortcut icon" href="vistas/recursos/assets/media/logos/logo0.png" />
 </head>
 <!-- end::Head -->
 
