@@ -226,7 +226,6 @@ var KTAppOptions = {"colors":{"state":{"brand":"#591df1","light":"#ffffff","dark
                         <!--end::Page Scripts -->
                         <script src="vistas/recursos/assets/js/demo9/pages/wizard/wizard-1.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/scripts/app.js" type="text/javascript"></script>
-                        <script src="vistas/recursos/assets/js/scripts/chart/canvasjs.min.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/scripts/usuarios.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/demo9/pages/crud/forms/widgets/bootstrap-datepicker.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/demo9/pages/crud/forms/widgets/bootstrap-touchspin.js" type="text/javascript"></script>
@@ -234,14 +233,11 @@ var KTAppOptions = {"colors":{"state":{"brand":"#591df1","light":"#ffffff","dark
                         <?php if ($action !== 'ordenpago' && $action !== 'orden-generada' && $action !== 'preregistro' && $action !== 'inscripcion' && $action !== 'docentes'): ?>
                         <script src="vistas/recursos/assets/js/demo9/pages/components/extended/sweetalert2.js" type="text/javascript"></script>
                         <?php endif; ?>
-                        <script src="vistas/recursos/assets/js/demo9/pages/components/extended/canvasjs.min.js" type="text/javascript"></script>
 
                          <!--Scripts-paginaposgrado -->
 
-                        <script src="vistas/recursos/assets/js/scripts/validaciones.js" type="text/javascript"></script> 
                         <script src="vistas/recursos/assets/js/scripts/programas.js?v=<?php echo filemtime('vistas/recursos/assets/js/scripts/programas.js'); ?>" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/scripts/selectprograma.js" type="text/javascript"></script>
-                        <script src="vistas/recursos/assets/js/scripts/validaciondocentes.js" type="text/javascript"></script>
                        
                         
                         <!--/Scripts-paginaposgrado -->
