@@ -6,7 +6,7 @@
  * desde la lista de usuarios del personal (ADM, SEC, AUX).
  *
  * Permisos:
- *  - Estudiantes y docentes: ADM y SEC (son quienes gestionan esas páginas).
+ *  - Estudiantes y docentes: ADM, SEC y AUX (son quienes gestionan esas páginas).
  *  - Personal administrativo: solo ADM (evita que una secretaria restablezca
  *    la contraseña del administrador y pueda ingresar con su cuenta).
  */
