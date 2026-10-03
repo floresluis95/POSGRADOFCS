@@ -16,3 +16,6 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+bd/proyecto.sql
+bd/localhost (3).sql
