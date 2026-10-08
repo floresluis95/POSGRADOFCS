@@ -150,28 +150,6 @@ class PagoModuloModelo
         }
     }
 
-    /**
-     * Si el número de voucher ya fue usado en otra cuota registrada (evita que
-     * el mismo comprobante se use para pagar dos cuotas distintas).
-     * @param string $numeroVaucher
-     * @return bool
-     */
-    public static function ExisteVoucherCuotaModelo($numeroVaucher)
-    {
-        try {
-            $stmt = Conexion::Conectar()->prepare(
-                "SELECT 1 FROM pagomodulo
-                 WHERE LOWER(nvaucher) = LOWER(:numeroVaucher) AND Estado != 'ANULADO'
-                 LIMIT 1"
-            );
-            $stmt->bindParam(":numeroVaucher", $numeroVaucher, PDO::PARAM_STR);
-            $stmt->execute();
-            return $stmt->fetch() !== false;
-        } catch (PDOException $e) {
-            error_log("Error en ExisteVoucherCuotaModelo: " . $e->getMessage());
-            return false;
-        }
-    }
 
     /**
      * Busca la orden de pago PENDIENTE de una cuota del programa para esta inscripción

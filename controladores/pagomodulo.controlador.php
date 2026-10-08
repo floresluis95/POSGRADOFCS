@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../modelos/modulopagos_core.php';
+require_once __DIR__ . '/../modelos/voucher.modelo.php';
 require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
 
 class PagoModuloControlador
@@ -46,8 +47,10 @@ class PagoModuloControlador
             return ['estado' => 'validacion', 'mensaje' => 'El monto de la cuota debe ser mayor a 0'];
         }
 
-        if (PagoModuloModelo::ExisteVoucherCuotaModelo($numeroVaucher)) {
-            return ['estado' => 'validacion', 'mensaje' => 'Ese N° de voucher ya fue registrado en otra cuota. Verifique el número o use un comprobante distinto'];
+        // El N° de voucher es único en todo el sistema (matrículas, cuotas y clínicas)
+        $usadoEn = VoucherModelo::VoucherYaUsadoModelo($numeroVaucher);
+        if ($usadoEn !== null) {
+            return ['estado' => 'validacion', 'mensaje' => VoucherModelo::MensajeVoucherRepetido($numeroVaucher, $usadoEn)];
         }
 
         $archivoVoucher = file_get_contents($_FILES['fmodulo']['tmp_name']);

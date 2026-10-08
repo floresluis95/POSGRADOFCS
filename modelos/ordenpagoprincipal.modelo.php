@@ -1,6 +1,7 @@
 <?php
 require_once 'conexion.modelo.php';
 require_once 'planpago.modelo.php';
+require_once __DIR__ . '/voucher.modelo.php';
 
 /**
  * Modelo de Orden de Pago (Preregistro)
@@ -63,6 +64,15 @@ class OrdenPagoModelos
             if ($stmtDup->fetch()) {
                 $pdo->rollBack();
                 return ['status' => 'error', 'mensaje' => 'El estudiante ya está inscrito en este programa'];
+            }
+
+            // El N° de voucher es único: no puede estar ya en otra matrícula, cuota o clínica
+            if (!$forzarSinMatricula) {
+                $usadoEn = VoucherModelo::VoucherYaUsadoModelo($numeroVoucher, $pdo);
+                if ($usadoEn !== null) {
+                    $pdo->rollBack();
+                    return ['status' => 'error', 'mensaje' => VoucherModelo::MensajeVoucherRepetido($numeroVoucher, $usadoEn)];
+                }
             }
 
             // Inscripción formal: única escritura en estudianteprograma

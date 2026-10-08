@@ -148,25 +148,6 @@ class PagoClinicaModelo
     }
 
     /**
-     * ¿Ese N° de voucher ya se usó en otro pago de clínica vigente?
-     * @param string $numeroVoucher
-     * @return bool
-     */
-    public static function ExisteVoucherModelo($numeroVoucher)
-    {
-        try {
-            $stmt = Conexion::Conectar()->prepare(
-                "SELECT 1 FROM pagoclinica WHERE NumeroVoucher = :voucher AND Estado = 'PAGADO' LIMIT 1"
-            );
-            $stmt->execute([':voucher' => $numeroVoucher]);
-            return (bool)$stmt->fetchColumn();
-        } catch (PDOException $e) {
-            error_log("Error en ExisteVoucherModelo (clínica): " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
      * Registrar el voucher de la orden de clínica pendiente y confirmarla, en una
      * sola transacción. El monto pagado es el de la orden.
      * @param array $datos idinscripcion, FechaPago, NumeroVoucher, FotoVoucher, ResponsableRegistro

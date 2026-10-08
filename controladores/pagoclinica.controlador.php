@@ -7,6 +7,7 @@
  */
 
 require_once __DIR__ . '/../modelos/pagoclinica.modelo.php';
+require_once __DIR__ . '/../modelos/voucher.modelo.php';
 
 class PagoClinicaControlador
 {
@@ -109,8 +110,10 @@ class PagoClinicaControlador
             return ['success' => false, 'mensaje' => 'Formato no permitido. Solo JPG, PNG, GIF, WEBP o PDF'];
         }
 
-        if (PagoClinicaModelo::ExisteVoucherModelo($numeroVoucher)) {
-            return ['success' => false, 'mensaje' => 'Ese N° de voucher ya fue registrado en otro pago de clínica'];
+        // El N° de voucher es único en todo el sistema (matrículas, cuotas y clínicas)
+        $usadoEn = VoucherModelo::VoucherYaUsadoModelo($numeroVoucher);
+        if ($usadoEn !== null) {
+            return ['success' => false, 'mensaje' => VoucherModelo::MensajeVoucherRepetido($numeroVoucher, $usadoEn)];
         }
 
         $resultado = PagoClinicaModelo::RegistrarPagoModelo([
