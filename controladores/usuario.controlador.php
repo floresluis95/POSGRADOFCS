@@ -136,6 +136,7 @@
                             data-target="#ModalEditarUsuario"
                             type="button"
                             class="btn btn-warning btn-sm btnEditarUsuario"
+                            IdPersonal="'.(int)$Usuario["IdPersonal"].'"
                             CedulaIdentidad="'.$Usuario["CedulaIdentidad"].'"
                             ApellidoPaterno="'.$Usuario["ApellidoPaterno"].'"
                             ApellidoMaterno="'.$Usuario["ApellidoMaterno"].'"
@@ -192,17 +193,36 @@
                         return;
                     }
 
-                    // Capturar el IdPersonal Maximo de la tabla personal
-                    $item = 'IdPersonal';
-                    $tabla = 'personal';
-                    $IdPersonal = HeredadoModelos::UltimoIdModelo($item, $tabla) + 1;
-                    
-                    // Enviar datos del Personal
-                    $TablaPersonal = 'personal';
+                    // Nombre de usuario: único en todo el sistema (con él se inicia sesión)
+                    // y C.I. único dentro del personal (puede repetirse con un estudiante
+                    // o docente: la misma persona puede tener también esa otra cuenta).
+                    $ci = trim($_POST['ci']);
+                    $usuario = trim($_POST['usuario'] ?? '');
+                    $errorDatos = null;
+                    if ($ci === '') {
+                        $errorDatos = 'Ingrese el C.I.';
+                    } elseif (!preg_match('/^[A-Za-z0-9._-]{3,20}$/', $usuario)) {
+                        $errorDatos = 'El usuario debe tener de 3 a 20 caracteres: letras, números, punto, guion o guion bajo (sin espacios)';
+                    } elseif (UsuarioModelos::ExisteNombreUsuarioModelo($usuario)) {
+                        $errorDatos = 'El usuario "' . $usuario . '" ya existe. Elija otro nombre de usuario';
+                    } elseif (UsuarioModelos::ExisteCiPersonalModelo($ci)) {
+                        $errorDatos = 'Ya hay un personal registrado con el C.I. ' . $ci;
+                    }
+                    if ($errorDatos !== null) {
+                        echo'
+                        <script src="vistas/recursos/sweetalert.min.js"></script>
+                        <script>
+                        swal("ERROR!", '.json_encode($errorDatos).', "error")
+                        .then(function () {
+                            location.href="usuario";
+                          })
+                          ;
+                         </script>';
+                        return;
+                    }
 
                     $DatosPersonal = array(
-                        "IdPersonal" => $IdPersonal,
-                        "CedulaIdentidad" => $_POST['ci'],
+                        "CedulaIdentidad" => $ci,
                         "ApellidoPaterno" => strtoupper($_POST['apaterno']),
                         "ApellidoMaterno" => strtoupper($_POST['amaterno']),
                         "Nombres" => strtoupper($_POST['nombres']),
@@ -211,28 +231,18 @@
                         "Telefono" => $_POST['telefono'],
                         "Correo" => $correo
                     );
-                
-                    $InsertarPersonal = UsuarioModelos::InsertarPersonalModelo($TablaPersonal, $DatosPersonal);
 
                     // Contraseña escrita por el administrador en el formulario (no se genera)
-                    $encriptar = password_hash($_POST['password'], PASSWORD_BCRYPT, ['cost' => 12]);
-
-                    // Enviar datos del Usuario
-                    $TablaUsuario = 'usuario';
-
-                    $DatosModelo = array(
-
-                        "IdPersonal" => $IdPersonal,
-                        "Usuario" => $_POST['usuario'],
-                        "Password" => $encriptar,
+                    $DatosUsuario = array(
+                        "Usuario" => $usuario,
+                        "Password" => password_hash($_POST['password'], PASSWORD_BCRYPT, ['cost' => 12]),
                         "Tipo" => $_POST['UICargo']
                     );
-                 
-                  
-                    $InsertarUsuario = UsuarioModelos::InsertarUsuarioModelo($TablaUsuario, $DatosModelo);
-                    
 
-                    if ($InsertarPersonal == 'exitoso' && $InsertarUsuario == 'exitoso')
+                    // Personal y usuario juntos: o se crean los dos, o ninguno
+                    $resultado = UsuarioModelos::RegistrarPersonalConUsuarioModelo($DatosPersonal, $DatosUsuario);
+
+                    if ($resultado == 'exitoso')
                      {
                         echo'
                         <script src="vistas/recursos/sweetalert.min.js"></script>
@@ -249,7 +259,9 @@
                         echo'
                         <script src="vistas/recursos/sweetalert.min.js"></script>
                         <script>
-                        swal("ERROR!", "Registro incorrecto de usuario", "error")
+                        swal("ERROR!", '.json_encode($resultado == 'usuario_duplicado'
+                            ? 'El usuario "' . $usuario . '" ya existe. Elija otro nombre de usuario'
+                            : 'Registro incorrecto de usuario').', "error")
                         .then(function () {
                             location.href="usuario";
                           })
@@ -279,7 +291,8 @@
                 }
 
                 $DatosPersonal = array(
-                    "CedulaIdentidad" => $_POST['editarci'],
+                    // Se edita por IdPersonal: hay personal que comparte C.I. y se editaba junto
+                    "IdPersonal" => (int)($_POST['editaridpersonal'] ?? 0),
                     "ApellidoPaterno" => strtoupper($_POST['editarapaterno']),
                     "ApellidoMaterno" => strtoupper($_POST['editaramaterno']),
                     "Nombres" => strtoupper($_POST['editarnombres']),
@@ -393,8 +406,9 @@
                     return;
                 }
 
-                // Usuario será el número de carnet (CI)
-                $usuario = $ci;
+                // Usuario será el número de carnet (CI). Si ese nombre ya lo usa otra cuenta
+                // (p. ej. la misma persona como personal), se le agrega "E": 7311599E
+                $usuario = UsuarioModelos::UsuarioDisponibleModelo($ci, 'E');
 
                 // Contraseña será: primera letra del nombre + número de carnet
                 $nombre = isset($_POST['estudiante_nombre']) ? $_POST['estudiante_nombre'] : '';
@@ -599,8 +613,9 @@
                     return;
                 }
 
-                // Usuario será el número de carnet (CI)
-                $usuario = $ci;
+                // Usuario será el número de carnet (CI). Si ese nombre ya lo usa otra cuenta
+                // (p. ej. la misma persona como personal o estudiante), se le agrega "D": 7311599D
+                $usuario = UsuarioModelos::UsuarioDisponibleModelo($ci, 'D');
 
                 // Obtener nombre del docente
                 $nombre = isset($_POST['docente_nombre']) ? $_POST['docente_nombre'] : '';

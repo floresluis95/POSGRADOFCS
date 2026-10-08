@@ -10,6 +10,7 @@ $('.TablaUsuarios tbody').on('click', 'button.btnEditarUsuario', function(){
     let Correo = $(this).attr("Correo");
 
 
+    $('#UEIdPersonal').val($(this).attr("IdPersonal"));
     $('#UECedulaIdentidad').val(CedulaIdentidad);
     $('#UEApellidoPaterno').val(ApellidoPaterno);
     $('#UEApellidoMaterno').val(ApellidoMaterno);

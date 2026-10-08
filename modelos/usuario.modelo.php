@@ -3,17 +3,6 @@
 
     class UsuarioModelos
     {
-        // Método privado para validar nombres de tablas
-        private static function ValidarNombreTabla($nombre)
-        {
-            // Lista blanca de tablas permitidas
-            $tablasPermitidas = ['personal', 'usuario'];
-            if (!in_array($nombre, $tablasPermitidas)) {
-                throw new Exception("Tabla no permitida");
-            }
-            return $nombre;
-        }
-
         public static function ListaUsuariosModelo()
         {
             // Solo muestra usuarios de personal (IdPersonal NOT NULL)
@@ -25,65 +14,117 @@
             return $stmt -> fetchAll();
         }
 
-        public static function InsertarPersonalModelo($TablaPersonal, $DatosModelo)
+        /**
+         * ¿Ya existe ese nombre de usuario? Con él se inicia sesión, así que es único
+         * en TODO el sistema (personal, docentes y estudiantes). Sin distinguir mayúsculas.
+         */
+        public static function ExisteNombreUsuarioModelo($usuario)
         {
-            // Validar nombre de tabla
-            $TablaPersonal = self::ValidarNombreTabla($TablaPersonal);
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT 1 FROM usuario WHERE LOWER(TRIM(Usuario)) = LOWER(TRIM(:usuario)) LIMIT 1"
+            );
+            $stmt->execute([':usuario' => $usuario]);
+            return $stmt->fetchColumn() !== false;
+        }
 
-            $stmt = Conexion::Conectar()->prepare("INSERT INTO `$TablaPersonal` (`IdPersonal`, `CedulaIdentidad`, `ApellidoPaterno`, `ApellidoMaterno`, `Nombres`, `Direccion`, `Celular`, `Telefono`, `Correo`)
-            VALUES (:IdPersonal, :CedulaIdentidad, :ApellidoPaterno, :ApellidoMaterno, :Nombres, :Direccion, :Celular, :Telefono, :Correo)");
+        /**
+         * ¿Ya hay alguien del PERSONAL con ese C.I.? Solo se compara contra el personal:
+         * la misma persona puede ser además estudiante o docente (otra tabla, otra cuenta).
+         */
+        public static function ExisteCiPersonalModelo($ci)
+        {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT 1 FROM personal WHERE TRIM(CedulaIdentidad) = TRIM(:ci) LIMIT 1"
+            );
+            $stmt->execute([':ci' => $ci]);
+            return $stmt->fetchColumn() !== false;
+        }
 
-            $stmt -> bindParam(":IdPersonal", $DatosModelo['IdPersonal'], PDO::PARAM_INT);
-            $stmt -> bindParam(":CedulaIdentidad", $DatosModelo['CedulaIdentidad'], PDO::PARAM_STR);
-            $stmt -> bindParam(":ApellidoPaterno", $DatosModelo['ApellidoPaterno'], PDO::PARAM_STR);
-            $stmt -> bindParam(":ApellidoMaterno", $DatosModelo['ApellidoMaterno'], PDO::PARAM_STR);
-            $stmt -> bindParam(":Nombres", $DatosModelo['Nombres'], PDO::PARAM_STR);
-            $stmt -> bindParam(":Direccion", $DatosModelo['Direccion'], PDO::PARAM_STR);
-            $stmt -> bindParam(":Celular", $DatosModelo['Celular'], PDO::PARAM_STR);
-            $stmt -> bindParam(":Telefono", $DatosModelo['Telefono'], PDO::PARAM_STR);
-            $stmt -> bindValue(":Correo", $DatosModelo['Correo'], $DatosModelo['Correo'] === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
-
-            if ($stmt -> execute())
-            {
-                return 'exitoso';
+        /**
+         * Nombre de usuario libre a partir de una base (p. ej. el C.I. del estudiante).
+         * Si alguien ya lo usa (p. ej. la misma persona como personal), se agrega un
+         * sufijo: 7311599 → 7311599E → 7311599E2 ... (máx. 20 caracteres, como la columna).
+         */
+        public static function UsuarioDisponibleModelo($base, $sufijo)
+        {
+            $base = substr(trim($base), 0, 20 - strlen($sufijo) - 2);
+            if (!self::ExisteNombreUsuarioModelo($base)) {
+                return $base;
             }
-            else
-            {
+            for ($n = 1; $n < 100; $n++) {
+                $candidato = $base . $sufijo . ($n > 1 ? $n : '');
+                if (!self::ExisteNombreUsuarioModelo($candidato)) {
+                    return $candidato;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Registra al personal y su usuario en UNA transacción: o se crean los dos, o
+         * ninguno (antes, si fallaba el usuario, el personal quedaba creado sin cuenta).
+         * @param array $DatosPersonal CedulaIdentidad, ApellidoPaterno, ApellidoMaterno, Nombres, Direccion, Celular, Telefono, Correo
+         * @param array $DatosUsuario Usuario, Password (hash), Tipo
+         * @return string 'exitoso' | 'usuario_duplicado' | 'error'
+         */
+        public static function RegistrarPersonalConUsuarioModelo($DatosPersonal, $DatosUsuario)
+        {
+            $pdo = Conexion::Conectar();
+            try {
+                $pdo->beginTransaction();
+
+                // IdPersonal no es autoincremental: el siguiente número, bloqueando la tabla
+                // para que dos registros simultáneos no tomen el mismo.
+                $idPersonal = (int)$pdo->query("SELECT COALESCE(MAX(IdPersonal), 0) + 1 FROM personal FOR UPDATE")->fetchColumn();
+
+                $stmt = $pdo->prepare("INSERT INTO `personal` (`IdPersonal`, `CedulaIdentidad`, `ApellidoPaterno`, `ApellidoMaterno`, `Nombres`, `Direccion`, `Celular`, `Telefono`, `Correo`)
+                    VALUES (:IdPersonal, :CedulaIdentidad, :ApellidoPaterno, :ApellidoMaterno, :Nombres, :Direccion, :Celular, :Telefono, :Correo)");
+                $stmt->bindValue(":IdPersonal", $idPersonal, PDO::PARAM_INT);
+                $stmt->bindValue(":CedulaIdentidad", $DatosPersonal['CedulaIdentidad'], PDO::PARAM_STR);
+                $stmt->bindValue(":ApellidoPaterno", $DatosPersonal['ApellidoPaterno'], PDO::PARAM_STR);
+                $stmt->bindValue(":ApellidoMaterno", $DatosPersonal['ApellidoMaterno'], PDO::PARAM_STR);
+                $stmt->bindValue(":Nombres", $DatosPersonal['Nombres'], PDO::PARAM_STR);
+                $stmt->bindValue(":Direccion", $DatosPersonal['Direccion'], PDO::PARAM_STR);
+                $stmt->bindValue(":Celular", $DatosPersonal['Celular'], PDO::PARAM_STR);
+                $stmt->bindValue(":Telefono", $DatosPersonal['Telefono'], PDO::PARAM_STR);
+                $stmt->bindValue(":Correo", $DatosPersonal['Correo'], $DatosPersonal['Correo'] === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+                $stmt->execute();
+
+                $stmt = $pdo->prepare("INSERT INTO `usuario` (`IdPersonal`, `Usuario`, `Password`, `Tipo`)
+                    VALUES (:IdPersonal, :Usuario, :Password, :Tipo)");
+                $stmt->bindValue(":IdPersonal", $idPersonal, PDO::PARAM_INT);
+                $stmt->bindValue(":Usuario", $DatosUsuario['Usuario'], PDO::PARAM_STR);
+                $stmt->bindValue(":Password", $DatosUsuario['Password'], PDO::PARAM_STR);
+                $stmt->bindValue(":Tipo", $DatosUsuario['Tipo'], PDO::PARAM_STR);
+                $stmt->execute();
+
+                $pdo->commit();
+                return 'exitoso';
+            } catch (PDOException $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                // 1062 = clave única repetida (índice uq_usuario_usuario): otro lo registró a la vez
+                if (($e->errorInfo[1] ?? null) == 1062) {
+                    return 'usuario_duplicado';
+                }
+                error_log("Error en RegistrarPersonalConUsuarioModelo: " . $e->getMessage());
                 return 'error';
             }
         }
 
-        public static function InsertarUsuarioModelo($TablaUsuario, $DatosModelo)
-        {
-            // Validar nombre de tabla
-            $TablaUsuario = self::ValidarNombreTabla($TablaUsuario);
-
-            $stmt = Conexion::Conectar()->prepare("INSERT INTO `$TablaUsuario` (`IdPersonal`, `Usuario`, `Password`, `Tipo`)
-             VALUES (:IdPersonal, :Usuario, :Password2, :Tipo)");
-
-            $stmt -> bindParam(":IdPersonal", $DatosModelo['IdPersonal'], PDO::PARAM_INT);
-            $stmt -> bindParam(":Usuario", $DatosModelo['Usuario'], PDO::PARAM_STR);
-            $stmt -> bindParam(":Password2", $DatosModelo['Password'], PDO::PARAM_STR);
-            $stmt -> bindParam(":Tipo", $DatosModelo['Tipo'], PDO::PARAM_STR);
-
-            if ($stmt -> execute())
-            {
-                return 'exitoso';
-            }
-            else
-            {
-                return 'error';
-            }
-        }
-
+        /**
+         * Edita los datos del personal. Se identifica por IdPersonal (no por C.I.):
+         * hay registros del personal que comparten C.I. y se editaban juntos.
+         */
         public static function EditarUsuaario($DatosModelo)
         {
             $stmt = Conexion::Conectar()->prepare("UPDATE `personal` SET `ApellidoPaterno`=:ApellidoPaterno,
             `ApellidoMaterno`=:ApellidoMaterno, `Nombres`=:Nombres,
             `Direccion`=:Direccion, `Celular`=:Celular, `Telefono`=:Telefono, `Correo`=:Correo
-            WHERE `CedulaIdentidad`=:CedulaIdentidad");
+            WHERE `IdPersonal`=:IdPersonal");
 
-            $stmt -> bindParam(":CedulaIdentidad", $DatosModelo['CedulaIdentidad'], PDO::PARAM_STR);
+            $stmt -> bindParam(":IdPersonal", $DatosModelo['IdPersonal'], PDO::PARAM_INT);
             $stmt -> bindParam(":ApellidoPaterno", $DatosModelo['ApellidoPaterno'], PDO::PARAM_STR);
             $stmt -> bindParam(":ApellidoMaterno", $DatosModelo['ApellidoMaterno'], PDO::PARAM_STR);
             $stmt -> bindParam(":Nombres", $DatosModelo['Nombres'], PDO::PARAM_STR);

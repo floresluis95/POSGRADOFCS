@@ -334,6 +334,7 @@
                 <label for="UECedulaIdentidad">
                   <i class="fas fa-id-card text-primary"></i> C.I.
                 </label>
+                <input type="hidden" id="UEIdPersonal" name="editaridpersonal">
                 <input type="text" id="UECedulaIdentidad" name="editarci" class="form-control" readonly
                        style="background-color: #e9ecef;">
               </div>

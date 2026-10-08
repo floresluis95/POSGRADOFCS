@@ -25,3 +25,4 @@ Ejecutar en este orden, **con respaldo previo de la base de datos**:
 9. `ampliar_cronogramadefensa.sql`: columna `cronogramadefensa.EstudianteID` (la defensa muestra el título guardado del trabajo de grado), títulos existentes a MAYÚSCULAS y columna `trabajogrado.HoraEntrega` (hora de entrega del informe final).
 10. `crear_ordenpagomodulo.sql`: tabla `ordenpagomodulo` (a qué módulo(s) corresponde cada orden de cuota; solo control, no cambia la orden).
 11. `crear_configuracion.sql`: tabla `configuracion` (parámetros editables por el ADM; NOTA_APROBACION = 76). Importar con `--default-character-set=utf8mb4` si es por consola.
+12. `usuario_unico.sql`: índice único en `usuario.Usuario` (no puede haber dos cuentas con el mismo nombre de usuario). Antes revisa que no haya repetidos.
