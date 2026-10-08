@@ -678,7 +678,7 @@ function mostrarFormularioCalificaciones(estudiantes) {
                     >
                 </td>
                 <td class="text-center">
-                    <span class="kt-badge kt-badge--xl ${estadoClass}" data-estudiante-id="${estudiante.EstudianteID}">
+                    <span class="kt-badge kt-badge--inline kt-badge--pill kt-badge--bold ${estadoClass}" data-estudiante-id="${estudiante.EstudianteID}">
                         ${estadoTexto}
                     </span>
                 </td>
