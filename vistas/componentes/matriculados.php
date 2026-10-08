@@ -385,6 +385,94 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     }
 
     /* =========================================================
+       Modal "Módulos inscritos" (prefijo mi-): mismo lenguaje que Gestión de Pagos.
+       Acotado a #modalVerModulos. El contenido lo arma inscripcionmodulo.js.
+       ========================================================= */
+    #modalVerModulos {
+        --mi-primario: #1e3c72;
+        --mi-primario-suave: #eef2f9;
+        --mi-texto: #1f2937;
+        --mi-texto-2: #6b7280;
+        --mi-borde: #e5e7eb;
+        --mi-fondo: #f7f8fa;
+        --mi-exito: #15803d;
+        --mi-exito-suave: #ecfdf3;
+        --mi-alerta: #b45309;
+        --mi-alerta-suave: #fffbeb;
+        --mi-peligro: #b91c1c;
+        --mi-peligro-suave: #fef2f2;
+        --mi-info: #1d4ed8;
+        --mi-info-suave: #eff6ff;
+    }
+    #modalVerModulos .modal-content { border: 0; border-radius: 12px; overflow: hidden; color: var(--mi-texto); }
+    #modalVerModulos .mi-header { background: var(--mi-primario); color: #fff; border: 0; padding: 18px 24px; align-items: flex-start; }
+    #modalVerModulos .mi-eyebrow { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.65); margin-bottom: 2px; }
+    #modalVerModulos .mi-header .modal-title { color: #fff; font-size: 18px; font-weight: 600; line-height: 1.3; }
+    #modalVerModulos .mi-header-sub { font-size: 13px; color: rgba(255,255,255,.8); margin-top: 2px; }
+    #modalVerModulos .mi-header .close { color: #fff; opacity: .7; text-shadow: none; margin: -6px -8px -6px auto; }
+    #modalVerModulos .mi-header .close:hover { opacity: 1; }
+
+    #modalVerModulos .modal-body { background: var(--mi-fondo); padding: 20px 24px; }
+    #modalVerModulos .mi-cargando { text-align: center; color: var(--mi-texto-2); padding: 32px 0; font-size: 13px; }
+
+    /* Resumen académico */
+    #modalVerModulos .mi-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+    #modalVerModulos .mi-stat { background: #fff; border: 1px solid var(--mi-borde); border-radius: 8px; padding: 10px 14px; }
+    #modalVerModulos .mi-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--mi-texto-2); }
+    #modalVerModulos .mi-stat-valor { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    #modalVerModulos .mi-stat.is-aprobado .mi-stat-valor { color: var(--mi-exito); }
+    #modalVerModulos .mi-stat.is-reprobado .mi-stat-valor { color: var(--mi-peligro); }
+    #modalVerModulos .mi-stat.is-promedio .mi-stat-valor { color: var(--mi-primario); }
+    #modalVerModulos .mi-progreso { display: flex; align-items: center; gap: 10px; margin: 12px 0 16px; font-size: 12px; color: var(--mi-texto-2); }
+    #modalVerModulos .mi-progreso .progress { flex: 1; height: 6px; border-radius: 3px; background: var(--mi-borde); }
+    #modalVerModulos .mi-progreso .progress-bar { background: var(--mi-exito); }
+
+    /* Tabla de módulos */
+    #modalVerModulos .mi-tabla-wrap { background: #fff; border: 1px solid var(--mi-borde); border-radius: 8px; overflow: hidden; }
+    #modalVerModulos .mi-tabla { width: 100%; margin: 0; font-size: 13px; }
+    #modalVerModulos .mi-tabla thead th {
+        position: sticky; top: 0; z-index: 1;
+        background: var(--mi-primario-suave); color: var(--mi-primario);
+        font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em;
+        border: 0; border-bottom: 1px solid var(--mi-borde); padding: 10px 12px; white-space: nowrap;
+    }
+    #modalVerModulos .mi-tabla td { border: 0; border-bottom: 1px solid var(--mi-borde); padding: 10px 12px; vertical-align: middle; }
+    #modalVerModulos .mi-tabla tbody tr:last-child td { border-bottom: 0; }
+    #modalVerModulos .mi-tabla tbody tr:hover { background: #fafbfc; }
+    #modalVerModulos .mi-num { color: var(--mi-texto-2); font-variant-numeric: tabular-nums; width: 1%; }
+    #modalVerModulos .mi-codigo { display: block; font-size: 11px; font-weight: 600; letter-spacing: .05em; color: var(--mi-primario); text-transform: uppercase; }
+    #modalVerModulos .mi-nombre { font-weight: 600; line-height: 1.35; }
+    #modalVerModulos .mi-fechas { display: block; font-size: 12px; color: var(--mi-texto-2); margin-top: 2px; }
+    #modalVerModulos .mi-docente { line-height: 1.35; }
+    #modalVerModulos .mi-docente small { display: block; font-size: 11px; color: var(--mi-texto-2); }
+    #modalVerModulos .mi-nota { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    #modalVerModulos .mi-nota.is-aprobado { color: var(--mi-exito); }
+    #modalVerModulos .mi-nota.is-reprobado { color: var(--mi-peligro); }
+
+    /* Etiquetas suaves (estado del módulo, cuota y resultado) */
+    #modalVerModulos .mi-tag { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; background: var(--mi-fondo); color: var(--mi-texto-2); border: 1px solid var(--mi-borde); }
+    #modalVerModulos .mi-tag.is-exito { background: var(--mi-exito-suave); color: var(--mi-exito); border-color: #bbf7d0; }
+    #modalVerModulos .mi-tag.is-peligro { background: var(--mi-peligro-suave); color: var(--mi-peligro); border-color: #fecaca; }
+    #modalVerModulos .mi-tag.is-alerta { background: var(--mi-alerta-suave); color: var(--mi-alerta); border-color: #fde68a; }
+    #modalVerModulos .mi-tag.is-info { background: var(--mi-info-suave); color: var(--mi-info); border-color: #bfdbfe; }
+    #modalVerModulos .mi-sub { display: block; font-size: 11px; color: var(--mi-texto-2); margin-top: 2px; }
+
+    #modalVerModulos .mi-vacio { text-align: center; color: var(--mi-texto-2); padding: 32px 16px; }
+    #modalVerModulos .mi-vacio i { font-size: 28px; margin-bottom: 8px; display: block; }
+
+    #modalVerModulos .mi-footer { background: #fff; border-top: 1px solid var(--mi-borde); padding: 12px 24px; justify-content: space-between; }
+    #modalVerModulos .mi-leyenda { font-size: 12px; color: var(--mi-texto-2); }
+    #modalVerModulos .mi-footer .btn-light { border: 1px solid var(--mi-borde); background: #fff; }
+
+    @media (max-width: 991.98px) {
+        #modalVerModulos .mi-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 575.98px) {
+        #modalVerModulos .mi-header, #modalVerModulos .modal-body { padding-left: 16px; padding-right: 16px; }
+        #modalVerModulos .mi-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    }
+
+    /* =========================================================
        PÁGINA DE MATRICULADOS (prefijo mt-): filtros y lista.
        Mismo lenguaje visual que Programas, Reporte de Notas y Estudiantes.
        Las filas las arma InscripcionModuloControladores (badges con estilo
@@ -1114,28 +1202,27 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 
 <!-- Modal Ver Módulos Inscritos -->
 <div class="modal fade" id="modalVerModulos" tabindex="-1" role="dialog" aria-labelledby="modalVerModulosLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content">
-            <div class="modal-header mt-modal-head">
-                <h5 class="modal-title text-white" id="modalVerModulosLabel">
-                    <i class="fa fa-list"></i> Módulos Inscritos - <span id="modulosEstudianteNombre"></span>
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+            <!-- Encabezado: estudiante y programa (como en Gestión de Pagos) -->
+            <div class="modal-header mi-header">
+                <div>
+                    <span class="mi-eyebrow">Módulos inscritos · avance académico</span>
+                    <h5 class="modal-title" id="modalVerModulosLabel"><span id="modulosEstudianteNombre"></span></h5>
+                    <div class="mi-header-sub"><i class="fa fa-graduation-cap"></i> <span id="modulosProgramaNombre"></span></div>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <div id="contenidoModulos">
-                    <div class="text-center">
-                        <i class="fa fa-spinner fa-spin fa-3x text-primary"></i>
-                        <p class="mt-3">Cargando módulos...</p>
-                    </div>
+                    <div class="mi-cargando"><i class="fa fa-spinner fa-spin"></i> Cargando módulos...</div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="fa fa-times"></i> Cerrar
-                </button>
+            <div class="modal-footer mi-footer">
+                <span class="mi-leyenda" id="modulosLeyenda"></span>
+                <button type="button" class="btn btn-light" data-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>

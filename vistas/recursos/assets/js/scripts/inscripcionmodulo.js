@@ -462,16 +462,13 @@ $(document).ready(function() {
         console.log('Cargando módulos inscritos para estudiante:', estudianteID);
         console.log('Inscripción:', idInscripcion, 'Programa:', programaID);
 
-        // Actualizar título del modal con nombre del estudiante y programa
-        $('#modulosEstudianteNombre').text(estudianteNombre + ' - ' + programaNombre);
+        // Encabezado: estudiante y programa en líneas separadas
+        $('#modulosEstudianteNombre').text(estudianteNombre);
+        $('#modulosProgramaNombre').text(programaNombre);
+        $('#modulosLeyenda').text('');
 
         // Mostrar modal con loader
-        $('#contenidoModulos').html(`
-            <div class="text-center">
-                <i class="fa fa-spinner fa-spin fa-3x text-primary"></i>
-                <p class="mt-3">Cargando módulos...</p>
-            </div>
-        `);
+        $('#contenidoModulos').html('<div class="mi-cargando"><i class="fa fa-spinner fa-spin"></i> Cargando módulos...</div>');
         $('#modalVerModulos').modal('show');
 
         // Cargar módulos inscritos vía AJAX
@@ -486,106 +483,147 @@ $(document).ready(function() {
             },
             dataType: 'json',
             success: function(response) {
-                console.log('Módulos inscritos:', response);
+                const notaMinima = window.NOTA_APROBACION || 76;
+                $('#modulosLeyenda').html('<i class="fa fa-info-circle"></i> Nota mínima de aprobación: <strong>' + notaMinima + ' pts.</strong>');
 
-                if (response && response.length > 0) {
-                    let tabla = `
+                if (!response || response.length === 0) {
+                    $('#contenidoModulos').html(`
+                        <div class="mi-tabla-wrap mi-vacio">
+                            <i class="fa fa-book-open"></i>
+                            <strong>El programa no tiene módulos activos</strong><br>
+                            Cuando se registren módulos en el programa, aparecerán aquí con su calificación.
+                        </div>
+                    `);
+                    return;
+                }
+
+                const escapar = (texto) => $('<div>').text(texto == null ? '' : String(texto)).html();
+                const fechaCorta = (f) => {
+                    if (!f || f === '0000-00-00') return '';
+                    const p = String(f).substring(0, 10).split('-');
+                    return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : '';
+                };
+                const pad = (n) => String(n).padStart(2, '0');
+                const ahora = new Date();
+                const hoy = ahora.getFullYear() + '-' + pad(ahora.getMonth() + 1) + '-' + pad(ahora.getDate());
+
+                // Periodo del módulo según sus fechas (mismo criterio que la lista de Módulos)
+                const periodoModulo = (m) => {
+                    const ini = m.FechaInicio ? String(m.FechaInicio).substring(0, 10) : '';
+                    const fin = m.FechaFinal ? String(m.FechaFinal).substring(0, 10) : '';
+                    if (!ini || !fin || ini === '0000-00-00' || fin === '0000-00-00') return '<span class="mi-tag">Sin fechas</span>';
+                    if (hoy < ini) return '<span class="mi-tag is-alerta">Por iniciar</span>';
+                    if (hoy > fin) return '<span class="mi-tag">Culminado</span>';
+                    return '<span class="mi-tag is-info">En curso</span>';
+                };
+
+                // Resumen académico
+                const total = response.length;
+                const aprobados = response.filter(m => m.EstadoAprobacion === 'APROBADO').length;
+                const reprobados = response.filter(m => m.EstadoAprobacion === 'REPROBADO').length;
+                const sinNota = total - aprobados - reprobados;
+                const notas = response
+                    .filter(m => m.Nota !== null && m.Nota !== undefined && m.Nota !== '')
+                    .map(m => parseFloat(m.Nota))
+                    .filter(n => !isNaN(n));
+                const promedio = notas.length ? (notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(1) : '—';
+                const avance = Math.round(aprobados / total * 100);
+
+                let html = `
+                    <div class="mi-stats">
+                        <div class="mi-stat"><div class="mi-stat-label">Módulos</div><div class="mi-stat-valor">${total}</div></div>
+                        <div class="mi-stat is-aprobado"><div class="mi-stat-label">Aprobados</div><div class="mi-stat-valor">${aprobados}</div></div>
+                        <div class="mi-stat is-reprobado"><div class="mi-stat-label">Reprobados</div><div class="mi-stat-valor">${reprobados}</div></div>
+                        <div class="mi-stat"><div class="mi-stat-label">Sin calificación</div><div class="mi-stat-valor">${sinNota}</div></div>
+                        <div class="mi-stat is-promedio"><div class="mi-stat-label">Promedio</div><div class="mi-stat-valor">${promedio}</div></div>
+                    </div>
+                    <div class="mi-progreso">
+                        <span>Avance académico</span>
+                        <div class="progress"><div class="progress-bar" style="width: ${avance}%"></div></div>
+                        <span><strong>${aprobados} de ${total}</strong> aprobados (${avance}%)</span>
+                    </div>
+                    <div class="mi-tabla-wrap">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover">
-                                <thead style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                            <table class="table mi-tabla">
+                                <thead>
                                     <tr>
-                                        <th class="text-center" style="color: white;">#</th>
-                                        <th style="color: white;">MÓDULO</th>
-                                        <th class="text-center" style="color: white;">CÓDIGO</th>
-                                        <th style="color: white;">DOCENTE</th>
-                                        <th class="text-center" style="color: white;">CUOTA</th>
-                                        <th class="text-center" style="color: white;">CALIFICACIÓN</th>
-                                        <th class="text-center" style="color: white;">ESTADO</th>
+                                        <th>N°</th>
+                                        <th>Módulo</th>
+                                        <th>Docente</th>
+                                        <th class="text-center">Periodo</th>
+                                        <th class="text-center">Cuota</th>
+                                        <th class="text-center">Nota</th>
+                                        <th class="text-center">Resultado</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                `;
+
+                response.forEach((modulo, index) => {
+                    // Módulo: código arriba, nombre y fechas debajo
+                    const inicio = fechaCorta(modulo.FechaInicio);
+                    const final = fechaCorta(modulo.FechaFinal);
+                    const fechas = inicio && final
+                        ? `<span class="mi-fechas"><i class="fa fa-calendar-alt"></i> ${inicio} al ${final}</span>`
+                        : '';
+
+                    const docente = modulo.NombreDocente
+                        ? `${escapar(modulo.NombreDocente)}${modulo.EspecialidadDocente ? '<small>' + escapar(modulo.EspecialidadDocente) + '</small>' : ''}`
+                        : '<span class="text-muted">Sin asignar</span>';
+
+                    // Cuota que cubre el módulo (marcada al generar la orden de cuota)
+                    let cuota = '<span class="mi-tag" title="Ninguna orden de cuota marca este módulo">Sin cuota</span>';
+                    if (modulo.CuotaOrden) {
+                        const pagada = modulo.CuotaEstado === 'CONFIRMADO';
+                        const vencida = modulo.CuotaEstado === 'VENCIDO';
+                        cuota = `<span class="mi-tag ${pagada ? 'is-exito' : (vencida ? 'is-peligro' : 'is-alerta')}">${pagada ? 'Pagada' : (vencida ? 'Vencida' : 'Pendiente')}</span>` +
+                            `<span class="mi-sub">${escapar(modulo.CuotaOrden)}</span>`;
+                    }
+
+                    // Nota y resultado
+                    const tieneNota = modulo.Nota !== null && modulo.Nota !== undefined && modulo.Nota !== '';
+                    const claseNota = modulo.EstadoAprobacion === 'APROBADO' ? 'is-aprobado' : (modulo.EstadoAprobacion === 'REPROBADO' ? 'is-reprobado' : '');
+                    const nota = tieneNota ? `<span class="mi-nota ${claseNota}">${escapar(modulo.Nota)}</span>` : '<span class="text-muted">—</span>';
+                    let resultado = '<span class="mi-tag">Sin calificación</span>';
+                    if (modulo.EstadoAprobacion === 'APROBADO') {
+                        resultado = '<span class="mi-tag is-exito"><i class="fa fa-check"></i> Aprobado</span>';
+                    } else if (modulo.EstadoAprobacion === 'REPROBADO') {
+                        resultado = '<span class="mi-tag is-peligro"><i class="fa fa-times"></i> Reprobado</span>';
+                    }
+
+                    html += `
+                        <tr>
+                            <td class="mi-num">${index + 1}</td>
+                            <td>
+                                <span class="mi-codigo">${escapar(modulo.Codigo || '')}</span>
+                                <span class="mi-nombre">${escapar(modulo.NombreModulo || 'N/A')}</span>
+                                ${fechas}
+                            </td>
+                            <td class="mi-docente">${docente}</td>
+                            <td class="text-center">${periodoModulo(modulo)}</td>
+                            <td class="text-center">${cuota}</td>
+                            <td class="text-center">${nota}</td>
+                            <td class="text-center">${resultado}</td>
+                        </tr>
                     `;
+                });
 
-                    response.forEach((modulo, index) => {
-                        // Información del docente
-                        let docenteInfo = modulo.NombreDocente || 'Sin asignar';
-                        if (modulo.EspecialidadDocente) {
-                            docenteInfo += `<br><small class="text-muted">${modulo.EspecialidadDocente}</small>`;
-                        }
-
-                        // Calificación
-                        let notaDisplay = modulo.Nota !== null && modulo.Nota !== undefined
-                            ? `<strong class="h5">${modulo.Nota}</strong>`
-                            : '<span class="text-muted">-</span>';
-
-                        // Badge de estado según aprobación
-                        let estadoBadge = '';
-                        if (modulo.EstadoAprobacion === 'APROBADO') {
-                            estadoBadge = '<span class="badge badge-success badge-lg"><i class="fa fa-check-circle"></i> APROBADO</span>';
-                        } else if (modulo.EstadoAprobacion === 'REPROBADO') {
-                            estadoBadge = '<span class="badge badge-danger badge-lg"><i class="fa fa-times-circle"></i> REPROBADO</span>';
-                        } else {
-                            estadoBadge = '<span class="badge badge-secondary badge-lg"><i class="fa fa-clock-o"></i> SIN CALIFICACIÓN</span>';
-                        }
-
-                        // Cuota que cubre el módulo (marcada al generar la orden de cuota)
-                        let cuotaBadge = '<span class="badge badge-light" title="Ninguna orden de cuota marca este módulo">Sin cuota</span>';
-                        if (modulo.CuotaOrden) {
-                            const pagada = modulo.CuotaEstado === 'CONFIRMADO';
-                            const vencida = modulo.CuotaEstado === 'VENCIDO';
-                            cuotaBadge = `<span class="badge ${pagada ? 'badge-success' : (vencida ? 'badge-danger' : 'badge-warning')}">` +
-                                `${pagada ? 'Pagada' : (vencida ? 'Vencida' : 'Pendiente')}</span><br><small class="text-muted">${modulo.CuotaOrden}</small>`;
-                        }
-
-                        tabla += `
-                            <tr>
-                                <td class="text-center"><strong>${index + 1}</strong></td>
-                                <td><strong>${modulo.NombreModulo || 'N/A'}</strong></td>
-                                <td class="text-center"><span class="badge badge-primary">${modulo.Codigo || 'N/A'}</span></td>
-                                <td>${docenteInfo}</td>
-                                <td class="text-center">${cuotaBadge}</td>
-                                <td class="text-center">${notaDisplay}</td>
-                                <td class="text-center">${estadoBadge}</td>
-                            </tr>
-                        `;
-                    });
-
-                    tabla += `
+                html += `
                                 </tbody>
                             </table>
                         </div>
-                        <div class="alert alert-info mt-3">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <i class="fa fa-list"></i>
-                                    Total de módulos inscritos: <strong>${response.length}</strong>
-                                </div>
-                                <div class="col-md-6 text-right">
-                                    <span class="badge badge-success mr-2"><i class="fa fa-check"></i> Aprobado: >= ${window.NOTA_APROBACION || 76}</span>
-                                    <span class="badge badge-danger"><i class="fa fa-times"></i> Reprobado: &lt; ${window.NOTA_APROBACION || 76}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    </div>
+                `;
 
-                    $('#contenidoModulos').html(tabla);
-                } else {
-                    $('#contenidoModulos').html(`
-                        <div class="alert alert-warning text-center">
-                            <i class="fa fa-exclamation-triangle fa-3x mb-3"></i>
-                            <h5>No hay módulos inscritos</h5>
-                            <p>Este estudiante aún no está inscrito en ningún módulo.</p>
-                        </div>
-                    `);
-                }
+                $('#contenidoModulos').html(html);
             },
             error: function(xhr, status, error) {
                 console.error('Error al cargar módulos inscritos:', error);
                 $('#contenidoModulos').html(`
-                    <div class="alert alert-danger text-center">
-                        <i class="fa fa-exclamation-circle fa-3x mb-3"></i>
-                        <h5>Error al cargar módulos</h5>
-                        <p>No se pudieron cargar los módulos inscritos. Por favor, intente nuevamente.</p>
+                    <div class="mi-tabla-wrap mi-vacio" style="color: var(--mi-peligro);">
+                        <i class="fa fa-exclamation-circle"></i>
+                        <strong>No se pudieron cargar los módulos</strong><br>
+                        Cierre esta ventana e intente nuevamente.
                     </div>
                 `);
             }
