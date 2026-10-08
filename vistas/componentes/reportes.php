@@ -360,7 +360,8 @@ function actualizarFecha() {
 actualizarFecha();
 
 // Select2 (mismo tamaño/estilo en los tres pares Sede/Programa)
-$(document).ready(function() {
+// La vista se incluye antes que jQuery (plantilla.php): esperar a que cargue
+document.addEventListener('DOMContentLoaded', function() {
     $('.select2-uniforme').select2({ width: '100%' });
 });
 
@@ -368,7 +369,7 @@ $(document).ready(function() {
 // de esa misma tarjeta solo muestra los programas de esa sede. Con Select2 no
 // basta con ocultar <option> por CSS como en un <select> nativo, hay que
 // quitarlas/ponerlas del DOM.
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     $('.select-programa-por-sede').each(function() {
         const $sede = $(this);
         const $programa = $($sede.data('target'));

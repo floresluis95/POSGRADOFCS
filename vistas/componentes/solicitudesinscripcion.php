@@ -71,10 +71,13 @@ if (!in_array($tipoUsuario, ['ADM', 'SEC', 'AUX'], true)) {
             <div class="kt-container kt-grid__item kt-grid__item--fluid">
 
               <div class="alert alert-light border mb-3" style="font-size: 13px;">
-                <i class="fa fa-info-circle text-primary"></i>
-                Estas solicitudes las envían estudiantes o docentes desde el botón "Inscribirme" del panel.
-                Son solo un aviso de interés: para inscribir formalmente al estudiante, use
-                <strong>Nuevo registro</strong> (Pre-Registro) como siempre.
+                <!-- .alert de Metronic es flex: el texto va en un solo bloque para que no se parta en columnas -->
+                <div>
+                  <i class="fa fa-info-circle text-primary"></i>
+                  Estas solicitudes las envían estudiantes o docentes desde el botón "Inscribirme" del panel.
+                  Son solo un aviso de interés: para inscribir formalmente al estudiante, use
+                  <strong>Nuevo registro</strong> (Pre-Registro) como siempre.
+                </div>
               </div>
 
               <div class="kt-portlet">
@@ -131,7 +134,8 @@ if (!in_array($tipoUsuario, ['ADM', 'SEC', 'AUX'], true)) {
 </div>
 
 <script>
-$(document).ready(function() {
+// La vista se incluye antes que jQuery (plantilla.php): esperar a que cargue
+document.addEventListener('DOMContentLoaded', function() {
     function actualizarFecha() {
         const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const fecha = new Date().toLocaleDateString('es-ES', opciones);
@@ -240,13 +244,13 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(resp) {
                 if (!resp.success) {
-                    Swal.fire({ icon: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo actualizar' });
+                    Swal.fire({ type: 'warning', title: 'Atención', text: resp.mensaje || 'No se pudo actualizar' });
                     return;
                 }
                 cargarSolicitudes();
             },
             error: function() {
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el estado' });
+                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo actualizar el estado' });
             }
         });
     });

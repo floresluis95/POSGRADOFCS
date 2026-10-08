@@ -397,13 +397,7 @@ if ($_SESSION["Tipo"] == "SEC") {
                     <i class="flaticon2-user" style="color: #9c27b0;"></i> PERSONAL
                   </h4>
                 </li>
-               
-                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="docentes" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">Docentes</span>
-                  </a>
-                </li>
+
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="estudiantes" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-group" style="color: #9c27b0;"></i>
