@@ -53,9 +53,51 @@ class EstudiantesModelos
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Motivo por el que no se puede guardar un estudiante: su C.I. o su correo ya los
+     * tiene otro estudiante (la base no permite repetirlos). Se usa al registrar y al
+     * editar, para mostrar el porqué en vez de un error genérico.
+     * @param string|null $ci        null = no revisar el C.I. (al editar no se cambia)
+     * @param int|null    $excluirId al editar, el propio estudiante
+     * @return string|null Mensaje, o null si no hay datos repetidos
+     */
+    public static function MotivoDatoRepetidoModelo($ci, $correo, $excluirId = null)
+    {
+        $pdo = Conexion::Conectar();
+        $nombreDe = function ($e) {
+            return trim($e['Nombre'] . ' ' . $e['Apaterno'] . ' ' . $e['Amaterno']);
+        };
+
+        if ($ci !== null && trim((string)$ci) !== '') {
+            $stmt = $pdo->prepare("SELECT EstudianteID, Ci, Nombre, Apaterno, Amaterno FROM estudiante WHERE Ci = :ci AND EstudianteID <> :excluir LIMIT 1");
+            $stmt->execute([':ci' => trim((string)$ci), ':excluir' => (int)$excluirId]);
+            if ($e = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                return sprintf('Ya existe un estudiante con el C.I. %s: %s.', $e['Ci'], $nombreDe($e));
+            }
+        }
+
+        if (trim((string)$correo) !== '') {
+            $stmt = $pdo->prepare("SELECT EstudianteID, Ci, Nombre, Apaterno, Amaterno FROM estudiante WHERE Correo = :correo AND EstudianteID <> :excluir LIMIT 1");
+            $stmt->execute([':correo' => trim((string)$correo), ':excluir' => (int)$excluirId]);
+            if ($e = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                return sprintf('El correo %s ya está registrado para el estudiante %s (C.I. %s). Use otro correo.', trim((string)$correo), $nombreDe($e), $e['Ci']);
+            }
+        }
+
+        return null;
+    }
+
     /* REGISTRAR CON TODOS LOS CAMPOS */
+   /**
+    * @return string 'exitoso', o el motivo por el que no se guardó (C.I./correo repetido)
+    */
    public static function RegistrarEstudianteModelo($DatosEstudiante)
 {
+    $motivo = self::MotivoDatoRepetidoModelo($DatosEstudiante['Ci'], $DatosEstudiante['Correo']);
+    if ($motivo !== null) {
+        return $motivo;
+    }
+
     $stmt = Conexion::Conectar()->prepare("
         INSERT INTO estudiante (
             Ci, Complemento, Exp, Nombre, Apaterno, Amaterno,
@@ -94,19 +136,29 @@ class EstudiantesModelos
     $stmt->bindValue(":IdUniversidad", $idUniversidad, $idUniversidad === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
     $stmt->bindValue(":FechaEgreso", $fechaEgreso, $fechaEgreso === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
 
-    if ($stmt->execute()) {
-        return 'exitoso';
-    } else {
-        print_r($stmt->errorInfo());
-        return 'error';
+    try {
+        return $stmt->execute() ? 'exitoso' : 'No se pudo registrar al estudiante';
+    } catch (PDOException $e) {
+        // Otro usuario lo registró al mismo tiempo: se informa qué dato se repitió
+        if ($e->getCode() === '23000') {
+            return self::MotivoDatoRepetidoModelo($DatosEstudiante['Ci'], $DatosEstudiante['Correo'])
+                ?? 'El C.I. o el correo ya están registrados para otro estudiante';
+        }
+        throw $e;
     }
 }
     
  
 
     /* ACTUALIZAR DATOS DE UN ESTUDIANTE EXISTENTE (no toca Ci ni Estado) */
+    /** @return string 'exitoso', o el motivo por el que no se guardó (correo de otro estudiante) */
     public static function ActualizarEstudianteModelo($EstudianteID, $DatosEstudiante)
     {
+        $motivo = self::MotivoDatoRepetidoModelo(null, $DatosEstudiante['Correo'], $EstudianteID);
+        if ($motivo !== null) {
+            return $motivo;
+        }
+
         $stmt = Conexion::Conectar()->prepare("
             UPDATE estudiante SET
                 Complemento = :Complemento,
@@ -149,7 +201,15 @@ class EstudiantesModelos
         $stmt->bindValue(":IdUniversidad", $idUniversidad, $idUniversidad === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $stmt->bindValue(":FechaEgreso", $fechaEgreso, $fechaEgreso === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
 
-        return $stmt->execute() ? 'exitoso' : 'error';
+        try {
+            return $stmt->execute() ? 'exitoso' : 'No se pudo actualizar al estudiante';
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23000') {
+                return self::MotivoDatoRepetidoModelo(null, $DatosEstudiante['Correo'], $EstudianteID)
+                    ?? 'El correo ya está registrado para otro estudiante';
+            }
+            throw $e;
+        }
     }
 
     /* CAMBIAR A INACTIVO */
@@ -239,6 +299,10 @@ class ProfesionModelos {
                 'profesion' => ['IdProfesion' => $id, 'NombreProfesion' => $nombre]
             ];
         } catch (PDOException $e) {
+            // Índice único: otro usuario la registró al mismo tiempo => se devuelve esa
+            if ($e->getCode() === '23000' && ($existente = self::BuscarPorNombreModelo($nombre))) {
+                return ['status' => 'duplicado', 'mensaje' => 'Esa profesión ya existe', 'profesion' => $existente];
+            }
             error_log("Error en RegistrarProfesionModelo: " . $e->getMessage());
             return ['status' => 'error', 'mensaje' => 'Error en el servidor: ' . $e->getMessage()];
         }

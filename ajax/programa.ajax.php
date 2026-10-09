@@ -15,7 +15,15 @@ require_once $rutaBase . "/modelos/programa.modelo.php";
 if(isset($_POST["grado"])) {
     $grado = $_POST["grado"];
     $sede = isset($_POST["sede"]) ? $_POST["sede"] : null;
-    $respuesta = ProgramasModelos::BuscarProgramasConFiltros($grado, null, null, $sede);
+    // Solo activos, el último registrado primero, con su estado según las fechas
+    // (Por iniciar / En curso / Concluido) para distinguir programas del mismo nombre
+    $respuesta = ProgramasModelos::BuscarProgramasConFiltros($grado, null, null, $sede, true);
+    foreach ($respuesta as &$programa) {
+        $estado = ProgramasControladores::EstadoProgramaControlador($programa);
+        $programa['EstadoClave'] = $estado['clave'];
+        $programa['EstadoEtiqueta'] = $estado['etiqueta'];
+    }
+    unset($programa);
 
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode($respuesta);

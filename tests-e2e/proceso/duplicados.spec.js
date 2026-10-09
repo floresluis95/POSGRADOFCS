@@ -37,6 +37,9 @@ test.describe('Duplicados en formularios', () => {
     const { ci } = await registrarEstudiante(page);
     const otro = await registrarEstudiante(page, { Correo: `prueba${ci}@correo-prueba.com` });
     expect(otro.respuesta.success).toBe(false);
+    // El aviso dice de quién es el correo (antes era "Error al registrar el estudiante")
+    expect(otro.respuesta.mensaje).toContain('ya está registrado');
+    expect(otro.respuesta.mensaje).toContain(ci);
     expect(valor(`SELECT COUNT(*) FROM estudiante WHERE Correo = 'prueba${ci}@correo-prueba.com'`)).toBe('1');
   });
 
@@ -49,8 +52,33 @@ test.describe('Duplicados en formularios', () => {
     };
     await enviarFormulario(page, 'estudiantes', campos);
     const html = await enviarFormulario(page, 'estudiantes', { ...campos, Correo: `form2${ci}@correo-prueba.com` });
-    expect(html).toContain('ya esta registrado');
+    expect(html).toContain(`Ya existe un estudiante con el C.I. ${ci}`);
     expect(valor(`SELECT COUNT(*) FROM estudiante WHERE Ci = '${ci}'`)).toBe('1');
+  });
+
+  test('estudiante (página Estudiantes): el correo de otro estudiante se avisa con el motivo', async ({ page }) => {
+    const { ci: ciOtro } = await registrarEstudiante(page);
+    const ci = unico();
+    const html = await enviarFormulario(page, 'estudiantes', {
+      Ci: ci, Complemento: '', Exp: 'OR', Nombre: 'FORM', Apaterno: 'PRUEBA', Amaterno: 'CORREO',
+      FechaNacimiento: '1990-01-01', Edad: '36', Lugarn: 'ORURO', Correo: `prueba${ciOtro}@correo-prueba.com`,
+      IdProfesion: valor('SELECT MIN(IdProfesion) FROM profesion') ?? '', Trabajo: '', Direccion: '', Telefono: '', Celular: '70000001',
+    });
+    expect(html).toContain('ya está registrado para el estudiante');
+    expect(html).toContain(ciOtro);
+    expect(valor(`SELECT COUNT(*) FROM estudiante WHERE Ci = '${ci}'`)).toBe('0');
+  });
+
+  test('estudiante (editar): no se puede poner el correo de otro estudiante', async ({ page }) => {
+    const { ci: ciOtro } = await registrarEstudiante(page);
+    const { respuesta } = await registrarEstudiante(page);
+    const r = await ajax(page, 'ordenpago.ajax.php', {
+      accion: 'actualizarEstudiante', EstudianteID: String(respuesta.estudianteID), Exp: 'OR', Nombre: 'PRUEBA', Apaterno: 'EDITAR',
+      FechaNacimiento: '1995-05-10', Edad: '31', Lugarn: 'ORURO', Correo: `prueba${ciOtro}@correo-prueba.com`,
+      IdProfesion: valor('SELECT MIN(IdProfesion) FROM profesion') ?? '', Celular: '70000000',
+    });
+    expect(r.success).toBe(false);
+    expect(r.mensaje).toContain(ciOtro);
   });
 
   test('docente: no se registra dos veces el mismo C.I.', async ({ page }) => {

@@ -9,7 +9,7 @@ const MYSQL = 'C:/xampp/mysql/bin/mysql.exe';
 
 /** Consulta directa a proyecto_pruebas. Devuelve las filas como arreglos de texto. */
 export function sql(consulta) {
-  const salida = execFileSync(MYSQL, ['-u', 'root', '-N', '-B', 'proyecto_pruebas', '-e', consulta]).toString().trim();
+  const salida = execFileSync(MYSQL, ['-u', 'root', '--default-character-set=utf8', '-N', '-B', 'proyecto_pruebas'], { input: consulta }).toString().trim();
   return salida === '' ? [] : salida.split(/\r?\n/).map((fila) => fila.split('\t'));
 }
 
@@ -23,7 +23,8 @@ let contador = 0;
 /** Número distinto en cada llamada (para C.I., vouchers, nombres de prueba). */
 export function unico() {
   contador += 1;
-  return String(Date.now()).slice(-6) + String(contador).padStart(2, '0');
+  // Nunca empieza con 0: estudiante.Ci es INT y "0123..." se guardaría como "123..."
+  return String(Date.now()).slice(-6).replace(/^0/, '9') + String(contador).padStart(2, '0');
 }
 
 /** Inicia sesión con un usuario de prueba (prueba_adm, prueba_sec...). */
@@ -87,6 +88,8 @@ export async function registrarEstudiante(page, cambios = {}) {
     Correo: `prueba${ci}@correo-prueba.com`,
     IdProfesion: valor('SELECT MIN(IdProfesion) FROM profesion'),
     Celular: '70000000',
+    IdUniversidad: valor("SELECT MIN(IdUniversidad) FROM universidad WHERE TipoUniversidad = 'PUBLICA'") ?? '',
+    FechaEgreso: '2018-12-15',
     ...cambios,
   };
   return { ci, respuesta: await ajax(page, 'ordenpago.ajax.php', datos) };

@@ -186,8 +186,9 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#333;back
 </tr>
 <?php if($montoDescuentoMatricula > 0): ?>
 <tr style="background:#d4edda">
-<td><strong>Descuento de matrícula aplicado (<?php echo number_format($porcentajeDescuentoMatricula,1); ?>%)</strong></td>
-<td class="num" style="color:#28a745"><strong>- Bs. <?php echo number_format($montoDescuentoMatricula,2); ?></strong></td>
+<?php // costomatricula ya es el monto CON descuento: esta fila solo informa cuánto se descontó ?>
+<td><strong>Incluye descuento de matrícula (<?php echo number_format($porcentajeDescuentoMatricula,1); ?>%)</strong></td>
+<td class="num" style="color:#28a745"><strong>Bs. <?php echo number_format($montoDescuentoMatricula,2); ?></strong></td>
 <td colspan="2"></td>
 </tr>
 <?php endif; ?>

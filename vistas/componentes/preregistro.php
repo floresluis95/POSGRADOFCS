@@ -291,16 +291,16 @@ kt-aside--fixed kt-page--loading">
                                 <label for="selectExpedido" class="small font-weight-bold mb-1">Expedido <span class="text-danger">*</span></label>
                                 <select class="form-control form-control-sm" id="selectExpedido" name="Exp" form="formPreregistro" required>
                                   <option value="" disabled selected>Seleccione...</option>
-                                  <option value="LP">La Paz</option>
-                                  <option value="CB">Cochabamba</option>
-                                  <option value="SC">Santa Cruz</option>
-                                  <option value="OR">Oruro</option>
-                                  <option value="PT">Potosí</option>
-                                  <option value="CH">Chuquisaca</option>
-                                  <option value="TJ">Tarija</option>
-                                  <option value="BN">Beni</option>
-                                  <option value="PD">Pando</option>
-                                  <option value="OTR">Otro</option>
+                                  <option value="LP">LA PAZ</option>
+                                  <option value="CB">COCHABAMBA</option>
+                                  <option value="SC">SANTA CRUZ</option>
+                                  <option value="OR">ORURO</option>
+                                  <option value="PT">POTOSÍ</option>
+                                  <option value="CH">CHUQUISACA</option>
+                                  <option value="TJ">TARIJA</option>
+                                  <option value="BN">BENI</option>
+                                  <option value="PD">PANDO</option>
+                                  <option value="OTR">OTRO</option>
                                 </select>
                               </div>
                               <div class="col-md-3">
@@ -314,16 +314,16 @@ kt-aside--fixed kt-page--loading">
                             <div class="row mt-2">
                               <div class="col-md-3">
                                 <label for="inputNombres" class="small font-weight-bold mb-1">Nombre(s) <span class="text-danger">*</span></label>
-                                <input type="text" id="inputNombres" name="Nombre" form="formPreregistro" class="form-control form-control-sm"
+                                <input type="text" id="inputNombres" name="Nombre" form="formPreregistro" class="form-control form-control-sm text-uppercase"
                                        required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}">
                               </div>
                               <div class="col-md-3">
                                 <label for="apaterno" class="small font-weight-bold mb-1">Apellido Paterno <span class="text-danger">*</span></label>
-                                <input type="text" id="apaterno" name="Apaterno" form="formPreregistro" class="form-control form-control-sm" required>
+                                <input type="text" id="apaterno" name="Apaterno" form="formPreregistro" class="form-control form-control-sm text-uppercase" required>
                               </div>
                               <div class="col-md-3">
                                 <label for="amaterno" class="small font-weight-bold mb-1">Apellido Materno</label>
-                                <input type="text" id="amaterno" name="Amaterno" form="formPreregistro" class="form-control form-control-sm">
+                                <input type="text" id="amaterno" name="Amaterno" form="formPreregistro" class="form-control form-control-sm text-uppercase">
                               </div>
                               <div class="col-md-3">
                                 <label for="Edad" class="small font-weight-bold mb-1">Edad <span class="text-danger">*</span></label>
@@ -337,21 +337,19 @@ kt-aside--fixed kt-page--loading">
                                 <select class="form-control form-control-sm" id="Lugarn" name="Lugarn" form="formPreregistro" required>
                                   <option value="" disabled selected>Seleccione...</option>
                                   <!-- El value va en MAYÚSCULAS porque así es como queda guardado en la BD
-                                       (el backend aplica strtoupper() al registrar/editar el estudiante).
+                                       (el backend aplica mb_strtoupper() al registrar/editar el estudiante).
                                        Si no coincide exactamente, el select no puede pre-seleccionar el
                                        valor guardado al cargar los datos de un estudiante existente. -->
-                                  <option value="LA PAZ">La Paz</option>
-                                  <option value="COCHABAMBA">Cochabamba</option>
-                                  <option value="SANTA CRUZ">Santa Cruz</option>
-                                  <option value="ORURO">Oruro</option>
-                                  <!-- "í" queda así (minúscula) porque strtoupper() de PHP no convierte
-                                       acentos UTF-8: 'Potosí' termina guardado como 'POTOSí' en la BD. -->
-                                  <option value="POTOSí">Potosí</option>
-                                  <option value="CHUQUISACA">Chuquisaca</option>
-                                  <option value="TARIJA">Tarija</option>
-                                  <option value="BENI">Beni</option>
-                                  <option value="PANDO">Pando</option>
-                                  <option value="OTRO">Otro</option>
+                                  <option value="LA PAZ">LA PAZ</option>
+                                  <option value="COCHABAMBA">COCHABAMBA</option>
+                                  <option value="SANTA CRUZ">SANTA CRUZ</option>
+                                  <option value="ORURO">ORURO</option>
+                                  <option value="POTOSÍ">POTOSÍ</option>
+                                  <option value="CHUQUISACA">CHUQUISACA</option>
+                                  <option value="TARIJA">TARIJA</option>
+                                  <option value="BENI">BENI</option>
+                                  <option value="PANDO">PANDO</option>
+                                  <option value="OTRO">OTRO</option>
                                 </select>
                               </div>
                               <div class="col-md-3">
@@ -380,46 +378,46 @@ kt-aside--fixed kt-page--loading">
                                     <?php endforeach; ?>
                                   </select>
                                   <div class="input-group-append">
-                                    <button type="button" class="btn btn-outline-primary" id="btnNuevaProfesion" title="Agregar una profesión que no está en la lista">
-                                      <i class="fa fa-plus"></i>
+                                    <button type="button" class="btn btn-success" id="btnNuevaProfesion" title="Agregar una profesión que no está en la lista">
+                                      <i class="fa fa-plus text-white"></i> Nueva
                                     </button>
                                   </div>
                                 </div>
                               </div>
                               <div class="col-md-3">
                                 <label for="Trabajo" class="small font-weight-bold mb-1">Trabajo actual</label>
-                                <input type="text" id="Trabajo" name="Trabajo" form="formPreregistro" class="form-control form-control-sm" maxlength="100">
+                                <input type="text" id="Trabajo" name="Trabajo" form="formPreregistro" class="form-control form-control-sm text-uppercase" maxlength="100">
                               </div>
                               <div class="col-md-3">
                                 <label for="direccionInput" class="small font-weight-bold mb-1">Dirección domiciliaria</label>
-                                <input type="text" id="direccionInput" name="Direccion" form="formPreregistro" class="form-control form-control-sm" maxlength="100">
+                                <input type="text" id="direccionInput" name="Direccion" form="formPreregistro" class="form-control form-control-sm text-uppercase" maxlength="100">
                               </div>
                             </div>
 
-                            <!-- Universidad de egreso: opcional, no todos los estudiantes tienen
-                                 este dato al momento del pre-registro. -->
+                            <!-- Universidad y fecha de egreso: obligatorias; la fecha no puede ser
+                                 posterior a hoy (el servidor también lo valida). -->
                             <div class="row mt-2">
                               <div class="col-md-6">
-                                <label for="IdUniversidad" class="small font-weight-bold mb-1">Universidad de Egreso</label>
+                                <label for="IdUniversidad" class="small font-weight-bold mb-1">Universidad de Egreso <span class="text-danger">*</span></label>
                                 <div class="input-group input-group-sm">
-                                  <select class="form-control form-control-sm" id="IdUniversidad" name="IdUniversidad" form="formPreregistro">
+                                  <select class="form-control form-control-sm" id="IdUniversidad" name="IdUniversidad" form="formPreregistro" required>
                                     <option value="">Seleccione una universidad...</option>
                                     <?php foreach ($listaUniversidadesInicial as $univ): ?>
                                       <option value="<?php echo (int)$univ['IdUniversidad']; ?>" data-tipo="<?php echo htmlspecialchars($univ['TipoUniversidad']); ?>"><?php echo htmlspecialchars($univ['NombreUniversidad']); ?></option>
                                     <?php endforeach; ?>
                                   </select>
                                   <div class="input-group-append">
-                                    <button type="button" class="btn btn-outline-primary" id="btnNuevaUniversidad" title="Agregar una universidad que no está en la lista">
-                                      <i class="fa fa-plus"></i>
+                                    <button type="button" class="btn btn-success" id="btnNuevaUniversidad" title="Agregar una universidad que no está en la lista">
+                                      <i class="fa fa-plus text-white"></i> Nueva
                                     </button>
                                   </div>
                                 </div>
                                 <small class="form-text text-muted" id="IdUniversidadTipo"></small>
                               </div>
                               <div class="col-md-3">
-                                <label for="FechaEgreso" class="small font-weight-bold mb-1">Fecha de Egreso</label>
+                                <label for="FechaEgreso" class="small font-weight-bold mb-1">Fecha de Egreso <span class="text-danger">*</span></label>
                                 <input type="date" id="FechaEgreso" name="FechaEgreso" form="formPreregistro" class="form-control form-control-sm"
-                                       max="<?php echo date('Y-m-d'); ?>">
+                                       max="<?php echo date('Y-m-d'); ?>" required>
                               </div>
                             </div>
 
@@ -449,17 +447,17 @@ kt-aside--fixed kt-page--loading">
 
                           <div class="preregistro-step" id="seccionPrograma" style="display: none;">
                             <div class="row">
-                              <div class="col-lg-3 form-group mb-2">
-                                <label class="small font-weight-bold mb-1">Sede</label>
+                              <div class="col-md-6 form-group mb-2">
+                                <label for="sedePrograma" class="small font-weight-bold mb-1">Sede</label>
                                 <select class="form-control form-control-sm" id="sedePrograma" name="sedePrograma" form="formPreregistro">
-                                  <option value="">Todas las sedes</option>
+                                  <option value="">TODAS LAS SEDES</option>
                                   <?php foreach ($sedesDisponibles as $sedeOpcion): ?>
-                                    <option value="<?php echo htmlspecialchars($sedeOpcion, ENT_QUOTES); ?>"><?php echo htmlspecialchars($sedeOpcion); ?></option>
+                                    <option value="<?php echo htmlspecialchars($sedeOpcion, ENT_QUOTES); ?>"><?php echo htmlspecialchars(mb_strtoupper($sedeOpcion, 'UTF-8')); ?></option>
                                   <?php endforeach; ?>
                                 </select>
                               </div>
-                              <div class="col-lg-3 form-group mb-2">
-                                <label class="small font-weight-bold mb-1">Grado Académico</label>
+                              <div class="col-md-6 form-group mb-2">
+                                <label for="gradoAcademico" class="small font-weight-bold mb-1">Grado académico <span class="text-danger">*</span></label>
                                 <select class="form-control form-control-sm" id="gradoAcademico" name="gradoAcademico" form="formPreregistro" required>
                                   <option value="">Seleccione el grado...</option>
                                   <option value="DIPLOMADO">DIPLOMADO</option>
@@ -468,44 +466,33 @@ kt-aside--fixed kt-page--loading">
                                   <option value="DOCTORADO">DOCTORADO</option>
                                 </select>
                               </div>
-                              <div class="col-lg-6 form-group mb-2">
-                                <label class="small font-weight-bold mb-1">Programa</label>
+                              <div class="col-12 form-group mb-2">
+                                <label for="programa" class="small font-weight-bold mb-1">Programa <span class="text-danger">*</span></label>
+                                <!-- Solo programas activos, el último registrado primero; cada opción muestra
+                                     código, versión, inicio y estado para distinguir los del mismo nombre -->
                                 <select class="form-control form-control-sm" id="programa" name="programa" form="formPreregistro" required>
-                                  <option value="">Seleccione un programa...</option>
+                                  <option value="">Seleccione el grado primero...</option>
                                 </select>
                               </div>
                             </div>
 
-                            <!-- Resumen del programa seleccionado -->
+                            <!-- Detalle del programa elegido -->
                             <div id="tablaPrograma" class="programa-resumen" style="display: none;">
-                              <div class="programa-resumen-titulo">
-                                <i class="fa fa-graduation-cap"></i>
-                                <span id="proNombre"></span>
-                                <span class="text-muted font-weight-normal">(<span id="proCodigo"></span>)</span>
-                              </div>
                               <div class="programa-resumen-grid">
-                                <div class="programa-resumen-item">
-                                  <span class="programa-resumen-label">Grado</span>
-                                  <span id="proGrado"></span>
-                                </div>
                                 <div class="programa-resumen-item">
                                   <span class="programa-resumen-label">Sede</span>
                                   <span id="proSede"></span>
-                                </div>
-                                <div class="programa-resumen-item">
-                                  <span class="programa-resumen-label">Duración</span>
-                                  <span id="proDuracion"></span>
                                 </div>
                                 <div class="programa-resumen-item">
                                   <span class="programa-resumen-label">Módulos</span>
                                   <span id="proModulos"></span>
                                 </div>
                                 <div class="programa-resumen-item">
-                                  <span class="programa-resumen-label">Costo Matrícula</span>
+                                  <span class="programa-resumen-label">Costo matrícula</span>
                                   <strong class="text-primary" id="proMatricula"></strong>
                                 </div>
                                 <div class="programa-resumen-item">
-                                  <span class="programa-resumen-label">Costo Programa</span>
+                                  <span class="programa-resumen-label">Costo programa</span>
                                   <strong class="text-primary" id="proPrograma"></strong>
                                 </div>
                               </div>
@@ -538,45 +525,45 @@ kt-aside--fixed kt-page--loading">
 
                           <div class="preregistro-step" id="seccionPago" style="display: none;">
 
-                            <small class="text-muted d-block mb-3">
-                              <i class="flaticon2-information"></i> Solo se genera la orden de pago de la <strong>matrícula</strong>; el estudiante queda <strong>PENDIENTE</strong> hasta presentar el voucher.
-                            </small>
-
-                            <!-- Plan de Pago -->
+                            <!-- Plan de pago: align-items-end deja los campos alineados abajo -->
                             <div class="orden-subseccion">
-                              <div class="orden-subseccion-titulo"><i class="fa fa-tasks"></i> Plan de Pago del Programa</div>
-                              <div class="row">
-                                <div class="col-lg-4 form-group mb-2">
-                                  <label class="small font-weight-bold mb-1">Plan</label>
-                                  <select class="form-control form-control-sm" id="tipoPagoCodigo" name="tipoPagoCodigo" form="formPreregistro">
-                                    <option value="REGULAR">Plan Regular (cuotas libres)</option>
-                                    <option value="CONTADO">Plan al Contado (con descuento)</option>
-                                    <option value="GRUPAL">Plan Grupal (definir después en Matriculados)</option>
+                              <div class="orden-subseccion-titulo"><i class="fa fa-tasks"></i> Plan de pago</div>
+                              <div class="row align-items-end">
+                                <div class="col-md-5 form-group mb-2 mb-md-0">
+                                  <label for="tipoPagoCodigo" class="small font-weight-bold mb-1">Plan</label>
+                                  <select class="form-control form-control-sm" id="tipoPagoCodigo" name="tipoPagoCodigo" form="formPreregistro"
+                                          title="Grupal: el plan del programa se arma después en Matriculados">
+                                    <option value="REGULAR">REGULAR (EN CUOTAS)</option>
+                                    <option value="CONTADO">AL CONTADO</option>
+                                    <option value="GRUPAL">GRUPAL</option>
                                   </select>
                                 </div>
-                                <div class="col-lg-3 form-group mb-2" id="grupoDescuentoPreregistro" style="display:none;">
-                                  <label class="small font-weight-bold mb-1" id="labelPorcentajeDescuento">% Descuento</label>
-                                  <input type="number" class="form-control form-control-sm" id="porcentajeDescuento" name="porcentajeDescuento" form="formPreregistro" min="0" max="100" step="0.01" value="0">
+                                <div class="col-md-3 form-group mb-2 mb-md-0" id="grupoDescuentoPreregistro">
+                                  <label for="porcentajeDescuento" class="small font-weight-bold mb-1">Descuento</label>
+                                  <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control form-control-sm" id="porcentajeDescuento" name="porcentajeDescuento" form="formPreregistro" min="0" max="100" step="0.01" value="0">
+                                    <div class="input-group-append"><span class="input-group-text">%</span></div>
+                                  </div>
                                 </div>
-                                <div class="col-lg-2 form-group mb-2" id="grupoPagoMatriculaPreregistro" style="display:none;">
+                                <div class="col-md-4 form-group mb-0" id="grupoPagoMatriculaPreregistro">
                                   <label class="small font-weight-bold mb-1 d-block">Matrícula</label>
-                                  <div class="custom-control custom-checkbox mt-1">
-                                    <input type="checkbox" class="custom-control-input" id="pagarMatricula" name="pagarMatricula" form="formPreregistro" value="1" checked>
-                                    <label class="custom-control-label" for="pagarMatricula">¿Pagar matrícula?</label>
+                                  <!-- Recuadro del mismo alto que los demás campos, para que la casilla quede alineada -->
+                                  <div class="form-control form-control-sm casilla-matricula">
+                                    <div class="custom-control custom-checkbox">
+                                      <input type="checkbox" class="custom-control-input" id="pagarMatricula" name="pagarMatricula" form="formPreregistro" value="1" checked>
+                                      <label class="custom-control-label text-nowrap" for="pagarMatricula">Cobrar matrícula</label>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                              <small class="text-muted d-block mb-0" id="planInfoTexto">
-                                Este plan queda <strong>definitivo</strong> apenas se valide el voucher de matrícula.
-                              </small>
                             </div>
 
-                            <!-- Cuenta de Depósito -->
+                            <!-- Cuenta de depósito -->
                             <div class="orden-subseccion">
-                              <div class="orden-subseccion-titulo"><i class="fa fa-university"></i> Cuenta de Depósito</div>
+                              <div class="orden-subseccion-titulo"><i class="fa fa-university"></i> Cuenta de depósito</div>
                               <div class="row">
-                                <div class="col-lg-6 form-group mb-0">
-                                  <label class="small font-weight-bold mb-1">Tipo y N° de Cuenta a depositar</label>
+                                <div class="col-md-8 form-group mb-0">
+                                  <label for="cuentaPago" class="small font-weight-bold mb-1">Cuenta</label>
                                   <select class="form-control form-control-sm" id="cuentaPago" name="ProgramaCuentaID" form="formPreregistro" required>
                                     <option value="">Seleccione un programa primero...</option>
                                   </select>
@@ -584,25 +571,25 @@ kt-aside--fixed kt-page--loading">
                               </div>
                             </div>
 
-                            <!-- Resumen de la Orden -->
+                            <!-- Resumen de la orden -->
                             <div class="orden-resumen">
                               <div class="orden-resumen-item">
-                                <span class="orden-resumen-label">Monto de Matrícula</span>
+                                <span class="orden-resumen-label">Monto de matrícula</span>
                                 <div class="input-group input-group-sm orden-resumen-monto">
                                   <div class="input-group-prepend">
                                     <span class="input-group-text">Bs.</span>
                                   </div>
                                   <input type="number" step="0.01" min="0" class="form-control font-weight-bold" id="montoSoloMatricula" readonly>
                                 </div>
-                                <small class="text-muted d-block mt-1" id="textoMatriculaExonerada" style="display:none;">
-                                  <i class="flaticon2-information"></i> Matrícula ya pagada / exonerada.
-                                </small>
-                                <small class="text-warning d-block mt-1" id="avisoMatriculaEditable" style="display:none;">
-                                  <i class="fa fa-unlock-alt"></i> Universidad de egreso privada, extranjera o de convenio: el monto es editable, puede incrementarlo.
-                                </small>
+                                <div class="small text-muted mt-1" id="textoMatriculaExonerada" style="display:none;">
+                                  <i class="flaticon2-information"></i> Exonerada: no se cobra.
+                                </div>
+                                <div class="small text-warning mt-1" id="avisoMatriculaEditable" style="display:none;">
+                                  <i class="fa fa-unlock-alt"></i> Editable: universidad privada, extranjera o de convenio.
+                                </div>
                               </div>
                               <div class="orden-resumen-item">
-                                <span class="orden-resumen-label">Fecha de Orden</span>
+                                <span class="orden-resumen-label">Fecha de orden</span>
                                 <input type="date" class="form-control form-control-sm" name="fechaInscripcion" form="formPreregistro" value="<?php echo date('Y-m-d'); ?>" required>
                               </div>
                             </div>
@@ -729,7 +716,7 @@ kt-aside--fixed kt-page--loading">
           <div class="modal-body">
             <div class="form-group">
               <label class="font-weight-bold">Nombre de la Profesión <span class="text-danger">*</span></label>
-              <input type="text" class="form-control text-uppercase" id="inputNuevaProfesion" maxlength="25" required autofocus>
+              <input type="text" class="form-control text-uppercase" id="inputNuevaProfesion" maxlength="100" required autofocus>
               <small class="form-text text-muted">Se agregará al select y quedará seleccionada.</small>
             </div>
           </div>
@@ -763,10 +750,10 @@ kt-aside--fixed kt-page--loading">
               <label class="font-weight-bold">Tipo de Universidad <span class="text-danger">*</span></label>
               <select class="form-control" id="selectNuevaUniversidadTipo" required>
                 <option value="" disabled selected>Seleccione...</option>
-                <option value="PUBLICA">Pública</option>
-                <option value="PRIVADA">Privada</option>
-                <option value="EXTRANJERA">Extranjera</option>
-                <option value="CONVENIO">De convenio</option>
+                <option value="PUBLICA">PÚBLICA</option>
+                <option value="PRIVADA">PRIVADA</option>
+                <option value="EXTRANJERA">EXTRANJERA</option>
+                <option value="CONVENIO">DE CONVENIO</option>
               </select>
             </div>
           </div>
@@ -891,6 +878,19 @@ function iniciarPreregistro() {
     // formulario para registrarlo ahí mismo si no existe)
     // ============================================
 
+    // Profesión y Universidad con buscador (las listas crecen con el tiempo).
+    // dropdownParent: dentro de un modal de Bootstrap, si la lista se dibuja fuera
+    // de él, el cuadro de búsqueda no recibe el foco. Si el valor se cambia por
+    // código, hay que avisarle con .trigger('change.select2').
+    $('#IdProfesion, #IdUniversidad').each(function() {
+        $(this).select2({
+            width: 'style',
+            dropdownParent: $('#modalPasoEstudiante'),
+            placeholder: $(this).find('option[value=""]').text(),
+            language: { noResults: function() { return 'Sin resultados: use el botón "Nueva"'; } }
+        });
+    });
+
     // Hasta que se haga una búsqueda, el formulario de datos permanece bloqueado.
     // Incluye los botones "+" de Nueva Profesión y Nueva Universidad: si el
     // estudiante ya está registrado, sus datos quedan de solo lectura, así que
@@ -915,19 +915,21 @@ function iniciarPreregistro() {
         $('#emailInput').val(est.Correo || '');
         $('#inputTelefono').val(est.Telefono || '');
         $('#inputCelular').val(est.Celular || '');
-        $('#IdProfesion').val(est.IdProfesion || '');
+        $('#IdProfesion').val(est.IdProfesion || '').trigger('change.select2');
         $('#Trabajo').val(est.Trabajo || '');
         $('#direccionInput').val(est.Direccion || '');
-        $('#IdUniversidad').val(est.IdUniversidad || '');
+        $('#IdUniversidad').val(est.IdUniversidad || '').trigger('change.select2');
         actualizarTipoUniversidad();
         $('#FechaEgreso').val(est.FechaEgreso ? est.FechaEgreso.substring(0, 10) : '');
+        validarFechaEgreso();
     }
 
     function limpiarCamposEstudiante(ciPrellenado) {
         $('#datosEstudianteForm input[type="text"], #datosEstudianteForm input[type="email"], #datosEstudianteForm input[type="tel"], #datosEstudianteForm input[type="number"], #datosEstudianteForm input[type="date"]').val('');
-        $('#datosEstudianteForm select').val('');
+        $('#datosEstudianteForm select').val('').trigger('change.select2');
         $('#inputCi').val(ciPrellenado || '');
         actualizarTipoUniversidad();
+        validarFechaEgreso();
     }
 
     function buscarEstudiantePorCi() {
@@ -957,6 +959,10 @@ function iniciarPreregistro() {
                     habilitarCamposEstudiante(false);
                     $('#selectedEstudianteID').val(resp.estudiante.EstudianteID);
                     $('#estadoBusquedaEstudiante').html('<span class="badge badge-success"><i class="fa fa-check"></i> Estudiante encontrado, datos autocompletados</span>');
+                    // Sus datos aquí son de solo lectura: si le falta el egreso, se completa en Estudiantes
+                    if (!resp.estudiante.IdUniversidad || !resp.estudiante.FechaEgreso) {
+                        swal("Faltan datos", "Este estudiante no tiene registrada su universidad o su fecha de egreso. Complételos en el módulo Estudiantes antes de generar el pre-registro.", "warning");
+                    }
                 } else {
                     limpiarCamposEstudiante(ci);
                     habilitarCamposEstudiante(true);
@@ -1008,6 +1014,44 @@ function iniciarPreregistro() {
     });
 
     // Agregar una profesión que no está en el select (botón "+")
+    // Nombre comparable: sin tildes, sin espacios de más y en mayúsculas (igual que
+    // compara la base), para no registrar dos veces la misma profesión/universidad.
+    function nombreComparable(texto) {
+        return String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+/g, ' ').trim().toUpperCase();
+    }
+
+    // Universidad: además se ignora la sigla entre paréntesis y los signos, y cuenta
+    // como la misma si coincide la sigla o si se escribió solo la sigla (igual que
+    // UniversidadModelos::BuscarParecidaModelo en el servidor).
+    function claveUniversidad(texto) {
+        return nombreComparable(String(texto).replace(/\([^)]*\)/g, ' ')).replace(/[^A-Z0-9Ñ ]+/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    function siglaUniversidad(texto) {
+        const m = String(texto).match(/\(([^)]*)\)/);
+        return m ? claveUniversidad(m[1]) : '';
+    }
+    function mismaUniversidad(escrito, existente) {
+        const clave = claveUniversidad(escrito), sigla = siglaUniversidad(escrito), siglaExistente = siglaUniversidad(existente);
+        return (clave !== '' && clave === claveUniversidad(existente)) ||
+            (siglaExistente !== '' && (siglaExistente === sigla || siglaExistente === clave));
+    }
+
+    // Si el nombre escrito ya está en el select, no se registra de nuevo: se
+    // selecciona el existente y se avisa. Devuelve true si ya existía.
+    function seleccionarSiYaExiste(selector, nombre, etiqueta, modal, esLaMisma) {
+        esLaMisma = esLaMisma || function(a, b) { return nombreComparable(a) === nombreComparable(b); };
+        const opcion = $(selector).find('option').filter(function() {
+            return this.value !== '' && esLaMisma(nombre, $(this).text());
+        }).first();
+        if (!opcion.length) return false;
+
+        $(selector).val(opcion.val()).trigger('change.select2');
+        $(modal).modal('hide');
+        swal('Ya está registrada', 'La ' + etiqueta + ' "' + opcion.text() + '" ya existe en la lista: se seleccionó, no se registra de nuevo.', 'warning');
+        return true;
+    }
+
     $('#btnNuevaProfesion').on('click', function() {
         $('#formNuevaProfesion')[0].reset();
         $('#ModalNuevaProfesion').modal('show');
@@ -1018,6 +1062,9 @@ function iniciarPreregistro() {
 
         const nombre = $('#inputNuevaProfesion').val().trim();
         if (!nombre) {
+            return;
+        }
+        if (seleccionarSiYaExiste('#IdProfesion', nombre, 'profesión', '#ModalNuevaProfesion')) {
             return;
         }
 
@@ -1044,11 +1091,11 @@ function iniciarPreregistro() {
                         $('<option></option>').attr('value', prof.IdProfesion).text(prof.NombreProfesion)
                     );
                 }
-                $('#IdProfesion').val(prof.IdProfesion);
+                $('#IdProfesion').val(prof.IdProfesion).trigger('change.select2');
 
                 $('#ModalNuevaProfesion').modal('hide');
                 if (resp.duplicado) {
-                    swal('Atención', 'Esa profesión ya existía, se seleccionó del listado', 'info');
+                    swal('Ya está registrada', 'Esa profesión ya existía: se seleccionó del listado, no se registró de nuevo.', 'warning');
                 }
             },
             error: function() {
@@ -1065,15 +1112,15 @@ function iniciarPreregistro() {
     // define al agregarla.
     // ============================================
     const etiquetasTipoUniversidad = {
-        PUBLICA: 'Pública',
-        PRIVADA: 'Privada',
-        EXTRANJERA: 'Extranjera',
-        CONVENIO: 'De convenio'
+        PUBLICA: 'PÚBLICA',
+        PRIVADA: 'PRIVADA',
+        EXTRANJERA: 'EXTRANJERA',
+        CONVENIO: 'DE CONVENIO'
     };
 
     function actualizarTipoUniversidad() {
         const tipo = $('#IdUniversidad').find('option:selected').data('tipo');
-        $('#IdUniversidadTipo').text(tipo ? ('Tipo: ' + (etiquetasTipoUniversidad[tipo] || tipo)) : '');
+        $('#IdUniversidadTipo').text(tipo ? ('TIPO: ' + (etiquetasTipoUniversidad[tipo] || tipo)) : '');
         actualizarEditabilidadMatricula(tipo);
     }
 
@@ -1118,6 +1165,10 @@ function iniciarPreregistro() {
         if (!nombre || !tipo) {
             return;
         }
+        if (seleccionarSiYaExiste('#IdUniversidad', nombre, 'universidad', '#ModalNuevaUniversidad', mismaUniversidad)) {
+            actualizarTipoUniversidad();
+            return;
+        }
 
         const btnSubmit = $(this).find('button[type="submit"]');
         btnSubmit.prop('disabled', true);
@@ -1142,12 +1193,12 @@ function iniciarPreregistro() {
                         $('<option></option>').attr('value', univ.IdUniversidad).attr('data-tipo', univ.TipoUniversidad).text(univ.NombreUniversidad)
                     );
                 }
-                $('#IdUniversidad').val(univ.IdUniversidad);
+                $('#IdUniversidad').val(univ.IdUniversidad).trigger('change.select2');
                 actualizarTipoUniversidad();
 
                 $('#ModalNuevaUniversidad').modal('hide');
                 if (resp.duplicado) {
-                    swal('Atención', 'Esa universidad ya existía, se seleccionó del listado', 'info');
+                    swal('Ya está registrada', 'La universidad ya existe como "' + univ.NombreUniversidad + '": se seleccionó del listado, no se registró de nuevo.', 'warning');
                 }
             },
             error: function() {
@@ -1168,7 +1219,7 @@ function iniciarPreregistro() {
         $('#seccionPago').slideUp();
 
         if (!grado) {
-            $('#programa').empty().append('<option value="">Seleccione un grado primero</option>');
+            $('#programa').empty().append('<option value="">Seleccione el grado primero...</option>').trigger('change.select2');
             return;
         }
 
@@ -1178,13 +1229,20 @@ function iniciarPreregistro() {
             data: { grado: grado, sede: sede },
             dataType: 'json',
             success: function(response) {
-                $('#programa').empty().append('<option value="">Seleccione un programa</option>');
+                $('#programa').empty().append('<option value=""></option>');
 
-                if (response.length > 0) {
-                    response.forEach(function(p) {
-                        $('#programa').append('<option value="' + p.ProgramaID + '">' + p.Codigo + ' - ' + p.NombrePrograma + ' (' + (p.Sede || '') + ')</option>');
-                    });
-                }
+                // Ya vienen el último registrado primero. Los datos extra (código, versión,
+                // inicio, estado) sirven para distinguir programas con el mismo nombre.
+                response.forEach(function(p) {
+                    $('<option></option>')
+                        .val(p.ProgramaID)
+                        .text(p.NombrePrograma)
+                        .attr('data-detalle', [p.Codigo, p.Version, p.Sede, 'Inicio ' + mesAnio(p.FechaInicio)].filter(Boolean).join(' · '))
+                        .attr('data-estado', p.EstadoClave || '')
+                        .attr('data-estado-texto', p.EstadoEtiqueta || '')
+                        .appendTo('#programa');
+                });
+                $('#programa').trigger('change.select2');
             },
             error: function() {
                 swal("Error", "No se pudieron obtener los programas", "error");
@@ -1195,18 +1253,54 @@ function iniciarPreregistro() {
     $('#gradoAcademico').on('change', cargarProgramasPorSedeYGrado);
     $('#sedePrograma').on('change', cargarProgramasPorSedeYGrado);
 
+    // "2024-03-01" => "03/2024"
+    function mesAnio(fecha) {
+        return fecha ? fecha.substring(5, 7) + '/' + fecha.substring(0, 4) : '';
+    }
+
+    // Paso 2 con buscador. En la lista, cada programa muestra debajo su código,
+    // versión, sede, inicio y estado; ya elegido, solo el nombre y su versión/inicio.
+    function opcionPrograma(opcion) {
+        if (!opcion.id) return opcion.text;
+        const $o = $(opcion.element);
+        return $('<div class="opcion-programa"></div>')
+            .append($('<div class="opcion-programa-nombre"></div>').text(opcion.text))
+            .append($('<div class="opcion-programa-detalle"></div>').text($o.data('detalle') || '')
+                .append($o.data('estado-texto')
+                    ? $('<span class="badge-estado-programa"></span>').addClass('estado-' + $o.data('estado')).text($o.data('estado-texto'))
+                    : ''));
+    }
+    function programaElegido(opcion) {
+        if (!opcion.id) return opcion.text;
+        const $o = $(opcion.element);
+        const detalle = String($o.data('detalle') || '').split(' · ');
+        const texto = opcion.text + (detalle.length > 1 ? '  (' + detalle[1] + ' · ' + detalle[detalle.length - 1] + ')' : '');
+        // Ya elegido, solo se marca si está concluido (en rojo)
+        return $o.data('estado') === 'concluido'
+            ? $('<span></span>').text(texto).append($('<span class="badge-estado-programa estado-concluido"></span>').text($o.data('estado-texto')))
+            : texto;
+    }
+    $('#sedePrograma, #gradoAcademico').select2({ width: '100%', dropdownParent: $('#modalPasoPrograma') });
+    $('#programa').select2({
+        width: '100%',
+        dropdownParent: $('#modalPasoPrograma'),
+        templateResult: opcionPrograma,
+        templateSelection: programaElegido,
+        placeholder: 'Seleccione el programa...',
+        language: { noResults: function() { return 'No hay programas activos con ese grado/sede'; } }
+    });
+
     // ============================================
     // PASO 3: MONTO DE MATRÍCULA
-    // El backend (RegistrarPreregistroModelo) exige que este monto ya refleje el mismo
-    // % de descuento del Plan de Pago del Programa elegido arriba (hoy es un descuento
-    // único compartido; un descuento de matrícula totalmente independiente queda pendiente).
-    // Para Plan Regular, además se puede exonerar la matrícula (checkbox "¿Pagar matrícula?"),
-    // dejando el monto en 0, y aplicar su propio % de descuento independiente.
+    // El backend (RegistrarPreregistroModelo) exige que este monto ya refleje el
+    // % de descuento elegido arriba (Contado: el del programa; Regular y Grupal: uno
+    // propio de la matrícula). En cualquier plan, además, se puede exonerar la
+    // matrícula (checkbox "¿Pagar matrícula?"), dejando el monto en 0.
     // ============================================
     function recalcularMontoMatricula() {
         const tipo = $('#tipoPagoCodigo').val();
         const costoBase = parseFloat($('#costoMatriculaPrograma').val()) || 0;
-        const matriculaExonerada = tipo !== 'GRUPAL' && !$('#pagarMatricula').is(':checked');
+        const matriculaExonerada = !$('#pagarMatricula').is(':checked');
 
         let montoFinal;
         if (matriculaExonerada) {
@@ -1230,26 +1324,12 @@ function iniciarPreregistro() {
     // al validar el voucher de matrícula (salvo Grupal, que se arma después en Matriculados)
     // ============================================
     $('#tipoPagoCodigo').on('change', function() {
-        const tipo = $(this).val();
-
-        $('#grupoPagoMatriculaPreregistro').hide();
+        // Descuento y "Cobrar matrícula" están en todos los planes. Contado: el % es el
+        // del programa; Regular y Grupal: propio de la matrícula (el % del grupo se fija
+        // después, al armar el Plan Grupal en Matriculados).
         $('#pagarMatricula').prop('checked', true);
-
-        if (tipo === 'CONTADO') {
-            $('#grupoDescuentoPreregistro').show();
-            $('#grupoPagoMatriculaPreregistro').show();
-            $('#labelPorcentajeDescuento').text('% Descuento (programa)');
-            $('#planInfoTexto').html('Este plan queda <strong>definitivo</strong> apenas se valide el voucher de matrícula.');
-        } else if (tipo === 'GRUPAL') {
-            $('#grupoDescuentoPreregistro').hide();
+        if ($(this).val() !== 'CONTADO') {
             $('#porcentajeDescuento').val(0);
-            $('#planInfoTexto').html('No se fija ningún plan todavía: el estudiante quedará disponible para armar un <strong>Plan Grupal</strong> después, desde Matriculados.');
-        } else {
-            $('#grupoDescuentoPreregistro').show();
-            $('#grupoPagoMatriculaPreregistro').show();
-            $('#porcentajeDescuento').val(0);
-            $('#labelPorcentajeDescuento').text('% Descuento (matrícula)');
-            $('#planInfoTexto').html('Este plan queda <strong>definitivo</strong> apenas se valide el voucher de matrícula.');
         }
 
         recalcularMontoMatricula();
@@ -1274,11 +1354,7 @@ function iniciarPreregistro() {
                 data: { idprograma: programaId },
                 dataType: 'json',
                 success: function(respuesta) {
-                    // Llenar tabla de datos del programa
-                    $('#proNombre').text(respuesta.NombrePrograma);
-                    $('#proCodigo').text(respuesta.Codigo);
-                    $('#proGrado').text(respuesta.GradoAcademico);
-                    $('#proDuracion').text(respuesta.DuracionMeses + ' meses');
+                    // Detalle: solo sede, módulos y costos
                     $('#proModulos').text(respuesta.Modulos);
                     $('#proSede').text(respuesta.Sede);
 
@@ -1370,10 +1446,10 @@ function iniciarPreregistro() {
             return false;
         }
 
-        // Validar que el monto de matrícula sea mayor a 0, salvo que el Plan Regular
-        // haya marcado explícitamente la matrícula como ya pagada / exonerada
+        // Validar que el monto de matrícula sea mayor a 0, salvo que se haya marcado
+        // explícitamente la matrícula como ya pagada / exonerada
         const montoAPagar = parseFloat($('#montoAPagar').val()) || 0;
-        const matriculaExonerada = $('#tipoPagoCodigo').val() !== 'GRUPAL' && !$('#pagarMatricula').is(':checked');
+        const matriculaExonerada = !$('#pagarMatricula').is(':checked');
         if (montoAPagar <= 0 && !matriculaExonerada) {
             swal("Error", "El monto de matrícula debe ser mayor a 0", "error");
             return false;
@@ -1479,6 +1555,30 @@ function iniciarPreregistro() {
             $('#Edad').val(edad);
         }
     });
+
+    // Fecha de egreso: como mínimo a los 15 años de edad (nacimiento + 15 años) y como
+    // máximo hoy (atributo max). Se marca inválida con un mensaje propio para que
+    // "Siguiente" no deje avanzar; el servidor aplica la misma regla.
+    const EDAD_MINIMA_EGRESO = 15;
+    function validarFechaEgreso() {
+        const $egreso = $('#FechaEgreso');
+        const nacimiento = $('#fechaNacimiento').val();
+        let mensaje = '';
+
+        if (nacimiento) {
+            const [anio, mes, dia] = nacimiento.split('-');
+            const minima = (parseInt(anio, 10) + EDAD_MINIMA_EGRESO) + '-' + mes + '-' + dia;
+            $egreso.attr('min', minima);
+            if ($egreso.val() && $egreso.val() < minima) {
+                mensaje = 'La fecha de egreso debe ser al menos ' + EDAD_MINIMA_EGRESO +
+                    ' años posterior a la fecha de nacimiento (desde el ' + [dia, mes, parseInt(anio, 10) + EDAD_MINIMA_EGRESO].join('/') + ').';
+            }
+        } else {
+            $egreso.removeAttr('min');
+        }
+        $egreso[0].setCustomValidity(mensaje);
+    }
+    $('#fechaNacimiento, #FechaEgreso').on('change', validarFechaEgreso);
 
     // ============================================
     // TABLA DE PREREGISTROS PENDIENTES (CRUD)
@@ -1987,9 +2087,11 @@ function iniciarPreregistro() {
         $('#resumenEstudianteCorreo').text($('#emailInput').val() || '-');
         $('#resumenEstudianteCelular').text($('#inputCelular').val() || '-');
 
-        const codigoPrograma = $('#proCodigo').text();
-        $('#resumenProgramaNombre').text(($('#proNombre').text() || '-') + (codigoPrograma ? ' (' + codigoPrograma + ')' : ''));
-        $('#resumenProgramaGrado').text($('#proGrado').text() || '-');
+        // Nombre y "código · versión · sede · inicio" del programa elegido (paso 2)
+        const $programa = $('#programa option:selected');
+        const detallePrograma = $programa.val() ? String($programa.data('detalle') || '') : '';
+        $('#resumenProgramaNombre').text(($programa.val() ? $programa.text() : '-') + (detallePrograma ? ' (' + detallePrograma.split(' · ')[0] + ')' : ''));
+        $('#resumenProgramaGrado').text($('#gradoAcademico option:selected').text() || '-');
         $('#resumenProgramaSede').text($('#proSede').text() || '-');
 
         $('#resumenPlanPago').text($('#tipoPagoCodigo option:selected').text() || '-');
@@ -2020,6 +2122,62 @@ if (document.readyState === 'loading') {
 </script>
 
 <style>
+/* Paso 2: Select2 del alto de los campos pequeños, y opciones de programa en dos líneas */
+#seccionPrograma .select2-container .select2-selection--single {
+    height: 32px !important;
+}
+#seccionPrograma .select2-container .select2-selection--single .select2-selection__rendered {
+    line-height: 30px !important;
+    font-size: .875rem;
+}
+.opcion-programa-nombre {
+    font-weight: 600;
+}
+.opcion-programa-detalle {
+    font-size: .8rem;
+    opacity: .75;
+}
+.badge-estado-programa {
+    margin-left: .5rem;
+    padding: 0 .4rem;
+    border-radius: 3px;
+    font-size: .7rem;
+    font-weight: 600;
+    background: #e8f0fe;
+    color: #2c5bd8;
+}
+.badge-estado-programa.estado-en-curso { background: #e6f6ee; color: #1a7f4b; }
+/* Concluido en rojo: todavía se puede elegir (para pruebas), pero debe notarse */
+.badge-estado-programa.estado-concluido { background: #fde8e8; color: #c62828; }
+
+/* Paso 3: casilla "¿Pagar matrícula?" dentro de un recuadro del alto de un campo */
+.casilla-matricula {
+    display: flex;
+    align-items: center;
+}
+.casilla-matricula .custom-control {
+    margin: 0;
+}
+
+/* Profesión / Universidad (Select2) junto al botón "Nueva": ocupan el ancho
+   restante y tienen la misma altura que los demás campos pequeños */
+#datosEstudianteForm .input-group > .select2-container {
+    flex: 1 1 auto;
+    width: 1% !important;
+}
+#datosEstudianteForm .select2-container .select2-selection--single {
+    height: 32px !important;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+#datosEstudianteForm .select2-container .select2-selection--single .select2-selection__rendered {
+    line-height: 30px !important;
+    font-size: .875rem;
+}
+#datosEstudianteForm .select2-container--disabled .select2-selection--single {
+    background-color: #f7f8fa;
+}
+
 .card {
     transition: all 0.3s ease;
 }

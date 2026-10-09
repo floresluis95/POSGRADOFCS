@@ -1,4 +1,8 @@
 <?php
+    // Hora de Bolivia para todo el sistema (también los ajax). El php.ini de XAMPP trae
+    // Europe/Berlin: de 18:00 a 24:00 date() ya devolvía el día siguiente.
+    date_default_timezone_set('America/La_Paz');
+
     class Conexion
     {
         public static function Conectar()

@@ -234,7 +234,6 @@ var KTAppOptions = {"colors":{"state":{"brand":"#591df1","light":"#ffffff","dark
                          <!--Scripts-paginaposgrado -->
 
                         <script src="vistas/recursos/assets/js/scripts/programas.js?v=<?php echo filemtime('vistas/recursos/assets/js/scripts/programas.js'); ?>" type="text/javascript"></script>
-                        <script src="vistas/recursos/assets/js/scripts/selectprograma.js" type="text/javascript"></script>
                        
                         
                         <!--/Scripts-paginaposgrado -->

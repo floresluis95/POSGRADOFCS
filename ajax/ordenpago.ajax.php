@@ -314,6 +314,18 @@ function buscarEstudiantePorCi()
  * Registrar una profesión nueva desde el botón "+" del select de Profesión en
  * Pre-Registro, cuando la profesión buscada no está en la lista.
  */
+/**
+ * Nombre para los catálogos de profesión y universidad: sin espacios de más (también
+ * los de en medio) y en MAYÚSCULAS, incluidas las letras con tilde (strtoupper no las
+ * convierte). Así "odontólogo  general" y "ODONTÓLOGO GENERAL" son el mismo nombre y
+ * no se registran dos veces (la base ya compara sin distinguir mayúsculas ni tildes).
+ */
+function normalizarNombreCatalogo($texto)
+{
+    $texto = preg_replace('/\s+/u', ' ', trim((string)$texto));
+    return htmlspecialchars(mb_strtoupper($texto, 'UTF-8'));
+}
+
 function registrarProfesionRapida()
 {
     if (!isset($_POST['nombreProfesion']) || trim($_POST['nombreProfesion']) === '') {
@@ -321,7 +333,11 @@ function registrarProfesionRapida()
         return;
     }
 
-    $nombre = strtoupper(htmlspecialchars(trim($_POST['nombreProfesion'])));
+    $nombre = normalizarNombreCatalogo($_POST['nombreProfesion']);
+    if (mb_strlen($nombre, 'UTF-8') > 100) {
+        echo json_encode(['success' => false, 'mensaje' => 'El nombre de la profesión no puede tener más de 100 caracteres']);
+        return;
+    }
     $resultado = ProfesionModelos::RegistrarProfesionModelo($nombre);
 
     if ($resultado['status'] === 'exitoso' || $resultado['status'] === 'duplicado') {
@@ -352,7 +368,11 @@ function registrarUniversidadRapida()
         return;
     }
 
-    $nombre = strtoupper(htmlspecialchars(trim($_POST['nombreUniversidad'])));
+    $nombre = normalizarNombreCatalogo($_POST['nombreUniversidad']);
+    if (mb_strlen($nombre, 'UTF-8') > 150) {
+        echo json_encode(['success' => false, 'mensaje' => 'El nombre de la universidad no puede tener más de 150 caracteres']);
+        return;
+    }
     $tipo = strtoupper(htmlspecialchars(trim($_POST['tipoUniversidad'])));
     $resultado = UniversidadModelos::RegistrarUniversidadModelo($nombre, $tipo);
 
@@ -372,6 +392,42 @@ function registrarUniversidadRapida()
  * Registrar un estudiante nuevo directamente desde el formulario de preregistro
  * (cuando la búsqueda manual por CI no encontró datos existentes).
  */
+/**
+ * Universidad y fecha de egreso del estudiante (Pre-Registro): ambas obligatorias,
+ * la universidad debe existir y la fecha no puede ser posterior a hoy ni anterior a
+ * los 15 años de edad del estudiante.
+ * @return string|null Mensaje de error, o null si son válidas
+ */
+function validarDatosEgreso($idUniversidad, $fechaEgreso, $fechaNacimiento)
+{
+    $edadMinimaEgreso = 15;
+
+    if (!is_numeric($idUniversidad) || !UniversidadModelos::ObtenerPorIdModelo((int)$idUniversidad)) {
+        return 'Seleccione la universidad de egreso';
+    }
+
+    $fecha = DateTime::createFromFormat('!Y-m-d', trim((string)$fechaEgreso));
+    if (!$fecha || $fecha->format('Y-m-d') !== trim((string)$fechaEgreso)) {
+        return 'Ingrese una fecha de egreso válida';
+    }
+    if ($fecha > new DateTime('today')) {
+        return 'La fecha de egreso no puede ser posterior a la fecha actual';
+    }
+
+    $nacimiento = DateTime::createFromFormat('!Y-m-d', trim((string)$fechaNacimiento));
+    if (!$nacimiento) {
+        return 'Ingrese una fecha de nacimiento válida';
+    }
+    $minima = (clone $nacimiento)->modify('+' . $edadMinimaEgreso . ' years');
+    if ($fecha < $minima) {
+        return sprintf(
+            'La fecha de egreso debe ser al menos %d años posterior a la fecha de nacimiento (desde el %s)',
+            $edadMinimaEgreso, $minima->format('d/m/Y')
+        );
+    }
+    return null;
+}
+
 function registrarEstudianteRapido()
 {
     $camposRequeridos = ['Ci', 'Exp', 'Nombre', 'Apaterno', 'FechaNacimiento', 'Edad', 'Lugarn', 'Correo', 'IdProfesion', 'Celular'];
@@ -393,26 +449,32 @@ function registrarEstudianteRapido()
         return;
     }
 
+    $errorEgreso = validarDatosEgreso($_POST['IdUniversidad'] ?? '', $_POST['FechaEgreso'] ?? '', $_POST['FechaNacimiento']);
+    if ($errorEgreso !== null) {
+        echo json_encode(['success' => false, 'mensaje' => $errorEgreso]);
+        return;
+    }
+
     try {
         $DatosEstudiante = array(
             "Ci"              => htmlspecialchars(trim($_POST['Ci'])),
-            "Complemento"     => strtoupper(htmlspecialchars(trim($_POST['Complemento'] ?? ''))),
-            "Exp"             => strtoupper(htmlspecialchars(trim($_POST['Exp']))),
-            "Nombre"          => strtoupper(htmlspecialchars(trim($_POST['Nombre']))),
-            "Apaterno"        => strtoupper(htmlspecialchars(trim($_POST['Apaterno']))),
-            "Amaterno"        => strtoupper(htmlspecialchars(trim($_POST['Amaterno'] ?? ''))),
+            "Complemento"     => mb_strtoupper(htmlspecialchars(trim($_POST['Complemento'] ?? '')), 'UTF-8'),
+            "Exp"             => mb_strtoupper(htmlspecialchars(trim($_POST['Exp'])), 'UTF-8'),
+            "Nombre"          => mb_strtoupper(htmlspecialchars(trim($_POST['Nombre'])), 'UTF-8'),
+            "Apaterno"        => mb_strtoupper(htmlspecialchars(trim($_POST['Apaterno'])), 'UTF-8'),
+            "Amaterno"        => mb_strtoupper(htmlspecialchars(trim($_POST['Amaterno'] ?? '')), 'UTF-8'),
             "FechaNacimiento" => htmlspecialchars(trim($_POST['FechaNacimiento'])),
             "Edad"            => (int)$_POST['Edad'],
-            "Lugarn"          => strtoupper(htmlspecialchars(trim($_POST['Lugarn']))),
+            "Lugarn"          => mb_strtoupper(htmlspecialchars(trim($_POST['Lugarn'])), 'UTF-8'),
             "Correo"          => strtolower(htmlspecialchars(trim($_POST['Correo']))),
             "IdProfesion"     => (int)$_POST['IdProfesion'],
-            "Trabajo"         => strtoupper(htmlspecialchars(trim($_POST['Trabajo'] ?? ''))),
-            "Direccion"       => strtoupper(htmlspecialchars(trim($_POST['Direccion'] ?? ''))),
+            "Trabajo"         => mb_strtoupper(htmlspecialchars(trim($_POST['Trabajo'] ?? '')), 'UTF-8'),
+            "Direccion"       => mb_strtoupper(htmlspecialchars(trim($_POST['Direccion'] ?? '')), 'UTF-8'),
             "Telefono"        => htmlspecialchars(trim($_POST['Telefono'] ?? '')),
             "Celular"         => htmlspecialchars(trim($_POST['Celular'])),
-            // Universidad de egreso: opcional, no todos los flujos de alta la piden.
-            "IdUniversidad"   => (!empty($_POST['IdUniversidad']) && is_numeric($_POST['IdUniversidad'])) ? (int)$_POST['IdUniversidad'] : null,
-            "FechaEgreso"     => !empty($_POST['FechaEgreso']) ? htmlspecialchars(trim($_POST['FechaEgreso'])) : null,
+            // Universidad y fecha de egreso: obligatorias (ya validadas arriba)
+            "IdUniversidad"   => (int)$_POST['IdUniversidad'],
+            "FechaEgreso"     => trim($_POST['FechaEgreso']),
         );
 
         $existe = EstudiantesModelos::BuscarEstudianteModelo($DatosEstudiante['Ci']);
@@ -434,6 +496,7 @@ function registrarEstudianteRapido()
             return;
         }
 
+        // Si el C.I. o el correo ya los tiene otro estudiante, el modelo devuelve el motivo
         $resultado = EstudiantesModelos::RegistrarEstudianteModelo($DatosEstudiante);
 
         if ($resultado === 'exitoso') {
@@ -446,7 +509,7 @@ function registrarEstudianteRapido()
         } else {
             echo json_encode([
                 'success' => false,
-                'mensaje' => 'No se pudo registrar al estudiante'
+                'mensaje' => $resultado
             ]);
         }
     } catch (Exception $e) {
@@ -493,18 +556,18 @@ function actualizarEstudiante()
         }
 
         $DatosEstudiante = array(
-            "Complemento"     => strtoupper(htmlspecialchars(trim($_POST['Complemento'] ?? ''))),
-            "Exp"             => strtoupper(htmlspecialchars(trim($_POST['Exp']))),
-            "Nombre"          => strtoupper(htmlspecialchars(trim($_POST['Nombre']))),
-            "Apaterno"        => strtoupper(htmlspecialchars(trim($_POST['Apaterno']))),
-            "Amaterno"        => strtoupper(htmlspecialchars(trim($_POST['Amaterno'] ?? ''))),
+            "Complemento"     => mb_strtoupper(htmlspecialchars(trim($_POST['Complemento'] ?? '')), 'UTF-8'),
+            "Exp"             => mb_strtoupper(htmlspecialchars(trim($_POST['Exp'])), 'UTF-8'),
+            "Nombre"          => mb_strtoupper(htmlspecialchars(trim($_POST['Nombre'])), 'UTF-8'),
+            "Apaterno"        => mb_strtoupper(htmlspecialchars(trim($_POST['Apaterno'])), 'UTF-8'),
+            "Amaterno"        => mb_strtoupper(htmlspecialchars(trim($_POST['Amaterno'] ?? '')), 'UTF-8'),
             "FechaNacimiento" => htmlspecialchars(trim($_POST['FechaNacimiento'])),
             "Edad"            => (int)$_POST['Edad'],
-            "Lugarn"          => strtoupper(htmlspecialchars(trim($_POST['Lugarn']))),
+            "Lugarn"          => mb_strtoupper(htmlspecialchars(trim($_POST['Lugarn'])), 'UTF-8'),
             "Correo"          => strtolower(htmlspecialchars(trim($_POST['Correo']))),
             "IdProfesion"     => (int)$_POST['IdProfesion'],
-            "Trabajo"         => strtoupper(htmlspecialchars(trim($_POST['Trabajo'] ?? ''))),
-            "Direccion"       => strtoupper(htmlspecialchars(trim($_POST['Direccion'] ?? ''))),
+            "Trabajo"         => mb_strtoupper(htmlspecialchars(trim($_POST['Trabajo'] ?? '')), 'UTF-8'),
+            "Direccion"       => mb_strtoupper(htmlspecialchars(trim($_POST['Direccion'] ?? '')), 'UTF-8'),
             "Telefono"        => htmlspecialchars(trim($_POST['Telefono'] ?? '')),
             "Celular"         => htmlspecialchars(trim($_POST['Celular'])),
             "IdUniversidad"   => (!empty($_POST['IdUniversidad']) && is_numeric($_POST['IdUniversidad'])) ? (int)$_POST['IdUniversidad'] : null,
@@ -516,7 +579,7 @@ function actualizarEstudiante()
         if ($resultado === 'exitoso') {
             echo json_encode(['success' => true, 'mensaje' => 'Datos del estudiante actualizados correctamente']);
         } else {
-            echo json_encode(['success' => false, 'mensaje' => 'No se pudo actualizar al estudiante']);
+            echo json_encode(['success' => false, 'mensaje' => $resultado]);
         }
     } catch (Exception $e) {
         error_log("Error en actualizarEstudiante: " . $e->getMessage());

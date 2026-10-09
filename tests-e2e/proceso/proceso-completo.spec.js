@@ -56,6 +56,9 @@ test.describe('Proceso completo: del registro a los informes', () => {
     await paso1.locator('#emailInput').fill(`ana${ci}@correo-prueba.com`);
     await paso1.locator('#inputCelular').fill('71234567');
     await paso1.locator('#IdProfesion').selectOption({ index: 1 });
+    // Universidad (pública: la matrícula no es editable) y fecha de egreso, obligatorias
+    await paso1.locator('#IdUniversidad').selectOption(valor("SELECT MIN(IdUniversidad) FROM universidad WHERE TipoUniversidad = 'PUBLICA'") ?? '');
+    await paso1.locator('#FechaEgreso').fill('2019-11-30');
     await page.locator('#btnWizardPaso1Siguiente').click();
 
     // PASO 2: programa

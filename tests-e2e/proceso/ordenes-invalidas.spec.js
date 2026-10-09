@@ -53,6 +53,31 @@ test.describe('Órdenes de pago de matrícula (Pre-Registro)', () => {
     expect(contarOrdenes(estudianteID)).toBe('1');
   });
 
+  test('plan grupal: la matrícula lleva su propio descuento y se guarda en Bs.', async ({ page }) => {
+    const matricula = Number(valor(`SELECT CostoMatricula FROM programa WHERE ProgramaID = ${PROGRAMA_ID}`));
+    const conDescuento = Math.round(matricula * 0.8 * 100) / 100;
+    await preregistrar(page, estudianteID, {
+      tipoPagoCodigo: 'GRUPAL', tipoPago: 'PLAN GRUPAL', porcentajeDescuento: '20', montoAPagar: conDescuento.toFixed(2),
+    });
+    const idOrden = ordenPendiente(estudianteID);
+    const orden = (columna) => Number(valor(`SELECT ${columna} FROM ordenpago WHERE IdOrdenPago = ${idOrden}`));
+    expect(orden('MontoFinal')).toBe(conDescuento);
+    expect(orden('PorcentajeDescuento')).toBe(20);
+    expect(orden('MontoDescuento')).toBe(Math.round((matricula - conDescuento) * 100) / 100);
+    expect(orden('MontoTotal')).toBe(matricula);
+  });
+
+  test('plan grupal: la matrícula también se puede exonerar (Bs. 0)', async ({ page }) => {
+    const pagarMatricula = undefined;
+    await preregistrar(page, estudianteID, { tipoPagoCodigo: 'GRUPAL', tipoPago: 'PLAN GRUPAL', montoAPagar: '0.00', pagarMatricula });
+    expect(valor(`SELECT MontoFinal FROM ordenpago WHERE EstudianteID = ${estudianteID} AND Estado = 'PENDIENTE'`)).toBe('0.00');
+  });
+
+  test('plan grupal: sin exonerar, la matrícula no puede ser Bs. 0', async ({ page }) => {
+    await preregistrar(page, estudianteID, { tipoPagoCodigo: 'GRUPAL', tipoPago: 'PLAN GRUPAL', montoAPagar: '0.00' });
+    expect(contarOrdenes(estudianteID)).toBe('0');
+  });
+
   for (const [caso, monto] of [['a cero', '0'], ['a un monto negativo', '-500']]) {
     test(`editar el pre-registro no deja la orden ${caso}`, async ({ page }) => {
       await preregistrar(page, estudianteID);

@@ -254,14 +254,12 @@ $csrf_token = bin2hex(random_bytes(32));
                                 <select class="form-control" id="Lugarn" name="Lugarn" required>
                                     <option value="" disabled selected>Seleccione...</option>
                                     <!-- El value va en MAYÚSCULAS porque así queda guardado en la BD
-                                         (el backend aplica strtoupper() al registrar el estudiante). -->
+                                         (el backend aplica mb_strtoupper() al registrar el estudiante). -->
                                     <option value="LA PAZ">La Paz</option>
                                     <option value="COCHABAMBA">Cochabamba</option>
                                     <option value="SANTA CRUZ">Santa Cruz</option>
                                     <option value="ORURO">Oruro</option>
-                                    <!-- "í" queda así (minúscula) porque strtoupper() de PHP no convierte
-                                         acentos UTF-8: 'Potosí' termina guardado como 'POTOSí' en la BD. -->
-                                    <option value="POTOSí">Potosí</option>
+                                    <option value="POTOSÍ">Potosí</option>
                                     <option value="CHUQUISACA">Chuquisaca</option>
                                     <option value="TARIJA">Tarija</option>
                                     <option value="BENI">Beni</option>
@@ -515,16 +513,14 @@ $csrf_token = bin2hex(random_bytes(32));
                                 <select class="form-control" id="LugarnEditar" name="Lugarn" required>
                                     <option value="" disabled>Seleccione...</option>
                                     <!-- El value va en MAYÚSCULAS porque así queda guardado en la BD
-                                         (el backend aplica strtoupper() al registrar/editar el estudiante).
+                                         (el backend aplica mb_strtoupper() al registrar/editar el estudiante).
                                          Antes estaba en formato título y por eso nunca coincidía con el
                                          dato guardado: el campo quedaba en blanco al editar. -->
                                     <option value="LA PAZ">La Paz</option>
                                     <option value="COCHABAMBA">Cochabamba</option>
                                     <option value="SANTA CRUZ">Santa Cruz</option>
                                     <option value="ORURO">Oruro</option>
-                                    <!-- "í" queda así (minúscula) porque strtoupper() de PHP no convierte
-                                         acentos UTF-8: 'Potosí' termina guardado como 'POTOSí' en la BD. -->
-                                    <option value="POTOSí">Potosí</option>
+                                    <option value="POTOSÍ">Potosí</option>
                                     <option value="CHUQUISACA">Chuquisaca</option>
                                     <option value="TARIJA">Tarija</option>
                                     <option value="BENI">Beni</option>

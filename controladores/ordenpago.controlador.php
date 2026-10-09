@@ -76,10 +76,9 @@ class OrdenPagoControladores
                 ? (int)$_POST['numeroCuotas']
                 : null;
 
-            // Plan Regular o Contado: la matrícula se puede marcar como ya pagada / exonerada
-            // (checkbox sin marcar no llega en el POST), dejando el monto de matrícula en Bs. 0.
-            // No aplica a Grupal (ese plan no genera orden de matrícula en este paso).
-            $matriculaExonerada = $planPropuestoTipo !== 'GRUPAL' && !isset($_POST['pagarMatricula']);
+            // En cualquier plan (también Grupal) la matrícula se puede marcar como ya pagada /
+            // exonerada (checkbox sin marcar no llega en el POST), dejando el monto en Bs. 0.
+            $matriculaExonerada = !isset($_POST['pagarMatricula']);
 
             // El % de descuento en Plan Regular solo se aplica a la matrícula de este
             // pre-registro (no se propaga al plan de cuotas del programa, a diferencia de
@@ -87,6 +86,27 @@ class OrdenPagoControladores
             $planPropuestoPorcentaje = ($planPropuestoTipo === 'CONTADO') ? $porcentajeDescuento : 0;
 
             $estudianteID = (int)$_POST['idcliente'];
+
+            // El estudiante debe tener registrada su universidad y fecha de egreso
+            // (un estudiante ya existente las completa en el módulo Estudiantes)
+            $stmtEgreso = Conexion::Conectar()->prepare(
+                "SELECT IdUniversidad IS NOT NULL AND FechaEgreso IS NOT NULL FROM estudiante WHERE EstudianteID = :id"
+            );
+            $stmtEgreso->bindParam(':id', $estudianteID, PDO::PARAM_INT);
+            $stmtEgreso->execute();
+            if (!$stmtEgreso->fetchColumn()) {
+                echo '
+                <script>
+                window.addEventListener("load", function() {
+                    swal("ERROR!", "El estudiante no tiene registrada su universidad o fecha de egreso. Complételos en el módulo Estudiantes", "error")
+                    .then(function () {
+                        location.href="' . $paginaRedirect . '";
+                    });
+                });
+                </script>';
+                return;
+            }
+
             $programaCuentaID = !empty($_POST['ProgramaCuentaID']) ? (int)$_POST['ProgramaCuentaID'] : null;
 
             // Campos de facturación: si el formulario no los envía (el pre-registro no los pide),

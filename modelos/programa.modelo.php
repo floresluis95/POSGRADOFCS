@@ -20,7 +20,11 @@ class ProgramasModelos
     }
 
     // Buscar programas con filtros
-    public static function BuscarProgramasConFiltros($grado = null, $fechaInicio = null, $fechaFin = null, $sede = null)
+    /**
+     * @param bool $ultimosPrimero true: el último programa registrado primero (Pre-Registro);
+     *                             false: por fecha de inicio (lista de Programas)
+     */
+    public static function BuscarProgramasConFiltros($grado = null, $fechaInicio = null, $fechaFin = null, $sede = null, $ultimosPrimero = false)
     {
         $sql = "SELECT * FROM programa WHERE Estado = 1";
         $params = array();
@@ -49,7 +53,7 @@ class ProgramasModelos
             $params[':fechaFin'] = $fechaFin;
         }
 
-        $sql .= " ORDER BY FechaInicio DESC";
+        $sql .= $ultimosPrimero ? " ORDER BY ProgramaID DESC" : " ORDER BY FechaInicio DESC";
 
         $stmt = Conexion::Conectar()->prepare($sql);
 

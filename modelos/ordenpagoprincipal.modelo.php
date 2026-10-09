@@ -373,7 +373,13 @@ class OrdenPagoModelos
             $numeroOrden = 'ORD-' . date('YmdHis') . '-' . rand(1000, 9999);
 
             // Calcular montos para la tabla ordenpago
-            $montoDescuento = floatval($datos['montoDescuento']);
+            // Descuento de la matrícula en Bs.: lo calcula el servidor (el formulario no
+            // lo envía). Exonerada no es descuento: no se cobra porque ya se pagó.
+            if ($datos['pagoCompleto'] == 1) {
+                $montoDescuento = floatval($datos['montoDescuento']);
+            } else {
+                $montoDescuento = $matriculaExonerada ? 0 : round($costoMatriculaPrograma * $porcentajeDescuento / 100, 2);
+            }
             $montoFinal = floatval($datos['montoPagado']);
             $costoMatricula = $datos['pagoCompleto'] == 1 ? 0 : floatval($datos['costomatricula']);
 

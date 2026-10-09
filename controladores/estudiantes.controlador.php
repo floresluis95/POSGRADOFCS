@@ -130,18 +130,18 @@ class EstudiantesControladores
 
         $DatosEstudiante = array(
             "Ci"              => htmlspecialchars(trim($_POST['Ci'])),
-            "Complemento"     => strtoupper(htmlspecialchars(trim($_POST['Complemento']))),
-            "Exp"             => strtoupper(htmlspecialchars(trim($_POST['Exp']))),
-            "Nombre"          => strtoupper(htmlspecialchars(trim($_POST['Nombre']))),
-            "Apaterno"        => strtoupper(htmlspecialchars(trim($_POST['Apaterno']))),
-            "Amaterno"        => strtoupper(htmlspecialchars(trim($_POST['Amaterno']))),
+            "Complemento"     => mb_strtoupper(htmlspecialchars(trim($_POST['Complemento'])), 'UTF-8'),
+            "Exp"             => mb_strtoupper(htmlspecialchars(trim($_POST['Exp'])), 'UTF-8'),
+            "Nombre"          => mb_strtoupper(htmlspecialchars(trim($_POST['Nombre'])), 'UTF-8'),
+            "Apaterno"        => mb_strtoupper(htmlspecialchars(trim($_POST['Apaterno'])), 'UTF-8'),
+            "Amaterno"        => mb_strtoupper(htmlspecialchars(trim($_POST['Amaterno'])), 'UTF-8'),
             "FechaNacimiento" => htmlspecialchars(trim($_POST['FechaNacimiento'])),
             "Edad"            => (int)htmlspecialchars(trim($_POST['Edad'])),
-            "Lugarn"          => strtoupper(htmlspecialchars(trim($_POST['Lugarn']))),
+            "Lugarn"          => mb_strtoupper(htmlspecialchars(trim($_POST['Lugarn'])), 'UTF-8'),
             "Correo"          => strtolower(htmlspecialchars(trim($_POST['Correo']))), // Correo en minúsculas
             "IdProfesion"     => (int)$_POST["IdProfesion"],
-            "Trabajo"         => strtoupper(htmlspecialchars(trim($_POST['Trabajo']))),
-            "Direccion"       => strtoupper(htmlspecialchars(trim($_POST['Direccion']))),
+            "Trabajo"         => mb_strtoupper(htmlspecialchars(trim($_POST['Trabajo'])), 'UTF-8'),
+            "Direccion"       => mb_strtoupper(htmlspecialchars(trim($_POST['Direccion'])), 'UTF-8'),
             "Telefono"        => htmlspecialchars(trim($_POST['Telefono'])),
             "Celular"         => htmlspecialchars(trim($_POST['Celular'])),
             "IdUniversidad"   => (!empty($_POST['IdUniversidad']) && is_numeric($_POST['IdUniversidad'])) ? (int)$_POST['IdUniversidad'] : null,
@@ -154,7 +154,7 @@ class EstudiantesControladores
         if ($existe) {
             echo '<script src="vistas/recursos/sweetalert.min.js"></script>
                   <script>
-                  swal("ERROR!", "El estudiante ya esta registrado en el sistema", "error")
+                  swal("ERROR!", "' . addslashes(EstudiantesModelos::MotivoDatoRepetidoModelo($ciestudiante, null) ?? 'El estudiante ya está registrado en el sistema') . '", "error")
                   .then(function () { location.href="estudiantes"; });
                   </script>';
             return;
@@ -215,18 +215,18 @@ class EstudiantesControladores
 
         $DatosEstudiante = array(
             "Ci"              => htmlspecialchars(trim($_POST['Ci'])),
-            "Complemento"     => strtoupper(htmlspecialchars(trim($_POST['Complemento']))),
-            "Exp"             => strtoupper(htmlspecialchars(trim($_POST['Exp']))),
-            "Nombre"          => strtoupper(htmlspecialchars(trim($_POST['Nombre']))),
-            "Apaterno"        => strtoupper(htmlspecialchars(trim($_POST['Apaterno']))),
-            "Amaterno"        => strtoupper(htmlspecialchars(trim($_POST['Amaterno']))),
+            "Complemento"     => mb_strtoupper(htmlspecialchars(trim($_POST['Complemento'])), 'UTF-8'),
+            "Exp"             => mb_strtoupper(htmlspecialchars(trim($_POST['Exp'])), 'UTF-8'),
+            "Nombre"          => mb_strtoupper(htmlspecialchars(trim($_POST['Nombre'])), 'UTF-8'),
+            "Apaterno"        => mb_strtoupper(htmlspecialchars(trim($_POST['Apaterno'])), 'UTF-8'),
+            "Amaterno"        => mb_strtoupper(htmlspecialchars(trim($_POST['Amaterno'])), 'UTF-8'),
             "FechaNacimiento" => htmlspecialchars(trim($_POST['FechaNacimiento'])),
             "Edad"            => (int)htmlspecialchars(trim($_POST['Edad'])),
-            "Lugarn"          => strtoupper(htmlspecialchars(trim($_POST['Lugarn']))),
+            "Lugarn"          => mb_strtoupper(htmlspecialchars(trim($_POST['Lugarn'])), 'UTF-8'),
             "Correo"          => strtolower(htmlspecialchars(trim($_POST['Correo']))), // Correo en minúsculas
             "IdProfesion"     => (int)$_POST["IdProfesion"],
-            "Trabajo"         => strtoupper(htmlspecialchars(trim($_POST['Trabajo']))),
-            "Direccion"       => strtoupper(htmlspecialchars(trim($_POST['Direccion']))),
+            "Trabajo"         => mb_strtoupper(htmlspecialchars(trim($_POST['Trabajo'])), 'UTF-8'),
+            "Direccion"       => mb_strtoupper(htmlspecialchars(trim($_POST['Direccion'])), 'UTF-8'),
             "Telefono"        => htmlspecialchars(trim($_POST['Telefono'])),
             "Celular"         => htmlspecialchars(trim($_POST['Celular'])),
             "IdUniversidad"   => (!empty($_POST['IdUniversidad']) && is_numeric($_POST['IdUniversidad'])) ? (int)$_POST['IdUniversidad'] : null,
@@ -239,7 +239,7 @@ class EstudiantesControladores
         if ($existe) {
             echo '<script src="vistas/recursos/sweetalert.min.js"></script>
                   <script>
-                  swal("ERROR!", "El estudiante ya esta registrado en el sistema", "error")
+                  swal("ERROR!", "' . addslashes(EstudiantesModelos::MotivoDatoRepetidoModelo($ciestudiante, null) ?? 'El estudiante ya está registrado en el sistema') . '", "error")
                   .then(function () { location.href="' . $paginaRedirect . '"; });
                   </script>';
             return;

@@ -168,8 +168,9 @@ class ReportesModelos
                 -- Matrícula
                 (SELECT COUNT(*) FROM estudianteprograma ep WHERE ep.ProgramaID = p.ProgramaID AND ep.Estado = 'ACTIVO') as TotalMatriculados,
 
-                -- Dinero comprometido por matrícula (costo pactado - descuento) de inscripciones activas
-                (SELECT COALESCE(SUM(ep.costomatricula - ep.montoDescuento), 0)
+                -- Dinero comprometido por matrícula de inscripciones activas
+                -- (costomatricula ya es el monto con descuento: no se resta otra vez)
+                (SELECT COALESCE(SUM(ep.costomatricula), 0)
                     FROM estudianteprograma ep
                     WHERE ep.ProgramaID = p.ProgramaID AND ep.Estado = 'ACTIVO') as MontoComprometido,
 

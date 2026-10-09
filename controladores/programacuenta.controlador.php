@@ -81,7 +81,7 @@ class ProgramaCuentaControlador
             echo '<option value="' . htmlspecialchars($cuenta['ProgramaCuentaID']) . '"'
                 . ' data-numero="' . htmlspecialchars($cuenta['NumeroCuenta']) . '"'
                 . ($cuenta['Principal'] == '1' ? ' selected' : '') . '>'
-                . htmlspecialchars($etiqueta) . '</option>';
+                . htmlspecialchars(mb_strtoupper($etiqueta, 'UTF-8')) . '</option>';
         }
     }
 
