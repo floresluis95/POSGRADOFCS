@@ -736,6 +736,12 @@ function registrarOrdenPago()
         $nombreFactura = isset($_POST['nombreFactura']) ? $_POST['nombreFactura'] : '';
         $nitCiFactura = isset($_POST['nitCiFactura']) ? $_POST['nitCiFactura'] : '';
 
+        // La orden nace CONFIRMADA: no puede ser sin pagos de módulo ni en Bs. 0 o menos
+        if (trim($listaPagosModulo) === '' || $montoTotal <= 0) {
+            echo json_encode(['success' => false, 'mensaje' => 'La orden debe incluir al menos un pago de módulo y un monto mayor a 0']);
+            return;
+        }
+
         // Generar número de orden único
         $numeroOrden = 'ORD-' . str_pad($estudianteID, 4, '0', STR_PAD_LEFT) . '-' .
                        str_pad($programaID, 3, '0', STR_PAD_LEFT) . '-' .
@@ -943,6 +949,17 @@ function registrarOrdenPagoCuotaPrograma()
 
         if ($montoTotal <= 0) {
             echo json_encode(['success' => false, 'mensaje' => 'El monto de la cuota debe ser mayor a 0']);
+            return;
+        }
+
+        // La cuota no puede superar lo que falta pagar del programa (mismo saldo que
+        // muestra Gestión de Pagos: costo con el descuento del plan menos lo PAGADO)
+        $resumen = PagoModuloModelo::ObtenerResumenPagoProgramaModelo($idinscripcion, $programaID);
+        if ($montoTotal - $resumen['saldoPendiente'] > 0.01) {
+            echo json_encode(['success' => false, 'mensaje' => sprintf(
+                'El monto de la cuota (Bs. %.2f) supera el saldo pendiente del programa (Bs. %.2f)',
+                $montoTotal, $resumen['saldoPendiente']
+            )]);
             return;
         }
 
@@ -1279,13 +1296,12 @@ function actualizarPreregistro()
         return;
     }
 
+    // El tipo de orden (matrícula / programa completo) y el descuento NO se reciben:
+    // el modelo los toma de la orden guardada y valida el monto contra ellos.
     $datos = [
-        'idOrdenPago'         => (int)$_POST['idOrdenPago'],
-        'pagoCompleto'        => isset($_POST['pagoCompleto']) ? (int)$_POST['pagoCompleto'] : 0,
-        'montoPagado'         => floatval($_POST['montoPagado']),
-        'porcentajeDescuento' => isset($_POST['porcentajeDescuento']) ? floatval($_POST['porcentajeDescuento']) : 0,
-        'montoDescuento'      => isset($_POST['montoDescuento']) ? floatval($_POST['montoDescuento']) : 0,
-        'FechaInscripcion'    => htmlspecialchars(trim($_POST['fechaInscripcion'])),
+        'idOrdenPago'      => (int)$_POST['idOrdenPago'],
+        'montoPagado'      => floatval($_POST['montoPagado']),
+        'FechaInscripcion' => htmlspecialchars(trim($_POST['fechaInscripcion'])),
     ];
 
     $resultado = OrdenPagoModelos::ActualizarPreregistroModelo($datos);

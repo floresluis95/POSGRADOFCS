@@ -698,7 +698,7 @@ kt-aside--fixed kt-page--loading">
           <div class="modal-body">
             <div class="form-group">
               <label class="font-weight-bold">Monto a Pagar (Bs.) <span class="text-danger">*</span></label>
-              <input type="number" step="0.01" min="0.01" class="form-control" name="montoPagado" id="editMontoPagado" required>
+              <input type="number" step="0.01" min="0" class="form-control" name="montoPagado" id="editMontoPagado" required>
             </div>
             <div class="form-group">
               <label class="font-weight-bold">Fecha de Orden <span class="text-danger">*</span></label>

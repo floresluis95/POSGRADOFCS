@@ -33,7 +33,7 @@ test.describe('Órdenes de pago de matrícula (Pre-Registro)', () => {
     ['con monto negativo', { montoAPagar: '-2100' }],
     ['con monto en texto', { montoAPagar: 'abc' }],
     ['con un monto distinto a la matrícula', { montoAPagar: '1' }],
-    ['de "programa completo" en cero', { pagoCompleto: '1', montoAPagar: '0.00' }, PENDIENTE],
+    ['de "programa completo" en cero', { pagoCompleto: '1', montoAPagar: '0.00' }],
   ])) {
     test(`no se genera una orden ${caso}`, async ({ page }) => {
       test.fail(!!fallaConocida, fallaConocida);
@@ -55,7 +55,6 @@ test.describe('Órdenes de pago de matrícula (Pre-Registro)', () => {
 
   for (const [caso, monto] of [['a cero', '0'], ['a un monto negativo', '-500']]) {
     test(`editar el pre-registro no deja la orden ${caso}`, async ({ page }) => {
-      test.fail(true, PENDIENTE);
       await preregistrar(page, estudianteID);
       const idOrden = ordenPendiente(estudianteID);
       const montoAntes = valor(`SELECT MontoFinal FROM ordenpago WHERE IdOrdenPago = ${idOrden}`);
@@ -99,7 +98,6 @@ test.describe('Órdenes de cuota y pagos (Matriculados > Gestión de Pagos)', ()
   }
 
   test('no se genera una orden de cuota mayor al saldo del programa', async ({ page }) => {
-    test.fail(true, PENDIENTE);
     const inscrito = await estudianteInscrito(page);
     const costo = Number(valor(`SELECT MontoTotalPagar FROM pagoprograma WHERE idInscripcion = ${inscrito.idInscripcion}`));
     const r = await generarOrdenCuota(page, inscrito, String(costo + 5000));
@@ -121,7 +119,6 @@ test.describe('Órdenes de cuota y pagos (Matriculados > Gestión de Pagos)', ()
   });
 
   test('el pago de la cuota debe ser por el monto de su orden', async ({ page }) => {
-    test.fail(true, PENDIENTE);
     const inscrito = await estudianteInscrito(page);
     await generarOrdenCuota(page, inscrito, '3000');
     await pagarCuota(page, inscrito.idInscripcion, '1', 'CUO-' + unico());
@@ -140,7 +137,6 @@ test.describe('Órdenes de cuota y pagos (Matriculados > Gestión de Pagos)', ()
   });
 
   test('la orden antigua por módulos no se genera vacía ni en cero', async ({ page }) => {
-    test.fail(true, PENDIENTE);
     const inscrito = await estudianteInscrito(page);
     const r = await ajax(page, 'ordenpago.ajax.php', {
       accion: 'registrarOrdenPago', estudianteID: String(inscrito.estudianteID), idinscripcion: String(inscrito.idInscripcion),

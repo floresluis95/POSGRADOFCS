@@ -206,6 +206,53 @@ class OrdenPagoModelos
     }
 
     /**
+     * Valida el monto de un pre-registro (al crearlo y al editarlo).
+     * - Programa completo: debe ser mayor a 0.
+     * - Solo matrícula: debe ser la matrícula con el descuento del plan, o Bs. 0 si está
+     *   exonerada. Excepción: si el estudiante egresó de una universidad PRIVADA, EXTRANJERA
+     *   o DE CONVENIO, el monto es editable (la coordinación puede cobrar más), así que solo
+     *   se exige que no sea MENOR al esperado.
+     * @return string|null Mensaje de error, o null si el monto es válido
+     */
+    private static function ValidarMontoPreregistro($pdo, $estudianteID, $costoMatriculaPrograma, $pagoCompleto, $montoPagado, $porcentajeDescuento, $matriculaExonerada)
+    {
+        if ($pagoCompleto) {
+            return $montoPagado > 0 ? null : 'El monto del programa completo debe ser mayor a 0';
+        }
+
+        $montoEsperado = $matriculaExonerada ? 0 : round($costoMatriculaPrograma * (1 - $porcentajeDescuento / 100), 2);
+
+        $stmtTipoUniv = $pdo->prepare(
+            "SELECT u.TipoUniversidad FROM estudiante e
+             LEFT JOIN universidad u ON e.IdUniversidad = u.IdUniversidad
+             WHERE e.EstudianteID = :estudianteID"
+        );
+        $stmtTipoUniv->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
+        $stmtTipoUniv->execute();
+        $tipoUniversidad = $stmtTipoUniv->fetchColumn();
+
+        $matriculaEditable = in_array($tipoUniversidad, ['PRIVADA', 'EXTRANJERA', 'CONVENIO'], true);
+
+        $cumpleMonto = $matriculaEditable
+            ? ($montoPagado - $montoEsperado) >= -0.01
+            : abs($montoPagado - $montoEsperado) <= 0.01;
+
+        if ($cumpleMonto) {
+            return null;
+        }
+
+        return sprintf(
+            $matriculaEditable
+                ? 'El monto de matrícula no puede ser menor a Bs. %.2f (matrícula Bs. %.2f con %.2f%% de descuento). Monto ingresado: Bs. %.2f'
+                : 'El monto de matrícula debe ser Bs. %.2f (matrícula Bs. %.2f con %.2f%% de descuento). Monto ingresado: Bs. %.2f',
+            $montoEsperado,
+            $costoMatriculaPrograma,
+            $porcentajeDescuento,
+            $montoPagado
+        );
+    }
+
+    /**
      * Registrar orden de pago (sin tocar estudianteprograma)
      * @param array $datos - Datos de la orden de pago
      * @return array - ['status' => 'exitoso'/'duplicado'/'error', 'idOrdenPago' => ID, 'numeroOrden' => NUM]
@@ -312,50 +359,13 @@ class OrdenPagoModelos
             // en cuyo caso se espera un monto de Bs. 0 en vez de matrícula con descuento.
             $matriculaExonerada = !empty($datos['MatriculaExonerada']);
 
-            // VALIDACIÓN: Si NO es pago completo, validar que el monto corresponda a la matrícula con descuento.
-            // Excepción: si el estudiante egresó de una universidad PRIVADA, EXTRANJERA o DE CONVENIO,
-            // el monto de matrícula es editable en el formulario (la coordinación puede cobrar más),
-            // así que solo se exige que no sea MENOR al esperado, no que coincida exacto.
-            if ($datos['pagoCompleto'] != 1) {
-                $montoPagado = floatval($datos['montoPagado']);
-                $montoEsperado = $matriculaExonerada ? 0 : round($costoMatriculaPrograma * (1 - $porcentajeDescuento / 100), 2);
-
-                $stmtTipoUniv = $pdo->prepare(
-                    "SELECT u.TipoUniversidad FROM estudiante e
-                     LEFT JOIN universidad u ON e.IdUniversidad = u.IdUniversidad
-                     WHERE e.EstudianteID = :estudianteID"
-                );
-                $stmtTipoUniv->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
-                $stmtTipoUniv->execute();
-                $tipoUniversidad = $stmtTipoUniv->fetchColumn();
-
-                $matriculaEditable = in_array($tipoUniversidad, ['PRIVADA', 'EXTRANJERA', 'CONVENIO'], true);
-
-                $cumpleMonto = $matriculaEditable
-                    ? ($montoPagado - $montoEsperado) >= -0.01
-                    : abs($montoPagado - $montoEsperado) <= 0.01;
-
-                if (!$cumpleMonto) {
-                    $pdo->rollBack();
-                    return [
-                        'status' => 'error',
-                        'mensaje' => $matriculaEditable
-                            ? sprintf(
-                                'El monto de matrícula no puede ser menor a Bs. %.2f (matrícula Bs. %.2f con %.2f%% de descuento). Monto ingresado: Bs. %.2f',
-                                $montoEsperado,
-                                $costoMatriculaPrograma,
-                                $porcentajeDescuento,
-                                $montoPagado
-                            )
-                            : sprintf(
-                                'El monto de matrícula debe ser Bs. %.2f (matrícula Bs. %.2f con %.2f%% de descuento). Monto ingresado: Bs. %.2f',
-                                $montoEsperado,
-                                $costoMatriculaPrograma,
-                                $porcentajeDescuento,
-                                $montoPagado
-                            )
-                    ];
-                }
+            $errorMonto = self::ValidarMontoPreregistro(
+                $pdo, $datos['EstudianteID'], $costoMatriculaPrograma, $datos['pagoCompleto'] == 1,
+                floatval($datos['montoPagado']), $porcentajeDescuento, $matriculaExonerada
+            );
+            if ($errorMonto !== null) {
+                $pdo->rollBack();
+                return ['status' => 'error', 'mensaje' => $errorMonto];
             }
 
             // Generar número de orden único ANTES de insertar
@@ -653,11 +663,45 @@ class OrdenPagoModelos
             $pdo = Conexion::Conectar();
             $pdo->beginTransaction();
 
+            // El tipo de orden y el descuento se toman de la orden guardada: el modal de
+            // edición solo envía monto y fecha (antes el descuento quedaba en 0 al editar).
+            $stmtOrden = $pdo->prepare(
+                "SELECT op.EstudianteID, op.PagoCompleto, op.MontoFinal, op.PorcentajeDescuento, op.MontoDescuento,
+                        p.CostoMatricula
+                 FROM ordenpago op
+                 INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
+                 WHERE op.IdOrdenPago = :idOrdenPago AND op.Estado = 'PENDIENTE'
+                 AND COALESCE(op.Observaciones, '') <> 'CLINICA'
+                 FOR UPDATE"
+            );
+            $stmtOrden->bindParam(":idOrdenPago", $datos['idOrdenPago'], PDO::PARAM_INT);
+            $stmtOrden->execute();
+            $orden = $stmtOrden->fetch(PDO::FETCH_ASSOC);
+
+            if (!$orden) {
+                $pdo->rollBack();
+                return ['status' => 'error', 'mensaje' => 'El preregistro ya no está pendiente o no existe'];
+            }
+
+            $pagoCompleto = (int)$orden['PagoCompleto'] === 1;
             $montoFinal = floatval($datos['montoPagado']);
-            $montoDescuento = floatval($datos['montoDescuento']);
-            $porcentajeDescuento = floatval($datos['porcentajeDescuento']);
+            $montoDescuento = floatval($orden['MontoDescuento']);
+            $porcentajeDescuento = floatval($orden['PorcentajeDescuento']);
+
+            // Una matrícula exonerada (orden en Bs. 0) puede seguir en 0
+            $matriculaExonerada = abs(floatval($orden['MontoFinal'])) < 0.005 && abs($montoFinal) < 0.005;
+
+            $errorMonto = self::ValidarMontoPreregistro(
+                $pdo, $orden['EstudianteID'], floatval($orden['CostoMatricula']), $pagoCompleto,
+                $montoFinal, $porcentajeDescuento, $matriculaExonerada
+            );
+            if ($errorMonto !== null) {
+                $pdo->rollBack();
+                return ['status' => 'error', 'mensaje' => $errorMonto];
+            }
+
             $montoTotal = $montoFinal + $montoDescuento;
-            $costomatricula = (isset($datos['pagoCompleto']) && (int)$datos['pagoCompleto'] === 1) ? 0 : $montoFinal;
+            $costomatricula = $pagoCompleto ? 0 : $montoFinal;
 
             $stmt = $pdo->prepare(
                 "UPDATE ordenpago
@@ -676,12 +720,9 @@ class OrdenPagoModelos
             $stmt->bindParam(":montoDescuento", $montoDescuento);
             $stmt->bindParam(":fechaInscripcion", $datos['FechaInscripcion'], PDO::PARAM_STR);
             $stmt->bindParam(":idOrdenPago", $datos['idOrdenPago'], PDO::PARAM_INT);
+            // (no se revisa rowCount: guardar sin cambios da 0 filas y no es un error;
+            // la orden ya se comprobó PENDIENTE arriba, bloqueada con FOR UPDATE)
             $stmt->execute();
-
-            if ($stmt->rowCount() === 0) {
-                $pdo->rollBack();
-                return ['status' => 'error', 'mensaje' => 'El preregistro ya no está pendiente o no existe'];
-            }
 
             $pdo->commit();
             return ['status' => 'exitoso', 'mensaje' => 'Preregistro actualizado correctamente'];

@@ -66,10 +66,12 @@ class PagoModuloControlador
         $mensajes = [
             'exitoso'   => 'El pago de la cuota se registró correctamente',
             'sin_orden' => 'Debe generar primero la orden de pago (pestaña "Orden de Pago") antes de registrar el pago',
+            'monto_distinto' => 'El monto del voucher no coincide con el de la orden de pago pendiente. Recargue la pestaña e intente de nuevo',
             'error'     => 'No se pudo registrar el pago'
         ];
 
-        $estado = $resultado === 'exitoso' ? 'exitoso' : ($resultado === 'sin_orden' ? 'sin_orden' : 'error');
+        $estado = in_array($resultado, ['exitoso', 'sin_orden'], true) ? $resultado
+            : ($resultado === 'monto_distinto' ? 'validacion' : 'error');
 
         return [
             'estado' => $estado,

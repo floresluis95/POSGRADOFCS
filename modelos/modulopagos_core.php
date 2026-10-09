@@ -77,10 +77,11 @@ class PagoModuloModelo
 
             $plan = self::ObtenerPlanProgramaModelo($idinscripcion);
             $tipoPlan = $plan['TipoPlan'] ?? null;
-            $porcentajeDescuento = $plan ? floatval($plan['PorcentajeDescuento']) : 0.0;
 
-            $costoTotal = $porcentajeDescuento > 0
-                ? round($costoBase * (1 - $porcentajeDescuento / 100), 2)
+            // Con plan, manda el monto PACTADO al crearlo (no cambia si después sube el
+            // costo del programa), igual que en los reportes. Sin plan, el costo actual.
+            $costoTotal = $plan
+                ? round(floatval($plan['MontoTotalPagar']), 2)
                 : round($costoBase, 2);
 
             $stmtPagado = Conexion::Conectar()->prepare(
@@ -175,7 +176,7 @@ class PagoModuloModelo
      * Registrar el pago (con voucher) de una cuota del programa.
      * Requiere que exista una orden de pago pendiente para la inscripción.
      * @param array $datos idinscripcion, montocuota, fechapago, nvaucher, fmodulo
-     * @return string 'exitoso'|'sin_orden'|'error'
+     * @return string 'exitoso'|'sin_orden'|'monto_distinto'|'error'
      */
     public static function RegistrarCuotaProgramaModelo($datos)
     {
@@ -187,6 +188,12 @@ class PagoModuloModelo
             if ($orden === null) {
                 $pdo->rollBack();
                 return "sin_orden";
+            }
+
+            // El voucher debe ser por el monto exacto de la orden que confirma
+            if (abs(floatval($datos['montocuota']) - floatval($orden['MontoTotal'])) > 0.01) {
+                $pdo->rollBack();
+                return "monto_distinto";
             }
 
             $stmtNum = $pdo->prepare(
