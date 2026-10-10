@@ -392,42 +392,6 @@ function registrarUniversidadRapida()
  * Registrar un estudiante nuevo directamente desde el formulario de preregistro
  * (cuando la búsqueda manual por CI no encontró datos existentes).
  */
-/**
- * Universidad y fecha de egreso del estudiante (Pre-Registro): ambas obligatorias,
- * la universidad debe existir y la fecha no puede ser posterior a hoy ni anterior a
- * los 15 años de edad del estudiante.
- * @return string|null Mensaje de error, o null si son válidas
- */
-function validarDatosEgreso($idUniversidad, $fechaEgreso, $fechaNacimiento)
-{
-    $edadMinimaEgreso = 15;
-
-    if (!is_numeric($idUniversidad) || !UniversidadModelos::ObtenerPorIdModelo((int)$idUniversidad)) {
-        return 'Seleccione la universidad de egreso';
-    }
-
-    $fecha = DateTime::createFromFormat('!Y-m-d', trim((string)$fechaEgreso));
-    if (!$fecha || $fecha->format('Y-m-d') !== trim((string)$fechaEgreso)) {
-        return 'Ingrese una fecha de egreso válida';
-    }
-    if ($fecha > new DateTime('today')) {
-        return 'La fecha de egreso no puede ser posterior a la fecha actual';
-    }
-
-    $nacimiento = DateTime::createFromFormat('!Y-m-d', trim((string)$fechaNacimiento));
-    if (!$nacimiento) {
-        return 'Ingrese una fecha de nacimiento válida';
-    }
-    $minima = (clone $nacimiento)->modify('+' . $edadMinimaEgreso . ' years');
-    if ($fecha < $minima) {
-        return sprintf(
-            'La fecha de egreso debe ser al menos %d años posterior a la fecha de nacimiento (desde el %s)',
-            $edadMinimaEgreso, $minima->format('d/m/Y')
-        );
-    }
-    return null;
-}
-
 function registrarEstudianteRapido()
 {
     $camposRequeridos = ['Ci', 'Exp', 'Nombre', 'Apaterno', 'FechaNacimiento', 'Edad', 'Lugarn', 'Correo', 'IdProfesion', 'Celular'];
@@ -449,7 +413,7 @@ function registrarEstudianteRapido()
         return;
     }
 
-    $errorEgreso = validarDatosEgreso($_POST['IdUniversidad'] ?? '', $_POST['FechaEgreso'] ?? '', $_POST['FechaNacimiento']);
+    $errorEgreso = EstudiantesModelos::ValidarDatosEgresoModelo($_POST['IdUniversidad'] ?? '', $_POST['FechaEgreso'] ?? '', $_POST['FechaNacimiento']);
     if ($errorEgreso !== null) {
         echo json_encode(['success' => false, 'mensaje' => $errorEgreso]);
         return;
@@ -546,6 +510,12 @@ function actualizarEstudiante()
         return;
     }
 
+    $errorEgreso = EstudiantesModelos::ValidarDatosEgresoModelo($_POST['IdUniversidad'] ?? '', $_POST['FechaEgreso'] ?? '', $_POST['FechaNacimiento']);
+    if ($errorEgreso !== null) {
+        echo json_encode(['success' => false, 'mensaje' => $errorEgreso]);
+        return;
+    }
+
     $EstudianteID = (int)$_POST['EstudianteID'];
 
     try {
@@ -570,8 +540,9 @@ function actualizarEstudiante()
             "Direccion"       => mb_strtoupper(htmlspecialchars(trim($_POST['Direccion'] ?? '')), 'UTF-8'),
             "Telefono"        => htmlspecialchars(trim($_POST['Telefono'] ?? '')),
             "Celular"         => htmlspecialchars(trim($_POST['Celular'])),
-            "IdUniversidad"   => (!empty($_POST['IdUniversidad']) && is_numeric($_POST['IdUniversidad'])) ? (int)$_POST['IdUniversidad'] : null,
-            "FechaEgreso"     => !empty($_POST['FechaEgreso']) ? htmlspecialchars(trim($_POST['FechaEgreso'])) : null,
+            // Universidad y fecha de egreso: obligatorias (ya validadas arriba)
+            "IdUniversidad"   => (int)$_POST['IdUniversidad'],
+            "FechaEgreso"     => trim($_POST['FechaEgreso']),
         );
 
         $resultado = EstudiantesModelos::ActualizarEstudianteModelo($EstudianteID, $DatosEstudiante);

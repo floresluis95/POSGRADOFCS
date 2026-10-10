@@ -77,7 +77,8 @@
       "Bash(\"C:\\xampp\\php\\php.exe\" verificar_campo_estado_docente.php)",
       "Bash(\"C:\\xampp\\php\\php.exe\" test_login.php)",
       "Bash(cmd /c \"del test_login.php\")",
-      "Bash(cmd /c \"del verificar_estructura_reportes.php\")"
+      "Bash(cmd /c \"del verificar_estructura_reportes.php\")",
+      "Bash(grep *)"
     ],
     "deny": [],
     "ask": []

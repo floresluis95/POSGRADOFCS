@@ -128,6 +128,16 @@ class EstudiantesControladores
             return;
         }
 
+        $errorEgreso = EstudiantesModelos::ValidarDatosEgresoModelo($_POST['IdUniversidad'] ?? '', $_POST['FechaEgreso'] ?? '', $_POST['FechaNacimiento'] ?? '');
+        if ($errorEgreso !== null) {
+            echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                  <script>
+                  swal("ERROR!", "' . addslashes($errorEgreso) . '", "error")
+                  .then(function () { location.href="estudiantes"; });
+                  </script>';
+            return;
+        }
+
         $DatosEstudiante = array(
             "Ci"              => htmlspecialchars(trim($_POST['Ci'])),
             "Complemento"     => mb_strtoupper(htmlspecialchars(trim($_POST['Complemento'])), 'UTF-8'),
@@ -208,6 +218,16 @@ class EstudiantesControladores
             echo '<script src="vistas/recursos/sweetalert.min.js"></script>
                   <script>
                   swal("ERROR!", "Seleccione una profesión válida", "error")
+                  .then(function () { location.href="' . $paginaRedirect . '"; });
+                  </script>';
+            return;
+        }
+
+        $errorEgreso = EstudiantesModelos::ValidarDatosEgresoModelo($_POST['IdUniversidad'] ?? '', $_POST['FechaEgreso'] ?? '', $_POST['FechaNacimiento'] ?? '');
+        if ($errorEgreso !== null) {
+            echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                  <script>
+                  swal("ERROR!", "' . addslashes($errorEgreso) . '", "error")
                   .then(function () { location.href="' . $paginaRedirect . '"; });
                   </script>';
             return;

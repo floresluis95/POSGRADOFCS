@@ -1,5 +1,6 @@
 <?php
 require_once 'conexion.modelo.php';
+require_once __DIR__ . '/universidad.modelo.php';
 
 // ===========================
 //      MODELO ESTUDIANTES
@@ -7,6 +8,42 @@ require_once 'conexion.modelo.php';
 
 class EstudiantesModelos
 {
+    /**
+     * Universidad y fecha de egreso del estudiante: ambas obligatorias, la universidad
+     * debe existir y la fecha no puede ser posterior a hoy ni anterior a los 15 años de
+     * edad del estudiante. La usan el Pre-Registro y el módulo Estudiantes (alta y edición).
+     * @return string|null Mensaje de error, o null si son válidas
+     */
+    public static function ValidarDatosEgresoModelo($idUniversidad, $fechaEgreso, $fechaNacimiento)
+    {
+        $edadMinimaEgreso = 15;
+
+        if (!is_numeric($idUniversidad) || !UniversidadModelos::ObtenerPorIdModelo((int)$idUniversidad)) {
+            return 'Seleccione la universidad de egreso';
+        }
+
+        $fecha = DateTime::createFromFormat('!Y-m-d', trim((string)$fechaEgreso));
+        if (!$fecha || $fecha->format('Y-m-d') !== trim((string)$fechaEgreso)) {
+            return 'Ingrese una fecha de egreso válida';
+        }
+        if ($fecha > new DateTime('today')) {
+            return 'La fecha de egreso no puede ser posterior a la fecha actual';
+        }
+
+        $nacimiento = DateTime::createFromFormat('!Y-m-d', trim((string)$fechaNacimiento));
+        if (!$nacimiento) {
+            return 'Ingrese una fecha de nacimiento válida';
+        }
+        $minima = (clone $nacimiento)->modify('+' . $edadMinimaEgreso . ' years');
+        if ($fecha < $minima) {
+            return sprintf(
+                'La fecha de egreso debe ser al menos %d años posterior a la fecha de nacimiento (desde el %s)',
+                $edadMinimaEgreso, $minima->format('d/m/Y')
+            );
+        }
+        return null;
+    }
+
     /* LISTAR TODOS */
     public static function ListaEstudianteModelo()
     {
@@ -130,7 +167,7 @@ class EstudiantesModelos
     $stmt->bindParam(":Telefono", $DatosEstudiante['Telefono'], PDO::PARAM_STR);
     $stmt->bindParam(":Celular", $DatosEstudiante['Celular'], PDO::PARAM_STR);
 
-    // Universidad de egreso: opcional (algunos flujos de alta no la piden todavía).
+    // Universidad y fecha de egreso: obligatorias, se validan antes con ValidarDatosEgresoModelo().
     $idUniversidad = $DatosEstudiante['IdUniversidad'] ?? null;
     $fechaEgreso = $DatosEstudiante['FechaEgreso'] ?? null;
     $stmt->bindValue(":IdUniversidad", $idUniversidad, $idUniversidad === null ? PDO::PARAM_NULL : PDO::PARAM_INT);

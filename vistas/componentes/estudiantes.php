@@ -188,16 +188,16 @@ $csrf_token = bin2hex(random_bytes(32));
                                 <label for="selectExpedido"><i class="fas fa-map-marker-alt text-primary"></i> Expedido *</label>
                                 <select class="form-control" id="selectExpedido" name="Exp" required>
                                     <option value="" disabled selected>Seleccione...</option>
-                                    <option value="LP">La Paz</option>
-                                    <option value="CB">Cochabamba</option>
-                                    <option value="SC">Santa Cruz</option>
-                                    <option value="OR">Oruro</option>
-                                    <option value="PT">Potosí</option>
-                                    <option value="CH">Chuquisaca</option>
-                                    <option value="TJ">Tarija</option>
-                                    <option value="BN">Beni</option>
-                                    <option value="PD">Pando</option>
-                                    <option value="OTR">Otro</option>
+                                    <option value="LP">LA PAZ</option>
+                                    <option value="CB">COCHABAMBA</option>
+                                    <option value="SC">SANTA CRUZ</option>
+                                    <option value="OR">ORURO</option>
+                                    <option value="PT">POTOSÍ</option>
+                                    <option value="CH">CHUQUISACA</option>
+                                    <option value="TJ">TARIJA</option>
+                                    <option value="BN">BENI</option>
+                                    <option value="PD">PANDO</option>
+                                    <option value="OTR">OTRO</option>
                                 </select>
                                 <div class="invalid-feedback">Seleccione el lugar de expedición.</div>
                             </div>
@@ -255,16 +255,16 @@ $csrf_token = bin2hex(random_bytes(32));
                                     <option value="" disabled selected>Seleccione...</option>
                                     <!-- El value va en MAYÚSCULAS porque así queda guardado en la BD
                                          (el backend aplica mb_strtoupper() al registrar el estudiante). -->
-                                    <option value="LA PAZ">La Paz</option>
-                                    <option value="COCHABAMBA">Cochabamba</option>
-                                    <option value="SANTA CRUZ">Santa Cruz</option>
-                                    <option value="ORURO">Oruro</option>
-                                    <option value="POTOSÍ">Potosí</option>
-                                    <option value="CHUQUISACA">Chuquisaca</option>
-                                    <option value="TARIJA">Tarija</option>
-                                    <option value="BENI">Beni</option>
-                                    <option value="PANDO">Pando</option>
-                                    <option value="OTRO">Otro</option>
+                                    <option value="LA PAZ">LA PAZ</option>
+                                    <option value="COCHABAMBA">COCHABAMBA</option>
+                                    <option value="SANTA CRUZ">SANTA CRUZ</option>
+                                    <option value="ORURO">ORURO</option>
+                                    <option value="POTOSÍ">POTOSÍ</option>
+                                    <option value="CHUQUISACA">CHUQUISACA</option>
+                                    <option value="TARIJA">TARIJA</option>
+                                    <option value="BENI">BENI</option>
+                                    <option value="PANDO">PANDO</option>
+                                    <option value="OTRO">OTRO</option>
                                 </select>
                                 <div class="invalid-feedback">Seleccione el lugar de nacimiento.</div>
                             </div>
@@ -343,14 +343,14 @@ $csrf_token = bin2hex(random_bytes(32));
                         </div>
                     </div>
 
-                    <!-- Universidad de egreso: opcional, no todos los estudiantes tienen este
-                         dato al momento del registro (se puede completar después editando). -->
+                    <!-- Universidad y fecha de egreso: obligatorias; la fecha no puede ser posterior
+                         a hoy ni anterior a los 15 años de edad (el servidor también lo valida). -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="IdUniversidad"><i class="fas fa-university text-primary"></i> Universidad de Egreso</label>
+                                <label for="IdUniversidad"><i class="fas fa-university text-primary"></i> Universidad de Egreso *</label>
                                 <div class="input-group">
-                                    <select class="form-control" id="IdUniversidad" name="IdUniversidad">
+                                    <select class="form-control" id="IdUniversidad" name="IdUniversidad" required>
                                         <option value="">Seleccione una universidad...</option>
                                         <?php
                                             $ListaUniversidad = new UniversidadControlador();
@@ -370,9 +370,10 @@ $csrf_token = bin2hex(random_bytes(32));
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="FechaEgreso"><i class="fas fa-calendar-check text-primary"></i> Fecha de Egreso</label>
+                                <label for="FechaEgreso"><i class="fas fa-calendar-check text-primary"></i> Fecha de Egreso *</label>
                                 <input type="date" id="FechaEgreso" name="FechaEgreso" class="form-control"
-                                       max="<?php echo date('Y-m-d'); ?>">
+                                       max="<?php echo date('Y-m-d'); ?>" required>
+                                <div class="invalid-feedback" id="FechaEgresoMensaje">Ingrese la fecha de egreso (no posterior a hoy).</div>
                             </div>
                         </div>
                     </div>
@@ -516,16 +517,16 @@ $csrf_token = bin2hex(random_bytes(32));
                                          (el backend aplica mb_strtoupper() al registrar/editar el estudiante).
                                          Antes estaba en formato título y por eso nunca coincidía con el
                                          dato guardado: el campo quedaba en blanco al editar. -->
-                                    <option value="LA PAZ">La Paz</option>
-                                    <option value="COCHABAMBA">Cochabamba</option>
-                                    <option value="SANTA CRUZ">Santa Cruz</option>
-                                    <option value="ORURO">Oruro</option>
-                                    <option value="POTOSÍ">Potosí</option>
-                                    <option value="CHUQUISACA">Chuquisaca</option>
-                                    <option value="TARIJA">Tarija</option>
-                                    <option value="BENI">Beni</option>
-                                    <option value="PANDO">Pando</option>
-                                    <option value="OTRO">Otro</option>
+                                    <option value="LA PAZ">LA PAZ</option>
+                                    <option value="COCHABAMBA">COCHABAMBA</option>
+                                    <option value="SANTA CRUZ">SANTA CRUZ</option>
+                                    <option value="ORURO">ORURO</option>
+                                    <option value="POTOSÍ">POTOSÍ</option>
+                                    <option value="CHUQUISACA">CHUQUISACA</option>
+                                    <option value="TARIJA">TARIJA</option>
+                                    <option value="BENI">BENI</option>
+                                    <option value="PANDO">PANDO</option>
+                                    <option value="OTRO">OTRO</option>
                                 </select>
                                 <div class="invalid-feedback">Seleccione el lugar de nacimiento.</div>
                             </div>
@@ -602,9 +603,9 @@ $csrf_token = bin2hex(random_bytes(32));
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="IdUniversidadEditar"><i class="fas fa-university text-primary"></i> Universidad de Egreso</label>
+                                <label for="IdUniversidadEditar"><i class="fas fa-university text-primary"></i> Universidad de Egreso *</label>
                                 <div class="input-group">
-                                    <select class="form-control" id="IdUniversidadEditar" name="IdUniversidad">
+                                    <select class="form-control" id="IdUniversidadEditar" name="IdUniversidad" required>
                                         <option value="">Seleccione una universidad...</option>
                                         <?php
                                             $ListaUniversidadEditar = new UniversidadControlador();
@@ -624,9 +625,10 @@ $csrf_token = bin2hex(random_bytes(32));
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="FechaEgresoEditar"><i class="fas fa-calendar-check text-primary"></i> Fecha de Egreso</label>
+                                <label for="FechaEgresoEditar"><i class="fas fa-calendar-check text-primary"></i> Fecha de Egreso *</label>
                                 <input type="date" id="FechaEgresoEditar" name="FechaEgreso" class="form-control"
-                                       max="<?php echo date('Y-m-d'); ?>">
+                                       max="<?php echo date('Y-m-d'); ?>" required>
+                                <div class="invalid-feedback" id="FechaEgresoEditarMensaje">Ingrese la fecha de egreso (no posterior a hoy).</div>
                             </div>
                         </div>
                     </div>
@@ -686,16 +688,16 @@ $csrf_token = bin2hex(random_bytes(32));
                 <div class="modal-body" style="padding: 25px;">
                     <div class="form-group">
                         <label for="inputNuevaUniversidadEstudiante">Nombre de la universidad</label>
-                        <input type="text" class="form-control" id="inputNuevaUniversidadEstudiante" maxlength="150" required placeholder="Ej: Universidad Mayor de San Andrés">
+                        <input type="text" class="form-control text-uppercase" id="inputNuevaUniversidadEstudiante" maxlength="150" required placeholder="Ej: Universidad Mayor de San Andrés">
                     </div>
                     <div class="form-group mb-0">
                         <label for="selectNuevaUniversidadTipo">Tipo de universidad</label>
                         <select class="form-control" id="selectNuevaUniversidadTipo" required>
                             <option value="" disabled selected>Seleccione...</option>
-                            <option value="PUBLICA">Pública</option>
-                            <option value="PRIVADA">Privada</option>
-                            <option value="EXTRANJERA">Extranjera</option>
-                            <option value="CONVENIO">De convenio</option>
+                            <option value="PUBLICA">PÚBLICA</option>
+                            <option value="PRIVADA">PRIVADA</option>
+                            <option value="EXTRANJERA">EXTRANJERA</option>
+                            <option value="CONVENIO">DE CONVENIO</option>
                         </select>
                         <div class="invalid-feedback">Seleccione el tipo de universidad.</div>
                     </div>
@@ -1141,16 +1143,46 @@ window.addEventListener('load', function() {
     let $selectUniversidadDestino = jQuery('#IdUniversidad');
 
     const etiquetasTipoUniversidad = {
-        PUBLICA: 'Pública',
-        PRIVADA: 'Privada',
-        EXTRANJERA: 'Extranjera',
-        CONVENIO: 'De convenio'
+        PUBLICA: 'PÚBLICA',
+        PRIVADA: 'PRIVADA',
+        EXTRANJERA: 'EXTRANJERA',
+        CONVENIO: 'DE CONVENIO'
     };
 
     function actualizarTipoUniversidad($select, $badge) {
         const tipo = $select.find('option:selected').data('tipo');
-        $badge.text(tipo ? ('Tipo: ' + (etiquetasTipoUniversidad[tipo] || tipo)) : '');
+        $badge.text(tipo ? ('TIPO: ' + (etiquetasTipoUniversidad[tipo] || tipo)) : '');
     }
+
+    // Fecha de egreso: como mínimo a los 15 años de edad (nacimiento + 15 años) y como
+    // máximo hoy (atributo max). Se marca inválida con un mensaje propio para que el
+    // formulario no se envíe; el servidor aplica la misma regla (igual que en Pre-Registro).
+    const EDAD_MINIMA_EGRESO = 15;
+    const MENSAJE_EGRESO = 'Ingrese la fecha de egreso (no posterior a hoy).';
+    function validarFechaEgreso($nacimiento, $egreso, $mensaje) {
+        const nacimiento = $nacimiento.val();
+        let mensaje = '';
+
+        if (nacimiento) {
+            const [anio, mes, dia] = nacimiento.split('-');
+            const minima = (parseInt(anio, 10) + EDAD_MINIMA_EGRESO) + '-' + mes + '-' + dia;
+            $egreso.attr('min', minima);
+            if ($egreso.val() && $egreso.val() < minima) {
+                mensaje = 'La fecha de egreso debe ser al menos ' + EDAD_MINIMA_EGRESO +
+                    ' años posterior a la fecha de nacimiento (desde el ' + [dia, mes, parseInt(anio, 10) + EDAD_MINIMA_EGRESO].join('/') + ').';
+            }
+        } else {
+            $egreso.removeAttr('min');
+        }
+        $egreso[0].setCustomValidity(mensaje);
+        $mensaje.text(mensaje || MENSAJE_EGRESO);
+    }
+    jQuery('#fechaNacimiento, #FechaEgreso').on('change', function() {
+        validarFechaEgreso(jQuery('#fechaNacimiento'), jQuery('#FechaEgreso'), jQuery('#FechaEgresoMensaje'));
+    });
+    jQuery('#fechaNacimientoEditar, #FechaEgresoEditar').on('change', function() {
+        validarFechaEgreso(jQuery('#fechaNacimientoEditar'), jQuery('#FechaEgresoEditar'), jQuery('#FechaEgresoEditarMensaje'));
+    });
 
     jQuery('#IdUniversidad').on('change', function() {
         actualizarTipoUniversidad(jQuery(this), jQuery('#IdUniversidadTipo'));
@@ -1249,6 +1281,7 @@ window.addEventListener('load', function() {
                 jQuery('#IdUniversidadEditar').val(est.IdUniversidad || '');
                 actualizarTipoUniversidad(jQuery('#IdUniversidadEditar'), jQuery('#IdUniversidadTipoEditar'));
                 jQuery('#FechaEgresoEditar').val(est.FechaEgreso ? est.FechaEgreso.substring(0, 10) : '');
+                validarFechaEgreso(jQuery('#fechaNacimientoEditar'), jQuery('#FechaEgresoEditar'), jQuery('#FechaEgresoEditarMensaje'));
 
                 jQuery('#ModalEditarEstudiante').modal('show');
             },

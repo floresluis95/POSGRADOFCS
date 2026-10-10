@@ -49,6 +49,7 @@ test.describe('Duplicados en formularios', () => {
       Ci: ci, Complemento: '', Exp: 'OR', Nombre: 'FORM', Apaterno: 'PRUEBA', Amaterno: 'DUPLICADO',
       FechaNacimiento: '1990-01-01', Edad: '36', Lugarn: 'ORURO', Correo: `form${ci}@correo-prueba.com`,
       IdProfesion: valor('SELECT MIN(IdProfesion) FROM profesion'), Trabajo: '', Direccion: '', Telefono: '', Celular: '70000001',
+      IdUniversidad: valor("SELECT MIN(IdUniversidad) FROM universidad") ?? '', FechaEgreso: '2015-12-15',
     };
     await enviarFormulario(page, 'estudiantes', campos);
     const html = await enviarFormulario(page, 'estudiantes', { ...campos, Correo: `form2${ci}@correo-prueba.com` });
@@ -63,6 +64,7 @@ test.describe('Duplicados en formularios', () => {
       Ci: ci, Complemento: '', Exp: 'OR', Nombre: 'FORM', Apaterno: 'PRUEBA', Amaterno: 'CORREO',
       FechaNacimiento: '1990-01-01', Edad: '36', Lugarn: 'ORURO', Correo: `prueba${ciOtro}@correo-prueba.com`,
       IdProfesion: valor('SELECT MIN(IdProfesion) FROM profesion') ?? '', Trabajo: '', Direccion: '', Telefono: '', Celular: '70000001',
+      IdUniversidad: valor("SELECT MIN(IdUniversidad) FROM universidad") ?? '', FechaEgreso: '2015-12-15',
     });
     expect(html).toContain('ya está registrado para el estudiante');
     expect(html).toContain(ciOtro);
@@ -76,6 +78,7 @@ test.describe('Duplicados en formularios', () => {
       accion: 'actualizarEstudiante', EstudianteID: String(respuesta.estudianteID), Exp: 'OR', Nombre: 'PRUEBA', Apaterno: 'EDITAR',
       FechaNacimiento: '1995-05-10', Edad: '31', Lugarn: 'ORURO', Correo: `prueba${ciOtro}@correo-prueba.com`,
       IdProfesion: valor('SELECT MIN(IdProfesion) FROM profesion') ?? '', Celular: '70000000',
+      IdUniversidad: valor("SELECT MIN(IdUniversidad) FROM universidad") ?? '', FechaEgreso: '2018-12-15',
     });
     expect(r.success).toBe(false);
     expect(r.mensaje).toContain(ciOtro);
