@@ -213,51 +213,94 @@ kt-aside--fixed kt-page--loading">
     display: contents;
 }
 
-/* Secciones del detalle */
-.seccion-detalle {
-    padding: 14px 18px;
-    background-color: #fff;
-    border: 1px solid #e3e7ef;
-    border-radius: 12px;
+/* Validar voucher: estudiante, datos a comparar, voucher y requisitos */
+.vv-estudiante {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
 }
-
-/* Bloque "Pago a verificar": monto y N° de cuenta resaltados para compararlos
-   de un vistazo con el voucher físico */
-.pago-verificar {
-    background: #f5f8fd;
-    border-left: 4px solid #1e3c72;
-}
-.pago-verificar-destacado {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: .5px;
+.vv-nombre { font-size: 17px; font-weight: 700; color: #1f2937; line-height: 1.3; }
+.vv-sub { font-size: 12.5px; color: #64748b; margin-top: 2px; }
+.vv-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #eef2fa;
     color: #1e3c72;
-}
-
-.seccion-detalle-titulo {
     font-size: 12px;
-    font-weight: 700;
-    color: #1e3c72;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #e3e7ef;
-}
-.seccion-detalle-titulo i { margin-right: 4px; }
-
-.label-modern {
-    font-size: 11px;
     font-weight: 600;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
 }
 
-.value-modern {
-    font-size: 0.95rem;
+/* Monto y cuenta: grandes, para mirarlos junto al voucher físico */
+.vv-comparar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: #dbe3f0;
+    border: 1px solid #dbe3f0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 14px;
+}
+.vv-dato { background: #f5f8fd; padding: 12px 16px; display: flex; flex-direction: column; }
+.vv-etiqueta { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .4px; }
+.vv-valor { font-size: 22px; font-weight: 700; color: #1e3c72; letter-spacing: .5px; line-height: 1.25; }
+.vv-cuenta-datos { font-size: 11px; color: #64748b; }
+
+.vv-exonerada {
+    margin: 0 0 14px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #f3faf6;
+    color: #2f855a;
+    font-size: 13px;
     font-weight: 600;
-    color: #1f2937;
+}
+.vv-exonerada i { margin-right: 4px; }
+
+.vv-bloque { padding-top: 12px; border-top: 1px solid #edf0f5; margin-bottom: 12px; }
+
+/* Foto: miniatura + botones Archivo / Cámara */
+.vv-foto { display: flex; align-items: center; gap: 10px; }
+.vv-foto-caja {
+    position: relative;
+    flex: 0 0 62px;
+    height: 62px;
+    margin: 0;
+    border: 1px dashed #c7cdd8;
+    border-radius: 8px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a0aec0;
+    font-size: 20px;
+    cursor: pointer;
+    overflow: hidden;
+}
+.vv-foto-caja #voucherFotoPreview { position: absolute; inset: 0; }
+.vv-foto-caja img { width: 100%; height: 100%; object-fit: cover; }
+.vv-foto-acciones { min-width: 0; }
+.vv-foto-botones { display: flex; gap: 6px; flex-wrap: wrap; }
+.vv-foto-botones .btn { font-size: 12.5px; }
+.vv-foto-botones .captura-foto-boton { margin-top: 0 !important; }
+.vv-foto-nombre { display: block; margin-top: 4px; font-size: 11.5px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.vv-contador { font-weight: 500; color: #64748b; margin-left: 4px; }
+
+.vv-pie { flex-wrap: nowrap; }
+.vv-aviso { font-size: 12px; color: #8a6d1d; }
+.vv-aviso i { color: #d69e2e; margin-right: 3px; }
+
+@media (max-width: 575.98px) {
+    .vv-estudiante { flex-direction: column; }
+    .vv-comparar { grid-template-columns: 1fr; }
+    .vv-pie { flex-wrap: wrap; }
 }
 
 .filtro-label {
@@ -290,53 +333,8 @@ kt-aside--fixed kt-page--loading">
 .in-link:hover { text-decoration: underline; }
 @media (max-width: 575.98px) { .in-requisitos { grid-template-columns: 1fr; } }
 
-/* "Matricular sin pago de matrícula": opción destacada en un recuadro */
-.in-sin-pago {
-    padding: 10px 14px 10px 40px;
-    background: #fffaf0;
-    border: 1px dashed #e3c27a;
-    border-radius: 10px;
-}
-.in-sin-pago .custom-control-label { font-size: 13px; color: #7a5a12; }
-
 #modalValidarVoucher .form-control-sm { height: 38px; border-radius: 8px; font-size: 13px; }
 
-/* Avisos: el tema pone .alert en flex y parte el texto en columnas (cada
-   <strong> quedaba como columna aparte); aquí van como párrafo normal */
-#modalValidarVoucher .alert {
-    display: block;
-    border-radius: 10px;
-    font-size: 12.5px;
-    line-height: 1.55;
-}
-#modalValidarVoucher .alert i { margin-right: 4px; }
-#avisoValidacion {
-    background: #fff8e6;
-    border: 1px solid #f1d58a;
-    border-left: 4px solid #d69e2e;
-    color: #6b4e0e;
-}
-#avisoValidacion i { color: #d69e2e; }
-
-#modalValidarVoucher .custom-file-label::after { content: "Examinar"; }
-
-.custom-file-sm .custom-file-label,
-.custom-file-sm .custom-file-input {
-    height: 38px;
-    font-size: 13px;
-}
-
-.custom-file-sm .custom-file-label {
-    padding: 0.45rem 0.75rem;
-    line-height: 1.5;
-    border-radius: 8px;
-}
-
-.custom-file-sm .custom-file-label::after {
-    height: 36px;
-    padding: 0.45rem 0.75rem;
-    line-height: 1.5;
-}
 
 @media (max-width: 767.98px) {
     .in-card-head { flex-direction: column; align-items: flex-start; }
@@ -500,7 +498,9 @@ kt-aside--fixed kt-page--loading">
         <!-- Formulario de validación del voucher: envuelve todo el cuerpo del modal
              (igual que en los demás modales de esta app), aunque el submit arma su
              propio FormData a mano, no depende de la posición de los campos. -->
-        <form id="formValidarVoucher" enctype="multipart/form-data">
+        <!-- novalidate: los campos obligatorios los revisa el submit (la foto va en un
+             input oculto y el navegador no podría señalarlo). -->
+        <form id="formValidarVoucher" enctype="multipart/form-data" novalidate>
 
           <div class="modal-body">
             <div id="panelDetalle" style="display:none;">
@@ -508,109 +508,94 @@ kt-aside--fixed kt-page--loading">
               <input type="hidden" id="detalleIdOrdenPago">
 
               <!-- Solo lo necesario para contrastar con el voucher físico: quién
-                   pagó, cuánto y a qué cuenta. Correo, celular, grado y sede ya se
-                   ven en Pre-Registro y no aportan a esta validación. -->
+                   pagó, cuánto y a qué cuenta. -->
 
-              <!-- Estudiante y programa -->
-              <div class="seccion-detalle mb-3">
-                <div class="seccion-detalle-titulo"><i class="fa fa-user-graduate"></i> Estudiante</div>
-                <div class="row">
-                  <div class="col-md-8">
-                    <div class="label-modern">Nombre completo</div>
-                    <div class="value-modern" id="detalleNombre"></div>
+              <!-- Estudiante, programa y plan elegido en Pre-Registro -->
+              <div class="vv-estudiante">
+                <div class="vv-estudiante-datos">
+                  <div class="vv-nombre" id="detalleNombre"></div>
+                  <div class="vv-sub">
+                    C.I. <span id="detalleCi"></span> &middot;
+                    <span id="detallePrograma"></span> (<span id="detalleCodigo"></span>)
                   </div>
-                  <div class="col-md-4">
-                    <div class="label-modern">C.I.</div>
-                    <div class="value-modern" id="detalleCi"></div>
-                  </div>
-                  <div class="col-md-12 mt-2">
-                    <div class="label-modern">Programa</div>
-                    <div class="value-modern"><span id="detallePrograma"></span> (<span id="detalleCodigo"></span>)</div>
-                  </div>
+                </div>
+                <div id="planPropuestaInfo"></div>
+              </div>
+
+              <!-- Lo que debe coincidir con el voucher -->
+              <div class="vv-comparar">
+                <div class="vv-dato">
+                  <span class="vv-etiqueta">Monto</span>
+                  <span class="vv-valor">Bs. <span id="detalleMonto">0.00</span></span>
+                </div>
+                <div class="vv-dato">
+                  <span class="vv-etiqueta">Cuenta</span>
+                  <span class="vv-valor" id="detalleCuentaNumero">-</span>
+                  <small class="vv-cuenta-datos" id="detalleCuentaDatos"></small>
                 </div>
               </div>
 
-              <!-- Pago a verificar: monto y cuenta de depósito (para comparar con el voucher) -->
-              <div class="seccion-detalle mb-3 pago-verificar">
-                <div class="seccion-detalle-titulo"><i class="fa fa-university"></i> Pago a verificar</div>
-                <div class="row">
-                  <div class="col-md-4">
-                    <div class="label-modern">Monto de matrícula</div>
-                    <div class="pago-verificar-destacado">Bs. <span id="detalleMonto">0.00</span></div>
-                  </div>
-                  <div class="col-md-8">
-                    <div class="label-modern">N° de cuenta de depósito</div>
-                    <div class="pago-verificar-destacado" id="detalleCuentaNumero">-</div>
-                    <small class="text-muted" id="detalleCuentaDatos"></small>
-                  </div>
-                </div>
-                <!-- Plan elegido en Pre-Registro (queda definitivo al validar) -->
-                <div id="planPropuestaInfo" class="mt-2"></div>
+              <!-- Matrícula exonerada en Pre-Registro (Bs. 0): no se pide voucher -->
+              <div class="vv-exonerada" id="avisoMatriculaExonerada" style="display:none;">
+                <i class="fa fa-check-circle"></i> Matrícula exonerada: no requiere voucher
               </div>
 
-              <!-- DATOS DEL VOUCHER -->
-              <div class="seccion-detalle mb-3">
-                <div class="seccion-detalle-titulo"><i class="fa fa-receipt"></i> Datos del voucher</div>
-
-                <div class="custom-control custom-checkbox in-sin-pago mb-3">
-                  <input type="checkbox" class="custom-control-input" id="sinPagoMatricula">
-                  <label class="custom-control-label font-weight-bold" for="sinPagoMatricula">
-                    Matricular sin pago de matrícula (el programa completo se cancelará después)
-                  </label>
-                </div>
-
+              <!-- Voucher -->
+              <div class="vv-bloque">
                 <div class="row" id="filaCamposVoucher">
-                  <div class="col-lg-4 form-group mb-2" id="grupoVoucherNumero">
-                    <label class="filtro-label">Código de voucher <span class="text-danger">*</span></label>
+                  <div class="col-md-4 form-group mb-2" id="grupoVoucherNumero">
+                    <label class="filtro-label" for="voucherNumero">N° de voucher</label>
                     <input type="text" class="form-control form-control-sm" id="voucherNumero" maxlength="25" required>
                   </div>
-                  <div class="col-lg-4 form-group mb-2">
-                    <label class="filtro-label">Fecha de inscripción <span class="text-danger">*</span></label>
+                  <div class="col-md-3 form-group mb-2">
+                    <label class="filtro-label" for="voucherFecha">Fecha</label>
                     <input type="date" class="form-control form-control-sm" id="voucherFecha" required
                            max="<?php echo date('Y-m-d'); ?>">
                   </div>
-                  <div class="col-lg-4 form-group mb-2" id="grupoVoucherFoto">
-                    <label class="filtro-label">Foto del voucher <span class="text-danger">*</span></label>
-                    <div class="custom-file custom-file-sm">
-                      <input type="file" class="custom-file-input" id="voucherFoto" accept="image/*" required>
-                      <label class="custom-file-label" for="voucherFoto" id="voucherFotoLabel">Seleccionar imagen...</label>
+                  <div class="col-md-5 form-group mb-2" id="grupoVoucherFoto">
+                    <label class="filtro-label">Foto</label>
+                    <div class="vv-foto">
+                      <label class="vv-foto-caja" for="voucherFoto" title="JPG, PNG, GIF o WEBP (máx. 5 MB)">
+                        <i class="fa fa-image"></i>
+                        <span id="voucherFotoPreview" style="display:none;"><img id="voucherFotoPreviewImg" src="" alt="Voucher"></span>
+                      </label>
+                      <div class="vv-foto-acciones">
+                        <div class="vv-foto-botones">
+                          <label class="btn btn-sm btn-outline-secondary mb-0" for="voucherFoto"><i class="fa fa-upload"></i> Archivo</label>
+                          <input type="file" class="d-none" id="voucherFoto" accept="image/*" data-captura-foto required>
+                        </div>
+                        <small class="vv-foto-nombre" id="voucherFotoLabel">Sin foto</small>
+                      </div>
                     </div>
-                    <small class="form-text text-muted">JPG, PNG, GIF o WEBP (máx. 5MB)</small>
                   </div>
-                </div>
-
-                <div id="voucherFotoPreview" style="display:none;">
-                  <img id="voucherFotoPreviewImg" src="" class="img-thumbnail" style="max-width: 140px;">
                 </div>
               </div>
 
               <!-- REQUISITOS ENTREGADOS (catálogo cargado por ajax/requisito.ajax.php).
                    Lo que no se marque queda pendiente en Matriculados > Requisitos;
                    no impide inscribir. -->
-              <div class="seccion-detalle mb-3" id="seccionRequisitos" style="display:none;">
-                <div class="seccion-detalle-titulo d-flex justify-content-between align-items-center">
-                  <span><i class="fa fa-clipboard-check"></i> Requisitos entregados</span>
+              <div class="vv-bloque mb-0" id="seccionRequisitos" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="filtro-label mb-0" title="Lo que falte se registra después en Matriculados">
+                    Requisitos entregados <span class="vv-contador" id="contadorRequisitos"></span>
+                  </span>
                   <button type="button" class="in-link" id="btnMarcarTodosRequisitos">Marcar todos</button>
                 </div>
                 <div class="in-requisitos" id="listaRequisitosInscripcion"></div>
-                <small class="text-muted d-block mt-2">Marque los documentos que el estudiante trae hoy. Los que falten se podrán registrar después en <strong>Matriculados</strong>.</small>
-              </div>
-
-              <div class="alert alert-warning py-2 px-3 mb-0" style="font-size:12px;" id="avisoValidacion">
-                <i class="fa fa-exclamation-triangle"></i>
-                Verifique que la matrícula ya fue cancelada en caja antes de validar. Esta acción
-                <strong>inscribe formalmente</strong> al estudiante en el programa y no se puede deshacer desde aquí.
               </div>
 
             </div>
           </div>
 
-          <div class="modal-footer">
+          <div class="modal-footer vv-pie">
+            <small class="vv-aviso mr-auto" id="avisoValidacion">
+              <i class="fa fa-exclamation-triangle"></i> Inscribe al estudiante; no se puede deshacer.
+            </small>
             <button type="button" id="btnBuscarOtro" class="btn btn-outline-secondary">
-              <i class="flaticon2-back"></i> Buscar otro estudiante
+              <i class="fa fa-arrow-left"></i> Volver
             </button>
             <button type="submit" class="btn btn-primary">
-              <i class="fa fa-check-circle"></i> Validar inscripción
+              <i class="fa fa-check-circle"></i> Inscribir
             </button>
           </div>
         </form>
@@ -745,6 +730,7 @@ kt-aside--fixed kt-page--loading">
                           '<span>' + escaparHtml(r.Nombre) + (auto ? ' <small class="text-muted">(automático)</small>' : '') + '</span></label>';
               });
               $('#listaRequisitosInscripcion').html(html);
+              actualizarContadorRequisitos();
               $('#seccionRequisitos').show();
           }
       });
@@ -752,6 +738,7 @@ kt-aside--fixed kt-page--loading">
 
       $('#btnMarcarTodosRequisitos').on('click', function() {
           $('#listaRequisitosInscripcion .chk-requisito').prop('checked', true);
+          actualizarContadorRequisitos();
       });
 
       $('#btnBuscarPreregistro').on('click', buscarPreregistros);
@@ -805,38 +792,27 @@ kt-aside--fixed kt-page--loading">
                   $('#formValidarVoucher')[0].reset();
                   cargarRequisitosInscripcion(p.ProgramaID);
                   $('#voucherFecha').val(new Date().toISOString().split('T')[0]);
-                  $('#voucherFotoLabel').text('Seleccionar imagen...');
+                  $('#voucherFotoLabel').text('Sin foto');
                   $('#voucherFotoPreview').hide();
                   $('#voucherFotoPreviewImg').attr('src', '');
 
-                  // Si la matrícula ya vino exonerada (Bs. 0) desde Pre-Registro, se marca
-                  // automáticamente "sin pago de matrícula" para no exigir un voucher que no existe.
+                  // Matrícula exonerada (Bs. 0) en Pre-Registro: no se pide voucher
                   const montoFinal = parseFloat(p.MontoFinal) || 0;
-                  $('#sinPagoMatricula').prop('checked', montoFinal <= 0).trigger('change');
+                  mostrarCamposVoucher(montoFinal <= 0 && parseInt(p.PagoCompleto, 10) !== 1);
 
-                  // El plan de pago del programa ya se definió en Pre-Registro; aquí solo se
-                  // muestra como referencia. Queda definitivo al validar el voucher, salvo
-                  // Grupal, que se arma después en Matriculados.
+                  // El plan de pago del programa y su % de descuento ya se definieron en
+                  // Pre-Registro; aquí solo se muestran como referencia. Quedan definitivos
+                  // al validar el voucher (en los tres planes).
                   const planTipo = p.PlanPropuestoTipo || 'REGULAR';
                   const planPorcentaje = parseFloat(p.PlanPropuestoPorcentaje) || 0;
                   const nombresPlan = { REGULAR: 'Regular', CONTADO: 'al Contado', GRUPAL: 'Grupal' };
 
-                  if (planTipo === 'GRUPAL') {
-                      $('#planPropuestaInfo').html(
-                          '<div class="alert alert-light border py-2 px-3 mb-0" style="font-size:12px;">' +
-                          '<i class="fa fa-users text-primary"></i> Se eligió <strong>Plan Grupal</strong> en Pre-Registro. ' +
-                          'No se fija ningún plan al validar este voucher: el estudiante quedará disponible para armarse ' +
-                          'en un grupo después, desde <strong>Matriculados</strong>.</div>'
-                      );
-                  } else {
-                      $('#planPropuestaInfo').html(
-                          '<div class="alert alert-light border py-2 px-3 mb-0" style="font-size:12px;">' +
-                          '<i class="fa fa-info-circle text-primary"></i> Plan definido en Pre-Registro: <strong>Plan ' +
-                          nombresPlan[planTipo] + '</strong>' +
-                          (planPorcentaje > 0 ? ' con <strong>' + planPorcentaje.toFixed(2) + '%</strong> de descuento' : '') +
-                          '. Quedará definitivo al validar el voucher.</div>'
-                      );
-                  }
+                  $('#planPropuestaInfo').html(
+                      '<span class="vv-chip" title="Plan elegido en Pre-Registro; queda definitivo al inscribir">' +
+                      '<i class="fa fa-tags"></i> Plan ' + nombresPlan[planTipo] +
+                      (planPorcentaje > 0 ? ' &middot; ' + parseFloat(planPorcentaje.toFixed(2)) + '% programa' : '') +
+                      '</span>'
+                  );
 
                   $('#ModalResultadosBusqueda').modal('hide');
                   $('#panelDetalle').slideDown();
@@ -866,7 +842,7 @@ kt-aside--fixed kt-page--loading">
       // Vista previa de la foto del voucher
       $('#voucherFoto').on('change', function() {
           const file = this.files[0];
-          const fileName = file ? file.name : 'Seleccionar imagen...';
+          const fileName = file ? file.name : 'Sin foto';
           $('#voucherFotoLabel').text(fileName);
 
           if (file && file.type.startsWith('image/')) {
@@ -888,30 +864,28 @@ kt-aside--fixed kt-page--loading">
       // ============================================
 
       // ============================================
-      // "MATRICULAR SIN PAGO DE MATRÍCULA": oculta los campos de voucher (no hay nada que
-      // validar) y avisa que el programa completo se cobrará después, desde Matriculados.
-      // Se marca automáticamente si la matrícula ya vino exonerada desde Pre-Registro, pero
-      // también se puede activar manualmente aquí para cualquier preregistro.
+      // MATRÍCULA EXONERADA EN PRE-REGISTRO: oculta los campos de voucher (no hay nada que
+      // validar). Lo decide la orden, no se elige aquí; el servidor aplica la misma regla.
       // ============================================
-      $('#sinPagoMatricula').on('change', function() {
-          const sinPago = $(this).is(':checked');
+      let matriculaExonerada = false;
+      function mostrarCamposVoucher(exonerada) {
+          matriculaExonerada = exonerada;
+          const sinPago = exonerada;
 
+          // Exonerada: no hay monto ni cuenta que comparar; solo se muestra el aviso
+          $('#avisoMatriculaExonerada').toggle(sinPago);
+          $('.vv-comparar').toggle(!sinPago);
           $('#grupoVoucherNumero, #grupoVoucherFoto').toggle(!sinPago);
           $('#voucherNumero').prop('required', !sinPago);
           $('#voucherFoto').prop('required', !sinPago);
+      }
 
-          if (sinPago) {
-              $('#avisoValidacion').html(
-                  '<i class="fa fa-info-circle"></i> Se inscribirá al estudiante <strong>sin registrar pago de matrícula</strong>. ' +
-                  'El programa completo se deberá cancelar después, desde <strong>Matriculados</strong>.'
-              );
-          } else {
-              $('#avisoValidacion').html(
-                  '<i class="fa fa-exclamation-triangle"></i> Verifique que la matrícula ya fue cancelada en caja antes de validar. Esta acción ' +
-                  '<strong>inscribe formalmente</strong> al estudiante en el programa y no se puede deshacer desde aquí.'
-              );
-          }
-      });
+      // Requisitos marcados / total, junto al título
+      function actualizarContadorRequisitos() {
+          const $chk = $('#listaRequisitosInscripcion .chk-requisito');
+          $('#contadorRequisitos').text($chk.length ? '(' + $chk.filter(':checked').length + ' de ' + $chk.length + ')' : '');
+      }
+      $(document).on('change', '#listaRequisitosInscripcion .chk-requisito', actualizarContadorRequisitos);
 
       // ============================================
       // VALIDAR EL VOUCHER (inscribe formalmente al estudiante)
@@ -920,8 +894,8 @@ kt-aside--fixed kt-page--loading">
           e.preventDefault();
 
           const idOrdenPago = $('#detalleIdOrdenPago').val();
-          const sinPago = $('#sinPagoMatricula').is(':checked');
-          const numeroVoucher = sinPago ? 'SIN MATRÍCULA' : $('#voucherNumero').val().trim();
+          const sinPago = matriculaExonerada;
+          const numeroVoucher = sinPago ? '' : $('#voucherNumero').val().trim();
           const fechaInscripcion = $('#voucherFecha').val();
 
           if (!sinPago && !numeroVoucher) {
@@ -944,7 +918,6 @@ kt-aside--fixed kt-page--loading">
           formData.append('idOrdenPago', idOrdenPago);
           formData.append('numeroVoucher', numeroVoucher);
           formData.append('fechaInscripcion', fechaInscripcion);
-          formData.append('sinMatricula', sinPago ? '1' : '0');
 
           // Requisitos: se envían todos (marcados y no marcados) con la fecha de inscripción
           $('#listaRequisitosInscripcion .chk-requisito').each(function() {
@@ -970,19 +943,6 @@ kt-aside--fixed kt-page--loading">
                   btnSubmit.prop('disabled', false);
 
                   if (resp.success) {
-                      if (sinPago) {
-                          swal({
-                              title: '¡Estudiante inscrito!',
-                              text: 'Quedó inscrito sin pago de matrícula. A continuación se le llevará a Matriculados para registrar el pago del programa completo.',
-                              icon: 'success',
-                              buttons: false,
-                              timer: 2500
-                          }).then(function() {
-                              window.location.href = 'matriculados';
-                          });
-                          return;
-                      }
-
                       swal({
                           title: '¡Voucher validado!',
                           text: 'El estudiante quedó inscrito formalmente en el programa y su plan de pago quedó CONFIRMADO.',

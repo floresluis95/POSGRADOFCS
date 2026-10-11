@@ -19,3 +19,5 @@ node_modules/
 
 bd/proyecto.sql
 bd/localhost (3).sql
+# Respaldos de la base de datos (tienen datos personales)
+mantenimiento/respaldos/

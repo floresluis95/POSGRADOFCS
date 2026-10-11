@@ -1310,7 +1310,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                     <div class="col-lg-4 form-group">
                                         <label class="gp-label" for="fmodulo">Foto o archivo del voucher <span class="gp-req">*</span></label>
                                         <input type="file" class="form-control-file gp-file" name="fmodulo" id="fmodulo"
-                                               accept="image/*,.pdf" required>
+                                               accept="image/*,.pdf" data-captura-foto required>
                                         <div id="previewFotoVoucher" class="mt-2"></div>
                                     </div>
                                 </div>

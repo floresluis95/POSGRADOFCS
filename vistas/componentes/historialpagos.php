@@ -460,7 +460,7 @@ date_default_timezone_set("America/La_Paz");
           <div class="form-group mb-0">
             <label class="hp-label" for="editPagoFoto">Foto del voucher</label>
             <div class="custom-file">
-              <input type="file" class="custom-file-input" id="editPagoFoto" accept="image/*">
+              <input type="file" class="custom-file-input" id="editPagoFoto" accept="image/*" data-captura-foto>
               <label class="custom-file-label" for="editPagoFoto" id="editPagoFotoLabel">Conservar la foto actual</label>
             </div>
             <small class="form-text text-muted">Opcional: solo si desea reemplazar la foto actual (máx. 5MB).</small>

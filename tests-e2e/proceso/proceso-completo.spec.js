@@ -104,6 +104,9 @@ test.describe('Proceso completo: del registro a los informes', () => {
     await modal.locator('#voucherNumero').fill(voucherMatricula);
     await modal.locator('#voucherFecha').fill(hoy);
     await modal.locator('#voucherFoto').setInputFiles(IMAGEN_VOUCHER);
+    // Al elegir la foto se abre la ventana de recorte (captura-foto.js)
+    await page.locator('#capturaRecorteSinCambios').click();
+    await expect(page.locator('#modalCapturaRecorte')).toBeHidden();
     const marcarTodos = modal.locator('#btnMarcarTodosRequisitos');
     if (await marcarTodos.isVisible()) await marcarTodos.click();
     await modal.locator('button[type="submit"]').click();
@@ -151,6 +154,9 @@ test.describe('Proceso completo: del registro a los informes', () => {
     await modal.locator('#fechaPago').fill(hoy);
     await modal.locator('#numeroVaucher').fill(voucherCuota);
     await modal.locator('#fmodulo').setInputFiles(IMAGEN_VOUCHER);
+    // Al elegir la foto se abre la ventana de recorte (captura-foto.js)
+    await page.locator('#capturaRecorteSinCambios').click();
+    await expect(page.locator('#modalCapturaRecorte')).toBeHidden();
     await modal.locator('#btnGuardarPagoCuota').click();
 
     await expect.poll(() => valor(`SELECT montocuota FROM pagomodulo WHERE idinscripcion = ${datos.idInscripcion} AND Estado = 'PAGADO'`), { timeout: 15_000 })

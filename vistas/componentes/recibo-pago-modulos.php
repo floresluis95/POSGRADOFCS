@@ -64,7 +64,7 @@ $numeroInicialColumna = 0;
 
 function TextoCuotaRecibo($c, $resumenPrograma)
 {
-    if (!$resumenPrograma['cuotaUnica'] && $resumenPrograma['numeroCuotasPlan'] && $c['NumeroCuota']) {
+    if ($resumenPrograma['numeroCuotasPlan'] && $c['NumeroCuota']) {
         return $c['NumeroCuota'] . ' de ' . $resumenPrograma['numeroCuotasPlan'];
     }
     return $c['NumeroCuota'] ?: '-';
@@ -76,15 +76,17 @@ function TextoCuotaRecibo($c, $resumenPrograma)
 
 <style>
 /* Hoja carta (215.9 x 279.4 mm) con márgenes de 10 mm: el área útil es 195.9 x 259.4 mm.
-   En pantalla se muestra la hoja tal como saldrá impresa. */
+   En pantalla se muestra la hoja tal como saldrá impresa.
+   Pensado para imprimir con poca tinta: sin fondos de color, solo negro y grises,
+   pocas líneas (finas y claras) y los datos importantes en negrita. */
 @page{size:letter;margin:10mm}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#333;background:#e9ecef}
+body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#111;background:#e9ecef}
 
 .papel{width:215.9mm;min-height:279.4mm;padding:10mm;margin:15px auto;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.15)}
 .hoja{width:195.9mm}
 
-.header{display:flex;align-items:center;justify-content:space-between;padding-bottom:4px;border-bottom:2px solid #ccc}
+.header{display:flex;align-items:center;justify-content:space-between;padding-bottom:4px;border-bottom:1.5px solid #111}
 .header-content{text-align:center;flex-grow:1;margin:0 8px;line-height:1.15}
 .header-content h3{font-size:11pt}
 .header-content h4{font-size:9pt}
@@ -92,36 +94,46 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#333;back
 .logo{width:60px;text-align:center}
 .logo img{max-width:100%;max-height:52px}
 
-.titulo-recibo{text-align:center;margin:6px 0 0}
-.titulo-recibo h2{font-size:12.5pt;color:#1e3c72;letter-spacing:1px;margin-bottom:2px}
-.titulo-recibo .datos-recibo{font-size:8pt;color:#555}
-.numero-recibo{display:inline-block;background:#1e3c72;color:#fff;padding:1px 8px;font-size:8pt;border-radius:3px;font-weight:bold;margin-right:6px}
+.titulo-recibo{display:flex;justify-content:space-between;align-items:flex-end;margin:8px 0 6px}
+.titulo-recibo h2{font-size:13pt;letter-spacing:1.5px}
+.titulo-recibo .datos-recibo{text-align:right;font-size:7.5pt;color:#555;line-height:1.4}
+.numero-recibo{display:block;font-size:9.5pt;font-weight:bold;color:#111}
 
-.info-estudiante{background:#f8f9fa;border-left:3px solid #1e3c72;padding:5px 8px;margin:8px 0;border-radius:3px}
-.info-estudiante table{width:100%;border-collapse:collapse}
-.info-estudiante td{padding:1px 4px;vertical-align:top}
-.info-estudiante td.etiqueta{width:1%;white-space:nowrap;color:#555}
+/* Etiqueta pequeña y gris pegada a su dato (sin línea entre ambos) */
+.etq{display:block;font-size:6.5pt;font-weight:bold;letter-spacing:.3px;text-transform:uppercase;color:#666;margin-bottom:1px}
 
-.seccion{margin:7px 0}
-.seccion-titulo{padding:3px 8px;border-radius:3px 3px 0 0;font-size:8.5pt;font-weight:bold;background:#28a745;color:#fff}
+/* Marco con los datos del estudiante: solo líneas claras entre columnas */
+.info-estudiante{border:1px solid #888;display:grid;grid-template-columns:2fr 1fr;margin-bottom:8px}
+.info-estudiante > div{padding:4px 8px}
+.info-estudiante > div:nth-child(odd){border-right:1px solid #ddd}
+.info-estudiante > div:nth-child(n+3){border-top:1px solid #ddd}
+.info-estudiante .nombre{font-size:11pt;font-weight:bold}
+.info-estudiante .programa{font-size:9.5pt;font-weight:bold}
 
+.seccion{margin:8px 0}
+.seccion-titulo{padding:3px 8px;font-size:8pt;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;background:#ebebeb;color:#111}
+
+/* Tablas: sin líneas verticales; solo una línea fina bajo cada fila */
 .tabla-modulos{width:100%;border-collapse:collapse}
-.tabla-modulos th,.tabla-modulos td{border:1px solid #ddd;padding:2px 5px;font-size:8pt}
-.tabla-modulos thead{background:#1e3c72;color:#fff}
-.tabla-modulos th{font-weight:bold;text-align:left}
+.tabla-modulos th,.tabla-modulos td{padding:3px 8px;font-size:8.5pt;border-bottom:1px solid #e3e3e3}
+.tabla-modulos th{font-size:6.5pt;font-weight:bold;letter-spacing:.3px;text-transform:uppercase;color:#666;text-align:left;border-bottom:1px solid #999}
 .tabla-modulos .num{text-align:right;white-space:nowrap}
+.tabla-modulos td.num{font-weight:bold}
+.tabla-modulos tr.descuento td{font-style:italic;color:#444}
 
 /* Cuotas en una o dos columnas */
-.columnas-cuotas{display:flex;gap:6px;align-items:flex-start}
+.columnas-cuotas{display:flex;gap:10px;align-items:flex-start}
 .columnas-cuotas > table{flex:1}
 
-.aviso{background:#fff3cd;padding:4px 8px;border-left:3px solid #ffc107;margin-top:6px;font-size:8.5pt}
+.aviso{padding:4px 8px;border-left:3px solid #111;margin-top:6px;font-size:8.5pt}
 
-.resumen{border:1.5px solid #1e3c72;border-radius:4px;margin-top:10px;display:flex}
-.resumen > div{flex:1;padding:4px 8px;border-right:1px solid #ddd;background:#f8f9fa}
-.resumen > div:last-child{border-right:none;background:#eef2f9}
-.resumen span{display:block;font-size:7.5pt;color:#555}
-.resumen strong{font-size:9.5pt}
+/* Resumen final: un marco y líneas claras entre los datos; el saldo destacado */
+.resumen{border:1px solid #888;margin-top:10px;display:flex}
+.resumen > div{flex:1;padding:4px 8px;border-right:1px solid #ddd}
+.resumen > div:last-child{border-right:none}
+.resumen strong{font-size:10pt}
+.resumen .saldo strong{font-size:11pt}
+.resumen .plan{display:block;font-size:7pt;color:#555}
 
 .footer{margin-top:12px;padding-top:5px;border-top:1px solid #ddd;text-align:center;font-size:7.5pt;line-height:1.3;color:#666}
 
@@ -164,17 +176,15 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#333;back
 </div>
 
 <div class="info-estudiante">
-<table>
-<tr><td class="etiqueta">Estudiante:</td><td><strong><?php echo htmlspecialchars($nombreCompleto); ?></strong></td>
-<td class="etiqueta">C.I.:</td><td><strong><?php echo htmlspecialchars($ciCompleto); ?></strong></td></tr>
-<tr><td class="etiqueta">Programa:</td><td colspan="3"><strong><?php echo htmlspecialchars($estudiante['NombrePrograma']); ?></strong></td></tr>
-<tr><td class="etiqueta">Grado:</td><td><?php echo htmlspecialchars($estudiante['GradoAcademico']); ?></td>
-<td class="etiqueta">Código:</td><td><?php echo htmlspecialchars($estudiante['CodigoPrograma']); ?></td></tr>
-</table></div>
+    <div><span class="etq">Estudiante</span><span class="nombre"><?php echo htmlspecialchars($nombreCompleto); ?></span></div>
+    <div><span class="etq">C.I.</span><strong><?php echo htmlspecialchars($ciCompleto); ?></strong></div>
+    <div><span class="etq">Programa</span><span class="programa"><?php echo htmlspecialchars($estudiante['NombrePrograma']); ?></span></div>
+    <div><span class="etq">Grado · Código</span><?php echo htmlspecialchars($estudiante['GradoAcademico']); ?> · <strong><?php echo htmlspecialchars($estudiante['CodigoPrograma']); ?></strong></div>
+</div>
 
 <?php if($costoMatriculaPagado>0): ?>
 <div class="seccion">
-<div class="seccion-titulo" style="background:#1e3c72">✓ MATRÍCULA CANCELADA</div>
+<div class="seccion-titulo">Matrícula cancelada</div>
 <table class="tabla-modulos"><thead>
 <tr><th>Concepto</th><th class="num">Monto</th><th>Fecha</th><th>Voucher</th></tr>
 </thead><tbody>
@@ -185,10 +195,10 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#333;back
 <td><?php echo htmlspecialchars($estudiante['VoucherMatricula'] ?: '-'); ?></td>
 </tr>
 <?php if($montoDescuentoMatricula > 0): ?>
-<tr style="background:#d4edda">
+<tr class="descuento">
 <?php // costomatricula ya es el monto CON descuento: esta fila solo informa cuánto se descontó ?>
-<td><strong>Incluye descuento de matrícula (<?php echo number_format($porcentajeDescuentoMatricula,1); ?>%)</strong></td>
-<td class="num" style="color:#28a745"><strong>Bs. <?php echo number_format($montoDescuentoMatricula,2); ?></strong></td>
+<td>Incluye descuento de matrícula (<?php echo number_format($porcentajeDescuentoMatricula,1); ?>%)</td>
+<td class="num">Bs. <?php echo number_format($montoDescuentoMatricula,2); ?></td>
 <td colspan="2"></td>
 </tr>
 <?php endif; ?>
@@ -198,7 +208,7 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#333;back
 <?php if($resumenPrograma['tienePlan']): ?>
 
 <?php if(count($cuotasPagadas)>0): ?>
-<div class="seccion"><div class="seccion-titulo">✓ CUOTAS PAGADAS (<?php echo count($cuotasPagadas); ?>)</div>
+<div class="seccion"><div class="seccion-titulo">Cuotas pagadas (<?php echo count($cuotasPagadas); ?>)</div>
 <div class="columnas-cuotas">
 <?php foreach($columnasCuotas as $columna): ?>
 <table class="tabla-modulos"><thead>
@@ -219,11 +229,11 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#333;back
 
 <?php if($resumenPrograma['saldoPendiente'] > 0): ?>
 <div class="aviso">
-<strong>⚠ IMPORTANTE:</strong> Saldo pendiente del programa: <strong>Bs. <?php echo number_format($resumenPrograma['saldoPendiente'],2); ?></strong>
+<strong>IMPORTANTE:</strong> Saldo pendiente del programa: <strong>Bs. <?php echo number_format($resumenPrograma['saldoPendiente'],2); ?></strong>
 </div>
 <?php endif; ?>
 <?php else: ?>
-<div class="aviso">⚠ Este estudiante todavía no tiene un Plan de Pago del Programa definido.</div>
+<div class="aviso">Este estudiante todavía no tiene un Plan de Pago del Programa definido.</div>
 <?php endif; ?>
 
 <?php
@@ -231,17 +241,18 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#333;back
 $nombresPlan = ['REGULAR' => 'Plan Regular', 'DESCUENTO' => 'Plan al Contado', 'GRUPAL' => 'Plan Grupal'];
 ?>
 <div class="resumen">
-    <div><span>Matrícula pagada</span><strong>Bs. <?php echo number_format($costoMatriculaPagado,2); ?></strong></div>
+    <div><span class="etq">Matrícula pagada</span><strong>Bs. <?php echo number_format($costoMatriculaPagado,2); ?></strong></div>
     <?php if($resumenPrograma['tienePlan']): ?>
-    <div><span>Costo del programa<?php
-        echo ' · ' . ($nombresPlan[$resumenPrograma['tipoPlan']] ?? $resumenPrograma['tipoPlan']);
-        if (!$resumenPrograma['cuotaUnica'] && $resumenPrograma['numeroCuotasPlan']) {
-            echo ' (' . $resumenPrograma['numeroCuotasPlan'] . ' cuotas)';
-        }
-    ?></span><strong>Bs. <?php echo number_format($resumenPrograma['costoTotal'],2); ?></strong></div>
-    <div><span>Pagado del programa</span><strong style="color:#28a745">Bs. <?php echo number_format($resumenPrograma['totalPagado'],2); ?></strong></div>
-    <div><span>Saldo del programa</span><strong style="color:<?php echo $resumenPrograma['saldoPendiente'] > 0 ? '#dc3545' : '#28a745'; ?>">
-        <?php echo $resumenPrograma['saldoPendiente']>0?'Bs. '.number_format($resumenPrograma['saldoPendiente'],2):'CANCELADO ✓'; ?>
+    <div><span class="etq">Costo del programa</span><strong>Bs. <?php echo number_format($resumenPrograma['costoTotal'],2); ?></strong>
+        <span class="plan"><?php
+            echo $nombresPlan[$resumenPrograma['tipoPlan']] ?? $resumenPrograma['tipoPlan'];
+            if ($resumenPrograma['numeroCuotasPlan']) {
+                echo ' · ' . $resumenPrograma['numeroCuotasPlan'] . ' cuotas';
+            }
+        ?></span></div>
+    <div><span class="etq">Pagado del programa</span><strong>Bs. <?php echo number_format($resumenPrograma['totalPagado'],2); ?></strong></div>
+    <div class="saldo"><span class="etq">Saldo del programa</span><strong>
+        <?php echo $resumenPrograma['saldoPendiente']>0?'Bs. '.number_format($resumenPrograma['saldoPendiente'],2):'CANCELADO'; ?>
     </strong></div>
     <?php endif; ?>
 </div>

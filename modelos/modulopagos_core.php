@@ -99,9 +99,8 @@ class PagoModuloModelo
                 $saldoPendiente = 0.0;
             }
 
-            // Contado y Grupal se pagan en una única cuota por el total; Regular admite cuotas libres.
-            $cuotaUnica = in_array($tipoPlan, ['DESCUENTO', 'GRUPAL'], true);
-
+            // Todos los planes (Regular, Contado y Grupal) admiten cuotas de monto libre
+            // hasta cubrir el saldo; el plan solo define el % de descuento del programa.
             return [
                 'tienePlan' => $plan !== null,
                 'tipoPlan' => $tipoPlan,
@@ -109,7 +108,6 @@ class PagoModuloModelo
                 'totalPagado' => $totalPagado,
                 'saldoPendiente' => $saldoPendiente,
                 'completado' => $plan !== null && $saldoPendiente <= 0,
-                'cuotaUnica' => $cuotaUnica,
                 // Número de cuotas planificado (solo Plan Regular; null si no se definió o no aplica)
                 'numeroCuotasPlan' => isset($plan['NumeroCuotas']) ? (int)$plan['NumeroCuotas'] : null,
                 'cuotasPagadasCount' => $cuotasPagadasCount
@@ -118,7 +116,7 @@ class PagoModuloModelo
             error_log("Error en ObtenerResumenPagoProgramaModelo: " . $e->getMessage());
             return [
                 'tienePlan' => false, 'tipoPlan' => null, 'costoTotal' => 0,
-                'totalPagado' => 0, 'saldoPendiente' => 0, 'completado' => false, 'cuotaUnica' => false,
+                'totalPagado' => 0, 'saldoPendiente' => 0, 'completado' => false,
                 'numeroCuotasPlan' => null, 'cuotasPagadasCount' => 0
             ];
         }

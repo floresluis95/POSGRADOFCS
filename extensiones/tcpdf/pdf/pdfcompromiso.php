@@ -165,13 +165,20 @@ if ($matricula <= 0) {
 
 $lineaColegiatura = 'Pago de <b>' . montoCompromiso($colegiatura) . ' Bs.</b> (' . letrasCompromiso($colegiatura)
     . ') por concepto de colegiatura';
-if (in_array($tipoPlan, ['DESCUENTO', 'GRUPAL'], true)) {
-    $nombrePlan = $tipoPlan === 'GRUPAL' ? 'plan grupal' : 'plan al contado';
-    $lineaColegiatura .= ', en un solo pago (' . $nombrePlan
-        . ($descuento > 0 ? ' con ' . montoCompromiso($descuento) . '% de descuento sobre el costo de ' . montoCompromiso($costoBase) . ' Bs.' : '')
-        . ').';
+// Todos los planes pagan la colegiatura en cuotas; el plan y su descuento se detallan
+// si los hay. Programa completo pagado al matricularse: un solo pago.
+$nombresPlanCompromiso = ['REGULAR' => 'plan regular', 'DESCUENTO' => 'plan al contado', 'GRUPAL' => 'plan grupal'];
+$detallePlan = '';
+if ($tipoPlan && $descuento > 0) {
+    $detallePlan = ' (' . ($nombresPlanCompromiso[$tipoPlan] ?? 'plan') . ' con ' . montoCompromiso($descuento)
+        . '% de descuento sobre el costo de ' . montoCompromiso($costoBase) . ' Bs.)';
+} elseif (in_array($tipoPlan, ['DESCUENTO', 'GRUPAL'], true)) {
+    $detallePlan = ' (' . $nombresPlanCompromiso[$tipoPlan] . ')';
+}
+if (!empty($datos['pagoCompleto'])) {
+    $lineaColegiatura .= ', en un solo pago' . $detallePlan . '.';
 } else {
-    $lineaColegiatura .= ', pago que deberá efectuarse al inicio de cada módulo, <b>' . $numCuotas
+    $lineaColegiatura .= $detallePlan . ', pago que deberá efectuarse al inicio de cada módulo, <b>' . $numCuotas
         . ' cuotas de ' . montoCompromiso($cuota) . ' Bs.</b>';
 }
 

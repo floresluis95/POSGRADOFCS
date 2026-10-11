@@ -8,6 +8,7 @@
 
 require_once __DIR__ . '/../modelos/pagoclinica.modelo.php';
 require_once __DIR__ . '/../modelos/voucher.modelo.php';
+require_once __DIR__ . '/../modelos/ordenpagoprincipal.modelo.php';
 
 class PagoClinicaControlador
 {
@@ -150,8 +151,6 @@ class PagoClinicaControlador
 
     private function UsuarioSesion()
     {
-        return isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
-            ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
-            : null;
+        return OrdenPagoModelos::ResponsableSesion();
     }
 }

@@ -137,13 +137,10 @@ $(document).ready(function() {
         }
 
         const saldoPendiente = parseFloat(r.saldoPendiente) || 0;
-        const campoMonto = r.cuotaUnica
-            ? '<input type="hidden" id="opMontoCuota" value="' + saldoPendiente.toFixed(2) + '">' +
-              '<div class="gp-monto-fijo">' + bs(saldoPendiente) + '</div>'
-            : '<div class="gp-monto-input">' +
-                  '<span>Bs.</span>' +
-                  '<input type="number" id="opMontoCuota" min="0.01" max="' + saldoPendiente.toFixed(2) + '" step="0.01" value="' + saldoPendiente.toFixed(2) + '">' +
-              '</div>';
+        const campoMonto = '<div class="gp-monto-input">' +
+            '<span>Bs.</span>' +
+            '<input type="number" id="opMontoCuota" min="0.01" max="' + saldoPendiente.toFixed(2) + '" step="0.01" value="' + saldoPendiente.toFixed(2) + '">' +
+        '</div>';
 
         const html =
             // Monto a generar: lo primero y más visible
@@ -151,9 +148,7 @@ $(document).ready(function() {
                 '<div class="gp-monto">' +
                     '<div>' +
                         '<div class="gp-section-title mb-1"><i class="fa fa-tag"></i> Monto de la orden</div>' +
-                        '<div class="gp-ayuda mt-0">' + (r.cuotaUnica
-                            ? 'Saldo total del programa (pago único)'
-                            : 'Cuota N° ' + opContexto.numeroCuotaActual + ' &middot; saldo pendiente ' + bs(saldoPendiente)) +
+                        '<div class="gp-ayuda mt-0">' + 'Cuota N° ' + opContexto.numeroCuotaActual + ' &middot; saldo pendiente ' + bs(saldoPendiente) +
                         '</div>' +
                     '</div>' +
                     campoMonto +
@@ -231,15 +226,15 @@ $(document).ready(function() {
         $('#ordenPagoContenido').html(html);
         cargarOpcionesCuentaPago();
         cargarOpcionesFirmante();
-        cargarModulosCuota(r.cuotaUnica);
+        cargarModulosCuota();
     }
 
     // ========================================
     // Módulos del programa para marcar a cuál(es) corresponde la cuota. Los que ya
     // tienen una orden vigente (pagada o pendiente) se muestran marcados y bloqueados.
-    // Se sugiere el siguiente módulo sin cuota (o todos, si es pago único del saldo).
+    // Se sugiere el siguiente módulo sin cuota.
     // ========================================
-    function cargarModulosCuota(cuotaUnica) {
+    function cargarModulosCuota() {
         $.ajax({
             url: 'ajax/ordenpago.ajax.php',
             method: 'POST',
@@ -257,7 +252,7 @@ $(document).ready(function() {
                 resp.modulos.forEach(function(m) {
                     const cubierto = !!m.NumeroOrden;
                     let marcar = cubierto;
-                    if (!cubierto && (cuotaUnica || !sugeridoUno)) {
+                    if (!cubierto && !sugeridoUno) {
                         marcar = true;
                         sugeridoUno = true;
                     }

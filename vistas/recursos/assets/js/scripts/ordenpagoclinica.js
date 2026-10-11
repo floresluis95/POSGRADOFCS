@@ -166,7 +166,7 @@ $(document).ready(function() {
                         '</div>' +
                         '<div class="col-lg-4 form-group">' +
                             '<label class="gp-label" for="clFotoVoucher">Foto o archivo del voucher <span class="gp-req">*</span></label>' +
-                            '<input type="file" class="form-control-file gp-file" id="clFotoVoucher" accept="image/*,.pdf" required>' +
+                            '<input type="file" class="form-control-file gp-file" id="clFotoVoucher" accept="image/*,.pdf" data-captura-foto required>' +
                         '</div>' +
                     '</div>' +
                     '<div class="gp-actions">' +

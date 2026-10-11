@@ -54,6 +54,8 @@ ob_start();
   <link href="vistas/recursos/assets/vendors/general/dual-listbox/dist/dual-listbox.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/general/morris.js/morris.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/general/sweetalert2/dist/sweetalert2.css" rel="stylesheet" type="text/css" />
+  <link href="vistas/recursos/assets/vendors/general/cropperjs/cropper.min.css" rel="stylesheet" type="text/css" />
+  <link href="vistas/recursos/assets/css/captura-foto.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/general/socicon/css/socicon.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/custom/vendors/line-awesome/css/line-awesome.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/custom/vendors/flaticon/flaticon.css" rel="stylesheet" type="text/css" />
@@ -172,6 +174,9 @@ ob_start();
   <script src="vistas/recursos/assets/vendors/general/waypoints/lib/jquery.waypoints.js" type="text/javascript"></script>
   <script src="vistas/recursos/assets/vendors/general/counterup/jquery.counterup.js" type="text/javascript"></script>
   <script src="vistas/recursos/assets/vendors/general/es6-promise-polyfill/promise.min.js" type="text/javascript"></script>
+  <!-- Foto del voucher: cámara y recorte (input type="file" data-captura-foto) -->
+  <script src="vistas/recursos/assets/vendors/general/cropperjs/cropper.min.js" type="text/javascript"></script>
+  <script src="vistas/recursos/assets/js/scripts/captura-foto.js" type="text/javascript"></script>
   <?php
   // No cargar SweetAlert2 en páginas que usan SweetAlert v1
   $action = isset($_GET['action']) ? $_GET['action'] : '';

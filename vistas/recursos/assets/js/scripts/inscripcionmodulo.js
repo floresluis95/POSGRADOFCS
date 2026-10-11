@@ -6,14 +6,17 @@
 $(document).ready(function() {
     console.log('Script de inscripción a módulos cargado correctamente');
 
-    // Inicializar DataTable
-    $('#tablaMatriculados').DataTable({
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json'
-        },
-        order: [[0, 'asc']], // El modelo ya entrega las filas por fecha de inscripción descendente
-        pageLength: 25
-    });
+    // Inicializar DataTable, salvo que la tabla venga vacía: la fila "No hay estudiantes
+    // matriculados" usa colspan y DataTables no la acepta (igual que en cargarEstudiantes)
+    if (!$('#tablaMatriculadosBody tr:first td[colspan]').length) {
+        $('#tablaMatriculados').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json'
+            },
+            order: [[0, 'asc']], // El modelo ya entrega las filas por fecha de inscripción descendente
+            pageLength: 25
+        });
+    }
 
     // ========================================
     // ABRIR MODAL UNIFICADO: PLAN DE PAGO + PAGO DE MÓDULOS
@@ -160,8 +163,8 @@ $(document).ready(function() {
         const saldoPendiente = parseFloat(r.saldoPendiente) || 0;
         const porcentaje = costoTotal > 0 ? Math.min(100, Math.round((totalPagado / costoTotal) * 100)) : 0;
 
-        // Progreso de cuotas: solo tiene sentido en Plan Regular con número de cuotas definido
-        const etiquetaCuotas = (!r.cuotaUnica && r.numeroCuotasPlan)
+        // Progreso de cuotas: solo si el plan tiene número de cuotas definido
+        const etiquetaCuotas = (r.numeroCuotasPlan)
             ? r.cuotasPagadasCount + ' de ' + r.numeroCuotasPlan + ' cuotas'
             : '';
 

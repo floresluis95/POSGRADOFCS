@@ -74,6 +74,12 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Historial de Pagos</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="ordenespago" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-printer" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Órdenes de Pago</span>
+                  </a>
+                </li>
 
 
                 <!-- CALENDARIO ACADÉMICO -->
@@ -328,6 +334,12 @@ if ($_SESSION["Tipo"] == "SEC") {
                     <span class="kt-menu__link-text">Historial de Pagos</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="ordenespago" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-printer" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Órdenes de Pago</span>
+                  </a>
+                </li>
 
                 <!-- CALIFICACIONES -->
                 <li class="kt-menu__section">
@@ -566,6 +578,12 @@ if ($_SESSION["Tipo"] == "AUX") {
                   <a href="historialpagos" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-time" style="color: #6f94c9;"></i>
                     <span class="kt-menu__link-text">Historial de Pagos</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="ordenespago" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-printer" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Órdenes de Pago</span>
                   </a>
                 </li>
 

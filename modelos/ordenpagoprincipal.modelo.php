@@ -10,6 +10,22 @@ require_once __DIR__ . '/voucher.modelo.php';
 class OrdenPagoModelos
 {
     /**
+     * Nombre del usuario con sesión, para guardarlo como responsable de una orden o
+     * de un registro de pago. Antes se armaba con $_SESSION['Nombre'] y ['Apellido'],
+     * que el login nunca define, y quedaba siempre vacío.
+     * @return string|null
+     */
+    public static function ResponsableSesion()
+    {
+        $nombre = trim(($_SESSION['Nombres'] ?? '') . ' ' . ($_SESSION['ApellidoPaterno'] ?? '') . ' ' . ($_SESSION['ApellidoMaterno'] ?? ''));
+        $nombre = preg_replace('/\s+/', ' ', $nombre);
+        if ($nombre === '') {
+            $nombre = trim($_SESSION['Usuario'] ?? '');
+        }
+        return $nombre !== '' ? mb_substr($nombre, 0, 200) : null;
+    }
+
+    /**
      * Validar el voucher de la matrícula ya cancelada e inscribir formalmente al estudiante.
      * Este es el único punto donde se escribe en `estudianteprograma`: recién aquí la
      * inscripción pasa a ser real. La orden de pago pasa a Estado = 'CONFIRMADO'.
@@ -22,11 +38,12 @@ class OrdenPagoModelos
      * @param string|null $fechaInscripcion
      * @param string|null $fotoVoucher Contenido binario de la imagen del voucher (opcional)
      * @param array|null $planPago Datos del plan de pago del programa (opcional, ver PagoProgramaModelos)
-     * @param bool $forzarSinMatricula Si es true, la matrícula queda en Bs. 0 en la inscripción
-     *             sin importar el monto de la orden (el estudiante pagará el programa completo después)
      * @return array
+     *
+     * Si se cobra o no la matrícula lo define el Pre-Registro: una orden de matrícula en
+     * Bs. 0 (exonerada) se valida sin voucher; cualquier otra exige N° y foto del voucher.
      */
-    public static function ValidarVoucherMatriculaModelo($idOrdenPago, $numeroVoucher, $fechaInscripcion = null, $fotoVoucher = null, $planPago = null, $forzarSinMatricula = false)
+    public static function ValidarVoucherMatriculaModelo($idOrdenPago, $numeroVoucher, $fechaInscripcion = null, $fotoVoucher = null, $planPago = null)
     {
         try {
             $pdo = Conexion::Conectar();
@@ -66,8 +83,22 @@ class OrdenPagoModelos
                 return ['status' => 'error', 'mensaje' => 'El estudiante ya está inscrito en este programa'];
             }
 
-            // El N° de voucher es único: no puede estar ya en otra matrícula, cuota o clínica
-            if (!$forzarSinMatricula) {
+            // Matrícula exonerada en Pre-Registro (orden de matrícula en Bs. 0): no hay voucher
+            $matriculaExonerada = self::MatriculaExoneradaEnOrden($orden);
+
+            if ($matriculaExonerada) {
+                $numeroVoucher = 'SIN MATRÍCULA';
+                $fotoVoucher = null;
+            } else {
+                if (trim((string)$numeroVoucher) === '' || mb_strtoupper(trim((string)$numeroVoucher), 'UTF-8') === 'SIN MATRÍCULA') {
+                    $pdo->rollBack();
+                    return ['status' => 'error', 'mensaje' => 'El N° de voucher es requerido'];
+                }
+                if (empty($fotoVoucher)) {
+                    $pdo->rollBack();
+                    return ['status' => 'error', 'mensaje' => 'La foto del voucher es obligatoria'];
+                }
+                // El N° de voucher es único: no puede estar ya en otra matrícula, cuota o clínica
                 $usadoEn = VoucherModelo::VoucherYaUsadoModelo($numeroVoucher, $pdo);
                 if ($usadoEn !== null) {
                     $pdo->rollBack();
@@ -78,10 +109,8 @@ class OrdenPagoModelos
             // Inscripción formal: única escritura en estudianteprograma
             $fechaInscripcionFinal = !empty($fechaInscripcion) ? $fechaInscripcion : date('Y-m-d');
 
-            // "Matricular sin pago de matrícula": la inscripción queda con matrícula en Bs. 0
-            // sin importar el monto de la orden original; el programa completo se cobra después.
-            $costomatriculaFinal = $forzarSinMatricula ? 0 : $orden['CostoMatricula'];
-            $montoPagadoFinal = $forzarSinMatricula ? 0 : $orden['MontoFinal'];
+            $costomatriculaFinal = $orden['CostoMatricula'];
+            $montoPagadoFinal = $orden['MontoFinal'];
 
             $stmtInsert = $pdo->prepare(
                 "INSERT INTO estudianteprograma
@@ -119,13 +148,11 @@ class OrdenPagoModelos
             $stmtUpdate->bindParam(":idOrdenPago", $idOrdenPago, PDO::PARAM_INT);
             $stmtUpdate->execute();
 
-            // El plan de pago del programa (Regular/Contado) se define en Pre-Registro y
-            // queda DEFINITIVO en este mismo momento, automáticamente, sin volver a
-            // pedirlo aquí. Si en Pre-Registro se eligió "Grupal", no se crea ningún plan
-            // todavía: el estudiante queda disponible para armarse en un grupo después,
-            // desde Matriculados. Un llamador puede seguir pasando $planPago explícito
-            // (por compatibilidad); si no lo pasa, se deriva de la propia orden.
-            if ($planPago === null && !empty($orden['PlanPropuestoTipo']) && $orden['PlanPropuestoTipo'] !== 'GRUPAL') {
+            // El plan de pago del programa (Regular/Contado/Grupal) y su % de descuento se
+            // definen en Pre-Registro y quedan DEFINITIVOS en este mismo momento,
+            // automáticamente, sin volver a pedirlos aquí. Un llamador puede seguir pasando
+            // $planPago explícito (por compatibilidad); si no lo pasa, se deriva de la orden.
+            if ($planPago === null && !empty($orden['PlanPropuestoTipo'])) {
                 $stmtCostoPrograma = $pdo->prepare("SELECT Costo FROM programa WHERE ProgramaID = :programaID");
                 $stmtCostoPrograma->bindParam(":programaID", $orden['ProgramaID'], PDO::PARAM_INT);
                 $stmtCostoPrograma->execute();
@@ -174,6 +201,17 @@ class OrdenPagoModelos
             error_log("Error en ValidarVoucherMatriculaModelo: " . $e->getMessage());
             return ['status' => 'error', 'mensaje' => 'Error en el servidor: ' . $e->getMessage()];
         }
+    }
+
+    /**
+     * La matrícula se exoneró en Pre-Registro ("Cobrar matrícula" sin marcar): orden de
+     * matrícula (no de programa completo) por Bs. 0.
+     * @param array $orden Fila de ordenpago
+     * @return bool
+     */
+    public static function MatriculaExoneradaEnOrden($orden)
+    {
+        return (int)$orden['PagoCompleto'] !== 1 && floatval($orden['MontoFinal']) <= 0;
     }
 
     /**
@@ -388,9 +426,7 @@ class OrdenPagoModelos
 
             // Obtener responsable (usuario de sesión si existe)
             // La sesión ya está iniciada desde plantilla.php
-            $responsable = isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
-                ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
-                : null;
+            $responsable = OrdenPagoModelos::ResponsableSesion();
 
             $observaciones = isset($datos['Observaciones']) ? $datos['Observaciones'] : null;
 
@@ -839,6 +875,68 @@ class OrdenPagoModelos
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Error en ListarOrdenesPorEstudianteModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Tipo de una orden según cómo se generó: MODULOS (legado, ligado a
+     * ListaModulos), CUOTA (cuota del programa), CLINICA, o MATRICULA (el resto:
+     * las del Pre-Registro).
+     * @param array $orden fila de ordenpago con ListaModulos y Observaciones
+     * @return string
+     */
+    public static function TipoDeOrden($orden)
+    {
+        if (!empty($orden['ListaModulos'])) {
+            return 'MODULOS';
+        }
+        if (($orden['Observaciones'] ?? '') === 'CUOTA PROGRAMA') {
+            return 'CUOTA';
+        }
+        if (($orden['Observaciones'] ?? '') === 'CLINICA') {
+            return 'CLINICA';
+        }
+        return 'MATRICULA';
+    }
+
+    /**
+     * Todas las órdenes de pago generadas (de cualquier estudiante y tipo), para la
+     * pantalla "Órdenes de pago" del personal. Se filtra por fecha de generación en
+     * el servidor; tipo, estado, programa y búsqueda se filtran en la pantalla.
+     * @param string|null $desde Y-m-d
+     * @param string|null $hasta Y-m-d
+     * @return array
+     */
+    public static function ListarOrdenesGeneradasModelo($desde = null, $hasta = null)
+    {
+        try {
+            $sql = "SELECT
+                        op.IdOrdenPago, op.NumeroOrden, op.ProgramaID, op.ListaModulos, op.MontoTotal,
+                        op.MontoFinal, op.PagoCompleto, op.FechaGeneracion, op.FechaVencimiento,
+                        op.FechaConfirmacion, op.Estado, op.Observaciones, op.ResponsableGeneracion,
+                        e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Complemento, e.Exp,
+                        p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico, p.Sede
+                    FROM ordenpago op
+                    INNER JOIN estudiante e ON e.EstudianteID = op.EstudianteID
+                    INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
+                    WHERE 1 = 1";
+            $params = [];
+            if (!empty($desde)) {
+                $sql .= " AND op.FechaGeneracion >= :desde";
+                $params[':desde'] = substr($desde, 0, 10) . ' 00:00:00';
+            }
+            if (!empty($hasta)) {
+                $sql .= " AND op.FechaGeneracion <= :hasta";
+                $params[':hasta'] = substr($hasta, 0, 10) . ' 23:59:59';
+            }
+            $sql .= " ORDER BY op.FechaGeneracion DESC, op.IdOrdenPago DESC";
+
+            $stmt = Conexion::Conectar()->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ListarOrdenesGeneradasModelo: " . $e->getMessage());
             return [];
         }
     }

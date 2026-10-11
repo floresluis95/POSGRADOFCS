@@ -63,15 +63,14 @@ class OrdenPagoControladores
             $tipoPago = isset($_POST['tipoPago']) ? htmlspecialchars(trim($_POST['tipoPago'])) : 'PLAN REGULAR';
 
             // Plan de pago del PROGRAMA elegido en Pre-Registro (Regular/Contado/Grupal).
-            // Queda definitivo automáticamente al validar el voucher en Inscripción
-            // (salvo Grupal, que se arma después en Matriculados).
+            // Queda definitivo automáticamente al validar el voucher en Inscripción.
             $planPropuestoTipo = isset($_POST['tipoPagoCodigo']) && in_array($_POST['tipoPagoCodigo'], ['REGULAR', 'CONTADO', 'GRUPAL'], true)
                 ? $_POST['tipoPagoCodigo']
                 : 'REGULAR';
 
             // Número de cuotas PLANIFICADO para el Plan Regular (las cuotas siguen siendo de
             // monto libre; este número es solo de referencia, para poder mostrar "Cuota X de N"
-            // en recibos). No aplica a Contado/Grupal (siempre es un solo pago).
+            // en recibos). En Contado/Grupal no se planifica (también admiten varias cuotas).
             $planPropuestoNumeroCuotas = ($planPropuestoTipo === 'REGULAR' && !empty($_POST['numeroCuotas']))
                 ? (int)$_POST['numeroCuotas']
                 : null;
@@ -80,10 +79,11 @@ class OrdenPagoControladores
             // exonerada (checkbox sin marcar no llega en el POST), dejando el monto en Bs. 0.
             $matriculaExonerada = !isset($_POST['pagarMatricula']);
 
-            // El % de descuento en Plan Regular solo se aplica a la matrícula de este
-            // pre-registro (no se propaga al plan de cuotas del programa, a diferencia de
-            // Plan al Contado). Por eso PlanPropuestoPorcentaje solo se guarda para Contado.
-            $planPropuestoPorcentaje = ($planPropuestoTipo === 'CONTADO') ? $porcentajeDescuento : 0;
+            // Descuentos por separado, en todos los planes: porcentajeDescuento es el de la
+            // matrícula (esta orden) y porcentajeDescuentoPrograma el del plan de cuotas del
+            // programa, que queda definitivo al validar el voucher.
+            $planPropuestoPorcentaje = isset($_POST['porcentajeDescuentoPrograma']) ? floatval($_POST['porcentajeDescuentoPrograma']) : 0;
+            $planPropuestoPorcentaje = min(100, max(0, $planPropuestoPorcentaje));
 
             $estudianteID = (int)$_POST['idcliente'];
 

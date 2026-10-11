@@ -61,8 +61,8 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
         // Se dibuja la etiqueta arriba a la derecha (junto al logo) sin perder la posición Y actual
         $y_actual = $pdf->GetY();
         $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetTextColor(200, 0, 0);
-        $pdf->SetXY($page_width - $margin - 25, $yInicio);
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->SetXY($page_width - $margin - $width_img - 27, $yInicio + 1);
         $pdf->Cell(25, 3, '** COPIA **', 0, 0, 'R');
         $pdf->SetTextColor(0, 0, 0);
         $pdf->SetY($y_actual);
@@ -72,16 +72,39 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     $pdf->SetDrawColor(0, 0, 0);
     $pdf->Line($x_left, $pdf->GetY() + 0.8, $page_width - $margin, $pdf->GetY() + 0.8);
     $pdf->Ln(1.8);
+    $pdf->SetLineWidth(0.2);
 
     // ========================================
-    // TÍTULO
+    // TABLA: un solo marco exterior; las barras grises separan las secciones y
+    // dentro solo hay líneas claras entre columnas. Cada etiqueta (pequeña, gris)
+    // va pegada a su dato, sin línea entre ambos. Las posiciones y tamaños de
+    // cada recuadro son los mismos de antes.
     // ========================================
-    $pdf->SetX($x_left);
-    $pdf->SetFont('helvetica', 'B', 11);
-    $pdf->SetFillColor($colorTitulo[0], $colorTitulo[1], $colorTitulo[2]);
-    $pdf->SetTextColor($colorTituloTexto[0], $colorTituloTexto[1], $colorTituloTexto[2]);
-    $pdf->Cell($content_width, 7.5, 'ORDEN DE PAGO EN CAJA DE POSGRADO', 1, 1, 'C', true);
-    $pdf->SetTextColor(0, 0, 0);
+    $separador = function ($x1, $y1, $x2, $y2) use ($pdf) {
+        $pdf->SetDrawColor(200, 200, 200);
+        $pdf->SetLineWidth(0.2);
+        $pdf->Line($x1, $y1, $x2, $y2);
+    };
+    $barra = function ($texto, $alto, $tamano) use ($pdf, $x_left, $content_width, $colorTitulo, $colorTituloTexto) {
+        $pdf->SetX($x_left);
+        $pdf->SetFont('helvetica', 'B', $tamano);
+        $pdf->SetFillColor($colorTitulo[0], $colorTitulo[1], $colorTitulo[2]);
+        $pdf->SetTextColor($colorTituloTexto[0], $colorTituloTexto[1], $colorTituloTexto[2]);
+        $pdf->Cell($content_width, $alto, $texto, 0, 1, 'C', true);
+    };
+    $etiqueta = function ($tamano = 6.5) use ($pdf, $colorEtiqueta) {
+        $pdf->SetFont('helvetica', 'B', $tamano);
+        $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    };
+    $dato = function ($tamano, $estilo = 'B') use ($pdf, $colorTexto) {
+        $pdf->SetFont('helvetica', $estilo, $tamano);
+        $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
+    };
+
+    $y_tabla = $pdf->GetY();
+
+    // TÍTULO
+    $barra('ORDEN DE PAGO EN CAJA DE POSGRADO', 7.5, 11);
 
     // ========================================
     // DATOS DEL POSGRADUANTE
@@ -95,52 +118,49 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
 
     $y_bloque = $pdf->GetY();
 
-    $pdf->SetFont('helvetica', 'BI', 7.5);
-    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
+    $etiqueta(7);
     $pdf->SetXY($x_left, $y_bloque);
-    $pdf->MultiCell($W_ENCABEZADO, $H_TOTAL, 'NOMBRE COMPLETO DEL POSGRADUANTE:', 1, 'L', false, 0, '', '', true, 0, false, true, $H_TOTAL, 'M');
+    $pdf->MultiCell($W_ENCABEZADO, $H_TOTAL, 'NOMBRE COMPLETO DEL POSGRADUANTE', 0, 'L', false, 0, '', '', true, 0, false, true, $H_TOTAL, 'M');
 
     $x_tabla = $x_left + $W_ENCABEZADO;
 
+    // Nombre: lo más visible del bloque
+    $etiqueta();
     $pdf->SetXY($x_tabla, $y_bloque);
-    $pdf->SetFont('helvetica', 'BI', 7);
-    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
-    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO PATERNO', 1, 0, 'L');
-    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO MATERNO', 1, 0, 'L');
-    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'NOMBRE (S)', 1, 1, 'L');
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO PATERNO', 0, 0, 'L', false, '', 0, false, 'T', 'B');
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'APELLIDO MATERNO', 0, 0, 'L', false, '', 0, false, 'T', 'B');
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'NOMBRE(S)', 0, 1, 'L', false, '', 0, false, 'T', 'B');
 
     $pdf->SetX($x_tabla);
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
-    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $apaterno, 1, 0, 'L');
-    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $amaterno, 1, 0, 'L');
-    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $nombres, 1, 1, 'L');
+    $dato(10.5);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $apaterno, 0, 0, 'L', false, '', 1);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $amaterno, 0, 0, 'L', false, '', 1);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $nombres, 0, 1, 'L', false, '', 1);
+
+    $etiqueta();
+    $pdf->SetX($x_tabla);
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'CORREO ELECTRÓNICO', 0, 0, 'L', false, '', 0, false, 'T', 'B');
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'C.I.', 0, 0, 'L', false, '', 0, false, 'T', 'B');
+    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'N° DE CELULAR', 0, 1, 'L', false, '', 0, false, 'T', 'B');
 
     $pdf->SetX($x_tabla);
-    $pdf->SetFont('helvetica', 'BI', 7);
-    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
-    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'CORREO ELECTRONICO', 1, 0, 'L');
-    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'C.I.', 1, 0, 'L');
-    $pdf->Cell($W_CELDA, $H_FILA_TITULO, 'N° DE CELULAR:', 1, 1, 'L');
+    $dato(8.5, '');
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $correo, 0, 0, 'L', false, '', 1);
+    $dato(9);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $ci, 0, 0, 'L', false, '', 1);
+    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $celular, 0, 1, 'L', false, '', 1);
 
-    $pdf->SetX($x_tabla);
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
-    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $correo, 1, 0, 'L');
-    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $ci, 1, 0, 'L');
-    $pdf->Cell($W_CELDA, $H_FILA_VALOR, $celular, 1, 1, 'L');
+    $separador($x_tabla, $y_bloque + 1, $x_tabla, $y_bloque + $H_TOTAL - 1);
+    $separador($x_tabla + $W_CELDA, $y_bloque + 1, $x_tabla + $W_CELDA, $y_bloque + $H_TOTAL - 1);
+    $separador($x_tabla + 2 * $W_CELDA, $y_bloque + 1, $x_tabla + 2 * $W_CELDA, $y_bloque + $H_TOTAL - 1);
+    $separador($x_tabla, $y_bloque + $H_FILA_TITULO + $H_FILA_VALOR, $x_left + $content_width, $y_bloque + $H_FILA_TITULO + $H_FILA_VALOR);
 
     $pdf->SetY($y_bloque + $H_TOTAL);
 
     // ========================================
     // DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO
     // ========================================
-    $pdf->SetX($x_left);
-    $pdf->SetFont('helvetica', 'B', 10);
-    $pdf->SetFillColor($colorTitulo[0], $colorTitulo[1], $colorTitulo[2]);
-    $pdf->SetTextColor($colorTituloTexto[0], $colorTituloTexto[1], $colorTituloTexto[2]);
-    $pdf->Cell($content_width, 6.5, 'DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO', 1, 1, 'C', true);
-    $pdf->SetTextColor(0, 0, 0);
+    $barra('DATOS PARA LA EMISIÓN DE COMPROBANTE DE PAGO', 6.5, 10);
 
     $W_PROGRAMA = $content_width * 0.62;
     $W_DERECHA = $content_width - $W_PROGRAMA;
@@ -150,128 +170,111 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
 
     $y_prog = $pdf->GetY();
 
-    // Fila A: etiqueta "PROGRAMA:" (izq) / "Versión y/o" + valor (der)
-    $pdf->SetXY($x_left, $y_prog);
-    $pdf->SetFont('helvetica', 'BI', 7);
-    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
-    $pdf->Cell($W_PROGRAMA, $H_ROW_A, 'PROGRAMA:', 1, 0, 'L');
-
-    $pdf->Cell($W_DERECHA * 0.42, $H_ROW_A, 'TIPO DE PAGO', 1, 0, 'L');
-
-    // Se reutiliza este campo (antes mostraba la versión, que ya no se imprime)
-    // para remarcar si la orden es de MATRÍCULA, CUOTA o PROGRAMA COMPLETO: se
-    // detecta dentro del texto ya armado de $programa y se resalta con un color
-    // propio y fondo relleno, para que sea más visible que el resto del recuadro.
+    // Tipo de pago (MATRÍCULA, CUOTA o PROGRAMA COMPLETO): se detecta dentro del
+    // texto ya armado de $programa
     $tipoPago = '';
-    $colorTipoPagoTexto = $colorTexto;
-    $colorTipoPagoFondo = [255, 255, 255];
     if (stripos($programa, 'PROGRAMA COMPLETO') !== false) {
         $tipoPago = 'PROG. COMPLETO';
-        $colorTipoPagoTexto = [27, 94, 32];    // verde oscuro
-        $colorTipoPagoFondo = [232, 245, 233]; // verde claro
     } elseif (stripos($programa, 'MATRICULA') !== false || stripos($programa, 'MATRÍCULA') !== false) {
         $tipoPago = 'MATRÍCULA';
-        $colorTipoPagoTexto = [204, 85, 0];    // naranja oscuro
-        $colorTipoPagoFondo = [255, 240, 224]; // naranja claro
     } elseif (stripos($programa, 'cuota') !== false) {
         $tipoPago = 'CUOTA';
-        $colorTipoPagoTexto = [178, 34, 34];   // rojo ladrillo
-        $colorTipoPagoFondo = [253, 232, 232]; // rojo claro
     }
 
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->SetTextColor($colorTipoPagoTexto[0], $colorTipoPagoTexto[1], $colorTipoPagoTexto[2]);
-    $pdf->SetFillColor($colorTipoPagoFondo[0], $colorTipoPagoFondo[1], $colorTipoPagoFondo[2]);
-    $pdf->Cell($W_DERECHA * 0.58, $H_ROW_A, $tipoPago, 1, 1, 'L', true);
+    // Izquierda: programa (etiqueta arriba, nombre destacado abajo)
+    $etiqueta();
+    $pdf->SetXY($x_left, $y_prog);
+    $pdf->Cell($W_PROGRAMA, $H_ROW_A, 'PROGRAMA', 0, 0, 'L');
 
-    // Fila B: texto del programa (izq, multilinea) / "Cuenta auxiliar" + valor (der)
+    // Derecha, fila A: tipo de pago
+    $pdf->Cell($W_DERECHA * 0.42, $H_ROW_A, 'TIPO DE PAGO', 0, 0, 'L');
+    $dato(9);
+    $pdf->Cell($W_DERECHA * 0.58, $H_ROW_A, $tipoPago, 0, 1, 'L');
+
     $pdf->SetXY($x_left, $y_prog + $H_ROW_A);
-    $pdf->SetFont('helvetica', 'BI', 7.5);
-    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
-    $pdf->MultiCell($W_PROGRAMA, $H_ROW_B, $programa, 1, 'L', false, 0, '', '', true, 0, false, true, $H_ROW_B, 'M');
+    $dato(9);
+    $pdf->MultiCell($W_PROGRAMA, $H_ROW_B, $programa, 0, 'L', false, 0, '', '', true, 0, false, true, $H_ROW_B, 'T', true);
 
+    // Derecha, fila B: cuenta auxiliar destacada
     $pdf->SetXY($x_left + $W_PROGRAMA, $y_prog + $H_ROW_A);
-    $pdf->SetFont('helvetica', 'BI', 7);
-    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
-    $pdf->Cell($W_DERECHA * 0.42, $H_ROW_B, 'Cuenta auxiliar', 1, 0, 'L');
-    $pdf->SetFont('helvetica', 'B', 8.5);
-    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
-    $pdf->Cell($W_DERECHA * 0.58, $H_ROW_B, $numeroTramite, 1, 1, 'L');
+    $etiqueta();
+    $pdf->Cell($W_DERECHA * 0.42, $H_ROW_B, 'CUENTA AUXILIAR', 0, 0, 'L');
+    $dato(13);
+    $pdf->Cell($W_DERECHA * 0.58, $H_ROW_B, $numeroTramite, 0, 1, 'L');
+
+    $separador($x_left + $W_PROGRAMA, $y_prog + 1, $x_left + $W_PROGRAMA, $y_prog + $H_PROGRAMA - 1);
+    $separador($x_left + $W_PROGRAMA, $y_prog + $H_ROW_A, $x_left + $content_width, $y_prog + $H_ROW_A);
+    $separador($x_left, $y_prog + $H_PROGRAMA, $x_left + $content_width, $y_prog + $H_PROGRAMA);
 
     $pdf->SetY($y_prog + $H_PROGRAMA);
 
-    // Fila MONTO / LITERAL (en línea)
+    // Fila MONTO / LITERAL
+    $y_monto = $pdf->GetY();
     $pdf->SetX($x_left);
-    $pdf->SetFont('helvetica', 'BI', 7);
-    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
-    $pdf->Cell(20, 6.5, 'MONTO:', 1, 0, 'L');
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
-    $pdf->Cell(32, 6.5, $montoNumeral, 1, 0, 'L');
-    $pdf->SetFont('helvetica', 'BI', 7);
-    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
-    $pdf->Cell(20, 6.5, 'LITERAL:', 1, 0, 'L');
-    $pdf->SetFont('helvetica', 'BI', 7.5);
-    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
-    $pdf->Cell($content_width - 20 - 32 - 20, 6.5, $montoLiteral, 1, 1, 'L');
+    $etiqueta();
+    $pdf->Cell(20, 6.5, 'MONTO', 0, 0, 'L');
+    $dato(10.5);
+    $pdf->Cell(32, 6.5, $montoNumeral, 0, 0, 'L');
+    $etiqueta();
+    $pdf->Cell(20, 6.5, 'LITERAL', 0, 0, 'L');
+    $dato(8);
+    $pdf->Cell($content_width - 20 - 32 - 20, 6.5, $montoLiteral, 0, 1, 'L', false, '', 1);
+    $separador($x_left + 52, $y_monto + 1, $x_left + 52, $y_monto + 5.5);
 
     // ========================================
     // DATOS PARA LA EMISIÓN DE FACTURA
     // ========================================
-    $pdf->SetX($x_left);
-    $pdf->SetFont('helvetica', 'B', 10);
-    $pdf->SetFillColor($colorTitulo[0], $colorTitulo[1], $colorTitulo[2]);
-    $pdf->SetTextColor($colorTituloTexto[0], $colorTituloTexto[1], $colorTituloTexto[2]);
-    $pdf->Cell($content_width, 6.5, 'DATOS PARA LA EMISIÓN DE FACTURA', 1, 1, 'C', true);
-    $pdf->SetTextColor(0, 0, 0);
+    $barra('DATOS PARA LA EMISIÓN DE FACTURA', 6.5, 10);
 
+    $y_factura = $pdf->GetY();
     $pdf->SetX($x_left);
-    $pdf->SetFont('helvetica', 'BI', 7);
-    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
-    $pdf->Cell(42, 6.5, 'NOMBRE DE LA FACTURA:', 1, 0, 'L');
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
-    $pdf->Cell($content_width * 0.58 - 42, 6.5, $nombreFactura, 1, 0, 'L');
-    $pdf->SetFont('helvetica', 'BI', 7);
-    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
-    $pdf->Cell(22, 6.5, 'NIT Ó C.I.:', 1, 0, 'L');
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
-    $pdf->Cell($content_width - ($content_width * 0.58) - 22, 6.5, $nitCiFactura, 1, 1, 'L');
+    $etiqueta();
+    $pdf->Cell(42, 6.5, 'NOMBRE DE LA FACTURA', 0, 0, 'L');
+    $dato(9);
+    $pdf->Cell($content_width * 0.58 - 42, 6.5, $nombreFactura, 0, 0, 'L', false, '', 1);
+    $etiqueta();
+    $pdf->Cell(22, 6.5, 'NIT O C.I.', 0, 0, 'L');
+    $dato(9);
+    $pdf->Cell($content_width - ($content_width * 0.58) - 22, 6.5, $nitCiFactura, 0, 1, 'L', false, '', 1);
+    $separador($x_left + $content_width * 0.58, $y_factura + 1, $x_left + $content_width * 0.58, $y_factura + 5.5);
 
     // ========================================
     // DATOS PARA DEPÓSITO EN BANCO UNIÓN
     // ========================================
-    $pdf->SetX($x_left);
-    $pdf->SetFont('helvetica', 'B', 10);
-    $pdf->SetFillColor($colorTitulo[0], $colorTitulo[1], $colorTitulo[2]);
-    $pdf->SetTextColor($colorTituloTexto[0], $colorTituloTexto[1], $colorTituloTexto[2]);
-    $pdf->Cell($content_width, 6.5, 'DATOS PARA DEPOSITO EN BANCO UNION', 1, 1, 'C', true);
-    $pdf->SetTextColor(0, 0, 0);
+    $barra('DATOS PARA DEPÓSITO EN BANCO UNIÓN', 6.5, 10);
 
     $W_BANCO_IZQ = $content_width * 0.55;
     $W_BANCO_DER = $content_width - $W_BANCO_IZQ;
 
+    $y_banco = $pdf->GetY();
     $pdf->SetX($x_left);
-    $pdf->SetFillColor(225, 232, 245);
-    $pdf->SetFont('helvetica', 'BI', 7);
-    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
-    $pdf->Cell($W_BANCO_IZQ, 5.5, 'DENOMINACION DE LA CUENTA', 1, 0, 'L', true);
-    $pdf->Cell($W_BANCO_DER, 5.5, 'NUMERO DE CUENTA', 1, 1, 'L', true);
+    $etiqueta();
+    $pdf->Cell($W_BANCO_IZQ, 5.5, 'DENOMINACIÓN DE LA CUENTA', 0, 0, 'L', false, '', 0, false, 'T', 'B');
+    $pdf->Cell($W_BANCO_DER, 5.5, 'NÚMERO DE CUENTA', 0, 1, 'L', false, '', 0, false, 'T', 'B');
 
     $y_cuenta = $pdf->GetY();
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->SetTextColor($colorTexto[0], $colorTexto[1], $colorTexto[2]);
+    $dato(9);
     $pdf->SetXY($x_left, $y_cuenta);
-    $pdf->MultiCell($W_BANCO_IZQ, 9.5, "UTO\nAPORTES EXTRAORDINARIOS", 1, 'L', true, 0, '', '', true, 0, false, true, 9.5, 'M');
+    $pdf->MultiCell($W_BANCO_IZQ, 9.5, "UTO\nAPORTES EXTRAORDINARIOS", 0, 'L', false, 0, '', '', true, 0, false, true, 9.5, 'M');
     $pdf->SetXY($x_left + $W_BANCO_IZQ, $y_cuenta);
-    $pdf->Cell($W_BANCO_DER, 9.5, $numeroCuentaDeposito, 1, 0, 'L', true);
+    $dato(12);
+    $pdf->Cell($W_BANCO_DER, 9.5, $numeroCuentaDeposito, 0, 0, 'L');
     $pdf->Ln(9.5);
 
+    $separador($x_left + $W_BANCO_IZQ, $y_banco + 1, $x_left + $W_BANCO_IZQ, $y_cuenta + 9.5 - 1);
+    $separador($x_left, $pdf->GetY(), $x_left + $content_width, $pdf->GetY());
+
     $pdf->SetX($x_left);
-    $pdf->SetFont('helvetica', 'B', 8);
-    $pdf->SetTextColor($colorEtiqueta[0], $colorEtiqueta[1], $colorEtiqueta[2]);
-    $pdf->Cell($content_width, 5.5, 'NIT: 120129022', 1, 1, 'L', true);
+    $etiqueta();
+    $pdf->Cell(10, 5.5, 'NIT', 0, 0, 'L');
+    $dato(8.5);
+    $pdf->Cell($content_width - 10, 5.5, '120129022', 0, 1, 'L');
+
+    // Marco exterior de toda la tabla
+    $pdf->SetDrawColor(110, 110, 110);
+    $pdf->SetLineWidth(0.3);
+    $pdf->Rect($x_left, $y_tabla, $content_width, $pdf->GetY() - $y_tabla);
+    $pdf->SetDrawColor(0, 0, 0);
 
     // ========================================
     // FIRMA DEL COORDINADOR / RESPONSABLE
@@ -302,13 +305,13 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
  */
 function generarPdfOrdenPagoOficial(array $datos)
 {
-    // Paleta institucional (la misma azul del resto del sistema), en vez del
-    // naranja/negro plano que tenía este documento antes: barras de sección
-    // rellenas y etiquetas en azul, para un aspecto más formal.
-    $colorTitulo = [30, 60, 114];     // azul institucional (fondo de las barras de sección)
-    $colorTituloTexto = [255, 255, 255];
-    $colorEtiqueta = [30, 60, 114];   // azul institucional (etiquetas de cada campo)
-    $colorTexto = [20, 20, 20];
+    // Paleta para imprimir con poca tinta: barras de sección en gris muy claro con
+    // texto negro, etiquetas en gris oscuro y datos en negro (antes las barras eran
+    // azul relleno). La distribución del documento no cambia.
+    $colorTitulo = [235, 235, 235];   // gris muy claro (fondo de las barras de sección)
+    $colorTituloTexto = [0, 0, 0];
+    $colorEtiqueta = [80, 80, 80];    // gris oscuro (etiquetas de cada campo)
+    $colorTexto = [0, 0, 0];
 
     $nombreCompleto = trim(($datos['apaterno'] ?? '') . ' ' . ($datos['amaterno'] ?? '') . ' ' . ($datos['nombres'] ?? ''));
 

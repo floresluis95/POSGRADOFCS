@@ -165,6 +165,10 @@ switch ($accion) {
         misOrdenesPago();
         break;
 
+    case 'listarOrdenesGeneradas':
+        listarOrdenesGeneradas();
+        break;
+
     case 'listarFirmantes':
         listarFirmantes();
         break;
@@ -766,7 +770,7 @@ function registrarOrdenPago()
         $programaID = (int)$_POST['programaID'];
         $listaPagosModulo = $_POST['listaPagosModulo']; // Ya viene como string separado por comas
         $montoTotal = (float)$_POST['montoTotal'];
-        $responsable = isset($_POST['responsable']) ? $_POST['responsable'] : '';
+        $responsable = OrdenPagoModelos::ResponsableSesion() ?? '';
         $nombreFactura = isset($_POST['nombreFactura']) ? $_POST['nombreFactura'] : '';
         $nitCiFactura = isset($_POST['nitCiFactura']) ? $_POST['nitCiFactura'] : '';
 
@@ -970,9 +974,7 @@ function registrarOrdenPagoCuotaPrograma()
         $montoTotal = (float)$_POST['montoTotal'];
         // El responsable de generar la orden es siempre el usuario que inició sesión
         // (no un campo editable desde el formulario): igual que en Pre-Registro.
-        $responsable = isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
-            ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
-            : null;
+        $responsable = OrdenPagoModelos::ResponsableSesion();
         // Nombre del responsable de la firma (coordinador/a), elegido del catálogo de
         // firmantes: es el que se imprime en la orden, junto a la línea de firma.
         $firma = isset($_POST['firma']) ? htmlspecialchars(trim($_POST['firma'])) : '';
@@ -1153,7 +1155,7 @@ function registrarOrdenPagoModulosPendientes()
         $programaID = (int)$_POST['programaID'];
         $listaModulos = $_POST['listaModulos']; // Idmodulo separados por coma
         $montoTotal = (float)$_POST['montoTotal'];
-        $responsable = isset($_POST['responsable']) ? $_POST['responsable'] : '';
+        $responsable = OrdenPagoModelos::ResponsableSesion() ?? '';
         $nombreFactura = isset($_POST['nombreFactura']) ? $_POST['nombreFactura'] : '';
         $nitCiFactura = isset($_POST['nitCiFactura']) ? $_POST['nitCiFactura'] : '';
         // Detalle (codigo/nombre/costo por modulo) como snapshot para poder imprimir
@@ -1428,21 +1430,14 @@ function registrarFirmante()
  */
 function validarVoucherMatricula()
 {
-    // "Matricular sin pago de matrícula": no hay voucher real que exigir, el programa
-    // completo se cobrará después desde Matriculados.
-    $sinMatricula = isset($_POST['sinMatricula']) && $_POST['sinMatricula'] == '1';
-
-    if (empty($_POST['idOrdenPago']) || (!$sinMatricula && empty($_POST['numeroVoucher']))) {
-        echo json_encode(['success' => false, 'mensaje' => 'El N° de voucher es requerido']);
+    // Si se pide o no el voucher lo decide la orden (matrícula exonerada en Pre-Registro =
+    // sin voucher); el modelo lo valida con la orden ya bloqueada en la transacción.
+    if (empty($_POST['idOrdenPago'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El ID de la orden es requerido']);
         return;
     }
 
-    if (!$sinMatricula && (empty($_FILES['fotoVoucher']) || $_FILES['fotoVoucher']['error'] !== UPLOAD_ERR_OK)) {
-        echo json_encode(['success' => false, 'mensaje' => 'La foto del voucher es obligatoria']);
-        return;
-    }
-
-    $numeroVoucher = !empty($_POST['numeroVoucher']) ? htmlspecialchars(trim($_POST['numeroVoucher'])) : 'SIN MATRÍCULA';
+    $numeroVoucher = !empty($_POST['numeroVoucher']) ? htmlspecialchars(trim($_POST['numeroVoucher'])) : '';
     $fechaInscripcion = !empty($_POST['fechaInscripcion']) ? htmlspecialchars(trim($_POST['fechaInscripcion'])) : null;
 
     $fotoVoucher = null;
@@ -1477,9 +1472,7 @@ function validarVoucherMatricula()
                 'PorcentajeDescuento' => floatval($planDecodificado['PorcentajeDescuento'] ?? 0),
                 'CodigoGrupo' => !empty($planDecodificado['CodigoGrupo']) ? htmlspecialchars(trim($planDecodificado['CodigoGrupo'])) : null,
                 'CantidadInscritosGrupo' => (int)($planDecodificado['CantidadInscritosGrupo'] ?? 1),
-                'ResponsableGeneracion' => isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
-                    ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
-                    : null,
+                'ResponsableGeneracion' => OrdenPagoModelos::ResponsableSesion(),
             ];
         }
     }
@@ -1489,8 +1482,7 @@ function validarVoucherMatricula()
         $numeroVoucher,
         $fechaInscripcion,
         $fotoVoucher,
-        $planPago,
-        $sinMatricula
+        $planPago
     );
 
     // Requisitos de matriculación que el estudiante entregó al inscribirse
@@ -1568,9 +1560,7 @@ function registrarPlanPagoPrograma()
         'PorcentajeDescuento' => isset($_POST['porcentajeDescuento']) ? floatval($_POST['porcentajeDescuento']) : 0,
         'CodigoGrupo' => !empty($_POST['codigoGrupo']) ? htmlspecialchars(trim($_POST['codigoGrupo'])) : null,
         'CantidadInscritosGrupo' => isset($_POST['cantidadInscritosGrupo']) ? (int)$_POST['cantidadInscritosGrupo'] : 1,
-        'ResponsableGeneracion' => isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
-            ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
-            : null,
+        'ResponsableGeneracion' => OrdenPagoModelos::ResponsableSesion(),
     ];
 
     $resultado = PagoProgramaModelos::RegistrarPlanModelo($datos);
@@ -1607,9 +1597,7 @@ function registrarPlanGrupal()
         return;
     }
 
-    $responsable = isset($_SESSION['Nombre']) && isset($_SESSION['Apellido'])
-        ? $_SESSION['Nombre'] . ' ' . $_SESSION['Apellido']
-        : null;
+    $responsable = OrdenPagoModelos::ResponsableSesion();
 
     $resultado = PagoProgramaModelos::RegistrarPlanGrupalModelo(
         $ids,
@@ -1656,38 +1644,63 @@ function misOrdenesPago()
     $estudianteID = (int)$_SESSION['EstudianteID'];
     $ordenes = OrdenPagoModelos::ListarOrdenesPorEstudianteModelo($estudianteID);
 
-    $resultado = array_map(function ($o) {
-        $hoy = date('Y-m-d');
-        // Tipo de la orden: MODULOS (legado, ligado a ListaModulos), CUOTA (cuota del
-        // programa, marcada con Observaciones='CUOTA PROGRAMA') o MATRICULA (el resto,
-        // preregistro).
-        if (!empty($o['ListaModulos'])) {
-            $tipo = 'MODULOS';
-        } elseif ($o['Observaciones'] === 'CUOTA PROGRAMA') {
-            $tipo = 'CUOTA';
-        } elseif ($o['Observaciones'] === 'CLINICA') {
-            $tipo = 'CLINICA';
-        } else {
-            $tipo = 'MATRICULA';
-        }
+    echo json_encode(['success' => true, 'ordenes' => array_map('datosOrdenParaLista', $ordenes)]);
+}
 
-        return [
-            'idOrdenPago' => (int)$o['IdOrdenPago'],
-            'numeroOrden' => $o['NumeroOrden'],
-            'programaID' => (int)$o['ProgramaID'],
-            'nombrePrograma' => $o['NombrePrograma'],
-            'codigoPrograma' => $o['CodigoPrograma'],
-            'gradoAcademico' => $o['GradoAcademico'],
-            'sede' => $o['Sede'],
-            'tipo' => $tipo,
-            // Las órdenes de matrícula/preregistro guardan el monto en MontoFinal;
-            // las de cuota del programa lo guardan en MontoTotal (MontoFinal les queda en 0).
-            'monto' => (float)($o['MontoFinal'] > 0 ? $o['MontoFinal'] : $o['MontoTotal']),
-            'fechaGeneracion' => $o['FechaGeneracion'],
-            'fechaVencimiento' => $o['FechaVencimiento'],
-            'estado' => $o['Estado'],
-            'vencida' => !empty($o['FechaVencimiento']) && $o['Estado'] === 'PENDIENTE' && $o['FechaVencimiento'] < $hoy,
-        ];
+/**
+ * Datos de una orden para las listas "Mis órdenes de pago" (estudiante) y
+ * "Órdenes de pago" (personal).
+ */
+function datosOrdenParaLista($o)
+{
+    $tipo = OrdenPagoModelos::TipoDeOrden($o);
+    // Las órdenes de matrícula guardan el monto a pagar en MontoFinal (0 si la
+    // matrícula se exoneró); las demás lo guardan en MontoTotal.
+    $monto = $tipo === 'MATRICULA'
+        ? (float)$o['MontoFinal']
+        : (float)($o['MontoFinal'] > 0 ? $o['MontoFinal'] : $o['MontoTotal']);
+
+    return [
+        'idOrdenPago' => (int)$o['IdOrdenPago'],
+        'numeroOrden' => $o['NumeroOrden'],
+        'programaID' => (int)$o['ProgramaID'],
+        'nombrePrograma' => $o['NombrePrograma'],
+        'codigoPrograma' => $o['CodigoPrograma'],
+        'gradoAcademico' => $o['GradoAcademico'],
+        'sede' => $o['Sede'],
+        'tipo' => $tipo,
+        'pagoCompleto' => (int)($o['PagoCompleto'] ?? 0) === 1,
+        'monto' => $monto,
+        'fechaGeneracion' => $o['FechaGeneracion'],
+        'fechaVencimiento' => $o['FechaVencimiento'],
+        'fechaConfirmacion' => $o['FechaConfirmacion'] ?? null,
+        'estado' => $o['Estado'],
+        'vencida' => $o['Estado'] === 'VENCIDO'
+            || (!empty($o['FechaVencimiento']) && $o['Estado'] === 'PENDIENTE' && $o['FechaVencimiento'] < date('Y-m-d')),
+    ];
+}
+
+/**
+ * Todas las órdenes de pago generadas, para la pantalla "Órdenes de pago" del
+ * personal (ADM, SEC, AUX): control de lo que ya se emitió y reimpresión. El
+ * permiso por rol ya se revisó al inicio de este archivo.
+ */
+function listarOrdenesGeneradas()
+{
+    $fecha = function ($clave) {
+        $valor = trim($_POST[$clave] ?? '');
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $valor) ? $valor : null;
+    };
+
+    $ordenes = OrdenPagoModelos::ListarOrdenesGeneradasModelo($fecha('desde'), $fecha('hasta'));
+
+    $resultado = array_map(function ($o) {
+        $fila = datosOrdenParaLista($o);
+        $ci = trim($o['Ci'] . ($o['Complemento'] ? '-' . $o['Complemento'] : '') . ' ' . ($o['Exp'] ?? ''));
+        $fila['estudiante'] = trim($o['Apaterno'] . ' ' . $o['Amaterno'] . ' ' . $o['Nombre']);
+        $fila['ci'] = $ci;
+        $fila['responsable'] = $o['ResponsableGeneracion'];
+        return $fila;
     }, $ordenes);
 
     echo json_encode(['success' => true, 'ordenes' => $resultado]);

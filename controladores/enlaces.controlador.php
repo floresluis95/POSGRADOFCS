@@ -16,7 +16,7 @@
         const PAGINAS_POR_ROL = [
             'SEC' => [
                 'programas', 'modulos', 'reportemodulos', 'preregistro', 'inscripcion', 'matriculados',
-                'historialpagos', 'solicitudesinscripcion', 'rnotasestudiante', 'reportenotas',
+                'historialpagos', 'ordenespago', 'solicitudesinscripcion', 'rnotasestudiante', 'reportenotas',
                 'bnotaestudiante', 'historialnotaestudiante', 'asignaciondocente',
                 'estudiantes', 'docentes', 'usuario',
                 'certificadocalificaciones', 'certificadohistorialacademico',
@@ -26,7 +26,7 @@
             // Auxiliar: como Secretaría, pero sin Usuarios, Certificados ni Reportes PDF
             'AUX' => [
                 'programas', 'modulos', 'reportemodulos', 'preregistro', 'inscripcion', 'matriculados',
-                'historialpagos', 'solicitudesinscripcion', 'rnotasestudiante', 'reportenotas',
+                'historialpagos', 'ordenespago', 'solicitudesinscripcion', 'rnotasestudiante', 'reportenotas',
                 'bnotaestudiante', 'historialnotaestudiante', 'asignaciondocente',
                 'estudiantes', 'docentes',
                 'orden-generada', 'matriculas', 'detalles',
