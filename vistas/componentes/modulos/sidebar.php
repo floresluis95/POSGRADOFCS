@@ -220,6 +220,12 @@ if ($_SESSION["Tipo"] == "ADM") {
                   </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="certificadorevision" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-checking" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Certificado de Revisión</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="registrodocumentos" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-checking" style="color: #d9a941;"></i>
                     <span class="kt-menu__link-text">Registro de Documentos</span>
@@ -451,6 +457,12 @@ if ($_SESSION["Tipo"] == "SEC") {
                   <a href="certificadomediomagnetico" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-paper-plane" style="color: #d9a941;"></i>
                     <span class="kt-menu__link-text">Medio Magnético</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="certificadorevision" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-checking" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Certificado de Revisión</span>
                   </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
@@ -1003,6 +1015,16 @@ if ($_SESSION["Tipo"] == "EST") {
   background: rgba(217, 169, 65, 0.2);
 }
 .kt-menu__item--active > a[href="certificadomediomagnetico"] {
+  background: rgba(217, 169, 65, 0.3);
+  box-shadow: 0 4px 12px rgba(217, 169, 65, 0.4);
+}
+.kt-menu__nav a[href="certificadorevision"] {
+  border-left-color: #d9a941;
+}
+.kt-menu__nav a[href="certificadorevision"]:hover {
+  background: rgba(217, 169, 65, 0.2);
+}
+.kt-menu__item--active > a[href="certificadorevision"] {
   background: rgba(217, 169, 65, 0.3);
   box-shadow: 0 4px 12px rgba(217, 169, 65, 0.4);
 }

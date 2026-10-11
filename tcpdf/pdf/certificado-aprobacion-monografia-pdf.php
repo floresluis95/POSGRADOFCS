@@ -5,9 +5,9 @@
  * Se imprime SOLO el contenido (sin membrete propio) porque el papel ya viene
  * pre-impreso desde Posgrado Central (Universidad Técnica de Oruro), en hoja
  * oficio vertical (8.5 x 14 in).
- * Las coordenadas se midieron sobre el formato en blanco (CERT_DE_APROBACION.tif);
- * es un primer ajuste y es normal que necesite un retoque de milímetros luego
- * de una impresión de prueba sobre el papel real (ver bloque "COORDENADAS").
+ * Las coordenadas se midieron sobre el formato en Word que usa Posgrado
+ * (CERT_APROBACION_*.docx); si algo se desalinea en el papel real, ajustar
+ * las constantes del bloque "COORDENADAS".
  */
 
 error_reporting(E_ALL);
@@ -65,8 +65,11 @@ if ($estudianteID && $programaID) {
     ]);
 }
 
-CertificadoModelo::RegistrarDocumentoEmitidoModelo(
-    'APROBACION_MONOGRAFIA', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null
+// Se guardan los datos del formulario para poder reimprimirlo (y corregirlo) desde
+// Registro de documentos; con idDocumento es una reimpresión de ese registro.
+CertificadoModelo::RegistrarEmisionModelo(
+    'APROBACION_MONOGRAFIA', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
+    $_POST, intval($_POST['idDocumento'] ?? 0)
 );
 
 /**
@@ -123,27 +126,93 @@ function numeroALetrasMonografia($numero)
 }
 
 $calificacionLiteral = numeroALetrasMonografia($calificacion);
-$fechaEntregaTexto = !empty($entrega) ? date('d/m/Y', strtotime($entrega)) : '';
-// Con hora: "15/10/2026 - 10:30 HRS."
-if ($fechaEntregaTexto !== '' && preg_match('/^\d{2}:\d{2}$/', $horaEntrega)) {
-    $fechaEntregaTexto .= ' - ' . $horaEntrega . ' HRS.';
+
+// Apellidos y nombres van separados (cada uno con su rótulo debajo). Se toman del
+// registro del estudiante; si el nombre se corrigió al reimprimir y ya no coincide,
+// se toman las dos primeras palabras como apellidos.
+$apellidos = '';
+$nombres = '';
+if ($estudianteID) {
+    $stmtEst = Conexion::Conectar()->prepare("SELECT Apaterno, Amaterno, Nombre FROM estudiante WHERE EstudianteID = :id");
+    $stmtEst->execute([':id' => $estudianteID]);
+    $est = $stmtEst->fetch(PDO::FETCH_ASSOC);
+    if ($est) {
+        $apellidosBD = trim($est['Apaterno'] . ' ' . $est['Amaterno']);
+        $completoBD = preg_replace('/\s+/', ' ', trim($apellidosBD . ' ' . $est['Nombre']));
+        if (mb_strtoupper($completoBD, 'UTF-8') === mb_strtoupper(preg_replace('/\s+/', ' ', trim($nombre)), 'UTF-8')) {
+            $apellidos = $apellidosBD;
+            $nombres = trim($est['Nombre']);
+        }
+    }
+}
+if ($apellidos === '') {
+    $palabras = preg_split('/\s+/', trim($nombre));
+    $apellidos = implode(' ', array_slice($palabras, 0, min(2, max(1, count($palabras) - 1))));
+    $nombres = implode(' ', array_slice($palabras, min(2, max(1, count($palabras) - 1))));
+}
+
+// El grado va en su propia línea ("ESPECIALIDAD"): del nombre del programa se quita
+// el "ESPECIALIDAD DE" / "MAESTRÍA EN" del inicio
+$programaTexto = preg_replace('/^(ESPECIALIDAD|MAESTR[IÍ]A|DIPLOMADO|DOCTORADO)\s+(DE|EN)\s+/iu', '', trim($programa));
+
+// Fecha y hora: "26 de marzo de 2026, a horas 08:30"
+$mesesCertificado = [1 => 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+$fechaEntregaTexto = '';
+if (!empty($entrega) && ($t = strtotime($entrega))) {
+    $fechaEntregaTexto = date('j', $t) . ' de ' . $mesesCertificado[(int)date('n', $t)] . ' de ' . date('Y', $t);
+    if (preg_match('/^\d{2}:\d{2}/', $horaEntrega)) {
+        $fechaEntregaTexto .= ', a horas ' . substr($horaEntrega, 0, 5);
+    }
+}
+
+// Tribunal: cada miembro llega como "Rol: Nombre". Presidente a la izquierda,
+// secretario a la derecha y vocal al centro; el nombre se escribe tal como se
+// registró y el cargo, en mayúsculas, debajo. Si hay más miembros, van debajo del
+// vocal, centrados.
+$espaciosTribunal = ['PRESIDENTE' => null, 'SECRETARIO' => null, 'VOCAL' => null];
+$otrosTribunal = [];
+foreach ($miembrosTribunal as $miembro) {
+    $partes = explode(':', $miembro, 2);
+    $rol = count($partes) === 2 ? trim($partes[0]) : '';
+    $persona = trim(count($partes) === 2 ? $partes[1] : $partes[0]);
+    $dato = ['nombre' => $persona, 'rol' => mb_strtoupper($rol, 'UTF-8')];
+    $clave = null;
+    foreach (array_keys($espaciosTribunal) as $posible) {
+        if ($espaciosTribunal[$posible] === null && stripos($rol, $posible) === 0) {
+            $clave = $posible;
+            break;
+        }
+    }
+    if ($clave) {
+        $espaciosTribunal[$clave] = $dato;
+    } else {
+        $otrosTribunal[] = $dato;
+    }
+}
+// Los que no dijeron su cargo ocupan los espacios libres, en orden
+foreach (array_keys($espaciosTribunal) as $clave) {
+    if ($espaciosTribunal[$clave] === null && $otrosTribunal) {
+        $espaciosTribunal[$clave] = array_shift($otrosTribunal);
+    }
 }
 
 // ===================================
 // COORDENADAS (mm) - Hoja Oficio vertical (215.9 x 355.6 mm)
+// Medidas sobre el formato en Word que usa Posgrado
+// (CERT_APROBACION_*.docx): X_* es el centro del texto (o su inicio, si dice
+// "inicio") e Y_* la parte de arriba de la línea.
 // ===================================
-$X_NOMBRE_CENTRO = 108;  $Y_NOMBRE = 60;
-$X_PROGRAMA = 42;        $Y_PROGRAMA = 70.5;   $W_PROGRAMA = 165;
-$X_CURSO = 34;           $Y_CURSO = 80.6;      $W_CURSO = 165;
-
-$X_TITULO = 15;          $Y_TITULO = 102;      $W_TITULO = 185;
-$X_TRIBUNAL = 15;        $Y_TRIBUNAL = 133;    $W_TRIBUNAL = 185;
-
-$X_NUMERAL = 146;        $Y_NUMERAL = 160.4;   $W_NUMERAL = 40;
-$X_ENTREGA = 79;         $Y_ENTREGA = 169;     $W_ENTREGA = 60;
-$X_LITERAL = 143;        $Y_LITERAL = 177.6;   $W_LITERAL = 55;
-
-$X_RECIBO = 52;          $Y_RECIBO = 303.6;    $W_RECIBO = 55;
+$ALTO_LINEA = 5.2;
+$X_APELLIDOS = 83.5;   $X_NOMBRES = 155;      $Y_NOMBRE = 53.2;    $Y_ROTULO_NOMBRE = 58.5;
+$X_PROGRAMA = 84.7;    $Y_PROGRAMA = 64;
+$X_CURSO = 50.9;       $Y_CURSO = 73;          // inicio
+$X_TITULO = 21.4;      $Y_TITULO = 95.8;       $W_TITULO = 174.5;   $INTERLINEA_TITULO = 5.95; // inicio
+$X_PRESIDENTE = 59.5;  $X_SECRETARIO = 155.8;  $Y_TRIBUNAL_1 = 129.1;
+$X_VOCAL = 104.7;      $Y_TRIBUNAL_2 = 140;    $SEPARACION_CARGO = 5.3;
+$X_ENTREGA = 27.4;     $Y_ENTREGA = 164.6;     // inicio
+$X_NUMERAL = 126.2;    $Y_NUMERAL = 164.6;
+$X_LITERAL = 126.4;    $Y_LITERAL = 179.4;
+$X_RECIBO = 64.2;      $Y_RECIBO = 303.2;
 
 // ===================================
 // GENERACIÓN DEL PDF
@@ -158,48 +227,68 @@ $pdf->setPrintHeader(false);
 $pdf->setPrintFooter(false);
 $pdf->SetMargins(0, 0, 0);
 $pdf->SetAutoPageBreak(false);
+$pdf->setCellPaddings(0, 0, 0, 0);
 $pdf->AddPage();
 $pdf->SetTextColor(0, 0, 0);
-
-// Nombre del estudiante (centrado, APELLIDOS NOMBRE)
-$pdf->SetFont('helvetica', 'B', 13);
-$pdf->SetXY(0, $Y_NOMBRE);
-$pdf->Cell(215.9, 7, mb_strtoupper($nombre, 'UTF-8'), 0, 0, 'C');
-
-// Programa / Curso (en el espacio de "curso" va el grado académico del programa)
+// Helvetica 11 un poco angosta (88 %) ocupa casi lo mismo que la Calibri 12 del
+// formato en Word, así el título corta las líneas en las mismas palabras. (La
+// Calibri no se incluye en el sistema: su licencia no permite distribuirla.)
 $pdf->SetFont('helvetica', '', 11);
-$pdf->SetXY($X_PROGRAMA, $Y_PROGRAMA);
-$pdf->Cell($W_PROGRAMA, 6, mb_strtoupper($programa, 'UTF-8'), 0, 0, 'L');
+$pdf->setFontStretching(88);
 
-$pdf->SetXY($X_CURSO, $Y_CURSO);
-$pdf->Cell($W_CURSO, 6, mb_strtoupper($curso, 'UTF-8'), 0, 0, 'L');
+// Texto centrado en una X (ancho 0 = solo lo que mide el texto)
+$centrado = function ($texto, $xCentro, $y) use ($pdf, $ALTO_LINEA) {
+    $ancho = $pdf->GetStringWidth($texto);
+    $pdf->SetXY($xCentro - $ancho / 2, $y);
+    $pdf->Cell($ancho, $ALTO_LINEA, $texto, 0, 0, 'L');
+};
+$desde = function ($texto, $x, $y) use ($pdf, $ALTO_LINEA) {
+    $pdf->SetXY($x, $y);
+    $pdf->Cell(0, $ALTO_LINEA, $texto, 0, 0, 'L');
+};
 
-// Título del trabajo de grado
-$pdf->SetFont('helvetica', '', 10);
-$pdf->MultiCell($W_TITULO, 6, mb_strtoupper($titulo, 'UTF-8'), 0, 'L', false, 1, $X_TITULO, $Y_TITULO);
+// Apellidos y nombres, con sus rótulos
+$centrado(mb_strtoupper($apellidos, 'UTF-8'), $X_APELLIDOS, $Y_NOMBRE);
+$centrado(mb_strtoupper($nombres, 'UTF-8'), $X_NOMBRES, $Y_NOMBRE);
+$centrado('(Apellidos)', $X_APELLIDOS, $Y_ROTULO_NOMBRE);
+$centrado('(Nombres)', $X_NOMBRES, $Y_ROTULO_NOMBRE);
 
-// Miembros del tribunal
-$textoTribunal = mb_strtoupper(implode("\n", $miembrosTribunal), 'UTF-8');
-$pdf->SetFont('helvetica', '', 10);
-$pdf->MultiCell($W_TRIBUNAL, 5, $textoTribunal, 0, 'L', false, 1, $X_TRIBUNAL, $Y_TRIBUNAL);
+// Programa y grado académico
+$centrado(mb_strtoupper($programaTexto, 'UTF-8'), $X_PROGRAMA, $Y_PROGRAMA);
+$desde(mb_strtoupper($curso, 'UTF-8'), $X_CURSO, $Y_CURSO);
 
-// Entrega informe final
-$pdf->SetFont('helvetica', '', 10);
-$pdf->SetXY($X_ENTREGA, $Y_ENTREGA);
-$pdf->Cell($W_ENTREGA, 6, $fechaEntregaTexto, 0, 0, 'L');
+// Título del trabajo de grado, justificado
+$pdf->setCellHeightRatio($INTERLINEA_TITULO / ($pdf->getFontSize() ?: 3.88));
+// (el salto final evita que TCPDF estire también la última línea)
+$pdf->MultiCell($W_TITULO, $INTERLINEA_TITULO, mb_strtoupper($titulo, 'UTF-8') . "\n", 0, 'J', false, 1, $X_TITULO, $Y_TITULO);
+$pdf->setCellHeightRatio(1.25);
 
-// Calificación numeral y literal
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->SetXY($X_NUMERAL, $Y_NUMERAL);
-$pdf->Cell($W_NUMERAL, 6, intval($calificacion), 0, 0, 'L');
+// Tribunal
+$posiciones = [
+    'PRESIDENTE' => [$X_PRESIDENTE, $Y_TRIBUNAL_1],
+    'SECRETARIO' => [$X_SECRETARIO, $Y_TRIBUNAL_1],
+    'VOCAL' => [$X_VOCAL, $Y_TRIBUNAL_2],
+];
+foreach ($posiciones as $clave => $pos) {
+    $miembro = $espaciosTribunal[$clave];
+    if (!$miembro) continue;
+    $centrado($miembro['nombre'], $pos[0], $pos[1]);
+    $centrado($miembro['rol'] !== '' ? $miembro['rol'] : ($clave === 'SECRETARIO' ? 'SECRETARIO/A' : $clave), $pos[0], $pos[1] + $SEPARACION_CARGO);
+}
+$yExtra = $Y_TRIBUNAL_2 + 2 * $SEPARACION_CARGO + 1;
+foreach ($otrosTribunal as $miembro) {
+    $centrado($miembro['nombre'], $X_VOCAL, $yExtra);
+    if ($miembro['rol'] !== '') $centrado($miembro['rol'], $X_VOCAL, $yExtra + $SEPARACION_CARGO);
+    $yExtra += 2 * $SEPARACION_CARGO + 1;
+}
 
-$pdf->SetXY($X_LITERAL, $Y_LITERAL);
-$pdf->Cell($W_LITERAL, 6, $calificacionLiteral, 0, 0, 'L');
+// Fecha y hora; calificación numeral y literal
+$desde($fechaEntregaTexto, $X_ENTREGA, $Y_ENTREGA);
+$centrado((string)intval($calificacion), $X_NUMERAL, $Y_NUMERAL);
+$centrado($calificacionLiteral, $X_LITERAL, $Y_LITERAL);
 
-// N° de recibo de caja (vaucher)
-$pdf->SetFont('helvetica', '', 10);
-$pdf->SetXY($X_RECIBO, $Y_RECIBO);
-$pdf->Cell($W_RECIBO, 6, mb_strtoupper($vaucher, 'UTF-8'), 0, 0, 'L');
+// N° de recibo de caja (voucher)
+$centrado(mb_strtoupper($vaucher, 'UTF-8'), $X_RECIBO, $Y_RECIBO);
 
 if (ob_get_contents()) {
     ob_end_clean();

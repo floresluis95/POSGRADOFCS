@@ -20,7 +20,7 @@
                 'bnotaestudiante', 'historialnotaestudiante', 'asignaciondocente',
                 'estudiantes', 'docentes', 'usuario',
                 'certificadocalificaciones', 'certificadohistorialacademico',
-                'certificadoaprobacionmonografia', 'certificadomediomagnetico', 'registrodocumentos', 'reportes',
+                'certificadoaprobacionmonografia', 'certificadomediomagnetico', 'certificadorevision', 'registrodocumentos', 'reportes',
                 'orden-generada', 'matriculas', 'detalles',
             ],
             // Auxiliar: como Secretaría, pero sin Usuarios, Certificados ni Reportes PDF

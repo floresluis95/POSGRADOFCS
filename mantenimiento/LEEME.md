@@ -29,3 +29,4 @@ Ejecutar en este orden, **con respaldo previo de la base de datos**:
 13. `profesion_unica.sql`: `profesion.NombreProfesion` pasa a VARCHAR(100) (antes los nombres largos se cortaban y quedaban repetidos) e índice único. Antes revisa que no haya repetidos.
 14. `mayusculas_estudiante.sql`: datos del estudiante en MAYÚSCULAS también con tildes ("POTOSí" → "POTOSÍ"). Importar con `--default-character-set=utf8` si es por consola.
 15. `estudiante_indices_correo.sql`: quita los índices repetidos `EmailPersonal` y `Correo_2` de `estudiante.Correo` (queda `Correo`, el correo sigue siendo único).
+16. `documentoemitido_aprobacion.sql`: columnas `documentoemitido.Datos` (datos con que se generó cada documento, para reimprimirlo y corregirlo desde Registro de documentos), `Estado` (PENDIENTE / APROBADO por el decano), `FechaAprobacion` y `UsuarioAprobadorID`. Ya ejecutado en la BD local.

@@ -127,5 +127,39 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'listarDocumentosEmitidos') 
     exit();
 }
 
+// Datos guardados de un documento emitido, para reimprimirlo (y corregirlo) desde
+// Registro de documentos
+if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerDocumento') {
+    $documento = CertificadoModelo::ObtenerDocumentoModelo(intval($_POST['idDocumento'] ?? 0));
+    if (!$documento) {
+        echo json_encode(['success' => false, 'mensaje' => 'No se encontró el documento']);
+        exit();
+    }
+    $rutas = CertificadoModelo::RutasPdf();
+    echo json_encode([
+        'success' => true,
+        'documento' => [
+            'idDocumento' => (int)$documento['IdDocumento'],
+            'tipo' => $documento['TipoDocumento'],
+            'estado' => $documento['Estado'],
+            'datos' => $documento['Datos'] ? json_decode($documento['Datos'], true) : null,
+            'rutaPdf' => $rutas[$documento['TipoDocumento']] ?? null,
+        ],
+    ]);
+    exit();
+}
+
+// Aprobación del decano (solo control): APROBADO, o de vuelta a PENDIENTE si se marcó por error
+if (isset($_POST['accion']) && in_array($_POST['accion'], ['aprobarDocumento', 'quitarAprobacion'], true)) {
+    $idDocumento = intval($_POST['idDocumento'] ?? 0);
+    $aprobar = $_POST['accion'] === 'aprobarDocumento';
+    $ok = $idDocumento && CertificadoModelo::CambiarEstadoDocumentoModelo($idDocumento, $aprobar, $_SESSION['IdUsuario'] ?? null);
+    echo json_encode([
+        'success' => (bool)$ok,
+        'mensaje' => $ok ? ($aprobar ? 'Documento aprobado' : 'El documento volvió a pendiente de aprobación') : 'No se pudo cambiar el estado del documento',
+    ]);
+    exit();
+}
+
 echo json_encode(['error' => 'Acción no reconocida']);
 exit();

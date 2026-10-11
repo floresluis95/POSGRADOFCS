@@ -46,8 +46,11 @@ if (empty($modulos)) {
     die('Error: El estudiante no tiene calificaciones registradas en este programa');
 }
 
-CertificadoModelo::RegistrarDocumentoEmitidoModelo(
-    'HISTORIAL_ACADEMICO', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null
+// Se guardan los datos del formulario para poder reimprimirlo (y corregirlo) desde
+// Registro de documentos; con idDocumento es una reimpresión de ese registro.
+CertificadoModelo::RegistrarEmisionModelo(
+    'HISTORIAL_ACADEMICO', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
+    $_POST, intval($_POST['idDocumento'] ?? 0)
 );
 
 /**

@@ -181,7 +181,39 @@ date_default_timezone_set("America/La_Paz");
 .tabla-log td { vertical-align: middle; border-color: #eef1f6; color: var(--rd-texto); }
 .rd-tipo { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--rd-primario-suave); color: var(--rd-primario); font-size: 11.5px; font-weight: 600; }
 
+/* ---------- Aprobación del decano y reimpresión ---------- */
+.rd-estado { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.rd-estado.pendiente { background: #fff6e0; color: #b7791f; }
+.rd-estado.aprobado { background: #e7f6ee; color: #2f855a; }
+.rd-acciones { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.rd-btn-mini {
+    display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 8px;
+    font-size: 12px; font-weight: 600; border: 1px solid var(--rd-borde); background: #fff; color: var(--rd-texto); cursor: pointer;
+}
+.rd-btn-mini:hover { border-color: #1e3c72; color: #1e3c72; }
+.rd-btn-mini.aprobar { border-color: #2f855a; color: #2f855a; }
+.rd-btn-mini.aprobar:hover { background: #2f855a; color: #fff; }
+.rd-btn-mini[disabled] { opacity: .5; cursor: not-allowed; }
+.item-checklist { flex-wrap: wrap; }
+.item-checklist .rd-doc-texto { flex: 1; min-width: 0; }
+.tabla-log td.rd-celda-acciones { white-space: nowrap; }
+
+/* Ventana para reimprimir con los datos guardados (propia, sin depender de Bootstrap) */
+.rd-ventana-fondo { position: fixed; inset: 0; background: rgba(15, 23, 42, .45); z-index: 1060; display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; }
+.rd-ventana-fondo.abierta { display: flex; }
+.rd-ventana { background: #fff; border-radius: 14px; width: 100%; max-width: 620px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+.rd-ventana-cabeza { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 18px 22px; border-bottom: 1px solid var(--rd-borde); }
+.rd-ventana-cabeza h4 { margin: 0; font-size: 16px; font-weight: 700; color: var(--rd-texto); }
+.rd-ventana-cabeza p { margin: 2px 0 0; font-size: 12.5px; color: var(--rd-texto-2); }
+.rd-ventana-cerrar { background: none; border: none; font-size: 22px; line-height: 1; color: #94a3b8; cursor: pointer; }
+.rd-ventana-cuerpo { padding: 18px 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.rd-ventana-cuerpo .rd-campo-ancho { grid-column: 1 / -1; }
+.rd-ventana-cuerpo .form-control { font-size: 13.5px; }
+.rd-ventana-aviso { grid-column: 1 / -1; margin: 0; padding: 8px 12px; border-radius: 8px; background: #fff8e6; color: #6b4e0e; font-size: 12.5px; }
+.rd-ventana-pie { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px; border-top: 1px solid var(--rd-borde); background: #f8fafc; border-radius: 0 0 14px 14px; }
+.rd-ventana-pie .rd-btn-primario { height: 40px; }
 @media (max-width: 767.98px) {
+    .rd-ventana-cuerpo { grid-template-columns: 1fr; }
     .rd-buscador { flex-direction: column; }
     .rd-buscador-icono { top: 23px; }
     .rd-ficha, .rd-documentos { grid-template-columns: 1fr; }
@@ -356,6 +388,8 @@ date_default_timezone_set("America/La_Paz");
                                                     <th>Estudiante</th>
                                                     <th>N° voucher</th>
                                                     <th>Emitido por</th>
+                                                    <th>Aprobación del decano</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody id="tabla-log-body"></tbody>
@@ -365,6 +399,26 @@ date_default_timezone_set("America/La_Paz");
                             </div>
 
                           </div>
+                        </div>
+
+                        <!-- Ventana: reimprimir un documento con sus datos guardados (editables) -->
+                        <div class="rd-ventana-fondo" id="ventana-reimprimir" role="dialog" aria-modal="true" aria-labelledby="ventana-reimprimir-titulo">
+                            <div class="rd-ventana">
+                                <div class="rd-ventana-cabeza">
+                                    <div>
+                                        <h4 id="ventana-reimprimir-titulo">Reimprimir documento</h4>
+                                        <p id="ventana-reimprimir-sub">Revise o corrija los datos antes de imprimir.</p>
+                                    </div>
+                                    <button type="button" class="rd-ventana-cerrar" data-cerrar-ventana aria-label="Cerrar">&times;</button>
+                                </div>
+                                <form id="form-reimprimir" method="POST" target="_blank">
+                                    <div class="rd-ventana-cuerpo" id="campos-reimprimir"></div>
+                                    <div class="rd-ventana-pie">
+                                        <button type="button" class="btn btn-outline-secondary" data-cerrar-ventana>Cancelar</button>
+                                        <button type="submit" class="btn rd-btn-primario"><i class="fas fa-print"></i> Imprimir</button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
 
                         <?php
@@ -388,6 +442,31 @@ date_default_timezone_set("America/La_Paz");
             return $('<div>').text(texto == null ? '' : String(texto)).html();
         }
 
+        // Aprobación del decano (solo control: no bloquea otros trámites)
+        function htmlEstado(doc) {
+            return doc.Estado === 'APROBADO'
+                ? '<span class="rd-estado aprobado" title="' + esc(doc.FechaAprobacion ? 'Aprobado el ' + doc.FechaAprobacion : '') + '">Aprobado</span>'
+                : '<span class="rd-estado pendiente">Por aprobar</span>';
+        }
+
+        // Botones Imprimir (con los datos guardados) y Aprobar / Quitar aprobación
+        function htmlAcciones(doc) {
+            var tieneDatos = doc.TieneDatos !== undefined ? Number(doc.TieneDatos) === 1 : !!doc.Datos;
+            var imprimir = '<button type="button" class="rd-btn-mini" data-reimprimir="' + doc.IdDocumento + '"' +
+                (tieneDatos ? '' : ' disabled title="Se generó antes de que el sistema guardara los datos: vuelva a generarlo desde su pantalla"') +
+                '><i class="fas fa-print"></i> Imprimir</button>';
+            var estado = doc.Estado === 'APROBADO'
+                ? '<button type="button" class="rd-btn-mini" data-quitar-aprobacion="' + doc.IdDocumento + '"><i class="fas fa-undo"></i> Quitar aprobación</button>'
+                : '<button type="button" class="rd-btn-mini aprobar" data-aprobar="' + doc.IdDocumento + '"><i class="fas fa-check"></i> Aprobado por el decano</button>';
+            return imprimir + estado;
+        }
+
+        // Vuelve a cargar la lista y los documentos del estudiante elegido
+        function refrescar() {
+            cargarLog($('#input-buscar-ci').val().trim());
+            if ($('#select-inscripcion').val()) $('#select-inscripcion').trigger('change');
+        }
+
         function cargarLog(ci) {
             $('#subtitulo-log').text(ci ? 'Documentos emitidos al estudiante con C.I. ' + ci + '.' : 'Emisiones más recientes de todo el sistema.');
 
@@ -401,7 +480,7 @@ date_default_timezone_set("America/La_Paz");
                     $tbody.empty();
 
                     if (!data.success || !data.documentos || data.documentos.length === 0) {
-                        $tbody.append('<tr><td colspan="5" class="text-center text-muted py-4">Sin documentos emitidos todavía</td></tr>');
+                        $tbody.append('<tr><td colspan="7" class="text-center text-muted py-4">Sin documentos emitidos todavía</td></tr>');
                         return;
                     }
 
@@ -414,6 +493,8 @@ date_default_timezone_set("America/La_Paz");
                             '<td>' + esc(doc.NombreEstudiante || '-') + '</td>' +
                             '<td>' + esc(doc.NumeroVaucher || '-') + '</td>' +
                             '<td>' + esc(doc.UsuarioEmisor || '-') + '</td>' +
+                            '<td>' + htmlEstado(doc) + '</td>' +
+                            '<td class="rd-celda-acciones"><div class="rd-acciones" style="margin:0;">' + htmlAcciones(doc) + '</div></td>' +
                             '</tr>'
                         );
                     });
@@ -527,7 +608,8 @@ date_default_timezone_set("America/La_Paz");
 
                     var claves = Object.keys(data.tipos);
                     var emitidos = claves.filter(function(clave) { return data.estado[clave]; }).length;
-                    $('#contador-documentos').html('<strong>' + emitidos + ' de ' + claves.length + '</strong> emitidos');
+                    var aprobados = claves.filter(function(clave) { return data.estado[clave] && data.estado[clave].Estado === 'APROBADO'; }).length;
+                    $('#contador-documentos').html('<strong>' + emitidos + ' de ' + claves.length + '</strong> emitidos · <strong>' + aprobados + '</strong> aprobados');
 
                     claves.forEach(function(clave) {
                         var etiqueta = data.tipos[clave];
@@ -535,17 +617,16 @@ date_default_timezone_set("America/La_Paz");
 
                         var html = '<div class="item-checklist ' + (emitido ? 'emitido' : 'pendiente') + '">' +
                             '<div class="icono"><i class="fas ' + (emitido ? 'fa-check' : 'fa-clock') + '"></i></div>' +
-                            '<div>' +
+                            '<div class="rd-doc-texto">' +
                                 '<div class="titulo-doc">' + esc(etiqueta) + '</div>' +
                                 '<div class="detalle-doc">' +
                                     (emitido
                                         ? 'Emitido el ' + esc(emitido.FechaEmision) + (emitido.NumeroVaucher ? ' · Voucher: ' + esc(emitido.NumeroVaucher) : '')
                                         : 'Todavía no se ha generado') +
                                 '</div>' +
+                                (emitido ? '<div class="rd-acciones">' + htmlAcciones(emitido) + '</div>' : '') +
                             '</div>' +
-                            '<span class="badge-estado-doc ' + (emitido ? 'emitido' : 'pendiente') + '">' +
-                                (emitido ? 'Emitido' : 'Pendiente') +
-                            '</span>' +
+                            (emitido ? htmlEstado(emitido) : '<span class="badge-estado-doc pendiente">Sin generar</span>') +
                         '</div>';
 
                         $contenedor.append(html);
@@ -596,6 +677,124 @@ date_default_timezone_set("America/La_Paz");
                     Swal.fire({ type: 'error', title: 'No se pudo guardar' });
                 }
             });
+        });
+        // ===== Reimprimir con los datos guardados (editables) =====
+        var ETIQUETAS_CAMPO = {
+            nombre: 'Nombre del estudiante', programa: 'Programa', nivel: 'Nivel', anio: 'Año',
+            vaucher: 'N° de voucher', fecha: 'Fecha del documento', curso: 'Curso',
+            titulo: 'Título del trabajo', tribunal: 'Tribunal (uno por línea)', entrega: 'Fecha de entrega',
+            horaEntrega: 'Hora de entrega', calificacion: 'Calificación', tratamiento: 'Tratamiento',
+            tipotrabajo: 'Tipo de trabajo', coordinador: 'Coordinador(a)', director: 'Director(a)'
+        };
+        var CAMPOS_FECHA = ['fecha', 'entrega'];
+        var CAMPOS_ANCHOS = ['nombre', 'programa', 'titulo', 'tribunal'];
+
+        function abrirVentana() { $('#ventana-reimprimir').addClass('abierta'); }
+        function cerrarVentana() { $('#ventana-reimprimir').removeClass('abierta'); }
+
+        $(document).on('click', '[data-cerrar-ventana]', cerrarVentana);
+        $('#ventana-reimprimir').on('click', function(e) { if (e.target === this) cerrarVentana(); });
+        $(document).on('keydown', function(e) { if (e.key === 'Escape') cerrarVentana(); });
+
+        $(document).on('click', '[data-reimprimir]', function() {
+            var id = $(this).data('reimprimir');
+            var tipoTexto = $(this).closest('tr, .item-checklist').find('.rd-tipo, .titulo-doc').first().text();
+            $.post('ajax/certificado.ajax.php', { accion: 'obtenerDocumento', idDocumento: id }, function(data) {
+                if (!data.success || !data.documento.datos || !data.documento.rutaPdf) {
+                    Swal.fire({ type: 'error', title: 'No se puede reimprimir', text: data.mensaje || 'El documento no tiene datos guardados.' });
+                    return;
+                }
+                var doc = data.documento;
+                var $campos = $('#campos-reimprimir').empty();
+                $('#form-reimprimir').attr('action', doc.rutaPdf);
+                $('#ventana-reimprimir-titulo').text('Reimprimir: ' + (tipoTexto || 'documento'));
+
+                if (doc.estado === 'APROBADO') {
+                    $campos.append('<p class="rd-ventana-aviso"><i class="fas fa-info-circle"></i> Este documento ya fue aprobado por el decano. Si cambia algún dato, volverá a quedar <strong>por aprobar</strong>.</p>');
+                }
+
+                $campos.append($('<input type="hidden" name="idDocumento">').val(doc.idDocumento));
+                Object.keys(doc.datos).forEach(function(clave) {
+                    var valor = doc.datos[clave];
+                    // estudianteID, programaID y cualquier otro dato interno van ocultos
+                    if (!ETIQUETAS_CAMPO[clave]) {
+                        $campos.append($('<input type="hidden">').attr('name', clave).val(valor));
+                        return;
+                    }
+                    var idCampo = 'reimp-' + clave;
+                    var $grupo = $('<div></div>').toggleClass('rd-campo-ancho', CAMPOS_ANCHOS.indexOf(clave) !== -1);
+                    $grupo.append($('<label class="rd-label"></label>').attr('for', idCampo).text(ETIQUETAS_CAMPO[clave]));
+                    var $control;
+                    if (clave === 'titulo' || clave === 'tribunal') {
+                        $control = $('<textarea class="form-control" rows="3"></textarea>')
+                            .val(clave === 'tribunal' ? String(valor).split('|').join('\n') : valor);
+                    } else {
+                        var tipo = 'text';
+                        if (CAMPOS_FECHA.indexOf(clave) !== -1 && /^\d{4}-\d{2}-\d{2}$/.test(valor)) tipo = 'date';
+                        else if (clave === 'horaEntrega' && /^\d{2}:\d{2}/.test(valor)) tipo = 'time';
+                        else if (clave === 'calificacion') tipo = 'number';
+                        $control = $('<input class="form-control">').attr('type', tipo).val(valor);
+                    }
+                    $control.attr({ id: idCampo, 'data-campo': clave });
+                    $grupo.append($control);
+                    $campos.append($grupo);
+                });
+                abrirVentana();
+            }, 'json');
+        });
+
+        // Al imprimir, los campos editables pasan al formulario con su nombre original
+        // (el tribunal vuelve a ir separado por "|", como lo envía su pantalla)
+        $('#form-reimprimir').on('submit', function() {
+            var $form = $(this);
+            $form.find('input[data-copia]').remove();
+            $form.find('[data-campo]').each(function() {
+                var clave = $(this).data('campo');
+                var valor = $(this).val();
+                if (clave === 'tribunal') {
+                    valor = valor.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; }).join('|');
+                }
+                $form.append($('<input type="hidden" data-copia>').attr('name', clave).val(valor));
+            });
+            cerrarVentana();
+            // El estado puede cambiar si se corrigió un dato de un documento aprobado
+            setTimeout(refrescar, 1500);
+        });
+
+        // ===== Aprobación del decano =====
+        function cambiarEstado(id, aprobar) {
+            $.post('ajax/certificado.ajax.php', { accion: aprobar ? 'aprobarDocumento' : 'quitarAprobacion', idDocumento: id }, function(data) {
+                if (data.success) {
+                    Swal.fire({ type: 'success', title: data.mensaje, timer: 1400, showConfirmButton: false });
+                    refrescar();
+                } else {
+                    Swal.fire({ type: 'error', title: data.mensaje || 'No se pudo cambiar el estado' });
+                }
+            }, 'json');
+        }
+
+        $(document).on('click', '[data-aprobar]', function() {
+            var id = $(this).data('aprobar');
+            Swal.fire({
+                type: 'question',
+                title: '¿El decano aprobó este documento?',
+                text: 'Se marcará como aprobado para continuar con el trámite.',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, aprobado',
+                cancelButtonText: 'Cancelar'
+            }).then(function(r) { if (r.value) cambiarEstado(id, true); });
+        });
+
+        $(document).on('click', '[data-quitar-aprobacion]', function() {
+            var id = $(this).data('quitar-aprobacion');
+            Swal.fire({
+                type: 'warning',
+                title: '¿Quitar la aprobación?',
+                text: 'El documento volverá a quedar por aprobar.',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, quitar',
+                cancelButtonText: 'Cancelar'
+            }).then(function(r) { if (r.value) cambiarEstado(id, false); });
         });
     });
     </script>

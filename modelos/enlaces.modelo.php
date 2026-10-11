@@ -42,6 +42,7 @@
                 $enlace == 'certificadohistorialacademico'||
                 $enlace == 'certificadoaprobacionmonografia'||
                 $enlace == 'certificadomediomagnetico'||
+                $enlace == 'certificadorevision'||
                 $enlace == 'registrodocumentos'||
                 $enlace == 'calendario'||
                 $enlace == 'autoridades'||

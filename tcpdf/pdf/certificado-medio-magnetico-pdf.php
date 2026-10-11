@@ -42,8 +42,11 @@ if (empty($nombre) || empty($titulo) || empty($vaucher) || empty($fecha)) {
     die('Error: Faltan datos requeridos para generar la carta');
 }
 
-CertificadoModelo::RegistrarDocumentoEmitidoModelo(
-    'MEDIO_MAGNETICO', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null
+// Se guardan los datos del formulario para poder reimprimirlo (y corregirlo) desde
+// Registro de documentos; con idDocumento es una reimpresión de ese registro.
+CertificadoModelo::RegistrarEmisionModelo(
+    'MEDIO_MAGNETICO', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
+    $_POST, intval($_POST['idDocumento'] ?? 0)
 );
 
 $mesesEspanolMinuscula = [

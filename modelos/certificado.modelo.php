@@ -176,27 +176,101 @@ class CertificadoModelo
             'HISTORIAL_ACADEMICO' => 'Historial Académico',
             'APROBACION_MONOGRAFIA' => 'Aprobación Programa de Posgrado', // la clave se conserva (historial)
             'MEDIO_MAGNETICO' => 'Medio Magnético',
+            'REVISION' => 'Certificado de Revisión',
         ];
     }
 
-    /* Registra en la bitácora que se emitió un documento */
-    public static function RegistrarDocumentoEmitidoModelo($tipoDocumento, $estudianteID, $programaID, $nombreEstudiante, $vaucher, $usuarioID)
+    /* Script PDF que genera cada tipo de documento (para reimprimirlo con sus datos) */
+    public static function RutasPdf()
     {
-        $stmt = Conexion::Conectar()->prepare("
+        return [
+            'CALIFICACIONES' => 'tcpdf/pdf/certificado-calificaciones-pdf.php',
+            'HISTORIAL_ACADEMICO' => 'tcpdf/pdf/certificado-historial-academico-pdf.php',
+            'APROBACION_MONOGRAFIA' => 'tcpdf/pdf/certificado-aprobacion-monografia-pdf.php',
+            'MEDIO_MAGNETICO' => 'tcpdf/pdf/certificado-medio-magnetico-pdf.php',
+            'REVISION' => 'tcpdf/pdf/certificado-revision-pdf.php',
+        ];
+    }
+
+    /**
+     * Registra la emisión de un documento guardando los datos con que se generó
+     * (el formulario de su pantalla), para poder reimprimirlo desde Registro de
+     * documentos. Si llega $idDocumento es una reimpresión de ese registro: no se
+     * crea otro; si los datos cambiaron se guardan los nuevos y, si ya estaba
+     * aprobado, vuelve a PENDIENTE (el decano aprobó otro contenido).
+     * @return int|false IdDocumento
+     */
+    public static function RegistrarEmisionModelo($tipoDocumento, $estudianteID, $programaID, $nombreEstudiante, $vaucher, $usuarioID, array $datos, $idDocumento = 0)
+    {
+        unset($datos['idDocumento']);
+        $datos = array_map(function ($v) { return is_scalar($v) ? (string)$v : ''; }, $datos);
+        $json = json_encode($datos, JSON_UNESCAPED_UNICODE);
+        $pdo = Conexion::Conectar();
+
+        if ($idDocumento > 0) {
+            $stmt = $pdo->prepare("SELECT * FROM documentoemitido WHERE IdDocumento = :id");
+            $stmt->execute([':id' => $idDocumento]);
+            $actual = $stmt->fetch(PDO::FETCH_ASSOC);
+            // Solo se reimprime el mismo tipo de documento del mismo estudiante y programa
+            if ($actual && $actual['TipoDocumento'] === $tipoDocumento
+                && (int)$actual['EstudianteID'] === (int)$estudianteID && (int)$actual['ProgramaID'] === (int)$programaID) {
+                if ($actual['Datos'] !== $json) {
+                    $stmt = $pdo->prepare("
+                        UPDATE documentoemitido
+                        SET Datos = :datos, NombreEstudiante = :nombre, NumeroVaucher = :vaucher,
+                            Estado = 'PENDIENTE', FechaAprobacion = NULL, UsuarioAprobadorID = NULL
+                        WHERE IdDocumento = :id
+                    ");
+                    $stmt->execute([':datos' => $json, ':nombre' => $nombreEstudiante, ':vaucher' => $vaucher, ':id' => $idDocumento]);
+                }
+                return (int)$idDocumento;
+            }
+        }
+
+        $stmt = $pdo->prepare("
             INSERT INTO documentoemitido
-                (TipoDocumento, EstudianteID, ProgramaID, NombreEstudiante, NumeroVaucher, UsuarioEmisorID)
+                (TipoDocumento, EstudianteID, ProgramaID, NombreEstudiante, NumeroVaucher, Datos, UsuarioEmisorID)
             VALUES
-                (:tipo, :estudianteID, :programaID, :nombre, :vaucher, :usuarioID)
+                (:tipo, :estudianteID, :programaID, :nombre, :vaucher, :datos, :usuarioID)
         ");
-        $estudianteIDValor = $estudianteID ?: null;
-        $programaIDValor = $programaID ?: null;
-        $stmt->bindParam(':tipo', $tipoDocumento, PDO::PARAM_STR);
-        $stmt->bindParam(':estudianteID', $estudianteIDValor, PDO::PARAM_INT);
-        $stmt->bindParam(':programaID', $programaIDValor, PDO::PARAM_INT);
-        $stmt->bindParam(':nombre', $nombreEstudiante, PDO::PARAM_STR);
-        $stmt->bindParam(':vaucher', $vaucher, PDO::PARAM_STR);
-        $stmt->bindParam(':usuarioID', $usuarioID, PDO::PARAM_INT);
-        return $stmt->execute();
+        $ok = $stmt->execute([
+            ':tipo' => $tipoDocumento,
+            ':estudianteID' => $estudianteID ?: null,
+            ':programaID' => $programaID ?: null,
+            ':nombre' => $nombreEstudiante,
+            ':vaucher' => $vaucher,
+            ':datos' => $json,
+            ':usuarioID' => $usuarioID,
+        ]);
+        return $ok ? (int)$pdo->lastInsertId() : false;
+    }
+
+    /* Un documento emitido con sus datos guardados */
+    public static function ObtenerDocumentoModelo($idDocumento)
+    {
+        $stmt = Conexion::Conectar()->prepare("SELECT * FROM documentoemitido WHERE IdDocumento = :id");
+        $stmt->execute([':id' => $idDocumento]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    /**
+     * Aprobación del decano: APROBADO (volvió aprobado y se validó) o, para
+     * corregir un error al marcarlo, de vuelta a PENDIENTE.
+     */
+    public static function CambiarEstadoDocumentoModelo($idDocumento, $aprobado, $usuarioID)
+    {
+        if ($aprobado) {
+            $stmt = Conexion::Conectar()->prepare("
+                UPDATE documentoemitido SET Estado = 'APROBADO', FechaAprobacion = NOW(), UsuarioAprobadorID = :usuario
+                WHERE IdDocumento = :id");
+            $stmt->execute([':usuario' => $usuarioID, ':id' => $idDocumento]);
+        } else {
+            $stmt = Conexion::Conectar()->prepare("
+                UPDATE documentoemitido SET Estado = 'PENDIENTE', FechaAprobacion = NULL, UsuarioAprobadorID = NULL
+                WHERE IdDocumento = :id");
+            $stmt->execute([':id' => $idDocumento]);
+        }
+        return $stmt->rowCount() > 0;
     }
 
     /* Para cada tipo de documento, la última emisión de un estudiante+programa (o null si nunca se emitió) */
@@ -233,13 +307,17 @@ class CertificadoModelo
     {
         $sql = "
             SELECT
-                d.*,
+                d.IdDocumento, d.TipoDocumento, d.EstudianteID, d.ProgramaID, d.NombreEstudiante,
+                d.NumeroVaucher, d.FechaEmision, d.Estado, d.FechaAprobacion,
+                (d.Datos IS NOT NULL) AS TieneDatos,
                 e.Ci,
                 e.Complemento,
-                u.Usuario as UsuarioEmisor
+                u.Usuario as UsuarioEmisor,
+                ua.Usuario as UsuarioAprobador
             FROM documentoemitido d
             LEFT JOIN estudiante e ON d.EstudianteID = e.EstudianteID
             LEFT JOIN usuario u ON d.UsuarioEmisorID = u.ID
+            LEFT JOIN usuario ua ON d.UsuarioAprobadorID = ua.ID
         ";
         if (!empty($ci)) {
             $sql .= " WHERE e.Ci LIKE :ci ";
