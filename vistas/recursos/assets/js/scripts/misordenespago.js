@@ -71,14 +71,14 @@
 
         ordenes.forEach(function (o) {
             var fila = '<tr>' +
-                '<td><strong>' + (o.numeroOrden || '-') + '</strong></td>' +
-                '<td>' + o.nombrePrograma + '<br><small class="text-muted">' + o.gradoAcademico + ' - ' + o.sede + '</small></td>' +
-                '<td>' + (ETIQUETAS_TIPO[o.tipo] || o.tipo) + '</td>' +
-                '<td class="text-right">' + formatoMoneda(o.monto) + '</td>' +
-                '<td>' + formatoFecha(o.fechaGeneracion) + '</td>' +
-                '<td>' + (o.fechaVencimiento ? formatoFecha(o.fechaVencimiento) : '-') + '</td>' +
-                '<td class="text-center">' + badgeEstado(o) + '</td>' +
-                '<td class="text-center">' +
+                '<td data-label="N° Orden"><strong>' + (o.numeroOrden || '-') + '</strong></td>' +
+                '<td data-label="Programa"><span>' + o.nombrePrograma + '<br><small class="text-muted">' + o.gradoAcademico + ' - ' + o.sede + '</small></span></td>' +
+                '<td data-label="Tipo">' + (ETIQUETAS_TIPO[o.tipo] || o.tipo) + '</td>' +
+                '<td data-label="Monto" class="text-right">' + formatoMoneda(o.monto) + '</td>' +
+                '<td data-label="Generada">' + formatoFecha(o.fechaGeneracion) + '</td>' +
+                '<td data-label="Fecha límite">' + (o.fechaVencimiento ? formatoFecha(o.fechaVencimiento) : '-') + '</td>' +
+                '<td data-label="Estado" class="text-center">' + badgeEstado(o) + '</td>' +
+                '<td class="text-center celda-accion">' +
                     '<a href="vistas/componentes/orden-pago-pdf.php?idordenpago=' + o.idOrdenPago + '" ' +
                     'target="_blank" class="btn-imprimir-orden"><i class="fa fa-print"></i> Imprimir</a>' +
                 '</td>' +

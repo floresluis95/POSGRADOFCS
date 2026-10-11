@@ -45,27 +45,8 @@ function cargarEstudianteLogueado() {
                 estudianteData = response.estudiante;
                 cargarProgramasSelect(response.data);
 
-                // Mostrar mensaje de bienvenida (no si todos sus programas están bloqueados:
-                // en ese caso ya se muestra el aviso de historial desactivado)
-                const todosBloqueados = response.data.length > 0 && response.data.every(function(p) { return p.Bloqueado; });
-                if (todosBloqueados) {
-                    // sin bienvenida
-                } else if (response.data.length > 0) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Bienvenido!',
-                        html: `<p><strong>${response.estudiante.NombreCompleto}</strong></p>
-                               <p>Tiene <strong>${response.data.length}</strong> programa(s) inscrito(s)</p>`,
-                        timer: 3000,
-                        showConfirmButton: false
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'Sin programas',
-                        text: 'No tiene programas inscritos actualmente',
-                        confirmButtonColor: '#5867dd'
-                    });
+                if (response.data.length === 0) {
+                    mostrarMensajeTabla('Todavía no está inscrito en ningún programa.');
                 }
             } else {
                 Swal.fire({
@@ -139,6 +120,12 @@ function cargarProgramasSelect(programas) {
     }
 
     $select.prop('disabled', false);
+
+    // Con un solo programa disponible se elige solo
+    const disponibles = programas.filter(function(p) { return !p.Bloqueado; });
+    if (disponibles.length === 1) {
+        $select.val(String(disponibles[0].ProgramaID)).trigger('change');
+    }
 }
 
 /**
@@ -168,7 +155,7 @@ function mostrarAvisoBloqueos(bloqueados) {
             <a href="misordenespago" class="btn btn-sm" style="background:#b91c1c; color:#fff; white-space:nowrap; font-weight:600;">Ver mis órdenes de pago</a>
         </div>
     `);
-    $('#select_programa_calificaciones').closest('.row').after($aviso);
+    $('#grupo_programa').after($aviso);
 }
 
 /**
@@ -184,15 +171,8 @@ function cargarCalificacionesPrograma(programaID) {
             programaID: programaID
         },
         beforeSend: function() {
-            const $tbody = $('#contenido_calificaciones');
-            $tbody.html(`
-                <tr>
-                    <td colspan="5" class="text-center" style="padding: 3rem;">
-                        <div class="kt-spinner kt-spinner--lg kt-spinner--brand"></div>
-                        <p style="margin-top: 1.5rem; color: #667eea; font-weight: 600; font-size: 1.1rem;">Cargando calificaciones...</p>
-                    </td>
-                </tr>
-            `);
+            $('#resumen_calificaciones').empty();
+            mostrarMensajeTabla('Cargando calificaciones...');
         },
         success: function(response) {
             if (response.status === 'success') {
@@ -228,14 +208,7 @@ function mostrarCalificaciones(calificaciones, resumen) {
     $tbody.empty();
 
     if (calificaciones.length === 0) {
-        $tbody.html(`
-            <tr>
-                <td colspan="5" class="text-center" style="padding: 3rem; color: #B5B5C3;">
-                    <i class="flaticon2-file" style="font-size: 3rem; color: #E4E6EF;"></i>
-                    <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">No hay calificaciones registradas para este programa</p>
-                </td>
-            </tr>
-        `);
+        mostrarMensajeTabla('Todavía no tiene calificaciones registradas en este programa.');
         return;
     }
 
@@ -249,39 +222,20 @@ function mostrarCalificaciones(calificaciones, resumen) {
             ? `${calificacion.DocenteNombre} ${calificacion.DocenteApaterno || ''} ${calificacion.DocenteAmaterno || ''}`.trim()
             : 'No asignado';
 
-        let estadoBadge = '';
-        let notaClasses = '';
-
-        if (nota >= (window.NOTA_APROBACION || 76)) {
-            estadoBadge = '<span class="badge-estado badge-aprobado">APROBADO</span>';
-            notaClasses = 'nota-destacada nota-aprobado';
-        } else {
-            estadoBadge = '<span class="badge-estado badge-reprobado">REPROBADO</span>';
-            notaClasses = 'nota-destacada nota-reprobado';
-        }
+        const aprobado = nota >= (window.NOTA_APROBACION || 76);
+        const clase = aprobado ? 'aprobado' : 'reprobado';
+        const escapar = function(t) { return $('<div>').text(t == null ? '' : String(t)).html(); };
 
         const fila = `
-            <tr style="border-bottom: 1px solid #f0f0f0; transition: all 0.3s;">
-                <td style="padding: 1.2rem;">
-                    <div>
-                        <strong style="color: #464E5F; font-size: 1rem;">${calificacion.NombreModulo}</strong><br>
-                        <small style="color: #B5B5C3;">
-                            <i class="flaticon2-tag"></i> Código: ${calificacion.CodigoModulo}
-                        </small>
-                    </div>
+            <tr>
+                <td class="celda-modulo">
+                    <span class="hn-modulo">${escapar(calificacion.NombreModulo)}</span>
+                    <span class="hn-codigo">${escapar(calificacion.CodigoModulo)}</span>
                 </td>
-                <td style="padding: 1.2rem; color: #464E5F; font-weight: 500;">
-                    <i class="flaticon2-user" style="color: #667eea; margin-right: 5px;"></i> ${docenteNombre}
-                </td>
-                <td class="text-center" style="padding: 1.2rem;">
-                    <span class="${notaClasses}">${nota}</span>
-                </td>
-                <td class="text-center" style="padding: 1.2rem; color: #464E5F; font-weight: 600; font-size: 1.1rem;">
-                    100
-                </td>
-                <td class="text-center" style="padding: 1.2rem;">
-                    ${estadoBadge}
-                </td>
+                <td data-label="Docente">${escapar(docenteNombre)}</td>
+                <td data-label="Nota" class="text-center"><span class="hn-nota hn-nota-${clase}">${nota}</span></td>
+                <td data-label="Ponderación" class="text-center">100</td>
+                <td data-label="Estado" class="text-center"><span class="hn-estado hn-estado-${clase}">${aprobado ? 'Aprobado' : 'Reprobado'}</span></td>
             </tr>
         `;
 
@@ -290,7 +244,8 @@ function mostrarCalificaciones(calificaciones, resumen) {
 }
 
 /**
- * Mostrar resumen de calificaciones
+ * Resumen de calificaciones: una franja con promedio, módulos, aprobados/reprobados
+ * y porcentaje de aprobación
  */
 function mostrarResumenCalificaciones(resumen) {
     if (!resumen || resumen.TotalModulos == 0) return;
@@ -303,69 +258,14 @@ function mostrarResumenCalificaciones(resumen) {
         ? ((modulosAprobados / totalModulos) * 100).toFixed(1)
         : 0;
 
-    let gradientePromedio = promedioGeneral >= (window.NOTA_APROBACION || 76)
-        ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)'
-        : 'linear-gradient(135deg, #ee0979 0%, #ff6a00 100%)';
-
-    const resumenHTML = `
-        <tr>
-            <td colspan="5" style="padding: 0; border: none;">
-                <div style="background: #f8f9fa; padding: 2rem; margin-bottom: 1rem; border-radius: 10px;">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <div style="background: ${gradientePromedio}; border-radius: 12px; padding: 1.5rem; text-align: center; height: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
-                                <div style="background: rgba(255,255,255,0.2); border-radius: 10px; width: 50px; height: 50px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                                    <i class="flaticon2-chart-2" style="font-size: 1.5rem; color: white;"></i>
-                                </div>
-                                <h6 style="color: rgba(255,255,255,0.9); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Promedio General</h6>
-                                <h2 style="color: white; font-weight: 700; font-size: 2.5rem; margin: 0;">${promedioGeneral}</h2>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 1.5rem; text-align: center; height: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
-                                <div style="background: rgba(255,255,255,0.2); border-radius: 10px; width: 50px; height: 50px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                                    <i class="flaticon2-layers" style="font-size: 1.5rem; color: white;"></i>
-                                </div>
-                                <h6 style="color: rgba(255,255,255,0.9); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Módulos Cursados</h6>
-                                <h2 style="color: white; font-weight: 700; font-size: 2.5rem; margin: 0;">${totalModulos}</h2>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div style="background: white; border-radius: 12px; padding: 1.5rem; text-align: center; height: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
-                                <h6 style="color: #B5B5C3; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Aprobados / Reprobados</h6>
-                                <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-                                    <div style="text-align: center;">
-                                        <div style="background: #e8f5f3; border-radius: 10px; padding: 10px 15px; margin-bottom: 5px;">
-                                            <span style="color: #11998e; font-weight: 700; font-size: 1.8rem;">${modulosAprobados}</span>
-                                        </div>
-                                        <small style="color: #11998e; font-weight: 600;">Aprobados</small>
-                                    </div>
-                                    <span style="color: #E4E6EF; font-size: 1.5rem;">/</span>
-                                    <div style="text-align: center;">
-                                        <div style="background: #fee5ed; border-radius: 10px; padding: 10px 15px; margin-bottom: 5px;">
-                                            <span style="color: #ee0979; font-weight: 700; font-size: 1.8rem;">${modulosReprobados}</span>
-                                        </div>
-                                        <small style="color: #ee0979; font-weight: 600;">Reprobados</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div style="background: linear-gradient(135deg, #ffa800 0%, #ffcd00 100%); border-radius: 12px; padding: 1.5rem; text-align: center; height: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
-                                <div style="background: rgba(255,255,255,0.2); border-radius: 10px; width: 50px; height: 50px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                                    <i class="flaticon2-percentage" style="font-size: 1.5rem; color: white;"></i>
-                                </div>
-                                <h6 style="color: rgba(255,255,255,0.9); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">% Aprobación</h6>
-                                <h2 style="color: white; font-weight: 700; font-size: 2.5rem; margin: 0;">${porcentajeAprobacion}%</h2>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </td>
-        </tr>
-    `;
-
-    $('#contenido_calificaciones').before(resumenHTML);
+    $('#resumen_calificaciones').html(`
+        <div class="hn-resumen">
+            <div class="hn-resumen-dato"><span>Promedio</span><strong>${promedioGeneral}</strong></div>
+            <div class="hn-resumen-dato"><span>Módulos</span><strong>${totalModulos}</strong></div>
+            <div class="hn-resumen-dato"><span>Aprobados / Reprobados</span><strong>${modulosAprobados} / ${modulosReprobados}</strong></div>
+            <div class="hn-resumen-dato"><span>Aprobación</span><strong>${porcentajeAprobacion}%</strong></div>
+        </div>
+    `);
 }
 
 /**
@@ -373,17 +273,17 @@ function mostrarResumenCalificaciones(resumen) {
  */
 function mostrarBloqueoCalificaciones(mensaje, conAlerta) {
     // Eliminar resumen si existe
-    $('#contenido_calificaciones').prev('tr').remove();
+    $('#resumen_calificaciones').empty();
 
     const texto = mensaje || 'Tienes un pago vencido. Regulariza tu pago para ver tus calificaciones.';
     const $tbody = $('#contenido_calificaciones');
     $tbody.html(`
         <tr>
-            <td colspan="5" class="text-center" style="padding: 3rem; color: #b91c1c;">
-                <i class="fa fa-lock" style="font-size: 3rem; color: #b91c1c;"></i>
-                <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 700;">Calificaciones no disponibles</p>
-                <p style="font-size: 0.95rem; color: #6b7280;">${$('<div>').text(texto).html()}</p>
-                <a href="misordenespago" class="btn btn-sm" style="background:#b91c1c; color:#fff; font-weight:600;">Ver mis órdenes de pago</a>
+            <td colspan="5" class="hn-vacio">
+                <i class="fa fa-lock" style="font-size: 1.5rem; color: #b02a1e;"></i>
+                <p style="margin: 0.5rem 0 0; font-weight: 600; color: #b02a1e;">Calificaciones no disponibles</p>
+                <p style="font-size: 0.85rem; color: #6b7280;">${$('<div>').text(texto).html()}</p>
+                <a href="misordenespago" class="btn btn-sm btn-outline-danger">Ver mis órdenes de pago</a>
             </td>
         </tr>
     `);
@@ -402,18 +302,15 @@ function mostrarBloqueoCalificaciones(mensaje, conAlerta) {
  * Limpiar tabla de calificaciones
  */
 function limpiarTablaCalificaciones() {
-    const $tbody = $('#contenido_calificaciones');
-    $tbody.html(`
-        <tr>
-            <td colspan="5" class="text-center" style="padding: 3rem; color: #B5B5C3;">
-                <i class="flaticon2-list-3" style="font-size: 3rem; color: #E4E6EF;"></i>
-                <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">Seleccione un programa en el menú superior</p>
-            </td>
-        </tr>
-    `);
+    $('#resumen_calificaciones').empty();
+    mostrarMensajeTabla('Elija un programa para ver sus calificaciones.');
+}
 
-    // Eliminar resumen si existe
-    $('#contenido_calificaciones').prev('tr').remove();
+/**
+ * Fila única con un mensaje (cargando, sin datos, sin programa elegido)
+ */
+function mostrarMensajeTabla(texto) {
+    $('#contenido_calificaciones').html(`<tr><td colspan="5" class="hn-vacio">${texto}</td></tr>`);
 }
 
 /**

@@ -7,7 +7,7 @@
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
     <div id="kt_header_mobile" class="kt-header-mobile  kt-header-mobile--fixed ">
         <div class="kt-header-mobile__logo">
-            <a href="demo9/index.html">
+            <a href="panel">
             <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
             </a>
         </div>
@@ -61,114 +61,83 @@
                                 <div class="kt-portlet__head">
                                     <div class="kt-portlet__head-label">
                                         <h3 class="kt-portlet__head-title">
-                                            Estado de Pagos de Modulos
+                                            Estado de pagos del programa
                                         </h3>
                                     </div>
                                 </div>
-                                <div class="kt-portlet__body" style="padding: 2rem; background: #f8f9fa;">
+                                <div class="kt-portlet__body hm-cuerpo">
 
-                                    <!-- Información del estudiante -->
-                                    <div class="d-flex align-items-center justify-content-between mb-3 pb-3" style="border-bottom: 1px solid #E4E6EF;">
-                                        <div>
-                                            <h5 class="mb-0" style="font-weight: 600; color: #464E5F;">
-                                                <i class="flaticon2-user" style="color: #1e3c72;"></i>
-                                                <span id="estudiante_nombre">Estudiante</span>
-                                            </h5>
-                                            <small class="text-muted">Consulte el estado de sus pagos de módulos</small>
-                                        </div>
+                                    <!-- Selector de programa (si tiene uno solo, se elige solo) -->
+                                    <div class="form-group mb-4">
+                                        <label for="select_programa_modulos" class="hm-etiqueta">Programa</label>
+                                        <select class="form-control select2-uniforme" id="select_programa_modulos" name="select_programa_modulos" disabled>
+                                            <option value="">Cargando programas...</option>
+                                        </select>
                                     </div>
 
-                                    <!-- Selector de programa -->
-                                    <div class="form-group row align-items-center mb-4">
-                                        <label class="col-lg-2 col-form-label" style="font-weight: 600; color: #464E5F;">Programa:</label>
-                                        <div class="col-lg-10">
-                                            <select class="form-control select2-uniforme" id="select_programa_modulos" name="select_programa_modulos" disabled>
-                                                <option value="">Cargando programas...</option>
-                                            </select>
-                                            <small class="form-text text-muted">Seleccione un programa para visualizar el detalle completo de sus módulos</small>
-                                        </div>
+                                    <div id="aviso_elegir_programa" class="hm-vacio" style="display: none;">
+                                        <i class="flaticon2-layers"></i>
+                                        <p>Elija un programa para ver sus pagos.</p>
                                     </div>
 
                                     <!-- Área de resultados -->
                                     <div id="area_resultados_modulos" style="display: none;">
 
                                         <!-- Resumen de pagos -->
-                                        <div class="row mb-3" id="resumen_pagos_container">
-                                            <div class="col-md-4 mb-2">
-                                                <div class="d-flex align-items-center" style="background: white; border: 1px solid #E4E6EF; border-left: 3px solid #1e3c72; border-radius: 4px; padding: 0.85rem 1rem;">
-                                                    <i class="flaticon2-pie-chart" style="font-size: 1.3rem; color: #1e3c72; margin-right: 0.85rem;"></i>
-                                                    <div>
-                                                        <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Costo Total</div>
-                                                        <strong style="font-size: 1.15rem; color: #464E5F;">Bs. <span id="total_programa">0.00</span></strong>
-                                                    </div>
+                                        <div class="hm-resumen mb-4" id="resumen_pagos_container">
+                                            <div class="row">
+                                                <div class="col-4 hm-dato">
+                                                    <span class="hm-dato-titulo">Costo total</span>
+                                                    <strong id="total_programa">Bs. 0,00</strong>
+                                                </div>
+                                                <div class="col-4 hm-dato">
+                                                    <span class="hm-dato-titulo">Pagado</span>
+                                                    <strong class="text-success" id="total_pagado">Bs. 0,00</strong>
+                                                    <small class="text-muted"><span id="cantidad_pagados">0</span> cuota(s)</small>
+                                                </div>
+                                                <div class="col-4 hm-dato">
+                                                    <span class="hm-dato-titulo">Saldo</span>
+                                                    <strong class="text-danger" id="total_pendiente">Bs. 0,00</strong>
                                                 </div>
                                             </div>
-                                            <div class="col-md-4 mb-2">
-                                                <div class="d-flex align-items-center" style="background: white; border: 1px solid #E4E6EF; border-left: 3px solid #27ae60; border-radius: 4px; padding: 0.85rem 1rem;">
-                                                    <i class="flaticon2-check-mark" style="font-size: 1.3rem; color: #27ae60; margin-right: 0.85rem;"></i>
-                                                    <div>
-                                                        <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Total Pagado</div>
-                                                        <strong style="font-size: 1.15rem; color: #464E5F;">Bs. <span id="total_pagado">0.00</span></strong>
-                                                        <span class="text-muted" style="font-size: 0.8rem;">(<span id="cantidad_pagados">0</span> cuotas)</span>
-                                                    </div>
-                                                </div>
+                                            <div class="progress hm-barra" title="Avance del pago">
+                                                <div class="progress-bar" id="barra_avance" role="progressbar" style="width: 0%;"></div>
                                             </div>
-                                            <div class="col-md-4 mb-2">
-                                                <div class="d-flex align-items-center" style="background: white; border: 1px solid #E4E6EF; border-left: 3px solid #dc3545; border-radius: 4px; padding: 0.85rem 1rem;">
-                                                    <i class="flaticon2-hourglass-1" style="font-size: 1.3rem; color: #dc3545; margin-right: 0.85rem;"></i>
-                                                    <div>
-                                                        <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Total Pendiente</div>
-                                                        <strong style="font-size: 1.15rem; color: #464E5F;">Bs. <span id="total_pendiente">0.00</span></strong>
-                                                        <div class="text-muted" style="font-size: 0.8rem;" id="estado_plan_texto">Saldo por cancelar</div>
-                                                    </div>
-                                                </div>
+                                            <div class="d-flex justify-content-between flex-wrap hm-avance">
+                                                <span><strong id="porcentaje_avance">0%</strong> pagado</span>
+                                                <span id="estado_plan_texto">Saldo por cancelar</span>
                                             </div>
                                         </div>
 
-                                        <!-- Estado de Matrícula -->
-                                        <div class="mb-4" id="matricula_container" style="background: white; border: 1px solid #E4E6EF; border-radius: 4px;">
-                                            <div style="padding: 0.9rem 1.25rem; border-bottom: 1px solid #E4E6EF;">
-                                                <h6 style="margin: 0; font-weight: 600; color: #464E5F; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px;">
-                                                    <i class="flaticon2-graduation-cap" style="color: #1e3c72;"></i>
-                                                    Matrícula
-                                                </h6>
+                                        <!-- Matrícula -->
+                                        <div class="hm-seccion mb-4" id="matricula_container">
+                                            <div class="hm-seccion-titulo">
+                                                <i class="flaticon2-correct"></i> Matrícula
                                             </div>
-                                            <div style="padding: 1.1rem 1.25rem;" id="matricula_cuerpo">
+                                            <div class="hm-seccion-cuerpo" id="matricula_cuerpo">
                                                 <span class="text-muted">Sin información de matrícula</span>
                                             </div>
                                         </div>
 
-                                        <!-- Historial de Cuotas -->
-                                        <div class="mb-4" id="modulos_pagados_container" style="background: white; border: 1px solid #E4E6EF; border-radius: 4px;">
-                                            <div style="padding: 0.9rem 1.25rem; border-bottom: 1px solid #E4E6EF;">
-                                                <h6 style="margin: 0; font-weight: 600; color: #464E5F; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px;">
-                                                    <i class="flaticon2-check-mark" style="color: #27ae60;"></i>
-                                                    Historial de Cuotas
-                                                </h6>
+                                        <!-- Cuotas del programa -->
+                                        <div class="hm-seccion" id="modulos_pagados_container">
+                                            <div class="hm-seccion-titulo">
+                                                <i class="flaticon2-list-3"></i> Cuotas
                                             </div>
-                                            <div style="padding: 1.25rem;">
-                                                <div class="table-responsive">
-                                                    <table class="table table-hover table-sm" id="tabla_modulos_pagados" style="margin-bottom: 0;">
-                                                        <thead>
-                                                            <tr style="background: #f8f9fa; border-bottom: 2px solid #E4E6EF;">
-                                                                <th class="text-center" width="8%" style="padding: 0.6rem; font-weight: 600; color: #464E5F; font-size: 0.8rem;">N° CUOTA</th>
-                                                                <th class="text-center" width="15%" style="padding: 0.6rem; font-weight: 600; color: #464E5F; font-size: 0.8rem;">MONTO</th>
-                                                                <th class="text-center" width="17%" style="padding: 0.6rem; font-weight: 600; color: #464E5F; font-size: 0.8rem;">FECHA GENERADA</th>
-                                                                <th class="text-center" width="17%" style="padding: 0.6rem; font-weight: 600; color: #464E5F; font-size: 0.8rem;">FECHA DE PAGO</th>
-                                                                <th class="text-center" width="21%" style="padding: 0.6rem; font-weight: 600; color: #464E5F; font-size: 0.8rem;">Nº VOUCHER</th>
-                                                                <th class="text-center" width="21%" style="padding: 0.6rem; font-weight: 600; color: #464E5F; font-size: 0.8rem;">ESTADO</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody id="tbody_modulos_pagados">
-                                                            <tr>
-                                                                <td colspan="6" class="text-center" style="padding: 2rem; color: #B5B5C3;">
-                                                                    <i class="flaticon2-information" style="font-size: 2rem; color: #E4E6EF;"></i>
-                                                                    <p style="margin-top: 0.5rem; font-size: 1rem; font-weight: 500;">No hay cuotas registradas</p>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                            <div class="hm-seccion-cuerpo">
+                                                <table class="table table-sm mb-0" id="tabla_modulos_pagados">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>N°</th>
+                                                            <th class="text-right">Monto</th>
+                                                            <th>Generada</th>
+                                                            <th>Pagada</th>
+                                                            <th>N° voucher</th>
+                                                            <th class="text-center">Estado</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tbody_modulos_pagados"></tbody>
+                                                </table>
                                             </div>
                                         </div>
 
@@ -207,6 +176,246 @@
     </div>
 
     <style>
+        .hm-cuerpo {
+            padding: 2rem;
+            background: #f8f9fa;
+        }
+
+        .hm-etiqueta {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #56637a;
+            margin-bottom: 4px;
+        }
+
+        .hm-vacio {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: #B5B5C3;
+        }
+
+        .hm-vacio i {
+            font-size: 2.5rem;
+            color: #E4E6EF;
+        }
+
+        .hm-vacio p {
+            margin: 0.75rem 0 0;
+            font-weight: 500;
+        }
+
+        /* Resumen: costo, pagado y saldo con la barra de avance */
+        .hm-resumen {
+            background: #fff;
+            border: 1px solid #E4E6EF;
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .hm-dato {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hm-dato-titulo {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #7e8299;
+        }
+
+        .hm-dato strong {
+            font-size: 1.25rem;
+            color: #464E5F;
+            white-space: nowrap;
+        }
+
+        .hm-dato strong.text-success { color: #1e7145 !important; }
+        .hm-dato strong.text-danger { color: #c0392b !important; }
+
+        .hm-barra {
+            height: 8px;
+            border-radius: 4px;
+            background: #eef0f5;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .hm-barra .progress-bar {
+            background: linear-gradient(90deg, #1e7145 0%, #27ae60 100%);
+            border-radius: 4px;
+        }
+
+        .hm-avance {
+            gap: 4px 12px;
+            font-size: 0.82rem;
+            color: #7e8299;
+        }
+
+        /* Matrícula y cuotas */
+        .hm-seccion {
+            background: #fff;
+            border: 1px solid #E4E6EF;
+            border-radius: 8px;
+        }
+
+        .hm-seccion-titulo {
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid #E4E6EF;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #464E5F;
+        }
+
+        .hm-seccion-titulo i {
+            color: #1e3c72;
+            margin-right: 4px;
+        }
+
+        .hm-seccion-cuerpo {
+            padding: 1rem 1.25rem;
+        }
+
+        .hm-insignia {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .hm-insignia-pagado { background: #1e7145; }
+        .hm-insignia-pendiente { background: #b7791f; }
+        .hm-insignia-rechazado { background: #c0392b; }
+        .hm-insignia-anulado { background: #9aa0ac; }
+
+        #tabla_modulos_pagados thead th {
+            border-top: none;
+            border-bottom: 2px solid #E4E6EF;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #7e8299;
+            white-space: nowrap;
+        }
+
+        #tabla_modulos_pagados th,
+        #tabla_modulos_pagados td {
+            padding: 0.6rem 1rem;
+        }
+
+        #tabla_modulos_pagados tbody td {
+            vertical-align: middle;
+            color: #464E5F;
+        }
+
+        #tabla_modulos_pagados td[data-label="Monto"] {
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .btn-ver-foto-cuota-estudiante {
+            background: none;
+            border: none;
+            margin-left: 6px;
+            padding: 0 4px;
+            cursor: pointer;
+            color: #2a5298;
+        }
+
+        /* Celular: resumen más compacto y cada cuota como tarjeta, con la etiqueta de
+           cada dato a la izquierda */
+        @media (max-width: 767px) {
+            .hm-cuerpo {
+                padding: 1rem;
+            }
+
+            .hm-resumen {
+                padding: 1rem;
+            }
+
+            .hm-resumen .row {
+                margin: 0 -4px;
+            }
+
+            .hm-resumen [class*="col-"] {
+                padding: 0 4px;
+            }
+
+            .hm-dato strong {
+                font-size: 0.95rem;
+            }
+
+            .hm-dato-titulo {
+                font-size: 0.65rem;
+            }
+
+            .hm-seccion-cuerpo {
+                padding: 0.75rem;
+            }
+
+            #tabla_modulos_pagados thead {
+                display: none;
+            }
+
+            #tabla_modulos_pagados,
+            #tabla_modulos_pagados tbody,
+            #tabla_modulos_pagados tr,
+            #tabla_modulos_pagados td {
+                display: block;
+                width: 100%;
+            }
+
+            #tabla_modulos_pagados tbody tr {
+                border: 1px solid #eef0f5;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                padding: 2px 12px;
+            }
+
+            #tabla_modulos_pagados tbody tr:last-child {
+                margin-bottom: 0;
+            }
+
+            #tabla_modulos_pagados tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                padding: 7px 0;
+                border-top: 1px solid #f3f4f8;
+                text-align: right !important;
+            }
+
+            #tabla_modulos_pagados tbody tr td:first-child {
+                border-top: none;
+            }
+
+            #tabla_modulos_pagados tbody td::before {
+                content: attr(data-label);
+                flex-shrink: 0;
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: #7e8299;
+            }
+
+            #tabla_modulos_pagados tbody td[colspan] {
+                display: block;
+                text-align: center !important;
+                border: none;
+            }
+
+            #tabla_modulos_pagados tbody td[colspan]::before {
+                content: none;
+            }
+        }
+
         .foto-recibo-tamano-fijo {
             width: 500px;
             max-width: 100%;

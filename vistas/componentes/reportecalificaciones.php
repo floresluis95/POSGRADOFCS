@@ -1,10 +1,10 @@
 <?php
 /**
  * Vista: Reporte de Calificaciones para Docentes
- * Muestra los m�dulos asignados al docente con detalle de calificaciones
+ * Muestra los módulos asignados al docente con detalle de calificaciones
  */
 
-// Validaci�n de sesi�n
+// Validación de sesión
 $Validar = new FuncionesControladores();
 $Validar->ValidarSessionControlador();
 
@@ -93,7 +93,7 @@ date_default_timezone_set("America/La_Paz");
                                     <p class="mt-3">Cargando modulos asignados...</p>
                                 </div>
 
-                                <!-- INFORMACI�N DEL DOCENTE -->
+                                <!-- INFORMACIÓN DEL DOCENTE -->
                                 <div id="info-docente" class="alert alert-light mb-4" style="display: none; border-left: 4px solid #34495e;">
                                     <div class="row">
                                         <div class="col-md-6">
@@ -108,7 +108,7 @@ date_default_timezone_set("America/La_Paz");
                                     </div>
                                 </div>
 
-                                <!-- FILTROS DE LA TABLA DE M�DULOS -->
+                                <!-- FILTROS DE LA TABLA DE MÓDULOS -->
                                 <div class="row mb-3" id="filtros-modulos-container" style="display:none;">
                                     <div class="col-md-3">
                                         <label class="small font-weight-bold mb-1" for="filtro-sede-reporte">
@@ -136,7 +136,7 @@ date_default_timezone_set("America/La_Paz");
                                     </div>
                                 </div>
 
-                                <!-- TABLA DE M�DULOS -->
+                                <!-- TABLA DE MÓDULOS -->
                                 <div id="tabla-modulos-container"></div>
 
                             </div>
@@ -416,7 +416,7 @@ function cargarModulosDocente() {
             if (response.status === 'success' && response.data) {
                 docenteData = response.data;
 
-                // Mostrar informaci�n del docente
+                // Mostrar información del docente
                 $('#docente-nombre').text(docenteData.NombreCompleto);
                 $('#docente-ci').text(docenteData.CICompleto);
                 $('#docente-especialidad').text(docenteData.Especialidad || 'No especificada');
@@ -426,7 +426,7 @@ function cargarModulosDocente() {
                 cargarAsignaciones(docenteData.DocenteID);
             } else {
                 $('#loading-modulos').hide();
-                mostrarError('No se pudo cargar la informaci�n del docente');
+                mostrarError('No se pudo cargar la información del docente');
             }
         },
         error: function() {

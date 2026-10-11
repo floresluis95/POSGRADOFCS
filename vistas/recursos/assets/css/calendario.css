@@ -157,9 +157,37 @@
 
     .calendario-leyenda {
         margin-left: 0;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+    }
+
+    .calendario-leyenda span {
+        white-space: nowrap;
     }
 
     #calendario-academico {
         min-height: 640px;
+    }
+}
+
+/* Celular: cada filtro ocupa todo el ancho y el nombre largo del programa se corta
+   con "..." en vez de empujar la página hacia la derecha */
+@media (max-width: 575px) {
+    .calendario-toolbar,
+    .calendario-filtros {
+        width: 100%;
+    }
+
+    .calendario-filtros .form-group {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .calendario-filtros select {
+        min-width: 0 !important;
+    }
+
+    .calendario-filtros .select2-container {
+        max-width: 100%;
     }
 }

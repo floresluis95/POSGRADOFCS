@@ -67,7 +67,7 @@
                                 </div>
                                 <div class="kt-portlet__body" style="padding: 2.5rem; background: #f8f9fa;">
 
-                                    <!-- Informaci�n del estudiante -->
+                                    <!-- Información del estudiante -->
                                     <div class="mb-4" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3);">
                                         <div class="row align-items-center">
                                             <div class="col-md-8">
@@ -88,7 +88,7 @@
                                             <div class="col-md-4 text-right">
                                                 <div style="background: rgba(255,255,255,0.2); border-radius: 30px; padding: 12px 24px; display: inline-block;">
                                                     <i class="flaticon2-protected" style="color: white; font-size: 1.2rem;"></i>
-                                                    <span style="color: white; font-weight: 600; font-size: 1rem; margin-left: 8px;">Sesi�n Activa</span>
+                                                    <span style="color: white; font-weight: 600; font-size: 1rem; margin-left: 8px;">Sesión Activa</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -114,7 +114,7 @@
                                         </div>
                                     </div>
 
-                                    <!-- �rea de vouchers -->
+                                    <!-- Área de vouchers -->
                                     <div id="area_vouchers" style="display: none;">
                                         <div class="mb-4" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
                                             <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 1.5rem 2rem;">
@@ -125,7 +125,7 @@
                                             </div>
                                             <div style="padding: 2rem;">
                                                 <div id="contenido_vouchers">
-                                                    <!-- Los vouchers se cargar�n aqu� din�micamente -->
+                                                    <!-- Los vouchers se cargarán aquí dinámicamente -->
                                                 </div>
                                             </div>
                                         </div>
@@ -166,14 +166,14 @@
     </div>
 
     <script>
-        // Esperar a que jQuery est� completamente cargado
+        // Esperar a que jQuery está completamente cargado
         window.addEventListener('load', function() {
             if (typeof jQuery === 'undefined') {
-                console.error('jQuery no est� cargado!');
+                console.error('jQuery no está cargado!');
                 return;
             }
 
-            // Cargar el script despu�s de que jQuery est� disponible
+            // Cargar el script después de que jQuery está disponible
             var script = document.createElement('script');
             script.src = 'vistas/recursos/assets/js/scripts/historial-vouchers-estudiante.js?v=<?php echo time(); ?>';
             document.body.appendChild(script);
@@ -268,7 +268,7 @@
             }
         }
 
-        /* Animaci�n de carga */
+        /* Animación de carga */
         @keyframes fadeIn {
             from {
                 opacity: 0;

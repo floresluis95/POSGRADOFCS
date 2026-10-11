@@ -65,13 +65,13 @@
                                         </h3>
                                     </div>
                                 </div>
-                                <div class="kt-portlet__body" style="padding: 2.5rem; background: #f8f9fa;">
+                                <div class="kt-portlet__body ordenes-cuerpo">
 
                                     <div class="alert alert-light mb-4" style="border-left: 4px solid #1e3c72; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.06);">
-                                        <i class="flaticon2-information text-primary"></i>
-                                        Aquí encuentra todas sus órdenes de pago generadas (matrícula, cuotas del programa y pago de
-                                        módulos). Presione <strong>Imprimir</strong> para descargar el comprobante que debe presentar
-                                        en el banco.
+                                        <div class="alert-icon"><i class="flaticon2-information text-primary"></i></div>
+                                        <div class="alert-text">
+                                            Presione <strong>Imprimir</strong> para descargar el comprobante que debe presentar en el banco.
+                                        </div>
                                     </div>
 
                                     <div id="ordenes_cargando" class="text-center" style="padding: 3rem;">
@@ -203,6 +203,13 @@
             font-weight: 600;
         }
 
+        .btn-imprimir-orden {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
         .btn-imprimir-orden:hover {
             color: white;
             opacity: 0.9;
@@ -210,6 +217,86 @@
 
         #tabla_ordenes_pago tbody td {
             vertical-align: middle;
+        }
+
+        #tabla_ordenes_pago td[data-label="Monto"],
+        #tabla_ordenes_pago td[data-label="Generada"],
+        #tabla_ordenes_pago td[data-label="Fecha límite"] {
+            white-space: nowrap;
+        }
+
+        .ordenes-cuerpo {
+            padding: 2rem;
+            background: #f8f9fa;
+        }
+
+        /* Tablet y celular: cada orden es una tarjeta con la etiqueta de cada dato a
+           la izquierda, así no hace falta desplazarse de lado para ver el botón */
+        @media (max-width: 767px) {
+            .ordenes-cuerpo {
+                padding: 1rem;
+            }
+
+            #tabla_ordenes_pago thead {
+                display: none;
+            }
+
+            #tabla_ordenes_pago,
+            #tabla_ordenes_pago tbody,
+            #tabla_ordenes_pago tr,
+            #tabla_ordenes_pago td {
+                display: block;
+                width: 100%;
+            }
+
+            #tabla_ordenes_pago tr {
+                background: #fff;
+                border-radius: 10px;
+                box-shadow: 0 1px 6px rgba(30, 60, 114, 0.08);
+                margin-bottom: 12px;
+                padding: 6px 14px 12px;
+            }
+
+            #tabla_ordenes_pago tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                border: none;
+                border-bottom: 1px solid #f0f1f5;
+                padding: 8px 0;
+                text-align: right !important;
+            }
+
+            #tabla_ordenes_pago tbody td::before {
+                content: attr(data-label);
+                flex-shrink: 0;
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: #7e8299;
+                text-align: left;
+            }
+
+            #tabla_ordenes_pago tbody td[colspan] {
+                display: block;
+                text-align: center !important;
+            }
+
+            #tabla_ordenes_pago tbody td[colspan]::before,
+            #tabla_ordenes_pago td.celda-accion::before {
+                content: none;
+            }
+
+            #tabla_ordenes_pago td.celda-accion {
+                border-bottom: none;
+                padding-top: 12px;
+            }
+
+            #tabla_ordenes_pago td.celda-accion .btn-imprimir-orden {
+                width: 100%;
+                justify-content: center;
+                padding: 10px 16px;
+            }
         }
     </style>
 

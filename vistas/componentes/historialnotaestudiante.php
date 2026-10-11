@@ -61,92 +61,46 @@
                                 <div class="kt-portlet__head">
                                     <div class="kt-portlet__head-label">
                                         <h3 class="kt-portlet__head-title">
-                                            Identificación y Consulta de Notas
+                                            Consulta de calificaciones
                                         </h3>
                                     </div>
                                 </div>
-                                <div class="kt-portlet__body" style="padding: 2.5rem; background: #f8f9fa;">
+                                <div class="kt-portlet__body hn-cuerpo">
 
-                                    <!-- Información del estudiante -->
-                                    <div class="mb-4" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3);">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-8">
-                                                <div style="display: flex; align-items: center; margin-bottom: 1rem;">
-                                                    <div style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; margin-right: 1.5rem;">
-                                                        <i class="flaticon2-user" style="font-size: 2rem; color: white;"></i>
-                                                    </div>
-                                                    <div>
-                                                        <h4 class="mb-1" style="color: white; font-weight: 700; font-size: 1.5rem;">
-                                                            <span id="estudiante_nombre">Estudiante</span>
-                                                        </h4>
-                                                        <p class="mb-0" style="color: rgba(255,255,255,0.8); font-size: 1rem;">
-                                                            <i class="flaticon2-line-chart"></i> Acceda a sus calificaciones por programa académico
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4 text-right">
-                                                <div style="background: rgba(255,255,255,0.2); border-radius: 30px; padding: 12px 24px; display: inline-block;">
-                                                    <i class="flaticon2-protected" style="color: white; font-size: 1.2rem;"></i>
-                                                    <span style="color: white; font-weight: 600; font-size: 1rem; margin-left: 8px;">Sesión Activa</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <!-- Selector de programa (si tiene uno solo, se elige solo) -->
+                                    <div class="form-group mb-4" id="grupo_programa">
+                                        <label for="select_programa_calificaciones" class="hn-etiqueta">Programa</label>
+                                        <select class="form-control select2-uniforme" id="select_programa_calificaciones" name="select_programa_calificaciones" disabled>
+                                            <option value="">Cargando programas...</option>
+                                        </select>
                                     </div>
 
-                                    <!-- Selector de programa -->
-                                    <div style="background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 2rem;">
-                                        <div class="row align-items-center">
-                                            <div class="col-lg-3">
-                                                <label class="mb-0" style="font-weight: 700; font-size: 1.1rem; color: #464E5F;">
-                                                    <i class="flaticon2-layers-1" style="color: #1e3c72; font-size: 1.5rem; margin-right: 10px;"></i>
-                                                    Programa:
-                                                </label>
-                                            </div>
-                                            <div class="col-lg-9">
-                                                <select class="form-control select2-uniforme" id="select_programa_calificaciones" name="select_programa_calificaciones" disabled>
-                                                    <option value="">Cargando programas...</option>
-                                                </select>
-                                                <small class="form-text" style="color: #B5B5C3; margin-top: 8px;">
-                                                    <i class="flaticon2-information"></i> Seleccione un programa para visualizar sus calificaciones
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Tabla de calificaciones -->
-                                    <div class="mb-4" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
-                                        <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center;">
-                                            <h3 style="color: white; font-weight: 700; margin: 0; font-size: 1.4rem;">
-                                                <i class="flaticon2-line-chart" style="font-size: 1.8rem; margin-right: 10px;"></i>
-                                                Detalle de Calificaciones Finales
-                                            </h3>
-                                            <button class="btn btn-light btn-sm" id="btn_descargar_pdf" style="display: none; border-radius: 25px; padding: 10px 24px; font-weight: 600; box-shadow: 0 4px 15px rgba(255,255,255,0.3);">
+                                    <!-- Calificaciones finales -->
+                                    <div class="hn-seccion">
+                                        <div class="hn-seccion-titulo">
+                                            <span>Calificaciones finales</span>
+                                            <button class="btn btn-outline-secondary btn-sm" id="btn_descargar_pdf" style="display: none;">
                                                 <i class="flaticon2-download"></i> Descargar PDF
                                             </button>
                                         </div>
-                                        <div style="padding: 2rem;">
-                                            <div class="table-responsive">
-                                                <table class="table table-hover mb-0" id="tabla_calificaciones_finales">
-                                                    <thead>
-                                                        <tr style="background: #f8f9fa; border-bottom: 2px solid #1e3c72;">
-                                                            <th width="30%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">MÓDULO / ASIGNATURA</th>
-                                                            <th width="25%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">DOCENTE</th>
-                                                            <th class="text-center" width="15%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">NOTA OBTENIDA</th>
-                                                            <th class="text-center" width="15%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">PONDERACIÓN</th>
-                                                            <th class="text-center" width="15%" style="padding: 1rem; font-weight: 700; color: #464E5F; font-size: 0.9rem;">ESTADO</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="contenido_calificaciones">
-                                                        <tr>
-                                                            <td colspan="5" class="text-center" style="padding: 3rem; color: #B5B5C3;">
-                                                                <i class="flaticon2-list-3" style="font-size: 3rem; color: #E4E6EF;"></i>
-                                                                <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 500;">Seleccione un programa en el menú superior</p>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                        <div class="calificaciones-cuerpo">
+                                            <div id="resumen_calificaciones"></div>
+                                            <table class="table mb-0" id="tabla_calificaciones_finales">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Módulo</th>
+                                                        <th>Docente</th>
+                                                        <th class="text-center">Nota</th>
+                                                        <th class="text-center">Ponderación</th>
+                                                        <th class="text-center">Estado</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="contenido_calificaciones">
+                                                    <tr>
+                                                        <td colspan="5" class="hn-vacio">Elija un programa para ver sus calificaciones.</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
 
@@ -171,142 +125,212 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="vistas/recursos/assets/js/scripts/historial-estudiante.js?v=<?php echo time(); ?>"></script>
     <style>
-        /* Select2 con el mismo alto/borde que el select nativo que reemplaza
-           en esta página (el override global del sistema usa el alto estándar
-           de Bootstrap, más bajo que este). display:flex + align-items:center
-           centra el texto sin depender de un line-height calculado a mano
-           (que quedaba mal y corría la etiqueta hacia abajo). */
-        .select2-container--default .select2-selection--single {
-            height: 50px !important;
-            display: flex !important;
+        .hn-cuerpo {
+            padding: 2rem;
+            background: #f8f9fa;
+        }
+
+        .hn-etiqueta {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #56637a;
+            margin-bottom: 4px;
+        }
+
+        .hn-seccion {
+            background: #fff;
+            border: 1px solid #E4E6EF;
+            border-radius: 8px;
+        }
+
+        .hn-seccion-titulo {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            border: 2px solid #E4E6EF !important;
-            border-radius: 10px !important;
-            padding: 0 !important;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: normal !important;
-            /* El bundle del tema le pone padding vertical propio a este
-               elemento; hay que anular los cuatro lados (no solo left/right)
-               para que no se siga sumando y el texto no se salga de la caja. */
-            padding: 0 20px 0 16px !important;
-            font-size: 1rem;
-            font-weight: 500;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            /* El bundle del tema posiciona esta flecha con "top: 50%" sin
-               transform, así que queda corrida hacia arriba; top+translateY(-50%)
-               la centra sin importar el alto real de la caja. */
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            height: auto !important;
-            right: 10px !important;
-        }
-    </style>
-
-    <style>
-        /* Estilos personalizados mejorados */
-        .table tbody tr {
-            border-bottom: 1px solid #f0f0f0;
-            transition: all 0.3s ease;
-        }
-
-        .table tbody tr:hover {
-            background-color: #f8f9fa;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        /* Estilos para el select */
-        .form-control:focus {
-            border-color: #1e3c72;
-            box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
-        }
-
-        /* Animación para las filas */
-        tbody tr {
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Botón de descarga */
-        #btn_descargar_pdf {
-            transition: all 0.3s ease;
-        }
-
-        #btn_descargar_pdf:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(30, 60, 114, 0.4) !important;
-        }
-
-        /* Badge de estado */
-        .badge-estado {
-            padding: 8px 16px;
-            border-radius: 20px;
+            gap: 12px;
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid #E4E6EF;
             font-weight: 600;
             font-size: 0.85rem;
             text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #464E5F;
         }
 
-        .badge-aprobado {
-            background: linear-gradient(135deg, #1e7145 0%, #27ae60 100%);
-            color: white;
+        .calificaciones-cuerpo {
+            padding: 1rem 1.25rem;
         }
 
-        .badge-reprobado {
-            background: linear-gradient(135deg, #c0392b 0%, #dc3545 100%);
-            color: white;
+        /* Resumen: una franja con los datos separados por líneas finas */
+        .hn-resumen {
+            display: flex;
+            border: 1px solid #eef0f5;
+            border-radius: 6px;
+            margin-bottom: 1rem;
         }
 
-        .badge-pendiente {
-            background: linear-gradient(135deg, #b7791f 0%, #d4a017 100%);
-            color: white;
+        .hn-resumen-dato {
+            flex: 1;
+            padding: 0.6rem 0.75rem;
+            text-align: center;
+            border-left: 1px solid #eef0f5;
         }
 
-        /* Nota destacada */
-        .nota-destacada {
-            font-size: 1.3rem;
-            font-weight: 700;
-            padding: 8px 16px;
-            border-radius: 10px;
-            display: inline-block;
+        .hn-resumen-dato:first-child {
+            border-left: none;
         }
 
-        .nota-aprobado {
-            background: #e8f5f3;
-            color: #1e7145;
+        .hn-resumen-dato span {
+            display: block;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #7e8299;
         }
 
-        .nota-reprobado {
-            background: #fee5ed;
-            color: #c0392b;
+        .hn-resumen-dato strong {
+            font-size: 1.1rem;
+            color: #464E5F;
         }
 
-        /* Spinner de carga */
-        .kt-spinner {
-            width: 3rem;
-            height: 3rem;
+        #tabla_calificaciones_finales thead th {
+            border-top: none;
+            border-bottom: 1px solid #E4E6EF;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #7e8299;
+            white-space: nowrap;
         }
 
-        /* Mejorar tbody */
-        tbody td {
-            padding: 1.2rem 1rem;
+        #tabla_calificaciones_finales tbody td {
+            padding: 0.6rem 0.75rem;
             vertical-align: middle;
+            font-size: 0.88rem;
+            color: #464E5F;
+            border-top: 1px solid #f3f4f8;
         }
 
-        /* Fondo del body */
-        body {
-            background: #f8f9fa;
+        .hn-modulo {
+            font-weight: 600;
+        }
+
+        .hn-codigo {
+            display: block;
+            font-size: 0.75rem;
+            color: #9aa0ac !important;
+        }
+
+        .hn-nota {
+            font-weight: 700;
+        }
+
+        .hn-nota-aprobado { color: #1e7145; }
+        .hn-nota-reprobado { color: #b02a1e; }
+
+        .hn-estado {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 4px;
+            border: 1px solid currentColor;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .hn-estado-aprobado { color: #1e7145; }
+        .hn-estado-reprobado { color: #b02a1e; }
+
+        .hn-vacio {
+            text-align: center;
+            color: #9aa0ac;
+            padding: 1.5rem !important;
+        }
+
+        /* Celular: resumen de 2 en 2 y cada módulo como tarjeta, con la etiqueta de
+           cada dato a la izquierda (sin desplazarse de lado) */
+        @media (max-width: 767px) {
+            .hn-cuerpo {
+                padding: 1rem;
+            }
+
+            .calificaciones-cuerpo {
+                padding: 0.75rem;
+            }
+
+            .hn-resumen {
+                flex-wrap: wrap;
+            }
+
+            .hn-resumen-dato {
+                flex: 1 1 50%;
+                border-left: none;
+                border-top: 1px solid #eef0f5;
+            }
+
+            .hn-resumen-dato:nth-child(-n+2) {
+                border-top: none;
+            }
+
+            .hn-resumen-dato:nth-child(even) {
+                border-left: 1px solid #eef0f5;
+            }
+
+            #tabla_calificaciones_finales thead {
+                display: none;
+            }
+
+            #tabla_calificaciones_finales,
+            #tabla_calificaciones_finales tbody,
+            #tabla_calificaciones_finales tr,
+            #tabla_calificaciones_finales td {
+                display: block;
+                width: 100%;
+            }
+
+            #tabla_calificaciones_finales tbody tr {
+                border: 1px solid #eef0f5;
+                border-radius: 6px;
+                margin-bottom: 10px;
+                padding: 2px 12px;
+            }
+
+            #tabla_calificaciones_finales tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                padding: 6px 0;
+                text-align: right !important;
+            }
+
+            #tabla_calificaciones_finales tbody td::before {
+                content: attr(data-label);
+                flex-shrink: 0;
+                font-size: 0.72rem;
+                font-weight: 600;
+                color: #7e8299;
+            }
+
+            #tabla_calificaciones_finales tbody td.celda-modulo,
+            #tabla_calificaciones_finales tbody td[colspan] {
+                display: block;
+                border-top: none;
+                text-align: left !important;
+            }
+
+            #tabla_calificaciones_finales tbody td[colspan] {
+                text-align: center !important;
+            }
+
+            #tabla_calificaciones_finales tbody td.celda-modulo::before,
+            #tabla_calificaciones_finales tbody td[colspan]::before {
+                content: none;
+            }
         }
     </style>
 
