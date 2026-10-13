@@ -47,6 +47,10 @@ class InscripcionModuloModelos
                     p.NumeroTramite,
                     p.Costo as CostoPrograma,
                     p.Sede,
+                    -- Plan Grupal: grupo armado en Pre-Registro (NULL si no es grupal)
+                    (SELECT pp.CodigoGrupo FROM pagoprograma pp
+                     WHERE pp.idInscripcion = ep.idInscripcion AND pp.Estado != 'ANULADO'
+                     ORDER BY pp.IdPagoPrograma DESC LIMIT 1) AS CodigoGrupo,
                     -- Solo cuentan los requisitos obligatorios del grado académico del programa
                     (SELECT COUNT(*) FROM requisito r WHERE r.Estado = 1 AND r.Obligatorio = 1
                      AND " . RequisitoModelo::CondicionGrado() . ") AS RequisitosTotal,

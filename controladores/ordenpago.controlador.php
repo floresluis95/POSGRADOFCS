@@ -153,6 +153,8 @@ class OrdenPagoControladores
                 "PlanPropuestoTipo" => $planPropuestoTipo,
                 "PlanPropuestoNumeroCuotas" => $planPropuestoNumeroCuotas,
                 "PlanPropuestoPorcentaje" => $planPropuestoPorcentaje,
+                // Plan Grupal: código de un grupo ya existente del programa; vacío = grupo nuevo
+                "PlanPropuestoCodigoGrupo" => isset($_POST['codigoGrupo']) ? trim($_POST['codigoGrupo']) : '',
                 "MatriculaExonerada" => $matriculaExonerada
             );
 

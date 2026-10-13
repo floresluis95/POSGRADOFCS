@@ -153,12 +153,8 @@ switch ($accion) {
         registrarPlanPagoPrograma();
         break;
 
-    case 'listarMatriculadosSinPlan':
-        listarMatriculadosSinPlan();
-        break;
-
-    case 'registrarPlanGrupal':
-        registrarPlanGrupal();
+    case 'listarGruposPrograma':
+        listarGruposPrograma();
         break;
 
     case 'misOrdenesPago':
@@ -1414,7 +1410,8 @@ function registrarFirmante()
         return;
     }
 
-    $resultado = FirmanteModelos::RegistrarFirmanteModelo(htmlspecialchars(trim($_POST['nombre'])));
+    // El modelo lo pasa a MAYÚSCULAS y lo escapa
+    $resultado = FirmanteModelos::RegistrarFirmanteModelo($_POST['nombre']);
     echo json_encode([
         'success' => $resultado['status'] === 'exitoso',
         'mensaje' => $resultado['mensaje'] ?? '',
@@ -1572,43 +1569,12 @@ function registrarPlanPagoPrograma()
 }
 
 /**
- * Listar estudiantes matriculados sin plan de pago del programa aún (candidatos a un Plan Grupal)
+ * Plan Grupal: grupos ya armados de un programa (Pre-Registro elige a cuál se suma el estudiante)
  */
-function listarMatriculadosSinPlan()
+function listarGruposPrograma()
 {
-    $programaID = !empty($_POST['programaID']) ? (int)$_POST['programaID'] : null;
-    $lista = PagoProgramaModelos::ListarMatriculadosSinPlanModelo($programaID);
-    echo json_encode(['success' => true, 'matriculados' => $lista]);
-}
-
-/**
- * Registrar un Plan Grupal para varios estudiantes matriculados seleccionados a la vez
- */
-function registrarPlanGrupal()
-{
-    if (empty($_POST['idsInscripcion']) || !isset($_POST['porcentajeDescuento'])) {
-        echo json_encode(['success' => false, 'mensaje' => 'Faltan datos requeridos del plan grupal']);
-        return;
-    }
-
-    $ids = json_decode($_POST['idsInscripcion'], true);
-    if (!is_array($ids) || count($ids) < 2) {
-        echo json_encode(['success' => false, 'mensaje' => 'Seleccione al menos 2 estudiantes']);
-        return;
-    }
-
-    $responsable = OrdenPagoModelos::ResponsableSesion();
-
-    $resultado = PagoProgramaModelos::RegistrarPlanGrupalModelo(
-        $ids,
-        floatval($_POST['porcentajeDescuento']),
-        $responsable
-    );
-
-    echo json_encode([
-        'success' => $resultado['status'] === 'exitoso',
-        'mensaje' => $resultado['mensaje']
-    ]);
+    $programaID = !empty($_POST['programaID']) ? (int)$_POST['programaID'] : 0;
+    echo json_encode(['success' => true, 'grupos' => OrdenPagoModelos::ListarGruposProgramaModelo($programaID)]);
 }
 
 /**

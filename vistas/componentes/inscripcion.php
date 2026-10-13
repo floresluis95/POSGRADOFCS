@@ -335,6 +335,20 @@ kt-aside--fixed kt-page--loading">
 
 #modalValidarVoucher .form-control-sm { height: 38px; border-radius: 8px; font-size: 13px; }
 
+/* Resumen que se confirma antes de inscribir (swal): con scroll propio para que
+   los botones no queden fuera de la pantalla */
+.in-swal-resumen { width: 560px; max-width: 94vw; }
+.in-swal-resumen .swal-title { font-size: 20px; padding-top: 18px; }
+.in-swal-resumen .swal-content { max-height: 62vh; overflow-y: auto; margin-top: 12px; }
+.in-swal-resumen .swal-button--confirm { background: #1e3c72; }
+.in-swal-resumen .swal-button--confirm:not([disabled]):hover { background: #16305c; }
+.in-resumen { width: 100%; font-size: 13px; text-align: left; border-collapse: collapse; }
+.in-resumen th, .in-resumen td { padding: 6px 8px; border-bottom: 1px solid #eef2f7; vertical-align: top; }
+.in-resumen th { width: 38%; color: #64748b; font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .3px; }
+.in-resumen td { color: #1e293b; }
+.in-resumen-pendiente { color: #b45309; }
+.in-resumen-foto { display: block; max-width: 100%; max-height: 160px; margin: 12px auto 0; border: 1px solid #e2e8f0; border-radius: 8px; }
+
 
 @media (max-width: 767.98px) {
     .in-card-head { flex-direction: column; align-items: flex-start; }
@@ -753,8 +767,22 @@ kt-aside--fixed kt-page--loading">
       // SELECCIONAR UN PREREGISTRO (muestra el panel de validación)
       // ============================================
       $(document).on('click', '.btn-seleccionar-preregistro', function() {
-          const id = $(this).data('id');
+          seleccionarPreregistro($(this).data('id'));
+      });
 
+      // Desde Pre-Registro (botón "Validar voucher"): inscripcion?orden=ID abre la
+      // validación de esa solicitud directamente, sin buscarla.
+      const ordenDesdeUrl = parseInt(new URLSearchParams(window.location.search).get('orden'), 10);
+      if (ordenDesdeUrl > 0) {
+          seleccionarPreregistro(ordenDesdeUrl);
+          // Se quita de la URL para que al recargar no se vuelva a abrir
+          window.history.replaceState(null, '', window.location.pathname);
+      }
+
+      // C.I. del preregistro abierto: al inscribir se abre Matriculados filtrado por él
+      let ciSeleccionado = '';
+
+      function seleccionarPreregistro(id) {
           $.ajax({
               url: 'ajax/ordenpago.ajax.php',
               type: 'POST',
@@ -770,6 +798,7 @@ kt-aside--fixed kt-page--loading">
                   const nombreCompleto = ((p.Apaterno || '') + ' ' + (p.Amaterno || '') + ' ' + (p.Nombre || '')).trim();
 
                   $('#detalleIdOrdenPago').val(p.IdOrdenPago);
+                  ciSeleccionado = p.Ci || '';
                   $('#detalleNombre').text(nombreCompleto);
                   $('#detalleCi').text(p.CiCompleto || '');
                   $('#detallePrograma').text(p.NombrePrograma || '');
@@ -829,7 +858,7 @@ kt-aside--fixed kt-page--loading">
                   swal('Error', 'No se pudo cargar el preregistro', 'error');
               }
           });
-      });
+      }
 
       // Volver a la búsqueda
       $('#btnBuscarOtro').on('click', function() {
@@ -913,6 +942,75 @@ kt-aside--fixed kt-page--loading">
               return;
           }
 
+          const btnSubmit = $(this).find('button[type="submit"]');
+
+          // Antes de guardar se muestra el detalle de lo que se va a registrar
+          // (la inscripción no se puede deshacer)
+          swal({
+              title: '¿Inscribir al estudiante?',
+              content: resumenInscripcion(sinPago, numeroVoucher, fechaInscripcion),
+              className: 'in-swal-resumen',
+              closeOnClickOutside: false,
+              buttons: {
+                  cancel: { text: 'Revisar', value: false, visible: true },
+                  confirm: { text: 'Sí, inscribir', value: true }
+              }
+          }).then(function(confirmado) {
+              if (confirmado) {
+                  enviarInscripcion(idOrdenPago, numeroVoucher, fechaInscripcion, sinPago, archivoFoto, btnSubmit);
+              }
+          });
+      });
+
+      // Detalle que se muestra para confirmar: lo cargado del preregistro y lo
+      // llenado en el formulario
+      function resumenInscripcion(sinPago, numeroVoucher, fechaInscripcion) {
+          const fila = function(etiqueta, valorHtml) {
+              return '<tr><th>' + etiqueta + '</th><td>' + valorHtml + '</td></tr>';
+          };
+          const partesFecha = fechaInscripcion.split('-');
+          const cuenta = escaparHtml($('#detalleCuentaNumero').text()) +
+              ($('#detalleCuentaDatos').text() ? ' <small>(' + escaparHtml($('#detalleCuentaDatos').text()) + ')</small>' : '');
+
+          let html = '<table class="in-resumen">' +
+              fila('Estudiante', escaparHtml($('#detalleNombre').text())) +
+              fila('C.I.', escaparHtml($('#detalleCi').text())) +
+              fila('Programa', escaparHtml($('#detallePrograma').text()) + ' (' + escaparHtml($('#detalleCodigo').text()) + ')') +
+              fila('Plan', escaparHtml($('#planPropuestaInfo').text().trim()));
+
+          if (sinPago) {
+              html += fila('Matrícula', 'Exonerada (sin voucher)');
+          } else {
+              html += fila('Monto', 'Bs. ' + escaparHtml($('#detalleMonto').text())) +
+                      fila('Cuenta', cuenta) +
+                      fila('N° de voucher', '<strong>' + escaparHtml(numeroVoucher) + '</strong>');
+          }
+          html += fila('Fecha', escaparHtml(partesFecha[2] + '/' + partesFecha[1] + '/' + partesFecha[0]));
+
+          const $requisitos = $('#listaRequisitosInscripcion .chk-requisito');
+          if ($requisitos.length) {
+              const nombreRequisito = function(chk) {
+                  return escaparHtml($(chk).closest('label').find('span').clone().children('small').remove().end().text().trim());
+              };
+              const entregados = $requisitos.filter(':checked').map(function() { return nombreRequisito(this); }).get();
+              const pendientes = $requisitos.not(':checked').map(function() { return nombreRequisito(this); }).get();
+              html += fila('Requisitos entregados', entregados.length ? entregados.join('<br>') : '<em>Ninguno</em>');
+              if (pendientes.length) {
+                  html += fila('Quedan pendientes', '<span class="in-resumen-pendiente">' + pendientes.join('<br>') + '</span>');
+              }
+          }
+          html += '</table>';
+
+          if (!sinPago && $('#voucherFotoPreviewImg').attr('src')) {
+              html += '<img class="in-resumen-foto" src="' + $('#voucherFotoPreviewImg').attr('src') + '" alt="Voucher">';
+          }
+
+          const contenedor = document.createElement('div');
+          contenedor.innerHTML = html;
+          return contenedor;
+      }
+
+      function enviarInscripcion(idOrdenPago, numeroVoucher, fechaInscripcion, sinPago, archivoFoto, btnSubmit) {
           const formData = new FormData();
           formData.append('accion', 'validarVoucherMatricula');
           formData.append('idOrdenPago', idOrdenPago);
@@ -929,7 +1027,6 @@ kt-aside--fixed kt-page--loading">
               formData.append('fotoVoucher', archivoFoto);
           }
 
-          const btnSubmit = $(this).find('button[type="submit"]');
           btnSubmit.prop('disabled', true);
 
           $.ajax({
@@ -940,22 +1037,21 @@ kt-aside--fixed kt-page--loading">
               contentType: false,
               dataType: 'json',
               success: function(resp) {
-                  btnSubmit.prop('disabled', false);
-
                   if (resp.success) {
+                      // El botón queda deshabilitado: se pasa a Matriculados, filtrado
+                      // por el C.I. del estudiante recién inscrito
                       swal({
-                          title: '¡Voucher validado!',
-                          text: 'El estudiante quedó inscrito formalmente en el programa y su plan de pago quedó CONFIRMADO.',
+                          title: '¡Estudiante inscrito!',
+                          text: 'Quedó inscrito formalmente en el programa y su plan de pago quedó CONFIRMADO. Abriendo Matriculados...',
                           icon: 'success',
                           buttons: false,
-                          timer: 2200
+                          closeOnClickOutside: false,
+                          timer: 2000
                       }).then(function() {
-                          $('#panelDetalle').slideUp();
-                          $('#pasoValidar').removeClass('active');
-                          $('#pasoBuscar').addClass('active');
-                          $('#buscarTermino').val('').focus();
+                          window.location.href = 'matriculados' + (ciSeleccionado ? '?buscar=' + encodeURIComponent(ciSeleccionado) : '');
                       });
                   } else {
+                      btnSubmit.prop('disabled', false);
                       swal('Error', resp.mensaje || 'No se pudo validar el voucher', 'error');
                   }
               },
@@ -964,7 +1060,7 @@ kt-aside--fixed kt-page--loading">
                   swal('Error', 'No se pudo validar el voucher', 'error');
               }
           });
-      });
+      }
 
       // ============================================
       // MODAL "VALIDAR VOUCHER DE MATRÍCULA": puramente de presentación. Todo

@@ -169,8 +169,19 @@ class OrdenPagoModelos
                     'CostoTotalPrograma' => $filaPrograma ? floatval($filaPrograma['Costo']) : 0,
                     'TipoPlan' => $tipoPlanFinal,
                     'NumeroCuotas' => $orden['PlanPropuestoNumeroCuotas'] ?? null,
-                    'PorcentajeDescuento' => $orden['PlanPropuestoPorcentaje'] ?? 0
+                    'PorcentajeDescuento' => $orden['PlanPropuestoPorcentaje'] ?? 0,
+                    'CodigoGrupo' => $orden['PlanPropuestoCodigoGrupo'] ?? null
                 ];
+            }
+
+            // Plan Grupal: CantidadInscritosGrupo = integrantes ya matriculados (con éste)
+            if (!empty($planPago['CodigoGrupo'])) {
+                $stmtCantidad = $pdo->prepare(
+                    "SELECT COUNT(*) FROM pagoprograma WHERE CodigoGrupo = :codigo AND Estado != 'ANULADO'"
+                );
+                $stmtCantidad->bindParam(":codigo", $planPago['CodigoGrupo'], PDO::PARAM_STR);
+                $stmtCantidad->execute();
+                $planPago['CantidadInscritosGrupo'] = (int)$stmtCantidad->fetchColumn() + 1;
             }
 
             if (!empty($planPago) && !empty($planPago['TipoPlan'])) {
@@ -182,6 +193,17 @@ class OrdenPagoModelos
                 if ($resultadoPlan['status'] !== 'exitoso') {
                     $pdo->rollBack();
                     return $resultadoPlan;
+                }
+
+                // Los demás integrantes del grupo quedan con la misma cantidad
+                if (!empty($planPago['CodigoGrupo'])) {
+                    $stmtGrupo = $pdo->prepare(
+                        "UPDATE pagoprograma SET CantidadInscritosGrupo = :cantidad
+                         WHERE CodigoGrupo = :codigo AND Estado != 'ANULADO'"
+                    );
+                    $stmtGrupo->bindParam(":cantidad", $planPago['CantidadInscritosGrupo'], PDO::PARAM_INT);
+                    $stmtGrupo->bindParam(":codigo", $planPago['CodigoGrupo'], PDO::PARAM_STR);
+                    $stmtGrupo->execute();
                 }
             }
 
@@ -288,6 +310,71 @@ class OrdenPagoModelos
             $porcentajeDescuento,
             $montoPagado
         );
+    }
+
+    /**
+     * Plan Grupal: ¿hay órdenes vigentes (no anuladas ni vencidas) del programa con este código de grupo?
+     * @return bool
+     */
+    private static function GrupoExisteEnPrograma($pdo, $codigoGrupo, $programaID)
+    {
+        $stmt = $pdo->prepare(
+            "SELECT 1 FROM ordenpago
+             WHERE PlanPropuestoCodigoGrupo = :codigo AND ProgramaID = :programaID
+             AND Estado IN ('PENDIENTE', 'CONFIRMADO') LIMIT 1"
+        );
+        $stmt->bindParam(":codigo", $codigoGrupo, PDO::PARAM_STR);
+        $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+        $stmt->execute();
+        return (bool)$stmt->fetchColumn();
+    }
+
+    /**
+     * Plan Grupal: código para un grupo nuevo del programa, legible y correlativo
+     * (GRUPO-<programa>-<n>). Cuenta también los grupos anulados para no repetir códigos.
+     * @return string
+     */
+    private static function SiguienteCodigoGrupo($pdo, $programaID)
+    {
+        $prefijo = 'GRUPO-' . (int)$programaID . '-';
+        $stmt = $pdo->prepare(
+            "SELECT MAX(CAST(SUBSTRING(PlanPropuestoCodigoGrupo, :largo) AS UNSIGNED))
+             FROM ordenpago WHERE PlanPropuestoCodigoGrupo LIKE :prefijo"
+        );
+        $stmt->bindValue(":largo", strlen($prefijo) + 1, PDO::PARAM_INT);
+        $stmt->bindValue(":prefijo", $prefijo . '%', PDO::PARAM_STR);
+        $stmt->execute();
+        return $prefijo . ((int)$stmt->fetchColumn() + 1);
+    }
+
+    /**
+     * Plan Grupal: grupos vigentes de un programa, con sus integrantes, para elegir en
+     * Pre-Registro a qué grupo se suma el estudiante.
+     * @param int $programaID
+     * @return array [['CodigoGrupo', 'Cantidad', 'Integrantes'], ...]
+     */
+    public static function ListarGruposProgramaModelo($programaID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT op.PlanPropuestoCodigoGrupo AS CodigoGrupo,
+                        COUNT(*) AS Cantidad,
+                        GROUP_CONCAT(CONCAT_WS(' ', e.Apaterno, e.Amaterno, e.Nombre)
+                                     ORDER BY e.Apaterno, e.Amaterno, e.Nombre SEPARATOR ', ') AS Integrantes
+                 FROM ordenpago op
+                 INNER JOIN estudiante e ON e.EstudianteID = op.EstudianteID
+                 WHERE op.ProgramaID = :programaID AND op.PlanPropuestoCodigoGrupo IS NOT NULL
+                 AND op.Estado IN ('PENDIENTE', 'CONFIRMADO')
+                 GROUP BY op.PlanPropuestoCodigoGrupo
+                 ORDER BY MIN(op.IdOrdenPago)"
+            );
+            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ListarGruposProgramaModelo: " . $e->getMessage());
+            return [];
+        }
     }
 
     /**
@@ -443,19 +530,34 @@ class OrdenPagoModelos
                 ? (int)$datos['PlanPropuestoNumeroCuotas']
                 : null;
 
+            // Plan Grupal: el grupo se arma aquí. Sin código = grupo nuevo; con código, tiene
+            // que ser un grupo ya existente del MISMO programa (no se mezclan programas).
+            $planCodigoGrupo = null;
+            if ($planTipo === 'GRUPAL') {
+                $codigoPedido = trim((string)($datos['PlanPropuestoCodigoGrupo'] ?? ''));
+                if ($codigoPedido === '') {
+                    $planCodigoGrupo = self::SiguienteCodigoGrupo($pdo, $datos['ProgramaID']);
+                } elseif (!self::GrupoExisteEnPrograma($pdo, $codigoPedido, $datos['ProgramaID'])) {
+                    $pdo->rollBack();
+                    return ['status' => 'error', 'mensaje' => 'El grupo elegido no existe o es de otro programa'];
+                } else {
+                    $planCodigoGrupo = $codigoPedido;
+                }
+            }
+
             // INSERTAR SOLO EN ORDENPAGO - NO tocar estudianteprograma
             $stmtOrden = $pdo->prepare(
                 "INSERT INTO ordenpago
                 (NumeroOrden, idInscripcion, EstudianteID, ProgramaID, ProgramaCuentaID,
                  MontoTotal, MontoDescuento, PorcentajeDescuento, MontoFinal,
                  PagoCompleto, CostoMatricula, FechaGeneracion, Observaciones,
-                 PlanPropuestoTipo, PlanPropuestoNumeroCuotas, PlanPropuestoPorcentaje,
+                 PlanPropuestoTipo, PlanPropuestoNumeroCuotas, PlanPropuestoPorcentaje, PlanPropuestoCodigoGrupo,
                  NombreFactura, NitCiFactura, ResponsableGeneracion, Firma, Estado)
                 VALUES
                 (:numeroOrden, NULL, :estudianteID, :programaID, :programaCuentaID,
                  :montoTotal, :montoDescuento, :porcentajeDescuento, :montoFinal,
                  :pagoCompleto, :costoMatricula, NOW(), :observaciones,
-                 :planTipo, :planNumeroCuotas, :planPorcentaje,
+                 :planTipo, :planNumeroCuotas, :planPorcentaje, :planCodigoGrupo,
                  :nombreFactura, :nitCiFactura, :responsable, :firma, 'PENDIENTE')"
             );
 
@@ -481,6 +583,7 @@ class OrdenPagoModelos
                 $stmtOrden->bindValue(":planNumeroCuotas", null, PDO::PARAM_NULL);
             }
             $stmtOrden->bindParam(":planPorcentaje", $planPorcentaje);
+            $stmtOrden->bindValue(":planCodigoGrupo", $planCodigoGrupo, $planCodigoGrupo === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
             $stmtOrden->bindParam(":nombreFactura", $datos['NombreFactura'], PDO::PARAM_STR);
             $stmtOrden->bindParam(":nitCiFactura", $datos['NitCiFactura'], PDO::PARAM_STR);
             $stmtOrden->bindParam(":responsable", $responsable, PDO::PARAM_STR);
@@ -636,6 +739,7 @@ class OrdenPagoModelos
                     op.MontoDescuento,
                     op.PlanPropuestoTipo,
                     op.PlanPropuestoPorcentaje,
+                    op.PlanPropuestoCodigoGrupo,
                     op.NombreFactura,
                     op.NitCiFactura,
                     op.ResponsableGeneracion,

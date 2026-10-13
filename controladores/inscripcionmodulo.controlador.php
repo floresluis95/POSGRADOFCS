@@ -50,6 +50,12 @@ class InscripcionModuloControladores
                 $tipoPago = '<span class="badge badge-warning" style="font-size: 11px; padding: 6px 12px;"><i class="fa fa-money"></i> SOLO MATRÍCULA</span>';
             }
 
+            // Plan Grupal: el grupo se arma en Pre-Registro; aquí solo se muestra
+            if (!empty($estudiante['CodigoGrupo'])) {
+                $tipoPago .= '<br><span class="badge badge-light mt-1" style="font-size: 10px;" title="Plan grupal"><i class="fa fa-users"></i> '
+                    . htmlspecialchars($estudiante['CodigoGrupo']) . '</span>';
+            }
+
             // Mostrar monto: si es pago completo y tiene montoPagado válido, mostrarlo, sino costomatricula
             $montoMostrar = $estudiante['costomatricula'];
             if ($pagoCompleto == 1 && $montoPagado > 0) {
@@ -86,7 +92,8 @@ class InscripcionModuloControladores
                 'porcentaje'    => $porcentajeDescuento > 0 ? rtrim(rtrim(number_format($porcentajeDescuento, 2), '0'), '.') : '',
                 'montoPagado'   => $montoPagado > 0 ? number_format($montoPagado, 2) : '',
                 'pagoCompleto'  => $pagoCompleto,
-                'voucher'       => $estudiante['nvauchermatricula'] ?? ''
+                'voucher'       => $estudiante['nvauchermatricula'] ?? '',
+                'grupo'         => $estudiante['CodigoGrupo'] ?? ''
             ];
 
             // Requisitos de matriculación entregados (obligatorios): abre la ventana "Requisitos"

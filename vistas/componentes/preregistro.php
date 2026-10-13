@@ -39,6 +39,7 @@ function PintarFilaPreregistro($pr)
     $html .= '<td class="text-center"><div class="acciones-preregistro">';
     $html .= '<button type="button" class="btn btn-accion btn-info btn-ver-detalle-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Ver Detalle"><i class="fa fa-eye"></i></button>';
     $html .= '<button type="button" class="btn btn-accion-texto btn-success btn-generar-orden" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Generar Orden de Pago"><i class="fa fa-file-invoice"></i> Generar Orden</button>';
+    $html .= '<a href="inscripcion?orden=' . (int)$pr['IdOrdenPago'] . '" class="btn btn-accion-texto btn-primary btn-validar-voucher" title="Validar el voucher en Inscripción"><i class="fa fa-check-circle"></i> Validar</a>';
     $html .= '<button type="button" class="btn btn-accion btn-warning btn-editar-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" data-pagocompleto="' . (int)($pr['pagoCompleto'] ?? 0) . '" title="Editar"><i class="fa fa-edit"></i></button>';
     $html .= '<button type="button" class="btn btn-accion btn-danger btn-anular-preregistro" data-id="' . (int)$pr['IdOrdenPago'] . '" title="Anular"><i class="fa fa-trash"></i></button>';
     $html .= '</div></td></tr>';
@@ -135,13 +136,20 @@ kt-aside--fixed kt-page--loading">
                   <input type="hidden" name="paginaRedirect" value="preregistro">
 
                   <!-- Punto de entrada del asistente: reemplaza el formulario largo en pantalla -->
-                  <div class="kt-portlet kt-portlet--height-fluid mb-3">
-                    <div class="kt-portlet__body py-3 d-flex align-items-center flex-wrap" style="gap: 12px;">
-                      <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#modalPasoEstudiante">
-                        <i class="fa fa-user-plus"></i> Nuevo Pre-Registro
-                      </button>
-                      <span class="text-muted small mb-0">Registre un nuevo estudiante y genere su orden de pago de matrícula.</span>
+                  <div class="pr-inicio">
+                    <div class="pr-inicio-texto">
+                      <div class="pr-inicio-titulo">Pre-Registro de matrícula</div>
+                      <p>Registre al estudiante y genere su orden de pago de matrícula en cuatro pasos.</p>
+                      <ol class="pr-inicio-pasos">
+                        <li><span>1</span> Estudiante</li>
+                        <li><span>2</span> Programa</li>
+                        <li><span>3</span> Orden de pago</li>
+                        <li><span>4</span> Confirmar</li>
+                      </ol>
                     </div>
+                    <button type="button" class="btn pr-inicio-boton" data-toggle="modal" data-target="#modalPasoEstudiante">
+                      <i class="fa fa-user-plus"></i> Nuevo Pre-Registro
+                    </button>
                   </div>
 
                   </form>
@@ -250,178 +258,200 @@ kt-aside--fixed kt-page--loading">
                   <!-- ============================================ -->
                   <div class="modal fade" id="modalPasoEstudiante" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false" aria-hidden="true">
                     <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
-                      <div class="modal-content">
+                      <div class="modal-content ficha-modal">
                         <div class="modal-header wizard-modal-header">
-                          <h5 class="modal-title text-white"><span class="wizard-step-badge">1</span> Datos del Estudiante</h5>
+                          <div>
+                            <div class="wizard-paso-texto">Pre-Registro · Paso 1 de 4</div>
+                            <h5 class="modal-title text-white">Datos del Estudiante</h5>
+                          </div>
                           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
                         </div>
                         <div class="modal-body">
 
-                          <!-- Búsqueda manual por CI -->
-                          <div class="d-flex align-items-end flex-wrap mb-2" style="gap: 10px;">
-                            <div class="form-group mb-0">
-                              <label class="small font-weight-bold mb-1">Buscar estudiante por CI</label>
-                              <input type="text" class="form-control form-control-sm" id="buscarPorCi"
-                                     style="max-width: 220px;" placeholder="Ingrese el CI..." maxlength="12">
+                          <!-- Búsqueda por CI: si existe se autocompletan sus datos; si no, se habilita el formulario para registrarlo -->
+                          <div class="ficha-busqueda">
+                            <label for="buscarPorCi" class="ficha-busqueda-titulo">Buscar estudiante por C.I.</label>
+                            <div class="d-flex align-items-center flex-wrap" style="gap: 10px;">
+                              <div class="input-group input-group-sm ficha-busqueda-campo">
+                                <input type="text" class="form-control" id="buscarPorCi" placeholder="Número de C.I." maxlength="12">
+                                <div class="input-group-append">
+                                  <button type="button" class="btn btn-primary" id="btnBuscarPorCi">
+                                    <i class="fa fa-search"></i> Buscar
+                                  </button>
+                                </div>
+                              </div>
+                              <button type="button" class="btn btn-sm btn-link ficha-enlace" id="btnLimpiarBusquedaCi">
+                                <i class="fa fa-undo"></i> Limpiar
+                              </button>
+                              <span id="estadoBusquedaEstudiante"></span>
                             </div>
-                            <button type="button" class="btn btn-sm btn-primary" id="btnBuscarPorCi">
-                              <i class="flaticon2-search"></i> Buscar
-                            </button>
-                            <button type="button" class="btn btn-sm btn-secondary" id="btnLimpiarBusquedaCi">
-                              <i class="flaticon2-reload"></i> Limpiar
-                            </button>
-                            <span id="estadoBusquedaEstudiante" class="ml-2"></span>
                           </div>
 
                           <!-- Datos del estudiante (se autocompletan si el CI ya existe; si no, se llenan aquí para registrarlo) -->
-                          <div id="datosEstudianteForm">
+                          <div id="datosEstudianteForm" class="ficha-form">
 
-                            <div class="row">
-                              <div class="col-md-3">
-                                <label for="inputCi" class="small font-weight-bold mb-1">C.I. <span class="text-danger">*</span></label>
-                                <input type="text" id="inputCi" name="Ci" form="formPreregistro" class="form-control form-control-sm"
-                                       placeholder="1234567" required pattern="[0-9]{6,12}" maxlength="12">
-                              </div>
-                              <div class="col-md-3">
-                                <label for="inputComplemento" class="small font-weight-bold mb-1">Complemento</label>
-                                <input type="text" id="inputComplemento" name="Complemento" form="formPreregistro"
-                                       class="form-control form-control-sm text-uppercase" pattern="[A-Za-z0-9]{1,5}">
-                              </div>
-                              <div class="col-md-3">
-                                <label for="selectExpedido" class="small font-weight-bold mb-1">Expedido <span class="text-danger">*</span></label>
-                                <select class="form-control form-control-sm" id="selectExpedido" name="Exp" form="formPreregistro" required>
-                                  <option value="" disabled selected>Seleccione...</option>
-                                  <option value="LP">LA PAZ</option>
-                                  <option value="CB">COCHABAMBA</option>
-                                  <option value="SC">SANTA CRUZ</option>
-                                  <option value="OR">ORURO</option>
-                                  <option value="PT">POTOSÍ</option>
-                                  <option value="CH">CHUQUISACA</option>
-                                  <option value="TJ">TARIJA</option>
-                                  <option value="BN">BENI</option>
-                                  <option value="PD">PANDO</option>
-                                  <option value="OTR">OTRO</option>
-                                </select>
-                              </div>
-                              <div class="col-md-3">
-                                <label for="fechaNacimiento" class="small font-weight-bold mb-1">Fecha Nacimiento <span class="text-danger">*</span></label>
-                                <input type="date" id="fechaNacimiento" name="FechaNacimiento" form="formPreregistro" class="form-control form-control-sm" required
-                                       max="<?php echo date('Y-m-d'); ?>"
-                                       min="<?php echo date('Y-m-d', strtotime('-100 years')); ?>">
-                              </div>
-                            </div>
-
-                            <div class="row mt-2">
-                              <div class="col-md-3">
-                                <label for="inputNombres" class="small font-weight-bold mb-1">Nombre(s) <span class="text-danger">*</span></label>
-                                <input type="text" id="inputNombres" name="Nombre" form="formPreregistro" class="form-control form-control-sm text-uppercase"
-                                       required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}">
-                              </div>
-                              <div class="col-md-3">
-                                <label for="apaterno" class="small font-weight-bold mb-1">Apellido Paterno <span class="text-danger">*</span></label>
-                                <input type="text" id="apaterno" name="Apaterno" form="formPreregistro" class="form-control form-control-sm text-uppercase" required>
-                              </div>
-                              <div class="col-md-3">
-                                <label for="amaterno" class="small font-weight-bold mb-1">Apellido Materno</label>
-                                <input type="text" id="amaterno" name="Amaterno" form="formPreregistro" class="form-control form-control-sm text-uppercase">
-                              </div>
-                              <div class="col-md-3">
-                                <label for="Edad" class="small font-weight-bold mb-1">Edad <span class="text-danger">*</span></label>
-                                <input type="number" id="Edad" name="Edad" form="formPreregistro" class="form-control form-control-sm" required>
-                              </div>
-                            </div>
-
-                            <div class="row mt-2">
-                              <div class="col-md-3">
-                                <label for="Lugarn" class="small font-weight-bold mb-1">Lugar de nacimiento <span class="text-danger">*</span></label>
-                                <select class="form-control form-control-sm" id="Lugarn" name="Lugarn" form="formPreregistro" required>
-                                  <option value="" disabled selected>Seleccione...</option>
-                                  <!-- El value va en MAYÚSCULAS porque así es como queda guardado en la BD
-                                       (el backend aplica mb_strtoupper() al registrar/editar el estudiante).
-                                       Si no coincide exactamente, el select no puede pre-seleccionar el
-                                       valor guardado al cargar los datos de un estudiante existente. -->
-                                  <option value="LA PAZ">LA PAZ</option>
-                                  <option value="COCHABAMBA">COCHABAMBA</option>
-                                  <option value="SANTA CRUZ">SANTA CRUZ</option>
-                                  <option value="ORURO">ORURO</option>
-                                  <option value="POTOSÍ">POTOSÍ</option>
-                                  <option value="CHUQUISACA">CHUQUISACA</option>
-                                  <option value="TARIJA">TARIJA</option>
-                                  <option value="BENI">BENI</option>
-                                  <option value="PANDO">PANDO</option>
-                                  <option value="OTRO">OTRO</option>
-                                </select>
-                              </div>
-                              <div class="col-md-3">
-                                <label for="emailInput" class="small font-weight-bold mb-1">Correo <span class="text-danger">*</span></label>
-                                <input type="email" id="emailInput" name="Correo" form="formPreregistro" class="form-control form-control-sm" required maxlength="100">
-                              </div>
-                              <div class="col-md-3">
-                                <label for="inputTelefono" class="small font-weight-bold mb-1">Teléfono</label>
-                                <input type="tel" id="inputTelefono" name="Telefono" form="formPreregistro" class="form-control form-control-sm" pattern="[0-9]{7,8}">
-                              </div>
-                              <div class="col-md-3">
-                                <label for="inputCelular" class="small font-weight-bold mb-1">Celular <span class="text-danger">*</span></label>
-                                <input type="tel" id="inputCelular" name="Celular" form="formPreregistro" class="form-control form-control-sm"
-                                       required pattern="[6-7][0-9]{7}">
-                              </div>
-                            </div>
-
-                            <div class="row mt-2">
-                              <div class="col-md-6">
-                                <label for="IdProfesion" class="small font-weight-bold mb-1">Profesión <span class="text-danger">*</span></label>
-                                <div class="input-group input-group-sm">
-                                  <select class="form-control form-control-sm" id="IdProfesion" name="IdProfesion" form="formPreregistro" required>
-                                    <option value="">Seleccione una profesión...</option>
-                                    <?php foreach ($listaProfesionesInicial as $prof): ?>
-                                      <option value="<?php echo (int)$prof['IdProfesion']; ?>"><?php echo htmlspecialchars($prof['NombreProfesion']); ?></option>
-                                    <?php endforeach; ?>
+                            <div class="ficha-seccion">
+                              <div class="ficha-seccion-titulo">Identificación</div>
+                              <div class="row">
+                                <div class="col-md-4 form-group">
+                                  <label for="inputCi">C.I. <span class="ficha-req">*</span></label>
+                                  <input type="text" id="inputCi" name="Ci" form="formPreregistro" class="form-control form-control-sm"
+                                         placeholder="1234567" required pattern="[0-9]{6,12}" maxlength="12">
+                                </div>
+                                <div class="col-md-4 form-group">
+                                  <label for="inputComplemento">Complemento</label>
+                                  <input type="text" id="inputComplemento" name="Complemento" form="formPreregistro"
+                                         class="form-control form-control-sm text-uppercase" pattern="[A-Za-z0-9]{1,5}">
+                                </div>
+                                <div class="col-md-4 form-group">
+                                  <label for="selectExpedido">Expedido <span class="ficha-req">*</span></label>
+                                  <select class="form-control form-control-sm" id="selectExpedido" name="Exp" form="formPreregistro" required>
+                                    <option value="" disabled selected>Seleccione...</option>
+                                    <option value="LP">LA PAZ</option>
+                                    <option value="CB">COCHABAMBA</option>
+                                    <option value="SC">SANTA CRUZ</option>
+                                    <option value="OR">ORURO</option>
+                                    <option value="PT">POTOSÍ</option>
+                                    <option value="CH">CHUQUISACA</option>
+                                    <option value="TJ">TARIJA</option>
+                                    <option value="BN">BENI</option>
+                                    <option value="PD">PANDO</option>
+                                    <option value="OTR">OTRO</option>
                                   </select>
-                                  <div class="input-group-append">
-                                    <button type="button" class="btn btn-success" id="btnNuevaProfesion" title="Agregar una profesión que no está en la lista">
-                                      <i class="fa fa-plus text-white"></i> Nueva
-                                    </button>
-                                  </div>
                                 </div>
                               </div>
-                              <div class="col-md-3">
-                                <label for="Trabajo" class="small font-weight-bold mb-1">Trabajo actual</label>
-                                <input type="text" id="Trabajo" name="Trabajo" form="formPreregistro" class="form-control form-control-sm text-uppercase" maxlength="100">
+                            </div>
+
+                            <div class="ficha-seccion">
+                              <div class="ficha-seccion-titulo">Datos personales</div>
+                              <div class="row">
+                                <div class="col-md-4 form-group">
+                                  <label for="inputNombres">Nombre(s) <span class="ficha-req">*</span></label>
+                                  <input type="text" id="inputNombres" name="Nombre" form="formPreregistro" class="form-control form-control-sm text-uppercase"
+                                         required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{2,50}">
+                                </div>
+                                <div class="col-md-4 form-group">
+                                  <label for="apaterno">Apellido paterno <span class="ficha-req">*</span></label>
+                                  <input type="text" id="apaterno" name="Apaterno" form="formPreregistro" class="form-control form-control-sm text-uppercase" required>
+                                </div>
+                                <div class="col-md-4 form-group">
+                                  <label for="amaterno">Apellido materno</label>
+                                  <input type="text" id="amaterno" name="Amaterno" form="formPreregistro" class="form-control form-control-sm text-uppercase">
+                                </div>
                               </div>
-                              <div class="col-md-3">
-                                <label for="direccionInput" class="small font-weight-bold mb-1">Dirección domiciliaria</label>
-                                <input type="text" id="direccionInput" name="Direccion" form="formPreregistro" class="form-control form-control-sm text-uppercase" maxlength="100">
+                              <div class="row">
+                                <div class="col-md-4 form-group">
+                                  <label for="fechaNacimiento">Fecha de nacimiento <span class="ficha-req">*</span></label>
+                                  <input type="date" id="fechaNacimiento" name="FechaNacimiento" form="formPreregistro" class="form-control form-control-sm" required
+                                         max="<?php echo date('Y-m-d'); ?>"
+                                         min="<?php echo date('Y-m-d', strtotime('-100 years')); ?>">
+                                </div>
+                                <div class="col-md-4 form-group">
+                                  <label for="Edad">Edad <span class="ficha-req">*</span></label>
+                                  <input type="number" id="Edad" name="Edad" form="formPreregistro" class="form-control form-control-sm" required>
+                                </div>
+                                <div class="col-md-4 form-group">
+                                  <label for="Lugarn">Lugar de nacimiento <span class="ficha-req">*</span></label>
+                                  <select class="form-control form-control-sm" id="Lugarn" name="Lugarn" form="formPreregistro" required>
+                                    <option value="" disabled selected>Seleccione...</option>
+                                    <!-- El value va en MAYÚSCULAS porque así es como queda guardado en la BD
+                                         (el backend aplica mb_strtoupper() al registrar/editar el estudiante).
+                                         Si no coincide exactamente, el select no puede pre-seleccionar el
+                                         valor guardado al cargar los datos de un estudiante existente. -->
+                                    <option value="LA PAZ">LA PAZ</option>
+                                    <option value="COCHABAMBA">COCHABAMBA</option>
+                                    <option value="SANTA CRUZ">SANTA CRUZ</option>
+                                    <option value="ORURO">ORURO</option>
+                                    <option value="POTOSÍ">POTOSÍ</option>
+                                    <option value="CHUQUISACA">CHUQUISACA</option>
+                                    <option value="TARIJA">TARIJA</option>
+                                    <option value="BENI">BENI</option>
+                                    <option value="PANDO">PANDO</option>
+                                    <option value="OTRO">OTRO</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div class="ficha-seccion">
+                              <div class="ficha-seccion-titulo">Contacto</div>
+                              <div class="row">
+                                <div class="col-md-4 form-group">
+                                  <label for="emailInput">Correo electrónico <span class="ficha-req">*</span></label>
+                                  <input type="email" id="emailInput" name="Correo" form="formPreregistro" class="form-control form-control-sm" required maxlength="100">
+                                </div>
+                                <div class="col-md-4 form-group">
+                                  <label for="inputCelular">Celular <span class="ficha-req">*</span></label>
+                                  <input type="tel" id="inputCelular" name="Celular" form="formPreregistro" class="form-control form-control-sm"
+                                         required pattern="[6-7][0-9]{7}">
+                                </div>
+                                <div class="col-md-4 form-group">
+                                  <label for="inputTelefono">Teléfono</label>
+                                  <input type="tel" id="inputTelefono" name="Telefono" form="formPreregistro" class="form-control form-control-sm" pattern="[0-9]{7,8}">
+                                </div>
+                              </div>
+                              <div class="row">
+                                <div class="col-md-12 form-group">
+                                  <label for="direccionInput">Dirección domiciliaria</label>
+                                  <input type="text" id="direccionInput" name="Direccion" form="formPreregistro" class="form-control form-control-sm text-uppercase" maxlength="100">
+                                </div>
                               </div>
                             </div>
 
                             <!-- Universidad y fecha de egreso: obligatorias; la fecha no puede ser
                                  posterior a hoy (el servidor también lo valida). -->
-                            <div class="row mt-2">
-                              <div class="col-md-6">
-                                <label for="IdUniversidad" class="small font-weight-bold mb-1">Universidad de Egreso <span class="text-danger">*</span></label>
-                                <div class="input-group input-group-sm">
-                                  <select class="form-control form-control-sm" id="IdUniversidad" name="IdUniversidad" form="formPreregistro" required>
-                                    <option value="">Seleccione una universidad...</option>
-                                    <?php foreach ($listaUniversidadesInicial as $univ): ?>
-                                      <option value="<?php echo (int)$univ['IdUniversidad']; ?>" data-tipo="<?php echo htmlspecialchars($univ['TipoUniversidad']); ?>"><?php echo htmlspecialchars($univ['NombreUniversidad']); ?></option>
-                                    <?php endforeach; ?>
-                                  </select>
-                                  <div class="input-group-append">
-                                    <button type="button" class="btn btn-success" id="btnNuevaUniversidad" title="Agregar una universidad que no está en la lista">
-                                      <i class="fa fa-plus text-white"></i> Nueva
-                                    </button>
+                            <div class="ficha-seccion">
+                              <div class="ficha-seccion-titulo">Formación y trabajo</div>
+                              <div class="row">
+                                <div class="col-md-8 form-group">
+                                  <label for="IdUniversidad">Universidad de egreso <span class="ficha-req">*</span></label>
+                                  <div class="input-group input-group-sm">
+                                    <select class="form-control form-control-sm" id="IdUniversidad" name="IdUniversidad" form="formPreregistro" required>
+                                      <option value="">Seleccione una universidad...</option>
+                                      <?php foreach ($listaUniversidadesInicial as $univ): ?>
+                                        <option value="<?php echo (int)$univ['IdUniversidad']; ?>" data-tipo="<?php echo htmlspecialchars($univ['TipoUniversidad']); ?>"><?php echo htmlspecialchars($univ['NombreUniversidad']); ?></option>
+                                      <?php endforeach; ?>
+                                    </select>
+                                    <div class="input-group-append">
+                                      <button type="button" class="btn ficha-btn-nueva" id="btnNuevaUniversidad" title="Agregar una universidad que no está en la lista">
+                                        <i class="fa fa-plus"></i> Nueva
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <small class="form-text text-muted" id="IdUniversidadTipo"></small>
+                                </div>
+                                <div class="col-md-4 form-group">
+                                  <label for="FechaEgreso">Fecha de egreso <span class="ficha-req">*</span></label>
+                                  <input type="date" id="FechaEgreso" name="FechaEgreso" form="formPreregistro" class="form-control form-control-sm"
+                                         max="<?php echo date('Y-m-d'); ?>" required>
+                                </div>
+                              </div>
+                              <div class="row">
+                                <div class="col-md-8 form-group">
+                                  <label for="IdProfesion">Profesión <span class="ficha-req">*</span></label>
+                                  <div class="input-group input-group-sm">
+                                    <select class="form-control form-control-sm" id="IdProfesion" name="IdProfesion" form="formPreregistro" required>
+                                      <option value="">Seleccione una profesión...</option>
+                                      <?php foreach ($listaProfesionesInicial as $prof): ?>
+                                        <option value="<?php echo (int)$prof['IdProfesion']; ?>"><?php echo htmlspecialchars($prof['NombreProfesion']); ?></option>
+                                      <?php endforeach; ?>
+                                    </select>
+                                    <div class="input-group-append">
+                                      <button type="button" class="btn ficha-btn-nueva" id="btnNuevaProfesion" title="Agregar una profesión que no está en la lista">
+                                        <i class="fa fa-plus"></i> Nueva
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
-                                <small class="form-text text-muted" id="IdUniversidadTipo"></small>
-                              </div>
-                              <div class="col-md-3">
-                                <label for="FechaEgreso" class="small font-weight-bold mb-1">Fecha de Egreso <span class="text-danger">*</span></label>
-                                <input type="date" id="FechaEgreso" name="FechaEgreso" form="formPreregistro" class="form-control form-control-sm"
-                                       max="<?php echo date('Y-m-d'); ?>" required>
+                                <div class="col-md-4 form-group">
+                                  <label for="Trabajo">Trabajo actual</label>
+                                  <input type="text" id="Trabajo" name="Trabajo" form="formPreregistro" class="form-control form-control-sm text-uppercase" maxlength="100">
+                                </div>
                               </div>
                             </div>
 
                           </div>
+                          <p class="ficha-nota"><span class="ficha-req">*</span> Campos obligatorios</p>
                         </div>
                         <div class="modal-footer">
                           <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancelar</button>
@@ -438,17 +468,21 @@ kt-aside--fixed kt-page--loading">
                   <!-- ============================================ -->
                   <div class="modal fade" id="modalPasoPrograma" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false" aria-hidden="true">
                     <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
-                      <div class="modal-content">
+                      <div class="modal-content ficha-modal">
                         <div class="modal-header wizard-modal-header">
-                          <h5 class="modal-title text-white"><span class="wizard-step-badge">2</span> Programa</h5>
+                          <div>
+                            <div class="wizard-paso-texto">Pre-Registro · Paso 2 de 4</div>
+                            <h5 class="modal-title text-white">Programa</h5>
+                          </div>
                           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
                         </div>
                         <div class="modal-body">
 
                           <div class="preregistro-step" id="seccionPrograma" style="display: none;">
+                            <div class="ficha-seccion-titulo">Selección del programa</div>
                             <div class="row">
                               <div class="col-md-6 form-group mb-2">
-                                <label for="sedePrograma" class="small font-weight-bold mb-1">Sede</label>
+                                <label for="sedePrograma">Sede</label>
                                 <select class="form-control form-control-sm" id="sedePrograma" name="sedePrograma" form="formPreregistro">
                                   <option value="">TODAS LAS SEDES</option>
                                   <?php foreach ($sedesDisponibles as $sedeOpcion): ?>
@@ -457,7 +491,7 @@ kt-aside--fixed kt-page--loading">
                                 </select>
                               </div>
                               <div class="col-md-6 form-group mb-2">
-                                <label for="gradoAcademico" class="small font-weight-bold mb-1">Grado académico <span class="text-danger">*</span></label>
+                                <label for="gradoAcademico">Grado académico <span class="ficha-req">*</span></label>
                                 <select class="form-control form-control-sm" id="gradoAcademico" name="gradoAcademico" form="formPreregistro" required>
                                   <option value="">Seleccione el grado...</option>
                                   <option value="DIPLOMADO">DIPLOMADO</option>
@@ -467,7 +501,7 @@ kt-aside--fixed kt-page--loading">
                                 </select>
                               </div>
                               <div class="col-12 form-group mb-2">
-                                <label for="programa" class="small font-weight-bold mb-1">Programa <span class="text-danger">*</span></label>
+                                <label for="programa">Programa <span class="ficha-req">*</span></label>
                                 <!-- Solo programas activos, el último registrado primero; cada opción muestra
                                      código, versión, inicio y estado para distinguir los del mismo nombre -->
                                 <select class="form-control form-control-sm" id="programa" name="programa" form="formPreregistro" required>
@@ -478,6 +512,7 @@ kt-aside--fixed kt-page--loading">
 
                             <!-- Detalle del programa elegido -->
                             <div id="tablaPrograma" class="programa-resumen" style="display: none;">
+                              <div class="ficha-seccion-titulo">Detalle del programa</div>
                               <div class="programa-resumen-grid">
                                 <div class="programa-resumen-item">
                                   <span class="programa-resumen-label">Sede</span>
@@ -516,9 +551,12 @@ kt-aside--fixed kt-page--loading">
                   <!-- ============================================ -->
                   <div class="modal fade" id="modalPasoPago" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false" aria-hidden="true">
                     <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
-                      <div class="modal-content">
+                      <div class="modal-content ficha-modal">
                         <div class="modal-header wizard-modal-header">
-                          <h5 class="modal-title text-white"><span class="wizard-step-badge">3</span> Orden de Pago de Matrícula</h5>
+                          <div>
+                            <div class="wizard-paso-texto">Pre-Registro · Paso 3 de 4</div>
+                            <h5 class="modal-title text-white">Orden de Pago de Matrícula</h5>
+                          </div>
                           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
                         </div>
                         <div class="modal-body">
@@ -527,10 +565,10 @@ kt-aside--fixed kt-page--loading">
 
                             <!-- Plan de pago: align-items-end deja los campos alineados abajo -->
                             <div class="orden-subseccion">
-                              <div class="orden-subseccion-titulo"><i class="fa fa-tasks"></i> Plan de pago</div>
+                              <div class="orden-subseccion-titulo">Plan de pago</div>
                               <div class="row align-items-end">
                                 <div class="col-md-4 form-group mb-2 mb-md-0">
-                                  <label for="tipoPagoCodigo" class="small font-weight-bold mb-1">Plan</label>
+                                  <label for="tipoPagoCodigo">Plan</label>
                                   <select class="form-control form-control-sm" id="tipoPagoCodigo" name="tipoPagoCodigo" form="formPreregistro">
                                     <option value="REGULAR">REGULAR (EN CUOTAS)</option>
                                     <option value="CONTADO">AL CONTADO</option>
@@ -541,21 +579,21 @@ kt-aside--fixed kt-page--loading">
                                      esta orden y el del programa al plan de cuotas (queda definitivo al validar
                                      el voucher). Para cambiarlos después hay que anular y rehacer el pre-registro. -->
                                 <div class="col-md-2 form-group mb-2 mb-md-0" id="grupoDescuentoPreregistro">
-                                  <label for="porcentajeDescuento" class="small font-weight-bold mb-1 text-nowrap">Desc. matrícula</label>
+                                  <label for="porcentajeDescuento" class="text-nowrap">Desc. matrícula</label>
                                   <div class="input-group input-group-sm">
                                     <input type="number" class="form-control form-control-sm" id="porcentajeDescuento" name="porcentajeDescuento" form="formPreregistro" min="0" max="100" step="0.01" value="0" required>
                                     <div class="input-group-append"><span class="input-group-text">%</span></div>
                                   </div>
                                 </div>
                                 <div class="col-md-2 form-group mb-2 mb-md-0" id="grupoDescuentoProgramaPreregistro">
-                                  <label for="porcentajeDescuentoPrograma" class="small font-weight-bold mb-1 text-nowrap">Desc. programa</label>
+                                  <label for="porcentajeDescuentoPrograma" class="text-nowrap">Desc. programa</label>
                                   <div class="input-group input-group-sm">
                                     <input type="number" class="form-control form-control-sm" id="porcentajeDescuentoPrograma" name="porcentajeDescuentoPrograma" form="formPreregistro" min="0" max="100" step="0.01" value="0" required>
                                     <div class="input-group-append"><span class="input-group-text">%</span></div>
                                   </div>
                                 </div>
                                 <div class="col-md-4 form-group mb-0" id="grupoPagoMatriculaPreregistro">
-                                  <label class="small font-weight-bold mb-1 d-block">Matrícula</label>
+                                  <label class="d-block">Matrícula</label>
                                   <!-- Recuadro del mismo alto que los demás campos, para que la casilla quede alineada -->
                                   <div class="form-control form-control-sm casilla-matricula">
                                     <div class="custom-control custom-checkbox">
@@ -565,14 +603,25 @@ kt-aside--fixed kt-page--loading">
                                   </div>
                                 </div>
                               </div>
+                              <!-- Plan Grupal: el grupo se arma aquí, con estudiantes del mismo programa.
+                                   Cada integrante tiene su propia orden y sus propios descuentos. -->
+                              <div class="row mt-2" id="grupoCodigoGrupoPreregistro" style="display:none;">
+                                <div class="col-md-8 form-group mb-0">
+                                  <label for="codigoGrupo">Grupo</label>
+                                  <select class="form-control form-control-sm" id="codigoGrupo" name="codigoGrupo" form="formPreregistro">
+                                    <option value="">NUEVO GRUPO</option>
+                                  </select>
+                                  <div class="small text-muted mt-1">Elija un grupo ya armado de este programa o cree uno nuevo con este estudiante.</div>
+                                </div>
+                              </div>
                             </div>
 
                             <!-- Cuenta de depósito -->
                             <div class="orden-subseccion">
-                              <div class="orden-subseccion-titulo"><i class="fa fa-university"></i> Cuenta de depósito</div>
+                              <div class="orden-subseccion-titulo">Cuenta de depósito</div>
                               <div class="row">
                                 <div class="col-md-8 form-group mb-0">
-                                  <label for="cuentaPago" class="small font-weight-bold mb-1">Cuenta</label>
+                                  <label for="cuentaPago">Cuenta</label>
                                   <select class="form-control form-control-sm" id="cuentaPago" name="ProgramaCuentaID" form="formPreregistro" required>
                                     <option value="">Seleccione un programa primero...</option>
                                   </select>
@@ -634,9 +683,12 @@ kt-aside--fixed kt-page--loading">
                   <!-- ============================================ -->
                   <div class="modal fade" id="modalConfirmarPreregistro" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false" aria-hidden="true">
                     <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
-                      <div class="modal-content">
+                      <div class="modal-content ficha-modal">
                         <div class="modal-header wizard-modal-header">
-                          <h5 class="modal-title text-white"><span class="wizard-step-badge">4</span> Confirmar Datos</h5>
+                          <div>
+                            <div class="wizard-paso-texto">Pre-Registro · Paso 4 de 4</div>
+                            <h5 class="modal-title text-white">Confirmar Datos</h5>
+                          </div>
                           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
                         </div>
                         <div class="modal-body">
@@ -683,8 +735,8 @@ kt-aside--fixed kt-page--loading">
                         </div>
                         <div class="modal-footer">
                           <button type="button" class="btn btn-secondary" id="btnWizardPaso4Atras"><i class="fa fa-arrow-left"></i> Atrás</button>
-                          <button type="submit" name="registrarOrdenPago" form="formPreregistro" class="btn btn-success">
-                            <i class="flaticon2-check-mark"></i> Confirmar y Guardar
+                          <button type="submit" name="registrarOrdenPago" form="formPreregistro" class="btn btn-primary">
+                            <i class="fa fa-check"></i> Confirmar y guardar
                           </button>
                         </div>
                       </div>
@@ -790,9 +842,12 @@ kt-aside--fixed kt-page--loading">
   <!-- Modal: Detalle de la solicitud de orden de pago -->
   <div class="modal fade" id="ModalDetallePreregistro" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
-      <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-        <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border-radius: 15px 15px 0 0;">
-          <h5 class="modal-title text-white"><i class="fa fa-eye"></i> Detalle de la Solicitud</h5>
+      <div class="modal-content ficha-modal">
+        <div class="modal-header wizard-modal-header">
+          <div>
+            <div class="wizard-paso-texto" id="detalleSolicitudOrden">Solicitud de pre-registro</div>
+            <h5 class="modal-title text-white">Detalle de la Solicitud</h5>
+          </div>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -800,8 +855,8 @@ kt-aside--fixed kt-page--loading">
         <div class="modal-body" id="detallePreregistroContenido">
           <div class="text-center p-4"><i class="fa fa-spinner fa-spin fa-2x text-primary"></i></div>
         </div>
-        <div class="modal-footer" style="background-color: #f5f5f5; border-radius: 0 0 15px 15px;">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cerrar</button>
         </div>
       </div>
     </div>
@@ -860,7 +915,7 @@ kt-aside--fixed kt-page--loading">
                    de Bootstrap ya abierto queda visible pero no recibe el foco del teclado
                    (el modal se lo roba de vuelta). -->
               <div id="nuevoFirmanteBoxPreregistro" class="input-group mt-2" style="display:none;">
-                <input type="text" class="form-control" id="nuevoFirmanteNombrePreregistro" placeholder="Nombre completo">
+                <input type="text" class="form-control text-uppercase" id="nuevoFirmanteNombrePreregistro" placeholder="Nombre completo" maxlength="150">
                 <div class="input-group-append">
                   <button type="button" class="btn btn-success" id="btnGuardarFirmantePreregistro" title="Guardar"><i class="fa fa-check"></i></button>
                   <button type="button" class="btn btn-outline-secondary" id="btnCancelarFirmantePreregistro" title="Cancelar"><i class="fa fa-times"></i></button>
@@ -1356,13 +1411,37 @@ function iniciarPreregistro() {
 
     // ============================================
     // PLAN DE PAGO DEL PROGRAMA (Regular/Contado/Grupal): elegido aquí, queda definitivo
-    // al validar el voucher de matrícula (salvo Grupal, que se arma después en Matriculados)
+    // al validar el voucher de matrícula (también Grupal: el grupo se elige aquí)
     // ============================================
     $('#tipoPagoCodigo').on('change', function() {
         // Los dos descuentos y "Cobrar matrícula" están en todos los planes y se
         // conservan al cambiar de plan.
         recalcularMontoMatricula();
+        const esGrupal = $(this).val() === 'GRUPAL';
+        $('#grupoCodigoGrupoPreregistro').toggle(esGrupal);
+        if (esGrupal) {
+            cargarGruposPrograma($('#programa').val());
+        }
     });
+
+    // Grupos ya armados del programa elegido; "NUEVO GRUPO" (vacío) crea uno con este estudiante
+    function cargarGruposPrograma(programaId) {
+        const $select = $('#codigoGrupo');
+        $select.html('<option value="">NUEVO GRUPO</option>');
+        if (!programaId) return;
+        $.ajax({
+            url: 'ajax/ordenpago.ajax.php',
+            type: 'POST',
+            data: { accion: 'listarGruposPrograma', programaID: programaId },
+            dataType: 'json',
+            success: function(resp) {
+                (resp.grupos || []).forEach(function(g) {
+                    $select.append($('<option>').val(g.CodigoGrupo)
+                        .text(g.CodigoGrupo + ' (' + g.Cantidad + '): ' + g.Integrantes));
+                });
+            }
+        });
+    }
 
     // El select ya viene con "Plan Regular" seleccionado por defecto (primera opción), así
     // que el evento "change" nunca se dispara solo con la carga de la página; se fuerza aquí
@@ -1407,6 +1486,11 @@ function iniciarPreregistro() {
 
                     // Cargar las cuentas de MATRÍCULA de este programa en el select
                     cargarCuentasPrograma(programaId);
+
+                    // Los grupos son por programa: al cambiar de programa se recargan
+                    if ($('#tipoPagoCodigo').val() === 'GRUPAL') {
+                        cargarGruposPrograma(programaId);
+                    }
                 },
                 error: function() {
                     swal("Error", "No se pudieron obtener los detalles del programa", "error");
@@ -1635,6 +1719,7 @@ function iniciarPreregistro() {
                 '<td class="text-center"><div class="acciones-preregistro">' +
                     '<button type="button" class="btn btn-accion btn-info btn-ver-detalle-preregistro" data-id="' + pr.IdOrdenPago + '" title="Ver Detalle"><i class="fa fa-eye"></i></button>' +
                     '<button type="button" class="btn btn-accion-texto btn-success btn-generar-orden" data-id="' + pr.IdOrdenPago + '" title="Generar Orden de Pago"><i class="fa fa-file-invoice"></i> Generar Orden</button>' +
+                    '<a href="inscripcion?orden=' + pr.IdOrdenPago + '" class="btn btn-accion-texto btn-primary btn-validar-voucher" title="Validar el voucher en Inscripción"><i class="fa fa-check-circle"></i> Validar</a>' +
                     '<button type="button" class="btn btn-accion btn-warning btn-editar-preregistro" data-id="' + pr.IdOrdenPago + '" data-pagocompleto="' + pr.pagoCompleto + '" title="Editar"><i class="fa fa-edit"></i></button>' +
                     '<button type="button" class="btn btn-accion btn-danger btn-anular-preregistro" data-id="' + pr.IdOrdenPago + '" title="Anular"><i class="fa fa-trash"></i></button>' +
                 '</div></td>' +
@@ -1756,58 +1841,46 @@ function iniciarPreregistro() {
                 const nombreCompleto = ((p.Apaterno || '') + ' ' + (p.Amaterno || '') + ' ' + (p.Nombre || '')).trim();
                 const fechaCorta = p.FechaGeneracion ? p.FechaGeneracion.substring(0, 10).split('-').reverse().join('/') : '';
 
-                const html = '' +
-                    '<div class="chip-summary mb-2">' +
-                        '<div class="chip-summary-row">' +
-                            '<span><i class="flaticon2-user-outline-symbol"></i> <strong>' + nombreCompleto + '</strong></span>' +
-                            '<span>CI: ' + (p.CiCompleto || '') + '</span>' +
-                            '<span>' + (p.Correo || '-') + '</span>' +
-                            '<span>' + (p.Celular || '-') + '</span>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="chip-summary mb-2">' +
-                        '<div class="chip-summary-row flex-wrap">' +
-                            '<span><strong>' + (p.NombrePrograma || '') + '</strong> (' + (p.CodigoPrograma || '') + ')</span>' +
-                            '<span>Grado: ' + (p.GradoAcademico || '') + '</span>' +
-                            '<span>Sede: ' + (p.Sede || '-') + '</span>' +
-                        '</div>' +
-                    '</div>' +
-                    '<table class="table table-sm table-bordered mb-2">' +
-                        '<tbody>' +
-                            '<tr><th style="width:45%;">N° de Orden</th><td>' + (p.NumeroOrden || '-') + '</td></tr>' +
-                            '<tr><th>Fecha de solicitud</th><td>' + fechaCorta + '</td></tr>' +
-                            '<tr><th>Monto de matrícula</th><td>Bs. ' + parseFloat(p.MontoFinal || 0).toFixed(2) + '</td></tr>' +
-                            '<tr><th>Estado</th><td><span class="badge badge-warning">' + (p.Estado || 'PENDIENTE') + '</span></td></tr>' +
-                        '</tbody>' +
-                    '</table>';
+                const esc = function(texto) { return $('<span>').text(texto == null ? '' : String(texto)).html(); };
+                const monto = parseFloat(p.MontoFinal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const nombresPlan = { REGULAR: 'Regular (en cuotas)', CONTADO: 'Al contado', GRUPAL: 'Grupal' };
+                const porcentaje = function(valor) { return (parseFloat(valor) || 0).toString().replace(/\.0+$/, '') + '%'; };
+                const exonerada = parseFloat(p.MontoFinal || 0) <= 0 && p.PagoCompleto != 1;
+                const fila = function(etiqueta, valor) {
+                    return '<div class="detalle-sol-item"><span class="detalle-sol-label">' + etiqueta + '</span>' +
+                        '<span class="detalle-sol-valor">' + valor + '</span></div>';
+                };
 
-                // Cuenta a la que el estudiante debe depositar la matrícula
-                let htmlCuenta;
-                if (p.CuentaNumero) {
-                    const origenCuenta = p.CuentaElegida == 1
-                        ? 'Cuenta elegida al registrar el pre-registro'
-                        : 'No se eligió cuenta: se usa la principal de matrícula del programa';
-                    htmlCuenta = '' +
-                        '<div class="cuenta-deposito-detalle">' +
-                            '<div class="cuenta-deposito-titulo"><i class="fa fa-university"></i> Cuenta de depósito</div>' +
-                            '<div class="cuenta-deposito-numero">' + $('<span>').text(p.CuentaNumero).html() + '</div>' +
-                            '<table class="table table-sm mb-1">' +
-                                '<tbody>' +
-                                    '<tr><th style="width:45%;">Banco / Entidad</th><td>' + $('<span>').text(p.CuentaBanco || 'No registrado').html() + '</td></tr>' +
-                                    '<tr><th>Tipo de cuenta</th><td>' + $('<span>').text(p.CuentaTipo || '-').html() +
-                                        (p.CuentaPrincipal == 1 ? ' <span class="badge badge-info">Principal</span>' : '') + '</td></tr>' +
-                                    '<tr><th>Monto a depositar</th><td><strong>Bs. ' + parseFloat(p.MontoFinal || 0).toFixed(2) + '</strong></td></tr>' +
-                                    '<tr><th>Referencia</th><td>Orden N° ' + (p.NumeroOrden || '-') + ' - ' + nombreCompleto + '</td></tr>' +
-                                '</tbody>' +
-                            '</table>' +
-                            '<small class="text-muted"><i class="fa fa-info-circle"></i> ' + origenCuenta + '</small>' +
-                        '</div>';
-                } else {
-                    htmlCuenta = '<div class="alert alert-warning mb-0"><i class="fa fa-exclamation-triangle"></i> ' +
-                        'Este programa no tiene una cuenta de matrícula registrada. Regístrela en Programas &gt; Cuentas.</div>';
-                }
+                $('#detalleSolicitudOrden').text('Orden N° ' + (p.NumeroOrden || '-'));
 
-                $('#detallePreregistroContenido').html(html + htmlCuenta);
+                // Lo que hay que depositar, a qué cuenta, y en qué estado está
+                const cuenta = p.CuentaNumero
+                    ? '<div class="detalle-sol-cuenta"><span>Cuenta</span> <strong>' + esc(p.CuentaNumero) + '</strong>' +
+                        (p.CuentaBanco ? ' · ' + esc(p.CuentaBanco) : '') + '</div>'
+                    : '<div class="detalle-sol-cuenta text-warning"><i class="fa fa-exclamation-triangle"></i> El programa no tiene cuenta de matrícula (Programas &gt; Cuentas)</div>';
+                const htmlMonto = '' +
+                    '<div class="detalle-sol-monto">' +
+                        '<div>' +
+                            '<div class="detalle-sol-label">' + (exonerada ? 'Matrícula' : 'Monto a depositar') + '</div>' +
+                            '<div class="detalle-sol-cifra">' + (exonerada ? 'Exonerada' : 'Bs. ' + monto) + '</div>' +
+                            cuenta +
+                        '</div>' +
+                        '<span class="detalle-sol-estado">' + esc(p.Estado || 'PENDIENTE') + '</span>' +
+                    '</div>';
+
+                // Ficha: solo lo necesario para identificar la solicitud
+                const plan = nombresPlan[p.PlanPropuestoTipo] || '-';
+                const descuentos = 'Matrícula ' + porcentaje(p.PorcentajeDescuento) + ' · Programa ' + porcentaje(p.PlanPropuestoPorcentaje);
+                const htmlFicha = '' +
+                    '<div class="detalle-sol-grid">' +
+                        fila('Estudiante', '<strong>' + esc(nombreCompleto) + '</strong><br><small>C.I. ' + esc(p.CiCompleto) + '</small>') +
+                        fila('Contacto', esc(p.Celular || '-') + '<br><small>' + esc(p.Correo || '-') + '</small>') +
+                        fila('Programa', '<strong>' + esc(p.NombrePrograma) + '</strong><br><small>' + esc(p.CodigoPrograma) + ' · ' + esc(p.Sede || '-') + '</small>') +
+                        fila('Plan de pago', esc(plan) + (p.PlanPropuestoCodigoGrupo ? ' · ' + esc(p.PlanPropuestoCodigoGrupo) : '') + '<br><small>' + descuentos + '</small>') +
+                        fila('Fecha de solicitud', esc(fechaCorta)) +
+                    '</div>';
+
+                $('#detallePreregistroContenido').html(htmlMonto + htmlFicha);
             },
             error: function() {
                 $('#detallePreregistroContenido').html('<div class="alert alert-danger">No se pudo cargar el detalle</div>');
@@ -2124,7 +2197,8 @@ function iniciarPreregistro() {
         $('#resumenProgramaGrado').text($('#gradoAcademico option:selected').text() || '-');
         $('#resumenProgramaSede').text($('#proSede').text() || '-');
 
-        $('#resumenPlanPago').text($('#tipoPagoCodigo option:selected').text() || '-');
+        $('#resumenPlanPago').text(($('#tipoPagoCodigo option:selected').text() || '-') +
+            ($('#tipoPagoCodigo').val() === 'GRUPAL' ? ' · ' + ($('#codigoGrupo').val() || 'NUEVO GRUPO') : ''));
         $('#resumenDescuentos').text(
             'Matrícula ' + ($('#pagarMatricula').is(':checked') ? porcentajeValido('#porcentajeDescuento') + '%' : 'exonerada') +
             ' · Programa ' + porcentajeValido('#porcentajeDescuentoPrograma') + '%'
@@ -2193,6 +2267,188 @@ if (document.readyState === 'loading') {
 .casilla-matricula .custom-control {
     margin: 0;
 }
+
+/* ---------- Inicio de la página: acción principal "Nuevo Pre-Registro" ---------- */
+.pr-inicio {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+    background: #fff;
+    border: 1px solid #e6e9ef;
+    border-left: 4px solid #1e3c72;
+    border-radius: 8px;
+    padding: 18px 24px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .04);
+}
+.pr-inicio-titulo { font-size: 17px; font-weight: 700; color: #1e3c72; }
+.pr-inicio-texto p { margin: 2px 0 10px; font-size: 13px; color: #6b7280; }
+.pr-inicio-pasos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 12px;
+    color: #4a5568;
+}
+.pr-inicio-pasos li { display: inline-flex; align-items: center; gap: 6px; }
+.pr-inicio-pasos span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #eef2f8;
+    color: #1e3c72;
+    font-size: 11px;
+    font-weight: 700;
+}
+.btn.pr-inicio-boton {
+    background: #1e3c72 !important;
+    border: 1px solid #1e3c72 !important;
+    border-bottom: 3px solid #c9a227 !important;
+    color: #fff !important;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 26px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(30, 60, 114, .25);
+    white-space: nowrap;
+}
+.btn.pr-inicio-boton:hover { background: #2a5298 !important; border-color: #2a5298 !important; }
+.btn.pr-inicio-boton i { color: #fff !important; margin-right: 6px; }
+@media (max-width: 575px) {
+    .btn.pr-inicio-boton { width: 100%; }
+}
+
+/* ---------- Paso 1: ficha del estudiante (estilo formal) ---------- */
+.ficha-modal { border: 0; border-radius: 10px; overflow: hidden; }
+.ficha-modal .wizard-modal-header {
+    background: #1e3c72;
+    padding: 16px 24px;
+    border-bottom: 3px solid #c9a227;
+    border-radius: 0;
+}
+.ficha-modal .wizard-paso-texto {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: rgba(255, 255, 255, .7);
+    margin-bottom: 2px;
+}
+.ficha-modal .modal-title { font-size: 18px; font-weight: 600; letter-spacing: .2px; }
+.ficha-modal .modal-body { padding: 16px 24px 8px; background: #fff; }
+.ficha-modal .modal-footer { background: #f8f9fb; border-top: 1px solid #e6e9ef; padding: 12px 24px; }
+
+/* Búsqueda por C.I.: franja propia arriba del formulario */
+.ficha-busqueda {
+    margin: -16px -24px 6px;
+    padding: 14px 24px;
+    background: #f5f7fa;
+    border-bottom: 1px solid #e6e9ef;
+}
+.ficha-busqueda-titulo {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e3c72;
+    margin-bottom: 6px;
+}
+.ficha-busqueda-campo { width: 280px; max-width: 100%; }
+.ficha-busqueda-campo .form-control { background: #fff; border-color: #cfd6e0; }
+.ficha-busqueda-campo .btn { background: #1e3c72; border-color: #1e3c72; }
+.ficha-enlace { color: #5b6b80; text-decoration: none !important; }
+.ficha-enlace:hover { color: #1e3c72; }
+
+/* Secciones con título pequeño en mayúsculas y línea fina */
+.ficha-seccion { padding-top: 14px; }
+.ficha-seccion-titulo {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #1e3c72;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e6e9ef;
+}
+.ficha-modal .form-group { margin-bottom: 10px; }
+.ficha-modal .modal-body label:not(.custom-control-label) {
+    font-size: 12px;
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 3px;
+}
+.ficha-req { color: #b42318; }
+.ficha-modal .modal-body .form-control {
+    background-color: #fff;
+    border: 1px solid #cfd6e0;
+    border-radius: 4px;
+    color: #1f2937;
+}
+.ficha-modal .modal-body .form-control:focus {
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 2px rgba(30, 60, 114, .12);
+}
+/* Bloqueado hasta buscar el C.I. (o de solo lectura si el estudiante ya existe) */
+.ficha-modal .modal-body .form-control:disabled,
+.ficha-modal .modal-body .form-control[readonly] { background-color: #f7f8fa; color: #6b7280; }
+.ficha-btn-nueva {
+    background: #fff;
+    border: 1px solid #cfd6e0;
+    border-left: 0;
+    color: #1e3c72;
+    font-weight: 500;
+}
+.ficha-btn-nueva:hover:not(:disabled) { background: #1e3c72; border-color: #1e3c72; color: #fff; }
+.ficha-btn-nueva:disabled { color: #9aa5b5; background: #f7f8fa; }
+/* Pasos 2 a 4 con el mismo estilo: subsecciones sin caja, títulos como en el paso 1 */
+.ficha-modal .orden-subseccion { border: 0; border-radius: 0; padding: 0; margin-bottom: 16px; }
+.ficha-modal .orden-subseccion-titulo,
+.ficha-modal .resumen-confirmacion-titulo {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #1e3c72;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e6e9ef;
+}
+.ficha-modal .programa-resumen,
+.ficha-modal .orden-resumen {
+    background: #f5f7fa;
+    border: 1px solid #e6e9ef;
+    border-left: 3px solid #1e3c72;
+    border-radius: 4px;
+    margin-top: 6px;
+}
+.ficha-modal .programa-resumen .ficha-seccion-titulo { border-bottom-color: #dfe3ea; }
+.ficha-modal .programa-resumen-label,
+.ficha-modal .orden-resumen-label { color: #6b7280; font-weight: 600; letter-spacing: .6px; }
+.ficha-modal .modal-body .orden-resumen-monto input[readonly] { color: #1e3c72; font-weight: 700; background: #fff; }
+.ficha-modal .input-group-text { background: #f5f7fa; border-color: #cfd6e0; color: #4a5568; }
+.ficha-modal .casilla-matricula { background: #fff; }
+.ficha-modal #avisoMatriculaEditable { color: #8a5a00 !important; }
+.ficha-modal .resumen-confirmacion-seccion { border-bottom: 0; }
+.ficha-modal .resumen-confirmacion-tabla td:first-child { color: #6b7280; }
+
+/* Resultado de la búsqueda: aviso sobrio en vez de la etiqueta de color fuerte */
+#estadoBusquedaEstudiante .badge {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+#estadoBusquedaEstudiante .badge-success { background: #e8f3ec; color: #1f6b3a; border: 1px solid #c5e1cf; }
+#estadoBusquedaEstudiante .badge-warning { background: #fdf4e3; color: #8a5a00; border: 1px solid #f1dcae; }
+.ficha-nota { font-size: 11.5px; color: #6b7280; margin: 4px 0 10px; }
+#datosEstudianteForm .select2-container .select2-selection--single { border-color: #cfd6e0 !important; }
 
 /* Profesión / Universidad (Select2) junto al botón "Nueva": ocupan el ancho
    restante y tienen la misma altura que los demás campos pequeños */
@@ -2437,32 +2693,58 @@ if (document.readyState === 'loading') {
     padding-bottom: 0;
 }
 
-/* Modal "Detalle de la Solicitud": bloque destacado con la cuenta de depósito */
-.cuenta-deposito-detalle {
-    border: 1px solid #c9d6ee;
-    border-left: 4px solid #1e3c72;
-    background: #f5f8fd;
-    border-radius: 6px;
-    padding: 10px 12px;
+/* Modal "Detalle de la Solicitud": monto y cuenta arriba, ficha compacta abajo */
+.detalle-sol-monto {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    background: #f5f7fa;
+    border: 1px solid #e6e9ef;
+    border-left: 3px solid #1e3c72;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
 }
-.cuenta-deposito-titulo {
-    font-size: 12px;
+.detalle-sol-cifra {
+    font-size: 24px;
     font-weight: 700;
+    color: #1e3c72;
+    line-height: 1.2;
+}
+.detalle-sol-cuenta { font-size: 13px; color: #4a5568; margin-top: 4px; }
+.detalle-sol-cuenta span { color: #6b7280; }
+.detalle-sol-estado {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .6px;
     text-transform: uppercase;
-    color: #1e3c72;
-    margin-bottom: 6px;
+    color: #8a5a00;
+    background: #fdf4e3;
+    border: 1px solid #f1dcae;
+    border-radius: 4px;
+    padding: 3px 8px;
+    white-space: nowrap;
 }
-.cuenta-deposito-numero {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: #1e3c72;
-    margin-bottom: 6px;
+.detalle-sol-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 20px;
+    padding-bottom: 6px;
 }
-.cuenta-deposito-detalle .table th,
-.cuenta-deposito-detalle .table td {
-    border-top: 1px solid #e3e9f5;
-    font-size: 12.5px;
+.detalle-sol-label {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
+.detalle-sol-valor { font-size: 13px; color: #1f2937; line-height: 1.4; }
+.detalle-sol-valor small { color: #6b7280; font-size: 12px; }
+@media (max-width: 575px) {
+    .detalle-sol-grid { grid-template-columns: 1fr; }
 }
 
 .resumen-confirmacion-titulo {

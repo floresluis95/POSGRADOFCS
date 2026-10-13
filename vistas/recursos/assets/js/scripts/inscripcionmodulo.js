@@ -8,13 +8,20 @@ $(document).ready(function() {
 
     // Inicializar DataTable, salvo que la tabla venga vacía: la fila "No hay estudiantes
     // matriculados" usa colspan y DataTables no la acepta (igual que en cargarEstudiantes)
+    // Desde Inscripción (matriculados?buscar=CI) llega filtrada por el estudiante recién inscrito
+    const buscarInicial = new URLSearchParams(window.location.search).get('buscar') || '';
+    if (buscarInicial) {
+        // Se quita de la URL para que al recargar se vea la lista completa
+        window.history.replaceState(null, '', window.location.pathname);
+    }
     if (!$('#tablaMatriculadosBody tr:first td[colspan]').length) {
         $('#tablaMatriculados').DataTable({
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json'
             },
             order: [[0, 'asc']], // El modelo ya entrega las filas por fecha de inscripción descendente
-            pageLength: 25
+            pageLength: 25,
+            search: { search: buscarInicial }
         });
     }
 
@@ -152,8 +159,8 @@ $(document).ready(function() {
         if (!r.tienePlan) {
             $('#resumenPagoPrograma').html(
                 '<div class="gp-aviso"><i class="fa fa-exclamation-triangle"></i> ' +
-                'Sin plan de pago del programa (normalmente porque eligió Plan Grupal en Pre-Registro). ' +
-                'Use el botón "Plan Grupal" de la barra superior para armarle uno.</div>'
+                'Sin plan de pago del programa. El plan se define en Pre-Registro y queda ' +
+                'registrado al validar el voucher de matrícula.</div>'
             );
             return;
         }
@@ -439,6 +446,9 @@ $(document).ready(function() {
         $('#detalleTipoPago').html(d.pagoCompleto == 1
             ? '<span class="badge badge-success"><i class="fa fa-check-circle"></i> PAGO COMPLETO</span>'
             : '<span class="badge badge-warning"><i class="fa fa-money"></i> SOLO MATRÍCULA</span>');
+        if (d.grupo) {
+            $('#detalleTipoPago').append(' ', $('<span class="badge badge-light">').text(d.grupo).prepend('<i class="fa fa-users"></i> '));
+        }
         $('#detalleVoucher').text(valor(d.voucher));
         $('#detalleCosto').text('Bs. ' + d.costo);
         $('#detalleDescuento').text(d.descuento

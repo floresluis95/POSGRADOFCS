@@ -594,8 +594,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     .mt-modal-head .close span { color: #fff !important; opacity: .9; text-shadow: none; }
     #modalVerDetalles .modal-content,
     #modalVerModulos .modal-content,
-    #modalFotoVoucher .modal-content,
-    #modalPlanGrupal .modal-content { border: 0; border-radius: 14px; overflow: hidden; }
+    #modalFotoVoucher .modal-content { border: 0; border-radius: 14px; overflow: hidden; }
 
     .modal-header.bg-primary {
         background-color: #1e3c72 !important;
@@ -641,16 +640,6 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     #modalVerDetalles .detalle-valor {
         margin-bottom: 10px;
         color: #1f2937;
-    }
-
-    /* Plan grupal: lista de estudiantes con el mismo encabezado claro */
-    #modalPlanGrupal .table thead th {
-        background: #f8fafc;
-        color: #64748b;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .4px;
     }
 
     /* Badge para mostrar información */
@@ -852,6 +841,26 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
         cursor: pointer;
     }
 
+    /* Filtros en una sola fila alineada abajo: Programa toma el espacio libre y
+       Sede, Estado y Requisitos quedan compactos (en celular pasan a otra línea) */
+    .mt-filtros {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 12px 16px;
+    }
+    .mt-filtro { min-width: 0; }
+    .mt-filtro-sede { flex: 0 0 180px; }
+    .mt-filtro-programa { flex: 1 1 280px; }
+    .mt-filtro-estado { flex: 0 0 140px; }
+    .mt-filtro-requisitos { flex: 0 0 150px; }
+    .mt-filtro-boton { flex: 0 0 auto; }
+    @media (max-width: 575px) {
+        .mt-filtro-sede, .mt-filtro-programa, .mt-filtro-boton { flex-basis: 100%; }
+        .mt-filtro-estado, .mt-filtro-requisitos { flex: 1 1 0; }
+        .mt-filtro-boton .btn { width: 100%; }
+    }
+
     /* Estilos para Select2 */
     .select2-container {
         width: 100% !important;
@@ -1040,8 +1049,8 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                 </div>
             </div>
             <div class="mt-card-body">
-                <div class="row align-items-end">
-                    <div class="col-xl-2 col-lg-6 col-md-6 mb-3 mb-xl-0">
+                <div class="mt-filtros">
+                    <div class="mt-filtro mt-filtro-sede">
                         <label class="mt-label" for="selectSedeFiltro"><i class="fa fa-map-marker-alt"></i> Sede</label>
                         <select class="form-control select2-uniforme" id="selectSedeFiltro" style="width: 100%;">
                             <option value="">Todas las sedes...</option>
@@ -1055,7 +1064,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                             ?>
                         </select>
                     </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6 mb-3 mb-xl-0">
+                    <div class="mt-filtro mt-filtro-programa">
                         <label class="mt-label" for="selectProgramaFiltro"><i class="fa fa-university"></i> Programa</label>
                         <select class="form-control select2-uniforme" id="selectProgramaFiltro" style="width: 100%;">
                             <option value="">Todos los programas...</option>
@@ -1074,7 +1083,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                             ?>
                         </select>
                     </div>
-                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3 mb-xl-0">
+                    <div class="mt-filtro mt-filtro-estado">
                         <label class="mt-label" for="selectEstadoFiltro"><i class="fa fa-user-check"></i> Estado</label>
                         <select class="form-control select2-uniforme" id="selectEstadoFiltro" style="width: 100%;">
                             <option value="ACTIVO" selected>Activos</option>
@@ -1082,7 +1091,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                             <option value="TODOS">Todos</option>
                         </select>
                     </div>
-                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3 mb-md-0">
+                    <div class="mt-filtro mt-filtro-requisitos">
                         <label class="mt-label" for="selectRequisitosFiltro"><i class="fa fa-clipboard-check"></i> Requisitos</label>
                         <select class="form-control select2-uniforme" id="selectRequisitosFiltro" style="width: 100%;">
                             <option value="" selected>Todos</option>
@@ -1090,7 +1099,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                             <option value="COMPLETOS">Completos</option>
                         </select>
                     </div>
-                    <div class="col-xl-2 col-lg-4 col-md-6">
+                    <div class="mt-filtro mt-filtro-boton">
                         <button type="button" class="btn btn-abrir-panel btn-block" id="btnLimpiarFiltro">
                             <i class="fa fa-times"></i> Limpiar filtros
                         </button>
@@ -1106,9 +1115,6 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                     <h3><i class="fa fa-user-graduate"></i> Estudiantes matriculados</h3>
                     <p>Pulse <strong>Pagos</strong> para gestionar la matrícula, las cuotas y las clínicas de cada estudiante.</p>
                 </div>
-                <button type="button" class="btn btn-abrir-panel" id="btnAbrirPlanGrupal">
-                    <i class="fa fa-users"></i> Plan grupal
-                </button>
             </div>
 
             <div class="mt-card-body">
@@ -1411,72 +1417,6 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     </div>
 </div>
 
-<!-- Modal: Plan Grupal (seleccionar a los estudiantes que entran en el plan) -->
-<div class="modal fade" id="modalPlanGrupal" tabindex="-1" role="dialog" aria-labelledby="modalPlanGrupalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header mt-modal-head">
-                <h5 class="modal-title text-white" id="modalPlanGrupalLabel">
-                    <i class="fa fa-users"></i> Plan Grupal - Seleccionar Estudiantes
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <small class="text-muted d-block mb-3">
-                    <i class="fa fa-info-circle"></i> Seleccione a los estudiantes matriculados que cancelarán el programa
-                    juntos bajo este plan grupal. Solo se listan estudiantes que aún no tienen un plan de pago del programa registrado.
-                </small>
-
-                <div class="row">
-                    <div class="col-lg-6 form-group">
-                        <label class="small font-weight-bold mb-1">Filtrar por Programa</label>
-                        <select class="form-control select2-plan-grupal" id="pgFiltroPrograma">
-                            <option value="">Todos los programas...</option>
-                            <?php foreach ($programas as $prog): ?>
-                                <option value="<?php echo (int)$prog['ProgramaID']; ?>">
-                                    <?php echo htmlspecialchars($prog['NombrePrograma'] . ' - ' . $prog['GradoAcademico']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-lg-6 form-group">
-                        <label class="small font-weight-bold mb-1">% Descuento Grupal</label>
-                        <input type="number" class="form-control form-control-sm" id="pgPorcentajeDescuento" min="0" max="100" step="0.01" value="0">
-                    </div>
-                </div>
-
-                <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
-                    <table class="table table-sm table-bordered table-hover mb-0">
-                        <thead class="thead-light">
-                            <tr>
-                                <th class="text-center" style="width:36px;"></th>
-                                <th>Estudiante</th>
-                                <th>CI</th>
-                                <th>Programa</th>
-                                <th class="text-center">Costo Programa</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pgListaEstudiantes">
-                            <tr><td colspan="5" class="text-center text-muted py-3">Cargando...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <small class="d-block text-right mt-2">
-                    Seleccionados: <strong id="pgContadorSeleccionados">0</strong> &nbsp;|&nbsp;
-                    Monto por estudiante: <strong>Bs. <span id="pgMontoPorEstudiante">0.00</span></strong>
-                </small>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="pgBtnCrearPlan"><i class="fa fa-save"></i> Crear Plan Grupal</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Modal: Requisitos de matriculación (requisitos.js) -->
 <div class="modal fade" id="modalRequisitos" tabindex="-1" role="dialog" aria-labelledby="modalRequisitosLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
@@ -1513,7 +1453,6 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="vistas/recursos/assets/js/scripts/inscripcionmodulo.js?v=<?php echo time(); ?>"></script>
-<script src="vistas/recursos/assets/js/scripts/planpago.js?v=<?php echo time(); ?>"></script>
 <script src="vistas/recursos/assets/js/scripts/ordenpagomodulos.js?v=<?php echo time(); ?>"></script>
 <script src="vistas/recursos/assets/js/scripts/ordenpagoclinica.js?v=<?php echo time(); ?>"></script>
 <script src="vistas/recursos/assets/js/scripts/requisitos.js?v=<?php echo time(); ?>"></script>
@@ -1523,13 +1462,6 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 <script>
 $(document).ready(function() {
     console.log('=== FILTRO DE MATRICULADOS POR PROGRAMA ===');
-
-    // Select2 dentro del modal "Plan Grupal": requiere dropdownParent para
-    // que el desplegable no quede recortado/oculto detrás del modal.
-    $('.select2-plan-grupal').select2({
-        width: '100%',
-        dropdownParent: $('#modalPlanGrupal')
-    });
 
     // Inicializar Select2 (mismo tamaño/estilo en Sede, Programa y Estado)
     $('.select2-uniforme').select2({

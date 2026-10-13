@@ -36,7 +36,9 @@ class FirmanteModelos
     public static function RegistrarFirmanteModelo($nombre)
     {
         try {
-            $nombre = trim($nombre);
+            // En MAYÚSCULAS (con tildes y Ñ) y sin espacios de más, como el resto de los
+            // nombres del sistema. Se escapa aquí porque el nombre se pinta en selects.
+            $nombre = htmlspecialchars(mb_strtoupper(preg_replace('/\s+/u', ' ', trim($nombre)), 'UTF-8'));
             if ($nombre === '') {
                 return ['status' => 'error', 'mensaje' => 'El nombre es requerido'];
             }
@@ -49,11 +51,12 @@ class FirmanteModelos
             $existente = $stmtExiste->fetch(PDO::FETCH_ASSOC);
 
             if ($existente) {
-                if ((int)$existente['Estado'] === 0) {
-                    $stmtReactivar = $pdo->prepare("UPDATE firmante SET Estado = 1 WHERE IdFirmante = :id");
-                    $stmtReactivar->bindParam(":id", $existente['IdFirmante'], PDO::PARAM_INT);
-                    $stmtReactivar->execute();
-                }
+                // La búsqueda no distingue mayúsculas: si estaba en minúsculas o dado de
+                // baja, queda en MAYÚSCULAS y activo.
+                $stmtReactivar = $pdo->prepare("UPDATE firmante SET Nombre = :nombre, Estado = 1 WHERE IdFirmante = :id");
+                $stmtReactivar->bindParam(":nombre", $nombre, PDO::PARAM_STR);
+                $stmtReactivar->bindParam(":id", $existente['IdFirmante'], PDO::PARAM_INT);
+                $stmtReactivar->execute();
                 return [
                     'status' => 'exitoso',
                     'idFirmante' => $existente['IdFirmante'],

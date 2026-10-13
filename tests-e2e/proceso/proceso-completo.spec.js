@@ -110,8 +110,23 @@ test.describe('Proceso completo: del registro a los informes', () => {
     const marcarTodos = modal.locator('#btnMarcarTodosRequisitos');
     if (await marcarTodos.isVisible()) await marcarTodos.click();
     await modal.locator('button[type="submit"]').click();
-    const confirmar = page.locator('.swal-modal .swal-button--confirm, .swal2-confirm').first();
-    if (await confirmar.isVisible({ timeout: 3000 }).catch(() => false)) await confirmar.click();
+
+    // Antes de guardar se muestra el detalle; "Revisar" vuelve al formulario sin inscribir
+    const resumen = page.locator('.swal-overlay--show-modal .in-resumen');
+    await expect(resumen).toBeVisible();
+    await expect(resumen).toContainText(ci);
+    await expect(resumen).toContainText(voucherMatricula);
+    await page.locator('.swal-modal .swal-button--cancel').click();
+    await expect(resumen).toBeHidden();
+    expect(valor(`SELECT COUNT(*) FROM estudianteprograma WHERE EstudianteID = ${datos.estudianteID}`)).toBe('0');
+
+    await modal.locator('button[type="submit"]').click();
+    await page.locator('.swal-modal .swal-button--confirm').click();
+
+    // Inscrito: pasa a Matriculados filtrado por su C.I.
+    await expect(page).toHaveURL(/\/matriculados$/, { timeout: 15_000 });
+    await expect(page.locator('#tablaMatriculados_filter input')).toHaveValue(ci);
+    await expect(page.locator('#tablaMatriculados tbody tr').filter({ hasText: ci })).toHaveCount(1);
 
     await expect.poll(() => valor(`SELECT idInscripcion FROM estudianteprograma WHERE EstudianteID = ${datos.estudianteID}`), { timeout: 15_000 })
       .not.toBeNull();
