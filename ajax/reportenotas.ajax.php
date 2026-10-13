@@ -33,6 +33,12 @@ if (isset($_POST['action'])) {
             $controller->ObtenerResumenAuditoriaControlador();
             break;
 
+        case 'resetearCalificaciones':
+            // Solo ADM (lo valida el controlador); SEC y AUX solo consultan
+            $controller = new ReporteNotasControlador();
+            $controller->ResetearCalificacionesModuloControlador();
+            break;
+
         default:
             echo json_encode([
                 'status' => 'error',

@@ -498,9 +498,46 @@ function imprimirTabla(titulo, contenidoHtml) {
                 .rp-na, .rp-muted { color: #9ca3af; }
                 .rp-avance small { font-size: 9px; }
                 .rp-no-print, .fa { display: none; }
+
+                /* En pantalla (al cancelar la impresión o volver a la pestaña): hoja
+                   A4 horizontal centrada sobre fondo gris, con barra para imprimir */
+                .barra-vista { display: none; }
+                @media screen {
+                    html { background: #e9ecf2; }
+                    body { padding: 64px 16px 32px; }
+                    .hoja {
+                        max-width: 297mm; margin: 0 auto; background: #fff;
+                        padding: 12mm 14mm; box-sizing: border-box;
+                        border-radius: 6px; box-shadow: 0 4px 24px rgba(15, 23, 42, .15);
+                    }
+                    .barra-vista {
+                        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+                        position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+                        padding: 10px 20px; background: #1e3c72; color: #fff;
+                        box-shadow: 0 2px 8px rgba(15, 23, 42, .2);
+                    }
+                    .barra-vista strong { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                    .barra-vista div { display: flex; gap: 8px; flex-shrink: 0; }
+                    .barra-vista button {
+                        font: 600 13px Helvetica, Arial, sans-serif; cursor: pointer;
+                        border-radius: 6px; padding: 7px 16px; border: 1px solid rgba(255, 255, 255, .5);
+                        background: transparent; color: #fff;
+                    }
+                    .barra-vista button.principal { background: #fff; color: #1e3c72; border-color: #fff; }
+                    .barra-vista button:hover { opacity: .9; }
+                }
+                @media print { .hoja { padding: 0; } }
             </style>
         </head>
         <body>
+            <div class="barra-vista">
+                <strong>${titulo}</strong>
+                <div>
+                    <button type="button" class="principal" onclick="window.print()">&#128424; Imprimir</button>
+                    <button type="button" onclick="window.close()">Cerrar</button>
+                </div>
+            </div>
+            <div class="hoja">
             <div class="cabecera">
                 <img class="logo-izq" src="${logoUTO}" alt="UTO">
                 <img class="logo-der" src="${logoFCS}" alt="FCS">
@@ -513,6 +550,7 @@ function imprimirTabla(titulo, contenidoHtml) {
             <hr class="cabecera-linea">
             <h2>${titulo}</h2>
             ${contenidoHtml}
+            </div>
             <script>
                 // Imprimir recién cuando los logos terminaron de cargar
                 window.onload = function() { window.focus(); window.print(); };

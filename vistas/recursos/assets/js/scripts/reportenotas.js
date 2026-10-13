@@ -89,7 +89,11 @@ $(document).ready(function() {
         return $('<div>').text(valor == null ? '' : String(valor)).html().replace(/"/g, '&quot;');
     }
 
+    // Último "Ver Módulos" pulsado: para recargar la lista tras resetear notas
+    let $ultimoVerModulos = null;
+
     $(document).on('click', '.btnVerModulos', function() {
+        $ultimoVerModulos = $(this);
         const programaID = $(this).data('programa-id');
         const programaNombre = $(this).data('programa-nombre');
 
@@ -174,6 +178,16 @@ $(document).ready(function() {
                                    'title="Ver Panel de Auditoría">' +
                                    '<i class="fas fa-history"></i> Auditoría' +
                                    '</button>';
+                            if (window.esAdminReporteNotas) {
+                                html += '<button type="button" class="btn btn-outline-danger btn-sm btnResetearNotas" ' +
+                                       'data-modulo-id="' + modulo.Idmodulo + '" ' +
+                                       'data-programa-id="' + (modulo.ProgramaId || programaID) + '" ' +
+                                       'data-modulo-nombre="' + escAttr(modulo.nombremodulo) + '" ' +
+                                       'data-calificados="' + calificados + '" ' +
+                                       'title="Borrar todas las notas del módulo para cargarlas de nuevo">' +
+                                       '<i class="fas fa-undo-alt"></i> Resetear' +
+                                       '</button>';
+                            }
                             html += '</div>';
                         } else {
                             html += '<button type="button" class="btn btn-secondary btn-sm" disabled>' +
@@ -327,6 +341,66 @@ $(document).ready(function() {
                 // Se muestra en ESTA MISMA pantalla (navega la pestaña actual
                 // al PDF) en vez de abrir una pestaña nueva.
                 window.location.href = url;
+            });
+        });
+
+        $modalModulos.modal('hide');
+    });
+
+    // Evento: Resetear (borrar) las notas de un módulo para cargarlas de nuevo.
+    // Solo ADM. Igual que al imprimir, se cierra primero el modal de módulos
+    // para que Bootstrap no le robe el foco al cuadro del motivo.
+    $(document).on('click', '.btnResetearNotas', function() {
+        const moduloID = $(this).data('modulo-id');
+        const programaID = $(this).data('programa-id');
+        const moduloNombre = $(this).data('modulo-nombre');
+        const calificados = $(this).data('calificados');
+        const $modalModulos = $('#ModalModulosPrograma');
+
+        $modalModulos.one('hidden.bs.modal', function() {
+            Swal.fire({
+                type: 'warning',
+                title: 'Resetear calificaciones',
+                html: 'Se borrarán las <strong>' + calificados + ' nota(s)</strong> del módulo<br><strong>' + escAttr(moduloNombre) + '</strong>' +
+                      '<br><small class="text-muted">El docente podrá cargarlas de nuevo. Queda una copia con el motivo.</small>',
+                input: 'textarea',
+                inputPlaceholder: 'Motivo del reseteo (obligatorio)',
+                inputValidator: function(valor) {
+                    if (!valor || valor.trim().length < 5) return 'Indique el motivo del reseteo';
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Sí, borrar notas',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#d33',
+                showLoaderOnConfirm: true,
+                preConfirm: function(motivo) {
+                    return $.ajax({
+                        url: 'ajax/reportenotas.ajax.php',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: { action: 'resetearCalificaciones', moduloID: moduloID, programaID: programaID, motivo: motivo.trim() }
+                    }).then(function(resp) {
+                        if (!resp || resp.status !== 'success') {
+                            Swal.showValidationMessage((resp && resp.message) || 'No se pudieron resetear las calificaciones');
+                            return false;
+                        }
+                        return resp;
+                    }, function() {
+                        Swal.showValidationMessage('No se pudieron resetear las calificaciones');
+                        return false;
+                    });
+                },
+                allowOutsideClick: function() { return !Swal.isLoading(); }
+            }).then(function(result) {
+                if (result.value) {
+                    Swal.fire({ type: 'success', title: 'Listo', text: result.value.message, timer: 1800, showConfirmButton: false });
+                }
+                // Volver al modal de módulos con la lista recargada
+                if ($ultimoVerModulos) {
+                    $ultimoVerModulos.trigger('click');
+                } else {
+                    $modalModulos.modal('show');
+                }
             });
         });
 

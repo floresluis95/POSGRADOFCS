@@ -71,7 +71,7 @@ if ($_SESSION["Tipo"] == "ADM") {
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="historialpagos" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-time" style="color: #6f94c9;"></i>
-                    <span class="kt-menu__link-text">Historial de Pagos</span>
+                    <span class="kt-menu__link-text">Historial de Pagos por estudiante</span>
                   </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">

@@ -158,6 +158,8 @@ test.describe('Proceso completo: del registro a los informes', () => {
     await modal.locator('#opMontoCuota').fill(String(MONTO_CUOTA));
     await modal.locator('#opCuentaPago').selectOption({ index: 1 }).catch(() => {});
     await modal.locator('#opBtnGenerarOrden').click();
+    // Resumen para verificar monto, cuota, programa y cuenta antes de generar
+    await page.locator('.swal2-confirm').click();
     await expect.poll(() => valor(`SELECT MontoTotal FROM ordenpago WHERE idinscripcion = ${datos.idInscripcion} AND Estado = 'PENDIENTE'`), { timeout: 15_000 })
       .toBe(MONTO_CUOTA.toFixed(2));
 

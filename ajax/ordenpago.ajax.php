@@ -885,7 +885,7 @@ function obtenerOrdenPendienteCuotaPrograma()
         $conexion = Conexion::Conectar();
 
         $stmt = $conexion->prepare("
-            SELECT op.IdOrdenPago, op.NumeroOrden, op.MontoTotal, op.FechaGeneracion, op.NombreFactura, op.NitCiFactura, op.Firma,
+            SELECT op.IdOrdenPago, op.NumeroOrden, op.MontoTotal, op.FechaGeneracion, op.FechaVencimiento, op.NombreFactura, op.NitCiFactura, op.Firma,
                 (SELECT GROUP_CONCAT(m.codigomodulo ORDER BY m.Idmodulo SEPARATOR ', ')
                  FROM ordenpagomodulo opm INNER JOIN modulos m ON m.Idmodulo = opm.IdModulo
                  WHERE opm.IdOrdenPago = op.IdOrdenPago) AS ModulosCubiertos,
@@ -1666,6 +1666,10 @@ function listarOrdenesGeneradas()
         $fila['estudiante'] = trim($o['Apaterno'] . ' ' . $o['Amaterno'] . ' ' . $o['Nombre']);
         $fila['ci'] = $ci;
         $fila['responsable'] = $o['ResponsableGeneracion'];
+        // Para validar el voucher desde esta pantalla (cuotas y clínicas se
+        // confirman por inscripción; la cuota exige el monto exacto de la orden)
+        $fila['idInscripcion'] = (int)($o['idinscripcion'] ?? 0);
+        $fila['montoTotal'] = (float)$o['MontoTotal'];
         return $fila;
     }, $ordenes);
 

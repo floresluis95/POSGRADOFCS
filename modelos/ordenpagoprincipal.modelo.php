@@ -1019,7 +1019,7 @@ class OrdenPagoModelos
                         op.IdOrdenPago, op.NumeroOrden, op.ProgramaID, op.ListaModulos, op.MontoTotal,
                         op.MontoFinal, op.PagoCompleto, op.FechaGeneracion, op.FechaVencimiento,
                         op.FechaConfirmacion, op.Estado, op.Observaciones, op.ResponsableGeneracion,
-                        e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Complemento, e.Exp,
+                        op.idinscripcion, e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Complemento, e.Exp,
                         p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico, p.Sede
                     FROM ordenpago op
                     INNER JOIN estudiante e ON e.EstudianteID = op.EstudianteID

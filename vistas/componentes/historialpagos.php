@@ -533,7 +533,12 @@ function iniciarHistorialPagos() {
                '</button>';
     }
 
+    // Se cambia al guardar una edición: obliga al navegador a pedir de nuevo las
+    // fotos (si se reemplazó la foto, la URL es la misma y mostraba la anterior)
+    let versionFotos = Date.now();
+
     function miniaturaFoto(tieneFoto, urlBase, voucher, alt) {
+        urlBase += '&v=' + versionFotos;
         return tieneFoto
             ? '<img src="' + urlBase + '&thumb=1" class="foto-voucher-thumb" alt="' + alt + '" ' +
               'data-url="' + urlBase + '" data-voucher="' + escaparAtributo(voucher || '-') + '">'
@@ -680,7 +685,7 @@ function iniciarHistorialPagos() {
     function refrescarUltimaBusqueda() {
         if (!ultimaBusqueda) return;
         if (ultimaBusqueda.tipo === 'ci') {
-            buscarPorCi();
+            buscarPorCi(ultimaBusqueda.ci);
         } else {
             buscarPorEstudianteId(ultimaBusqueda.estudianteId);
         }
@@ -688,8 +693,10 @@ function iniciarHistorialPagos() {
 
     const htmlBotonBuscar = '<i class="fa fa-search"></i> Buscar';
 
-    function buscarPorCi() {
-        const ci = $('#valorBusquedaHistorial').val().trim();
+    // ciGuardado: al refrescar tras editar se repite la misma búsqueda aunque el
+    // campo de búsqueda haya cambiado
+    function buscarPorCi(ciGuardado) {
+        const ci = typeof ciGuardado === 'string' ? ciGuardado : $('#valorBusquedaHistorial').val().trim();
 
         if (!ci) {
             Swal.fire({ type: 'warning', title: 'Atención', text: 'Ingrese un C.I. para buscar' });
@@ -715,7 +722,7 @@ function iniciarHistorialPagos() {
                     return;
                 }
 
-                ultimaBusqueda = { tipo: 'ci' };
+                ultimaBusqueda = { tipo: 'ci', ci: ci };
                 mostrarResultadoEstudiante(resp);
             },
             error: function() {
@@ -922,11 +929,11 @@ function iniciarHistorialPagos() {
                     return;
                 }
 
+                // Refrescar de inmediato (no al cerrar el aviso), con fotos nuevas
                 $('#modalEditarPagoHistorial').modal('hide');
-                Swal.fire({ type: 'success', title: 'Guardado', text: resp.mensaje, timer: 1800, showConfirmButton: false })
-                    .then(function() {
-                        refrescarUltimaBusqueda();
-                    });
+                versionFotos = Date.now();
+                refrescarUltimaBusqueda();
+                Swal.fire({ type: 'success', title: 'Guardado', text: resp.mensaje, timer: 1800, showConfirmButton: false });
             },
             error: function() {
                 $btnSubmit.prop('disabled', false).html(htmlBotonGuardar);

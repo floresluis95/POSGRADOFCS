@@ -55,11 +55,12 @@ $(document).ready(function() {
         $('input[name="numeroVaucher"]').val('');
         $('#fmodulo').val('');
         $('#montoCuota').val('');
-        $('#previewFotoVoucher').html('');
+        $('#previewFotoVoucher').html('<div class="vc-vista-vacia"><i class="fa fa-image"></i><span>Aquí se verá la foto del voucher para compararla con lo registrado</span></div>');
 
         // Mostrar loader en el resumen de pago
         $('#resumenPagoPrograma').html('<div class="gp-cargando"><i class="fa fa-spinner fa-spin"></i> Cargando resumen...</div>');
         $('#cuotaPendienteInfo').html('');
+        $('#seccionValidarCuota').hide();
         $('#tablaCuotasBody').html('<tr><td colspan="5" class="gp-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
 
         // Establecer fecha actual
@@ -200,37 +201,89 @@ $(document).ready(function() {
         );
     }
 
+    // Fecha "2026-10-13 17:39:30" o "2026-10-13" → "13/10/2026"
+    function fechaCorta(valor) {
+        const p = String(valor || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+        return p ? p[3] + '/' + p[2] + '/' + p[1] : (valor || '-');
+    }
+
+    function escHtml(t) {
+        return $('<div>').text(t == null ? '' : String(t)).html();
+    }
+
+    // Texto del botón de validar: incluye el monto de la orden
+    function textoBotonValidar() {
+        const monto = parseFloat($('#montoCuota').val()) || 0;
+        return '<i class="fa fa-check-circle"></i> Validar pago' + (monto ? ' de ' + formatoBs(monto) : '');
+    }
+
+    // Aviso a ancho completo (sin orden, completado, sin plan) y formulario oculto
+    function estadoCuotaSinValidar(icono, clase, titulo, texto) {
+        $('#seccionValidarCuota').hide();
+        $('#btnGuardarPagoCuota').prop('disabled', true);
+        $('#cuotaPendienteInfo').html(
+            '<div class="gp-section gp-estado-vacio ' + clase + '">' +
+                '<i class="fa ' + icono + '"></i>' +
+                '<h6>' + titulo + '</h6>' +
+                '<p class="mb-0">' + texto + '</p>' +
+            '</div>'
+        );
+    }
+
     function renderCuotaPendienteInfo(r, orden) {
         $('#montoCuota').val('');
-        $('#btnGuardarPagoCuota').html('<i class="fa fa-save"></i> Guardar pago');
 
         if (!r.tienePlan) {
-            $('#cuotaPendienteInfo').html('');
-            $('#btnGuardarPagoCuota').prop('disabled', true);
+            estadoCuotaSinValidar('fa-exclamation-triangle', 'is-alerta', 'Sin plan de pago',
+                'El estudiante no tiene plan de pago del programa.');
             return;
         }
 
         if (r.completado) {
-            $('#cuotaPendienteInfo').html('<div class="gp-nota is-exito"><i class="fa fa-check-circle"></i> El programa ya está pagado en su totalidad.</div>');
-            $('#btnGuardarPagoCuota').prop('disabled', true);
+            estadoCuotaSinValidar('fa-check-circle', 'is-exito', 'Programa pagado en su totalidad',
+                'No queda saldo pendiente; no hay cuotas por validar.');
             return;
         }
 
         if (!orden) {
-            $('#cuotaPendienteInfo').html(
-                '<div class="gp-nota is-neutra"><i class="fa fa-lock"></i> <span>No hay una orden de pago pendiente. ' +
-                '<button type="button" class="btn btn-link btn-sm p-0 align-baseline btn-ir-orden-pago">Generarla ahora</button> en la pestaña "Orden de pago".</span></div>'
-            );
-            $('#btnGuardarPagoCuota').prop('disabled', true);
+            estadoCuotaSinValidar('fa-file-invoice', '', 'No hay una orden de pago pendiente',
+                'Para validar un voucher primero debe generarse la orden de la cuota.<br>' +
+                '<button type="button" class="btn btn-primary btn-sm mt-3 btn-ir-orden-pago"><i class="fa fa-plus"></i> Generar orden de pago</button>');
             return;
         }
 
+        // Orden a validar: datos formales de lo que se está confirmando
+        const numeroCuota = (parseInt(r.cuotasPagadasCount, 10) || 0) + 1;
+        const textoCuota = 'Cuota ' + numeroCuota + (r.numeroCuotasPlan ? ' de ' + r.numeroCuotasPlan : '');
+        const dato = function(etiqueta, valor) {
+            return '<div class="vc-dato"><span>' + etiqueta + '</span><strong>' + valor + '</strong></div>';
+        };
+
         $('#montoCuota').val(orden.MontoTotal);
         $('#cuotaPendienteInfo').html(
-            '<div class="gp-nota"><i class="fa fa-file-invoice"></i> <span>Orden N° ' + orden.NumeroOrden +
-            ' pendiente por <strong>' + formatoBs(orden.MontoTotal) + '</strong>. Registre el voucher para confirmarla.</span></div>'
+            '<div class="vc-orden">' +
+                '<div class="vc-orden-cab">' +
+                    '<div>' +
+                        '<div class="vc-orden-eyebrow">Orden de pago a validar</div>' +
+                        '<div class="vc-orden-titulo">' + textoCuota + '</div>' +
+                    '</div>' +
+                    '<div class="vc-orden-monto">' + formatoBs(orden.MontoTotal) + '</div>' +
+                '</div>' +
+                '<div class="vc-orden-datos">' +
+                    dato('N° de orden', escHtml(orden.NumeroOrden)) +
+                    dato('Generada', fechaCorta(orden.FechaGeneracion)) +
+                    dato('Fecha límite', orden.FechaVencimiento ? fechaCorta(orden.FechaVencimiento) : '—') +
+                    dato('Cuenta', escHtml(orden.NumeroCuentaDeposito || '—')) +
+                    (orden.ModulosCubiertos ? dato('Módulo(s)', escHtml(orden.ModulosCubiertos)) : '') +
+                '</div>' +
+            '</div>'
         );
-        $('#btnGuardarPagoCuota').prop('disabled', false);
+
+        if (!$('#fechaPago').val()) {
+            $('#fechaPago').val(new Date().toLocaleDateString('sv-SE'));
+        }
+        $('#seccionValidarCuota').show();
+        $('#btnGuardarPagoCuota').prop('disabled', false).html(textoBotonValidar());
     }
 
     function renderHistorialCuotas(cuotas, numeroCuotasPlan) {
@@ -247,14 +300,14 @@ $(document).ready(function() {
 
             const tieneImagen = c.TieneImagen === 'SI';
             const btnFoto = tieneImagen
-                ? ' <a href="#" class="btn-ver-foto-cuota ml-1" data-idpago="' + c.Idpagomodulo + '" title="Ver foto del voucher"><i class="fa fa-image"></i></a>'
+                ? ' <a href="#" class="btn-ver-foto-cuota vc-ver-foto" data-idpago="' + c.Idpagomodulo + '" data-nvaucher="' + escHtml(c.nvaucher || '').replace(/"/g, '&quot;') + '" title="Ver foto del voucher"><i class="fa fa-image"></i> Ver</a>'
                 : '';
 
             html += '<tr>' +
-                '<td class="text-center">' + etiquetaCuota + '</td>' +
+                '<td class="text-center"><strong>' + etiquetaCuota + '</strong></td>' +
                 '<td class="text-right">' + formatoBs(c.montocuota) + '</td>' +
-                '<td class="text-center">' + (c.fechapago || '-') + '</td>' +
-                '<td>' + (c.nvaucher || '-') + btnFoto + '</td>' +
+                '<td class="text-center">' + fechaCorta(c.fechapago) + '</td>' +
+                '<td>' + escHtml(c.nvaucher || '-') + btnFoto + '</td>' +
                 '<td class="text-center">' + window.chipEstadoPago(c.Estado) + '</td>' +
             '</tr>';
         });
@@ -263,42 +316,69 @@ $(document).ready(function() {
 
     // Vista previa de la foto/archivo del voucher apenas se selecciona, para poder
     // verificar antes de guardar que es la imagen correcta.
+    // Recuadro vacío de la vista previa (antes de elegir la foto)
+    const VISTA_PREVIA_VACIA = '<div class="vc-vista-vacia"><i class="fa fa-image"></i>' +
+        '<span>Aquí se verá la foto del voucher para compararla con lo registrado</span></div>';
+
     $(document).on('change', '#fmodulo', function() {
         const archivo = this.files && this.files[0];
         const $preview = $('#previewFotoVoucher');
 
         if (!archivo) {
-            $preview.html('');
+            $preview.html(VISTA_PREVIA_VACIA);
             return;
         }
 
         if (archivo.type === 'application/pdf') {
-            $preview.html('<span class="text-muted small"><i class="fa fa-file-pdf-o"></i> ' + archivo.name + '</span>');
+            $preview.html('<div class="fv-numero"></div><div class="vc-vista-vacia"><i class="fa fa-file-pdf"></i><span>' + escHtml(archivo.name) + '</span></div>');
+            pintarNumeroVoucher($preview.find('.fv-numero'), $('#numeroVaucher').val());
             return;
         }
 
         if (!archivo.type.startsWith('image/')) {
-            $preview.html('');
+            $preview.html(VISTA_PREVIA_VACIA);
             return;
         }
 
         const lector = new FileReader();
         lector.onload = function(e) {
             $preview.html(
-                '<img src="' + e.target.result + '" alt="Vista previa del voucher" ' +
-                'style="max-width:100%; max-height:150px; border:1px solid #ddd; border-radius:4px; cursor:pointer;" ' +
-                'onclick="window.verFotoVoucherGrande(\'' + e.target.result + '\')">'
+                '<div class="fv-numero"></div>' +
+                '<img class="vc-vista-img" src="' + e.target.result + '" alt="Vista previa del voucher" title="Ver en grande" ' +
+                'onclick="window.verFotoVoucherGrande(\'' + e.target.result + '\', $(\'#numeroVaucher\').val())">'
             );
+            pintarNumeroVoucher($preview.find('.fv-numero'), $('#numeroVaucher').val());
         };
         lector.readAsDataURL(archivo);
     });
+
+    // El N° digitado se actualiza sobre la vista previa mientras se escribe
+    $(document).on('input', '#numeroVaucher', function() {
+        const $numero = $('#previewFotoVoucher .fv-numero');
+        if ($numero.length) pintarNumeroVoucher($numero, $(this).val());
+    });
+
+    // N° de voucher arriba de la foto, para comparar que se registró bien
+    function pintarNumeroVoucher($destino, numero) {
+        numero = String(numero || '').trim();
+        $destino.toggleClass('is-vacio', !numero).html(numero
+            ? '<span>N° de voucher registrado:</span> <strong>' + $('<div>').text(numero).html() + '</strong>'
+            : '<i class="fa fa-exclamation-triangle"></i> <span>Aún no se escribió el N° de voucher</span>');
+    }
 
     // Ver en grande la foto de un voucher (usado tanto en la vista previa antes de
     // guardar como en el historial de cuotas ya registradas). Modal de Bootstrap
     // propio (no SweetAlert) con tamaño de imagen fijo por CSS, igual que en
     // Historial de Módulos del estudiante, para que todas las fotos se vean del
     // mismo tamaño sin importar su resolución original.
-    window.verFotoVoucherGrande = function(url) {
+    window.verFotoVoucherGrande = function(url, numeroVoucher) {
+        const $numero = $('#numeroVoucherGrande');
+        if (numeroVoucher !== undefined) {
+            pintarNumeroVoucher($numero, numeroVoucher);
+            $numero.show();
+        } else {
+            $numero.hide();
+        }
         $('#imagenVoucherGrande').attr('src', url);
         $('#modalFotoVoucher').modal('show');
     };
@@ -307,7 +387,7 @@ $(document).ready(function() {
     $(document).on('click', '.btn-ver-foto-cuota', function(e) {
         e.preventDefault();
         const idpago = $(this).data('idpago');
-        window.verFotoVoucherGrande('ajax/obtener-voucher-imagen.php?id=' + idpago);
+        window.verFotoVoucherGrande('ajax/obtener-voucher-imagen.php?id=' + idpago, String($(this).attr('data-nvaucher') || ''));
     });
 
     // Botón "Generarla ahora" cuando no hay orden pendiente: salta a la pestaña "Orden de Pago"
@@ -327,7 +407,7 @@ $(document).ready(function() {
         formData.append('accion', 'registrarPagoModulo');
         formData.append('idinscripcion', idinscripcion);
 
-        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Guardando...');
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Validando...');
 
         $.ajax({
             url: 'ajax/pagomodulo.ajax.php',
@@ -338,18 +418,22 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(resp) {
                 if (resp.estado === 'exitoso') {
-                    Swal.fire({ type: 'success', title: 'Pago registrado', text: resp.mensaje, timer: 1800, showConfirmButton: false })
+                    // Limpiar para la próxima cuota
+                    $('#numeroVaucher').val('');
+                    $('#fmodulo').val('');
+                    $('#previewFotoVoucher').html(VISTA_PREVIA_VACIA);
+                    Swal.fire({ type: 'success', title: 'Pago validado', text: resp.mensaje, timer: 1800, showConfirmButton: false })
                         .then(function() {
                             cargarCuotasPrograma(programaID);
                         });
                 } else {
                     Swal.fire({ type: 'warning', title: 'Atención', text: resp.mensaje });
-                    $btn.prop('disabled', false).html('<i class="fa fa-save"></i> Guardar Pago');
+                    $btn.prop('disabled', false).html(textoBotonValidar());
                 }
             },
             error: function() {
                 Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo registrar el pago' });
-                $btn.prop('disabled', false).html('<i class="fa fa-save"></i> Guardar Pago');
+                $btn.prop('disabled', false).html(textoBotonValidar());
             }
         });
     });

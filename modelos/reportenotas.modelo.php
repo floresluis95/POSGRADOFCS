@@ -357,5 +357,65 @@ class ReporteNotasModelo
             return null;
         }
     }
+
+    /**
+     * Resetear (borrar) todas las calificaciones de un módulo para cargarlas de nuevo.
+     * Antes de borrar guarda una copia de cada nota en calificacionreseteo
+     * (la auditoría sale de las mismas filas de calificacion y se perdería).
+     * Todo en una transacción: si falla la copia, no se borra nada.
+     * @return int|false Cantidad de notas borradas, o false si hubo un error
+     */
+    public static function ResetearCalificacionesModuloModelo($moduloID, $programaID, $usuario, $motivo)
+    {
+        $conexion = Conexion::Conectar();
+        try {
+            $conexion->beginTransaction();
+
+            $stmt = $conexion->prepare("
+                SELECT CalificacionID, EstudianteID, Nota, estado, FechaRegistro,
+                       UsuarioRegistroID, UsuarioModificacionID, FechaModificacion
+                FROM calificacion
+                WHERE Idmodulo = :moduloID AND ProgramaId = :programaID
+                FOR UPDATE
+            ");
+            $stmt->bindParam(":moduloID", $moduloID, PDO::PARAM_INT);
+            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmt->execute();
+            $notas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($notas)) {
+                $conexion->rollBack();
+                return 0;
+            }
+
+            $stmt = $conexion->prepare("
+                INSERT INTO calificacionreseteo (Idmodulo, ProgramaId, TotalNotas, Motivo, Usuario, Detalle)
+                VALUES (:moduloID, :programaID, :total, :motivo, :usuario, :detalle)
+            ");
+            $stmt->execute([
+                ':moduloID' => $moduloID,
+                ':programaID' => $programaID,
+                ':total' => count($notas),
+                ':motivo' => $motivo,
+                ':usuario' => $usuario,
+                ':detalle' => json_encode($notas, JSON_UNESCAPED_UNICODE),
+            ]);
+
+            $stmt = $conexion->prepare("DELETE FROM calificacion WHERE Idmodulo = :moduloID AND ProgramaId = :programaID");
+            $stmt->bindParam(":moduloID", $moduloID, PDO::PARAM_INT);
+            $stmt->bindParam(":programaID", $programaID, PDO::PARAM_INT);
+            $stmt->execute();
+            $borradas = $stmt->rowCount();
+
+            $conexion->commit();
+            return $borradas;
+        } catch (PDOException $e) {
+            if ($conexion->inTransaction()) {
+                $conexion->rollBack();
+            }
+            error_log("Error en ResetearCalificacionesModuloModelo: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 ?>

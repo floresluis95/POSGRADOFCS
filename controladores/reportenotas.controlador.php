@@ -158,5 +158,42 @@ class ReporteNotasControlador
             ]);
         }
     }
+
+    /**
+     * Resetear (borrar) las calificaciones de un módulo (AJAX). Solo ADM y con
+     * motivo: la copia de las notas queda en calificacionreseteo.
+     */
+    public function ResetearCalificacionesModuloControlador()
+    {
+        if (($_SESSION['Tipo'] ?? '') !== 'ADM') {
+            echo json_encode(['status' => 'error', 'message' => 'Solo un administrador puede resetear calificaciones']);
+            return;
+        }
+
+        $moduloID = intval($_POST['moduloID'] ?? 0);
+        $programaID = intval($_POST['programaID'] ?? 0);
+        $motivo = trim($_POST['motivo'] ?? '');
+
+        if ($moduloID <= 0 || $programaID <= 0) {
+            echo json_encode(['status' => 'error', 'message' => 'Parámetros incompletos']);
+            return;
+        }
+        if (mb_strlen($motivo) < 5) {
+            echo json_encode(['status' => 'error', 'message' => 'Indique el motivo del reseteo']);
+            return;
+        }
+
+        $borradas = ReporteNotasModelo::ResetearCalificacionesModuloModelo(
+            $moduloID, $programaID, $_SESSION['Usuario'] ?? null, mb_substr($motivo, 0, 255)
+        );
+
+        if ($borradas === false) {
+            echo json_encode(['status' => 'error', 'message' => 'No se pudieron resetear las calificaciones']);
+        } elseif ($borradas === 0) {
+            echo json_encode(['status' => 'error', 'message' => 'El módulo no tiene calificaciones registradas']);
+        } else {
+            echo json_encode(['status' => 'success', 'message' => 'Se borraron ' . $borradas . ' calificación(es) del módulo', 'borradas' => $borradas]);
+        }
+    }
 }
 ?>

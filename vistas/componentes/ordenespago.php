@@ -203,6 +203,15 @@
         }
         .op-imprimir:hover { background: #1e3c72; color: #fff; text-decoration: none; }
 
+        /* Imprimir + ir a Matriculados (botón redondo solo con ícono) */
+        .op-acciones { display: inline-flex; align-items: center; gap: 6px; }
+        .op-ir-matriculado {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 30px; height: 30px; border-radius: 50%; border: 1px solid #d5dbe7;
+            color: #1e3c72; background: #fff; font-size: 0.8rem;
+        }
+        .op-ir-matriculado:hover { background: #eef2f9; border-color: #1e3c72; color: #1e3c72; text-decoration: none; }
+
         .op-vacio { text-align: center; color: #9aa0ac; padding: 2rem 1rem !important; }
         .op-pie { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 20px; border-top: 1px solid #eef0f5; font-size: 0.8rem; color: #7e8299; }
 
@@ -220,7 +229,9 @@
             #op_tabla tbody tr td:first-child { border-top: none; }
             #op_tabla tbody td.op-celda-accion::before, #op_tabla tbody td[colspan]::before { content: none; }
             #op_tabla tbody td.op-celda-accion { justify-content: center; padding-top: 10px; }
-            #op_tabla tbody td.op-celda-accion .op-imprimir { width: 100%; justify-content: center; padding: 8px 14px; }
+            #op_tabla tbody td.op-celda-accion .op-acciones { width: 100%; }
+            #op_tabla tbody td.op-celda-accion .op-imprimir { flex: 1; justify-content: center; padding: 8px 14px; }
+            #op_tabla tbody td.op-celda-accion .op-ir-matriculado { width: 36px; height: 36px; flex-shrink: 0; }
             #op_tabla tbody td[colspan] { display: block; text-align: center !important; border: none; }
         }
 
@@ -229,7 +240,63 @@
             .op-filtro, .op-filtro-buscar, .op-filtro-programa { flex: 1 1 100%; }
             .op-contador { flex: 1 1 calc(50% - 6px); }
         }
+        /* Botón Validar (órdenes pendientes) */
+        .op-validar {
+            display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+            padding: 5px 14px; border-radius: 20px; border: 1px solid #1e7145;
+            color: #fff; background: #1e7145; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+        }
+        .op-validar:hover { background: #155a35; border-color: #155a35; color: #fff; text-decoration: none; }
+
+        /* Ventana "Validar voucher" */
+        #op_modal_validar .modal-content { border: 0; border-radius: 14px; overflow: hidden; }
+        #op_modal_validar .modal-header { background: #1e3c72; border: 0; }
+        #op_modal_validar .modal-title, #op_modal_validar .close { color: #fff; opacity: 1; text-shadow: none; }
+        .opv-resumen { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; padding: 12px 14px; margin-bottom: 16px; background: #f7f8fa; border-radius: 10px; font-size: 13px; }
+        .opv-resumen dt { color: #7e8299; font-weight: 600; }
+        .opv-resumen dd { margin: 0; color: #1f2937; }
+        .opv-monto { font-size: 18px; font-weight: 700; color: #1e3c72; }
+        .opv-numero { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; padding: 5px 10px; border-radius: 8px; background: #eef2f9; color: #1e3c72; font-size: 12px; }
+        .opv-numero strong { font-size: 15px; }
+        .opv-numero.is-vacio { background: #fff6e0; color: #b7791f; }
+        #opv_preview img { max-width: 100%; max-height: 220px; border: 1px solid #ddd; border-radius: 6px; }
+        #op_modal_validar label { font-size: 12px; font-weight: 600; color: #1f2937; }
     </style>
+
+    <!-- Validar el voucher de una orden pendiente (cuota o clínica). La matrícula se
+         valida en Inscripción. Fuera de #kt_wrapper para que el modal se posicione bien. -->
+    <div class="modal fade" id="op_modal_validar" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form class="modal-content" id="op_form_validar" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa fa-check-circle"></i> Validar voucher</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <dl class="opv-resumen" id="opv_resumen"></dl>
+                    <div class="form-row">
+                        <div class="form-group col-sm-6">
+                            <label for="opv_fecha">Fecha de pago <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="opv_fecha" required>
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label for="opv_numero">N° de voucher / comprobante <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="opv_numero" placeholder="Ej: 123456" autocomplete="off" required>
+                        </div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="opv_archivo">Foto o archivo del voucher <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control-file" id="opv_archivo" accept="image/*,.pdf" data-captura-foto required>
+                        <div id="opv_preview" class="mt-2"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="opv_guardar"><i class="fa fa-save"></i> Validar pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="vistas/recursos/assets/js/scripts/ordenespago.js?v=<?php echo time(); ?>"></script>
 </body>

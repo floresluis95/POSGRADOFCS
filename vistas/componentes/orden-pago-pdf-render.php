@@ -171,10 +171,19 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     $y_prog = $pdf->GetY();
 
     // Tipo de pago (MATRÍCULA, CUOTA o PROGRAMA COMPLETO): se detecta dentro del
-    // texto ya armado de $programa
+    // texto ya armado de $programa. Como ya se muestra en TIPO DE PAGO, se quita
+    // del nombre del programa para no repetirlo.
     $tipoPago = '';
-    if (stripos($programa, 'PROGRAMA COMPLETO') !== false) {
+    if (preg_match('/\s+PROGRAMA COMPLETO\s*$/iu', $programa, $m)) {
         $tipoPago = 'PROG. COMPLETO';
+        $programa = mb_substr($programa, 0, -mb_strlen($m[0]));
+    } elseif (preg_match('/\s+MATR[IÍ]CULA\s*$/iu', $programa, $m)) {
+        $tipoPago = 'MATRÍCULA';
+        $programa = mb_substr($programa, 0, -mb_strlen($m[0]));
+    } elseif (preg_match('/\n\s*(?:(\S+) cuota|Cuota (\d+)) del programa\s*$/iu', $programa, $m)) {
+        // "Primera cuota del programa" → PRIMERA CUOTA; "Cuota 12 del programa" → CUOTA 12
+        $tipoPago = !empty($m[1]) ? mb_strtoupper($m[1], 'UTF-8') . ' CUOTA' : 'CUOTA ' . $m[2];
+        $programa = mb_substr($programa, 0, -mb_strlen($m[0]));
     } elseif (stripos($programa, 'MATRICULA') !== false || stripos($programa, 'MATRÍCULA') !== false) {
         $tipoPago = 'MATRÍCULA';
     } elseif (stripos($programa, 'cuota') !== false) {

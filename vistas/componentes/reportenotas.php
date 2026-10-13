@@ -63,6 +63,21 @@ $csrf_token = bin2hex(random_bytes(32));
 .rnt-label i { color: var(--rnt-primario); width: 14px; }
 .rnt .btn-abrir-panel { height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 
+/* Filtros en una sola fila alineada abajo: Programa toma el espacio libre y
+   Sede y Código quedan compactos (en celular pasan a otra línea) */
+.rnt-filtros { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
+.rnt-filtro { min-width: 0; }
+.rnt-filtro-sede { flex: 0 0 180px; }
+.rnt-filtro-programa { flex: 1 1 320px; }
+.rnt-filtro-codigo { flex: 0 0 170px; }
+.rnt-filtro-boton { flex: 0 0 auto; }
+.rnt-filtro-boton .btn-abrir-panel { height: 38px; padding: 0 16px; }
+@media (max-width: 575px) {
+    .rnt-filtro-programa, .rnt-filtro-boton { flex-basis: 100%; }
+    .rnt-filtro-sede, .rnt-filtro-codigo { flex: 1 1 0; }
+    .rnt-filtro-boton .btn { width: 100%; }
+}
+
 /* ---------- Tablas (programas, módulos y auditoría) ---------- */
 .rnt-tabla,
 #contenedorModulos .table,
@@ -242,8 +257,8 @@ $csrf_token = bin2hex(random_bytes(32));
                     </div>
                   </div>
                   <div class="rnt-card-body">
-                    <div class="row align-items-end">
-                      <div class="col-xl-3 col-lg-6 col-md-6 mb-3 mb-xl-0">
+                    <div class="rnt-filtros">
+                      <div class="rnt-filtro rnt-filtro-sede">
                         <label class="rnt-label" for="filtroSedeReporte"><i class="fas fa-map-marker-alt"></i> Sede</label>
                         <select class="form-control select2-uniforme" id="filtroSedeReporte">
                           <option value="">Todas las sedes...</option>
@@ -257,7 +272,7 @@ $csrf_token = bin2hex(random_bytes(32));
                           ?>
                         </select>
                       </div>
-                      <div class="col-xl-3 col-lg-6 col-md-6 mb-3 mb-xl-0">
+                      <div class="rnt-filtro rnt-filtro-programa">
                         <label class="rnt-label" for="filtroProgramaReporte"><i class="fas fa-university"></i> Programa</label>
                         <select class="form-control select2-uniforme" id="filtroProgramaReporte">
                           <option value="">Todos los programas...</option>
@@ -270,7 +285,7 @@ $csrf_token = bin2hex(random_bytes(32));
                           ?>
                         </select>
                       </div>
-                      <div class="col-xl-3 col-lg-6 col-md-6 mb-3 mb-md-0">
+                      <div class="rnt-filtro rnt-filtro-codigo">
                         <label class="rnt-label" for="filtroCodigoReporte"><i class="fas fa-code"></i> Código</label>
                         <select class="form-control select2-uniforme" id="filtroCodigoReporte">
                           <option value="">Todos los códigos...</option>
@@ -290,8 +305,8 @@ $csrf_token = bin2hex(random_bytes(32));
                           ?>
                         </select>
                       </div>
-                      <div class="col-xl-3 col-lg-6 col-md-6">
-                        <button type="button" class="btn btn-abrir-panel btn-block" id="btnLimpiarFiltroReporte">
+                      <div class="rnt-filtro rnt-filtro-boton">
+                        <button type="button" class="btn btn-abrir-panel" id="btnLimpiarFiltroReporte">
                           <i class="fa fa-times"></i> Limpiar filtros
                         </button>
                       </div>
@@ -310,6 +325,8 @@ $csrf_token = bin2hex(random_bytes(32));
                         }
                         echo json_encode($programasParaFiltroCodigo, JSON_UNESCAPED_UNICODE);
                       ?>;
+                      // Solo el ADM ve el botón "Resetear notas" (el servidor también lo valida)
+                      window.esAdminReporteNotas = <?php echo (($_SESSION['Tipo'] ?? '') === 'ADM') ? 'true' : 'false'; ?>;
                     </script>
                   </div>
                 </div>

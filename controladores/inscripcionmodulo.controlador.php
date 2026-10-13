@@ -142,10 +142,10 @@ class InscripcionModuloControladores
                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fa fa-cog"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-right">
+                            <div class="dropdown-menu dropdown-menu-right mt-acciones">
                                 <a class="dropdown-item btn-ver-detalles" href="#"
                                    data-detalle="' . htmlspecialchars(json_encode($detalle, JSON_UNESCAPED_UNICODE), ENT_QUOTES) . '">
-                                    <i class="fa fa-eye text-info"></i> Ver Detalles
+                                    <i class="fa fa-eye"></i> Detalles
                                 </a>
                                 <a class="dropdown-item btn-ver-modulos" href="#"
                                    data-estudiante-id="' . $estudiante['EstudianteID'] . '"
@@ -153,29 +153,28 @@ class InscripcionModuloControladores
                                    data-idinscripcion="' . $estudiante['idInscripcion'] . '"
                                    data-programa-id="' . $estudiante['ProgramaID'] . '"
                                    data-programa-nombre="' . htmlspecialchars($estudiante['NombrePrograma']) . '">
-                                    <i class="fa fa-list text-success"></i> Ver Módulos Inscritos
-                                </a>
-                                <a class="dropdown-item btn-requisitos" href="#"
-                                   data-idinscripcion="' . $estudiante['idInscripcion'] . '"
-                                   data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '">
-                                    <i class="fa fa-clipboard-check"></i> Requisitos
+                                    <i class="fa fa-list"></i> Módulos inscritos
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="vistas/componentes/recibo-pago-modulos.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
-                                    <i class="fa fa-file-invoice-dollar text-success"></i> Ver Recibo de Pagos
+                                    <i class="fa fa-file-invoice-dollar"></i> Recibo de pagos
                                 </a>
+                                <a class="dropdown-item" href="ordenespago?ci=' . urlencode($estudiante['Ci']) . '&programa=' . (int)$estudiante['ProgramaID'] . '">
+                                    <i class="fa fa-receipt"></i> Órdenes de pago
+                                </a>
+                                <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfestudiante.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
-                                    <i class="fa fa-print text-warning"></i> Imprimir Ficha
+                                    <i class="fa fa-print"></i> Ficha de inscripción
                                 </a>
                                 <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfcompromiso.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
-                                    <i class="fa fa-file-signature text-info"></i> Documento de Compromiso
+                                    <i class="fa fa-file-signature"></i> Compromiso
                                 </a>';
 
             // Agregar opción de comprobante de pago completo solo si pagoCompleto = 1
             if ($pagoCompleto == 1) {
                 echo '
-                                <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfpagocompletoprograma.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank" style="background-color: #e7f3ff;">
-                                    <i class="fa fa-file-pdf text-primary"></i> <strong>Comprobante Pago Completo</strong>
+                                <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfpagocompletoprograma.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
+                                    <i class="fa fa-file-pdf"></i> Comprobante pago completo
                                 </a>';
             }
 
@@ -188,16 +187,16 @@ class InscripcionModuloControladores
                                 <a class="dropdown-item btn-marcar-abandono" href="#"
                                    data-idinscripcion="' . $estudiante['idInscripcion'] . '"
                                    data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
-                                   data-nuevo-estado="ABANDONO" style="color: #dc3545;">
-                                    <i class="fa fa-user-times"></i> Marcar como Abandono
+                                   data-nuevo-estado="ABANDONO">
+                                    <i class="fa fa-user-times"></i> Marcar abandono
                                 </a>';
             } else {
                 echo '
                                 <a class="dropdown-item btn-marcar-abandono" href="#"
                                    data-idinscripcion="' . $estudiante['idInscripcion'] . '"
                                    data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '"
-                                   data-nuevo-estado="ACTIVO" style="color: #28a745;">
-                                    <i class="fa fa-user-check"></i> Reactivar (marcar Activo)
+                                   data-nuevo-estado="ACTIVO">
+                                    <i class="fa fa-user-check"></i> Reactivar
                                 </a>';
             }
 
