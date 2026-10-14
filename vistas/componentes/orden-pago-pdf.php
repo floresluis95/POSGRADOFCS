@@ -164,6 +164,7 @@ try {
         // generar la orden (ver generar-orden-pago-pdf.php).
         'numeroCuentaDeposito' => '10000006050938',
         'firma' => $orden['Firma'],
+        'numeroOrden' => $orden['NumeroOrden'],
     ];
 
     generarPdfOrdenPagoOficial($datos);

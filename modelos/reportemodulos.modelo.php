@@ -385,5 +385,105 @@ class ReporteModulosModelo
             return [];
         }
     }
+
+    /**
+     * Datos de la pestaña "Gráficos" del Reporte General (series por mes y órdenes
+     * por cobrar). Lo cobrado sigue el mismo criterio que el reporte de pagos: la
+     * matrícula cuenta como cobrada al inscribirse (FechaInscripcion), las cuotas por
+     * su fecha de pago y las clínicas aparte.
+     * @param string|null $grado Filtrar por grado académico (opcional)
+     * @param int $meses Meses hacia atrás, incluido el actual
+     * @return array
+     */
+    public static function ObtenerDatosGraficosModelo($grado, $meses)
+    {
+        try {
+            $conexion = Conexion::Conectar();
+            $desde = date('Y-m-01', strtotime('-' . ($meses - 1) . ' months', strtotime(date('Y-m-01'))));
+            $filtroGrado = !empty($grado) ? ' AND p.GradoAcademico = :grado' : '';
+            $ejecutar = function ($sql, $conFecha = true) use ($conexion, $grado, $desde) {
+                $stmt = $conexion->prepare($sql);
+                if ($conFecha) $stmt->bindValue(':desde', $desde);
+                if (!empty($grado)) $stmt->bindValue(':grado', $grado);
+                $stmt->execute();
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            };
+
+            $matriculas = $ejecutar(
+                "SELECT DATE_FORMAT(ep.FechaInscripcion, '%Y-%m') AS Mes,
+                        COALESCE(SUM(ep.costomatricula), 0) AS Monto, COUNT(*) AS Inscritos
+                 FROM estudianteprograma ep
+                 INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
+                 WHERE ep.Estado IN ('ACTIVO', 'CONFIRMADO', 'ABANDONO') AND ep.FechaInscripcion >= :desde" . $filtroGrado . "
+                 GROUP BY Mes"
+            );
+            $cuotas = $ejecutar(
+                "SELECT DATE_FORMAT(pm.fechapago, '%Y-%m') AS Mes, COALESCE(SUM(pm.montocuota), 0) AS Monto
+                 FROM pagomodulo pm
+                 INNER JOIN estudianteprograma ep ON ep.idInscripcion = pm.idinscripcion
+                 INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
+                 WHERE pm.Estado = 'PAGADO' AND pm.fechapago >= :desde" . $filtroGrado . "
+                 GROUP BY Mes"
+            );
+            $clinicas = $ejecutar(
+                "SELECT DATE_FORMAT(pcl.FechaPago, '%Y-%m') AS Mes, COALESCE(SUM(pcl.Monto), 0) AS Monto
+                 FROM pagoclinica pcl
+                 INNER JOIN ordenpago op ON op.IdOrdenPago = pcl.IdOrdenPago
+                 INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
+                 WHERE pcl.Estado = 'PAGADO' AND pcl.FechaPago >= :desde" . $filtroGrado . "
+                 GROUP BY Mes"
+            );
+
+            // Una fila por mes, también los meses sin movimiento
+            $porMes = [];
+            for ($i = 0; $i < $meses; $i++) {
+                $mes = date('Y-m', strtotime('+' . $i . ' months', strtotime($desde)));
+                $porMes[$mes] = ['mes' => $mes, 'matricula' => 0, 'cuotas' => 0, 'clinicas' => 0, 'inscritos' => 0];
+            }
+            foreach ($matriculas as $f) {
+                if (isset($porMes[$f['Mes']])) {
+                    $porMes[$f['Mes']]['matricula'] = (float)$f['Monto'];
+                    $porMes[$f['Mes']]['inscritos'] = (int)$f['Inscritos'];
+                }
+            }
+            foreach ($cuotas as $f) {
+                if (isset($porMes[$f['Mes']])) $porMes[$f['Mes']]['cuotas'] = (float)$f['Monto'];
+            }
+            foreach ($clinicas as $f) {
+                if (isset($porMes[$f['Mes']])) $porMes[$f['Mes']]['clinicas'] = (float)$f['Monto'];
+            }
+
+            // Órdenes pendientes. Las de cuota y clínica tienen fecha límite; las de
+            // matrícula son pre-registros por validar (su monto final ya trae el descuento).
+            $ordenes = $ejecutar(
+                "SELECT
+                    CASE
+                        WHEN op.Observaciones NOT IN ('CUOTA PROGRAMA', 'CLINICA') THEN 'matricula'
+                        WHEN op.FechaVencimiento IS NOT NULL AND op.FechaVencimiento < CURDATE() THEN 'vencidas'
+                        WHEN op.FechaVencimiento IS NOT NULL AND op.FechaVencimiento <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 'proximas'
+                        ELSE 'aldia'
+                    END AS Grupo,
+                    COUNT(*) AS Cantidad,
+                    COALESCE(SUM(CASE WHEN op.MontoFinal > 0 THEN op.MontoFinal ELSE op.MontoTotal END), 0) AS Monto
+                 FROM ordenpago op
+                 INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
+                 WHERE op.Estado = 'PENDIENTE'" . $filtroGrado . "
+                 GROUP BY Grupo",
+                false
+            );
+            $resumenOrdenes = [];
+            foreach (['vencidas', 'proximas', 'aldia', 'matricula'] as $g) {
+                $resumenOrdenes[$g] = ['cantidad' => 0, 'monto' => 0];
+            }
+            foreach ($ordenes as $f) {
+                $resumenOrdenes[$f['Grupo']] = ['cantidad' => (int)$f['Cantidad'], 'monto' => (float)$f['Monto']];
+            }
+
+            return ['meses' => array_values($porMes), 'ordenes' => $resumenOrdenes];
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerDatosGraficosModelo: " . $e->getMessage());
+            return ['meses' => [], 'ordenes' => []];
+        }
+    }
 }
 ?>

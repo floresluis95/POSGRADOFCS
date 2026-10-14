@@ -17,7 +17,7 @@ $(document).ready(function() {
     $('#reportePagosBuscar').on('input', filtrarReportePagos);
 
     // Actualizar / Imprimir solo aplican a la pestaña de pagos
-    $('#rpTabPagosLink, #rpTabProgramasLink').on('shown.bs.tab', function() {
+    $('#rpTabPagosLink, #rpTabProgramasLink, #rpTabGraficosLink').on('shown.bs.tab', function() {
         $('#rpAccionesPagos').toggle(this.id === 'rpTabPagosLink');
     });
     // Enlace directo a la pestaña: reportemodulos#programas

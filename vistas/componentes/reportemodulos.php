@@ -126,6 +126,11 @@ date_default_timezone_set("America/La_Paz");
                                                 <i class="fa fa-th-list"></i> Programas y módulos
                                             </a>
                                         </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-toggle="tab" href="#rpTabGraficos" role="tab" id="rpTabGraficosLink">
+                                                <i class="fa fa-chart-bar"></i> Gráficos
+                                            </a>
+                                        </li>
                                     </ul>
                                     <div class="rp-acciones" id="rpAccionesPagos">
                                         <button type="button" class="btn btn-sm rp-btn" id="btnActualizarReportePagos" title="Actualizar">
@@ -294,6 +299,75 @@ date_default_timezone_set("America/La_Paz");
                                         </div>
                                         <?php endif; ?>
                                     </div>
+
+                                    <!-- ===== Pestaña: Gráficos para la toma de decisiones (reportegraficos.js) ===== -->
+                                    <div class="tab-pane fade rp-body" id="rpTabGraficos" role="tabpanel">
+                                        <div class="rp-filtros">
+                                            <div class="rp-filtro">
+                                                <select class="form-control select2-uniforme" id="rgGrado" aria-label="Grado académico">
+                                                    <option value="">Todos los grados</option>
+                                                </select>
+                                            </div>
+                                            <div class="rp-filtro">
+                                                <select class="form-control select2-uniforme" id="rgPeriodo" aria-label="Periodo">
+                                                    <option value="6">Últimos 6 meses</option>
+                                                    <option value="12" selected>Últimos 12 meses</option>
+                                                    <option value="24">Últimos 24 meses</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Órdenes de pago pendientes (sin filtro de periodo: es el estado de hoy) -->
+                                        <div class="rg-tiles" id="rgOrdenes"></div>
+
+                                        <div class="rg-panel">
+                                            <div class="rg-panel-cab">
+                                                <div>
+                                                    <h6>Cobrado por mes</h6>
+                                                    <span class="rg-panel-dato" id="rgCobradoTotal"></span>
+                                                </div>
+                                                <button type="button" class="btn btn-sm rp-btn" id="rgVerTabla">Ver datos</button>
+                                            </div>
+                                            <div class="rg-leyenda" id="rgCobradoLeyenda"></div>
+                                            <div id="rgCobradoMes"></div>
+                                            <div class="rp-tabla-wrap table-responsive mt-3" id="rgCobradoTabla" style="display:none;"></div>
+                                        </div>
+
+                                        <div class="rg-fila">
+                                            <div class="rg-panel">
+                                                <div class="rg-panel-cab">
+                                                    <div>
+                                                        <h6>Cartera por programa</h6>
+                                                        <span class="rg-panel-dato" id="rgCarteraTotal"></span>
+                                                    </div>
+                                                </div>
+                                                <div class="rg-leyenda">
+                                                    <span><i class="rg-llave is-s1"></i>Cobrado</span>
+                                                    <span><i class="rg-llave is-pendiente"></i>Por cobrar</span>
+                                                </div>
+                                                <div id="rgCartera"></div>
+                                            </div>
+                                            <div class="rg-panel">
+                                                <div class="rg-panel-cab">
+                                                    <div>
+                                                        <h6>Inscripciones por mes</h6>
+                                                        <span class="rg-panel-dato" id="rgInscritosTotal"></span>
+                                                    </div>
+                                                </div>
+                                                <div id="rgInscritosMes"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="rg-panel mb-0">
+                                            <div class="rg-panel-cab">
+                                                <div>
+                                                    <h6>Planes de pago elegidos</h6>
+                                                    <span class="rg-panel-dato" id="rgPlanesNota"></span>
+                                                </div>
+                                            </div>
+                                            <div id="rgPlanes"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -372,6 +446,7 @@ date_default_timezone_set("America/La_Paz");
     <!-- Scripts -->
     <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
     <script src="vistas/recursos/assets/js/scripts/reportemodulos.js?v=<?php echo time(); ?>"></script>
+    <script src="vistas/recursos/assets/js/scripts/reportegraficos.js?v=<?php echo time(); ?>"></script>
 
     <style>
         /* =========================================================
@@ -879,5 +954,93 @@ date_default_timezone_set("America/La_Paz");
         .rp-chip.is-exito, .rp-chip.is-alerta, .rp-chip.is-info, .rp-chip.is-clinica { background: #f1f5f9; color: #334155; }
         .rp-chip.is-peligro { background: #fef2f2; color: #991b1b; }
         .rp-chip.is-exito { background: var(--rp-primario-suave); color: var(--rp-primario); }
+
+        /* ===== Pestaña Gráficos (prefijo rg-, reportegraficos.js) =====
+           Series: posiciones 1-3 de la paleta categórica validada (validate_palette.js:
+           azul / naranja / aqua pasan todas las pruebas; aqua < 3:1 → hay vista de tabla).
+           "Por cobrar" es la pista clara del mismo azul. Estados con ícono + etiqueta. */
+        .rp {
+            --rg-s1: #2a78d6;
+            --rg-s2: #eb6834;
+            --rg-s3: #1baf7a;
+            --rg-pendiente: #cde2fb;
+            --rg-grilla: #e8eaee;
+            --rg-eje: #c3c7cf;
+            --rg-muted: #6b7280;
+            --rg-critico: #d03b3b;
+            --rg-alerta: #fab219;
+            --rg-bien: #0ca30c;
+        }
+        .rg-llave { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; background: #cbd5e1; }
+        .rg-llave.is-s1, .rg-seg.is-s1 { background: var(--rg-s1); }
+        .rg-llave.is-s2, .rg-seg.is-s2 { background: var(--rg-s2); }
+        .rg-llave.is-s3, .rg-seg.is-s3 { background: var(--rg-s3); }
+        .rg-llave.is-pendiente, .rg-seg.is-pendiente { background: var(--rg-pendiente); }
+
+        /* Órdenes por cobrar */
+        .rg-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+        .rg-tile { border: 1px solid var(--rp-borde); border-radius: 8px; padding: 10px 14px; background: #fff; }
+        .rg-tile-cab { font-size: 12px; font-weight: 600; color: var(--rp-texto-2); }
+        .rg-tile-cab i { width: 16px; color: #94a3b8; }
+        .rg-tile.is-critico .rg-tile-cab i { color: var(--rg-critico); }
+        .rg-tile.is-alerta .rg-tile-cab i { color: var(--rg-alerta); }
+        .rg-tile.is-bien .rg-tile-cab i { color: var(--rg-bien); }
+        .rg-tile-valor { font-size: 24px; font-weight: 600; color: var(--rp-texto); line-height: 1.2; margin-top: 2px; }
+        .rg-tile-sub { font-size: 12px; color: var(--rp-texto-2); }
+
+        /* Paneles */
+        .rg-fila { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+        .rg-panel { border: 1px solid var(--rp-borde); border-radius: 8px; padding: 14px 16px 12px; background: #fff; margin-bottom: 14px; min-width: 0; }
+        .rg-panel-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+        .rg-panel-cab h6 { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--rp-texto); }
+        .rg-panel-dato { display: block; font-size: 12px; color: var(--rp-texto-2); margin-top: 1px; }
+        .rg-panel-dato b { color: var(--rp-texto); }
+        .rg-leyenda { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--rp-texto-2); margin-bottom: 10px; }
+        .rg-leyenda b { color: var(--rp-texto); font-weight: 600; margin-left: 2px; }
+        .rg-vacio { text-align: center; color: var(--rp-texto-2); font-size: 12.5px; padding: 40px 0; }
+        .rg-nota { font-size: 11.5px; color: var(--rp-texto-2); margin-top: 8px; }
+
+        /* Columnas: eje Y a la izquierda, grilla de línea fina, barras de hasta 24px */
+        .rg-columnas { display: flex; height: 210px; padding-bottom: 20px; }
+        .rg-eje-y { position: relative; width: 38px; flex-shrink: 0; }
+        .rg-eje-y span { position: absolute; right: 8px; transform: translateY(50%); font-size: 10.5px; color: var(--rg-muted); font-variant-numeric: tabular-nums; }
+        .rg-plano { position: relative; flex: 1; display: flex; align-items: flex-end; border-bottom: 1px solid var(--rg-eje); }
+        .rg-grilla { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid var(--rg-grilla); }
+        .rg-col { position: relative; flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; cursor: default; }
+        .rg-col:hover { background: rgba(30, 60, 114, .04); }
+        .rg-pila { position: relative; width: 60%; max-width: 24px; min-height: 0; display: flex; flex-direction: column; gap: 2px; }
+        .rg-pila .rg-seg { min-height: 2px; }
+        .rg-pila .rg-seg:first-child { border-radius: 4px 4px 0 0; }
+        .rg-col-valor { position: absolute; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 600; color: var(--rp-texto); font-variant-numeric: tabular-nums; }
+        .rg-col-eje { position: absolute; bottom: -19px; left: -10px; right: -10px; text-align: center; font-size: 10.5px; color: var(--rg-muted); white-space: nowrap; }
+
+        /* Barras horizontales: nombre · barra · valor en la punta */
+        .rg-barras { display: flex; flex-direction: column; gap: 8px; }
+        .rg-barra-fila { display: grid; grid-template-columns: minmax(0, 38%) minmax(0, 1fr) auto; align-items: center; gap: 10px; cursor: default; }
+        .rg-barra-fila.is-corta { grid-template-columns: 70px minmax(0, 1fr) 90px; }
+        .rg-barra-fila:hover .rg-barra-nombre { color: var(--rp-texto); }
+        .rg-barra-nombre { font-size: 12px; color: var(--rp-texto-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rg-barra-pista { height: 16px; display: flex; align-items: center; }
+        .rg-barra-total { height: 100%; display: flex; gap: 2px; min-width: 4px; }
+        .rg-barra-total .rg-seg { height: 100%; min-width: 2px; }
+        .rg-barra-total .rg-seg:last-child { border-radius: 0 4px 4px 0; }
+        .rg-barra-valor { font-size: 12px; font-weight: 600; color: var(--rp-texto); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .rg-barra-valor .rp-muted { font-weight: 400; }
+
+        /* Tooltip (sigue al mouse) */
+        .rg-tooltip {
+            display: none; position: fixed; z-index: 2000; pointer-events: none; min-width: 170px;
+            background: #fff; border: 1px solid var(--rp-borde, #e5e7eb); border-radius: 6px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, .14); padding: 8px 10px; font-size: 12px; color: #1f2937;
+        }
+        .rg-tip-titulo { font-weight: 600; margin-bottom: 4px; }
+        .rg-tip-fila { display: flex; align-items: center; gap: 4px; line-height: 1.7; }
+        .rg-tip-fila span { flex: 1; color: #6b7280; }
+        .rg-tip-fila b { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+        @media (max-width: 991.98px) {
+            .rg-fila { grid-template-columns: 1fr; }
+            .rg-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
     </style>
 </body>

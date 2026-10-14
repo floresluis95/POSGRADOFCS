@@ -86,7 +86,7 @@ class InscripcionModuloModelos
                 $sql .= " HAVING RequisitosEntregados >= RequisitosTotal";
             }
 
-            $sql .= " ORDER BY ep.FechaInscripcion DESC";
+            $sql .= " ORDER BY ep.FechaInscripcion DESC, ep.idInscripcion DESC";
 
             $stmt = Conexion::Conectar()->prepare($sql);
 

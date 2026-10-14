@@ -4,13 +4,20 @@
 .modal.captura-foto-modal { z-index: 1065; }
 .modal-backdrop.captura-foto-backdrop { z-index: 1060; }
 
+/* La vista toma la forma de la cámara (horizontal o vertical), sin estirarse */
 .captura-foto-video {
     background: #000;
     border-radius: 8px;
     overflow: hidden;
     text-align: center;
+    position: relative;
 }
-.captura-foto-video video { width: 100%; max-height: 60vh; display: block; }
+.captura-foto-video video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.captura-foto-video canvas { display: block; margin: 0 auto; max-width: 100%; max-height: 60vh; width: auto; height: auto; }
+
+.captura-foto-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+.captura-foto-barra .btn { font-size: 13px; padding: 5px 12px; }
+.captura-foto-barra small { flex: 1 1 200px; }
 
 .captura-foto-lienzo {
     height: 60vh;
@@ -20,5 +27,17 @@
 }
 /* Cropper.js necesita que la imagen ocupe el ancho del contenedor */
 .captura-foto-lienzo img { display: block; max-width: 100%; }
+/* Esquinas del recuadro más grandes: fáciles de tomar con el mouse o el dedo */
+.captura-foto-lienzo .cropper-point { width: 12px; height: 12px; opacity: 1; background-color: #2a78d6; border: 2px solid #fff; }
+.captura-foto-lienzo .cropper-point.point-nw { left: -6px; top: -6px; }
+.captura-foto-lienzo .cropper-point.point-ne { right: -6px; top: -6px; }
+.captura-foto-lienzo .cropper-point.point-sw { left: -6px; bottom: -6px; }
+.captura-foto-lienzo .cropper-point.point-se { right: -6px; bottom: -6px; width: 12px; height: 12px; }
+.captura-foto-lienzo .cropper-point.point-n { top: -6px; margin-left: -6px; }
+.captura-foto-lienzo .cropper-point.point-s { bottom: -6px; margin-left: -6px; }
+.captura-foto-lienzo .cropper-point.point-e { right: -6px; margin-top: -6px; }
+.captura-foto-lienzo .cropper-point.point-w { left: -6px; margin-top: -6px; }
+.captura-foto-lienzo .cropper-line { opacity: 0; }
+.captura-foto-lienzo .cropper-view-box { outline: 2px solid #2a78d6; outline-color: rgba(42, 120, 214, 0.9); }
 
 .captura-foto-boton { font-size: 12px; }

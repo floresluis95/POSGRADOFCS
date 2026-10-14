@@ -306,6 +306,17 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     $textoFirma = !empty($firma) ? mb_strtoupper($firma, 'UTF-8') : 'FIRMA COORDINADOR(A) / RESPONSABLE';
     $pdf->Cell($W_FIRMA, 4, $textoFirma, 0, 1, 'C');
 
+    // Código de la orden (generado por el sistema): solo en la copia, pequeño y gris
+    // en la esquina inferior derecha, para control interno.
+    if ($esCopia && !empty($numeroOrden)) {
+        $pdf->SetFont('helvetica', '', 6);
+        $pdf->SetTextColor(150, 150, 150);
+        $pdf->SetXY($x_left, $y_linea + 1.5);
+        $pdf->Cell($content_width, 3, 'Ctrl. ' . $numeroOrden, 0, 0, 'R');
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->SetY($y_linea + 5);
+    }
+
     return $pdf->GetY() - $yInicio;
 }
 
@@ -313,7 +324,7 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
  * Arma el PDF completo (original + copia) y lo envía al navegador.
  * @param array $datos apaterno, amaterno, nombres, correo, ci, celular, programa,
  *        montoNumeral, montoLiteral, version, numeroTramite, nombreFactura,
- *        nitCiFactura, numeroCuentaDeposito, firma
+ *        nitCiFactura, numeroCuentaDeposito, firma, numeroOrden (opcional; va al pie de la copia)
  */
 function generarPdfOrdenPagoOficial(array $datos)
 {

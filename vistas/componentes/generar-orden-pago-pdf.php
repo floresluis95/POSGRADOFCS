@@ -53,6 +53,16 @@ $datos = [
     // se imprime junto a la línea de firma. No confundir con el usuario que generó la orden
     // en el sistema (ese dato no se imprime, solo queda registrado para auditoría).
     'firma' => $_POST['firma'] ?? '',
+    // Código de la orden, solo para control (pie de la copia)
+    'numeroOrden' => trim($_POST['numeroOrden'] ?? ''),
 ];
+
+// Pre-Registro envía solo el ID de la orden: el código se busca en la base
+if ($datos['numeroOrden'] === '' && !empty($_POST['idOrdenPago'])) {
+    require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
+    $stmt = Conexion::Conectar()->prepare("SELECT NumeroOrden FROM ordenpago WHERE IdOrdenPago = :id");
+    $stmt->execute([':id' => (int)$_POST['idOrdenPago']]);
+    $datos['numeroOrden'] = (string)$stmt->fetchColumn();
+}
 
 generarPdfOrdenPagoOficial($datos);

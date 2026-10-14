@@ -55,7 +55,7 @@ ob_start();
   <link href="vistas/recursos/assets/vendors/general/morris.js/morris.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/general/sweetalert2/dist/sweetalert2.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/general/cropperjs/cropper.min.css" rel="stylesheet" type="text/css" />
-  <link href="vistas/recursos/assets/css/captura-foto.css" rel="stylesheet" type="text/css" />
+  <link href="vistas/recursos/assets/css/captura-foto.css?v=<?php echo filemtime(__DIR__ . '/recursos/assets/css/captura-foto.css'); ?>" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/general/socicon/css/socicon.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/custom/vendors/line-awesome/css/line-awesome.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/custom/vendors/flaticon/flaticon.css" rel="stylesheet" type="text/css" />

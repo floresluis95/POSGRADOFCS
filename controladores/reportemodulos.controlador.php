@@ -73,6 +73,22 @@ class ReporteModulosControlador
     }
 
     /**
+     * Datos de la pestaña "Gráficos": cobrado e inscritos por mes y órdenes por cobrar
+     */
+    public static function ObtenerDatosGraficosControlador()
+    {
+        $grado = isset($_POST['grado']) && $_POST['grado'] !== ''
+            ? htmlspecialchars(trim($_POST['grado']))
+            : null;
+        $meses = (int)($_POST['meses'] ?? 12);
+        if (!in_array($meses, [6, 12, 24], true)) {
+            $meses = 12;
+        }
+
+        echo json_encode(ReporteModulosModelo::ObtenerDatosGraficosModelo($grado, $meses));
+    }
+
+    /**
      * Obtener estadísticas generales
      */
     public static function ObtenerEstadisticasGeneralesControlador()

@@ -168,17 +168,33 @@ test.describe('Proceso completo: del registro a los informes', () => {
     await expect(page.locator('.swal2-popup')).toHaveCount(0, { timeout: 10_000 });
     await modal.locator('#tab-pago-modulos-link').click();
     await expect(modal.locator('#btnGuardarPagoCuota')).toBeEnabled({ timeout: 15_000 });
-    await modal.locator('#fechaPago').fill(hoy);
     await modal.locator('#numeroVaucher').fill(voucherCuota);
     await modal.locator('#fmodulo').setInputFiles(IMAGEN_VOUCHER);
     // Al elegir la foto se abre la ventana de recorte (captura-foto.js)
     await page.locator('#capturaRecorteSinCambios').click();
     await expect(page.locator('#modalCapturaRecorte')).toBeHidden();
     await modal.locator('#btnGuardarPagoCuota').click();
+    // Resumen antes de guardar: monto, N° de voucher y aviso de revisar la fecha (es la de hoy)
+    const resumen = page.locator('.swal2-popup.vc-confirmar');
+    await expect(resumen).toContainText(voucherCuota);
+    await expect(resumen).toContainText('Bs. 3,000.00');
+    await expect(resumen.locator('.vc-confirmar-fecha.is-hoy')).toBeVisible();
+    // La fecha del depósito se elige en el mismo resumen: al cambiarla se quita el aviso
+    const ayer = new Date(Date.now() - 86_400_000).toLocaleDateString('sv-SE');
+    await resumen.locator('#vcConfirmarFecha').fill(ayer);
+    await expect(resumen.locator('.vc-confirmar-fecha.is-hoy')).toHaveCount(0);
+    await resumen.locator('.swal2-confirm').click();
 
     await expect.poll(() => valor(`SELECT montocuota FROM pagomodulo WHERE idinscripcion = ${datos.idInscripcion} AND Estado = 'PAGADO'`), { timeout: 15_000 })
       .toBe(MONTO_CUOTA.toFixed(2));
+    expect(valor(`SELECT DATE(fechapago) FROM pagomodulo WHERE idinscripcion = ${datos.idInscripcion} AND Estado = 'PAGADO'`)).toBe(ayer);
     expect(valor(`SELECT COUNT(*) FROM ordenpago WHERE idinscripcion = ${datos.idInscripcion} AND Estado = 'PENDIENTE'`)).toBe('0');
+
+    // La pestaña "Orden de pago" se actualiza sola: ya no muestra la orden como pendiente
+    await expect(page.locator('.swal2-popup')).toHaveCount(0, { timeout: 10_000 });
+    await modal.locator('#tab-orden-pago-link').click();
+    await expect(modal.locator('#btnReimprimirOrdenCuota')).toHaveCount(0);
+    await expect(modal.locator('#opMontoCuota')).toBeVisible({ timeout: 15_000 });
   });
 
   test('5. Notas: se registra la calificación del primer módulo', async ({ page }) => {

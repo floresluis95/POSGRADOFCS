@@ -64,8 +64,8 @@ $(document).ready(function() {
         $('#tablaCuotasBody').html('<tr><td colspan="5" class="gp-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
 
         // Establecer fecha actual
-        const hoy = new Date().toISOString().split('T')[0];
-        $('#fechaPago').val(hoy);
+        // Fecha local: toISOString daría la de UTC (desde las 20:00 en Bolivia, la de mañana)
+        $('#fechaPago').val(new Date().toLocaleDateString('sv-SE'));
 
         // Volver siempre a la pestaña "Orden de Pago" al abrir (es el primer paso del flujo)
         $('#tab-orden-pago-link').tab('show');
@@ -256,6 +256,8 @@ $(document).ready(function() {
         if (orden.ModulosCubiertos) meta.push(escHtml(orden.ModulosCubiertos));
 
         $('#montoCuota').val(orden.MontoTotal);
+        // Para el resumen que se confirma antes de guardar
+        $('#formPagoModulo').data('cuota', { texto: textoCuota });
         $('#cuotaPendienteInfo').html(
             '<div class="vc-orden">' +
                 '<div class="vc-orden-cab">' +
@@ -375,15 +377,93 @@ $(document).ready(function() {
         $('#tab-orden-pago-link').tab('show');
     });
 
-    // Envío del pago de la cuota (con voucher)
+    // Envío del pago de la cuota (con voucher): primero se muestra lo que se va a
+    // guardar y ahí mismo se elige la fecha del depósito; recién al confirmar se envía.
     $('#formPagoModulo').on('submit', function(e) {
         e.preventDefault();
 
+        const form = this;
+        const numero = $.trim($('#numeroVaucher').val());
+        const archivo = $('#fmodulo')[0].files[0];
+        const faltan = [];
+        if (!numero) faltan.push('el N° de voucher');
+        if (!archivo) faltan.push('la foto del voucher');
+        if (faltan.length) {
+            Swal.fire({ type: 'warning', title: 'Faltan datos', text: 'Complete ' + faltan.join(' y ') + '.' });
+            return;
+        }
+
+        const cuota = $(form).data('cuota') || {};
+        const monto = parseFloat($('#montoCuota').val()) || 0;
+        const hoy = new Date().toLocaleDateString('sv-SE');
+        const $foto = $('#previewFotoVoucher img');
+        const fila = function(etiqueta, valor) {
+            return '<tr><th>' + etiqueta + '</th><td>' + valor + '</td></tr>';
+        };
+
+        Swal.fire({
+            title: 'Confirmar pago',
+            customClass: { popup: 'vc-confirmar' },
+            html:
+                '<table class="vc-confirmar-tabla">' +
+                    fila('Cuota', escHtml(cuota.texto || '-')) +
+                    fila('Monto', '<strong>' + formatoBs(monto) + '</strong>') +
+                    fila('N° de voucher', '<strong>' + escHtml(numero) + '</strong>') +
+                    fila('<label for="vcConfirmarFecha" class="mb-0">Fecha del depósito</label>',
+                        '<input type="date" class="form-control vc-confirmar-input" id="vcConfirmarFecha" max="' + hoy + '" value="' + ($('#fechaPago').val() || hoy) + '">') +
+                '</table>' +
+                '<div class="vc-confirmar-fecha" id="vcConfirmarAviso"></div>' +
+                ($foto.length ? '<img class="vc-confirmar-foto" src="' + $foto.attr('src') + '" alt="Voucher">' : ''),
+            showCancelButton: true,
+            confirmButtonText: 'Validar y guardar',
+            cancelButtonText: 'Volver',
+            reverseButtons: true,
+            onOpen: function() {
+                // El aviso cambia según la fecha elegida: si es la de hoy (la que viene
+                // puesta), se recuerda corregirla si el depósito fue otro día
+                const $fecha = $('#vcConfirmarFecha');
+                const avisar = function() {
+                    const esHoy = $fecha.val() === hoy;
+                    $('#vcConfirmarAviso').toggleClass('is-hoy', esHoy).html(
+                        '<i class="fa ' + (esHoy ? 'fa-exclamation-triangle' : 'fa-calendar-check') + '"></i><span>' +
+                        (esHoy
+                            ? 'Está puesta la fecha de <strong>hoy</strong>. Si el depósito se hizo otro día, cámbiela por la del voucher.'
+                            : 'Verifique que coincida con la fecha del voucher.') +
+                        '</span>');
+                };
+                $fecha.on('input change', function() {
+                    Swal.resetValidationMessage();
+                    avisar();
+                });
+                avisar();
+                $fecha.trigger('focus');
+            },
+            preConfirm: function() {
+                const fecha = $('#vcConfirmarFecha').val();
+                if (!fecha) {
+                    Swal.showValidationMessage('Elija la fecha del depósito');
+                    return false;
+                }
+                if (fecha > hoy) {
+                    Swal.showValidationMessage('La fecha del depósito no puede ser posterior a hoy');
+                    return false;
+                }
+                return fecha;
+            }
+        }).then(function(resultado) {
+            if (resultado.value) {
+                $('#fechaPago').val(resultado.value);
+                enviarPagoCuota(form);
+            }
+        });
+    });
+
+    function enviarPagoCuota(form) {
         const idinscripcion = $('#idinscripcion').val();
         const programaID = $('#programaID').val();
         const $btn = $('#btnGuardarPagoCuota');
 
-        const formData = new FormData(this);
+        const formData = new FormData(form);
         formData.append('accion', 'registrarPagoModulo');
         formData.append('idinscripcion', idinscripcion);
 
@@ -400,8 +480,13 @@ $(document).ready(function() {
                 if (resp.estado === 'exitoso') {
                     // Limpiar para la próxima cuota
                     $('#numeroVaucher').val('');
+                    $('#fechaPago').val('');
                     $('#fmodulo').val('');
                     vaciarMiniatura();
+                    // La pestaña "Orden de pago" también cambia (la orden ya no está pendiente)
+                    if (typeof window.recargarOrdenPagoModulos === 'function') {
+                        window.recargarOrdenPagoModulos();
+                    }
                     Swal.fire({ type: 'success', title: 'Pago validado', text: resp.mensaje, timer: 1800, showConfirmButton: false })
                         .then(function() {
                             cargarCuotasPrograma(programaID);
@@ -416,7 +501,7 @@ $(document).ready(function() {
                 $btn.prop('disabled', false).html(textoBotonValidar());
             }
         });
-    });
+    }
 
     // Exponer para que ordenpagomodulos.js refresque el resumen tras generar una orden
     window.cargarCuotasPrograma = cargarCuotasPrograma;

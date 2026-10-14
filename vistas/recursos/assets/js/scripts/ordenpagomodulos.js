@@ -66,6 +66,14 @@ $(document).ready(function() {
         });
     };
 
+    // Vuelve a cargar la pestaña con el mismo estudiante (p. ej. después de validar un
+    // voucher en "Cuotas del programa", para que la orden ya no figure como pendiente)
+    window.recargarOrdenPagoModulos = function() {
+        if (opContexto.idInscripcion) {
+            window.cargarOrdenPagoModulos(opContexto);
+        }
+    };
+
     function renderOrdenPago(r, orden) {
         // Cuota que corresponde según lo ya cancelado (no un plan fijo): la próxima
         // orden que se genere es la cuota N+1, siendo N las cuotas ya pagadas.
@@ -113,7 +121,8 @@ $(document).ready(function() {
                         '<button type="button" class="btn btn-outline-secondary" id="btnReimprimirOrdenCuota" ' +
                             'data-id="' + orden.IdOrdenPago + '" data-monto="' + orden.MontoTotal + '" ' +
                             'data-nombre-factura="' + esc(orden.NombreFactura || '') + '" data-nit-ci="' + esc(orden.NitCiFactura || '') + '" ' +
-                            'data-numero-cuenta="' + esc(orden.NumeroCuentaDeposito || '') + '" data-firma="' + esc(orden.Firma || '') + '">' +
+                            'data-numero-cuenta="' + esc(orden.NumeroCuentaDeposito || '') + '" data-firma="' + esc(orden.Firma || '') + '" ' +
+                            'data-numero-orden="' + esc(orden.NumeroOrden || '') + '">' +
                             '<i class="fa fa-print"></i> Reimprimir' +
                         '</button>' +
                         '<button type="button" class="btn btn-primary btn-ir-cuotas-programa">Registrar voucher</button>' +
@@ -515,7 +524,8 @@ $(document).ready(function() {
                                 numeroCuentaDeposito: numeroCuentaDeposito,
                                 numeroCuota: opContexto.numeroCuotaActual,
                                 totalCuotas: opContexto.numeroCuotasPlan,
-                                firma: firma
+                                firma: firma,
+                                numeroOrden: resp.numeroOrden
                             });
                             window.cargarOrdenPagoModulos(opContexto);
                             if (typeof window.cargarCuotasPrograma === 'function') {
@@ -548,7 +558,8 @@ $(document).ready(function() {
             numeroCuentaDeposito: $this.data('numero-cuenta'),
             numeroCuota: opContexto.numeroCuotaActual,
             totalCuotas: opContexto.numeroCuotasPlan,
-            firma: $this.data('firma')
+            firma: $this.data('firma'),
+            numeroOrden: $this.data('numero-orden')
         });
     });
 
@@ -670,7 +681,8 @@ $(document).ready(function() {
                     numeroTramite: params.numeroCuentaDeposito || params.numeroTramite || '',
                     nombreFactura: params.nombreFactura || '',
                     nitCiFactura: params.nitCiFactura || '',
-                    firma: params.firma || ''
+                    firma: params.firma || '',
+                    numeroOrden: params.numeroOrden || ''
                 };
 
                 const form = document.createElement('form');

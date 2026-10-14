@@ -24,6 +24,11 @@
     let inputDestino = null;
     let nombreOriginal = 'voucher';
     let streamCamara = null;
+    let animacionVista = null;
+    // Giro de la vista de la cámara (0, 90, 180 o 270); se recuerda en este navegador
+    let giroVista = (function () {
+        try { return (parseInt(localStorage.getItem('capturaFotoGiro'), 10) || 0) % 360; } catch (e) { return 0; }
+    })();
 
     const esCelular = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const camaraDisponible = !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -52,8 +57,14 @@
                       '</div>' +
                       '<small class="text-muted" id="capturaCamaraCantidad"></small>' +
                     '</div>' +
-                    '<div class="captura-foto-video"><video id="capturaCamaraVideo" autoplay playsinline muted></video></div>' +
-                    '<small class="text-muted d-block mt-2">Ponga el voucher sobre una superficie lisa y con buena luz. Después podrá recortarlo.</small>' +
+                    // El video queda oculto: se muestra en el lienzo, ya girado y con la
+                    // forma de la cámara (horizontal o vertical)
+                    '<div class="captura-foto-video"><video id="capturaCamaraVideo" autoplay playsinline muted></video><canvas id="capturaCamaraVista"></canvas></div>' +
+                    '<div class="captura-foto-barra">' +
+                      '<button type="button" class="btn btn-outline-secondary" id="capturaCamaraGirar" title="Girar la vista 90° (si la cámara está de costado o el voucher está vertical)">' +
+                        '<i class="fa fa-redo"></i> Girar vista</button>' +
+                      '<small class="text-muted">Voucher sobre una superficie lisa y con buena luz. Después podrá recortarlo.</small>' +
+                    '</div>' +
                   '</div>' +
                   '<div class="modal-footer">' +
                     '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
@@ -70,12 +81,12 @@
                     '<button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button></div>' +
                   '<div class="modal-body">' +
                     '<div class="captura-foto-lienzo"><img id="capturaRecorteImagen" alt="Imagen a recortar"></div>' +
-                    '<div class="d-flex flex-wrap mt-2" style="gap:6px;">' +
-                      '<button type="button" class="btn btn-sm btn-outline-secondary" data-captura-accion="girar-izq" title="Girar a la izquierda"><i class="fa fa-undo"></i> Girar</button>' +
-                      '<button type="button" class="btn btn-sm btn-outline-secondary" data-captura-accion="girar-der" title="Girar a la derecha"><i class="fa fa-redo"></i> Girar</button>' +
-                      '<button type="button" class="btn btn-sm btn-outline-secondary" data-captura-accion="todo" title="Seleccionar toda la imagen"><i class="fa fa-expand"></i> Toda la imagen</button>' +
+                    '<div class="captura-foto-barra">' +
+                      '<button type="button" class="btn btn-outline-secondary" data-captura-accion="girar-izq" title="Girar a la izquierda"><i class="fa fa-undo"></i> Izquierda</button>' +
+                      '<button type="button" class="btn btn-outline-secondary" data-captura-accion="girar-der" title="Girar a la derecha"><i class="fa fa-redo"></i> Derecha</button>' +
+                      '<button type="button" class="btn btn-outline-secondary" data-captura-accion="todo" title="Seleccionar toda la imagen"><i class="fa fa-expand"></i> Toda la imagen</button>' +
+                      '<small class="text-muted">Arrastre las esquinas del recuadro para dejar solo el voucher.</small>' +
                     '</div>' +
-                    '<small class="text-muted d-block mt-2">Arrastre las esquinas del recuadro para dejar solo el voucher.</small>' +
                   '</div>' +
                   '<div class="modal-footer">' +
                     '<button type="button" class="btn btn-outline-secondary mr-auto" id="capturaRecorteSinCambios">Usar sin recortar</button>' +
@@ -110,6 +121,10 @@
                 if (streamCamara) listarCamaras();
             });
         }
+        $('#capturaCamaraGirar').on('click', function () {
+            giroVista = (giroVista + 90) % 360;
+            try { localStorage.setItem('capturaFotoGiro', String(giroVista)); } catch (e) { /* sin almacenamiento */ }
+        });
         $('#capturaCamaraTomar').on('click', tomarFoto);
 
         $('#modalCapturaRecorte').on('shown.bs.modal', iniciarRecorte);
@@ -119,8 +134,8 @@
         $('[data-captura-accion]').on('click', function () {
             if (!cropper) return;
             const accion = $(this).data('captura-accion');
-            if (accion === 'girar-izq') cropper.rotate(-90);
-            if (accion === 'girar-der') cropper.rotate(90);
+            if (accion === 'girar-izq') girarImagen(-90);
+            if (accion === 'girar-der') girarImagen(90);
             if (accion === 'todo') cropper.setCropBoxData(cropper.getCanvasData());
         });
         $('#capturaRecorteUsar').on('click', function () { guardarResultado(true); });
@@ -192,6 +207,7 @@
             .then(function (stream) {
                 streamCamara = stream;
                 document.getElementById('capturaCamaraVideo').srcObject = stream;
+                dibujarVista();
                 return listarCamaras();
             })
             .catch(function (error) {
@@ -227,7 +243,36 @@
         });
     }
 
+    // Dibuja el cuadro actual del video en un lienzo, girado según giroVista. El lienzo
+    // toma la forma del resultado: una cámara vertical (o girada) se ve vertical.
+    function dibujarCuadro(lienzo, video) {
+        const ancho = video.videoWidth;
+        const alto = video.videoHeight;
+        const deCostado = giroVista % 180 !== 0;
+        const anchoLienzo = deCostado ? alto : ancho;
+        const altoLienzo = deCostado ? ancho : alto;
+        if (lienzo.width !== anchoLienzo) lienzo.width = anchoLienzo;
+        if (lienzo.height !== altoLienzo) lienzo.height = altoLienzo;
+        const ctx = lienzo.getContext('2d');
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.translate(anchoLienzo / 2, altoLienzo / 2);
+        ctx.rotate(giroVista * Math.PI / 180);
+        ctx.drawImage(video, -ancho / 2, -alto / 2);
+    }
+
+    function dibujarVista() {
+        cancelAnimationFrame(animacionVista);
+        const video = document.getElementById('capturaCamaraVideo');
+        const lienzo = document.getElementById('capturaCamaraVista');
+        (function cuadro() {
+            if (!streamCamara) return;
+            if (video.videoWidth) dibujarCuadro(lienzo, video);
+            animacionVista = requestAnimationFrame(cuadro);
+        })();
+    }
+
     function detenerCamara() {
+        cancelAnimationFrame(animacionVista);
         if (streamCamara) {
             streamCamara.getTracks().forEach(function (t) { t.stop(); });
             streamCamara = null;
@@ -237,10 +282,9 @@
     function tomarFoto() {
         const video = document.getElementById('capturaCamaraVideo');
         if (!video.videoWidth) return;
+        // La foto sale tal como se ve (con el giro de la vista)
         const lienzo = document.createElement('canvas');
-        lienzo.width = video.videoWidth;
-        lienzo.height = video.videoHeight;
-        lienzo.getContext('2d').drawImage(video, 0, 0);
+        dibujarCuadro(lienzo, video);
         lienzo.toBlob(function (blob) {
             $('#modalCapturaCamara').one('hidden.bs.modal', function () {
                 abrirRecorte(inputDestino, new File([blob], 'voucher-camara.jpg', { type: 'image/jpeg' }));
@@ -266,10 +310,31 @@
         if (cropper) cropper.destroy();
         cropper = new Cropper(document.getElementById('capturaRecorteImagen'), {
             viewMode: 1,
-            autoCropArea: 1,
+            autoCropArea: 0.92,
             background: false,
             responsive: true,
         });
+    }
+
+    // Gira la imagen misma (no el lienzo de Cropper, que la dejaba deformada y con el
+    // recuadro fuera de lugar) y vuelve a abrir el recorte con la imagen girada.
+    function girarImagen(grados) {
+        const fuente = new Image();
+        fuente.onload = function () {
+            // Hasta 3000 px de lado para que girar sea rápido (la foto final es de 2000)
+            const escala = Math.min(1, 3000 / Math.max(fuente.naturalWidth, fuente.naturalHeight));
+            const ancho = Math.round(fuente.naturalWidth * escala);
+            const alto = Math.round(fuente.naturalHeight * escala);
+            const lienzo = document.createElement('canvas');
+            lienzo.width = alto;
+            lienzo.height = ancho;
+            const ctx = lienzo.getContext('2d');
+            ctx.translate(alto / 2, ancho / 2);
+            ctx.rotate(grados * Math.PI / 180);
+            ctx.drawImage(fuente, -ancho / 2, -alto / 2, ancho, alto);
+            if (cropper) cropper.replace(lienzo.toDataURL('image/jpeg', CALIDAD_JPEG));
+        };
+        fuente.src = document.getElementById('capturaRecorteImagen').src;
     }
 
     function guardarResultado(recortar) {

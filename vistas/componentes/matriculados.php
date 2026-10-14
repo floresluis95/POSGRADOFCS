@@ -237,7 +237,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 
     #modalInscribirModulo .vc-validar { background: #fff; border: 1px solid var(--gp-borde); border-radius: 0 0 6px 6px; margin-bottom: 14px; }
     #modalInscribirModulo .vc-campos {
-        display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 12px; align-items: end;
+        display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end;
         padding: 12px 14px; border-top: 1px solid var(--gp-borde);
     }
     #modalInscribirModulo .vc-campos .form-control { height: 34px; }
@@ -245,6 +245,19 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     #modalInscribirModulo .vc-foto { display: flex; align-items: center; gap: 6px; }
     #modalInscribirModulo .vc-foto .btn { height: 34px; display: inline-flex; align-items: center; font-size: 12px; }
     #modalInscribirModulo .vc-foto .captura-foto-boton { margin-top: 0 !important; }
+
+    /* Resumen que se confirma antes de guardar el voucher de la cuota (SweetAlert) */
+    .vc-confirmar .swal2-title { font-size: 20px; }
+    .vc-confirmar-tabla { width: 100%; font-size: 14px; text-align: left; margin-bottom: 10px; }
+    .vc-confirmar-tabla th { color: #6c757d; font-weight: 500; padding: 5px 10px 5px 0; width: 38%; white-space: nowrap; }
+    .vc-confirmar-tabla td { color: #212529; padding: 5px 0; border-bottom: 1px solid #edf0f4; }
+    .vc-confirmar-tabla th label { font-weight: 600; color: #212529; }
+    .vc-confirmar-input { height: 36px; font-weight: 600; max-width: 190px; border-color: #2a78d6; }
+    .vc-confirmar-tabla tr:last-child td { border-bottom: 0; }
+    .vc-confirmar-fecha { display: flex; gap: 8px; align-items: flex-start; text-align: left; font-size: 13px; padding: 8px 10px; border-radius: 6px; background: #f1f6fd; color: #23466e; }
+    .vc-confirmar-fecha.is-hoy { background: #fff6dd; color: #6b4e00; }
+    .vc-confirmar-fecha .fa { margin-top: 3px; }
+    .vc-confirmar-foto { display: block; max-width: 100%; max-height: 220px; margin: 12px auto 0; border: 1px solid #e3e7ee; border-radius: 6px; }
     #modalInscribirModulo .vc-miniatura {
         flex: 0 0 34px; width: 34px; height: 34px; overflow: hidden;
         display: flex; align-items: center; justify-content: center;
@@ -256,8 +269,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     #modalInscribirModulo .vc-pie .btn { font-weight: 600; padding: 6px 16px; }
     #modalInscribirModulo .vc-ver-foto { margin-left: 6px; font-size: 11.5px; white-space: nowrap; }
     @media (max-width: 767.98px) {
-        #modalInscribirModulo .vc-campos { grid-template-columns: 1fr 1fr; }
-        #modalInscribirModulo .vc-campo-foto { grid-column: 1 / -1; }
+        #modalInscribirModulo .vc-campos { grid-template-columns: 1fr; }
         #modalInscribirModulo .vc-pie .btn { width: 100%; }
     }
 
@@ -1410,12 +1422,10 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                         <div class="vc-validar" id="seccionValidarCuota" style="display:none;">
                             <form id="formPagoModulo" enctype="multipart/form-data" novalidate>
                                 <input type="hidden" name="montoCuota" id="montoCuota">
+                                <!-- La fecha del depósito se elige en el resumen que se confirma antes de guardar -->
+                                <input type="hidden" name="fechaPago" id="fechaPago">
 
                                 <div class="vc-campos">
-                                    <div class="vc-campo">
-                                        <label class="gp-label" for="fechaPago">Fecha de pago</label>
-                                        <input type="date" class="form-control" name="fechaPago" id="fechaPago" required>
-                                    </div>
                                     <div class="vc-campo">
                                         <label class="gp-label" for="numeroVaucher">N° de voucher</label>
                                         <input type="text" class="form-control vc-input-numero" name="numeroVaucher" id="numeroVaucher"
