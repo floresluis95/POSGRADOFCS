@@ -41,8 +41,16 @@
                   '<div class="modal-header"><h5 class="modal-title"><i class="fa fa-camera"></i> Tomar foto del voucher</h5>' +
                     '<button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button></div>' +
                   '<div class="modal-body">' +
-                    '<div class="form-group mb-2" id="capturaCamaraElegir" style="display:none;">' +
-                      '<select class="form-control form-control-sm" id="capturaCamaraLista"></select>' +
+                    '<div class="form-group mb-2" id="capturaCamaraElegir">' +
+                      '<label for="capturaCamaraLista" class="mb-1 small font-weight-bold">Cámara</label>' +
+                      '<div class="input-group input-group-sm">' +
+                        '<select class="form-control" id="capturaCamaraLista"><option value="">Buscando cámaras...</option></select>' +
+                        '<div class="input-group-append">' +
+                          '<button type="button" class="btn btn-outline-secondary" id="capturaCamaraBuscar" title="Volver a buscar cámaras (p. ej. después de conectar una por USB)">' +
+                            '<i class="fa fa-sync-alt"></i> Buscar</button>' +
+                        '</div>' +
+                      '</div>' +
+                      '<small class="text-muted" id="capturaCamaraCantidad"></small>' +
                     '</div>' +
                     '<div class="captura-foto-video"><video id="capturaCamaraVideo" autoplay playsinline muted></video></div>' +
                     '<small class="text-muted d-block mt-2">Ponga el voucher sobre una superficie lisa y con buena luz. Después podrá recortarlo.</small>' +
@@ -88,7 +96,20 @@
         });
 
         $('#modalCapturaCamara').on('hidden.bs.modal', detenerCamara);
-        $('#capturaCamaraLista').on('change', function () { iniciarCamara(this.value); });
+        $('#capturaCamaraLista').on('change', function () {
+            if (!this.value) return;
+            guardarCamaraElegida(this.value);
+            iniciarCamara(this.value);
+        });
+        $('#capturaCamaraBuscar').on('click', function () {
+            iniciarCamara($('#capturaCamaraLista').val() || null);
+        });
+        // Cámara conectada o desconectada con la ventana abierta: se actualiza la lista
+        if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+            navigator.mediaDevices.addEventListener('devicechange', function () {
+                if (streamCamara) listarCamaras();
+            });
+        }
         $('#capturaCamaraTomar').on('click', tomarFoto);
 
         $('#modalCapturaRecorte').on('shown.bs.modal', iniciarRecorte);
@@ -149,10 +170,19 @@
         }
 
         $('#modalCapturaCamara').modal('show');
-        iniciarCamara(null);
+        // Se abre con la última cámara elegida en este navegador (si sigue conectada)
+        iniciarCamara(camaraGuardada());
     }
 
-    function iniciarCamara(idDispositivo) {
+    function camaraGuardada() {
+        try { return localStorage.getItem('capturaFotoCamara') || null; } catch (e) { return null; }
+    }
+
+    function guardarCamaraElegida(idDispositivo) {
+        try { localStorage.setItem('capturaFotoCamara', idDispositivo); } catch (e) { /* sin almacenamiento */ }
+    }
+
+    function iniciarCamara(idDispositivo, esReintento) {
         detenerCamara();
         const video = idDispositivo
             ? { deviceId: { exact: idDispositivo }, width: { ideal: 1920 }, height: { ideal: 1080 } }
@@ -162,24 +192,39 @@
             .then(function (stream) {
                 streamCamara = stream;
                 document.getElementById('capturaCamaraVideo').srcObject = stream;
-                return navigator.mediaDevices.enumerateDevices();
-            })
-            .then(function (dispositivos) {
-                const camaras = dispositivos.filter(function (d) { return d.kind === 'videoinput'; });
-                const actual = streamCamara.getVideoTracks()[0].getSettings().deviceId;
-                $('#capturaCamaraLista').html(camaras.map(function (c, i) {
-                    return '<option value="' + c.deviceId + '"' + (c.deviceId === actual ? ' selected' : '') + '>' +
-                        $('<div>').text(c.label || ('Cámara ' + (i + 1))).html() + '</option>';
-                }).join(''));
-                $('#capturaCamaraElegir').toggle(camaras.length > 1);
+                return listarCamaras();
             })
             .catch(function (error) {
+                const nombre = error && error.name;
+                // La cámara guardada ya no está (desconectada): se prueba con la predeterminada
+                if (idDispositivo && !esReintento && (nombre === 'OverconstrainedError' || nombre === 'NotFoundError')) {
+                    iniciarCamara(null, true);
+                    return;
+                }
                 $('#modalCapturaCamara').modal('hide');
-                const sinPermiso = error && (error.name === 'NotAllowedError' || error.name === 'SecurityError');
-                avisar('No se pudo abrir la cámara', sinPermiso
-                    ? 'El navegador no dio permiso para usar la cámara. Revise el ícono de la cámara junto a la dirección y permítalo.'
-                    : 'No se encontró una cámara conectada a este equipo.');
+                let texto = 'No se encontró una cámara conectada a este equipo.';
+                if (nombre === 'NotAllowedError' || nombre === 'SecurityError') {
+                    texto = 'El navegador no dio permiso para usar la cámara. Revise el ícono de la cámara junto a la dirección y permítalo.';
+                } else if (nombre === 'NotReadableError' || nombre === 'AbortError') {
+                    texto = 'La cámara está siendo usada por otro programa (Zoom, Teams, WhatsApp, etc.). Ciérrelo e intente de nuevo.';
+                }
+                avisar('No se pudo abrir la cámara', texto);
             });
+    }
+
+    // Llena el selector con todas las cámaras del equipo y marca la que está en uso
+    function listarCamaras() {
+        return navigator.mediaDevices.enumerateDevices().then(function (dispositivos) {
+            const camaras = dispositivos.filter(function (d) { return d.kind === 'videoinput'; });
+            const actual = streamCamara ? streamCamara.getVideoTracks()[0].getSettings().deviceId : '';
+            $('#capturaCamaraLista').html(camaras.map(function (c, i) {
+                return '<option value="' + c.deviceId + '"' + (c.deviceId === actual ? ' selected' : '') + '>' +
+                    $('<div>').text(c.label || ('Cámara ' + (i + 1))).html() + '</option>';
+            }).join(''));
+            $('#capturaCamaraCantidad').text(camaras.length === 1
+                ? 'Se encontró 1 cámara.'
+                : 'Se encontraron ' + camaras.length + ' cámaras. Elija la que quiera usar.');
+        });
     }
 
     function detenerCamara() {

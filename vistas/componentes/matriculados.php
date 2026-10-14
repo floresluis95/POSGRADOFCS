@@ -224,103 +224,90 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     #modalInscribirModulo .op-modulo.is-cubierto { background: #f6f7f9; color: #6b7280; cursor: default; }
     @media (max-width: 575.98px) { #modalInscribirModulo .op-modulos-cuota { grid-template-columns: 1fr; } }
 
-    /* Validar voucher de cuota (pestaña Cuotas del programa) */
-    #modalInscribirModulo .vc-orden { background: #fff; border: 1px solid var(--gp-borde); border-radius: 12px 12px 0 0; border-bottom: 0; overflow: hidden; }
+    /* Validar voucher de cuota (pestaña Cuotas del programa): franja con la cuota
+       (#cuotaPendienteInfo) y debajo el formulario en una sola fila */
+    #modalInscribirModulo .vc-orden { background: #fff; border: 1px solid var(--gp-borde); border-bottom: 0; border-radius: 6px 6px 0 0; }
     #modalInscribirModulo .vc-orden-cab {
-        display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
-        padding: 12px 16px; border-left: 4px solid #f59e0b; background: #fffdf6;
+        display: flex; justify-content: space-between; align-items: center; gap: 12px;
+        padding: 10px 14px; border-left: 3px solid #f59e0b; border-radius: 6px 0 0 0;
     }
-    #modalInscribirModulo .vc-orden-eyebrow { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--gp-alerta); }
-    #modalInscribirModulo .vc-orden-titulo { font-size: 15px; font-weight: 600; color: var(--gp-texto); }
-    #modalInscribirModulo .vc-orden-monto { font-size: 22px; font-weight: 700; color: var(--gp-primario); font-variant-numeric: tabular-nums; }
-    #modalInscribirModulo .vc-orden-datos {
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px 16px;
-        padding: 10px 16px; border-top: 1px solid var(--gp-borde);
-    }
-    #modalInscribirModulo .vc-dato span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--gp-texto-2); }
-    #modalInscribirModulo .vc-dato strong { font-size: 12.5px; font-weight: 600; color: var(--gp-texto); word-break: break-word; }
+    #modalInscribirModulo .vc-orden-titulo { font-size: 14px; font-weight: 600; color: var(--gp-texto); }
+    #modalInscribirModulo .vc-orden-meta { font-size: 12px; color: var(--gp-texto-2); margin-top: 1px; }
+    #modalInscribirModulo .vc-orden-monto { font-size: 18px; font-weight: 600; color: var(--gp-primario); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-    #modalInscribirModulo .vc-validar { background: #fff; border: 1px solid var(--gp-borde); border-radius: 0 0 12px 12px; margin-bottom: 16px; }
-    #modalInscribirModulo .vc-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 14px 16px; border-top: 1px solid var(--gp-borde); }
-    #modalInscribirModulo .vc-paso-titulo { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--gp-texto-2); margin-bottom: 8px; }
-    #modalInscribirModulo .vc-campos .form-group { margin-bottom: 10px; }
-    #modalInscribirModulo .vc-input-numero { font-size: 15px; font-weight: 600; letter-spacing: .5px; }
-    #modalInscribirModulo .vc-vista-vacia {
-        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-        min-height: 150px; padding: 16px; border: 1.5px dashed var(--gp-borde); border-radius: 10px;
-        background: var(--gp-fondo); color: var(--gp-texto-2); font-size: 12px; text-align: center;
+    #modalInscribirModulo .vc-validar { background: #fff; border: 1px solid var(--gp-borde); border-radius: 0 0 6px 6px; margin-bottom: 14px; }
+    #modalInscribirModulo .vc-campos {
+        display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 12px; align-items: end;
+        padding: 12px 14px; border-top: 1px solid var(--gp-borde);
     }
-    #modalInscribirModulo .vc-vista-vacia i { font-size: 26px; opacity: .6; }
-    #modalInscribirModulo .vc-vista-img { display: block; width: 100%; max-height: 220px; object-fit: contain; border: 1px solid var(--gp-borde); border-radius: 8px; background: var(--gp-fondo); cursor: zoom-in; }
-    #modalInscribirModulo .vc-pie {
-        display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
-        padding: 10px 16px; background: var(--gp-fondo); border-top: 1px solid var(--gp-borde); border-radius: 0 0 12px 12px;
+    #modalInscribirModulo .vc-campos .form-control { height: 34px; }
+    #modalInscribirModulo .vc-input-numero { font-weight: 600; letter-spacing: .3px; }
+    #modalInscribirModulo .vc-foto { display: flex; align-items: center; gap: 6px; }
+    #modalInscribirModulo .vc-foto .btn { height: 34px; display: inline-flex; align-items: center; font-size: 12px; }
+    #modalInscribirModulo .vc-foto .captura-foto-boton { margin-top: 0 !important; }
+    #modalInscribirModulo .vc-miniatura {
+        flex: 0 0 34px; width: 34px; height: 34px; overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        border: 1px dashed #c7cdd8; border-radius: 4px; background: var(--gp-fondo); color: #a0aec0; font-size: 14px;
     }
-    #modalInscribirModulo .vc-pie-nota { font-size: 12px; color: var(--gp-texto-2); }
-    #modalInscribirModulo .vc-pie .btn { font-weight: 600; padding: 7px 18px; }
-    #modalInscribirModulo .vc-ver-foto { margin-left: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+    #modalInscribirModulo .vc-miniatura.is-lleno { border-style: solid; border-color: var(--gp-borde); color: var(--gp-peligro); }
+    #modalInscribirModulo .vc-miniatura img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; }
+    #modalInscribirModulo .vc-pie { display: flex; justify-content: flex-end; padding: 0 14px 12px; }
+    #modalInscribirModulo .vc-pie .btn { font-weight: 600; padding: 6px 16px; }
+    #modalInscribirModulo .vc-ver-foto { margin-left: 6px; font-size: 11.5px; white-space: nowrap; }
     @media (max-width: 767.98px) {
-        #modalInscribirModulo .vc-cuerpo { grid-template-columns: 1fr; }
+        #modalInscribirModulo .vc-campos { grid-template-columns: 1fr 1fr; }
+        #modalInscribirModulo .vc-campo-foto { grid-column: 1 / -1; }
         #modalInscribirModulo .vc-pie .btn { width: 100%; }
     }
 
-    /* Orden de pago de cuota (ordenpagomodulos.js): 3 pasos numerados y barra final */
-    #modalInscribirModulo .op-form { background: #fff; border: 1px solid var(--gp-borde); border-radius: 12px; overflow: hidden; }
-    #modalInscribirModulo .op-paso { display: flex; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--gp-borde); }
-    #modalInscribirModulo .op-paso-num {
-        flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        background: var(--gp-primario); color: #fff; font-size: 11px; font-weight: 700;
+    /* Orden de pago de cuota (ordenpagomodulos.js): cabecera con la cuota, campos en
+       dos columnas, factura y módulos en líneas plegables y un solo botón al pie */
+    #modalInscribirModulo .op-form { background: #fff; border: 1px solid var(--gp-borde); border-radius: 6px; }
+    #modalInscribirModulo .op-cab {
+        display: flex; justify-content: space-between; align-items: center; gap: 12px;
+        padding: 10px 14px; border-bottom: 1px solid var(--gp-borde);
     }
-    #modalInscribirModulo .op-paso-cuerpo { flex: 1; min-width: 0; }
-    #modalInscribirModulo .op-paso-titulo { font-size: 13.5px; font-weight: 600; color: var(--gp-texto); margin: 1px 0 8px; }
-    #modalInscribirModulo .op-paso-ayuda { font-size: 12px; font-weight: 400; color: var(--gp-texto-2); margin-left: 6px; }
-    #modalInscribirModulo .op-paso .form-group { margin-bottom: 0; }
-    #modalInscribirModulo .op-paso .gp-label { font-size: 11.5px; margin-bottom: 2px; }
-    #modalInscribirModulo .op-paso .form-control { height: 34px; padding: 4px 10px; }
-    #modalInscribirModulo .op-paso .input-group .btn { height: 34px; padding: 0 10px; }
-    #modalInscribirModulo .op-paso .gp-monto-input { padding: 2px 10px; }
-    #modalInscribirModulo .op-paso .gp-monto-input input { font-size: 19px; width: 130px; }
-    @media (max-width: 767.98px) { #modalInscribirModulo .op-fila-datos > [class*="col-"] + [class*="col-"] { margin-top: 8px; } }
-    /* Factura y módulos lado a lado */
-    #modalInscribirModulo .op-plegables { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: start; }
-    #modalInscribirModulo .op-plegables .op-plegable { margin-top: 0; }
-    #modalInscribirModulo .op-plegables .op-plegable-cab > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    #modalInscribirModulo .op-plegables .op-plegable:has(.op-plegable-cab.is-abierto) { grid-column: 1 / -1; }
-    @media (max-width: 767.98px) { #modalInscribirModulo .op-plegables { grid-template-columns: 1fr; } }
-    #modalInscribirModulo .op-opcional { font-size: 12px; font-weight: 400; color: var(--gp-texto-2); }
-    #modalInscribirModulo .op-monto-fila { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    #modalInscribirModulo .op-atajos { display: flex; gap: 8px; flex-wrap: wrap; }
+    #modalInscribirModulo .op-cab.is-pendiente { border-left: 3px solid #f59e0b; border-radius: 6px 0 0 0; }
+    #modalInscribirModulo .op-cab-titulo { font-size: 14px; font-weight: 600; color: var(--gp-texto); }
+    #modalInscribirModulo .op-cab-titulo .gp-chip { margin-left: 6px; vertical-align: 1px; }
+    #modalInscribirModulo .op-cab-meta { font-size: 12px; color: var(--gp-texto-2); margin-top: 1px; }
+    #modalInscribirModulo .op-cab-monto { font-size: 18px; font-weight: 600; color: var(--gp-primario); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    #modalInscribirModulo .op-cuerpo { padding: 12px 14px 4px; }
+    #modalInscribirModulo .op-cuerpo .form-group { margin-bottom: 12px; }
+    #modalInscribirModulo .op-cuerpo .form-control { height: 34px; padding: 4px 10px; }
+    #modalInscribirModulo .op-cuerpo .input-group .btn { height: 34px; padding: 0 10px; }
+    #modalInscribirModulo .op-cuerpo .gp-monto-input { height: 34px; padding: 0 10px; border-radius: 6px; }
+    #modalInscribirModulo .op-cuerpo .gp-monto-input input { font-size: 16px; width: 100%; }
+    #modalInscribirModulo .op-atajos { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
     #modalInscribirModulo .op-atajo {
-        border: 1px solid var(--gp-borde); background: #fff; color: var(--gp-texto);
-        border-radius: 999px; padding: 4px 10px; font-size: 12px; cursor: pointer;
+        border: 1px solid var(--gp-borde); background: #fff; color: var(--gp-texto-2);
+        border-radius: 4px; padding: 2px 8px; font-size: 11.5px; cursor: pointer;
     }
     #modalInscribirModulo .op-atajo:hover { border-color: var(--gp-primario); color: var(--gp-primario); }
     #modalInscribirModulo .op-atajo.is-activo { background: var(--gp-primario-suave); border-color: var(--gp-primario); color: var(--gp-primario); font-weight: 600; }
-    #modalInscribirModulo .op-aviso-monto { margin-top: 8px; font-size: 12.5px; color: var(--gp-peligro); }
+    #modalInscribirModulo .op-aviso-monto { margin-top: 6px; font-size: 12px; color: var(--gp-peligro); }
 
-    #modalInscribirModulo .op-plegable { border: 1px solid var(--gp-borde); border-radius: 8px; margin-top: 8px; }
+    /* Factura y módulos: una línea cada uno con "Cambiar" */
+    #modalInscribirModulo .op-plegable { border-top: 1px solid var(--gp-borde); margin: 0 -14px; }
     #modalInscribirModulo .op-plegable-cab {
         width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px;
-        background: none; border: 0; padding: 7px 10px; text-align: left; font-size: 12.5px; color: var(--gp-texto); cursor: pointer;
+        background: none; border: 0; padding: 8px 14px; text-align: left; font-size: 12.5px; color: var(--gp-texto-2); cursor: pointer;
     }
-    #modalInscribirModulo .op-plegable-cab i.fa:first-child { color: var(--gp-primario); margin-right: 4px; }
+    #modalInscribirModulo .op-plegable-cab > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #modalInscribirModulo .op-plegable-cab strong { color: var(--gp-texto); font-weight: 600; }
     #modalInscribirModulo .op-plegable-accion { flex-shrink: 0; font-size: 12px; color: var(--gp-primario); font-weight: 600; }
-    #modalInscribirModulo .op-plegable-accion i { transition: transform .15s ease; }
-    #modalInscribirModulo .op-plegable-cab.is-abierto .op-plegable-accion i { transform: rotate(180deg); }
-    #modalInscribirModulo .op-plegable-cuerpo { padding: 4px 12px 12px; }
+    #modalInscribirModulo .op-plegable-cab.is-abierto .op-plegable-accion { color: var(--gp-texto-2); }
+    #modalInscribirModulo .op-plegable-cuerpo { padding: 0 14px 12px; }
 
-    #modalInscribirModulo .op-barra-final {
-        display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
-        padding: 8px 14px; background: var(--gp-primario-suave);
+    #modalInscribirModulo .op-pie {
+        display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap;
+        padding: 10px 14px; border-top: 1px solid var(--gp-borde); background: var(--gp-fondo); border-radius: 0 0 6px 6px;
     }
-    #modalInscribirModulo .op-barra-final > div { display: flex; align-items: baseline; gap: 10px; }
-    #modalInscribirModulo .op-barra-etiqueta { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--gp-texto-2); }
-    #modalInscribirModulo .op-barra-total { font-size: 20px; font-weight: 700; color: var(--gp-primario); font-variant-numeric: tabular-nums; }
-    #modalInscribirModulo .op-barra-final .btn-lg { font-size: 14px; padding: 7px 18px; border-radius: 8px; }
+    #modalInscribirModulo .op-pie .btn { font-weight: 600; padding: 6px 16px; }
+    #modalInscribirModulo .op-pie .btn-link { padding-left: 0; font-weight: 500; }
     @media (max-width: 575.98px) {
-        #modalInscribirModulo .op-paso { padding: 10px; gap: 8px; }
-        #modalInscribirModulo .op-barra-final .btn-lg { width: 100%; }
+        #modalInscribirModulo .op-pie .btn-primary { width: 100%; }
     }
     #modalInscribirModulo .gp-monto-input {
         display: flex;
@@ -416,6 +403,8 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     }
     #modalInscribirModulo .gp-nota.is-neutra { background: #fff; border: 1px dashed var(--gp-borde); color: var(--gp-texto-2); }
     #modalInscribirModulo .gp-nota.is-exito { background: var(--gp-exito-suave); color: var(--gp-exito); }
+    #modalInscribirModulo .gp-nota.is-alerta { background: var(--gp-alerta-suave); color: var(--gp-alerta); }
+    #modalInscribirModulo .gp-nota .btn { margin-left: auto; white-space: nowrap; }
 
     /* Tablas */
     #modalInscribirModulo .gp-table { font-size: 13px; }
@@ -713,8 +702,6 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     }
     .fv-numero strong { font-size: 20px; letter-spacing: .5px; font-variant-numeric: tabular-nums; }
     .fv-numero.is-vacio { background: #fff6e0; color: #b7791f; }
-    #previewFotoVoucher .fv-numero { justify-content: flex-start; margin-bottom: 6px; padding: 5px 10px; font-size: 12px; }
-    #previewFotoVoucher .fv-numero strong { font-size: 15px; }
 
     .modal-header.bg-primary {
         background-color: #1e3c72 !important;
@@ -1424,43 +1411,36 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                             <form id="formPagoModulo" enctype="multipart/form-data" novalidate>
                                 <input type="hidden" name="montoCuota" id="montoCuota">
 
-                                <div class="vc-cuerpo">
-                                    <div class="vc-campos">
-                                        <div class="vc-paso-titulo">Datos del voucher</div>
-                                        <div class="form-group">
-                                            <label class="gp-label" for="fechaPago">Fecha de pago <span class="gp-req">*</span></label>
-                                            <input type="date" class="form-control" name="fechaPago" id="fechaPago" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="gp-label" for="numeroVaucher">N° de voucher / comprobante <span class="gp-req">*</span></label>
-                                            <input type="text" class="form-control vc-input-numero" name="numeroVaucher" id="numeroVaucher"
-                                                   placeholder="Ej: 123456" autocomplete="off" required>
-                                        </div>
-                                        <div class="form-group mb-0">
-                                            <label class="gp-label" for="fmodulo">Foto o archivo del voucher <span class="gp-req">*</span></label>
-                                            <input type="file" class="form-control-file gp-file" name="fmodulo" id="fmodulo"
-                                                   accept="image/*,.pdf" data-captura-foto required>
-                                        </div>
+                                <div class="vc-campos">
+                                    <div class="vc-campo">
+                                        <label class="gp-label" for="fechaPago">Fecha de pago</label>
+                                        <input type="date" class="form-control" name="fechaPago" id="fechaPago" required>
                                     </div>
-                                    <div class="vc-vista">
-                                        <div class="vc-paso-titulo">Comparar con la foto</div>
-                                        <div id="previewFotoVoucher">
-                                            <div class="vc-vista-vacia"><i class="fa fa-image"></i><span>Aquí se verá la foto del voucher para compararla con lo registrado</span></div>
+                                    <div class="vc-campo">
+                                        <label class="gp-label" for="numeroVaucher">N° de voucher</label>
+                                        <input type="text" class="form-control vc-input-numero" name="numeroVaucher" id="numeroVaucher"
+                                               autocomplete="off" required>
+                                    </div>
+                                    <div class="vc-campo vc-campo-foto">
+                                        <label class="gp-label">Voucher</label>
+                                        <!-- Miniatura (clic = ver en grande) + Archivo; captura-foto.js agrega "Cámara" después del input -->
+                                        <div class="vc-foto">
+                                            <div class="vc-miniatura" id="previewFotoVoucher" title="Sin foto"><i class="fa fa-image"></i></div>
+                                            <label class="btn btn-sm btn-outline-secondary mb-0" for="fmodulo"><i class="fa fa-upload"></i> Archivo</label>
+                                            <input type="file" class="d-none" name="fmodulo" id="fmodulo"
+                                                   accept="image/*,.pdf" data-captura-foto required>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="vc-pie">
-                                    <span class="vc-pie-nota"><i class="fa fa-shield-alt"></i> Verifique el N° y el monto del voucher antes de validar.</span>
-                                    <button type="submit" id="btnGuardarPagoCuota" class="btn btn-primary" disabled>
-                                        <i class="fa fa-check-circle"></i> Validar pago
-                                    </button>
+                                    <button type="submit" id="btnGuardarPagoCuota" class="btn btn-primary" disabled>Validar pago</button>
                                 </div>
                             </form>
                         </div>
 
                         <div class="gp-section gp-section-flush">
-                            <div class="gp-section-title"><i class="fa fa-history"></i> Historial de cuotas</div>
+                            <div class="gp-section-title">Historial de cuotas</div>
                             <div class="table-responsive">
                                 <table class="table gp-table mb-0">
                                     <thead>

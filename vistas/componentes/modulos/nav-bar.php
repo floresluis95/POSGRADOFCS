@@ -169,118 +169,105 @@
     letter-spacing: 0.3px;
 }
 
-/* Dropdown mejorado */
+/* Menú desplegable del usuario. La animación solo cambia la opacidad: Bootstrap
+   (Popper) lo posiciona con transform, y si la animación también usa transform
+   el menú aparece primero a la izquierda y luego salta a la derecha. */
 .dropdown-menu-modern {
     background: white;
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    padding: 20px 0;
-    min-width: 280px;
-    margin-top: 10px;
-    animation: dropdownFadeIn 0.3s ease;
+    border: 1px solid #e3e6ef;
+    border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    padding: 0;
+    min-width: 230px;
+    margin-top: 6px;
+    overflow: hidden;
+    animation: dropdownFadeIn 0.15s ease;
 }
 
 @keyframes dropdownFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
 .dropdown-header-modern {
-    padding: 0 20px 15px;
-    border-bottom: 2px solid #f0f3ff;
-    margin-bottom: 15px;
+    padding: 12px 14px;
+    background: #f7f8fa;
+    border-bottom: 1px solid #e3e6ef;
 }
 
 .dropdown-user-info {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
 }
 
 .dropdown-user-avatar {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: #1e3c72;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-weight: 700;
-    font-size: 20px;
-    margin-right: 15px;
+    font-weight: 600;
+    font-size: 14px;
+    margin-right: 10px;
 }
 
 .dropdown-user-details h5 {
     margin: 0;
-    font-size: 16px;
-    font-weight: 700;
-    color: #464457;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3d4152;
+    line-height: 1.3;
 }
 
 .dropdown-user-details p {
     margin: 2px 0 0;
-    font-size: 12px;
+    font-size: 11px;
     color: #74788d;
 }
 
 .dropdown-info-item {
-    padding: 10px 20px;
+    padding: 8px 14px;
     display: flex;
     align-items: center;
     color: #464457;
-    font-size: 13px;
-    transition: background 0.2s ease;
-}
-
-.dropdown-info-item:hover {
-    background: #f8f9ff;
+    font-size: 12px;
 }
 
 .dropdown-info-item i {
-    width: 25px;
-    color: #1e3c72;
-    font-size: 14px;
+    width: 20px;
+    color: #74788d;
+    font-size: 12px;
 }
 
 .dropdown-divider-modern {
-    margin: 10px 0;
-    border-top: 1px solid #f0f3ff;
+    margin: 0;
+    border-top: 1px solid #e3e6ef;
 }
 
 .btn-logout-modern {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 8px;
-    width: calc(100% - 40px);
-    margin: 10px 20px 0;
-    padding: 12px;
-    background: linear-gradient(135deg, #52616e 0%, #37424a 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    padding: 9px 14px;
+    color: #3d4152;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background 0.15s ease, color 0.15s ease;
 }
 
 .btn-logout-modern:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(55, 66, 74, 0.4);
-    background: linear-gradient(135deg, #37424a 0%, #52616e 100%);
+    background: #f7f8fa;
+    color: #b42318;
+    text-decoration: none;
 }
 
 .btn-logout-modern i {
-    font-size: 16px;
+    width: 20px;
+    font-size: 12px;
 }
 
 /* Botón de menú móvil */
@@ -459,11 +446,6 @@ $menuItems = obtenerMenuPorTipo($tipoUsuario);
                     <div class="dropdown-info-item">
                         <i class="fas fa-user"></i>
                         <span><?php echo htmlspecialchars($usuario); ?></span>
-                    </div>
-
-                    <div class="dropdown-info-item">
-                        <i class="fas fa-id-badge"></i>
-                        <span><?php echo htmlspecialchars($nombres . ' ' . $apellidoPaterno); ?></span>
                     </div>
 
                     <div class="dropdown-divider-modern"></div>

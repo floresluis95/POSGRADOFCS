@@ -74,72 +74,57 @@ $(document).ready(function() {
         opContexto.numeroCuotasPlan = parseInt(r.numeroCuotasPlan, 10) || 0;
         const bs = window.formatoBs;
 
+        const esc = function(t) { return $('<div>').text(t == null ? '' : String(t)).html(); };
+        const nota = function(clase, icono, texto) {
+            return '<div class="gp-nota ' + clase + ' mb-0"><i class="fa ' + icono + '"></i><span>' + texto + '</span></div>';
+        };
+
         if (!r.tienePlan) {
-            $('#ordenPagoContenido').html(
-                '<div class="gp-section gp-estado-vacio is-alerta">' +
-                    '<i class="fa fa-exclamation-triangle"></i>' +
-                    '<h6>Sin plan de pago del programa</h6>' +
-                    '<p class="mb-0">Normalmente porque eligió Plan Grupal en Pre-Registro. Use el botón "Plan Grupal" de la barra superior para armarle uno.</p>' +
-                '</div>'
-            );
+            // Normalmente Plan Grupal en Pre-Registro: se arma con el botón "Plan Grupal" de la barra superior
+            $('#ordenPagoContenido').html(nota('is-alerta', 'fa-exclamation-triangle',
+                'Sin plan de pago del programa. Use <strong>Plan Grupal</strong> en la barra superior para armarlo.'));
             return;
         }
 
         if (r.completado) {
-            $('#ordenPagoContenido').html(
-                '<div class="gp-section gp-estado-vacio is-exito">' +
-                    '<i class="fa fa-check-circle"></i>' +
-                    '<h6>Programa pagado en su totalidad</h6>' +
-                    '<p class="mb-0">No queda saldo pendiente para este estudiante.</p>' +
-                '</div>'
-            );
+            $('#ordenPagoContenido').html(nota('is-exito', 'fa-check-circle', 'Programa pagado en su totalidad.'));
             return;
         }
 
         if (orden) {
+            // "2026-10-14 11:25:49" → "14/10/2026"
+            const f = String(orden.FechaGeneracion || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+            const metaOrden = ['Generada ' + (f ? f[3] + '/' + f[2] + '/' + f[1] : esc(orden.FechaGeneracion))];
+            if (orden.NumeroCuentaDeposito) metaOrden.push('Cuenta ' + esc(orden.NumeroCuentaDeposito));
+            if (orden.ModulosCubiertos) metaOrden.push(esc(orden.ModulosCubiertos));
+
             $('#ordenPagoContenido').html(
-                '<div class="gp-section gp-orden">' +
-                    '<div class="gp-orden-fila">' +
+                '<div class="op-form">' +
+                    '<div class="op-cab is-pendiente">' +
                         '<div>' +
-                            '<div class="gp-section-title mb-1"><i class="fa fa-file-invoice"></i> Orden de pago pendiente</div>' +
-                            '<div class="gp-orden-num">N° ' + orden.NumeroOrden + '</div>' +
-                            '<div class="gp-orden-meta">Generada el ' + orden.FechaGeneracion +
-                                (orden.NumeroCuentaDeposito ? ' &middot; Cuenta ' + orden.NumeroCuentaDeposito : '') + '</div>' +
-                            (orden.ModulosCubiertos
-                                ? '<div class="gp-orden-meta"><i class="fa fa-book"></i> Cubre: ' + $('<div>').text(orden.ModulosCubiertos).html() + '</div>'
-                                : '') +
+                            '<div class="op-cab-titulo">Orden N° ' + esc(orden.NumeroOrden) + ' ' + window.chipEstadoPago('PENDIENTE') + '</div>' +
+                            '<div class="op-cab-meta">' + metaOrden.join(' &middot; ') + '</div>' +
                         '</div>' +
-                        '<div>' +
-                            '<div class="gp-orden-monto">' + bs(orden.MontoTotal) + '</div>' +
-                            '<div class="text-right mt-1">' + window.chipEstadoPago('PENDIENTE') + '</div>' +
-                        '</div>' +
+                        '<div class="op-cab-monto">' + bs(orden.MontoTotal) + '</div>' +
                     '</div>' +
-                    '<div class="gp-ayuda mt-3">' +
-                        'El estudiante debe cancelar este monto; luego registre su voucher en la pestaña "Cuotas del programa" para confirmar el pago.' +
-                    '</div>' +
-                    '<div class="gp-actions">' +
-                        '<button type="button" class="btn btn-primary btn-ir-cuotas-programa">' +
-                            '<i class="fa fa-upload"></i> Registrar voucher' +
-                        '</button>' +
+                    '<div class="op-pie">' +
+                        '<button type="button" class="btn btn-link text-danger mr-auto" id="btnAnularOrdenCuota" ' +
+                            'data-id="' + orden.IdOrdenPago + '" data-confirmando="0">Anular orden</button>' +
                         '<button type="button" class="btn btn-outline-secondary" id="btnReimprimirOrdenCuota" ' +
                             'data-id="' + orden.IdOrdenPago + '" data-monto="' + orden.MontoTotal + '" ' +
-                            'data-nombre-factura="' + (orden.NombreFactura || '') + '" data-nit-ci="' + (orden.NitCiFactura || '') + '" ' +
-                            'data-numero-cuenta="' + (orden.NumeroCuentaDeposito || '') + '" data-firma="' + (orden.Firma || '') + '">' +
+                            'data-nombre-factura="' + esc(orden.NombreFactura || '') + '" data-nit-ci="' + esc(orden.NitCiFactura || '') + '" ' +
+                            'data-numero-cuenta="' + esc(orden.NumeroCuentaDeposito || '') + '" data-firma="' + esc(orden.Firma || '') + '">' +
                             '<i class="fa fa-print"></i> Reimprimir' +
                         '</button>' +
-                        '<button type="button" class="btn btn-link text-danger ml-auto" id="btnAnularOrdenCuota" ' +
-                            'data-id="' + orden.IdOrdenPago + '" data-confirmando="0">' +
-                            '<i class="fa fa-times"></i> Anular orden' +
-                        '</button>' +
+                        '<button type="button" class="btn btn-primary btn-ir-cuotas-programa">Registrar voucher</button>' +
                     '</div>' +
-                    '<div id="avisoAnularOrdenCuota" class="small text-danger mt-2 text-right" style="display:none;"></div>' +
+                    '<div id="avisoAnularOrdenCuota" class="small text-danger px-3 pb-2" style="display:none;"></div>' +
                 '</div>'
             );
             return;
         }
 
         const saldoPendiente = parseFloat(r.saldoPendiente) || 0;
-        const esc = function(t) { return $('<div>').text(t == null ? '' : String(t)).html(); };
 
         // Monto sugerido: la cuota pactada en Pre-Registro (la última cuota, todo el
         // saldo); en planes sin monto pactado, el saldo repartido entre las cuotas que
@@ -155,18 +140,18 @@ $(document).ready(function() {
         opContexto.saldoPendiente = saldoPendiente;
 
         const textoCuota = 'Cuota ' + opContexto.numeroCuotaActual + (cuotasPlan ? ' de ' + cuotasPlan : '');
-        const atajos =
-            (montoSugerido < saldoPendiente
-                ? '<button type="button" class="op-atajo" data-monto="' + montoSugerido.toFixed(2) + '">Cuota sugerida ' + bs(montoSugerido) + '</button>'
-                : '') +
-            '<button type="button" class="op-atajo" data-monto="' + saldoPendiente.toFixed(2) + '">Todo el saldo ' + bs(saldoPendiente) + '</button>';
+        // Atajos de monto: solo si la cuota sugerida no es ya todo el saldo
+        const atajos = montoSugerido < saldoPendiente
+            ? '<button type="button" class="op-atajo" data-monto="' + montoSugerido.toFixed(2) + '">Cuota ' + bs(montoSugerido) + '</button>' +
+              '<button type="button" class="op-atajo" data-monto="' + saldoPendiente.toFixed(2) + '">Todo el saldo</button>'
+            : '';
 
-        // Plegable: una línea con el valor actual y "Cambiar" para abrir los campos
-        const plegable = function(icono, etiqueta, idResumen, resumen, idCuerpo, cuerpo) {
+        // Línea con el valor actual y "Cambiar" para abrir los campos (ya vienen llenos)
+        const plegable = function(etiqueta, idResumen, resumen, idCuerpo, cuerpo) {
             return '<div class="op-plegable">' +
                 '<button type="button" class="op-plegable-cab" data-target="#' + idCuerpo + '">' +
-                    '<span><i class="fa ' + icono + '"></i> ' + etiqueta + ': <strong id="' + idResumen + '">' + resumen + '</strong></span>' +
-                    '<span class="op-plegable-accion">Cambiar <i class="fa fa-chevron-down"></i></span>' +
+                    '<span>' + etiqueta + ': <strong id="' + idResumen + '">' + resumen + '</strong></span>' +
+                    '<span class="op-plegable-accion">Cambiar</span>' +
                 '</button>' +
                 '<div class="op-plegable-cuerpo" id="' + idCuerpo + '" style="display:none;">' + cuerpo + '</div>' +
             '</div>';
@@ -174,100 +159,77 @@ $(document).ready(function() {
 
         const html =
             '<div class="op-form">' +
+                '<div class="op-cab">' +
+                    '<div class="op-cab-titulo">Nueva orden &middot; ' + textoCuota + '</div>' +
+                    '<div class="op-cab-meta">Saldo ' + bs(saldoPendiente) + '</div>' +
+                '</div>' +
 
-                // Paso 1: monto
-                '<div class="op-paso">' +
-                    '<div class="op-paso-num">1</div>' +
-                    '<div class="op-paso-cuerpo">' +
-                        '<div class="op-paso-titulo">¿Cuánto va a pagar? <span class="op-paso-ayuda"><strong>' + textoCuota + '</strong> &middot; saldo ' + bs(saldoPendiente) + '</span></div>' +
-                        '<div class="op-monto-fila">' +
+                '<div class="op-cuerpo">' +
+                    '<div class="row">' +
+                        '<div class="col-md-6 form-group">' +
+                            '<label class="gp-label" for="opMontoCuota">Monto</label>' +
                             '<div class="gp-monto-input">' +
                                 '<span>Bs.</span>' +
                                 '<input type="number" id="opMontoCuota" min="0.01" max="' + saldoPendiente.toFixed(2) + '" step="0.01" value="' + montoSugerido.toFixed(2) + '">' +
                             '</div>' +
-                            '<div class="op-atajos">' + atajos + '</div>' +
+                            (atajos ? '<div class="op-atajos">' + atajos + '</div>' : '') +
+                            '<div id="opMontoAviso" class="op-aviso-monto" style="display:none;"></div>' +
                         '</div>' +
-                        '<div id="opMontoAviso" class="op-aviso-monto" style="display:none;"></div>' +
-                    '</div>' +
-                '</div>' +
-
-                // Paso 2: cuenta, fecha límite y firma
-                '<div class="op-paso">' +
-                    '<div class="op-paso-num">2</div>' +
-                    '<div class="op-paso-cuerpo">' +
-                        '<div class="op-paso-titulo">¿Dónde y hasta cuándo deposita?</div>' +
-                        '<div class="row op-fila-datos">' +
-                            '<div class="col-md-5 form-group">' +
-                                '<label class="gp-label" for="opCuentaPago">Cuenta de depósito</label>' +
-                                '<select class="form-control" id="opCuentaPago">' +
-                                    '<option value="">Cargando cuentas...</option>' +
+                        '<div class="col-md-6 form-group">' +
+                            '<label class="gp-label" for="opCuentaPago">Cuenta de depósito</label>' +
+                            '<select class="form-control" id="opCuentaPago">' +
+                                '<option value="">Cargando cuentas...</option>' +
+                            '</select>' +
+                        '</div>' +
+                        '<div class="col-md-6 form-group">' +
+                            '<label class="gp-label" for="opFechaVencimiento">Fecha límite</label>' +
+                            '<input type="date" class="form-control" id="opFechaVencimiento" value="' + fechaPorDefectoVencimiento() + '">' +
+                        '</div>' +
+                        '<div class="col-md-6 form-group">' +
+                            '<label class="gp-label" for="opFirma">Firma</label>' +
+                            '<div class="input-group">' +
+                                '<select class="form-control" id="opFirma">' +
+                                    '<option value="">Cargando...</option>' +
                                 '</select>' +
-                            '</div>' +
-                            '<div class="col-md-3 form-group">' +
-                                '<label class="gp-label" for="opFechaVencimiento">Fecha límite</label>' +
-                                '<input type="date" class="form-control" id="opFechaVencimiento" value="' + fechaPorDefectoVencimiento() + '">' +
-                            '</div>' +
-                            '<div class="col-md-4 form-group">' +
-                                '<label class="gp-label" for="opFirma">Firma</label>' +
-                                '<div class="input-group">' +
-                                    '<select class="form-control" id="opFirma">' +
-                                        '<option value="">Cargando...</option>' +
-                                    '</select>' +
-                                    '<div class="input-group-append">' +
-                                        '<button type="button" class="btn btn-outline-secondary" id="opBtnAgregarFirmante" title="Agregar nuevo nombre">' +
-                                            '<i class="fa fa-plus"></i>' +
-                                        '</button>' +
-                                    '</div>' +
+                                '<div class="input-group-append">' +
+                                    '<button type="button" class="btn btn-outline-secondary" id="opBtnAgregarFirmante" title="Agregar nuevo nombre">' +
+                                        '<i class="fa fa-plus"></i>' +
+                                    '</button>' +
                                 '</div>' +
-                                // Caja en línea (no SweetAlert): un popup con <input> lanzado sobre un
-                                // modal de Bootstrap ya abierto queda visible pero no recibe el foco del
-                                // teclado (el modal se lo roba de vuelta), igual que en "Anular orden".
-                                '<div id="opNuevoFirmanteBox" class="input-group input-group-sm mt-1" style="display:none;">' +
-                                    '<input type="text" class="form-control form-control-sm" id="opNuevoFirmanteNombre" placeholder="Nombre completo">' +
-                                    '<div class="input-group-append">' +
-                                        '<button type="button" class="btn btn-success" id="opBtnGuardarFirmante" title="Guardar"><i class="fa fa-check"></i></button>' +
-                                        '<button type="button" class="btn btn-outline-secondary" id="opBtnCancelarFirmante" title="Cancelar"><i class="fa fa-times"></i></button>' +
-                                    '</div>' +
+                            '</div>' +
+                            // Caja en línea (no SweetAlert): un popup con <input> lanzado sobre un
+                            // modal de Bootstrap ya abierto queda visible pero no recibe el foco del
+                            // teclado (el modal se lo roba de vuelta), igual que en "Anular orden".
+                            '<div id="opNuevoFirmanteBox" class="input-group input-group-sm mt-1" style="display:none;">' +
+                                '<input type="text" class="form-control form-control-sm" id="opNuevoFirmanteNombre" placeholder="Nombre completo">' +
+                                '<div class="input-group-append">' +
+                                    '<button type="button" class="btn btn-success" id="opBtnGuardarFirmante" title="Guardar"><i class="fa fa-check"></i></button>' +
+                                    '<button type="button" class="btn btn-outline-secondary" id="opBtnCancelarFirmante" title="Cancelar"><i class="fa fa-times"></i></button>' +
                                 '</div>' +
                             '</div>' +
                         '</div>' +
                     '</div>' +
+
+                    // Factura y módulos ya vienen llenos; solo se abren para cambiarlos
+                    plegable('Factura', 'opFacturaResumen',
+                        esc(opContexto.estudianteNombre || '') + ' &middot; ' + esc(opContexto.estudianteCi || ''), 'opFacturaCuerpo',
+                        '<div class="row">' +
+                            '<div class="col-md-7 form-group mb-md-0">' +
+                                '<label class="gp-label" for="opNombreFactura">Nombre / Razón social</label>' +
+                                '<input type="text" class="form-control" id="opNombreFactura" value="' + esc(opContexto.estudianteNombre || '') + '">' +
+                            '</div>' +
+                            '<div class="col-md-5 form-group mb-0">' +
+                                '<label class="gp-label" for="opNitCiFactura">NIT / C.I.</label>' +
+                                '<input type="text" class="form-control" id="opNitCiFactura" value="' + esc(opContexto.estudianteCi || '') + '">' +
+                            '</div>' +
+                        '</div>') +
+                    // Solo para control: no cambia el monto ni la orden impresa
+                    plegable('Módulo(s)', 'opModulosResumen', 'cargando...', 'opModulosCuerpo',
+                        '<div id="opModulosCuota" class="op-modulos-cuota"><span class="text-muted"><i class="fa fa-spinner fa-spin"></i> Cargando módulos...</span></div>') +
                 '</div>' +
 
-                // Paso 3: factura y módulos ya vienen llenos; solo se abren para cambiarlos
-                '<div class="op-paso">' +
-                    '<div class="op-paso-num">3</div>' +
-                    '<div class="op-paso-cuerpo">' +
-                        '<div class="op-paso-titulo">Revise <span class="op-opcional">(ya viene lleno)</span></div>' +
-                        '<div class="op-plegables">' +
-                        plegable('fa-file-invoice-dollar', 'Factura a nombre de', 'opFacturaResumen',
-                            esc(opContexto.estudianteNombre || '') + ' &middot; ' + esc(opContexto.estudianteCi || ''), 'opFacturaCuerpo',
-                            '<div class="row">' +
-                                '<div class="col-md-7 form-group mb-md-0">' +
-                                    '<label class="gp-label" for="opNombreFactura">Nombre / Razón social</label>' +
-                                    '<input type="text" class="form-control" id="opNombreFactura" value="' + esc(opContexto.estudianteNombre || '') + '">' +
-                                '</div>' +
-                                '<div class="col-md-5 form-group mb-0">' +
-                                    '<label class="gp-label" for="opNitCiFactura">NIT / C.I.</label>' +
-                                    '<input type="text" class="form-control" id="opNitCiFactura" value="' + esc(opContexto.estudianteCi || '') + '">' +
-                                '</div>' +
-                            '</div>') +
-                        plegable('fa-book', 'Módulo(s) que cubre', 'opModulosResumen', 'cargando...', 'opModulosCuerpo',
-                            '<div class="gp-ayuda mt-0 mb-2">Solo para control; no cambia el monto ni la orden impresa. Puede marcar más de uno.</div>' +
-                            '<div id="opModulosCuota" class="op-modulos-cuota"><span class="text-muted"><i class="fa fa-spinner fa-spin"></i> Cargando módulos...</span></div>') +
-                        '</div>' +
-                    '</div>' +
-                '</div>' +
-
-                // Barra final: total y un solo botón
-                '<div class="op-barra-final">' +
-                    '<div>' +
-                        '<div class="op-barra-etiqueta">' + textoCuota + '</div>' +
-                        '<div class="op-barra-total" id="opTotalResumen">' + bs(montoSugerido) + '</div>' +
-                    '</div>' +
-                    '<button type="button" class="btn btn-primary btn-lg" id="opBtnGenerarOrden">' +
-                        '<i class="fa fa-file-invoice"></i> Generar orden de pago' +
-                    '</button>' +
+                '<div class="op-pie">' +
+                    '<button type="button" class="btn btn-primary" id="opBtnGenerarOrden">Generar orden de pago</button>' +
                 '</div>' +
             '</div>';
 
@@ -285,11 +247,10 @@ $(document).ready(function() {
         $('#opMontoCuota').val($(this).data('monto')).trigger('input');
     });
 
-    // Total de la barra final y aviso si el monto no es válido
+    // Atajo activo y aviso si el monto no es válido
     $(document).on('input', '#opMontoCuota', function() {
         const monto = parseFloat($(this).val()) || 0;
         const saldo = opContexto.saldoPendiente || 0;
-        $('#opTotalResumen').text(window.formatoBs(monto));
         $('#ordenPagoContenido .op-atajo').each(function() {
             $(this).toggleClass('is-activo', Math.abs(parseFloat($(this).data('monto')) - monto) < 0.005);
         });
@@ -563,12 +524,12 @@ $(document).ready(function() {
                         });
                 } else {
                     Swal.fire({ icon: 'error', title: 'Error', text: resp.mensaje || 'No se pudo generar la orden de pago' });
-                    $btn.prop('disabled', false).html('<i class="fa fa-file-invoice"></i> Generar orden de pago');
+                    $btn.prop('disabled', false).html('Generar orden de pago');
                 }
             },
             error: function() {
                 Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar la orden de pago' });
-                $btn.prop('disabled', false).html('<i class="fa fa-file-invoice"></i> Generar orden de pago');
+                $btn.prop('disabled', false).html('Generar orden de pago');
             }
         });
         }
@@ -614,12 +575,12 @@ $(document).ready(function() {
         const $aviso = $('#avisoAnularOrdenCuota');
 
         if ($btn.data('confirmando') !== 1) {
-            $btn.data('confirmando', 1).html('<i class="fa fa-exclamation-triangle"></i> ¿Confirmar? Clic de nuevo');
+            $btn.data('confirmando', 1).html('¿Confirmar? Clic de nuevo');
             $aviso.text('Esta acción no se puede deshacer. Podrá generar una nueva orden después.').show();
 
             clearTimeout(anularOrdenTimeout);
             anularOrdenTimeout = setTimeout(function() {
-                $btn.data('confirmando', 0).html('<i class="fa fa-times"></i> Anular orden');
+                $btn.data('confirmando', 0).html('Anular orden');
                 $aviso.hide();
             }, 4000);
             return;
@@ -642,12 +603,12 @@ $(document).ready(function() {
                     }
                 } else {
                     $aviso.text(resp.mensaje || 'No se pudo anular la orden').show();
-                    $btn.prop('disabled', false).data('confirmando', 0).html('<i class="fa fa-times"></i> Anular orden');
+                    $btn.prop('disabled', false).data('confirmando', 0).html('Anular orden');
                 }
             },
             error: function() {
                 $aviso.text('No se pudo anular la orden').show();
-                $btn.prop('disabled', false).data('confirmando', 0).html('<i class="fa fa-times"></i> Anular orden');
+                $btn.prop('disabled', false).data('confirmando', 0).html('Anular orden');
             }
         });
     });

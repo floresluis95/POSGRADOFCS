@@ -26,51 +26,11 @@ kt-aside--fixed kt-page--loading">
     margin: 0 auto;
 }
 
-/* ---------- Pasos ---------- */
-.in-pasos {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 18px;
-}
-.in-paso {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: var(--in-texto-2);
-}
-.in-paso strong { display: block; font-size: 13.5px; color: var(--in-texto-2); }
-.in-paso small { display: block; font-size: 12px; color: #94a3b8; }
-.in-paso-num {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    font-weight: 700;
-    font-size: 14px;
-    background: #fff;
-    border: 2px solid #cbd5e1;
-    color: #94a3b8;
-}
-.in-paso.active .in-paso-num {
-    background: var(--in-primario);
-    border-color: var(--in-primario);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(30, 60, 114, .3);
-}
-.in-paso.active strong { color: var(--in-primario); }
-.in-paso.active small { color: var(--in-texto-2); }
-.in-paso-linea { flex: 1; height: 2px; background: #d8dde8; border-radius: 2px; }
-
 /* ---------- Tarjeta de búsqueda ---------- */
 .in-card {
     background: #fff;
     border: 1px solid var(--in-borde);
-    border-radius: 14px;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, .05);
+    border-radius: 6px;
     overflow: hidden;
 }
 .in-card-head {
@@ -78,14 +38,13 @@ kt-aside--fixed kt-page--loading">
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 18px 24px;
+    padding: 14px 20px;
     border-bottom: 1px solid var(--in-borde);
+    background: #f7f8fa;
 }
-.in-card-head h3 { font-size: 16px; font-weight: 700; margin: 0; color: var(--in-texto); }
-.in-card-head h3 i { color: var(--in-primario); margin-right: 4px; }
-.in-card-head p { font-size: 12.5px; color: var(--in-texto-2); margin: 3px 0 0; }
-.in-card-head .btn-abrir-panel { white-space: nowrap; padding: 8px 14px; }
-.in-card-body { padding: 22px 24px 20px; }
+.in-card-head h3 { font-size: 14px; font-weight: 600; margin: 0; color: var(--in-texto); }
+.in-card-head .btn-abrir-panel { white-space: nowrap; padding: 6px 12px; font-size: 12px; }
+.in-card-body { padding: 18px 20px; }
 
 .in-label {
     display: block;
@@ -105,27 +64,17 @@ kt-aside--fixed kt-page--loading">
     pointer-events: none;
 }
 .in-buscador .form-control {
-    height: 46px;
-    padding-left: 40px;
+    height: 40px;
+    padding-left: 38px;
     border: 1px solid #d8dde8;
-    border-radius: 10px;
-    font-size: 14px;
+    border-radius: 4px;
+    font-size: 13px;
 }
 .in-buscador .form-control:focus {
     border-color: var(--in-primario);
-    box-shadow: 0 0 0 3px rgba(30, 60, 114, .12);
+    box-shadow: 0 0 0 2px rgba(30, 60, 114, .12);
 }
-.in-buscador .in-btn-primario { height: 46px; padding: 0 22px; }
-
-.in-ayuda {
-    margin: 12px 0 0;
-    padding: 10px 14px;
-    background: var(--in-primario-suave);
-    border-radius: 10px;
-    font-size: 12.5px;
-    color: #334155;
-}
-.in-ayuda i { color: var(--in-primario); margin-right: 4px; }
+.in-buscador .in-btn-primario { height: 40px; padding: 0 18px; }
 
 /* Botón principal de la vista (Buscar, Seleccionar): azul institucional */
 .in-btn-primario {
@@ -136,7 +85,8 @@ kt-aside--fixed kt-page--loading">
     background: #1e3c72;
     border: 1px solid #1e3c72;
     color: #fff;
-    border-radius: 10px;
+    border-radius: 4px;
+    font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
 }
@@ -144,25 +94,18 @@ kt-aside--fixed kt-page--loading">
     background: #16305c;
     border-color: #16305c;
     color: #fff;
-    box-shadow: 0 4px 12px rgba(30, 60, 114, .25);
 }
 
 /* ---------- Ventanas (resultados y validación) ---------- */
 .in-modal-head {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background: #1e3c72;
     color: #fff;
     border-bottom: 0;
-    align-items: flex-start;
-}
-.in-modal-head small {
-    display: block;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: .6px;
-    opacity: .75;
+    padding: 14px 20px;
+    align-items: center;
 }
 .in-modal-head .modal-title,
-.in-modal-head .modal-title i { color: #fff !important; font-weight: 700; opacity: 1; }
+.in-modal-head .modal-title i { color: #fff !important; font-size: 15px; font-weight: 600; opacity: 1; }
 .in-modal-head .close { color: #fff; opacity: .85; text-shadow: none; }
 .in-modal-head .close:hover { opacity: 1; }
 
@@ -172,12 +115,12 @@ kt-aside--fixed kt-page--loading">
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 12px 14px;
+    padding: 10px 12px;
     border: 1px solid #e3e7ef;
-    border-radius: 12px;
-    transition: border-color .15s ease, box-shadow .15s ease;
+    border-radius: 4px;
+    transition: border-color .15s ease;
 }
-.in-resultado:hover { border-color: #b9c6dd; box-shadow: 0 4px 12px rgba(15, 23, 42, .06); }
+.in-resultado:hover { border-color: #b9c6dd; }
 .in-avatar {
     width: 40px;
     height: 40px;
@@ -221,19 +164,17 @@ kt-aside--fixed kt-page--loading">
     gap: 12px;
     margin-bottom: 14px;
 }
-.vv-nombre { font-size: 17px; font-weight: 700; color: #1f2937; line-height: 1.3; }
-.vv-sub { font-size: 12.5px; color: #64748b; margin-top: 2px; }
+.vv-nombre { font-size: 15px; font-weight: 600; color: #1f2937; line-height: 1.3; }
+.vv-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
 .vv-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    display: inline-block;
     white-space: nowrap;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: #eef2fa;
-    color: #1e3c72;
-    font-size: 12px;
-    font-weight: 600;
+    padding: 3px 8px;
+    border: 1px solid #d8dde8;
+    border-radius: 4px;
+    color: #3d4152;
+    font-size: 11.5px;
+    font-weight: 500;
 }
 
 /* Monto y cuenta: grandes, para mirarlos junto al voucher físico */
@@ -241,21 +182,21 @@ kt-aside--fixed kt-page--loading">
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1px;
-    background: #dbe3f0;
-    border: 1px solid #dbe3f0;
-    border-radius: 12px;
+    background: #e3e7ef;
+    border: 1px solid #e3e7ef;
+    border-radius: 4px;
     overflow: hidden;
     margin-bottom: 14px;
 }
-.vv-dato { background: #f5f8fd; padding: 12px 16px; display: flex; flex-direction: column; }
-.vv-etiqueta { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .4px; }
-.vv-valor { font-size: 22px; font-weight: 700; color: #1e3c72; letter-spacing: .5px; line-height: 1.25; }
+.vv-dato { background: #f7f8fa; padding: 10px 14px; display: flex; flex-direction: column; }
+.vv-etiqueta { font-size: 10.5px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .4px; }
+.vv-valor { font-size: 19px; font-weight: 600; color: #1e3c72; letter-spacing: .3px; line-height: 1.3; }
 .vv-cuenta-datos { font-size: 11px; color: #64748b; }
 
 .vv-exonerada {
     margin: 0 0 14px;
     padding: 8px 12px;
-    border-radius: 10px;
+    border-radius: 4px;
     background: #f3faf6;
     color: #2f855a;
     font-size: 13px;
@@ -273,7 +214,7 @@ kt-aside--fixed kt-page--loading">
     height: 62px;
     margin: 0;
     border: 1px dashed #c7cdd8;
-    border-radius: 8px;
+    border-radius: 4px;
     background: #f8fafc;
     display: flex;
     align-items: center;
@@ -293,14 +234,9 @@ kt-aside--fixed kt-page--loading">
 
 .vv-contador { font-weight: 500; color: #64748b; margin-left: 4px; }
 
-.vv-pie { flex-wrap: nowrap; }
-.vv-aviso { font-size: 12px; color: #8a6d1d; }
-.vv-aviso i { color: #d69e2e; margin-right: 3px; }
-
 @media (max-width: 575.98px) {
     .vv-estudiante { flex-direction: column; }
     .vv-comparar { grid-template-columns: 1fr; }
-    .vv-pie { flex-wrap: wrap; }
 }
 
 .filtro-label {
@@ -318,10 +254,10 @@ kt-aside--fixed kt-page--loading">
     align-items: center;
     gap: 8px;
     margin: 0;
-    padding: 8px 10px;
+    padding: 7px 10px;
     border: 1px solid #e3e7ef;
-    border-radius: 8px;
-    font-size: 13px;
+    border-radius: 4px;
+    font-size: 12.5px;
     font-weight: 500;
     color: #1f2937;
     cursor: pointer;
@@ -333,7 +269,7 @@ kt-aside--fixed kt-page--loading">
 .in-link:hover { text-decoration: underline; }
 @media (max-width: 575.98px) { .in-requisitos { grid-template-columns: 1fr; } }
 
-#modalValidarVoucher .form-control-sm { height: 38px; border-radius: 8px; font-size: 13px; }
+#modalValidarVoucher .form-control-sm { height: 36px; border-radius: 4px; font-size: 13px; }
 
 /* Resumen que se confirma antes de inscribir (swal): con scroll propio para que
    los botones no queden fuera de la pantalla */
@@ -353,8 +289,7 @@ kt-aside--fixed kt-page--loading">
 @media (max-width: 767.98px) {
     .in-card-head { flex-direction: column; align-items: flex-start; }
     .in-buscador { flex-direction: column; }
-    .in-buscador-icono { top: 23px; }
-    .in-paso small { display: none; }
+    .in-buscador-icono { top: 20px; }
     .in-resultado { flex-wrap: wrap; }
     .in-resultado .in-btn-primario { width: 100%; }
 }
@@ -429,32 +364,10 @@ kt-aside--fixed kt-page--loading">
             <div class="kt-container kt-grid__item kt-grid__item--fluid">
               <div class="in-contenedor">
 
-                <!-- Indicador de pasos (#pasoBuscar / #pasoValidar: el JS alterna .active) -->
-                <div class="in-pasos">
-                  <div class="in-paso active" id="pasoBuscar">
-                    <span class="in-paso-num">1</span>
-                    <div>
-                      <strong>Buscar estudiante</strong>
-                      <small>Con pre-registro pendiente</small>
-                    </div>
-                  </div>
-                  <div class="in-paso-linea"></div>
-                  <div class="in-paso" id="pasoValidar">
-                    <span class="in-paso-num">2</span>
-                    <div>
-                      <strong>Validar voucher</strong>
-                      <small>Inscripción formal al programa</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- PASO 1: BUSCAR ESTUDIANTE CON PREREGISTRO PENDIENTE -->
+                <!-- BUSCAR ESTUDIANTE CON PREREGISTRO PENDIENTE (orden de matrícula sin validar) -->
                 <div class="in-card">
                   <div class="in-card-head">
-                    <div>
-                      <h3><i class="fa fa-search"></i> Buscar estudiante</h3>
-                      <p>Busque al estudiante que ya tiene su orden de pago de matrícula generada en Pre-Registro.</p>
-                    </div>
+                    <h3>Buscar pre-registro pendiente</h3>
                     <a href="preregistro" class="btn btn-abrir-panel">
                       <i class="fa fa-user-plus"></i> Nuevo pre-registro
                     </a>
@@ -464,15 +377,11 @@ kt-aside--fixed kt-page--loading">
                     <div class="in-buscador">
                       <i class="fa fa-id-card in-buscador-icono"></i>
                       <input type="text" id="buscarTermino" class="form-control"
-                             placeholder="Ej: 1234567 o Pérez" maxlength="60" autocomplete="off">
+                             maxlength="60" autocomplete="off">
                       <button type="button" id="btnBuscarPreregistro" class="btn in-btn-primario">
                         <i class="fa fa-search"></i> Buscar
                       </button>
                     </div>
-                    <p class="in-ayuda">
-                      <i class="fa fa-info-circle"></i> Solo aparecen estudiantes con una orden de pago de matrícula <strong>pendiente</strong>.
-                      Al validar su voucher quedan inscritos formalmente en el programa.
-                    </p>
                   </div>
                 </div>
 
@@ -500,10 +409,7 @@ kt-aside--fixed kt-page--loading">
     <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
       <div class="modal-content">
         <div class="modal-header in-modal-head">
-          <div>
-            <small>Paso 2 de 2</small>
-            <h5 class="modal-title"><i class="fa fa-check-circle"></i> Validar voucher de matrícula</h5>
-          </div>
+          <h5 class="modal-title">Validar voucher de matrícula</h5>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -601,16 +507,9 @@ kt-aside--fixed kt-page--loading">
             </div>
           </div>
 
-          <div class="modal-footer vv-pie">
-            <small class="vv-aviso mr-auto" id="avisoValidacion">
-              <i class="fa fa-exclamation-triangle"></i> Inscribe al estudiante; no se puede deshacer.
-            </small>
-            <button type="button" id="btnBuscarOtro" class="btn btn-outline-secondary">
-              <i class="fa fa-arrow-left"></i> Volver
-            </button>
-            <button type="submit" class="btn btn-primary">
-              <i class="fa fa-check-circle"></i> Inscribir
-            </button>
+          <div class="modal-footer">
+            <button type="button" id="btnBuscarOtro" class="btn btn-outline-secondary">Volver</button>
+            <button type="submit" class="btn btn-primary">Inscribir</button>
           </div>
         </form>
 
@@ -623,10 +522,7 @@ kt-aside--fixed kt-page--loading">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-header in-modal-head">
-          <div>
-            <small>Paso 1 de 2</small>
-            <h5 class="modal-title"><i class="fa fa-search"></i> Resultados de la búsqueda</h5>
-          </div>
+          <h5 class="modal-title">Resultados de la búsqueda</h5>
           <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -693,7 +589,7 @@ kt-aside--fixed kt-page--loading">
           if (!lista || lista.length === 0) {
               $('#resultadosBusquedaBody').html(
                   '<div class="in-vacio"><i class="fa fa-user-slash"></i><strong>Sin resultados</strong>' +
-                  '<span>No hay pre-registros pendientes con ese criterio. Revise el C.I. o el apellido.</span></div>'
+                  '<span>No hay pre-registros pendientes con ese dato.</span></div>'
               );
               return;
           }
@@ -741,7 +637,7 @@ kt-aside--fixed kt-page--loading">
                   const auto = parseInt(r.Automatico) === 1;
                   html += '<label class="in-requisito' + (auto ? ' in-requisito-auto' : '') + '"' + (auto ? ' title="Se marca automáticamente al validar el voucher"' : '') + '>' +
                           '<input type="checkbox" class="chk-requisito" value="' + parseInt(r.IdRequisito) + '"' + (auto ? ' checked disabled' : '') + '>' +
-                          '<span>' + escaparHtml(r.Nombre) + (auto ? ' <small class="text-muted">(automático)</small>' : '') + '</span></label>';
+                          '<span>' + escaparHtml(r.Nombre) + (auto ? ' <i class="fa fa-lock text-muted" style="font-size:10px;"></i>' : '') + '</span></label>';
               });
               $('#listaRequisitosInscripcion').html(html);
               actualizarContadorRequisitos();
@@ -838,7 +734,7 @@ kt-aside--fixed kt-page--loading">
 
                   $('#planPropuestaInfo').html(
                       '<span class="vv-chip" title="Plan elegido en Pre-Registro; queda definitivo al inscribir">' +
-                      '<i class="fa fa-tags"></i> Plan ' + nombresPlan[planTipo] +
+                      'Plan ' + nombresPlan[planTipo] +
                       (planPorcentaje > 0 ? ' &middot; ' + parseFloat(planPorcentaje.toFixed(2)) + '% programa' : '') +
                       (planPorcentaje < 0 ? ' &middot; aumento de ' + parseFloat((-planPorcentaje).toFixed(2)) + '% programa' : '') +
                       (parseInt(p.PlanPropuestoNumeroCuotas, 10) > 0
@@ -849,8 +745,6 @@ kt-aside--fixed kt-page--loading">
 
                   $('#ModalResultadosBusqueda').modal('hide');
                   $('#panelDetalle').slideDown();
-                  $('#pasoBuscar').removeClass('active');
-                  $('#pasoValidar').addClass('active');
                   // Nota: ya no se anima el scroll de la página hacia #panelDetalle
                   // (quedaba dentro de un modal oculto en este punto, así que
                   // .offset() daba {top:0} y el intento de mover el scroll del
@@ -867,8 +761,6 @@ kt-aside--fixed kt-page--loading">
       // Volver a la búsqueda
       $('#btnBuscarOtro').on('click', function() {
           $('#panelDetalle').slideUp();
-          $('#pasoValidar').removeClass('active');
-          $('#pasoBuscar').addClass('active');
           $('#buscarTermino').val('').focus();
       });
 

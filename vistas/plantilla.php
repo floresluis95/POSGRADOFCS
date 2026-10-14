@@ -176,7 +176,7 @@ ob_start();
   <script src="vistas/recursos/assets/vendors/general/es6-promise-polyfill/promise.min.js" type="text/javascript"></script>
   <!-- Foto del voucher: cámara y recorte (input type="file" data-captura-foto) -->
   <script src="vistas/recursos/assets/vendors/general/cropperjs/cropper.min.js" type="text/javascript"></script>
-  <script src="vistas/recursos/assets/js/scripts/captura-foto.js" type="text/javascript"></script>
+  <script src="vistas/recursos/assets/js/scripts/captura-foto.js?v=<?php echo filemtime(__DIR__ . '/recursos/assets/js/scripts/captura-foto.js'); ?>" type="text/javascript"></script>
   <?php
   // No cargar SweetAlert2 en páginas que usan SweetAlert v1
   $action = isset($_GET['action']) ? $_GET['action'] : '';
