@@ -83,7 +83,11 @@ $colegiatura = $tipoPlan ? (float)$datos['PlanMontoTotal'] : $costoBase;
 $descuento   = (float)($datos['PlanPorcentajeDescuento'] ?? 0);
 $total       = $matricula + $colegiatura;
 $numCuotas   = max(1, (int)($datos['NumeroCuotas'] ?: $datos['Modulos']));
-$cuota       = round($colegiatura / $numCuotas, 2);
+// Cuota pactada en Pre-Registro (redondeada; la última ajusta la diferencia).
+// Planes anteriores sin monto pactado: el total entre el N° de cuotas.
+$cuota       = !empty($datos['PlanMontoCuota']) && $tipoPlan ? (float)$datos['PlanMontoCuota'] : round($colegiatura / $numCuotas, 2);
+$ultimaCuota = round($colegiatura - $cuota * ($numCuotas - 1), 2);
+$cuotasIguales = $numCuotas === 1 || abs($ultimaCuota - $cuota) < 0.005;
 // Fecha de firma = fecha de inscripción (se registra al validar el voucher de matrícula).
 $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto',
     'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -172,14 +176,22 @@ $detallePlan = '';
 if ($tipoPlan && $descuento > 0) {
     $detallePlan = ' (' . ($nombresPlanCompromiso[$tipoPlan] ?? 'plan') . ' con ' . montoCompromiso($descuento)
         . '% de descuento sobre el costo de ' . montoCompromiso($costoBase) . ' Bs.)';
+} elseif ($tipoPlan && $descuento < 0) {
+    // % negativo = aumento del programa (Pre-Registro, "Aumento")
+    $detallePlan = ' (' . ($nombresPlanCompromiso[$tipoPlan] ?? 'plan') . ' con un incremento del ' . montoCompromiso(-$descuento)
+        . '% sobre el costo de ' . montoCompromiso($costoBase) . ' Bs.)';
 } elseif (in_array($tipoPlan, ['DESCUENTO', 'GRUPAL'], true)) {
     $detallePlan = ' (' . $nombresPlanCompromiso[$tipoPlan] . ')';
 }
 if (!empty($datos['pagoCompleto'])) {
     $lineaColegiatura .= ', en un solo pago' . $detallePlan . '.';
 } else {
-    $lineaColegiatura .= $detallePlan . ', pago que deberá efectuarse al inicio de cada módulo, <b>' . $numCuotas
-        . ' cuotas de ' . montoCompromiso($cuota) . ' Bs.</b>';
+    $lineaColegiatura .= $detallePlan . ($numCuotas === 1
+        ? ', en <b>1 cuota de ' . montoCompromiso($cuota) . ' Bs.</b>'
+        : ', pago que deberá efectuarse al inicio de cada módulo, <b>' . ($cuotasIguales
+            ? $numCuotas . ' cuotas de ' . montoCompromiso($cuota) . ' Bs.'
+            : ($numCuotas - 1) . ($numCuotas - 1 === 1 ? ' cuota' : ' cuotas') . ' de ' . montoCompromiso($cuota)
+                . ' Bs. y la última de ' . montoCompromiso($ultimaCuota) . ' Bs.') . '</b>');
 }
 
 $clausulas = [

@@ -70,6 +70,8 @@ $(document).ready(function() {
         // Cuota que corresponde según lo ya cancelado (no un plan fijo): la próxima
         // orden que se genere es la cuota N+1, siendo N las cuotas ya pagadas.
         opContexto.numeroCuotaActual = (parseInt(r.cuotasPagadasCount, 10) || 0) + 1;
+        // Total de cuotas del plan (definido en Pre-Registro), para mostrar "1/12"
+        opContexto.numeroCuotasPlan = parseInt(r.numeroCuotasPlan, 10) || 0;
         const bs = window.formatoBs;
 
         if (!r.tienePlan) {
@@ -139,13 +141,17 @@ $(document).ready(function() {
         const saldoPendiente = parseFloat(r.saldoPendiente) || 0;
         const esc = function(t) { return $('<div>').text(t == null ? '' : String(t)).html(); };
 
-        // Monto sugerido: con plan de N cuotas, el saldo repartido entre las que
+        // Monto sugerido: la cuota pactada en Pre-Registro (la última cuota, todo el
+        // saldo); en planes sin monto pactado, el saldo repartido entre las cuotas que
         // faltan; sin número de cuotas definido, el saldo completo
         const cuotasPlan = parseInt(r.numeroCuotasPlan, 10) || 0;
         const cuotasRestantes = cuotasPlan > 0 ? cuotasPlan - (opContexto.numeroCuotaActual - 1) : 0;
-        const montoSugerido = cuotasRestantes > 1
-            ? Math.round((saldoPendiente / cuotasRestantes) * 100) / 100
-            : saldoPendiente;
+        const montoCuotaPlan = parseFloat(r.montoCuotaPlan) || 0;
+        const montoSugerido = cuotasRestantes <= 1
+            ? saldoPendiente
+            : (montoCuotaPlan > 0
+                ? Math.min(montoCuotaPlan, saldoPendiente)
+                : Math.round((saldoPendiente / cuotasRestantes) * 100) / 100);
         opContexto.saldoPendiente = saldoPendiente;
 
         const textoCuota = 'Cuota ' + opContexto.numeroCuotaActual + (cuotasPlan ? ' de ' + cuotasPlan : '');
@@ -489,7 +495,7 @@ $(document).ready(function() {
         };
         const resumen = '<table style="width:100%;text-align:left;font-size:14px;border-collapse:collapse;">' +
             fila('Monto', '<strong style="font-size:20px;color:#1e3c72;">' + window.formatoBs(monto) + '</strong>') +
-            fila('Cuota', '<strong>' + esc(etiquetaCuota(opContexto.numeroCuotaActual)) + '</strong> (N° ' + opContexto.numeroCuotaActual + ')') +
+            fila('Cuota', '<strong>' + esc(etiquetaCuota(opContexto.numeroCuotaActual, opContexto.numeroCuotasPlan)) + '</strong> (N° ' + opContexto.numeroCuotaActual + ')') +
             fila('Programa', esc(programaTexto)) +
             fila('Cuenta', cuentaTexto
                 ? esc(cuentaTexto)
@@ -547,6 +553,7 @@ $(document).ready(function() {
                                 nitCiFactura: nitCiFactura,
                                 numeroCuentaDeposito: numeroCuentaDeposito,
                                 numeroCuota: opContexto.numeroCuotaActual,
+                                totalCuotas: opContexto.numeroCuotasPlan,
                                 firma: firma
                             });
                             window.cargarOrdenPagoModulos(opContexto);
@@ -579,6 +586,7 @@ $(document).ready(function() {
             nitCiFactura: $this.data('nit-ci'),
             numeroCuentaDeposito: $this.data('numero-cuenta'),
             numeroCuota: opContexto.numeroCuotaActual,
+            totalCuotas: opContexto.numeroCuotasPlan,
             firma: $this.data('firma')
         });
     });
@@ -647,15 +655,19 @@ $(document).ready(function() {
     /**
      * Texto de la cuota que corresponde según lo ya cancelado (no un plan fijo):
      * "Primera cuota", "Segunda cuota"... y desde la 11ª en adelante, "Cuota N".
+     * Con el total de cuotas del plan se agrega "(1/12)".
      * @param {number} numeroCuota
+     * @param {number} [totalCuotas]
      */
-    function etiquetaCuota(numeroCuota) {
+    function etiquetaCuota(numeroCuota, totalCuotas) {
         const ordinales = ['', 'Primera', 'Segunda', 'Tercera', 'Cuarta', 'Quinta',
             'Sexta', 'Séptima', 'Octava', 'Novena', 'Décima'];
         const n = parseInt(numeroCuota, 10) || 1;
-        return (n > 0 && n < ordinales.length)
+        const total = parseInt(totalCuotas, 10) || 0;
+        return ((n > 0 && n < ordinales.length)
             ? (ordinales[n] + ' cuota del programa')
-            : ('Cuota ' + n + ' del programa');
+            : ('Cuota ' + n + ' del programa'))
+            + (total > 0 ? ' (' + n + '/' + total + ')' : '');
     }
 
     /**
@@ -687,7 +699,7 @@ $(document).ready(function() {
                     correo: est.Correo || '',
                     ci: ciCompleto,
                     celular: est.Celular || '',
-                    programa: (params.programaNombre || '') + '\n' + etiquetaCuota(params.numeroCuota),
+                    programa: (params.programaNombre || '') + '\n' + etiquetaCuota(params.numeroCuota, params.totalCuotas),
                     montoNumeral: 'Bs. ' + montoTotal.toFixed(2),
                     montoLiteral: numeroALetras(montoTotal),
                     version: params.version || 'V-1',

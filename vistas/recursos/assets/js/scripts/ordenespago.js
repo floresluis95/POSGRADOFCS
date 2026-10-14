@@ -5,6 +5,10 @@
  *
  * El rango de fechas se pide al servidor; búsqueda, tipo, estado y programa se
  * filtran aquí sobre lo cargado, sin volver a pedirlo.
+ *
+ * Desde la barra lateral la tabla empieza vacía, esperando que se busque un
+ * estudiante. Desde Matriculados (?ci=...&programa=...) se muestran directo las
+ * órdenes de ese registro: ese C.I. exacto en ese programa.
  */
 (function () {
     var ETIQUETAS_TIPO = { MATRICULA: 'Matrícula', CUOTA: 'Cuota', CLINICA: 'Clínica', MODULOS: 'Módulos' };
@@ -93,20 +97,23 @@
     }
 
     function aplicarFiltros() {
-        var buscar = normalizar($('#op_buscar').val().trim());
+        var textoBuscar = $('#op_buscar').val().trim();
+        var buscar = normalizar(textoBuscar);
         var tipo = $('#op_tipo').val();
         var estado = $('#op_estado').val();
         var programa = $('#op_programa').val();
+        // Mientras siga el C.I. que vino de Matriculados, solo ese C.I. exacto
+        // (no otros que lo contengan)
+        var ciExacto = ciInicial && textoBuscar === ciInicial ? ciInicial : '';
 
-        filtradas = todas.filter(function (o) {
+        // Sin búsqueda no se lista nada: se espera a que se busque un estudiante
+        filtradas = !buscar ? [] : todas.filter(function (o) {
             if (tipo && o.tipo !== tipo) return false;
             if (estado && estadoDe(o) !== estado) return false;
             if (programa && String(o.programaID) !== programa) return false;
-            if (buscar) {
-                var texto = normalizar(o.estudiante + ' ' + o.ci + ' ' + o.numeroOrden);
-                if (texto.indexOf(buscar) === -1) return false;
-            }
-            return true;
+            if (ciExacto) return o.ciBase === ciExacto;
+            var texto = normalizar(o.estudiante + ' ' + o.ci + ' ' + o.numeroOrden);
+            return texto.indexOf(buscar) !== -1;
         });
 
         actualizarContadores();
@@ -127,9 +134,10 @@
 
     function mostrarMas() {
         if (!filtradas.length) {
-            $('#op_cuerpo').html('<tr><td colspan="8" class="op-vacio">' +
-                (todas.length ? 'Ninguna orden coincide con los filtros.' : 'Todavía no hay órdenes de pago generadas en este periodo.') +
-                '</td></tr>');
+            var mensaje = !$('#op_buscar').val().trim()
+                ? '<i class="fa fa-search"></i> Busque un estudiante por nombre, C.I. o N° de orden para ver sus órdenes de pago.'
+                : (todas.length ? 'Ninguna orden coincide con los filtros.' : 'Todavía no hay órdenes de pago generadas en este periodo.');
+            $('#op_cuerpo').html('<tr><td colspan="8" class="op-vacio">' + mensaje + '</td></tr>');
             $('#op_mostrando').text('');
             $('#op_mas').hide();
             return;
@@ -313,10 +321,12 @@
     // Filtro inicial desde la URL (botón "Órdenes de Pago" de Matriculados)
     var parametros = new URLSearchParams(window.location.search);
     var programaInicial = /^\d+$/.test(parametros.get('programa') || '') ? parametros.get('programa') : '';
+    var ciInicial = (parametros.get('ci') || '').trim();
 
     function iniciar() {
         actualizarFecha();
-        if (parametros.get('ci')) $('#op_buscar').val(parametros.get('ci'));
+        if (ciInicial) $('#op_buscar').val(ciInicial);
+        else $('#op_buscar').trigger('focus');
 
         var temporizador = null;
         $('#op_buscar').on('input', function () {
@@ -356,6 +366,7 @@
             var recargar = $('#op_desde').val() || $('#op_hasta').val();
             $('#op_desde, #op_hasta').val('');
             if (recargar) cargar(); else aplicarFiltros();
+            $('#op_buscar').trigger('focus');
         });
 
         cargar();

@@ -169,6 +169,9 @@ class OrdenPagoModelos
                     'CostoTotalPrograma' => $filaPrograma ? floatval($filaPrograma['Costo']) : 0,
                     'TipoPlan' => $tipoPlanFinal,
                     'NumeroCuotas' => $orden['PlanPropuestoNumeroCuotas'] ?? null,
+                    'MontoCuota' => $orden['PlanPropuestoMontoCuota'] ?? null,
+                    // Total escrito a mano en Pre-Registro (null = se calcula con el %)
+                    'MontoTotalPagar' => $orden['PlanPropuestoMontoPrograma'] ?? null,
                     'PorcentajeDescuento' => $orden['PlanPropuestoPorcentaje'] ?? 0,
                     'CodigoGrupo' => $orden['PlanPropuestoCodigoGrupo'] ?? null
                 ];
@@ -437,7 +440,7 @@ class OrdenPagoModelos
 
             // Obtener el costo de matrícula del programa
             $stmtPrograma = $pdo->prepare(
-                "SELECT CostoMatricula FROM programa WHERE ProgramaID = :programaID"
+                "SELECT CostoMatricula, Costo FROM programa WHERE ProgramaID = :programaID"
             );
             $stmtPrograma->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
             $stmtPrograma->execute();
@@ -525,10 +528,47 @@ class OrdenPagoModelos
                 ? $datos['PlanPropuestoTipo']
                 : 'REGULAR';
             $planPorcentaje = isset($datos['PlanPropuestoPorcentaje']) ? floatval($datos['PlanPropuestoPorcentaje']) : 0;
-            // Número de cuotas planificado (solo Plan Regular; NULL para Contado/Grupal)
-            $planNumeroCuotas = ($planTipo === 'REGULAR' && !empty($datos['PlanPropuestoNumeroCuotas']))
-                ? (int)$datos['PlanPropuestoNumeroCuotas']
+            // Negativo = aumento del programa (hasta 100%)
+            $planPorcentaje = min(100, max(-100, $planPorcentaje));
+            // Número de cuotas del programa, en los tres planes (Al Contado, máximo 3)
+            $planNumeroCuotas = !empty($datos['PlanPropuestoNumeroCuotas'])
+                ? min($planTipo === 'CONTADO' ? 3 : 60, max(1, (int)$datos['PlanPropuestoNumeroCuotas']))
                 : null;
+
+            // Total del programa a pagar: el costo con el % de descuento (o de aumento, si
+            // es negativo) o, si en Pre-Registro se escribió el total en Bs., ese monto
+            // (mayor a 0 y hasta el doble del costo); entonces el % que se guarda es el
+            // equivalente, redondeado
+            $costoPrograma = round(floatval($programa['Costo']), 2);
+            $totalPrograma = round($costoPrograma - round($costoPrograma * $planPorcentaje / 100, 2), 2);
+            $planMontoPrograma = null;
+            if (isset($datos['PlanPropuestoMontoPrograma']) && $datos['PlanPropuestoMontoPrograma'] !== null
+                && abs(round(floatval($datos['PlanPropuestoMontoPrograma']), 2) - $totalPrograma) >= 0.005) {
+                $planMontoPrograma = round(floatval($datos['PlanPropuestoMontoPrograma']), 2);
+                if ($planMontoPrograma <= 0 || $planMontoPrograma - $costoPrograma * 2 > 0.005) {
+                    $pdo->rollBack();
+                    return ['status' => 'error', 'mensaje' => 'El total del programa debe ser mayor a 0 y con un aumento de hasta 100% (Bs. '
+                        . number_format($costoPrograma * 2, 2, ',', '.') . ')'];
+                }
+                $totalPrograma = $planMontoPrograma;
+                $planPorcentaje = $costoPrograma > 0 ? round(($costoPrograma - $planMontoPrograma) * 100 / $costoPrograma, 2) : 0;
+            }
+
+            // Monto de cada cuota: el redondeado por defecto (ver CuotaRedondeada) o, si en
+            // Pre-Registro se marcó "Modificar cuota", el escrito a mano (revisado aquí)
+            $planMontoCuota = null;
+            if ($planNumeroCuotas !== null) {
+                if (!empty($datos['PlanPropuestoMontoCuota'])) {
+                    $planMontoCuota = round(floatval($datos['PlanPropuestoMontoCuota']), 2);
+                    $errorCuota = PagoProgramaModelos::ValidarMontoCuota($planMontoCuota, $totalPrograma, $planNumeroCuotas);
+                    if ($errorCuota !== null) {
+                        $pdo->rollBack();
+                        return ['status' => 'error', 'mensaje' => $errorCuota];
+                    }
+                } else {
+                    $planMontoCuota = PagoProgramaModelos::CuotaRedondeada($totalPrograma, $planNumeroCuotas);
+                }
+            }
 
             // Plan Grupal: el grupo se arma aquí. Sin código = grupo nuevo; con código, tiene
             // que ser un grupo ya existente del MISMO programa (no se mezclan programas).
@@ -551,13 +591,13 @@ class OrdenPagoModelos
                 (NumeroOrden, idInscripcion, EstudianteID, ProgramaID, ProgramaCuentaID,
                  MontoTotal, MontoDescuento, PorcentajeDescuento, MontoFinal,
                  PagoCompleto, CostoMatricula, FechaGeneracion, Observaciones,
-                 PlanPropuestoTipo, PlanPropuestoNumeroCuotas, PlanPropuestoPorcentaje, PlanPropuestoCodigoGrupo,
+                 PlanPropuestoTipo, PlanPropuestoNumeroCuotas, PlanPropuestoMontoCuota, PlanPropuestoPorcentaje, PlanPropuestoMontoPrograma, PlanPropuestoCodigoGrupo,
                  NombreFactura, NitCiFactura, ResponsableGeneracion, Firma, Estado)
                 VALUES
                 (:numeroOrden, NULL, :estudianteID, :programaID, :programaCuentaID,
                  :montoTotal, :montoDescuento, :porcentajeDescuento, :montoFinal,
                  :pagoCompleto, :costoMatricula, NOW(), :observaciones,
-                 :planTipo, :planNumeroCuotas, :planPorcentaje, :planCodigoGrupo,
+                 :planTipo, :planNumeroCuotas, :planMontoCuota, :planPorcentaje, :planMontoPrograma, :planCodigoGrupo,
                  :nombreFactura, :nitCiFactura, :responsable, :firma, 'PENDIENTE')"
             );
 
@@ -582,7 +622,9 @@ class OrdenPagoModelos
             } else {
                 $stmtOrden->bindValue(":planNumeroCuotas", null, PDO::PARAM_NULL);
             }
+            $stmtOrden->bindValue(":planMontoCuota", $planMontoCuota, $planMontoCuota === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
             $stmtOrden->bindParam(":planPorcentaje", $planPorcentaje);
+            $stmtOrden->bindValue(":planMontoPrograma", $planMontoPrograma, $planMontoPrograma === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
             $stmtOrden->bindValue(":planCodigoGrupo", $planCodigoGrupo, $planCodigoGrupo === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
             $stmtOrden->bindParam(":nombreFactura", $datos['NombreFactura'], PDO::PARAM_STR);
             $stmtOrden->bindParam(":nitCiFactura", $datos['NitCiFactura'], PDO::PARAM_STR);
@@ -635,7 +677,10 @@ class OrdenPagoModelos
                     op.PorcentajeDescuento as porcentajeDescuento,
                     op.MontoDescuento as montoDescuento,
                     op.PlanPropuestoTipo,
+                    op.PlanPropuestoNumeroCuotas,
+                    op.PlanPropuestoMontoCuota,
                     op.PlanPropuestoPorcentaje,
+                    op.PlanPropuestoMontoPrograma,
                     op.FechaGeneracion,
                     op.Estado,
                     e.Nombre,
@@ -738,7 +783,10 @@ class OrdenPagoModelos
                     op.PorcentajeDescuento,
                     op.MontoDescuento,
                     op.PlanPropuestoTipo,
+                    op.PlanPropuestoNumeroCuotas,
+                    op.PlanPropuestoMontoCuota,
                     op.PlanPropuestoPorcentaje,
+                    op.PlanPropuestoMontoPrograma,
                     op.PlanPropuestoCodigoGrupo,
                     op.NombreFactura,
                     op.NitCiFactura,

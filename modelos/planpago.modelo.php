@@ -12,6 +12,55 @@ require_once 'conexion.modelo.php';
 class PagoProgramaModelos
 {
     /**
+     * Monto de cada cuota del programa por defecto: el total entre el N° de cuotas;
+     * si no sale exacto, redondeado hacia arriba a decenas (30000 / 11 = 2727,27 ->
+     * 2730) y la última cuota ajusta la diferencia (30000 - 10 x 2730 = 2700).
+     * Si redondear a decenas dejara la última en 0 o menos (muchas cuotas de un
+     * total chico), se redondea a bolivianos y, si aún no alcanza, a centavos.
+     * La misma regla está en Pre-Registro (preregistro.php, cuotaRedondeada).
+     * @param float $total
+     * @param int $numeroCuotas
+     * @return float
+     */
+    public static function CuotaRedondeada($total, $numeroCuotas)
+    {
+        $total = round((float)$total, 2);
+        $n = max(1, (int)$numeroCuotas);
+        if ($n === 1 || $total <= 0) return $total;
+
+        $base = $total / $n;
+        if (abs($base - round($base)) < 0.005) return round($base, 2);
+
+        foreach ([10, 1] as $multiplo) {
+            $cuota = ceil(round($base, 6) / $multiplo) * $multiplo;
+            if (round($total - $cuota * ($n - 1), 2) > 0) return (float)$cuota;
+        }
+        return round($base, 2);
+    }
+
+    /**
+     * Revisa un monto de cuota escrito a mano: positivo y que la última cuota
+     * (el total menos las demás) quede mayor a 0. Devuelve el mensaje de error o null.
+     * @param float $montoCuota
+     * @param float $total
+     * @param int $numeroCuotas
+     * @return string|null
+     */
+    public static function ValidarMontoCuota($montoCuota, $total, $numeroCuotas)
+    {
+        $n = max(1, (int)$numeroCuotas);
+        if ($montoCuota <= 0) return 'El monto de la cuota debe ser mayor a 0';
+        if ($n === 1) {
+            return abs($montoCuota - $total) < 0.005 ? null : 'Con una sola cuota, la cuota debe ser el total del programa';
+        }
+        if (round($total - $montoCuota * ($n - 1), 2) <= 0) {
+            return 'Con ' . $n . ' cuotas de Bs. ' . number_format($montoCuota, 2, ',', '.') . ' se pasa del total del programa (Bs. '
+                . number_format($total, 2, ',', '.') . '): la última cuota quedaría en 0 o menos';
+        }
+        return null;
+    }
+
+    /**
      * Inserta el plan de pago (pagoprograma) usando una conexión/transacción
      * ya abierta por el llamador (no hace beginTransaction/commit/rollBack).
      * @param PDO $pdo
@@ -34,27 +83,46 @@ class PagoProgramaModelos
 
         $costoTotal = round(floatval($datos['CostoTotalPrograma']), 2);
         $porcentaje = isset($datos['PorcentajeDescuento']) ? floatval($datos['PorcentajeDescuento']) : 0;
-        if ($porcentaje < 0) $porcentaje = 0;
+        // % negativo = aumento del programa (Pre-Registro, "Aumento"), hasta 100%
+        if ($porcentaje < -100) $porcentaje = -100;
         if ($porcentaje > 100) $porcentaje = 100;
-        $montoDescuento = round($costoTotal * $porcentaje / 100, 2);
-        $montoTotalPagar = round($costoTotal - $montoDescuento, 2);
+        $montoTotalPagar = round($costoTotal - round($costoTotal * $porcentaje / 100, 2), 2);
+        // Total del programa escrito a mano en Pre-Registro (en Bs.): manda ese monto;
+        // el % guardado es solo su equivalente redondeado
+        if (isset($datos['MontoTotalPagar']) && $datos['MontoTotalPagar'] !== null && floatval($datos['MontoTotalPagar']) > 0) {
+            $montoTotalPagar = round(floatval($datos['MontoTotalPagar']), 2);
+        }
+        // MontoDescuento solo guarda descuentos (con aumento queda en 0)
+        $montoDescuento = max(0, round($costoTotal - $montoTotalPagar, 2));
 
         $tipoPlan = in_array($datos['TipoPlan'], ['REGULAR', 'DESCUENTO', 'GRUPAL']) ? $datos['TipoPlan'] : 'REGULAR';
         $codigoGrupo = !empty($datos['CodigoGrupo']) ? $datos['CodigoGrupo'] : null;
         $cantidadGrupo = isset($datos['CantidadInscritosGrupo']) ? (int)$datos['CantidadInscritosGrupo'] : 1;
         $responsable = $datos['ResponsableGeneracion'] ?? null;
         $observaciones = $datos['Observaciones'] ?? null;
-        // Número de cuotas planificado (solo tiene sentido para Plan Regular; las cuotas
-        // siguen siendo de monto libre, esto es solo para poder mostrar "Cuota X de N").
-        $numeroCuotas = ($tipoPlan === 'REGULAR' && !empty($datos['NumeroCuotas'])) ? (int)$datos['NumeroCuotas'] : null;
+        // Número de cuotas en que se paga el programa (los tres planes; Al Contado, máximo 3).
+        // Lo usan el compromiso y la orden de cada cuota ("Cuota X de N").
+        $numeroCuotas = !empty($datos['NumeroCuotas'])
+            ? min($tipoPlan === 'DESCUENTO' ? 3 : 60, max(1, (int)$datos['NumeroCuotas']))
+            : null;
+        // Monto de cada cuota pactado en Pre-Registro (la última ajusta la diferencia).
+        // Si no viene o ya no cuadra con el total (p. ej. cambió el costo del
+        // programa), se usa el redondeado por defecto.
+        $montoCuota = null;
+        if ($numeroCuotas !== null) {
+            $montoCuota = isset($datos['MontoCuota']) && $datos['MontoCuota'] !== null ? round(floatval($datos['MontoCuota']), 2) : null;
+            if ($montoCuota === null || self::ValidarMontoCuota($montoCuota, $montoTotalPagar, $numeroCuotas) !== null) {
+                $montoCuota = self::CuotaRedondeada($montoTotalPagar, $numeroCuotas);
+            }
+        }
 
         $stmt = $pdo->prepare(
             "INSERT INTO pagoprograma
-            (idInscripcion, EstudianteID, ProgramaID, CostoTotalPrograma, TipoPlan, NumeroCuotas,
+            (idInscripcion, EstudianteID, ProgramaID, CostoTotalPrograma, TipoPlan, NumeroCuotas, MontoCuota,
              PorcentajeDescuento, MontoDescuento, MontoTotalPagar,
              CodigoGrupo, CantidadInscritosGrupo, ResponsableGeneracion, Observaciones, Estado)
             VALUES
-            (:idInscripcion, :estudianteID, :programaID, :costoTotal, :tipoPlan, :numeroCuotas,
+            (:idInscripcion, :estudianteID, :programaID, :costoTotal, :tipoPlan, :numeroCuotas, :montoCuota,
              :porcentaje, :montoDescuento, :montoTotalPagar,
              :codigoGrupo, :cantidadGrupo, :responsable, :observaciones, 'ACTIVO')"
         );
@@ -68,6 +136,7 @@ class PagoProgramaModelos
         } else {
             $stmt->bindValue(":numeroCuotas", null, PDO::PARAM_NULL);
         }
+        $stmt->bindValue(":montoCuota", $montoCuota, $montoCuota === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindParam(":porcentaje", $porcentaje);
         $stmt->bindParam(":montoDescuento", $montoDescuento);
         $stmt->bindParam(":montoTotalPagar", $montoTotalPagar);

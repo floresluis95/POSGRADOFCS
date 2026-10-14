@@ -563,11 +563,16 @@ kt-aside--fixed kt-page--loading">
 
                           <div class="preregistro-step" id="seccionPago" style="display: none;">
 
-                            <!-- Plan de pago: align-items-end deja los campos alineados abajo -->
+                            <!-- El Paso 3 se llena de arriba abajo, en el orden en que se decide:
+                                 1) plan, 2) matrícula, 3) programa, 4) cuotas y 5) dónde depositar.
+                                 Cada bloque muestra el costo de lista, lo que se cambia y el resultado. -->
+
+                            <!-- 1. Plan de pago (Plan Grupal: el grupo se arma aquí, con estudiantes del
+                                 mismo programa; cada integrante tiene su propia orden y sus descuentos) -->
                             <div class="orden-subseccion">
-                              <div class="orden-subseccion-titulo">Plan de pago</div>
+                              <div class="orden-subseccion-titulo"><span class="orden-paso-num">1</span> Plan de pago</div>
                               <div class="row align-items-end">
-                                <div class="col-md-4 form-group mb-2 mb-md-0">
+                                <div class="col-md-5 form-group mb-2 mb-md-0">
                                   <label for="tipoPagoCodigo">Plan</label>
                                   <select class="form-control form-control-sm" id="tipoPagoCodigo" name="tipoPagoCodigo" form="formPreregistro">
                                     <option value="REGULAR">REGULAR (EN CUOTAS)</option>
@@ -575,38 +580,7 @@ kt-aside--fixed kt-page--loading">
                                     <option value="GRUPAL">GRUPAL</option>
                                   </select>
                                 </div>
-                                <!-- Descuentos por separado, en todos los planes: el de la matrícula se aplica a
-                                     esta orden y el del programa al plan de cuotas (queda definitivo al validar
-                                     el voucher). Para cambiarlos después hay que anular y rehacer el pre-registro. -->
-                                <div class="col-md-2 form-group mb-2 mb-md-0" id="grupoDescuentoPreregistro">
-                                  <label for="porcentajeDescuento" class="text-nowrap">Desc. matrícula</label>
-                                  <div class="input-group input-group-sm">
-                                    <input type="number" class="form-control form-control-sm" id="porcentajeDescuento" name="porcentajeDescuento" form="formPreregistro" min="0" max="100" step="0.01" value="0" required>
-                                    <div class="input-group-append"><span class="input-group-text">%</span></div>
-                                  </div>
-                                </div>
-                                <div class="col-md-2 form-group mb-2 mb-md-0" id="grupoDescuentoProgramaPreregistro">
-                                  <label for="porcentajeDescuentoPrograma" class="text-nowrap">Desc. programa</label>
-                                  <div class="input-group input-group-sm">
-                                    <input type="number" class="form-control form-control-sm" id="porcentajeDescuentoPrograma" name="porcentajeDescuentoPrograma" form="formPreregistro" min="0" max="100" step="0.01" value="0" required>
-                                    <div class="input-group-append"><span class="input-group-text">%</span></div>
-                                  </div>
-                                </div>
-                                <div class="col-md-4 form-group mb-0" id="grupoPagoMatriculaPreregistro">
-                                  <label class="d-block">Matrícula</label>
-                                  <!-- Recuadro del mismo alto que los demás campos, para que la casilla quede alineada -->
-                                  <div class="form-control form-control-sm casilla-matricula">
-                                    <div class="custom-control custom-checkbox">
-                                      <input type="checkbox" class="custom-control-input" id="pagarMatricula" name="pagarMatricula" form="formPreregistro" value="1" checked>
-                                      <label class="custom-control-label text-nowrap" for="pagarMatricula">Cobrar matrícula</label>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <!-- Plan Grupal: el grupo se arma aquí, con estudiantes del mismo programa.
-                                   Cada integrante tiene su propia orden y sus propios descuentos. -->
-                              <div class="row mt-2" id="grupoCodigoGrupoPreregistro" style="display:none;">
-                                <div class="col-md-8 form-group mb-0">
+                                <div class="col-md-7 form-group mb-0" id="grupoCodigoGrupoPreregistro" style="display:none;">
                                   <label for="codigoGrupo">Grupo</label>
                                   <select class="form-control form-control-sm" id="codigoGrupo" name="codigoGrupo" form="formPreregistro">
                                     <option value="">NUEVO GRUPO</option>
@@ -616,49 +590,136 @@ kt-aside--fixed kt-page--loading">
                               </div>
                             </div>
 
-                            <!-- Cuenta de depósito -->
+                            <!-- 2. Matrícula: se cobra o no; con su % de descuento (se aplica a esta orden) -->
                             <div class="orden-subseccion">
-                              <div class="orden-subseccion-titulo">Cuenta de depósito</div>
+                              <div class="orden-subseccion-titulo"><span class="orden-paso-num">2</span> Matrícula</div>
+                              <div class="row align-items-end">
+                                <div class="col-md-3 form-group mb-2 mb-md-0">
+                                  <label class="text-nowrap">Costo de matrícula</label>
+                                  <div class="form-control form-control-sm bg-light" id="paso3CostoMatricula">-</div>
+                                </div>
+                                <div class="col-md-3 form-group mb-2 mb-md-0" id="grupoPagoMatriculaPreregistro">
+                                  <label class="d-block">&nbsp;</label>
+                                  <!-- Recuadro del mismo alto que los demás campos, para que la casilla quede alineada -->
+                                  <div class="form-control form-control-sm casilla-matricula">
+                                    <div class="custom-control custom-checkbox">
+                                      <input type="checkbox" class="custom-control-input" id="pagarMatricula" name="pagarMatricula" form="formPreregistro" value="1" checked>
+                                      <label class="custom-control-label text-nowrap" for="pagarMatricula">Cobrar matrícula</label>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="col-md-2 form-group mb-2 mb-md-0" id="grupoDescuentoPreregistro">
+                                  <label for="porcentajeDescuento" class="text-nowrap">Descuento</label>
+                                  <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control form-control-sm" id="porcentajeDescuento" name="porcentajeDescuento" form="formPreregistro" min="0" max="100" step="0.01" value="0" required>
+                                    <div class="input-group-append"><span class="input-group-text">%</span></div>
+                                  </div>
+                                </div>
+                                <div class="col-md-4 form-group mb-0">
+                                  <label for="montoSoloMatricula" class="text-nowrap">Matrícula a pagar</label>
+                                  <div class="input-group input-group-sm orden-resumen-monto">
+                                    <div class="input-group-prepend"><span class="input-group-text">Bs.</span></div>
+                                    <input type="number" step="0.01" min="0" class="form-control font-weight-bold" id="montoSoloMatricula" readonly>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="small text-muted mt-1" id="textoMatriculaExonerada" style="display:none;">
+                                <i class="flaticon2-information"></i> Exonerada: no se cobra.
+                              </div>
+                              <div class="small text-warning mt-1" id="avisoMatriculaEditable" style="display:none;">
+                                <i class="fa fa-unlock-alt"></i> Matrícula a pagar editable: universidad privada, extranjera o de convenio.
+                              </div>
+                              <!-- Cuánto sube o baja la matrícula frente a su costo, en % y en Bs. -->
+                              <div class="small mt-1" id="textoVariacionMatricula" style="display:none;"></div>
+                            </div>
+
+                            <!-- 3. Programa: su % de descuento queda en el plan al validar el voucher.
+                                 Para cambiar los descuentos después hay que anular y rehacer el pre-registro. -->
+                            <div class="orden-subseccion">
+                              <div class="orden-subseccion-titulo"><span class="orden-paso-num">3</span> Costo del programa</div>
+                              <div class="row align-items-end">
+                                <div class="col-md-3 form-group mb-2 mb-md-0">
+                                  <label class="text-nowrap">Costo del programa</label>
+                                  <div class="form-control form-control-sm bg-light" id="paso3CostoPrograma">-</div>
+                                </div>
+                                <!-- El total del programa (y con él las cuotas) puede bajar o subir -->
+                                <div class="col-md-5 form-group mb-2 mb-md-0" id="grupoDescuentoProgramaPreregistro">
+                                  <label for="porcentajeDescuentoPrograma" class="text-nowrap">Descuento o aumento</label>
+                                  <div class="input-group input-group-sm">
+                                    <div class="input-group-prepend">
+                                      <select class="custom-select custom-select-sm ajuste-programa" id="tipoAjustePrograma" name="tipoAjustePrograma" form="formPreregistro">
+                                        <option value="DESCUENTO">Descuento</option>
+                                        <option value="AUMENTO">Aumento</option>
+                                      </select>
+                                    </div>
+                                    <input type="number" class="form-control form-control-sm" id="porcentajeDescuentoPrograma" name="porcentajeDescuentoPrograma" form="formPreregistro" min="0" max="100" step="0.01" value="0" required>
+                                    <div class="input-group-append"><span class="input-group-text">%</span></div>
+                                  </div>
+                                </div>
+                                <div class="col-md-4 form-group mb-0">
+                                  <label for="montoProgramaConDescuento" class="text-nowrap">Total del programa a pagar</label>
+                                  <div class="input-group input-group-sm orden-resumen-monto">
+                                    <div class="input-group-prepend"><span class="input-group-text">Bs.</span></div>
+                                    <input type="number" class="form-control font-weight-bold" id="montoProgramaConDescuento" name="montoPrograma" form="formPreregistro" min="0.01" step="0.01" required>
+                                  </div>
+                                </div>
+                              </div>
+                              <!-- El total se puede poner con el % (descuento o aumento) o escribirlo en Bs.: en ese
+                                   caso el % se llena solo con el equivalente y aquí se dice cuánto baja o sube -->
+                              <div class="small text-muted mt-1" id="textoDescuentoPrograma">Ponga el % de descuento o aumento, o escriba directamente el total a pagar.</div>
+                            </div>
+
+                            <!-- 4. Cuotas del total del programa (Al Contado hasta 3). Con los módulos a la vista
+                                 se decide si cada cuota cubre un módulo o se cambia el N° de cuotas. El monto
+                                 sale redondeado (la última ajusta) y solo se cambia marcando "Modificar cuota". -->
+                            <div class="orden-subseccion" id="grupoCuotaPreregistro">
+                              <div class="orden-subseccion-titulo"><span class="orden-paso-num">4</span> Cuotas del programa</div>
+                              <div class="row align-items-end">
+                                <div class="col-md-3 form-group mb-2 mb-md-0">
+                                  <label class="text-nowrap">Módulos del programa</label>
+                                  <div class="form-control form-control-sm bg-light" id="modulosProgramaPaso3">-</div>
+                                </div>
+                                <div class="col-md-3 form-group mb-2 mb-md-0" id="grupoNumeroCuotasPreregistro">
+                                  <label for="numeroCuotas" class="text-nowrap">N° de cuotas</label>
+                                  <input type="number" class="form-control form-control-sm" id="numeroCuotas" name="numeroCuotas" form="formPreregistro" min="1" max="60" step="1" value="1" required>
+                                </div>
+                                <div class="col-md-3 form-group mb-2 mb-md-0">
+                                  <label for="montoCuota" class="text-nowrap">Monto por cuota</label>
+                                  <div class="input-group input-group-sm orden-resumen-monto">
+                                    <div class="input-group-prepend"><span class="input-group-text">Bs.</span></div>
+                                    <input type="number" class="form-control form-control-sm font-weight-bold" id="montoCuota" name="montoCuota" form="formPreregistro" min="0.01" step="0.01" readonly>
+                                  </div>
+                                </div>
+                                <div class="col-md-3 form-group mb-0">
+                                  <label class="d-block">&nbsp;</label>
+                                  <div class="form-control form-control-sm casilla-matricula">
+                                    <div class="custom-control custom-checkbox">
+                                      <input type="checkbox" class="custom-control-input" id="modificarCuota" name="modificarCuota" form="formPreregistro" value="1">
+                                      <label class="custom-control-label text-nowrap" for="modificarCuota">Modificar cuota</label>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="small text-muted mt-2" id="textoCuotasPrograma">Se paga en cuotas después de la matrícula.</div>
+                              <!-- Cuota modificada: cuánto sube o baja frente a la calculada -->
+                              <div class="small mt-1" id="textoVariacionCuota" style="display:none;"></div>
+                              <div class="small mt-1" id="avisoModulosCuotas" style="display:none;"></div>
+                            </div>
+
+                            <!-- 5. Cuenta a la que se deposita la matrícula y fecha de la orden -->
+                            <div class="orden-subseccion mb-0">
+                              <div class="orden-subseccion-titulo"><span class="orden-paso-num">5</span> Depósito de la matrícula</div>
                               <div class="row">
-                                <div class="col-md-8 form-group mb-0">
-                                  <label for="cuentaPago">Cuenta</label>
+                                <div class="col-md-8 form-group mb-2 mb-md-0">
+                                  <label for="cuentaPago">Cuenta de depósito</label>
                                   <select class="form-control form-control-sm" id="cuentaPago" name="ProgramaCuentaID" form="formPreregistro" required>
                                     <option value="">Seleccione un programa primero...</option>
                                   </select>
                                 </div>
-                              </div>
-                            </div>
-
-                            <!-- Resumen de la orden -->
-                            <div class="orden-resumen">
-                              <div class="orden-resumen-item">
-                                <span class="orden-resumen-label">Monto de matrícula</span>
-                                <div class="input-group input-group-sm orden-resumen-monto">
-                                  <div class="input-group-prepend">
-                                    <span class="input-group-text">Bs.</span>
-                                  </div>
-                                  <input type="number" step="0.01" min="0" class="form-control font-weight-bold" id="montoSoloMatricula" readonly>
+                                <div class="col-md-4 form-group mb-0">
+                                  <label for="fechaOrdenPreregistro">Fecha de orden</label>
+                                  <input type="date" class="form-control form-control-sm" id="fechaOrdenPreregistro" name="fechaInscripcion" form="formPreregistro" value="<?php echo date('Y-m-d'); ?>" required>
                                 </div>
-                                <div class="small text-muted mt-1" id="textoMatriculaExonerada" style="display:none;">
-                                  <i class="flaticon2-information"></i> Exonerada: no se cobra.
-                                </div>
-                                <div class="small text-warning mt-1" id="avisoMatriculaEditable" style="display:none;">
-                                  <i class="fa fa-unlock-alt"></i> Editable: universidad privada, extranjera o de convenio.
-                                </div>
-                              </div>
-                              <div class="orden-resumen-item">
-                                <span class="orden-resumen-label">Programa con descuento</span>
-                                <div class="input-group input-group-sm orden-resumen-monto">
-                                  <div class="input-group-prepend">
-                                    <span class="input-group-text">Bs.</span>
-                                  </div>
-                                  <input type="text" class="form-control" id="montoProgramaConDescuento" readonly>
-                                </div>
-                                <div class="small text-muted mt-1">Se paga en cuotas después de la matrícula.</div>
-                              </div>
-                              <div class="orden-resumen-item">
-                                <span class="orden-resumen-label">Fecha de orden</span>
-                                <input type="date" class="form-control form-control-sm" name="fechaInscripcion" form="formPreregistro" value="<?php echo date('Y-m-d'); ?>" required>
                               </div>
                             </div>
 
@@ -719,16 +780,38 @@ kt-aside--fixed kt-page--loading">
                             </table>
                           </div>
 
+                          <!-- Lo que se guarda del Paso 3, en el mismo orden en que se llenó -->
                           <div class="resumen-confirmacion-seccion">
-                            <div class="resumen-confirmacion-titulo">3. Orden de Pago</div>
+                            <div class="resumen-confirmacion-titulo">3. Plan de pago</div>
                             <table class="table table-sm table-borderless mb-0 resumen-confirmacion-tabla">
                               <tbody>
-                                <tr><td>Plan de pago</td><td id="resumenPlanPago">-</td></tr>
-                                <tr><td>Descuentos</td><td id="resumenDescuentos">-</td></tr>
-                                <tr><td>Programa con descuento</td><td id="resumenMontoPrograma">-</td></tr>
+                                <tr><td>Plan</td><td id="resumenPlanPago">-</td></tr>
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <div class="resumen-confirmacion-seccion">
+                            <div class="resumen-confirmacion-titulo">4. Matrícula (esta orden de pago)</div>
+                            <table class="table table-sm table-borderless mb-0 resumen-confirmacion-tabla">
+                              <tbody>
+                                <tr><td>Costo de matrícula</td><td id="resumenCostoMatricula">-</td></tr>
+                                <tr><td>Descuento / aumento</td><td id="resumenDescuentoMatricula">-</td></tr>
                                 <tr><td>Cuenta de depósito</td><td id="resumenCuentaPago">-</td></tr>
                                 <tr><td>Fecha de orden</td><td id="resumenFechaOrden">-</td></tr>
-                                <tr class="resumen-confirmacion-total"><td>Monto de Matrícula</td><td id="resumenMontoMatricula">Bs. 0.00</td></tr>
+                                <tr class="resumen-confirmacion-total"><td>Matrícula a pagar</td><td id="resumenMontoMatricula">Bs. 0,00</td></tr>
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <div class="resumen-confirmacion-seccion">
+                            <div class="resumen-confirmacion-titulo">5. Programa y cuotas (después de la matrícula)</div>
+                            <table class="table table-sm table-borderless mb-0 resumen-confirmacion-tabla">
+                              <tbody>
+                                <tr><td>Costo del programa</td><td id="resumenCostoPrograma">-</td></tr>
+                                <tr><td>Descuento / aumento</td><td id="resumenDescuentoPrograma">-</td></tr>
+                                <tr><td>Módulos del programa</td><td id="resumenModulosPrograma">-</td></tr>
+                                <tr><td>Cuotas</td><td id="resumenCuotasPrograma">-</td></tr>
+                                <tr class="resumen-confirmacion-total"><td>Total del programa a pagar</td><td id="resumenMontoPrograma">Bs. 0,00</td></tr>
                               </tbody>
                             </table>
                           </div>
@@ -1226,6 +1309,7 @@ function iniciarPreregistro() {
     $('#montoSoloMatricula').on('input', function() {
         if ($(this).prop('readonly') || $(this).prop('disabled')) return;
         $('#montoAPagar').val($(this).val());
+        actualizarVariacionMatricula();
     });
 
     $('#btnNuevaUniversidad').on('click', function() {
@@ -1378,18 +1462,223 @@ function iniciarPreregistro() {
         return Math.min(100, Math.max(0, valor));
     }
 
-    // Costo del programa con su % de descuento: es lo que pactará el plan de cuotas
+    // Total del programa a pagar (lo que pactará el plan de cuotas): el costo con su
+    // % de descuento o de aumento (hasta 100%) o, si se escribió a mano en Bs., ese
+    // monto; entonces el % y "Descuento/Aumento" se llenan solos con el equivalente
+    // (el servidor guarda el monto exacto)
+    const MAX_AUMENTO_PROGRAMA = 100;
+    let totalProgramaManual = false;
+
+    function esAumentoPrograma() {
+        return $('#tipoAjustePrograma').val() === 'AUMENTO';
+    }
+
     function recalcularMontoPrograma() {
         const costoPrograma = parseFloat($('#costoTotalPrograma').val()) || 0;
-        const porcentaje = porcentajeValido('#porcentajeDescuentoPrograma');
-        const monto = Math.round((costoPrograma - (costoPrograma * porcentaje / 100)) * 100) / 100;
-        $('#montoProgramaConDescuento').val(monto.toFixed(2));
+        $('#paso3CostoPrograma').text(formatoBs(costoPrograma));
+        $('#montoProgramaConDescuento').attr('max', (costoPrograma * (1 + MAX_AUMENTO_PROGRAMA / 100)).toFixed(2));
+        if (!totalProgramaManual) {
+            const porcentaje = porcentajeValido('#porcentajeDescuentoPrograma') * (esAumentoPrograma() ? 1 : -1);
+            const monto = Math.round((costoPrograma + (costoPrograma * porcentaje / 100)) * 100) / 100;
+            $('#montoProgramaConDescuento').val(monto.toFixed(2));
+        }
+        actualizarTextoDescuentoPrograma();
+        recalcularCuota();
+    }
+
+    function formatoPorcentaje(valor) {
+        return valor.toLocaleString('es-BO', { maximumFractionDigits: 2 }) + '%';
+    }
+
+    // Cuánto sube o baja un monto frente a su base: "aumento de 20% (+ Bs. 300,00)"
+    // o "descuento de 10% (− Bs. 150,00)"; null si son iguales
+    function variacion(base, valor) {
+        const diferencia = Math.round((valor - base) * 100) / 100;
+        if (base <= 0 || Math.abs(diferencia) < 0.005) return null;
+        const porcentaje = Math.round(Math.abs(diferencia) * 10000 / base) / 100;
+        return {
+            sube: diferencia > 0,
+            texto: (diferencia > 0 ? 'aumento de ' : 'descuento de ') + formatoPorcentaje(porcentaje) +
+                ' (' + (diferencia > 0 ? '+ ' : '− ') + formatoBs(Math.abs(diferencia)) + ')'
+        };
+    }
+
+    // Matrícula a pagar frente al costo de matrícula (con % de descuento o escrita a
+    // mano en universidad privada, extranjera o de convenio)
+    function actualizarVariacionMatricula() {
+        const $texto = $('#textoVariacionMatricula');
+        const v = $('#pagarMatricula').is(':checked')
+            ? variacion(parseFloat($('#costoMatriculaPrograma').val()) || 0, parseFloat($('#montoSoloMatricula').val()) || 0)
+            : null;
+        if (!v) { $texto.hide(); return; }
+        $texto.toggleClass('text-warning', v.sube).toggleClass('text-muted', !v.sube).show()
+            .html('<i class="fa ' + (v.sube ? 'fa-arrow-up' : 'fa-arrow-down') + '"></i> Matrícula con ' + v.texto + ' sobre su costo.');
+    }
+
+    // Total del programa frente a su costo: v = descuento o aumento en % y Bs. (cuando
+    // el total se escribe a mano, el % es el equivalente redondeado)
+    function descuentoPrograma() {
+        const costo = parseFloat($('#costoTotalPrograma').val()) || 0;
+        const total = parseFloat($('#montoProgramaConDescuento').val()) || 0;
+        const diferencia = Math.round((total - costo) * 100) / 100;
+        return {
+            costo: costo, total: total, diferencia: diferencia,
+            porcentaje: costo > 0 ? Math.round(Math.abs(diferencia) * 10000 / costo) / 100 : 0,
+            v: variacion(costo, total)
+        };
+    }
+
+    function errorTotalPrograma() {
+        const d = descuentoPrograma();
+        if (d.total <= 0) return 'El total del programa a pagar debe ser mayor a 0.';
+        if (d.costo > 0 && d.diferencia * 100 / d.costo > MAX_AUMENTO_PROGRAMA + 0.005) {
+            return 'El aumento del programa no puede pasar del ' + MAX_AUMENTO_PROGRAMA + '% (hasta ' + formatoBs(d.costo * (1 + MAX_AUMENTO_PROGRAMA / 100)) + ').';
+        }
+        return '';
+    }
+
+    function actualizarTextoDescuentoPrograma() {
+        const d = descuentoPrograma();
+        const error = errorTotalPrograma();
+        let html;
+        if (error) html = error;
+        else if (!d.v) html = 'Sin descuento ni aumento. Ponga el % o escriba directamente el total a pagar.';
+        else html = '<i class="fa ' + (d.v.sube ? 'fa-arrow-up' : 'fa-arrow-down') + '"></i> ' +
+            (totalProgramaManual ? 'Total escrito a mano: ' : 'Programa con ') + d.v.texto + ' sobre su costo' +
+            (d.v.sube ? ': las cuotas suben.' : '.');
+        $('#textoDescuentoPrograma')
+            .toggleClass('text-danger', !!error)
+            .toggleClass('text-warning', !error && !!d.v && d.v.sube)
+            .toggleClass('text-muted', !error && !(d.v && d.v.sube))
+            .html(html);
+    }
+
+    // N° de cuotas del programa: en todos los planes; Al Contado, máximo 3.
+    // Por defecto, una cuota por módulo (Regular/Grupal) o una sola (Contado).
+    const MAX_CUOTAS_CONTADO = 3;
+    let modulosPrograma = 0;
+
+    function maxCuotasPlan() {
+        return $('#tipoPagoCodigo').val() === 'CONTADO' ? MAX_CUOTAS_CONTADO : 60;
+    }
+
+    function cuotasPorDefecto() {
+        return $('#tipoPagoCodigo').val() === 'CONTADO' ? 1 : Math.max(1, Math.min(60, modulosPrograma || 1));
+    }
+
+    function numeroCuotasValido() {
+        const n = parseInt($('#numeroCuotas').val(), 10);
+        return (n >= 1 && n <= maxCuotasPlan()) ? n : 0;
+    }
+
+    // Monto de cada cuota por defecto: el total entre el N° de cuotas; si no sale
+    // exacto, redondeado hacia arriba a decenas (30000 / 11 = 2727,27 -> 2730) y la
+    // última cuota ajusta (30000 - 10 x 2730 = 2700). Si así la última quedara en 0
+    // o menos, se redondea a bolivianos y luego a centavos. Misma regla que
+    // PagoProgramaModelos::CuotaRedondeada (planpago.modelo.php).
+    function cuotaRedondeada(total, n) {
+        total = Math.round(total * 100) / 100;
+        if (n <= 1 || total <= 0) return total;
+        const base = total / n;
+        if (Math.abs(base - Math.round(base)) < 0.005) return Math.round(base * 100) / 100;
+        for (const multiplo of [10, 1]) {
+            const cuota = Math.ceil(Math.round(base * 1e6) / 1e6 / multiplo) * multiplo;
+            if (Math.round((total - cuota * (n - 1)) * 100) / 100 > 0) return cuota;
+        }
+        return Math.round(base * 100) / 100;
+    }
+
+    function formatoBs(valor) {
+        return 'Bs. ' + valor.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Cuotas del plan: n, monto de cada una y la última (que ajusta la diferencia)
+    function detalleCuotas() {
+        const n = numeroCuotasValido();
+        const total = parseFloat($('#montoProgramaConDescuento').val()) || 0;
+        const cuota = Math.round((parseFloat($('#montoCuota').val()) || 0) * 100) / 100;
+        const ultima = n ? Math.round((total - cuota * (n - 1)) * 100) / 100 : 0;
+        return { n: n, total: total, cuota: cuota, ultima: ultima };
+    }
+
+    // Mismas reglas que PagoProgramaModelos::ValidarMontoCuota
+    function errorMontoCuota() {
+        const d = detalleCuotas();
+        if (!d.n) return '';
+        if (d.cuota <= 0) return 'El monto de la cuota debe ser mayor a 0.';
+        if (d.n === 1) return Math.abs(d.cuota - d.total) < 0.005 ? '' : 'Con una sola cuota, la cuota debe ser el total del programa (' + formatoBs(d.total) + ').';
+        if (d.ultima <= 0) return 'Con ' + d.n + ' cuotas de ' + formatoBs(d.cuota) + ' se pasa del total del programa (' + formatoBs(d.total) + ').';
+        return '';
+    }
+
+    // Sin "Modificar cuota", el monto se recalcula solo al cambiar el total o el N° de cuotas
+    function recalcularCuota() {
+        if (!$('#modificarCuota').is(':checked')) {
+            const n = numeroCuotasValido();
+            const total = parseFloat($('#montoProgramaConDescuento').val()) || 0;
+            $('#montoCuota').val(n ? cuotaRedondeada(total, n).toFixed(2) : '');
+        }
+        actualizarTextoCuotas();
+    }
+
+    // "10 cuotas de Bs. 2.730,00 y la última de Bs. 2.700,00"
+    function textoCuotas(d) {
+        if (d.n === 1) return '1 cuota de ' + formatoBs(d.cuota);
+        if (Math.abs(d.ultima - d.cuota) < 0.005) return d.n + ' cuotas de ' + formatoBs(d.cuota);
+        return (d.n - 1) + (d.n - 1 === 1 ? ' cuota' : ' cuotas') + ' de ' + formatoBs(d.cuota) + ' y la última de ' + formatoBs(d.ultima);
+    }
+
+    function actualizarTextoCuotas() {
+        const d = detalleCuotas();
+        const error = errorMontoCuota();
+        $('#textoCuotasPrograma').toggleClass('text-danger', !!error).toggleClass('text-muted', !error).text(
+            !d.n ? 'Indique en cuántas cuotas (de 1 a ' + maxCuotasPlan() + ') se paga el programa.'
+                : error || 'Se paga en ' + textoCuotas(d) + ', después de la matrícula.');
+
+        // Cuota modificada a mano: cuánto sube o baja frente a la calculada
+        const vCuota = variacionCuota(d);
+        $('#textoVariacionCuota').toggle(!!vCuota)
+            .toggleClass('text-warning', !!vCuota && vCuota.sube).toggleClass('text-muted', !!vCuota && !vCuota.sube)
+            .html(vCuota ? '<i class="fa ' + (vCuota.sube ? 'fa-arrow-up' : 'fa-arrow-down') + '"></i> Cuota modificada: ' + vCuota.texto +
+                ' frente a la calculada (' + formatoBs(vCuota.base) + ').' : '');
+
+        // Cuotas frente a módulos, para decidir si cada cuota cubre un módulo
+        $('#modulosProgramaPaso3').text(modulosPrograma ? modulosPrograma + (modulosPrograma === 1 ? ' módulo' : ' módulos') : '-');
+        const $aviso = $('#avisoModulosCuotas');
+        if (!modulosPrograma || !d.n) {
+            $aviso.hide();
+        } else if (d.n === modulosPrograma) {
+            $aviso.removeClass('text-warning').addClass('text-success').show()
+                .html('<i class="fa fa-check-circle"></i> Una cuota por módulo: cada cuota cubre un módulo del programa.');
+        } else {
+            $aviso.removeClass('text-success').addClass('text-warning').show()
+                .html('<i class="fa fa-exclamation-triangle"></i> El programa tiene ' + modulosPrograma + (modulosPrograma === 1 ? ' módulo' : ' módulos') +
+                    ' y se eligieron ' + d.n + (d.n === 1 ? ' cuota' : ' cuotas') + ': los pagos no coinciden uno a uno con los módulos.');
+        }
+    }
+
+    // Al cambiar de programa o de plan, el N° de cuotas vuelve al de por defecto y
+    // la cuota al redondeado (se quita "Modificar cuota")
+    // Cuota escrita a mano frente a la calculada (redondeada); null si no se modificó
+    function variacionCuota(d) {
+        if (!$('#modificarCuota').is(':checked') || !d.n) return null;
+        const base = cuotaRedondeada(d.total, d.n);
+        const v = variacion(base, d.cuota);
+        return v ? Object.assign(v, { base: base }) : null;
+    }
+
+    function reiniciarNumeroCuotas() {
+        $('#numeroCuotas').attr('max', maxCuotasPlan()).val(cuotasPorDefecto());
+        $('#modificarCuota').prop('checked', false);
+        $('#montoCuota').prop('readonly', true);
+        recalcularCuota();
     }
 
     function recalcularMontoMatricula() {
         recalcularMontoPrograma();
         const tipo = $('#tipoPagoCodigo').val();
         const costoBase = parseFloat($('#costoMatriculaPrograma').val()) || 0;
+        $('#paso3CostoMatricula').text(formatoBs(costoBase));
         const matriculaExonerada = !$('#pagarMatricula').is(':checked');
 
         let montoFinal;
@@ -1407,6 +1696,7 @@ function iniciarPreregistro() {
         // Exonerada: se deshabilita aunque sea de universidad privada, para que no
         // quede un monto manual "fantasma" que no se vaya a cobrar en realidad.
         $('#montoSoloMatricula').prop('disabled', matriculaExonerada);
+        actualizarVariacionMatricula();
     }
 
     // ============================================
@@ -1415,8 +1705,9 @@ function iniciarPreregistro() {
     // ============================================
     $('#tipoPagoCodigo').on('change', function() {
         // Los dos descuentos y "Cobrar matrícula" están en todos los planes y se
-        // conservan al cambiar de plan.
+        // conservan al cambiar de plan. El N° de cuotas vuelve al de este plan.
         recalcularMontoMatricula();
+        reiniciarNumeroCuotas();
         const esGrupal = $(this).val() === 'GRUPAL';
         $('#grupoCodigoGrupoPreregistro').toggle(esGrupal);
         if (esGrupal) {
@@ -1449,7 +1740,32 @@ function iniciarPreregistro() {
     $('#tipoPagoCodigo').trigger('change');
 
     $('#porcentajeDescuento').on('input', recalcularMontoMatricula);
-    $('#porcentajeDescuentoPrograma').on('input', recalcularMontoPrograma);
+    $('#porcentajeDescuentoPrograma').on('input', function() {
+        totalProgramaManual = false;
+        recalcularMontoPrograma();
+    });
+    $('#tipoAjustePrograma').on('change', function() {
+        totalProgramaManual = false;
+        recalcularMontoPrograma();
+    });
+    // Total escrito a mano: el % y "Descuento/Aumento" pasan a ser el equivalente
+    $('#montoProgramaConDescuento').on('input', function() {
+        totalProgramaManual = true;
+        const d = descuentoPrograma();
+        $('#tipoAjustePrograma').val(d.diferencia > 0 ? 'AUMENTO' : 'DESCUENTO');
+        $('#porcentajeDescuentoPrograma').val(Math.min(100, d.porcentaje));
+        actualizarTextoDescuentoPrograma();
+        recalcularCuota();
+    });
+    $('#numeroCuotas').on('input', recalcularCuota);
+    $('#montoCuota').on('input', actualizarTextoCuotas);
+    // El monto de la cuota solo se escribe a mano con la casilla marcada; al
+    // desmarcarla vuelve al redondeado por defecto
+    $('#modificarCuota').on('change', function() {
+        $('#montoCuota').prop('readonly', !this.checked);
+        if (this.checked) $('#montoCuota').trigger('focus').trigger('select');
+        recalcularCuota();
+    });
 
     $('#pagarMatricula').on('change', recalcularMontoMatricula);
 
@@ -1476,6 +1792,8 @@ function iniciarPreregistro() {
                     // Guardar en campos hidden
                     $('#costoMatriculaPrograma').val(costoMatricula.toFixed(2));
                     $('#costoTotalPrograma').val(costoPrograma.toFixed(2));
+                    modulosPrograma = parseInt(respuesta.Modulos, 10) || 0;
+                    totalProgramaManual = false;
 
                     // Mostrar tabla y siguiente sección
                     $('#tablaPrograma').slideDown();
@@ -1483,6 +1801,7 @@ function iniciarPreregistro() {
 
                     // El pre-registro SIEMPRE es orden de pago de matrícula (nunca programa completo)
                     recalcularMontoMatricula();
+                    reiniciarNumeroCuotas();
 
                     // Cargar las cuentas de MATRÍCULA de este programa en el select
                     cargarCuentasPrograma(programaId);
@@ -1557,6 +1876,22 @@ function iniciarPreregistro() {
 
         if (!$('#cuentaPago').val()) {
             swal("Error", "Por favor seleccione la cuenta a la que el estudiante debe depositar", "error");
+            return false;
+        }
+
+        if (!numeroCuotasValido()) {
+            swal("Error", "El número de cuotas del programa debe estar entre 1 y " + maxCuotasPlan() +
+                ($('#tipoPagoCodigo').val() === 'CONTADO' ? " en el Plan al Contado" : ""), "error");
+            return false;
+        }
+
+        if (errorTotalPrograma()) {
+            swal("Error", errorTotalPrograma(), "error");
+            return false;
+        }
+
+        if (errorMontoCuota()) {
+            swal("Error", errorMontoCuota(), "error");
             return false;
         }
 
@@ -1870,13 +2205,18 @@ function iniciarPreregistro() {
 
                 // Ficha: solo lo necesario para identificar la solicitud
                 const plan = nombresPlan[p.PlanPropuestoTipo] || '-';
-                const descuentos = 'Matrícula ' + porcentaje(p.PorcentajeDescuento) + ' · Programa ' + porcentaje(p.PlanPropuestoPorcentaje);
+                // % del programa negativo = aumento
+                const porcentajePrograma = parseFloat(p.PlanPropuestoPorcentaje) || 0;
+                const descuentos = 'Matrícula ' + porcentaje(p.PorcentajeDescuento) + ' · Programa ' +
+                    (porcentajePrograma < 0 ? 'aumento de ' + porcentaje(-porcentajePrograma) : porcentaje(porcentajePrograma));
                 const htmlFicha = '' +
                     '<div class="detalle-sol-grid">' +
                         fila('Estudiante', '<strong>' + esc(nombreCompleto) + '</strong><br><small>C.I. ' + esc(p.CiCompleto) + '</small>') +
                         fila('Contacto', esc(p.Celular || '-') + '<br><small>' + esc(p.Correo || '-') + '</small>') +
                         fila('Programa', '<strong>' + esc(p.NombrePrograma) + '</strong><br><small>' + esc(p.CodigoPrograma) + ' · ' + esc(p.Sede || '-') + '</small>') +
-                        fila('Plan de pago', esc(plan) + (p.PlanPropuestoCodigoGrupo ? ' · ' + esc(p.PlanPropuestoCodigoGrupo) : '') + '<br><small>' + descuentos + '</small>') +
+                        fila('Plan de pago', esc(plan) + (p.PlanPropuestoCodigoGrupo ? ' · ' + esc(p.PlanPropuestoCodigoGrupo) : '') +
+                            (p.PlanPropuestoNumeroCuotas ? ' · ' + esc(p.PlanPropuestoNumeroCuotas) + (p.PlanPropuestoNumeroCuotas == 1 ? ' cuota' : ' cuotas') : '') +
+                            '<br><small>' + descuentos + '</small>') +
                         fila('Fecha de solicitud', esc(fechaCorta)) +
                     '</div>';
 
@@ -2199,18 +2539,53 @@ function iniciarPreregistro() {
 
         $('#resumenPlanPago').text(($('#tipoPagoCodigo option:selected').text() || '-') +
             ($('#tipoPagoCodigo').val() === 'GRUPAL' ? ' · ' + ($('#codigoGrupo').val() || 'NUEVO GRUPO') : ''));
-        $('#resumenDescuentos').text(
-            'Matrícula ' + ($('#pagarMatricula').is(':checked') ? porcentajeValido('#porcentajeDescuento') + '%' : 'exonerada') +
-            ' · Programa ' + porcentajeValido('#porcentajeDescuentoPrograma') + '%'
-        );
-        $('#resumenMontoPrograma').text('Bs. ' + ($('#montoProgramaConDescuento').val() || '0.00'));
+        // Matrícula: costo de lista, descuento (o exonerada) y lo que se cobra en esta orden
+        const costoMatricula = parseFloat($('#costoMatriculaPrograma').val()) || 0;
+        const montoMatricula = parseFloat($('#montoSoloMatricula').val()) || 0;
+        const porcentajeMatricula = porcentajeValido('#porcentajeDescuento');
+        $('#resumenCostoMatricula').text(formatoBs(costoMatricula));
+        const vMatricula = variacion(costoMatricula, montoMatricula);
+        const matriculaAMano = Math.abs(montoMatricula - Math.round((costoMatricula - costoMatricula * porcentajeMatricula / 100) * 100) / 100) > 0.005;
+        $('#resumenDescuentoMatricula').text(!$('#pagarMatricula').is(':checked')
+            ? 'Exonerada: no se cobra'
+            : (vMatricula
+                ? vMatricula.texto.charAt(0).toUpperCase() + vMatricula.texto.slice(1) + (matriculaAMano ? ' · monto ajustado a mano' : '')
+                : 'Sin descuento'));
+        $('#resumenMontoMatricula').text(formatoBs(montoMatricula));
+
+        // Programa: costo de lista, descuento y total que se paga en cuotas
+        const descuento = descuentoPrograma();
+        $('#resumenCostoPrograma').text(formatoBs(descuento.costo));
+        $('#resumenDescuentoPrograma').text(!descuento.v
+            ? 'Sin descuento ni aumento'
+            : descuento.v.texto.charAt(0).toUpperCase() + descuento.v.texto.slice(1) +
+              (totalProgramaManual ? ' · total escrito a mano' : ''));
+        $('#resumenMontoPrograma').text(formatoBs(descuento.total));
+
+        // Cuotas: cuántas, de cuánto (la última ajusta) y frente a los módulos
+        const cuotas = detalleCuotas();
+        $('#resumenModulosPrograma').text(modulosPrograma ? modulosPrograma + (modulosPrograma === 1 ? ' módulo' : ' módulos') : '-');
+        $('#resumenCuotasPrograma').text(cuotas.n
+            ? textoCuotas(cuotas) + (variacionCuota(cuotas)
+                ? ' (cuota modificada a mano: ' + variacionCuota(cuotas).texto + ' frente a ' + formatoBs(variacionCuota(cuotas).base) + ')'
+                : '')
+            : '-');
+
         $('#resumenCuentaPago').text($('#cuentaPago option:selected').text() || '-');
-        $('#resumenFechaOrden').text($('input[name="fechaInscripcion"]').val() || '-');
-        $('#resumenMontoMatricula').text('Bs. ' + (parseFloat($('#montoSoloMatricula').val()) || 0).toFixed(2));
+        const fechaOrden = String($('input[name="fechaInscripcion"]').val() || '').split('-');
+        $('#resumenFechaOrden').text(fechaOrden.length === 3 ? fechaOrden[2] + '/' + fechaOrden[1] + '/' + fechaOrden[0] : '-');
     }
 
     $('#btnWizardPaso3Revisar').on('click', function() {
         if (!pasoTieneCamposValidos($('#modalPasoPago .modal-body'))) return;
+        if (errorTotalPrograma()) {
+            swal("Error", errorTotalPrograma(), "error");
+            return;
+        }
+        if (errorMontoCuota()) {
+            swal("Error", errorMontoCuota(), "error");
+            return;
+        }
         construirResumenConfirmacion();
         irAlSiguienteModal('modalPasoPago', 'modalConfirmarPreregistro');
     });
@@ -2409,6 +2784,22 @@ if (document.readyState === 'loading') {
 .ficha-btn-nueva:disabled { color: #9aa5b5; background: #f7f8fa; }
 /* Pasos 2 a 4 con el mismo estilo: subsecciones sin caja, títulos como en el paso 1 */
 .ficha-modal .orden-subseccion { border: 0; border-radius: 0; padding: 0; margin-bottom: 16px; }
+/* Paso 3: "Descuento/Aumento" del programa pegado al % */
+.ajuste-programa { flex: 0 0 auto; width: auto; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+/* Paso 3: número de cada bloque (1 plan, 2 matrícula, 3 programa, 4 cuotas, 5 depósito) */
+.orden-paso-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: #1e3c72;
+    color: #fff;
+    font-size: 10px;
+    letter-spacing: 0;
+}
 .ficha-modal .orden-subseccion-titulo,
 .ficha-modal .resumen-confirmacion-titulo {
     font-size: 11px;

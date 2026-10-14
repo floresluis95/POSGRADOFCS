@@ -108,7 +108,18 @@ try {
         // pagadas (PAGADO) antes de esa fecha, +1. No queda guardado en la propia
         // orden, se reconstruye igual que lo hizo el administrador al imprimirla.
         $numeroCuota = 1;
+        $totalCuotas = null;
         if (!empty($orden['idinscripcion'])) {
+            // Total de cuotas del plan (para "1/12"), si se definió
+            $stmtPlan = $pdo->prepare(
+                "SELECT NumeroCuotas FROM pagoprograma
+                 WHERE idInscripcion = :idinscripcion AND Estado != 'ANULADO'
+                 ORDER BY IdPagoPrograma DESC LIMIT 1"
+            );
+            $stmtPlan->bindParam(':idinscripcion', $orden['idinscripcion'], PDO::PARAM_INT);
+            $stmtPlan->execute();
+            $totalCuotas = $stmtPlan->fetchColumn() ?: null;
+
             $stmtCuota = $pdo->prepare(
                 "SELECT COUNT(*) as total FROM pagomodulo
                  WHERE idinscripcion = :idinscripcion AND Estado = 'PAGADO' AND FechaRegistro < :fechaGeneracion"
@@ -119,7 +130,7 @@ try {
             $numeroCuota = (int)$stmtCuota->fetch(PDO::FETCH_ASSOC)['total'] + 1;
         }
 
-        $programaTexto = $orden['NombrePrograma'] . "\n" . etiquetaCuotaOrdenPago($numeroCuota);
+        $programaTexto = $orden['NombrePrograma'] . "\n" . etiquetaCuotaOrdenPago($numeroCuota, $totalCuotas);
         $version = !empty($orden['Version']) ? $orden['Version'] : 'V-1';
     } else {
         // No se imprime la versión "V-1": es la versión base/por defecto y no aporta

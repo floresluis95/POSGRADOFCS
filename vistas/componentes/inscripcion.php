@@ -840,6 +840,10 @@ kt-aside--fixed kt-page--loading">
                       '<span class="vv-chip" title="Plan elegido en Pre-Registro; queda definitivo al inscribir">' +
                       '<i class="fa fa-tags"></i> Plan ' + nombresPlan[planTipo] +
                       (planPorcentaje > 0 ? ' &middot; ' + parseFloat(planPorcentaje.toFixed(2)) + '% programa' : '') +
+                      (planPorcentaje < 0 ? ' &middot; aumento de ' + parseFloat((-planPorcentaje).toFixed(2)) + '% programa' : '') +
+                      (parseInt(p.PlanPropuestoNumeroCuotas, 10) > 0
+                          ? ' &middot; ' + parseInt(p.PlanPropuestoNumeroCuotas, 10) + (parseInt(p.PlanPropuestoNumeroCuotas, 10) === 1 ? ' cuota' : ' cuotas')
+                          : '') +
                       '</span>'
                   );
 

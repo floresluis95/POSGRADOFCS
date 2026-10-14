@@ -68,12 +68,23 @@ class OrdenPagoControladores
                 ? $_POST['tipoPagoCodigo']
                 : 'REGULAR';
 
-            // Número de cuotas PLANIFICADO para el Plan Regular (las cuotas siguen siendo de
-            // monto libre; este número es solo de referencia, para poder mostrar "Cuota X de N"
-            // en recibos). En Contado/Grupal no se planifica (también admiten varias cuotas).
-            $planPropuestoNumeroCuotas = ($planPropuestoTipo === 'REGULAR' && !empty($_POST['numeroCuotas']))
-                ? (int)$_POST['numeroCuotas']
-                : null;
+            // Número de cuotas en que se paga el programa, en los tres planes (Al Contado,
+            // máximo 3). Pasa al plan al validar el voucher: con él se arma el compromiso
+            // y la orden de cada cuota muestra "1/N".
+            $planPropuestoNumeroCuotas = !empty($_POST['numeroCuotas']) ? (int)$_POST['numeroCuotas'] : 0;
+            $maxCuotasPlan = $planPropuestoTipo === 'CONTADO' ? 3 : 60;
+            if ($planPropuestoNumeroCuotas < 1 || $planPropuestoNumeroCuotas > $maxCuotasPlan) {
+                echo '
+                <script>
+                window.addEventListener("load", function() {
+                    swal("ERROR!", "El número de cuotas del programa debe estar entre 1 y ' . $maxCuotasPlan . '", "error")
+                    .then(function () {
+                        location.href="' . $paginaRedirect . '";
+                    });
+                });
+                </script>';
+                return;
+            }
 
             // En cualquier plan (también Grupal) la matrícula se puede marcar como ya pagada /
             // exonerada (checkbox sin marcar no llega en el POST), dejando el monto en Bs. 0.
@@ -84,6 +95,11 @@ class OrdenPagoControladores
             // programa, que queda definitivo al validar el voucher.
             $planPropuestoPorcentaje = isset($_POST['porcentajeDescuentoPrograma']) ? floatval($_POST['porcentajeDescuentoPrograma']) : 0;
             $planPropuestoPorcentaje = min(100, max(0, $planPropuestoPorcentaje));
+            // El programa también puede subir ("Aumento"): se guarda como % negativo
+            // (descuento de -10% = aumento de 10%)
+            if (($_POST['tipoAjustePrograma'] ?? '') === 'AUMENTO') {
+                $planPropuestoPorcentaje = -$planPropuestoPorcentaje;
+            }
 
             $estudianteID = (int)$_POST['idcliente'];
 
@@ -152,7 +168,17 @@ class OrdenPagoControladores
                 "Observaciones" => $tipoPago,
                 "PlanPropuestoTipo" => $planPropuestoTipo,
                 "PlanPropuestoNumeroCuotas" => $planPropuestoNumeroCuotas,
+                // Monto de cuota escrito a mano (casilla "Modificar cuota"); sin ella el
+                // modelo calcula el redondeado por defecto
+                "PlanPropuestoMontoCuota" => !empty($_POST['modificarCuota']) && isset($_POST['montoCuota'])
+                    ? floatval($_POST['montoCuota'])
+                    : null,
                 "PlanPropuestoPorcentaje" => $planPropuestoPorcentaje,
+                // Total del programa a pagar (Bs.); si no coincide con el costo menos el %,
+                // es que se escribió a mano y el modelo guarda ese monto
+                "PlanPropuestoMontoPrograma" => isset($_POST['montoPrograma']) && $_POST['montoPrograma'] !== ''
+                    ? floatval($_POST['montoPrograma'])
+                    : null,
                 // Plan Grupal: código de un grupo ya existente del programa; vacío = grupo nuevo
                 "PlanPropuestoCodigoGrupo" => isset($_POST['codigoGrupo']) ? trim($_POST['codigoGrupo']) : '',
                 "MatriculaExonerada" => $matriculaExonerada

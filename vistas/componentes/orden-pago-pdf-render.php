@@ -180,9 +180,12 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     } elseif (preg_match('/\s+MATR[IÍ]CULA\s*$/iu', $programa, $m)) {
         $tipoPago = 'MATRÍCULA';
         $programa = mb_substr($programa, 0, -mb_strlen($m[0]));
-    } elseif (preg_match('/\n\s*(?:(\S+) cuota|Cuota (\d+)) del programa\s*$/iu', $programa, $m)) {
-        // "Primera cuota del programa" → PRIMERA CUOTA; "Cuota 12 del programa" → CUOTA 12
-        $tipoPago = !empty($m[1]) ? mb_strtoupper($m[1], 'UTF-8') . ' CUOTA' : 'CUOTA ' . $m[2];
+    } elseif (preg_match('/\n\s*(?:(\S+) cuota|Cuota (\d+)) del programa(?:\s*\((\d+\/\d+)\))?\s*$/iu', $programa, $m)) {
+        // "Primera cuota del programa (1/12)" → PRIMERA CUOTA 1/12;
+        // "Cuota 12 del programa (12/12)" → CUOTA 12/12; "Cuota 12 del programa" → CUOTA 12
+        $tipoPago = !empty($m[1])
+            ? mb_strtoupper($m[1], 'UTF-8') . ' CUOTA' . (!empty($m[3]) ? ' ' . $m[3] : '')
+            : 'CUOTA ' . (!empty($m[3]) ? $m[3] : $m[2]);
         $programa = mb_substr($programa, 0, -mb_strlen($m[0]));
     } elseif (stripos($programa, 'MATRICULA') !== false || stripos($programa, 'MATRÍCULA') !== false) {
         $tipoPago = 'MATRÍCULA';
@@ -198,7 +201,7 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     // Derecha, fila A: tipo de pago
     $pdf->Cell($W_DERECHA * 0.42, $H_ROW_A, 'TIPO DE PAGO', 0, 0, 'L');
     $dato(9);
-    $pdf->Cell($W_DERECHA * 0.58, $H_ROW_A, $tipoPago, 0, 1, 'L');
+    $pdf->Cell($W_DERECHA * 0.58, $H_ROW_A, $tipoPago, 0, 1, 'L', false, '', 1);
 
     $pdf->SetXY($x_left, $y_prog + $H_ROW_A);
     $dato(9);
@@ -431,16 +434,19 @@ function numeroALetrasOrdenPagoOficial($numero)
 }
 
 /**
- * Etiqueta ordinal de una cuota del programa ("Primera cuota del programa"...),
- * igual que la que arma el administrador al generar la orden de la cuota.
+ * Etiqueta ordinal de una cuota del programa ("Primera cuota del programa (1/12)"...),
+ * igual que la que arma el administrador al generar la orden de la cuota. El "(1/12)"
+ * solo va si el plan tiene definido su número de cuotas.
  */
-function etiquetaCuotaOrdenPago($numeroCuota)
+function etiquetaCuotaOrdenPago($numeroCuota, $totalCuotas = null)
 {
     $ordinales = ['', 'Primera', 'Segunda', 'Tercera', 'Cuarta', 'Quinta',
         'Sexta', 'Séptima', 'Octava', 'Novena', 'Décima'];
     $n = (int)$numeroCuota ?: 1;
+    $total = (int)$totalCuotas;
 
-    return ($n > 0 && $n < count($ordinales))
-        ? ($ordinales[$n] . ' cuota del programa')
-        : ('Cuota ' . $n . ' del programa');
+    return (($n > 0 && $n < count($ordinales))
+            ? ($ordinales[$n] . ' cuota del programa')
+            : ('Cuota ' . $n . ' del programa'))
+        . ($total > 0 ? ' (' . $n . '/' . $total . ')' : '');
 }

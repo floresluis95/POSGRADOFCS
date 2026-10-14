@@ -112,7 +112,8 @@ export async function preregistrar(page, estudianteID, cambios = {}) {
     pagoCompleto: '0',
     tipoPagoCodigo: 'REGULAR',
     tipoPago: 'PLAN REGULAR',
-    numeroCuotas: '10',
+    // Al Contado admite hasta 3 cuotas
+    numeroCuotas: cambios.tipoPagoCodigo === 'CONTADO' ? '3' : '10',
     porcentajeDescuento: '0',
     pagarMatricula: '1',
     ...cambios,

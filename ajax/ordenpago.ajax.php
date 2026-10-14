@@ -1665,6 +1665,9 @@ function listarOrdenesGeneradas()
         $ci = trim($o['Ci'] . ($o['Complemento'] ? '-' . $o['Complemento'] : '') . ' ' . ($o['Exp'] ?? ''));
         $fila['estudiante'] = trim($o['Apaterno'] . ' ' . $o['Amaterno'] . ' ' . $o['Nombre']);
         $fila['ci'] = $ci;
+        // C.I. tal como se guarda (sin complemento ni expedición): con este llega
+        // el enlace desde Matriculados (ordenespago?ci=...)
+        $fila['ciBase'] = trim((string)$o['Ci']);
         $fila['responsable'] = $o['ResponsableGeneracion'];
         // Para validar el voucher desde esta pantalla (cuotas y clínicas se
         // confirman por inscripción; la cuota exige el monto exacto de la orden)

@@ -324,6 +324,7 @@ class InscripcionModuloModelos
                     ep.pagoCompleto,
                     pp.TipoPlan,
                     pp.NumeroCuotas,
+                    pp.MontoCuota AS PlanMontoCuota,
                     pp.PorcentajeDescuento AS PlanPorcentajeDescuento,
                     pp.MontoTotalPagar AS PlanMontoTotal
                 FROM estudianteprograma ep

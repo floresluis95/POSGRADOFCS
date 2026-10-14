@@ -42,7 +42,7 @@ class PagoModuloModelo
     {
         try {
             $stmt = Conexion::Conectar()->prepare(
-                "SELECT TipoPlan, NumeroCuotas, PorcentajeDescuento, MontoTotalPagar, CostoTotalPrograma
+                "SELECT TipoPlan, NumeroCuotas, MontoCuota, PorcentajeDescuento, MontoTotalPagar, CostoTotalPrograma
                  FROM pagoprograma
                  WHERE idInscripcion = :idinscripcion AND Estado != 'ANULADO'
                  ORDER BY IdPagoPrograma DESC LIMIT 1"
@@ -110,6 +110,8 @@ class PagoModuloModelo
                 'completado' => $plan !== null && $saldoPendiente <= 0,
                 // Número de cuotas planificado (solo Plan Regular; null si no se definió o no aplica)
                 'numeroCuotasPlan' => isset($plan['NumeroCuotas']) ? (int)$plan['NumeroCuotas'] : null,
+                // Monto de cada cuota pactado en Pre-Registro (la última ajusta); null en planes anteriores
+                'montoCuotaPlan' => isset($plan['MontoCuota']) ? (float)$plan['MontoCuota'] : null,
                 'cuotasPagadasCount' => $cuotasPagadasCount
             ];
         } catch (PDOException $e) {
@@ -117,7 +119,7 @@ class PagoModuloModelo
             return [
                 'tienePlan' => false, 'tipoPlan' => null, 'costoTotal' => 0,
                 'totalPagado' => 0, 'saldoPendiente' => 0, 'completado' => false,
-                'numeroCuotasPlan' => null, 'cuotasPagadasCount' => 0
+                'numeroCuotasPlan' => null, 'montoCuotaPlan' => null, 'cuotasPagadasCount' => 0
             ];
         }
     }
