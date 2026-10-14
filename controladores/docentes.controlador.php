@@ -200,6 +200,13 @@ private function ConstruirFilaDocente($Docente, $numero)
                             data-nombre-completo="' . htmlspecialchars($nombreCompleto) . '">
                         <i class="fa fa-ban"></i>
                     </button>
+                    <button type="button"
+                            class="btn btn-dark btn-sm btnEliminarDocente"
+                            title="Eliminar registro (solo si no tiene actividad)"
+                            data-docente-id="' . $Docente['DocenteID'] . '"
+                            data-nombre-completo="' . htmlspecialchars($nombreCompleto) . '">
+                        <i class="fa fa-trash"></i>
+                    </button>
                 </td>
             </tr>';
 }
@@ -397,6 +404,38 @@ private function ConstruirFilaDocente($Docente, $numero)
                 echo '<script src="vistas/recursos/sweetalert.min.js"></script>
                       <script>
                       swal("ERROR!", "No se pudo cambiar el acceso del docente", "error")
+                      .then(function () {
+                          location.href="docentes";
+                      });
+                      </script>';
+            }
+        }
+    }
+
+    /**
+     * Eliminar físicamente a un docente registrado por error. Solo procede
+     * si no tiene módulos ni cursos asignados; en ese caso se bloquea y se
+     * sugiere "Dar de baja" en su lugar.
+     */
+    public function EliminarDocenteControlador()
+    {
+        if (isset($_POST["eliminarDocente"])) {
+            $docenteID = intval($_POST['docenteID']);
+
+            $resultado = DocentesModelo::EliminarDocenteModelo($docenteID);
+
+            if ($resultado['status'] == 'exitoso') {
+                echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                      <script>
+                      swal("EXITOSO!", "' . $resultado['mensaje'] . '", "success")
+                      .then(function () {
+                          location.href="docentes";
+                      });
+                      </script>';
+            } else {
+                echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                      <script>
+                      swal("NO SE PUEDE ELIMINAR!", "' . $resultado['mensaje'] . '", "warning")
                       .then(function () {
                           location.href="docentes";
                       });

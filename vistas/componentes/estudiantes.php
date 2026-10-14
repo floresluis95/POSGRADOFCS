@@ -875,6 +875,7 @@ $csrf_token = bin2hex(random_bytes(32));
 <?php
   $cambiarAcceso = new EstudiantesControladores();
   $cambiarAcceso -> CambiarEstadoUsuarioEstudianteControlador();
+  $cambiarAcceso -> EliminarEstudianteControlador();
 ?>
 
 <?php
@@ -1450,6 +1451,34 @@ window.addEventListener('load', function() {
             form.append(jQuery('<input>', { type: 'hidden', name: 'cambiarEstadoUsuarioEstudiante', value: '1' }));
             form.append(jQuery('<input>', { type: 'hidden', name: 'estudianteID', value: estudianteID }));
             form.append(jQuery('<input>', { type: 'hidden', name: 'nuevoEstado', value: nuevoEstado }));
+            jQuery('body').append(form);
+            form.submit();
+        });
+    });
+
+    // ============================================
+    // ELIMINAR ESTUDIANTE (solo si no tiene actividad registrada)
+    // El backend verifica dependencias; si tiene inscripciones, pagos,
+    // notas u órdenes confirmadas, rechaza el borrado y sugiere "Dar de baja".
+    // ============================================
+    jQuery(document).on('click', '.btnEliminarEstudiante', function() {
+        const estudianteID = jQuery(this).attr('data-estudiante-id');
+        const nombreCompleto = jQuery(this).attr('data-nombre-completo');
+
+        Swal.fire({
+            type: 'warning',
+            title: '¿Eliminar este estudiante?',
+            text: 'Estudiante: ' + nombreCompleto + '. Esta acción es irreversible. Solo se eliminará si no tiene inscripciones, pagos, notas u órdenes de pago confirmadas.',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#dc3545'
+        }).then(function(resultado) {
+            if (!resultado.value) return; // SweetAlert2 v8: no tiene isConfirmed
+
+            const form = jQuery('<form>', { method: 'POST', action: '' });
+            form.append(jQuery('<input>', { type: 'hidden', name: 'eliminarEstudiante', value: '1' }));
+            form.append(jQuery('<input>', { type: 'hidden', name: 'estudianteID', value: estudianteID }));
             jQuery('body').append(form);
             form.submit();
         });

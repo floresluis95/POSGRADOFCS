@@ -942,6 +942,8 @@ $csrf_token = bin2hex(random_bytes(32));
     $darDeBaja->DarDeBajaDocenteControlador();
     $cambiarAcceso = new DocentesControlador();
     $cambiarAcceso->CambiarEstadoUsuarioDocenteControlador();
+    $eliminarDocente = new DocentesControlador();
+    $eliminarDocente->EliminarDocenteControlador();
 ?>
 
 <?php
@@ -1279,6 +1281,61 @@ jQuery(document).on('click', '.btnDarDeBaja', function() {
             form.append(jQuery('<input>', {
                 type: 'hidden',
                 name: 'darDeBajaDocente',
+                value: '1'
+            }));
+
+            form.append(jQuery('<input>', {
+                type: 'hidden',
+                name: 'docenteID',
+                value: docenteID
+            }));
+
+            jQuery('body').append(form);
+            form.submit();
+        }
+    });
+});
+
+// ========================================
+// ELIMINAR DOCENTE (solo si no tiene módulos ni cursos asignados)
+// El backend verifica dependencias; si tiene actividad, rechaza el
+// borrado y sugiere "Dar de baja" en su lugar.
+// ========================================
+jQuery(document).on('click', '.btnEliminarDocente', function() {
+    const docenteID = jQuery(this).attr('data-docente-id');
+    const nombreCompleto = jQuery(this).attr('data-nombre-completo');
+
+    swal({
+        title: '¿Eliminar este docente?',
+        text: 'Docente: ' + nombreCompleto + '\n\nEsta acción es irreversible. Solo se eliminará si no tiene módulos ni cursos asignados.',
+        type: 'warning',
+        buttons: {
+            cancel: {
+                text: 'Cancelar',
+                value: null,
+                visible: true,
+                className: 'btn btn-secondary',
+                closeModal: true
+            },
+            confirm: {
+                text: 'Sí, eliminar',
+                value: true,
+                visible: true,
+                className: 'btn btn-danger',
+                closeModal: false
+            }
+        },
+        dangerMode: true
+    }).then((confirmado) => {
+        if (confirmado) {
+            const form = jQuery('<form>', {
+                method: 'POST',
+                action: ''
+            });
+
+            form.append(jQuery('<input>', {
+                type: 'hidden',
+                name: 'eliminarDocente',
                 value: '1'
             }));
 

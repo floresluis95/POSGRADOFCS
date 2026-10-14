@@ -218,4 +218,78 @@
         $stmt->bindParam(":DocenteID", $DocenteID, PDO::PARAM_INT);
         return $stmt->execute() ? "exitoso" : "error";
     }
+
+    /**
+     * Verifica si un docente tiene actividad real (módulos o cursos
+     * asignados, en cualquier estado) que impida borrarlo físicamente.
+     * A diferencia de VerificarModulosAsignadosModelo (que solo mira
+     * módulos ACTIVOS para decidir si se puede "Dar de baja"), aquí se
+     * cuenta cualquier módulo porque la FK es RESTRICT sin importar el
+     * estado del módulo.
+     */
+    public static function VerificarDependenciasDocenteModelo($DocenteID)
+    {
+        $pdo = Conexion::Conectar();
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM modulos WHERE DocenteID = :id");
+        $stmt->bindParam(":id", $DocenteID, PDO::PARAM_INT);
+        $stmt->execute();
+        $modulos = (int) $stmt->fetchColumn();
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM asignacion_profesor_curso WHERE ProfesorID = :id");
+        $stmt->bindParam(":id", $DocenteID, PDO::PARAM_INT);
+        $stmt->execute();
+        $cursosAsignados = (int) $stmt->fetchColumn();
+
+        return [
+            'bloqueado'       => ($modulos + $cursosAsignados) > 0,
+            'modulos'         => $modulos,
+            'cursosAsignados' => $cursosAsignados,
+        ];
+    }
+
+    /**
+     * Borra físicamente a un docente registrado por error. Solo procede si
+     * no tiene módulos ni cursos asignados (en ningún estado). La cuenta de
+     * usuario asociada (login) se borra junto con el docente ya que no
+     * tiene sentido sin él.
+     */
+    public static function EliminarDocenteModelo($DocenteID)
+    {
+        $dependencias = self::VerificarDependenciasDocenteModelo($DocenteID);
+
+        if ($dependencias['bloqueado']) {
+            return [
+                'status'  => 'bloqueado',
+                'mensaje' => 'El docente tiene módulos o cursos asignados y no se puede eliminar. Use "Dar de baja" en su lugar.',
+            ];
+        }
+
+        $pdo = Conexion::Conectar();
+        try {
+            $pdo->beginTransaction();
+
+            $stmt = $pdo->prepare("DELETE FROM usuario WHERE DocenteID = :id");
+            $stmt->bindParam(":id", $DocenteID, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $stmt = $pdo->prepare("DELETE FROM docente WHERE DocenteID = :id");
+            $stmt->bindParam(":id", $DocenteID, PDO::PARAM_INT);
+            $stmt->execute();
+
+            if ($stmt->rowCount() === 0) {
+                $pdo->rollBack();
+                return ['status' => 'error', 'mensaje' => 'El docente no existe o ya fue eliminado'];
+            }
+
+            $pdo->commit();
+            return ['status' => 'exitoso', 'mensaje' => 'Docente eliminado correctamente'];
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("Error en EliminarDocenteModelo: " . $e->getMessage());
+            return ['status' => 'error', 'mensaje' => 'No se pudo eliminar: existen registros relacionados que lo impiden'];
+        }
+    }
   }

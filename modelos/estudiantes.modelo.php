@@ -268,6 +268,99 @@ class EstudiantesModelos
         $stmt->bindParam(":Ci", $Ci, PDO::PARAM_STR);
         return $stmt->execute() ? "exitoso" : "error";
     }
+
+    /**
+     * Verifica si un estudiante tiene actividad académica/financiera real
+     * (inscripciones, planes de pago, notas u órdenes de pago ya CONFIRMADAS)
+     * que impida borrarlo físicamente. Las órdenes PENDIENTE/VENCIDA/ANULADA
+     * que nunca llegaron a confirmarse no cuentan: idInscripcion queda NULL
+     * en esos casos, no existe estudianteprograma y por lo tanto tampoco
+     * pueden existir pagomodulo/pagoclinica/calificacion asociados a ellas.
+     */
+    public static function VerificarDependenciasEstudianteModelo($EstudianteID)
+    {
+        $pdo = Conexion::Conectar();
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM estudianteprograma WHERE EstudianteID = :id");
+        $stmt->bindParam(":id", $EstudianteID, PDO::PARAM_INT);
+        $stmt->execute();
+        $inscripciones = (int) $stmt->fetchColumn();
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM pagoprograma WHERE EstudianteID = :id");
+        $stmt->bindParam(":id", $EstudianteID, PDO::PARAM_INT);
+        $stmt->execute();
+        $planesPago = (int) $stmt->fetchColumn();
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM calificacion WHERE EstudianteID = :id");
+        $stmt->bindParam(":id", $EstudianteID, PDO::PARAM_INT);
+        $stmt->execute();
+        $notas = (int) $stmt->fetchColumn();
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM ordenpago WHERE EstudianteID = :id AND Estado = 'CONFIRMADO'");
+        $stmt->bindParam(":id", $EstudianteID, PDO::PARAM_INT);
+        $stmt->execute();
+        $ordenesConfirmadas = (int) $stmt->fetchColumn();
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM ordenpago WHERE EstudianteID = :id AND Estado != 'CONFIRMADO'");
+        $stmt->bindParam(":id", $EstudianteID, PDO::PARAM_INT);
+        $stmt->execute();
+        $ordenesSinConfirmar = (int) $stmt->fetchColumn();
+
+        return [
+            'bloqueado'           => ($inscripciones + $planesPago + $notas + $ordenesConfirmadas) > 0,
+            'inscripciones'       => $inscripciones,
+            'planesPago'          => $planesPago,
+            'notas'               => $notas,
+            'ordenesConfirmadas'  => $ordenesConfirmadas,
+            'ordenesSinConfirmar' => $ordenesSinConfirmar,
+        ];
+    }
+
+    /**
+     * Borra físicamente a un estudiante registrado por error. Solo procede
+     * si no tiene inscripciones, planes de pago, notas ni órdenes de pago
+     * CONFIRMADAS. Si tiene órdenes PENDIENTE/VENCIDA/ANULADA (nunca se
+     * confirmó un pago real) las borra primero de forma física -distinto de
+     * ANULAR, que se usa cuando una orden vigente caduca sin pagarse-.
+     */
+    public static function EliminarEstudianteModelo($EstudianteID)
+    {
+        $dependencias = self::VerificarDependenciasEstudianteModelo($EstudianteID);
+
+        if ($dependencias['bloqueado']) {
+            return [
+                'status'  => 'bloqueado',
+                'mensaje' => 'El estudiante tiene actividad registrada (inscripciones, planes de pago, notas u órdenes de pago confirmadas) y no se puede eliminar. Use "Dar de baja" en su lugar.',
+            ];
+        }
+
+        $pdo = Conexion::Conectar();
+        try {
+            $pdo->beginTransaction();
+
+            $stmt = $pdo->prepare("DELETE FROM ordenpago WHERE EstudianteID = :id AND Estado != 'CONFIRMADO'");
+            $stmt->bindParam(":id", $EstudianteID, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $stmt = $pdo->prepare("DELETE FROM estudiante WHERE EstudianteID = :id");
+            $stmt->bindParam(":id", $EstudianteID, PDO::PARAM_INT);
+            $stmt->execute();
+
+            if ($stmt->rowCount() === 0) {
+                $pdo->rollBack();
+                return ['status' => 'error', 'mensaje' => 'El estudiante no existe o ya fue eliminado'];
+            }
+
+            $pdo->commit();
+            return ['status' => 'exitoso', 'mensaje' => 'Estudiante eliminado correctamente'];
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("Error en EliminarEstudianteModelo: " . $e->getMessage());
+            return ['status' => 'error', 'mensaje' => 'No se pudo eliminar: existen registros relacionados que lo impiden'];
+        }
+    }
 }
 
 

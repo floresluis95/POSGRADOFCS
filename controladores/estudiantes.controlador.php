@@ -66,6 +66,17 @@ class EstudiantesControladores
                                 <i class="fa fa-pencil-alt"></i>
                             </button>';
 
+            // Solo para estudiantes registrados por error (sin actividad real):
+            // el backend verifica dependencias antes de borrar.
+            $botonEliminar = '<button
+                                type="button"
+                                class="btn btn-danger btn-sm btnEliminarEstudiante"
+                                data-estudiante-id="' . $Estudiante['EstudianteID'] . '"
+                                data-nombre-completo="' . htmlspecialchars($nombreCompleto) . '"
+                                title="Eliminar registro (solo si no tiene actividad)">
+                                <i class="fa fa-trash"></i>
+                            </button>';
+
             // Botón "Ver Detalle": agrupa correo, profesión, celular, usuario y
             // contraseña en un modal, igual que en Docentes.
             $estadoUsuarioTexto = !$tieneUsuario ? 'Sin usuario asignado' : ($Estudiante['EstadoUsuario'] == '1' ? 'Activo' : 'Bloqueado');
@@ -91,7 +102,7 @@ class EstudiantesControladores
                     <td>' . ($Estudiante['Correo'] ? $Estudiante['Correo'] : '<span class="text-muted">No registrado</span>') . '</td>
                     <td class="text-center">' . $Estudiante['Celular'] . '</td>
                     <td class="text-center">' . $estadoUsuarioBadge . '</td>
-                    <td class="text-center">' . $botonDetalle . ' ' . $botonEditar . ' ' . $botonUsuario . ' ' . $botonBloqueo . '</td>
+                    <td class="text-center">' . $botonDetalle . ' ' . $botonEditar . ' ' . $botonUsuario . ' ' . $botonBloqueo . ' ' . $botonEliminar . '</td>
                   </tr>';
         }
     }
@@ -365,6 +376,40 @@ class EstudiantesControladores
                 echo '<script src="vistas/recursos/sweetalert.min.js"></script>
                       <script>
                       swal("ERROR!", "No se pudo cambiar el acceso del estudiante", "error")
+                      .then(function () {
+                          location.href="estudiantes";
+                      });
+                      </script>';
+            }
+        }
+    }
+
+    /**
+     * Eliminar físicamente a un estudiante registrado por error. Solo
+     * procede si no tiene actividad real (inscripciones, planes de pago,
+     * notas u órdenes de pago confirmadas); las órdenes sin confirmar se
+     * borran de paso. Si tiene actividad real, se bloquea y se sugiere
+     * "Dar de baja" en su lugar.
+     */
+    public function EliminarEstudianteControlador()
+    {
+        if (isset($_POST["eliminarEstudiante"])) {
+            $estudianteID = intval($_POST['estudianteID']);
+
+            $resultado = EstudiantesModelos::EliminarEstudianteModelo($estudianteID);
+
+            if ($resultado['status'] == 'exitoso') {
+                echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                      <script>
+                      swal("EXITOSO!", "' . $resultado['mensaje'] . '", "success")
+                      .then(function () {
+                          location.href="estudiantes";
+                      });
+                      </script>';
+            } else {
+                echo '<script src="vistas/recursos/sweetalert.min.js"></script>
+                      <script>
+                      swal("NO SE PUEDE ELIMINAR!", "' . $resultado['mensaje'] . '", "warning")
                       .then(function () {
                           location.href="estudiantes";
                       });
