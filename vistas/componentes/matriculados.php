@@ -242,6 +242,17 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     }
     #modalInscribirModulo .vc-campos .form-control { height: 34px; }
     #modalInscribirModulo .vc-input-numero { font-weight: 600; letter-spacing: .3px; }
+    /* N° de voucher (largo - corto, voucher-partes.js): más compacto y más legible */
+    #modalInscribirModulo .vc-campo .voucher-partes { max-width: 300px; }
+    #modalInscribirModulo .vc-campo .voucher-partes .form-control {
+        height: 32px; padding: 2px 10px; font-size: 15px; font-weight: 700; color: #111827;
+        letter-spacing: .5px; border: 1px solid #9aa6bd; background: #fff;
+    }
+    #modalInscribirModulo .vc-campo .voucher-partes .form-control:focus { border-color: var(--gp-primario); box-shadow: 0 0 0 2px rgba(30, 60, 114, .15); }
+    #modalInscribirModulo .vc-campo .voucher-partes .form-control::placeholder { font-weight: 400; color: #a0aec0; letter-spacing: 0; }
+    #modalInscribirModulo .vc-campo .voucher-partes .vp-guion { height: 32px; padding: 0 6px; border-color: #9aa6bd; }
+    #modalInscribirModulo .vc-campo .voucher-partes .input-group > .vp-corto { flex-basis: 72px; width: 72px; max-width: 72px; }
+    #modalInscribirModulo .vc-campo .voucher-partes .vp-se-guarda { font-size: 11px; margin-top: 2px; }
     #modalInscribirModulo .vc-foto { display: flex; align-items: center; gap: 6px; }
     #modalInscribirModulo .vc-foto .btn { height: 34px; display: inline-flex; align-items: center; font-size: 12px; }
     #modalInscribirModulo .vc-foto .captura-foto-boton { margin-top: 0 !important; }
@@ -272,6 +283,74 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
         #modalInscribirModulo .vc-campos { grid-template-columns: 1fr; }
         #modalInscribirModulo .vc-pie .btn { width: 100%; }
     }
+
+    /* Voucher extraviado (cuotas y clínicas): caja con el motivo y lista de las órdenes
+       que esperan su voucher (ordenpagomodulos.js, inscripcionmodulo.js, ordenpagoclinica.js).
+       Misma paleta del modal: azul institucional, sin colores de alerta. */
+    #modalInscribirModulo .vx-caja {
+        margin: 0 14px 14px; border: 1px solid var(--gp-borde); border-left: 3px solid var(--gp-primario);
+        border-radius: 6px; background: #fff; overflow: hidden;
+    }
+    #modalInscribirModulo .vx-caja-cab {
+        padding: 8px 12px; background: var(--gp-primario-suave); border-bottom: 1px solid var(--gp-borde);
+        font-size: 13px; font-weight: 600; color: var(--gp-primario);
+    }
+    #modalInscribirModulo .vx-caja-cuerpo { padding: 10px 12px 12px; }
+    #modalInscribirModulo .vx-caja .vx-motivo { font-size: 13px; resize: vertical; }
+    #modalInscribirModulo .vx-nota { margin-top: 6px; font-size: 12px; color: var(--gp-texto-2); line-height: 1.45; }
+    #modalInscribirModulo .vx-aviso { margin-top: 6px; font-size: 12px; color: var(--gp-peligro); }
+    #modalInscribirModulo .vx-pie { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+    #modalInscribirModulo .vx-pie .btn { font-weight: 600; }
+    /* Lista de órdenes con voucher por validar: en rojo y compacta (llama la atención) */
+    #modalInscribirModulo .vx-lista { border: 1px solid #f5c2c2; border-left: 3px solid var(--gp-peligro); border-radius: 6px; background: #fff; margin-bottom: 12px; }
+    #modalInscribirModulo .vx-lista-titulo { padding: 5px 12px; font-size: 11.5px; font-weight: 600; color: var(--gp-peligro); background: #fef2f2; border-bottom: 1px solid #f5c2c2; }
+    #modalInscribirModulo .vx-lista-titulo span { color: #b45454; }
+    #modalInscribirModulo .vx-item { display: flex; align-items: center; gap: 10px; padding: 6px 12px; }
+    #modalInscribirModulo .vx-item + .vx-item { border-top: 1px solid #fbe0e0; }
+    #modalInscribirModulo .vx-item-datos { flex: 1 1 auto; min-width: 0; }
+    #modalInscribirModulo .vx-item-titulo { font-size: 12px; font-weight: 600; color: var(--gp-peligro); }
+    #modalInscribirModulo .vx-item-meta { font-size: 11px; color: var(--gp-texto-2); }
+    #modalInscribirModulo .vx-item-monto { font-size: 12.5px; font-weight: 600; color: var(--gp-peligro); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    /* El "danger" del tema es fucsia: el botón usa el mismo rojo de la lista */
+    #modalInscribirModulo .vx-item .btn-registrar-extraviada {
+        padding: 2px 10px; font-size: 11.5px; background: #fff;
+        border: 1px solid var(--gp-peligro) !important; color: var(--gp-peligro) !important;
+    }
+    #modalInscribirModulo .vx-item .btn-registrar-extraviada:hover,
+    #modalInscribirModulo .vx-item .btn-registrar-extraviada:focus { background: var(--gp-peligro) !important; color: #fff !important; box-shadow: none; }
+    #modalInscribirModulo .gp-chip.is-extraviado { background: var(--gp-primario-suave); color: var(--gp-primario); }
+    /* "Anular orden" y "Voucher extraviado": enlaces con fondo suave al pasar el mouse
+       (el tema pintaba un fondo morado) */
+    #modalInscribirModulo #btnAnularOrdenCuota,
+    #modalInscribirModulo #clBtnAnular,
+    #modalInscribirModulo .btn-abrir-extraviado {
+        padding: 5px 10px; border-radius: 6px; font-weight: 500; text-decoration: none;
+        transition: background-color .15s ease, color .15s ease;
+    }
+    #modalInscribirModulo .btn-abrir-extraviado { color: var(--gp-primario); }
+    #modalInscribirModulo #btnAnularOrdenCuota:hover,
+    #modalInscribirModulo #clBtnAnular:hover { background: #fef2f2 !important; color: var(--gp-peligro) !important; text-decoration: none; }
+    #modalInscribirModulo .btn-abrir-extraviado:hover { background: var(--gp-primario-suave) !important; color: var(--gp-primario) !important; text-decoration: none; }
+    #modalInscribirModulo #btnAnularOrdenCuota:focus, #modalInscribirModulo #btnAnularOrdenCuota:active,
+    #modalInscribirModulo #clBtnAnular:focus, #modalInscribirModulo #clBtnAnular:active,
+    #modalInscribirModulo .btn-abrir-extraviado:focus,
+    #modalInscribirModulo .btn-abrir-extraviado:active { box-shadow: none !important; text-decoration: none; }
+    #modalInscribirModulo .btn-abrir-extraviado:focus:not(:hover) { background: transparent !important; color: var(--gp-primario); }
+
+    /* Formulario de orden de clínica en pasos (ordenpagoclinica.js) */
+    #modalInscribirModulo .cl-paso + .cl-paso { border-top: 1px solid var(--gp-borde); padding-top: 12px; }
+    #modalInscribirModulo .cl-paso-titulo {
+        display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+        font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--gp-primario);
+    }
+    #modalInscribirModulo .cl-paso-num {
+        display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+        border-radius: 50%; background: var(--gp-primario); color: #fff; font-size: 11px;
+    }
+    #modalInscribirModulo .cl-ayuda { display: block; margin-top: 4px; font-size: 11.5px; color: var(--gp-texto-2); }
+    #modalInscribirModulo .btn-registrar-extraviada { white-space: nowrap; font-weight: 600; }
+    /* Orden con voucher extraviado elegida para registrar su voucher */
+    #modalInscribirModulo .vc-orden-cab.is-extraviada { border-left-color: var(--gp-primario); background: var(--gp-primario-suave); }
 
     /* Orden de pago de cuota (ordenpagomodulos.js): cabecera con la cuota, campos en
        dos columnas, factura y módulos en líneas plegables y un solo botón al pie */
@@ -692,6 +771,11 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     .mt-acciones .btn-marcar-abandono[data-nuevo-estado="ACTIVO"] i { color: #2f855a; }
 
     .btn-gestionar-pagos { white-space: nowrap; }
+    /* Órdenes de pago del estudiante (fuera del menú ⚙): azul institucional, contorno */
+    .mt-btn-ordenes {
+        white-space: nowrap; background: #fff; color: #1e3c72; border: 1px solid #1e3c72;
+    }
+    .mt-btn-ordenes:hover, .mt-btn-ordenes:focus { background: #1e3c72; color: #fff; text-decoration: none; }
 
     /* ---------- Ventanas secundarias (detalles, módulos, foto, plan grupal) ---------- */
     .mt-modal-head {
@@ -970,12 +1054,13 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     }
     .mt-filtro { min-width: 0; }
     .mt-filtro-sede { flex: 0 0 180px; }
+    .mt-filtro-grado { flex: 0 0 190px; }
     .mt-filtro-programa { flex: 1 1 280px; }
     .mt-filtro-estado { flex: 0 0 140px; }
     .mt-filtro-requisitos { flex: 0 0 150px; }
     .mt-filtro-boton { flex: 0 0 auto; }
     @media (max-width: 575px) {
-        .mt-filtro-sede, .mt-filtro-programa, .mt-filtro-boton { flex-basis: 100%; }
+        .mt-filtro-sede, .mt-filtro-grado, .mt-filtro-programa, .mt-filtro-boton { flex-basis: 100%; }
         .mt-filtro-estado, .mt-filtro-requisitos { flex: 1 1 0; }
         .mt-filtro-boton .btn { width: 100%; }
     }
@@ -1164,7 +1249,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
             <div class="mt-card-head">
                 <div>
                     <h3><i class="fa fa-filter"></i> Filtrar matriculados</h3>
-                    <p>Acote la lista por sede, programa o estado de la inscripción.</p>
+                    <p>Acote la lista por sede, grado académico, programa o estado de la inscripción.</p>
                 </div>
             </div>
             <div class="mt-card-body">
@@ -1183,19 +1268,36 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                             ?>
                         </select>
                     </div>
+                    <?php $programas = ProgramasModelos::ListaProgramaModelo(); ?>
+                    <div class="mt-filtro mt-filtro-grado">
+                        <label class="mt-label" for="selectGradoFiltro"><i class="fa fa-graduation-cap"></i> Grado académico</label>
+                        <select class="form-control select2-uniforme" id="selectGradoFiltro" style="width: 100%;">
+                            <option value="">Todos los grados...</option>
+                            <?php
+                            // Grados de los programas registrados (Especialidad, Maestría, Diplomado...)
+                            $gradosMatriculados = array_unique(array_filter(array_map(function ($p) {
+                                return trim($p['GradoAcademico'] ?? '');
+                            }, $programas)));
+                            sort($gradosMatriculados);
+                            foreach ($gradosMatriculados as $gradoOpcion) {
+                                $gradoValor = htmlspecialchars($gradoOpcion, ENT_QUOTES);
+                                echo '<option value="' . $gradoValor . '">' . $gradoValor . '</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
                     <div class="mt-filtro mt-filtro-programa">
                         <label class="mt-label" for="selectProgramaFiltro"><i class="fa fa-university"></i> Programa</label>
                         <select class="form-control select2-uniforme" id="selectProgramaFiltro" style="width: 100%;">
                             <option value="">Todos los programas...</option>
                             <?php
-                            $programas = ProgramasModelos::ListaProgramaModelo();
                             foreach ($programas as $prog) {
                                 $programaID = htmlspecialchars($prog['ProgramaID'] ?? '', ENT_QUOTES);
                                 $nombrePrograma = htmlspecialchars($prog['NombrePrograma'] ?? '', ENT_QUOTES);
                                 $codigo = htmlspecialchars($prog['Codigo'] ?? '', ENT_QUOTES);
                                 $grado = htmlspecialchars($prog['GradoAcademico'] ?? '', ENT_QUOTES);
 
-                                echo '<option value="' . $programaID . '">';
+                                echo '<option value="' . $programaID . '" data-grado="' . $grado . '">';
                                 echo $nombrePrograma . ' - ' . $grado . ' (' . $codigo . ')';
                                 echo '</option>';
                             }
@@ -1311,6 +1413,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                     <div class="col-md-4"><label class="detalle-label">Fecha de inscripción</label><p id="detalleFecha" class="detalle-valor"></p></div>
                     <div class="col-md-4"><label class="detalle-label">Tipo de pago</label><p id="detalleTipoPago" class="detalle-valor"></p></div>
                     <div class="col-md-4"><label class="detalle-label">N° Voucher</label><p id="detalleVoucher" class="detalle-valor"></p></div>
+                    <div class="col-md-4"><label class="detalle-label">Fecha de la orden</label><p id="detalleFechaOrden" class="detalle-valor"></p></div>
                     <div class="col-md-4"><label class="detalle-label">Costo de matrícula</label><p id="detalleCosto" class="detalle-valor text-primary font-weight-bold"></p></div>
                     <div class="col-md-4"><label class="detalle-label">Descuento</label><p id="detalleDescuento" class="detalle-valor"></p></div>
                     <div class="col-md-4"><label class="detalle-label">Monto pagado</label><p id="detalleMontoPagado" class="detalle-valor font-weight-bold"></p></div>
@@ -1415,6 +1518,9 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                          están ligadas a módulos, su número y monto son libres) -->
                     <div class="tab-pane fade" id="tab-pago-modulos" role="tabpanel">
 
+                        <!-- Órdenes con voucher extraviado: se les registra el voucher cuando Tesoro dé el código -->
+                        <div id="cuotasExtraviadas"></div>
+
                         <!-- Estado de la cuota: orden a validar, o aviso si no hay orden / ya pagó (inscripcionmodulo.js) -->
                         <div id="cuotaPendienteInfo"></div>
 
@@ -1429,7 +1535,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                     <div class="vc-campo">
                                         <label class="gp-label" for="numeroVaucher">N° de voucher</label>
                                         <input type="text" class="form-control vc-input-numero" name="numeroVaucher" id="numeroVaucher"
-                                               autocomplete="off" required>
+                                               autocomplete="off" required data-voucher-partes>
                                     </div>
                                     <div class="vc-campo vc-campo-foto">
                                         <label class="gp-label">Voucher</label>
@@ -1457,13 +1563,14 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                                         <tr>
                                             <th class="text-center" style="width:70px;">N°</th>
                                             <th class="text-right">Monto</th>
-                                            <th class="text-center">Fecha</th>
+                                            <th class="text-center" title="Fecha en que se generó la orden de pago">F. orden</th>
+                                            <th class="text-center">F. pago</th>
                                             <th>Voucher</th>
                                             <th class="text-center">Estado</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tablaCuotasBody">
-                                        <tr><td colspan="5" class="gp-vacio">Sin cuotas registradas</td></tr>
+                                        <tr><td colspan="6" class="gp-vacio">Sin cuotas registradas</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -1473,32 +1580,29 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                     <!-- Pestaña: Clínicas (orden de pago de monto libre a la cuenta CLINICA del
                          programa; se confirma registrando su voucher). Contenido en ordenpagoclinica.js -->
                     <div class="tab-pane fade" id="tab-clinica" role="tabpanel">
-                        <div class="gp-nota is-neutra">
-                            <i class="fa fa-info-circle"></i>
-                            <span>Los pagos de clínica son independientes: no se suman al costo, a lo pagado ni al saldo de matrícula y cuotas del programa.</span>
-                        </div>
-
+                        <!-- Los pagos de clínica no se suman al costo ni al saldo del programa -->
                         <div id="clinicaContenido"></div>
 
                         <div class="gp-section gp-section-flush">
                             <div class="gp-section-title d-flex justify-content-between">
-                                <span><i class="fa fa-history"></i> Historial de clínicas</span>
+                                <span>Historial de clínicas <small class="text-muted font-weight-normal">(aparte del saldo del programa)</small></span>
                                 <span id="clinicaTotalPagado"></span>
                             </div>
                             <div class="table-responsive">
                                 <table class="table gp-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>N° Orden</th>
+                                            <th>N° orden</th>
                                             <th class="text-right">Monto</th>
-                                            <th class="text-center">Fecha pago</th>
+                                            <th class="text-center" title="Fecha en que se generó la orden de pago">F. orden</th>
+                                            <th class="text-center">F. pago</th>
                                             <th>Voucher</th>
                                             <th class="text-center">Estado</th>
                                             <th class="text-center" style="width:60px;"></th>
                                         </tr>
                                     </thead>
                                     <tbody id="tablaClinicasBody">
-                                        <tr><td colspan="6" class="gp-vacio">Sin clínicas registradas</td></tr>
+                                        <tr><td colspan="7" class="gp-vacio">Sin clínicas registradas</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -1619,6 +1723,7 @@ $(document).ready(function() {
                 programaIDFiltro: programaID || '',
                 sedeFiltro: sede || '',
                 estadoFiltro: estado || 'ACTIVO',
+                gradoFiltro: $('#selectGradoFiltro').val() || '',
                 requisitosFiltro: $('#selectRequisitosFiltro').val() || ''
             },
             success: function(response) {
@@ -1693,8 +1798,27 @@ $(document).ready(function() {
         cargarEstudiantes(programaID, sede, estado);
     });
 
+    // Grado académico: la lista de programas muestra solo los de ese grado (las opciones
+    // se guardan al cargar y se vuelven a armar; Select2 no oculta opciones sueltas)
+    const $opcionesPrograma = $('#selectProgramaFiltro option').clone();
+    function programasDelGrado(grado) {
+        const $sel = $('#selectProgramaFiltro');
+        const elegido = $sel.val();
+        $sel.empty().append($opcionesPrograma.filter(function() {
+            return !this.value || !grado || $(this).attr('data-grado') === grado;
+        }).clone());
+        // Si el programa elegido no es de ese grado, vuelve a "Todos"
+        $sel.val($sel.find('option[value="' + elegido + '"]').length ? elegido : '').trigger('change.select2');
+    }
+    $('#selectGradoFiltro').on('change', function() {
+        programasDelGrado($(this).val());
+        window.refrescarTablaMatriculados();
+    });
+
     // Evento al limpiar filtro
     $('#btnLimpiarFiltro').on('click', function() {
+        $('#selectGradoFiltro').val('').trigger('change.select2');
+        programasDelGrado('');
         console.log('>>> Limpiando filtro');
         // trigger('change') en los tres: con Select2 un .val() plano no
         // actualiza el texto visible del combo.

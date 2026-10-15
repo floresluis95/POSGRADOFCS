@@ -1,5 +1,6 @@
 <?php
 require_once 'conexion.modelo.php';
+require_once __DIR__ . '/configuracion.modelo.php'; // precios de los certificados
 
 // ===========================
 //   MODELO CERTIFICADOS
@@ -180,6 +181,31 @@ class CertificadoModelo
         ];
     }
 
+    /**
+     * Precio de cada tipo de certificado (Bs.), definido por el ADM en la pantalla
+     * Autoridades (configuracion, clave COSTO_CERT_<TIPO>). null si aún no se definió.
+     * @return array [TIPO => float|null]
+     */
+    public static function PreciosCertificados()
+    {
+        $precios = [];
+        foreach (array_keys(self::TiposDocumento()) as $tipo) {
+            $valor = ConfiguracionModelo::Obtener('COSTO_CERT_' . $tipo);
+            $precios[$tipo] = ($valor === null || $valor === '') ? null : (float)$valor;
+        }
+        return $precios;
+    }
+
+    /**
+     * Monto del formulario del certificado ("120.50"); null si no se envió o no es válido.
+     * @return float|null
+     */
+    private static function MontoDeDatos(array $datos)
+    {
+        $monto = str_replace(',', '.', trim((string)($datos['monto'] ?? '')));
+        return ($monto !== '' && is_numeric($monto) && (float)$monto >= 0) ? round((float)$monto, 2) : null;
+    }
+
     /* Script PDF que genera cada tipo de documento (para reimprimirlo con sus datos) */
     public static function RutasPdf()
     {
@@ -205,6 +231,8 @@ class CertificadoModelo
         unset($datos['idDocumento']);
         $datos = array_map(function ($v) { return is_scalar($v) ? (string)$v : ''; }, $datos);
         $json = json_encode($datos, JSON_UNESCAPED_UNICODE);
+        // Monto pagado: viene en el mismo formulario del certificado (campo "monto")
+        $monto = self::MontoDeDatos($datos);
         $pdo = Conexion::Conectar();
 
         if ($idDocumento > 0) {
@@ -217,11 +245,11 @@ class CertificadoModelo
                 if ($actual['Datos'] !== $json) {
                     $stmt = $pdo->prepare("
                         UPDATE documentoemitido
-                        SET Datos = :datos, NombreEstudiante = :nombre, NumeroVaucher = :vaucher,
+                        SET Datos = :datos, NombreEstudiante = :nombre, NumeroVaucher = :vaucher, Monto = :monto,
                             Estado = 'PENDIENTE', FechaAprobacion = NULL, UsuarioAprobadorID = NULL
                         WHERE IdDocumento = :id
                     ");
-                    $stmt->execute([':datos' => $json, ':nombre' => $nombreEstudiante, ':vaucher' => $vaucher, ':id' => $idDocumento]);
+                    $stmt->execute([':datos' => $json, ':nombre' => $nombreEstudiante, ':vaucher' => $vaucher, ':monto' => $monto, ':id' => $idDocumento]);
                 }
                 return (int)$idDocumento;
             }
@@ -229,9 +257,9 @@ class CertificadoModelo
 
         $stmt = $pdo->prepare("
             INSERT INTO documentoemitido
-                (TipoDocumento, EstudianteID, ProgramaID, NombreEstudiante, NumeroVaucher, Datos, UsuarioEmisorID)
+                (TipoDocumento, EstudianteID, ProgramaID, NombreEstudiante, NumeroVaucher, Monto, Datos, UsuarioEmisorID)
             VALUES
-                (:tipo, :estudianteID, :programaID, :nombre, :vaucher, :datos, :usuarioID)
+                (:tipo, :estudianteID, :programaID, :nombre, :vaucher, :monto, :datos, :usuarioID)
         ");
         $ok = $stmt->execute([
             ':tipo' => $tipoDocumento,
@@ -239,6 +267,7 @@ class CertificadoModelo
             ':programaID' => $programaID ?: null,
             ':nombre' => $nombreEstudiante,
             ':vaucher' => $vaucher,
+            ':monto' => $monto,
             ':datos' => $json,
             ':usuarioID' => $usuarioID,
         ]);
@@ -303,12 +332,13 @@ class CertificadoModelo
     }
 
     /* Bitácora completa de documentos emitidos, opcionalmente filtrada por CI */
-    public static function ListarDocumentosEmitidosModelo($ci = null, $limite = 100)
+    public static function ListarDocumentosEmitidosModelo($ci = null, $limite = 100, array $filtros = [])
     {
         $sql = "
             SELECT
                 d.IdDocumento, d.TipoDocumento, d.EstudianteID, d.ProgramaID, d.NombreEstudiante,
-                d.NumeroVaucher, d.FechaEmision, d.Estado, d.FechaAprobacion,
+                d.NumeroVaucher, d.Monto, d.FechaEmision, d.Estado, d.FechaAprobacion,
+                p.NombrePrograma,
                 (d.Datos IS NOT NULL) AS TieneDatos,
                 e.Ci,
                 e.Complemento,
@@ -318,17 +348,31 @@ class CertificadoModelo
             LEFT JOIN estudiante e ON d.EstudianteID = e.EstudianteID
             LEFT JOIN usuario u ON d.UsuarioEmisorID = u.ID
             LEFT JOIN usuario ua ON d.UsuarioAprobadorID = ua.ID
+            LEFT JOIN programa p ON d.ProgramaID = p.ProgramaID
+            WHERE 1 = 1
         ";
+        $parametros = [];
         if (!empty($ci)) {
-            $sql .= " WHERE e.Ci LIKE :ci ";
+            $sql .= " AND e.Ci LIKE :ci ";
+            $parametros[':ci'] = $ci . '%';
+        }
+        // Filtros del historial de pagos: fechas de emisión y tipo de certificado
+        if (!empty($filtros['desde'])) {
+            $sql .= " AND d.FechaEmision >= :desde ";
+            $parametros[':desde'] = $filtros['desde'] . ' 00:00:00';
+        }
+        if (!empty($filtros['hasta'])) {
+            $sql .= " AND d.FechaEmision <= :hasta ";
+            $parametros[':hasta'] = $filtros['hasta'] . ' 23:59:59';
+        }
+        if (!empty($filtros['tipo'])) {
+            $sql .= " AND d.TipoDocumento = :tipo ";
+            $parametros[':tipo'] = $filtros['tipo'];
         }
         $sql .= " ORDER BY d.FechaEmision DESC LIMIT " . intval($limite);
 
         $stmt = Conexion::Conectar()->prepare($sql);
-        if (!empty($ci)) {
-            $stmt->bindValue(':ci', $ci . '%', PDO::PARAM_STR);
-        }
-        $stmt->execute();
+        $stmt->execute($parametros);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

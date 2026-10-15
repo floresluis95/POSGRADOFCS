@@ -118,7 +118,20 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'actualizarTrabajoGrado') {
 
 if (isset($_POST['accion']) && $_POST['accion'] === 'listarDocumentosEmitidos') {
     $ci = trim($_POST['ci'] ?? '');
-    $documentos = CertificadoModelo::ListarDocumentosEmitidosModelo($ci !== '' ? $ci : null);
+    // Historial de pagos de certificados: fechas (Y-m-d) y tipo; con filtros se lista todo
+    // el periodo (no solo los últimos 100)
+    $fecha = function ($campo) {
+        $valor = trim($_POST[$campo] ?? '');
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $valor) ? $valor : null;
+    };
+    $tipo = trim($_POST['tipo'] ?? '');
+    $filtros = [
+        'desde' => $fecha('desde'),
+        'hasta' => $fecha('hasta'),
+        'tipo' => array_key_exists($tipo, CertificadoModelo::TiposDocumento()) ? $tipo : null,
+    ];
+    $conFiltros = $filtros['desde'] || $filtros['hasta'] || $filtros['tipo'];
+    $documentos = CertificadoModelo::ListarDocumentosEmitidosModelo($ci !== '' ? $ci : null, $conFiltros ? 5000 : 100, $filtros);
     echo json_encode([
         'success' => true,
         'tipos' => CertificadoModelo::TiposDocumento(),

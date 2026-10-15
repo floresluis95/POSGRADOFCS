@@ -50,12 +50,34 @@ class ReporteModulosControlador
      */
     public static function ObtenerReportePagosPorProgramaControlador()
     {
-        $grado = isset($_POST['grado']) && $_POST['grado'] !== ''
-            ? htmlspecialchars(trim($_POST['grado']))
-            : null;
-
-        $reporte = ReporteModulosModelo::ObtenerReportePagosPorProgramaModelo($grado);
+        $filtros = self::FiltrosGraficos();
+        $reporte = ReporteModulosModelo::ObtenerReportePagosPorProgramaModelo($filtros['grado'], $filtros['sede'], $filtros['programaID']);
         echo json_encode($reporte);
+    }
+
+    /**
+     * Filtros que llegan del formulario: grado (pestañas Pagos y Gráficos), y sede y
+     * programa (solo pestaña Gráficos). Vacíos = sin filtro.
+     * @return array ['sede' => ?string, 'grado' => ?string, 'programaID' => ?int]
+     */
+    private static function FiltrosGraficos()
+    {
+        $texto = function ($campo) {
+            return isset($_POST[$campo]) && trim($_POST[$campo]) !== '' ? trim($_POST[$campo]) : null;
+        };
+        return [
+            'sede' => $texto('sede'),
+            'grado' => $texto('grado'),
+            'programaID' => !empty($_POST['programaID']) ? (int)$_POST['programaID'] : null,
+        ];
+    }
+
+    /**
+     * Opciones de los filtros de la pestaña Gráficos (programas con sede y grado)
+     */
+    public static function ObtenerOpcionesFiltrosControlador()
+    {
+        echo json_encode(ReporteModulosModelo::ObtenerOpcionesFiltrosModelo());
     }
 
     /**
@@ -77,15 +99,12 @@ class ReporteModulosControlador
      */
     public static function ObtenerDatosGraficosControlador()
     {
-        $grado = isset($_POST['grado']) && $_POST['grado'] !== ''
-            ? htmlspecialchars(trim($_POST['grado']))
-            : null;
         $meses = (int)($_POST['meses'] ?? 12);
         if (!in_array($meses, [6, 12, 24], true)) {
             $meses = 12;
         }
 
-        echo json_encode(ReporteModulosModelo::ObtenerDatosGraficosModelo($grado, $meses));
+        echo json_encode(ReporteModulosModelo::ObtenerDatosGraficosModelo(self::FiltrosGraficos(), $meses));
     }
 
     /**

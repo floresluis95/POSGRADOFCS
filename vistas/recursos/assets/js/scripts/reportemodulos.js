@@ -323,6 +323,7 @@ function verDetallePagosPrograma(programaID, programaNombre, tieneClinica) {
     $('#detallePagosProgramaNombre').text(programaNombre || '');
     $('#detallePagosKpis').html('');
     $('#tablaDetallePagosEstudianteHead').html('');
+    $('#tablaDetallePagosEstudianteFooter').html('');
     $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="8" class="rp-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
     $('#modalDetallePagosPrograma').modal('show');
 
@@ -345,30 +346,40 @@ function renderDetallePagosEstudiante(datos, tieneClinica) {
         '<tr>' +
             '<th>Estudiante</th>' +
             '<th class="text-center">Plan</th>' +
-            '<th class="text-right">Costo total</th>' +
+            // Costo desglosado: matrícula + programa (cada uno con su descuento) = costo total
+            '<th class="text-right">Matrícula</th>' +
+            '<th class="text-right">Costo del programa</th>' +
+            '<th class="text-right" title="Matrícula + costo del programa">Costo total</th>' +
             '<th class="text-right">Cobrado</th>' +
             '<th class="text-right">Saldo</th>' +
-            '<th style="min-width:130px">Avance</th>' +
+            '<th style="min-width:110px">Avance</th>' +
             (tieneClinica ? '<th class="text-right rp-grupo-clinica">Clínica cobrada</th><th class="text-right rp-grupo-clinica">Clínica por cobrar</th>' : '') +
         '</tr>'
     );
-    const columnas = tieneClinica ? 8 : 6;
+    const columnas = tieneClinica ? 10 : 8;
 
     if (!datos || datos.length === 0) {
         $('#detallePagosKpis').html('');
+        $('#tablaDetallePagosEstudianteFooter').html('');
         $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="' + columnas + '" class="rp-vacio">Este programa no tiene estudiantes inscritos</td></tr>');
         return;
     }
 
-    const t = { costo: 0, pagado: 0, saldo: 0, clinicaCobrado: 0, clinicaPorCobrar: 0, completaron: 0 };
+    const t = { matricula: 0, programa: 0, costo: 0, pagado: 0, saldo: 0, clinicaCobrado: 0, clinicaPorCobrar: 0, completaron: 0 };
+    // Descuento (positivo) o aumento (negativo) bajo el monto
+    const notaAjuste = function(monto) {
+        if (Math.abs(monto) < 0.005) return '';
+        return '<span class="rp-sub">' + (monto > 0 ? 'desc. ' : 'aum. ') + formatoMoneda(Math.abs(monto)) + '</span>';
+    };
     let html = '';
 
     datos.forEach(function(e) {
         const costoMatricula = parseFloat(e.CostoMatricula) || 0;
+        const costoPrograma = parseFloat(e.CostoPrograma) || 0;
         const costoTotal = parseFloat(e.CostoTotal) || 0;
         const pagado = parseFloat(e.TotalPagado) || 0;
+        const cuotasCobrado = parseFloat(e.CuotasCobrado) || 0;
         const saldo = parseFloat(e.SaldoPendiente) || 0;
-        const descuento = parseFloat(e.MontoDescuentoTotal) || 0;
         const clinicaCobrado = parseFloat(e.ClinicaCobrado) || 0;
         const clinicaPorCobrar = parseFloat(e.ClinicaPorCobrar) || 0;
         const abandono = e.EstadoInscripcion === 'ABANDONO';
@@ -377,6 +388,8 @@ function renderDetallePagosEstudiante(datos, tieneClinica) {
         const pct = porcentaje(pagado, costoTotal);
 
         if (!abandono) {
+            t.matricula += costoMatricula;
+            t.programa += costoPrograma;
             t.costo += costoTotal;
             t.pagado += pagado;
             t.saldo += saldo;
@@ -405,10 +418,14 @@ function renderDetallePagosEstudiante(datos, tieneClinica) {
                 '<div class="rp-prog-meta">C.I. ' + escaparHtml(e.Ci || '-') + (e.Celular ? ' &middot; Cel. ' + escaparHtml(e.Celular) : '') + '</div></td>' +
             '<td class="text-center">' + (tienePlan ? '<span class="rp-chip is-info">' + (NOMBRES_PLAN_REPORTE[e.TipoPlan] || escaparHtml(e.TipoPlan)) + '</span>' : '<span class="rp-muted">—</span>') +
                 (cuotasTexto ? '<span class="rp-sub">' + cuotasTexto + '</span>' : '') + '</td>' +
-            '<td class="text-right">' + formatoMoneda(costoTotal) +
-                (descuento > 0 ? '<span class="rp-sub">desc. ' + formatoMoneda(descuento) + '</span>' : '') + '</td>' +
+            '<td class="text-right">' + (costoMatricula > 0 ? formatoMoneda(costoMatricula) : '<span class="rp-muted">Sin matrícula</span>') +
+                notaAjuste(parseFloat(e.DescuentoMatricula) || 0) + '</td>' +
+            '<td class="text-right">' + (tienePlan ? formatoMoneda(costoPrograma) : '<span class="rp-muted">Sin plan</span>') +
+                (tienePlan ? notaAjuste(parseFloat(e.DescuentoPrograma) || 0) : '') + '</td>' +
+            '<td class="text-right"><strong>' + formatoMoneda(costoTotal) + '</strong></td>' +
             '<td class="text-right"><span class="rp-cobrado">' + formatoMoneda(pagado) + '</span>' +
-                (costoMatricula > 0 ? '<span class="rp-sub">matr. ' + formatoMoneda(costoMatricula) + '</span>' : '') + '</td>' +
+                '<span class="rp-sub">matr. ' + formatoMoneda(costoMatricula) + '</span>' +
+                '<span class="rp-sub">cuotas ' + formatoMoneda(cuotasCobrado) + '</span></td>' +
             '<td class="text-right"><span class="' + (saldo > 0 ? 'rp-saldo' : 'rp-muted') + '">' + formatoMoneda(saldo) + '</span></td>' +
             '<td>' + estado + '</td>' +
             (tieneClinica
@@ -419,6 +436,21 @@ function renderDetallePagosEstudiante(datos, tieneClinica) {
     });
 
     $('#tablaDetallePagosEstudianteBody').html(html);
+
+    // Fila de totales (sin los que abandonaron, igual que los indicadores)
+    $('#tablaDetallePagosEstudianteFooter').html('<tr>' +
+        '<td colspan="2">Totales <span class="rp-sub">sin los que abandonaron</span></td>' +
+        '<td class="text-right">' + formatoMoneda(t.matricula) + '</td>' +
+        '<td class="text-right">' + formatoMoneda(t.programa) + '</td>' +
+        '<td class="text-right"><strong>' + formatoMoneda(t.costo) + '</strong></td>' +
+        '<td class="text-right"><span class="rp-cobrado">' + formatoMoneda(t.pagado) + '</span></td>' +
+        '<td class="text-right"><span class="' + (t.saldo > 0 ? 'rp-saldo' : 'rp-muted') + '">' + formatoMoneda(t.saldo) + '</span></td>' +
+        '<td></td>' +
+        (tieneClinica
+            ? '<td class="text-right rp-celda-clinica">' + formatoMoneda(t.clinicaCobrado) + '</td>' +
+              '<td class="text-right rp-celda-clinica">' + formatoMoneda(t.clinicaPorCobrar) + '</td>'
+            : '') +
+    '</tr>');
 
     const pct = porcentaje(t.pagado, t.costo);
     $('#detallePagosKpis').html(

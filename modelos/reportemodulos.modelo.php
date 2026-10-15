@@ -9,6 +9,53 @@ require_once 'conexion.modelo.php';
 class ReporteModulosModelo
 {
     /**
+     * Condición SQL sobre la tabla `programa` (alias p) para los filtros de la pestaña
+     * Gráficos: sede, grado académico y programa. Los vacíos no filtran.
+     * @param array $filtros ['sede' => ?string, 'grado' => ?string, 'programaID' => ?int]
+     * @return array [string $condicion (empieza con " AND" o vacía), array $parametros]
+     */
+    private static function CondicionFiltrosPrograma($filtros)
+    {
+        $condicion = '';
+        $parametros = [];
+        if (!empty($filtros['sede'])) {
+            $condicion .= ' AND p.Sede = :fSede';
+            $parametros[':fSede'] = $filtros['sede'];
+        }
+        if (!empty($filtros['grado'])) {
+            $condicion .= ' AND p.GradoAcademico = :fGrado';
+            $parametros[':fGrado'] = $filtros['grado'];
+        }
+        if (!empty($filtros['programaID'])) {
+            $condicion .= ' AND p.ProgramaID = :fPrograma';
+            $parametros[':fPrograma'] = (int)$filtros['programaID'];
+        }
+        return [$condicion, $parametros];
+    }
+
+    /**
+     * Opciones de los filtros de la pestaña Gráficos: programas activos con su sede y
+     * grado (el navegador arma con ellos las listas de sedes, grados y programas).
+     * @return array
+     */
+    public static function ObtenerOpcionesFiltrosModelo()
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT ProgramaID, NombrePrograma, Version, Sede, GradoAcademico
+                 FROM programa
+                 WHERE Estado = 1
+                 ORDER BY NombrePrograma ASC, Version ASC"
+            );
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerOpcionesFiltrosModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Obtener grados académicos únicos
      * @return array
      */
@@ -188,10 +235,15 @@ class ReporteModulosModelo
      * El plan del programa vive en `pagoprograma` (uno por inscripción); lo pagado se
      * suma desde `pagomodulo` (las "cuotas del programa", ya no ligadas a módulos).
      * @param string|null $grado Filtrar por grado académico (opcional)
+     * @param string|null $sede Filtrar por sede (opcional, pestaña Gráficos)
+     * @param int|null $programaID Un solo programa (opcional, pestaña Gráficos)
      * @return array
      */
-    public static function ObtenerReportePagosPorProgramaModelo($grado = null)
+    public static function ObtenerReportePagosPorProgramaModelo($grado = null, $sede = null, $programaID = null)
     {
+        [$condicionFiltros, $parametrosFiltros] = self::CondicionFiltrosPrograma([
+            'sede' => $sede, 'grado' => $grado, 'programaID' => $programaID,
+        ]);
         try {
             $sql = "SELECT
                         d.ProgramaID,
@@ -252,11 +304,7 @@ class ReporteModulosModelo
                             WHERE Estado = 'PAGADO'
                             GROUP BY idinscripcion
                         ) pagado ON pagado.idinscripcion = ep.idInscripcion
-                        WHERE p.Estado = 1";
-
-            if (!empty($grado)) {
-                $sql .= " AND p.GradoAcademico = :grado";
-            }
+                        WHERE p.Estado = 1" . $condicionFiltros;
 
             $sql .= "
                     ) d
@@ -264,10 +312,7 @@ class ReporteModulosModelo
                     ORDER BY d.GradoAcademico ASC, d.NombrePrograma ASC";
 
             $stmt = Conexion::Conectar()->prepare($sql);
-            if (!empty($grado)) {
-                $stmt->bindParam(":grado", $grado, PDO::PARAM_STR);
-            }
-            $stmt->execute();
+            $stmt->execute($parametrosFiltros);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Error en ObtenerReportePagosPorProgramaModelo: " . $e->getMessage());
@@ -296,6 +341,12 @@ class ReporteModulosModelo
                         pp.PorcentajeDescuento,
                         (COALESCE(ep.montoDescuento, 0) + COALESCE(pp.MontoDescuento, 0)) AS MontoDescuentoTotal,
                         COALESCE(ep.costomatricula, 0) AS CostoMatricula,
+                        -- Desglose para el detalle: matrícula y programa ya con su descuento
+                        -- (o aumento, si el descuento es negativo); CostoTotal = la suma de ambos
+                        COALESCE(ep.montoDescuento, 0) AS DescuentoMatricula,
+                        pp.MontoTotalPagar AS CostoPrograma,
+                        COALESCE(pp.CostoTotalPrograma - pp.MontoTotalPagar, 0) AS DescuentoPrograma,
+                        COALESCE(pagado.TotalPagado, 0) AS CuotasCobrado,
                         (COALESCE(pp.MontoTotalPagar, 0) + COALESCE(ep.costomatricula, 0)) AS CostoTotal,
                         (COALESCE(pagado.TotalPagado, 0) + COALESCE(ep.costomatricula, 0)) AS TotalPagado,
                         GREATEST(COALESCE(pp.MontoTotalPagar, 0) - COALESCE(pagado.TotalPagado, 0), 0) AS SaldoPendiente,
@@ -391,21 +442,22 @@ class ReporteModulosModelo
      * por cobrar). Lo cobrado sigue el mismo criterio que el reporte de pagos: la
      * matrícula cuenta como cobrada al inscribirse (FechaInscripcion), las cuotas por
      * su fecha de pago y las clínicas aparte.
-     * @param string|null $grado Filtrar por grado académico (opcional)
+     * @param array $filtros ['sede', 'grado', 'programaID'] (los vacíos no filtran)
      * @param int $meses Meses hacia atrás, incluido el actual
      * @return array
      */
-    public static function ObtenerDatosGraficosModelo($grado, $meses)
+    public static function ObtenerDatosGraficosModelo($filtros, $meses)
     {
         try {
             $conexion = Conexion::Conectar();
             $desde = date('Y-m-01', strtotime('-' . ($meses - 1) . ' months', strtotime(date('Y-m-01'))));
-            $filtroGrado = !empty($grado) ? ' AND p.GradoAcademico = :grado' : '';
-            $ejecutar = function ($sql, $conFecha = true) use ($conexion, $grado, $desde) {
+            // Filtra sobre programa (alias p) en todas las consultas
+            [$filtroProgramas, $parametrosFiltros] = self::CondicionFiltrosPrograma($filtros);
+            $ejecutar = function ($sql, $conFecha = true) use ($conexion, $parametrosFiltros, $desde) {
                 $stmt = $conexion->prepare($sql);
-                if ($conFecha) $stmt->bindValue(':desde', $desde);
-                if (!empty($grado)) $stmt->bindValue(':grado', $grado);
-                $stmt->execute();
+                $parametros = $parametrosFiltros;
+                if ($conFecha) $parametros[':desde'] = $desde;
+                $stmt->execute($parametros);
                 return $stmt->fetchAll(PDO::FETCH_ASSOC);
             };
 
@@ -414,7 +466,7 @@ class ReporteModulosModelo
                         COALESCE(SUM(ep.costomatricula), 0) AS Monto, COUNT(*) AS Inscritos
                  FROM estudianteprograma ep
                  INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
-                 WHERE ep.Estado IN ('ACTIVO', 'CONFIRMADO', 'ABANDONO') AND ep.FechaInscripcion >= :desde" . $filtroGrado . "
+                 WHERE ep.Estado IN ('ACTIVO', 'CONFIRMADO', 'ABANDONO') AND ep.FechaInscripcion >= :desde" . $filtroProgramas . "
                  GROUP BY Mes"
             );
             $cuotas = $ejecutar(
@@ -422,7 +474,7 @@ class ReporteModulosModelo
                  FROM pagomodulo pm
                  INNER JOIN estudianteprograma ep ON ep.idInscripcion = pm.idinscripcion
                  INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
-                 WHERE pm.Estado = 'PAGADO' AND pm.fechapago >= :desde" . $filtroGrado . "
+                 WHERE pm.Estado = 'PAGADO' AND pm.fechapago >= :desde" . $filtroProgramas . "
                  GROUP BY Mes"
             );
             $clinicas = $ejecutar(
@@ -430,7 +482,7 @@ class ReporteModulosModelo
                  FROM pagoclinica pcl
                  INNER JOIN ordenpago op ON op.IdOrdenPago = pcl.IdOrdenPago
                  INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
-                 WHERE pcl.Estado = 'PAGADO' AND pcl.FechaPago >= :desde" . $filtroGrado . "
+                 WHERE pcl.Estado = 'PAGADO' AND pcl.FechaPago >= :desde" . $filtroProgramas . "
                  GROUP BY Mes"
             );
 
@@ -458,6 +510,8 @@ class ReporteModulosModelo
             $ordenes = $ejecutar(
                 "SELECT
                     CASE
+                        -- Ya pagadas pero sin voucher (extraviado): aparte, no son cobro pendiente
+                        WHEN op.Estado = 'EXTRAVIADO' THEN 'extraviadas'
                         WHEN op.Observaciones NOT IN ('CUOTA PROGRAMA', 'CLINICA') THEN 'matricula'
                         WHEN op.FechaVencimiento IS NOT NULL AND op.FechaVencimiento < CURDATE() THEN 'vencidas'
                         WHEN op.FechaVencimiento IS NOT NULL AND op.FechaVencimiento <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 'proximas'
@@ -467,12 +521,12 @@ class ReporteModulosModelo
                     COALESCE(SUM(CASE WHEN op.MontoFinal > 0 THEN op.MontoFinal ELSE op.MontoTotal END), 0) AS Monto
                  FROM ordenpago op
                  INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
-                 WHERE op.Estado = 'PENDIENTE'" . $filtroGrado . "
+                 WHERE op.Estado IN ('PENDIENTE', 'EXTRAVIADO')" . $filtroProgramas . "
                  GROUP BY Grupo",
                 false
             );
             $resumenOrdenes = [];
-            foreach (['vencidas', 'proximas', 'aldia', 'matricula'] as $g) {
+            foreach (['vencidas', 'proximas', 'aldia', 'matricula', 'extraviadas'] as $g) {
                 $resumenOrdenes[$g] = ['cantidad' => 0, 'monto' => 0];
             }
             foreach ($ordenes as $f) {

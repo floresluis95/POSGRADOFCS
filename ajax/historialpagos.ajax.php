@@ -135,6 +135,21 @@ function leerDatosEdicionPago()
         echo json_encode(['success' => false, 'mensaje' => 'Complete el N° de voucher, la fecha y un monto válido']);
         return null;
     }
+    require_once __DIR__ . '/../modelos/voucher.modelo.php';
+    if (!VoucherModelo::FormatoVoucherValido($numeroVoucher)) {
+        echo json_encode(['success' => false, 'mensaje' => VoucherModelo::MENSAJE_FORMATO_VOUCHER]);
+        return null;
+    }
+
+    // Fecha en que se generó la orden de pago (opcional: los pagos sin orden no la envían)
+    $fechaOrden = isset($_POST['fechaOrden']) ? trim($_POST['fechaOrden']) : '';
+    if ($fechaOrden !== '') {
+        $d = DateTime::createFromFormat('!Y-m-d', $fechaOrden);
+        if (!$d || $d->format('Y-m-d') !== $fechaOrden || $fechaOrden > date('Y-m-d')) {
+            echo json_encode(['success' => false, 'mensaje' => 'La fecha de la orden no es válida o es posterior a hoy']);
+            return null;
+        }
+    }
 
     $foto = null;
     if (isset($_FILES['fotoVoucher']) && $_FILES['fotoVoucher']['error'] === UPLOAD_ERR_OK) {
@@ -158,7 +173,8 @@ function leerDatosEdicionPago()
         'numeroVoucher' => htmlspecialchars($numeroVoucher),
         'fechaPago' => $fechaPago,
         'monto' => $monto,
-        'foto' => $foto
+        'foto' => $foto,
+        'fechaOrden' => $fechaOrden !== '' ? $fechaOrden : null
     ];
 }
 

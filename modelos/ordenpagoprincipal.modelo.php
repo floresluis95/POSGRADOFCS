@@ -26,6 +26,75 @@ class OrdenPagoModelos
     }
 
     /**
+     * N° de orden libre a partir de la base (ej. ORD-0021-001-20261015161320). La base
+     * lleva fecha y hora al segundo: dos órdenes del mismo estudiante y programa en el
+     * mismo segundo (marcar voucher extraviado y generar la siguiente, un doble clic)
+     * chocaban con el índice único NumeroOrden. Se agrega -2, -3... si ya existe.
+     * @param PDO $pdo
+     * @param string $base
+     * @return string
+     */
+    public static function NumeroOrdenLibre($pdo, $base)
+    {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM ordenpago WHERE NumeroOrden = :numero");
+        $numero = $base;
+        for ($i = 2; $i < 100; $i++) {
+            $stmt->execute([':numero' => $numero]);
+            if ((int)$stmt->fetchColumn() === 0) {
+                return $numero;
+            }
+            $numero = $base . '-' . $i;
+        }
+        return $base . '-' . uniqid();
+    }
+
+    /**
+     * Marcar una orden de cuota o clínica PENDIENTE como de voucher extraviado.
+     * @param int $idOrdenPago
+     * @param string $motivo
+     * @param string|null $responsable Usuario que la marca
+     * @return bool false si la orden no existe, no está pendiente o no es de cuota/clínica
+     */
+    public static function MarcarVoucherExtraviadoModelo($idOrdenPago, $motivo, $responsable)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "UPDATE ordenpago
+                 SET Estado = 'EXTRAVIADO', MotivoExtraviado = :motivo, FechaExtraviado = NOW(),
+                     ResponsableExtraviado = :responsable
+                 WHERE IdOrdenPago = :id AND Estado = 'PENDIENTE'
+                 AND Observaciones IN ('CUOTA PROGRAMA', 'CLINICA')"
+            );
+            $stmt->execute([':motivo' => $motivo, ':responsable' => $responsable, ':id' => (int)$idOrdenPago]);
+            return $stmt->rowCount() === 1;
+        } catch (PDOException $e) {
+            error_log("Error en MarcarVoucherExtraviadoModelo: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * FechaGeneracion de una orden nueva (matrícula o cuota) a partir de la fecha del
+     * formulario (Y-m-d). Por defecto es hoy; con la casilla "Modificar fecha" se puede
+     * poner otra, pero nunca una fecha futura. Se le añade la hora actual para que las
+     * órdenes del mismo día sigan ordenándose por hora de registro.
+     * @param string|null $fecha
+     * @return string|false 'Y-m-d H:i:s', o false si la fecha no es válida o es futura
+     */
+    public static function FechaGeneracionDesdeFormulario($fecha)
+    {
+        $fecha = trim((string)$fecha);
+        if ($fecha === '') {
+            return date('Y-m-d H:i:s');
+        }
+        $d = DateTime::createFromFormat('!Y-m-d', $fecha);
+        if (!$d || $d->format('Y-m-d') !== $fecha || $fecha > date('Y-m-d')) {
+            return false;
+        }
+        return $fecha . ' ' . date('H:i:s');
+    }
+
+    /**
      * Validar el voucher de la matrícula ya cancelada e inscribir formalmente al estudiante.
      * Este es el único punto donde se escribe en `estudianteprograma`: recién aquí la
      * inscripción pasa a ser real. La orden de pago pasa a Estado = 'CONFIRMADO'.
@@ -93,6 +162,10 @@ class OrdenPagoModelos
                 if (trim((string)$numeroVoucher) === '' || mb_strtoupper(trim((string)$numeroVoucher), 'UTF-8') === 'SIN MATRÍCULA') {
                     $pdo->rollBack();
                     return ['status' => 'error', 'mensaje' => 'El N° de voucher es requerido'];
+                }
+                if (!VoucherModelo::FormatoVoucherValido($numeroVoucher)) {
+                    $pdo->rollBack();
+                    return ['status' => 'error', 'mensaje' => VoucherModelo::MENSAJE_FORMATO_VOUCHER];
                 }
                 if (empty($fotoVoucher)) {
                     $pdo->rollBack();
@@ -387,6 +460,11 @@ class OrdenPagoModelos
      */
     public static function RegistrarPreregistroModelo($datos)
     {
+        $fechaGeneracion = self::FechaGeneracionDesdeFormulario($datos['FechaInscripcion'] ?? '');
+        if ($fechaGeneracion === false) {
+            return ['status' => 'error', 'mensaje' => 'La fecha de la orden no es válida o es posterior a hoy'];
+        }
+
         try {
             $pdo = Conexion::Conectar();
             $pdo->beginTransaction();
@@ -596,7 +674,7 @@ class OrdenPagoModelos
                 VALUES
                 (:numeroOrden, NULL, :estudianteID, :programaID, :programaCuentaID,
                  :montoTotal, :montoDescuento, :porcentajeDescuento, :montoFinal,
-                 :pagoCompleto, :costoMatricula, NOW(), :observaciones,
+                 :pagoCompleto, :costoMatricula, :fechaGeneracion, :observaciones,
                  :planTipo, :planNumeroCuotas, :planMontoCuota, :planPorcentaje, :planMontoPrograma, :planCodigoGrupo,
                  :nombreFactura, :nitCiFactura, :responsable, :firma, 'PENDIENTE')"
             );
@@ -615,6 +693,7 @@ class OrdenPagoModelos
             $stmtOrden->bindParam(":montoFinal", $montoFinal);
             $stmtOrden->bindParam(":pagoCompleto", $datos['pagoCompleto'], PDO::PARAM_INT);
             $stmtOrden->bindParam(":costoMatricula", $costoMatricula);
+            $stmtOrden->bindParam(":fechaGeneracion", $fechaGeneracion, PDO::PARAM_STR);
             $stmtOrden->bindParam(":observaciones", $observaciones, PDO::PARAM_STR);
             $stmtOrden->bindParam(":planTipo", $planTipo, PDO::PARAM_STR);
             if ($planNumeroCuotas !== null) {
@@ -1067,6 +1146,17 @@ class OrdenPagoModelos
                         op.IdOrdenPago, op.NumeroOrden, op.ProgramaID, op.ListaModulos, op.MontoTotal,
                         op.MontoFinal, op.PagoCompleto, op.FechaGeneracion, op.FechaVencimiento,
                         op.FechaConfirmacion, op.Estado, op.Observaciones, op.ResponsableGeneracion,
+                        op.MotivoExtraviado, op.FechaExtraviado, op.ResponsableExtraviado,
+                        -- N° de cuota: posición entre las órdenes de cuota no anuladas de la
+                        -- inscripción (PagoModuloModelo::NumeroCuotaDeOrdenModelo) y total del plan
+                        CASE WHEN op.Observaciones = 'CUOTA PROGRAMA' AND op.Estado <> 'ANULADO' THEN
+                            (SELECT COUNT(*) FROM ordenpago o2
+                             WHERE o2.idinscripcion = op.idinscripcion AND o2.Observaciones = 'CUOTA PROGRAMA'
+                             AND o2.Estado <> 'ANULADO' AND o2.IdOrdenPago <= op.IdOrdenPago)
+                        END AS NumeroCuota,
+                        (SELECT pp.NumeroCuotas FROM pagoprograma pp
+                         WHERE pp.idInscripcion = op.idinscripcion AND pp.Estado <> 'ANULADO'
+                         ORDER BY pp.IdPagoPrograma DESC LIMIT 1) AS CuotasPlan,
                         op.idinscripcion, e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Complemento, e.Exp,
                         p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico, p.Sede
                     FROM ordenpago op

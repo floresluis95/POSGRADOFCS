@@ -59,6 +59,16 @@ class PagoClinicaControlador
         if ($fechaVencimiento !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaVencimiento)) {
             return ['success' => false, 'mensaje' => 'La fecha límite de pago no es válida'];
         }
+        // Fecha de la orden: hoy, salvo que se marque "Modificar fecha" (nunca futura)
+        $fechaGeneracion = OrdenPagoModelos::FechaGeneracionDesdeFormulario($_POST['fechaGeneracion'] ?? '');
+        if ($fechaGeneracion === false) {
+            return ['success' => false, 'mensaje' => 'La fecha de la orden no es válida o es posterior a hoy'];
+        }
+        // El responsable de la firma se imprime en la orden: es obligatorio
+        $firma = htmlspecialchars(trim($_POST['firma'] ?? ''));
+        if ($firma === '') {
+            return ['success' => false, 'mensaje' => 'Elija al responsable de la firma'];
+        }
 
         $resultado = PagoClinicaModelo::RegistrarOrdenModelo([
             'EstudianteID' => $estudianteID,
@@ -69,7 +79,8 @@ class PagoClinicaControlador
             'FechaVencimiento' => $fechaVencimiento !== '' ? $fechaVencimiento : null,
             // El responsable es siempre el usuario de la sesión, no un campo del formulario
             'ResponsableGeneracion' => $this->UsuarioSesion(),
-            'Firma' => htmlspecialchars(trim($_POST['firma'] ?? '')),
+            'Firma' => $firma,
+            'FechaGeneracion' => $fechaGeneracion,
             'NombreFactura' => trim($_POST['nombreFactura'] ?? ''),
             'NitCiFactura' => trim($_POST['nitCiFactura'] ?? ''),
         ]);
@@ -94,6 +105,9 @@ class PagoClinicaControlador
         if ($idinscripcion <= 0 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaPago)) {
             return ['success' => false, 'mensaje' => 'Debe ingresar la fecha de pago'];
         }
+        if ($fechaPago > date('Y-m-d')) {
+            return ['success' => false, 'mensaje' => 'La fecha del depósito no puede ser posterior a hoy'];
+        }
         if ($numeroVoucher === '') {
             return ['success' => false, 'mensaje' => 'El N° de voucher o comprobante es obligatorio'];
         }
@@ -110,6 +124,9 @@ class PagoClinicaControlador
         if (!in_array($mime, $permitidos, true)) {
             return ['success' => false, 'mensaje' => 'Formato no permitido. Solo JPG, PNG, GIF, WEBP o PDF'];
         }
+        if (!VoucherModelo::FormatoVoucherValido($numeroVoucher)) {
+            return ['success' => false, 'mensaje' => VoucherModelo::MENSAJE_FORMATO_VOUCHER];
+        }
 
         // El N° de voucher es único en todo el sistema (matrículas, cuotas y clínicas)
         $usadoEn = VoucherModelo::VoucherYaUsadoModelo($numeroVoucher);
@@ -123,6 +140,8 @@ class PagoClinicaControlador
             'NumeroVoucher' => $numeroVoucher,
             'FotoVoucher' => file_get_contents($_FILES['fotoVoucher']['tmp_name']),
             'ResponsableRegistro' => $this->UsuarioSesion(),
+            // Orden concreta (voucher extraviado ya recuperado); sin ella, la pendiente
+            'IdOrdenPago' => !empty($_POST['idOrdenPago']) ? (int)$_POST['idOrdenPago'] : null,
         ]);
 
         return [

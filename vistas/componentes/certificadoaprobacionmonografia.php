@@ -117,7 +117,15 @@ require_once 'modelos/certificado.modelo.php';
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label><strong>N° de Recibo de Caja (Vaucher)</strong></label>
-                                                <input type="text" class="form-control" id="input-vaucher" placeholder="Número de recibo de caja">
+                                                <input type="text" class="form-control" id="input-vaucher" placeholder="Número de recibo de caja" data-voucher-partes>
+                                            </div>
+                                        </div>
+                                        <!-- Monto pagado: llega con el precio del certificado (Autoridades) y se puede cambiar -->
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="input-monto"><strong>Monto pagado (Bs.)</strong></label>
+                                                <input type="number" class="form-control" id="input-monto" min="0" step="0.01" placeholder="0.00"
+                                                       value="<?php $preciosCert = CertificadoModelo::PreciosCertificados(); echo $preciosCert['APROBACION_MONOGRAFIA'] !== null ? number_format($preciosCert['APROBACION_MONOGRAFIA'], 2, '.', '') : ''; ?>">
                                             </div>
                                         </div>
                                     </div>
@@ -226,6 +234,7 @@ require_once 'modelos/certificado.modelo.php';
         <input type="hidden" name="programa" id="hidden-programa">
         <input type="hidden" name="curso" id="hidden-curso">
         <input type="hidden" name="vaucher" id="hidden-vaucher">
+        <input type="hidden" name="monto" id="hidden-monto">
         <input type="hidden" name="titulo" id="hidden-titulo">
         <input type="hidden" name="tribunal" id="hidden-tribunal">
         <input type="hidden" name="entrega" id="hidden-entrega">
@@ -630,6 +639,12 @@ require_once 'modelos/certificado.modelo.php';
             $('#hidden-programa').val(programa);
             $('#hidden-curso').val(curso);
             $('#hidden-vaucher').val(vaucher);
+            var monto = ($('#input-monto').val() || '').trim();
+            if (monto === '' || isNaN(monto) || parseFloat(monto) < 0) {
+                Swal.fire({ type: 'warning', title: 'Falta el monto', text: 'Ingrese el monto pagado por el certificado (Bs.)' });
+                return;
+            }
+            $('#hidden-monto').val(monto);
             $('#hidden-titulo').val(titulo);
             $('#hidden-tribunal').val(tribunal.join('|'));
             $('#hidden-entrega').val(entrega);

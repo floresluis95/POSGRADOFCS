@@ -108,7 +108,9 @@ export async function preregistrar(page, estudianteID, cambios = {}) {
     programa: String(PROGRAMA_ID),
     ProgramaCuentaID: valor(`SELECT ProgramaCuentaID FROM programacuenta WHERE ProgramaID = ${PROGRAMA_ID} AND TipoCuenta = 'MATRICULA' AND Estado = 1 LIMIT 1`),
     montoAPagar: matricula.toFixed(2),
-    fechaInscripcion: new Date().toISOString().slice(0, 10),
+    // Fecha local (no UTC): desde las 20:00 de Bolivia la UTC ya es "mañana" y el
+    // servidor no acepta órdenes con fecha futura
+    fechaInscripcion: new Date().toLocaleDateString('sv-SE'),
     pagoCompleto: '0',
     tipoPagoCodigo: 'REGULAR',
     tipoPago: 'PLAN REGULAR',
@@ -159,7 +161,7 @@ export async function estudianteInscrito(page) {
   await preregistrar(page, estudianteID);
   const idOrden = ordenPendiente(estudianteID);
   expect(idOrden, 'se debió crear la orden de matrícula').not.toBeNull();
-  const validacion = await validarVoucherMatricula(page, idOrden, 'MAT-' + unico());
+  const validacion = await validarVoucherMatricula(page, idOrden, unico() + '-01');
   expect(validacion.success, validacion.mensaje).toBe(true);
   const idInscripcion = valor(`SELECT idInscripcion FROM estudianteprograma WHERE EstudianteID = ${estudianteID} AND ProgramaID = ${PROGRAMA_ID}`);
   return { estudianteID, idInscripcion: Number(idInscripcion) };

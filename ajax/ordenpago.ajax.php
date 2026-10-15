@@ -133,6 +133,10 @@ switch ($accion) {
         anularPreregistro();
         break;
 
+    case 'marcarVoucherExtraviado':
+        marcarVoucherExtraviado();
+        break;
+
     case 'actualizarFacturacion':
         actualizarFacturacion();
         break;
@@ -978,20 +982,32 @@ function registrarOrdenPagoCuotaPrograma()
         $nitCiFactura = isset($_POST['nitCiFactura']) ? $_POST['nitCiFactura'] : '';
         $fechaVencimiento = !empty($_POST['fechaVencimiento']) ? trim($_POST['fechaVencimiento']) : null;
         $programaCuentaID = !empty($_POST['programaCuentaID']) ? (int)$_POST['programaCuentaID'] : null;
+        // Fecha de la orden: hoy, salvo que se marque "Modificar fecha" (nunca futura)
+        $fechaGeneracion = OrdenPagoModelos::FechaGeneracionDesdeFormulario($_POST['fechaGeneracion'] ?? '');
 
         if ($montoTotal <= 0) {
             echo json_encode(['success' => false, 'mensaje' => 'El monto de la cuota debe ser mayor a 0']);
             return;
         }
+        if ($fechaGeneracion === false) {
+            echo json_encode(['success' => false, 'mensaje' => 'La fecha de la orden no es válida o es posterior a hoy']);
+            return;
+        }
 
         // La cuota no puede superar lo que falta pagar del programa (mismo saldo que
         // muestra Gestión de Pagos: costo con el descuento del plan menos lo PAGADO)
+        // Lo que está en órdenes con voucher extraviado ya se pagó: no se vuelve a pedir
         $resumen = PagoModuloModelo::ObtenerResumenPagoProgramaModelo($idinscripcion, $programaID);
-        if ($montoTotal - $resumen['saldoPendiente'] > 0.01) {
-            echo json_encode(['success' => false, 'mensaje' => sprintf(
-                'El monto de la cuota (Bs. %.2f) supera el saldo pendiente del programa (Bs. %.2f)',
-                $montoTotal, $resumen['saldoPendiente']
-            )]);
+        if ($montoTotal - $resumen['disponibleOrden'] > 0.01) {
+            echo json_encode(['success' => false, 'mensaje' => $resumen['montoEnEspera'] > 0
+                ? sprintf(
+                    'El monto de la cuota (Bs. %.2f) supera lo que falta pedir (Bs. %.2f): saldo Bs. %.2f menos Bs. %.2f en órdenes con voucher por validar',
+                    $montoTotal, $resumen['disponibleOrden'], $resumen['saldoPendiente'], $resumen['montoEnEspera']
+                )
+                : sprintf(
+                    'El monto de la cuota (Bs. %.2f) supera el saldo pendiente del programa (Bs. %.2f)',
+                    $montoTotal, $resumen['saldoPendiente']
+                )]);
             return;
         }
 
@@ -1055,9 +1071,10 @@ function registrarOrdenPagoCuotaPrograma()
             return;
         }
 
-        $numeroOrden = 'ORD-' . str_pad($estudianteID, 4, '0', STR_PAD_LEFT) . '-' .
-                       str_pad($programaID, 3, '0', STR_PAD_LEFT) . '-' .
-                       date('YmdHis');
+        $numeroOrden = OrdenPagoModelos::NumeroOrdenLibre($conexion,
+            'ORD-' . str_pad($estudianteID, 4, '0', STR_PAD_LEFT) . '-' .
+            str_pad($programaID, 3, '0', STR_PAD_LEFT) . '-' .
+            date('YmdHis'));
 
         $stmt = $conexion->prepare("
             INSERT INTO ordenpago
@@ -1065,8 +1082,9 @@ function registrarOrdenPagoCuotaPrograma()
              ResponsableGeneracion, Firma, NombreFactura, NitCiFactura, NumeroOrden, FechaGeneracion, Observaciones, Estado)
             VALUES
             (:estudianteID, :idinscripcion, :programaID, :programaCuentaID, :montoTotal, :fechaVencimiento,
-             :responsable, :firma, :nombreFactura, :nitCiFactura, :numeroOrden, NOW(), 'CUOTA PROGRAMA', 'PENDIENTE')
+             :responsable, :firma, :nombreFactura, :nitCiFactura, :numeroOrden, :fechaGeneracion, 'CUOTA PROGRAMA', 'PENDIENTE')
         ");
+        $stmt->bindParam(':fechaGeneracion', $fechaGeneracion, PDO::PARAM_STR);
 
         $stmt->bindParam(':estudianteID', $estudianteID, PDO::PARAM_INT);
         $stmt->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
@@ -1361,6 +1379,37 @@ function anularPreregistro()
 }
 
 /**
+ * Orden de cuota o clínica cuyo voucher el estudiante extravió: pasa a EXTRAVIADO con su
+ * motivo (obligatorio). Deja de contar como pendiente, así se puede generar la siguiente;
+ * su voucher se registra cuando Tesoro da el código.
+ */
+function marcarVoucherExtraviado()
+{
+    $idOrdenPago = (int)($_POST['idOrdenPago'] ?? 0);
+    $motivo = trim($_POST['motivo'] ?? '');
+    if ($idOrdenPago <= 0) {
+        echo json_encode(['success' => false, 'mensaje' => 'La orden es requerida']);
+        return;
+    }
+    if (mb_strlen($motivo) < 5) {
+        echo json_encode(['success' => false, 'mensaje' => 'Escriba el motivo (por ejemplo: perdió el voucher, se pidió copia a Tesoro)']);
+        return;
+    }
+
+    $resultado = OrdenPagoModelos::MarcarVoucherExtraviadoModelo(
+        $idOrdenPago,
+        mb_substr($motivo, 0, 255), // texto tal cual: las pantallas lo escapan al mostrarlo
+        OrdenPagoModelos::ResponsableSesion()
+    );
+    echo json_encode([
+        'success' => $resultado,
+        'mensaje' => $resultado
+            ? 'La orden quedó con voucher por validar. Ya puede generar la orden siguiente'
+            : 'Solo una orden de cuota o clínica pendiente puede marcarse con voucher por validar'
+    ]);
+}
+
+/**
  * Actualizar los datos de facturación de una orden ya generada (pantalla "orden-generada").
  * El "responsable" (usuario que generó la orden en el sistema) NO se recibe aquí: se
  * captura una sola vez, de la sesión, al crear la orden, y no se vuelve a exponer ni
@@ -1641,6 +1690,13 @@ function datosOrdenParaLista($o)
         'fechaVencimiento' => $o['FechaVencimiento'],
         'fechaConfirmacion' => $o['FechaConfirmacion'] ?? null,
         'estado' => $o['Estado'],
+        // Cuota: su N° y el total del plan ("Cuota 3 de 10"); solo en la lista del personal
+        'numeroCuota' => isset($o['NumeroCuota']) ? (int)$o['NumeroCuota'] : null,
+        'cuotasPlan' => isset($o['CuotasPlan']) ? (int)$o['CuotasPlan'] : null,
+        // Voucher extraviado: motivo, cuándo y quién lo marcó
+        'motivoExtraviado' => $o['MotivoExtraviado'] ?? null,
+        'fechaExtraviado' => $o['FechaExtraviado'] ?? null,
+        'responsableExtraviado' => $o['ResponsableExtraviado'] ?? null,
         'vencida' => $o['Estado'] === 'VENCIDO'
             || (!empty($o['FechaVencimiento']) && $o['Estado'] === 'PENDIENTE' && $o['FechaVencimiento'] < date('Y-m-d')),
     ];

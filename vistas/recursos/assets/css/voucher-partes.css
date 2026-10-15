@@ -1,0 +1,13 @@
+/* N° de voucher en dos partes (voucher-partes.js): largo - corto.
+   Selectores con .input-group > para ganarle a Bootstrap (.input-group > .form-control) */
+.voucher-partes .input-group { flex-wrap: nowrap; }
+.voucher-partes .input-group > .vp-largo { flex: 1 1 auto; min-width: 0; font-weight: 600; letter-spacing: .3px; }
+.voucher-partes .input-group > .vp-corto { flex: 0 0 92px; width: 92px; max-width: 92px; font-weight: 600; letter-spacing: .3px; }
+.voucher-partes .vp-guion {
+    padding-left: 8px; padding-right: 8px;
+    font-weight: 700; color: #6b7280; background: #f3f4f6;
+    border-radius: 0;
+}
+.voucher-partes .vp-se-guarda { display: block; margin-top: 4px; font-size: 11.5px; color: #6b7280; }
+.voucher-partes .vp-se-guarda strong { color: #1f2937; letter-spacing: .3px; }
+.voucher-partes .vp-aviso { display: none; margin-top: 3px; font-size: 11.5px; font-weight: 600; color: #b91c1c; }

@@ -46,6 +46,9 @@ class PagoModuloControlador
         if ($montoCuota <= 0) {
             return ['estado' => 'validacion', 'mensaje' => 'El monto de la cuota debe ser mayor a 0'];
         }
+        if (!VoucherModelo::FormatoVoucherValido($numeroVaucher)) {
+            return ['estado' => 'validacion', 'mensaje' => VoucherModelo::MENSAJE_FORMATO_VOUCHER];
+        }
 
         // El N° de voucher es único en todo el sistema (matrículas, cuotas y clínicas)
         $usadoEn = VoucherModelo::VoucherYaUsadoModelo($numeroVaucher);
@@ -60,13 +63,15 @@ class PagoModuloControlador
             'montocuota' => $montoCuota,
             'fechapago' => $fechaPago,
             'nvaucher' => $numeroVaucher,
-            'fmodulo' => $archivoVoucher
+            'fmodulo' => $archivoVoucher,
+            // Orden concreta (voucher extraviado ya recuperado); sin ella, la pendiente
+            'IdOrdenPago' => !empty($_POST['idOrdenPago']) ? (int)$_POST['idOrdenPago'] : null
         ]);
 
         $mensajes = [
             'exitoso'   => 'El pago de la cuota se registró correctamente',
             'sin_orden' => 'Debe generar primero la orden de pago (pestaña "Orden de Pago") antes de registrar el pago',
-            'monto_distinto' => 'El monto del voucher no coincide con el de la orden de pago pendiente. Recargue la pestaña e intente de nuevo',
+            'monto_distinto' => 'El monto del voucher no coincide con el de su orden de pago. Recargue la pestaña e intente de nuevo',
             'error'     => 'No se pudo registrar el pago'
         ];
 
@@ -142,7 +147,10 @@ class PagoModuloControlador
         echo json_encode([
             'success' => true,
             'resumen' => PagoModuloModelo::ObtenerResumenPagoProgramaModelo($idinscripcion, $programaID),
-            'cuotas' => PagoModuloModelo::ObtenerCuotasPorInscripcionModelo($idinscripcion)
+            'cuotas' => PagoModuloModelo::ObtenerCuotasPorInscripcionModelo($idinscripcion),
+            'extraviadas' => PagoModuloModelo::ListarCuotasExtraviadasModelo($idinscripcion),
+            // Órdenes sin voucher validado (pendientes y extraviadas), para el historial
+            'porPagar' => PagoModuloModelo::ListarCuotasSinPagarModelo($idinscripcion)
         ]);
         exit();
     }

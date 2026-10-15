@@ -46,7 +46,7 @@ test.describe('Descuentos de matrícula y programa por separado', () => {
       expect(valor(`SELECT MontoFinal FROM ordenpago WHERE IdOrdenPago = ${idOrden}`)).toBe(redondear(matricula * 0.9).toFixed(2));
       expect(Number(valor(`SELECT PlanPropuestoPorcentaje FROM ordenpago WHERE IdOrdenPago = ${idOrden}`))).toBe(20);
 
-      const validacion = await validarVoucherMatricula(page, idOrden, 'MAT-' + unico());
+      const validacion = await validarVoucherMatricula(page, idOrden, unico() + '-01');
       expect(validacion.success, validacion.mensaje).toBe(true);
       const idInscripcion = valor(`SELECT idInscripcion FROM estudianteprograma WHERE EstudianteID = ${estudianteID} AND ProgramaID = ${PROGRAMA_ID}`);
 
@@ -58,7 +58,7 @@ test.describe('Descuentos de matrícula y programa por separado', () => {
     test(`${nombre}: el programa se puede pagar en varias cuotas`, async ({ page }) => {
       const estudianteID = (await registrarEstudiante(page)).respuesta.estudianteID;
       await preregistrar(page, estudianteID, { tipoPagoCodigo: codigo, tipoPago: nombre, porcentajeDescuentoPrograma: '15' });
-      const validacion = await validarVoucherMatricula(page, ordenPendiente(estudianteID), 'MAT-' + unico());
+      const validacion = await validarVoucherMatricula(page, ordenPendiente(estudianteID), unico() + '-01');
       expect(validacion.success, validacion.mensaje).toBe(true);
       const idInscripcion = Number(valor(`SELECT idInscripcion FROM estudianteprograma WHERE EstudianteID = ${estudianteID} AND ProgramaID = ${PROGRAMA_ID}`));
 
@@ -124,7 +124,7 @@ test.describe('Validar voucher según lo definido en el Pre-Registro', () => {
     const estudianteID = (await registrarEstudiante(page)).respuesta.estudianteID;
     await preregistrar(page, estudianteID);
     const idOrden = ordenPendiente(estudianteID);
-    const r = await validarVoucherMatricula(page, idOrden, 'MAT-' + unico());
+    const r = await validarVoucherMatricula(page, idOrden, unico() + '-01');
     expect(r.success, r.mensaje).toBe(true);
     expect(valor(`SELECT montoPagado FROM estudianteprograma WHERE EstudianteID = ${estudianteID}`))
       .toBe(valor(`SELECT MontoFinal FROM ordenpago WHERE IdOrdenPago = ${idOrden}`));

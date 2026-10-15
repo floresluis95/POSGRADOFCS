@@ -52,11 +52,13 @@
     }
 
     // Marcas del eje Y redondeadas (pasos de 1, 2 o 5 × 10^n), unas 4 líneas
-    function escalaY(maximo) {
+    // Con enteros (conteos) el paso es al menos 1: con pocos inscritos el eje mostraba "0, 1, 1"
+    function escalaY(maximo, enteros) {
         if (maximo <= 0) return { tope: 1, marcas: [0] };
         const crudo = maximo / 4;
         const base = Math.pow(10, Math.floor(Math.log10(crudo)));
-        const paso = [1, 2, 5, 10].map(function(f) { return f * base; }).find(function(p) { return p >= crudo; });
+        let paso = [1, 2, 5, 10].map(function(f) { return f * base; }).find(function(p) { return p >= crudo; });
+        if (enteros) paso = Math.max(1, paso);
         const tope = Math.ceil(maximo / paso) * paso;
         const marcas = [];
         for (let v = 0; v <= tope + paso / 2; v += paso) marcas.push(v);
@@ -90,7 +92,7 @@
         const totales = meses.map(function(m) {
             return series.reduce(function(s, serie) { return s + (m[serie.clave] || 0); }, 0);
         });
-        const escala = escalaY(Math.max.apply(null, totales));
+        const escala = escalaY(Math.max.apply(null, totales), opciones.enteros);
         const etiquetar = opciones.etiquetar || function() { return false; };
         // Rótulos del eje X que caben: hasta 12 a todo el ancho, 6 en medio panel
         const saltoEje = Math.max(1, Math.ceil(meses.length / (opciones.rotulosEje || 12)));
@@ -143,7 +145,9 @@
             tile('is-critico', 'fa-exclamation-circle', 'Cuotas vencidas', o.vencidas, '') +
             tile('is-alerta', 'fa-clock', 'Vencen en 7 días', o.proximas, '') +
             tile('is-bien', 'fa-check-circle', 'Pendientes al día', o.aldia, '') +
-            tile('', 'fa-user-clock', 'Matrículas por validar', o.matricula, 'pre-registros')
+            tile('', 'fa-user-clock', 'Matrículas por validar', o.matricula, 'pre-registros') +
+            // Ya pagadas, falta registrar el voucher: no cuentan como cobrado
+            tile('', 'fa-search-dollar', 'Voucher por validar', o.extraviadas || { cantidad: 0, monto: 0 }, 'falta el código')
         );
     }
 
@@ -200,6 +204,7 @@
         $('#rgInscritosMes').html(graficoColumnas(meses, [{ clave: 'inscritos', nombre: 'Inscripciones', clase: 'is-s1' }], {
             formato: function(v) { return String(v); },
             etiqueta: function(v) { return String(v); },
+            enteros: true,
             rotulosEje: 6,
             etiquetar: function(i) { return i === iMax || i === meses.length - 1; }
         }));
@@ -293,15 +298,20 @@
 
     // ---------- Carga ----------
     function cargarGraficos() {
-        const grado = $('#rgGrado').val() || '';
+        const $ = window.jQuery;
+        const filtros = {
+            sede: $('#rgSede').val() || '',
+            grado: $('#rgGrado').val() || '',
+            programaID: $('#rgPrograma').val() || ''
+        };
         const meses = $('#rgPeriodo').val() || '12';
         $('#rgCobradoMes, #rgInscritosMes, #rgCartera, #rgPlanes').html('<div class="rg-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>');
 
         $.when(
             $.ajax({ url: 'ajax/reportemodulos.ajax.php', method: 'POST', dataType: 'json',
-                     data: { accion: 'obtenerDatosGraficos', grado: grado, meses: meses } }),
+                     data: $.extend({ accion: 'obtenerDatosGraficos', meses: meses }, filtros) }),
             $.ajax({ url: 'ajax/reportemodulos.ajax.php', method: 'POST', dataType: 'json',
-                     data: { accion: 'obtenerReportePagosPrograma', grado: grado } })
+                     data: $.extend({ accion: 'obtenerReportePagosPrograma' }, filtros) })
         ).done(function(respGraficos, respPagos) {
             const datos = respGraficos[0] || {};
             const programas = Array.isArray(respPagos[0]) ? respPagos[0] : [];
@@ -321,14 +331,37 @@
         const $ = window.jQuery;
         if (!$('#rpTabGraficos').length) return;
 
-        // Mismos grados que el filtro de Pagos por programa
+        // Filtros: sedes y grados salen de los programas activos; la lista de programas
+        // se acota con la sede y el grado elegidos
+        let programasFiltro = [];
+        const unicos = function(campo) {
+            return programasFiltro.map(function(p) { return p[campo]; })
+                .filter(function(v, i, lista) { return v && lista.indexOf(v) === i; })
+                .sort();
+        };
+        function llenarProgramas() {
+            const sede = $('#rgSede').val() || '';
+            const grado = $('#rgGrado').val() || '';
+            const elegido = $('#rgPrograma').val() || '';
+            const $sel = $('#rgPrograma').empty().append($('<option>').val('').text('Todos los programas'));
+            let sigue = false;
+            programasFiltro.forEach(function(p) {
+                if ((sede && p.Sede !== sede) || (grado && p.GradoAcademico !== grado)) return;
+                const version = p.Version && String(p.Version).toUpperCase() !== 'V-1' ? ' (' + p.Version + ')' : '';
+                $sel.append($('<option>').val(p.ProgramaID).text(p.NombrePrograma + version));
+                if (String(p.ProgramaID) === elegido) sigue = true;
+            });
+            // Si el programa elegido ya no está en la lista, vuelve a "Todos"
+            $sel.val(sigue ? elegido : '').trigger('change.select2');
+        }
         $.ajax({
             url: 'ajax/reportemodulos.ajax.php', method: 'POST', dataType: 'json',
-            data: { accion: 'obtenerGrados' },
-            success: function(grados) {
-                (grados || []).forEach(function(g) {
-                    $('#rgGrado').append($('<option>').val(g.GradoAcademico).text(g.GradoAcademico));
-                });
+            data: { accion: 'obtenerOpcionesFiltros' },
+            success: function(programas) {
+                programasFiltro = Array.isArray(programas) ? programas : [];
+                unicos('Sede').forEach(function(s) { $('#rgSede').append($('<option>').val(s).text(s)); });
+                unicos('GradoAcademico').forEach(function(g) { $('#rgGrado').append($('<option>').val(g).text(g)); });
+                llenarProgramas();
             }
         });
 
@@ -341,7 +374,11 @@
                 cargarGraficos();
             }
         });
-        $('#rgGrado, #rgPeriodo').on('change', cargarGraficos);
+        $('#rgSede, #rgGrado').on('change', function() {
+            llenarProgramas();
+            cargarGraficos();
+        });
+        $('#rgPrograma, #rgPeriodo').on('change', cargarGraficos);
         $('#rgVerTabla').on('click', function() {
             const $tabla = $('#rgCobradoTabla').toggle();
             $(this).text($tabla.is(':visible') ? 'Ocultar datos' : 'Ver datos');

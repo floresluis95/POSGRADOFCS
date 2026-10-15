@@ -8,6 +8,8 @@ if ($idinscripcion === 0) die('ID de inscripción inválido');
 
 require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
 require_once '../../modelos/modulopagos_core.php';
+require_once __DIR__ . '/../../modelos/voucher.modelo.php';
+require_once __DIR__ . '/../../modelos/pagoclinica.modelo.php';
 
 date_default_timezone_set("America/La_Paz");
 $fechaGeneracion = date('d/m/Y H:i:s');
@@ -23,6 +25,7 @@ try {
                ep.montoDescuento,
                ep.porcentajeDescuento,
                ep.nvauchermatricula AS VoucherMatricula,
+               " . VoucherModelo::SqlFechaOrdenMatricula('ep.idInscripcion') . " AS FechaOrdenMatricula,
                p.NombrePrograma,p.Codigo AS CodigoPrograma,p.GradoAcademico,p.Costo AS CostoTotalPrograma,p.CostoMatricula,
                p.Version,p.NumeroTramite
         FROM estudianteprograma ep
@@ -54,13 +57,49 @@ try {
         return [(int)$a['NumeroCuota'], $a['fechapago']] <=> [(int)$b['NumeroCuota'], $b['fechapago']];
     });
 
+    // Órdenes de cuota sin voucher validado: van en la misma tabla, en su lugar por N°,
+    // marcadas "PENDIENTE DE PAGO" (no suman a lo pagado ni cambian el saldo)
+    $cuotasPendientes = array_map(function($o) {
+        return [
+            'NumeroCuota' => $o['NumeroCuota'],
+            'montocuota' => $o['MontoTotal'],
+            'FechaSolicitud' => $o['FechaGeneracion'],
+            'fechapago' => null,
+            'nvaucher' => null,
+            'pendiente' => true,
+            'extraviado' => $o['Estado'] === 'EXTRAVIADO',
+        ];
+    }, PagoModuloModelo::ListarCuotasSinPagarModelo($idinscripcion));
+    $filasCuotas = array_merge(
+        array_map(function($c) { return $c + ['pendiente' => false, 'extraviado' => false]; }, $cuotasPagadas),
+        $cuotasPendientes
+    );
+    usort($filasCuotas, function($a, $b) { return (int)$a['NumeroCuota'] <=> (int)$b['NumeroCuota']; });
+
+    // Clínicas (aparte: no se suman al costo ni al saldo del programa). Las pendientes
+    // también se listan, marcadas; el total es solo de las pagadas.
+    $clinicasRecibo = array_values(array_filter(
+        PagoClinicaModelo::ListarPorInscripcionModelo($idinscripcion),
+        function($cl) { return in_array($cl['Estado'], ['CONFIRMADO', 'PENDIENTE', 'EXTRAVIADO'], true); }
+    ));
+    usort($clinicasRecibo, function($a, $b) { return (int)$a['IdOrdenPago'] <=> (int)$b['IdOrdenPago']; });
+    $clinicasPagadas = array_values(array_filter($clinicasRecibo, function($cl) { return $cl['Estado'] === 'CONFIRMADO'; }));
+    $clinicasPendientes = count($clinicasRecibo) - count($clinicasPagadas);
+    $totalClinicas = array_sum(array_map(function($cl) { return floatval($cl['MontoTotal']); }, $clinicasPagadas));
+
 } catch(PDOException $e){ die('Error al obtener datos: '.$e->getMessage()); }
 
 // Con muchas cuotas la tabla se reparte en dos columnas para que el recibo siga en una hoja
-$columnasCuotas = count($cuotasPagadas) > 12
-    ? array_chunk($cuotasPagadas, (int)ceil(count($cuotasPagadas) / 2))
-    : [$cuotasPagadas];
+$columnasCuotas = count($filasCuotas) > 12
+    ? array_chunk($filasCuotas, (int)ceil(count($filasCuotas) / 2))
+    : [$filasCuotas];
 $numeroInicialColumna = 0;
+
+/* "PENDIENTE DE PAGO" en el lugar del voucher; con voucher extraviado, que falta registrarlo */
+function MarcaPendienteRecibo($fila)
+{
+    return '<span class="marca-pendiente">' . (!empty($fila['extraviado']) ? 'VOUCHER POR VALIDAR' : 'PENDIENTE DE PAGO') . '</span>';
+}
 
 function TextoCuotaRecibo($c, $resumenPrograma)
 {
@@ -134,6 +173,11 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#111;back
 .resumen strong{font-size:10pt}
 .resumen .saldo strong{font-size:11pt}
 .resumen .plan{display:block;font-size:7pt;color:#555}
+.seccion-nota{font-weight:normal;text-transform:none;font-size:7.5pt;color:#666;margin-left:6px}
+.total-clinicas td{font-weight:bold;border-top:1px solid #888}
+/* Orden pendiente: en gris cursiva y con la marca en recuadro (se distingue al imprimir en negro) */
+.fila-pendiente td{color:#555;font-style:italic}
+.marca-pendiente{display:inline-block;font-style:normal;font-weight:bold;font-size:7pt;letter-spacing:.3px;color:#111;border:1px solid #555;padding:0 4px}
 
 .footer{margin-top:12px;padding-top:5px;border-top:1px solid #ddd;text-align:center;font-size:7.5pt;line-height:1.3;color:#666}
 
@@ -186,11 +230,12 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#111;back
 <div class="seccion">
 <div class="seccion-titulo">Matrícula cancelada</div>
 <table class="tabla-modulos"><thead>
-<tr><th>Concepto</th><th class="num">Monto</th><th>Fecha</th><th>Voucher</th></tr>
+<tr><th>Concepto</th><th class="num">Monto</th><th>F. orden</th><th>F. pago</th><th>Voucher</th></tr>
 </thead><tbody>
 <tr>
 <td>Matrícula - <?php echo htmlspecialchars($estudiante['NombrePrograma']); ?></td>
 <td class="num">Bs. <?php echo number_format($costoMatriculaPagado,2); ?></td>
+<td><?php echo $estudiante['FechaOrdenMatricula'] ? date('d/m/Y',strtotime($estudiante['FechaOrdenMatricula'])) : '-'; ?></td>
 <td><?php echo date('d/m/Y',strtotime($estudiante['FechaInscripcion'])); ?></td>
 <td><?php echo htmlspecialchars($estudiante['VoucherMatricula'] ?: '-'); ?></td>
 </tr>
@@ -199,7 +244,7 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#111;back
 <?php // costomatricula ya es el monto CON descuento: esta fila solo informa cuánto se descontó ?>
 <td>Incluye descuento de matrícula (<?php echo number_format($porcentajeDescuentoMatricula,1); ?>%)</td>
 <td class="num">Bs. <?php echo number_format($montoDescuentoMatricula,2); ?></td>
-<td colspan="2"></td>
+<td colspan="3"></td>
 </tr>
 <?php endif; ?>
 </tbody></table></div>
@@ -207,19 +252,21 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#111;back
 
 <?php if($resumenPrograma['tienePlan']): ?>
 
-<?php if(count($cuotasPagadas)>0): ?>
-<div class="seccion"><div class="seccion-titulo">Cuotas pagadas (<?php echo count($cuotasPagadas); ?>)</div>
+<?php if(count($filasCuotas)>0): ?>
+<div class="seccion"><div class="seccion-titulo">Cuotas del programa (<?php echo count($cuotasPagadas); ?> pagada<?php echo count($cuotasPagadas) === 1 ? '' : 's'; ?><?php
+    if (count($cuotasPendientes)) echo ' · ' . count($cuotasPendientes) . ' pendiente' . (count($cuotasPendientes) === 1 ? '' : 's') . ' de pago'; ?>)</div>
 <div class="columnas-cuotas">
 <?php foreach($columnasCuotas as $columna): ?>
 <table class="tabla-modulos"><thead>
-<tr><th>Cuota</th><th class="num">Monto</th><th>Fecha</th><th>Voucher</th></tr>
+<tr><th>Cuota</th><th class="num">Monto</th><th>F. orden</th><th>F. pago</th><th>Voucher</th></tr>
 </thead><tbody>
 <?php foreach($columna as $c): ?>
-<tr>
+<tr<?php echo $c['pendiente'] ? ' class="fila-pendiente"' : ''; ?>>
 <td><?php echo TextoCuotaRecibo($c, $resumenPrograma); ?></td>
 <td class="num">Bs. <?php echo number_format($c['montocuota'],2); ?></td>
+<td><?php echo $c['FechaSolicitud']?date('d/m/Y',strtotime($c['FechaSolicitud'])):'-'; ?></td>
 <td><?php echo $c['fechapago']?date('d/m/Y',strtotime($c['fechapago'])):'-'; ?></td>
-<td><?php echo htmlspecialchars($c['nvaucher'] ?: '-'); ?></td>
+<td><?php echo $c['pendiente'] ? MarcaPendienteRecibo($c) : htmlspecialchars($c['nvaucher'] ?: '-'); ?></td>
 </tr>
 <?php endforeach; ?>
 </tbody></table>
@@ -234,6 +281,26 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#111;back
 <?php endif; ?>
 <?php else: ?>
 <div class="aviso">Este estudiante todavía no tiene un Plan de Pago del Programa definido.</div>
+<?php endif; ?>
+
+<?php if(count($clinicasRecibo)>0): ?>
+<div class="seccion"><div class="seccion-titulo"><?php echo $clinicasPendientes === 0
+    ? 'Clínicas pagadas (' . count($clinicasPagadas) . ')'
+    : 'Clínicas (' . count($clinicasPagadas) . ' pagada' . (count($clinicasPagadas) === 1 ? '' : 's') . ' · ' . $clinicasPendientes . ' pendiente' . ($clinicasPendientes === 1 ? '' : 's') . ' de pago)'; ?> <span class="seccion-nota">aparte del costo y saldo del programa</span></div>
+<table class="tabla-modulos"><thead>
+<tr><th>Concepto</th><th class="num">Monto</th><th>F. orden</th><th>F. pago</th><th>Voucher</th></tr>
+</thead><tbody>
+<?php foreach($clinicasRecibo as $cl): $clPendiente = $cl['Estado'] !== 'CONFIRMADO'; ?>
+<tr<?php echo $clPendiente ? ' class="fila-pendiente"' : ''; ?>>
+<td>Clínica · Orden <?php echo htmlspecialchars($cl['NumeroOrden']); ?></td>
+<td class="num">Bs. <?php echo number_format($cl['MontoTotal'],2); ?></td>
+<td><?php echo $cl['FechaGeneracion']?date('d/m/Y',strtotime($cl['FechaGeneracion'])):'-'; ?></td>
+<td><?php echo $cl['FechaPago']?date('d/m/Y',strtotime($cl['FechaPago'])):'-'; ?></td>
+<td><?php echo $clPendiente ? MarcaPendienteRecibo(['extraviado' => $cl['Estado'] === 'EXTRAVIADO']) : htmlspecialchars($cl['NumeroVoucher'] ?: '-'); ?></td>
+</tr>
+<?php endforeach; ?>
+<tr class="total-clinicas"><td>Total clínicas pagadas</td><td class="num">Bs. <?php echo number_format($totalClinicas,2); ?></td><td colspan="3"></td></tr>
+</tbody></table></div>
 <?php endif; ?>
 
 <?php
@@ -254,6 +321,10 @@ $nombresPlan = ['REGULAR' => 'Plan Regular', 'DESCUENTO' => 'Plan al Contado', '
     <div class="saldo"><span class="etq">Saldo del programa</span><strong>
         <?php echo $resumenPrograma['saldoPendiente']>0?'Bs. '.number_format($resumenPrograma['saldoPendiente'],2):'CANCELADO'; ?>
     </strong></div>
+    <?php endif; ?>
+    <?php if(count($clinicasPagadas)>0): ?>
+    <div><span class="etq">Clínicas pagadas</span><strong>Bs. <?php echo number_format($totalClinicas,2); ?></strong>
+        <span class="plan">aparte del programa</span></div>
     <?php endif; ?>
 </div>
 

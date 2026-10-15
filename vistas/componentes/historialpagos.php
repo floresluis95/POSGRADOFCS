@@ -52,36 +52,39 @@ date_default_timezone_set("America/La_Paz");
     color: var(--hp-texto);
     margin-bottom: 6px;
 }
-.hp-buscador { position: relative; display: flex; gap: 10px; }
+/* Buscador compacto: ancho acotado, campo y botón de 38 px, esquinas sobrias */
+.hp-buscador { position: relative; display: flex; gap: 8px; max-width: 560px; }
 .hp-buscador-icono {
     position: absolute;
-    left: 14px;
+    left: 12px;
     top: 50%;
     transform: translateY(-50%);
     color: #94a3b8;
+    font-size: 13px;
     pointer-events: none;
 }
 .hp-buscador .form-control {
-    height: 46px;
-    padding-left: 40px;
-    border: 1px solid #d8dde8;
-    border-radius: 10px;
-    font-size: 14px;
+    height: 38px;
+    padding-left: 34px;
+    border: 1px solid #cfd5e1;
+    border-radius: 6px;
+    font-size: 13px;
 }
 .hp-buscador .form-control:focus {
     border-color: var(--hp-primario);
-    box-shadow: 0 0 0 3px rgba(30, 60, 114, .12);
+    box-shadow: 0 0 0 2px rgba(30, 60, 114, .12);
 }
-.hp-buscador .hp-btn-primario { height: 46px; padding: 0 22px; }
+.hp-buscador .hp-btn-primario { height: 38px; padding: 0 16px; border-radius: 6px; font-size: 13px; }
 .hp-ayuda {
-    margin: 12px 0 0;
-    padding: 10px 14px;
-    background: var(--hp-primario-suave);
-    border-radius: 10px;
-    font-size: 12.5px;
-    color: #334155;
+    margin: 6px 0 0;
+    font-size: 11.5px;
+    color: var(--hp-texto-2);
 }
 .hp-ayuda i { color: var(--hp-primario); margin-right: 4px; }
+/* Tarjeta del buscador más baja que las de resultados */
+.hp-card-busqueda .hp-card-head { padding: 12px 20px; }
+.hp-card-busqueda .hp-card-head h3 { font-size: 14px; }
+.hp-card-busqueda .hp-card-body { padding: 14px 20px 16px; }
 
 /* Botón principal de la vista (Buscar, Ver historial): azul institucional */
 .hp-btn-primario {
@@ -146,6 +149,13 @@ date_default_timezone_set("America/La_Paz");
 .hp-estudiante h4 { margin: 0 0 6px; font-size: 18px; font-weight: 700; color: var(--hp-texto); }
 .hp-datos { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--hp-texto-2); }
 .hp-datos i { color: #94a3b8; margin-right: 4px; }
+/* Ir a Matriculados con el estudiante: a la derecha de la ficha */
+.hp-btn-ir-matriculados {
+    margin-left: auto; flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
+    height: 34px; padding: 0 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600;
+    background: #fff; color: #1e3c72; border: 1px solid #1e3c72; white-space: nowrap;
+}
+.hp-btn-ir-matriculados:hover, .hp-btn-ir-matriculados:focus { background: #1e3c72; color: #fff; text-decoration: none; }
 
 /* ---------- Programa ---------- */
 .hp-programa-head {
@@ -267,7 +277,8 @@ date_default_timezone_set("America/La_Paz");
     .hp-resultado { flex-wrap: wrap; }
     .hp-resultado .hp-btn-primario { width: 100%; }
     .hp-resumen { grid-template-columns: 1fr; }
-    .hp-estudiante { align-items: flex-start; }
+    .hp-estudiante { align-items: flex-start; flex-wrap: wrap; }
+    .hp-btn-ir-matriculados { margin-left: 0; width: 100%; justify-content: center; }
 }
 </style>
 
@@ -325,25 +336,25 @@ date_default_timezone_set("America/La_Paz");
               <div class="hp">
 
                 <!-- Buscador unificado de estudiante -->
-                <div class="hp-card">
+                <div class="hp-card hp-card-busqueda">
                   <div class="hp-card-head">
                     <div>
-                      <h3><i class="fa fa-search"></i> Buscar estudiante</h3>
-                      <p>Consulte la matrícula y las cuotas pagadas de un estudiante en cada programa.</p>
+                      <h3><i class="fa fa-search"></i> Consulta de historial de pagos</h3>
+                      <p>Matrícula, cuotas y clínicas del estudiante en cada programa.</p>
                     </div>
                   </div>
                   <div class="hp-card-body">
-                    <label class="hp-label" for="valorBusquedaHistorial">C.I., nombre o apellidos</label>
+                    <label class="hp-label" for="valorBusquedaHistorial">Carnet de identidad o nombre del estudiante</label>
                     <div class="hp-buscador">
                       <i class="fa fa-id-card hp-buscador-icono"></i>
                       <input type="text" id="valorBusquedaHistorial" class="form-control"
-                             placeholder="Ej: 1234567 o Pérez" maxlength="150" autocomplete="off">
+                             placeholder="Ej.: 7456178 o Pérez Gómez" maxlength="150" autocomplete="off">
                       <button type="button" id="btnBuscarHistorial" class="btn hp-btn-primario">
                         <i class="fa fa-search"></i> Buscar
                       </button>
                     </div>
                     <p class="hp-ayuda">
-                      <i class="fa fa-info-circle"></i> Busque por número de C.I. (sin complemento ni expedido) o escriba el nombre y/o apellidos.
+                      <i class="fa fa-info-circle"></i> C.I. sin complemento ni expedido, o nombre y/o apellidos.
                     </p>
                   </div>
                 </div>
@@ -380,6 +391,10 @@ date_default_timezone_set("America/La_Paz");
                         <h4 id="historialEstudianteNombre"></h4>
                         <div class="hp-datos" id="historialEstudianteDatos"></div>
                       </div>
+                      <!-- Matriculados filtrado por el C.I. del estudiante (matriculados?buscar=CI) -->
+                      <a href="matriculados" class="btn hp-btn-ir-matriculados" id="historialIrMatriculados" title="Abrir Matriculados filtrado por este estudiante">
+                        <i class="fa fa-user-graduate"></i> Ver en Matriculados
+                      </a>
                     </div>
                   </div>
 
@@ -445,13 +460,21 @@ date_default_timezone_set("America/La_Paz");
         <div class="modal-body">
           <div class="form-group">
             <label class="hp-label" for="editPagoVoucher">N° de voucher <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="editPagoVoucher" maxlength="100" required>
+            <input type="text" class="form-control" id="editPagoVoucher" maxlength="100" required data-voucher-partes>
           </div>
+          <!-- Primero la fecha de la orden (se generó antes) y después la del pago, igual
+               que las columnas F. orden y F. pago. La de la orden se oculta si el pago no tiene orden -->
           <div class="row">
+            <div class="col-md-6 form-group" id="editPagoFechaOrdenGrupo">
+              <label class="hp-label" for="editPagoFechaOrden">Fecha de la orden de pago</label>
+              <input type="date" class="form-control" id="editPagoFechaOrden" max="<?php echo date('Y-m-d'); ?>">
+            </div>
             <div class="col-md-6 form-group">
               <label class="hp-label" for="editPagoFecha">Fecha de pago <span class="text-danger">*</span></label>
               <input type="date" class="form-control" id="editPagoFecha" max="<?php echo date('Y-m-d'); ?>" required>
             </div>
+          </div>
+          <div class="row">
             <div class="col-md-6 form-group">
               <label class="hp-label" for="editPagoMonto">Monto (Bs.) <span class="text-danger">*</span></label>
               <input type="number" step="0.01" min="0.01" class="form-control" id="editPagoMonto" required>
@@ -501,9 +524,10 @@ function iniciarHistorialPagos() {
 
     function formatearFecha(fecha) {
         if (!fecha) return '-';
-        const partes = fecha.split('-');
-        if (partes.length !== 3) return fecha;
-        return partes[2] + '/' + partes[1] + '/' + partes[0];
+        // "2026-10-13" o "2026-10-13 17:39:30" (fecha de la orden) → "13/10/2026"
+        const partes = String(fecha).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (!partes) return fecha;
+        return partes[3] + '/' + partes[2] + '/' + partes[1];
     }
 
     function formatoBs(monto) {
@@ -523,9 +547,10 @@ function iniciarHistorialPagos() {
         return ((apaterno || '').charAt(0) + (nombre || '').charAt(0)).toUpperCase();
     }
 
-    function botonEditar(tipo, id, fecha, voucher, monto, titulo) {
+    function botonEditar(tipo, id, fecha, voucher, monto, titulo, fechaOrden) {
         return '<button type="button" class="btn btn-sm btn-warning btnEditarPagoHistorial" title="' + escaparAtributo(titulo) + '" ' +
                    'data-tipo="' + tipo + '" data-id="' + id + '" ' +
+                   'data-fecha-orden="' + escaparAtributo(String(fechaOrden || '').slice(0, 10)) + '" ' +
                    'data-fecha="' + escaparAtributo(fecha || '') + '" data-voucher="' + escaparAtributo(voucher || '') + '" ' +
                    'data-monto="' + (parseFloat(monto) || 0).toFixed(2) + '" ' +
                    'data-titulo="' + escaparAtributo(titulo) + '">' +
@@ -555,22 +580,95 @@ function iniciarHistorialPagos() {
         const totalCuotasPagadas = cuotasPagadas.reduce(function(suma, c) { return suma + (parseFloat(c.Monto) || 0); }, 0);
         const matriculaExonerada = programa.EstadoInscripcion && parseFloat(programa.costomatricula) === 0 && !programa.nvauchermatricula;
 
-        let filasCuotas = '';
+        // Pagadas y pendientes juntas, en orden correlativo por N° de cuota (1, 2, 3...)
+        const filas = [];
+        const numero = function(n) { return parseInt(n, 10) || 9999; };
         if (cuotas.length > 0) {
             cuotas.forEach(function(c) {
-                filasCuotas += '<tr>' +
+                filas.push({ n: numero(c.NumeroCuota), html: '<tr>' +
                     '<td class="text-center"><strong>' + escaparAtributo(c.NumeroCuota || '-') + '</strong></td>' +
                     '<td class="text-right">' + formatoBs(c.Monto) + '</td>' +
+                    '<td class="text-center">' + formatearFecha(c.FechaOrden) + '</td>' +
                     '<td class="text-center">' + formatearFecha(c.FechaPago) + '</td>' +
                     '<td>' + escaparAtributo(c.NumeroVoucher || '-') + '</td>' +
                     '<td class="text-center"><span class="hp-chip ' + (chipEstadoCuota[c.Estado] || '') + '">' + escaparAtributo(c.Estado) + '</span></td>' +
                     '<td class="text-center">' + miniaturaFoto(c.TieneFoto === 'SI', 'ajax/obtener-voucher-imagen.php?id=' + c.Idpagomodulo, c.NumeroVoucher, 'Foto voucher cuota') + '</td>' +
                     '<td class="text-center">' + botonEditar('cuota', c.Idpagomodulo, c.FechaPago, c.NumeroVoucher, c.Monto,
-                        'Editar cuota' + (c.NumeroCuota ? ' N° ' + c.NumeroCuota : '')) + '</td>' +
+                        'Editar cuota' + (c.NumeroCuota ? ' N° ' + c.NumeroCuota : ''), c.FechaOrden) + '</td>' +
+                '</tr>' });
+            });
+        }
+        // Cuotas con orden de pago pero sin voucher validado: "Pendiente" (o voucher extraviado)
+        (programa.CuotasPorPagar || []).forEach(function(o) {
+            const extraviado = o.Estado === 'EXTRAVIADO';
+            filas.push({ n: numero(o.NumeroCuota), html: '<tr class="hp-fila-pendiente">' +
+                '<td class="text-center"><strong>' + escaparAtributo(o.NumeroCuota || '-') + '</strong></td>' +
+                '<td class="text-right">' + formatoBs(o.MontoTotal) + '</td>' +
+                '<td class="text-center">' + formatearFecha(o.FechaGeneracion) + '</td>' +
+                '<td class="text-center">-</td>' +
+                '<td>' + (extraviado
+                    ? '<span class="text-muted small" title="' + escaparAtributo(o.MotivoExtraviado || '') + '">Por validar: ' + escaparAtributo(o.MotivoExtraviado || '') + '</span>'
+                    : '<span class="text-muted small">Orden ' + escaparAtributo(o.NumeroOrden) + (o.FechaVencimiento ? ' · vence ' + formatearFecha(o.FechaVencimiento) : '') + '</span>') + '</td>' +
+                '<td class="text-center"><span class="hp-chip is-pendiente">' + (extraviado ? 'VOUCHER POR VALIDAR' : 'PENDIENTE') + '</span></td>' +
+                '<td class="text-center"><span class="text-muted small">-</span></td>' +
+                '<td class="text-center"><span class="text-muted small">Sin validar</span></td>' +
+            '</tr>' });
+        });
+        let filasCuotas = filas
+            .sort(function(a, b) { return a.n - b.n; })
+            .map(function(f) { return f.html; }).join('');
+        if (!filasCuotas) {
+            filasCuotas = '<tr><td colspan="8" class="text-center text-muted py-3">Sin cuotas registradas</td></tr>';
+        }
+
+        // Clínicas: solo si el estudiante tiene alguna (no todos los programas las manejan).
+        // La orden confirmada = pago registrado; la foto/PDF sale de obtener-voucher-clinica.php
+        const clinicas = programa.Clinicas || [];
+        const totalClinicas = clinicas
+            .filter(function(cl) { return cl.Estado === 'CONFIRMADO'; })
+            .reduce(function(suma, cl) { return suma + (parseFloat(cl.MontoTotal) || 0); }, 0);
+        let seccionClinicas = '';
+        if (clinicas.length > 0) {
+            let filasClinicas = '';
+            clinicas.forEach(function(cl) {
+                const pagada = cl.Estado === 'CONFIRMADO';
+                const urlFoto = 'ajax/obtener-voucher-clinica.php?id=' + cl.IdPagoClinica;
+                let foto = '<span class="text-muted small">Sin foto</span>';
+                if (cl.IdPagoClinica && cl.TieneFoto == 1) {
+                    foto = cl.EsPdf == 1
+                        ? '<a href="' + urlFoto + '" target="_blank" title="Ver voucher (PDF)"><i class="fa fa-file-pdf fa-lg"></i></a>'
+                        : miniaturaFoto(true, urlFoto, cl.NumeroVoucher, 'Foto voucher clínica');
+                }
+                filasClinicas += '<tr>' +
+                    '<td>' + escaparAtributo(cl.NumeroOrden) + '</td>' +
+                    '<td class="text-right">' + formatoBs(cl.MontoTotal) + '</td>' +
+                    '<td class="text-center">' + formatearFecha(cl.FechaGeneracion) + '</td>' +
+                    '<td class="text-center">' + formatearFecha(cl.FechaPago) + '</td>' +
+                    '<td>' + escaparAtributo(cl.NumeroVoucher || '-') + '</td>' +
+                    '<td class="text-center"><span class="hp-chip ' + (chipEstadoCuota[pagada ? 'PAGADO' : cl.Estado] || '') + '">' + (pagada ? 'PAGADO' : (cl.Estado === 'EXTRAVIADO' ? 'VOUCHER POR VALIDAR' : escaparAtributo(cl.Estado))) + '</span></td>' +
+                    '<td class="text-center">' + foto + '</td>' +
                 '</tr>';
             });
-        } else {
-            filasCuotas = '<tr><td colspan="7" class="text-center text-muted py-3">Sin cuotas registradas</td></tr>';
+            seccionClinicas =
+                '<div class="hp-seccion">' +
+                    '<div class="hp-seccion-titulo"><i class="fa fa-stethoscope"></i> Clínicas' +
+                        ' <span>(aparte del saldo del programa · pagado ' + formatoBs(totalClinicas) + ')</span>' +
+                    '</div>' +
+                    '<div class="hp-tabla-marco table-responsive">' +
+                        '<table class="table hp-tabla">' +
+                            '<thead><tr>' +
+                                '<th>N° orden</th>' +
+                                '<th class="text-right">Monto</th>' +
+                                '<th class="text-center" title="Fecha en que se generó la orden de pago">F. orden</th>' +
+                                '<th class="text-center">F. pago</th>' +
+                                '<th>Voucher</th>' +
+                                '<th class="text-center">Estado</th>' +
+                                '<th class="text-center">Foto</th>' +
+                            '</tr></thead>' +
+                            '<tbody>' + filasClinicas + '</tbody>' +
+                        '</table>' +
+                    '</div>' +
+                '</div>';
         }
 
         const seccionMatricula = matriculaExonerada
@@ -579,17 +677,19 @@ function iniciarHistorialPagos() {
                 '<table class="table hp-tabla">' +
                     '<thead><tr>' +
                         '<th class="text-right">Monto</th>' +
-                        '<th class="text-center">Fecha</th>' +
+                        '<th class="text-center" title="Fecha en que se generó la orden de pago">F. orden</th>' +
+                        '<th class="text-center">F. pago</th>' +
                         '<th>N° voucher</th>' +
                         '<th class="text-center">Foto</th>' +
                         '<th class="text-center" style="width:90px;">Acción</th>' +
                     '</tr></thead>' +
                     '<tbody><tr>' +
                         '<td class="text-right"><strong>' + formatoBs(programa.costomatricula) + '</strong></td>' +
+                        '<td class="text-center">' + formatearFecha(programa.FechaOrdenMatricula) + '</td>' +
                         '<td class="text-center">' + formatearFecha(programa.FechaInscripcion) + '</td>' +
                         '<td>' + escaparAtributo(programa.nvauchermatricula || '-') + '</td>' +
                         '<td class="text-center">' + miniaturaFoto(programa.TieneFotoMatricula === 'SI', 'ajax/obtener-foto-matricula.php?idInscripcion=' + programa.idInscripcion, programa.nvauchermatricula, 'Foto voucher matrícula') + '</td>' +
-                        '<td class="text-center">' + botonEditar('matricula', programa.idInscripcion, programa.FechaInscripcion, programa.nvauchermatricula, programa.costomatricula, 'Editar matrícula') + '</td>' +
+                        '<td class="text-center">' + botonEditar('matricula', programa.idInscripcion, programa.FechaInscripcion, programa.nvauchermatricula, programa.costomatricula, 'Editar matrícula', programa.FechaOrdenMatricula) + '</td>' +
                     '</tr></tbody>' +
                 '</table>' +
               '</div>';
@@ -608,7 +708,8 @@ function iniciarHistorialPagos() {
                     '<small>' + (matriculaExonerada ? 'Inscrito sin matrícula' : 'Pagada el ' + formatearFecha(programa.FechaInscripcion)) + '</small></div>' +
                 '<div class="hp-resumen-item"><span>Cuotas pagadas</span><strong>' + cuotasPagadas.length +
                     (programa.NumeroCuotasPlan ? ' <small>de ' + escaparAtributo(programa.NumeroCuotasPlan) + '</small>' : '') + '</strong>' +
-                    '<small>' + cuotas.length + ' registrada(s)</small></div>' +
+                    '<small>' + cuotas.length + ' registrada(s)' +
+                        ((programa.CuotasPorPagar || []).length ? ' · ' + programa.CuotasPorPagar.length + ' pendiente(s) de validar' : '') + '</small></div>' +
                 '<div class="hp-resumen-item"><span>Total pagado en cuotas</span><strong>' + formatoBs(totalCuotasPagadas) + '</strong>' +
                     '<small>Solo cuotas en estado PAGADO</small></div>' +
             '</div>' +
@@ -627,7 +728,8 @@ function iniciarHistorialPagos() {
                         '<thead><tr>' +
                             '<th class="text-center" style="width:60px;">N°</th>' +
                             '<th class="text-right">Monto</th>' +
-                            '<th class="text-center">Fecha</th>' +
+                            '<th class="text-center" title="Fecha en que se generó la orden de pago">F. orden</th>' +
+                            '<th class="text-center">F. pago</th>' +
                             '<th>Voucher</th>' +
                             '<th class="text-center">Estado</th>' +
                             '<th class="text-center">Foto</th>' +
@@ -637,6 +739,7 @@ function iniciarHistorialPagos() {
                     '</table>' +
                 '</div>' +
             '</div>' +
+            seccionClinicas +
         '</div>';
     }
 
@@ -656,6 +759,7 @@ function iniciarHistorialPagos() {
         const nombreCompleto = est.Apaterno + ' ' + est.Amaterno + ' ' + est.Nombre;
 
         $('#historialEstudianteIniciales').text(iniciales(est.Apaterno, est.Nombre));
+        $('#historialIrMatriculados').attr('href', 'matriculados?buscar=' + encodeURIComponent(est.Ci || ''));
         $('#historialEstudianteNombre').text(nombreCompleto);
         $('#historialEstudianteDatos').html(
             '<span><i class="fa fa-id-card"></i>C.I. ' + escaparAtributo(ciCompletoDe(est)) + '</span>' +
@@ -880,6 +984,18 @@ function iniciarHistorialPagos() {
         $('#editPagoVoucher').val($btn.data('voucher'));
         $('#editPagoFecha').val($btn.data('fecha'));
         $('#editPagoMonto').val($btn.data('monto'));
+        // Fecha de la orden: solo si el pago tiene orden de pago (los antiguos pueden no tenerla)
+        const fechaOrden = String($btn.attr('data-fecha-orden') || '');
+        $('#editPagoFechaOrden').val(fechaOrden);
+        $('#editPagoFechaOrdenGrupo').toggle(fechaOrden !== '');
+        // Valores al abrir: el resumen antes de guardar marca lo que cambió
+        $('#formEditarPagoHistorial').data('original', {
+            titulo: String($btn.data('titulo') || ''),
+            voucher: String($btn.data('voucher') || ''),
+            fechaOrden: fechaOrden,
+            fecha: String($btn.data('fecha') || ''),
+            monto: parseFloat($btn.data('monto')) || 0
+        });
         $('#editPagoFoto').val('');
         $('#editPagoFotoLabel').text('Conservar la foto actual');
 
@@ -892,9 +1008,65 @@ function iniciarHistorialPagos() {
 
     const htmlBotonGuardar = '<i class="fa fa-save"></i> Guardar cambios';
 
+    // Antes de guardar: resumen de lo que se va a guardar; lo que cambió se muestra
+    // como "antes → ahora" para revisarlo
     $('#formEditarPagoHistorial').on('submit', function(e) {
         e.preventDefault();
+        const form = this;
+        const original = $(form).data('original') || {};
+        const conFechaOrden = $('#editPagoFechaOrdenGrupo').css('display') !== 'none';
+        const nuevo = {
+            voucher: $('#editPagoVoucher').val().trim(),
+            fechaOrden: $('#editPagoFechaOrden').val(),
+            fecha: $('#editPagoFecha').val(),
+            monto: parseFloat($('#editPagoMonto').val()) || 0
+        };
+        const hoy = $('#editPagoFecha').attr('max');
+        if (conFechaOrden && (!nuevo.fechaOrden || nuevo.fechaOrden > hoy)) {
+            Swal.fire({ type: 'warning', title: 'Revise la fecha de la orden', text: 'Elija una fecha que no sea posterior a hoy.' });
+            return;
+        }
 
+        const valor = function(texto, antes, cambio) {
+            return cambio
+                ? '<span style="color:#9ca3af;text-decoration:line-through;">' + escaparAtributo(antes || '-') + '</span> &rarr; <strong style="color:#b45309;">' + escaparAtributo(texto) + '</strong>'
+                : escaparAtributo(texto);
+        };
+        const fila = function(etiqueta, contenido) {
+            return '<tr><th style="padding:6px 10px 6px 0;color:#6b7280;font-weight:500;white-space:nowrap;vertical-align:top;">' + etiqueta + '</th>' +
+                '<td style="padding:6px 0;border-bottom:1px solid #edf0f4;">' + contenido + '</td></tr>';
+        };
+        const archivoFoto = $('#editPagoFoto')[0].files[0];
+        let cambios = 0;
+        const marcar = function(cambio) { if (cambio) cambios++; return cambio; };
+
+        let filas = fila('N° de voucher', valor(nuevo.voucher, original.voucher, marcar(nuevo.voucher !== original.voucher)));
+        if (conFechaOrden) {
+            filas += fila('Fecha de la orden', valor(formatearFecha(nuevo.fechaOrden), formatearFecha(original.fechaOrden), marcar(nuevo.fechaOrden !== original.fechaOrden)));
+        }
+        filas += fila('Fecha de pago', valor(formatearFecha(nuevo.fecha), formatearFecha(original.fecha), marcar(nuevo.fecha !== original.fecha)));
+        filas += fila('Monto', valor(formatoBs(nuevo.monto), formatoBs(original.monto), marcar(Math.abs(nuevo.monto - original.monto) > 0.004)));
+        marcar(!!archivoFoto);
+        filas += fila('Foto del voucher', archivoFoto
+            ? '<strong style="color:#b45309;">Se reemplaza</strong> por ' + escaparAtributo(archivoFoto.name)
+            : 'Se conserva la actual');
+
+        Swal.fire({
+            type: 'question', // SweetAlert2 v8
+            title: 'Revise los cambios',
+            html: '<div style="font-size:13px;color:#6b7280;margin-bottom:8px;">' + escaparAtributo(original.titulo || 'Pago') + '</div>' +
+                '<table style="width:100%;text-align:left;font-size:14px;border-collapse:collapse;">' + filas + '</table>' +
+                (cambios === 0 ? '<div style="margin-top:10px;font-size:13px;color:#6b7280;">No cambió ningún dato.</div>' : ''),
+            showCancelButton: true,
+            confirmButtonText: 'Sí, guardar',
+            cancelButtonText: 'Revisar',
+            reverseButtons: true
+        }).then(function(resultado) {
+            if (resultado.value) enviarEdicionPago(form);
+        });
+    });
+
+    function enviarEdicionPago(form) {
         const tipo = $('#editPagoTipo').val();
         const id = $('#editPagoId').val();
         const accion = tipo === 'matricula' ? 'actualizarMatricula' : 'actualizarCuota';
@@ -905,13 +1077,16 @@ function iniciarHistorialPagos() {
         formData.append('numeroVoucher', $('#editPagoVoucher').val().trim());
         formData.append('fechaPago', $('#editPagoFecha').val());
         formData.append('monto', $('#editPagoMonto').val());
+        if ($('#editPagoFechaOrdenGrupo').css('display') !== 'none') {
+            formData.append('fechaOrden', $('#editPagoFechaOrden').val());
+        }
 
         const archivoFoto = $('#editPagoFoto')[0].files[0];
         if (archivoFoto) {
             formData.append('fotoVoucher', archivoFoto);
         }
 
-        const $btnSubmit = $(this).find('button[type="submit"]');
+        const $btnSubmit = $(form).find('button[type="submit"]');
         $btnSubmit.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Guardando...');
 
         $.ajax({
@@ -940,7 +1115,7 @@ function iniciarHistorialPagos() {
                 Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo guardar el cambio' });
             }
         });
-    });
+    }
 }
 
 if (document.readyState === 'loading') {

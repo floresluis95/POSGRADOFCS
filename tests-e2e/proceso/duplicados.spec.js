@@ -212,7 +212,7 @@ test.describe('Duplicados en formularios', () => {
   test('inscripción: el mismo voucher no se valida dos veces', async ({ page }) => {
     const { estudianteID } = await estudianteInscrito(page);
     const idOrden = valor(`SELECT IdOrdenPago FROM ordenpago WHERE EstudianteID = ${estudianteID} AND Estado = 'CONFIRMADO' LIMIT 1`);
-    const otraVez = await validarVoucherMatricula(page, idOrden, 'MAT-' + unico());
+    const otraVez = await validarVoucherMatricula(page, idOrden, unico() + '-01');
     expect(otraVez.success).toBe(false);
     expect(valor(`SELECT COUNT(*) FROM estudianteprograma WHERE EstudianteID = ${estudianteID}`)).toBe('1');
   });
@@ -284,7 +284,7 @@ test.describe('Duplicados en formularios', () => {
     const b = await estudianteInscrito(page);
     await generarOrdenCuota(page, a, '1000');
     await generarOrdenCuota(page, b, '1000');
-    const voucher = 'CUO-' + unico();
+    const voucher = unico() + '-02';
 
     const primero = await pagarCuota(page, a.idInscripcion, '1000', voucher);
     expect(primero.estado, primero.mensaje).toBe('exitoso');

@@ -147,7 +147,15 @@ $directorCarta = AutoridadModelo::NombreParaDocumento($autoridadesCarta, 'DIRECT
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label><strong>N° de Recibo / Vaucher</strong></label>
-                                            <input type="text" class="form-control" id="input-vaucher" placeholder="Número de recibo de caja">
+                                            <input type="text" class="form-control" id="input-vaucher" placeholder="Número de recibo de caja" data-voucher-partes>
+                                        </div>
+                                    </div>
+                                    <!-- Monto pagado: llega con el precio del certificado (Autoridades) y se puede cambiar -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="input-monto"><strong>Monto pagado (Bs.)</strong></label>
+                                            <input type="number" class="form-control" id="input-monto" min="0" step="0.01" placeholder="0.00"
+                                                   value="<?php $preciosCert = CertificadoModelo::PreciosCertificados(); echo $preciosCert['MEDIO_MAGNETICO'] !== null ? number_format($preciosCert['MEDIO_MAGNETICO'], 2, '.', '') : ''; ?>">
                                         </div>
                                     </div>
                                 </div>
@@ -208,6 +216,7 @@ $directorCarta = AutoridadModelo::NombreParaDocumento($autoridadesCarta, 'DIRECT
         <input type="hidden" name="tipotrabajo" id="hidden-tipotrabajo">
         <input type="hidden" name="titulo" id="hidden-titulo">
         <input type="hidden" name="vaucher" id="hidden-vaucher">
+        <input type="hidden" name="monto" id="hidden-monto">
         <input type="hidden" name="fecha" id="hidden-fecha">
         <input type="hidden" name="coordinador" id="hidden-coordinador">
         <input type="hidden" name="director" id="hidden-director">
@@ -387,6 +396,12 @@ $directorCarta = AutoridadModelo::NombreParaDocumento($autoridadesCarta, 'DIRECT
             $('#hidden-tipotrabajo').val($('#input-tipotrabajo').val());
             $('#hidden-titulo').val(titulo);
             $('#hidden-vaucher').val(vaucher);
+            var monto = ($('#input-monto').val() || '').trim();
+            if (monto === '' || isNaN(monto) || parseFloat(monto) < 0) {
+                Swal.fire({ type: 'warning', title: 'Falta el monto', text: 'Ingrese el monto pagado por el certificado (Bs.)' });
+                return;
+            }
+            $('#hidden-monto').val(monto);
             $('#hidden-fecha').val(fecha);
             $('#hidden-coordinador').val(coordinador);
             $('#hidden-director').val(director);

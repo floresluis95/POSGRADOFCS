@@ -718,7 +718,12 @@ kt-aside--fixed kt-page--loading">
                                 </div>
                                 <div class="col-md-4 form-group mb-0">
                                   <label for="fechaOrdenPreregistro">Fecha de orden</label>
-                                  <input type="date" class="form-control form-control-sm" id="fechaOrdenPreregistro" name="fechaInscripcion" form="formPreregistro" value="<?php echo date('Y-m-d'); ?>" required>
+                                  <!-- Hoy por defecto; con "Modificar fecha" se puede poner otra (nunca futura) -->
+                                  <input type="date" class="form-control form-control-sm" id="fechaOrdenPreregistro" name="fechaInscripcion" form="formPreregistro" value="<?php echo date('Y-m-d'); ?>" max="<?php echo date('Y-m-d'); ?>" readonly required>
+                                  <div class="custom-control custom-checkbox mt-1">
+                                    <input type="checkbox" class="custom-control-input" id="chkModificarFechaOrden">
+                                    <label class="custom-control-label small" for="chkModificarFechaOrden">Modificar fecha</label>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -1768,6 +1773,22 @@ function iniciarPreregistro() {
     });
 
     $('#pagarMatricula').on('change', recalcularMontoMatricula);
+
+    // Fecha de la orden: hoy y bloqueada; con la casilla se puede cambiar. Al
+    // desmarcarla (o con "Limpiar") vuelve a hoy.
+    const hoyOrden = $('#fechaOrdenPreregistro').attr('max');
+    function bloquearFechaOrden(editable) {
+        $('#fechaOrdenPreregistro').prop('readonly', !editable);
+        if (!editable) $('#fechaOrdenPreregistro').val(hoyOrden).trigger('change');
+    }
+    $('#chkModificarFechaOrden').on('change', function() {
+        bloquearFechaOrden(this.checked);
+        if (this.checked) $('#fechaOrdenPreregistro').trigger('focus');
+    });
+    $('#formPreregistro').on('reset', function() {
+        $('#chkModificarFechaOrden').prop('checked', false);
+        setTimeout(function() { bloquearFechaOrden(false); }, 0);
+    });
 
     $('#programa').on('change', function() {
         const programaId = $(this).val();

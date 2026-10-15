@@ -2,6 +2,7 @@
 $Validar = new FuncionesControladores();
 $Validar->ValidarSessionControlador();
 date_default_timezone_set("America/La_Paz");
+require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtro
 ?>
 
 <style>
@@ -55,6 +56,16 @@ date_default_timezone_set("America/La_Paz");
     box-shadow: 0 0 0 3px rgba(30, 60, 114, .12);
 }
 .rd select.form-control { height: 46px; }
+
+/* ---------- Historial de pagos: filtros, monto y total ---------- */
+.rd-filtros { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 16px; }
+.rd-filtro { flex: 0 1 170px; min-width: 150px; }
+.rd-filtro .form-control { height: 42px; }
+.rd-filtro-tipo { flex: 1 1 220px; }
+.rd-filtro-botones { flex: 0 0 auto; display: flex; gap: 8px; }
+.rd-filtro-botones .btn { height: 42px; }
+.tabla-log .rd-monto { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+.tabla-log tfoot td { background: #f7f8fa; font-weight: 700; border-top: 2px solid #e2e6ee; }
 
 /* ---------- Buscador ---------- */
 .rd-buscador { position: relative; display: flex; gap: 10px; }
@@ -370,29 +381,58 @@ date_default_timezone_set("America/La_Paz");
                                 </div>
                             </div>
 
-                            <!-- Registro de emisiones -->
-                            <div class="rd-card">
+                            <!-- Registro de emisiones e historial de pagos de certificados -->
+                            <div class="rd-card" id="card-historial-pagos">
                                 <div class="rd-card-head">
                                     <div>
-                                        <h3><i class="fas fa-history"></i> Últimos documentos emitidos</h3>
+                                        <h3><i class="fas fa-history"></i> Documentos emitidos y pagos</h3>
                                         <p id="subtitulo-log">Emisiones más recientes de todo el sistema.</p>
                                     </div>
+                                    <button type="button" class="btn rd-btn-primario" id="btn-imprimir-pagos">
+                                        <i class="fas fa-print"></i> Imprimir detalle
+                                    </button>
                                 </div>
                                 <div class="rd-card-body">
+                                    <!-- Filtros del historial de pagos (con el C.I. buscado arriba, si hay uno) -->
+                                    <div class="rd-filtros">
+                                        <div class="rd-filtro">
+                                            <label class="rd-label" for="filtro-desde">Desde</label>
+                                            <input type="date" class="form-control" id="filtro-desde">
+                                        </div>
+                                        <div class="rd-filtro">
+                                            <label class="rd-label" for="filtro-hasta">Hasta</label>
+                                            <input type="date" class="form-control" id="filtro-hasta">
+                                        </div>
+                                        <div class="rd-filtro rd-filtro-tipo">
+                                            <label class="rd-label" for="filtro-tipo">Tipo de certificado</label>
+                                            <select class="form-control" id="filtro-tipo">
+                                                <option value="">Todos</option>
+                                                <?php foreach (CertificadoModelo::TiposDocumento() as $claveTipo => $nombreTipo): ?>
+                                                <option value="<?php echo htmlspecialchars($claveTipo); ?>"><?php echo htmlspecialchars($nombreTipo); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="rd-filtro rd-filtro-botones">
+                                            <button type="button" class="btn rd-btn-primario" id="btn-filtrar-pagos"><i class="fas fa-filter"></i> Filtrar</button>
+                                            <button type="button" class="btn btn-outline-secondary" id="btn-limpiar-pagos">Limpiar</button>
+                                        </div>
+                                    </div>
                                     <div class="rd-tabla-marco table-responsive">
-                                        <table class="table table-hover tabla-log">
+                                        <table class="table table-hover tabla-log" id="tabla-log">
                                             <thead>
                                                 <tr>
                                                     <th>Fecha</th>
                                                     <th>Tipo de documento</th>
                                                     <th>Estudiante</th>
                                                     <th>N° voucher</th>
+                                                    <th class="text-right">Monto</th>
                                                     <th>Emitido por</th>
                                                     <th>Aprobación del decano</th>
                                                     <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody id="tabla-log-body"></tbody>
+                                            <tfoot id="tabla-log-pie"></tfoot>
                                         </table>
                                     </div>
                                 </div>
@@ -467,42 +507,158 @@ date_default_timezone_set("America/La_Paz");
             if ($('#select-inscripcion').val()) $('#select-inscripcion').trigger('change');
         }
 
+        // ===== Historial de pagos de certificados: filtros, monto, total e impresión =====
+        var ciLog = '';
+        var ultimoLog = { documentos: [], tipos: {} };
+
+        function formatoBs(monto) {
+            return 'Bs. ' + (parseFloat(monto) || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        // "2026-10-15 12:30:00" → "15/10/2026 12:30"
+        function fechaHora(valor) {
+            var p = String(valor || '').match(/^(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}))?/);
+            return p ? p[3] + '/' + p[2] + '/' + p[1] + (p[4] ? ' ' + p[4] + ':' + p[5] : '') : (valor || '-');
+        }
+        function filtrosLog() {
+            return {
+                desde: $('#filtro-desde').val() || '',
+                hasta: $('#filtro-hasta').val() || '',
+                tipo: $('#filtro-tipo').val() || ''
+            };
+        }
+        // Texto del periodo y filtros, para el subtítulo y la impresión
+        function descripcionFiltros() {
+            var f = filtrosLog();
+            var partes = [];
+            if (ciLog) partes.push('C.I. ' + ciLog);
+            if (f.tipo) partes.push($('#filtro-tipo option:selected').text());
+            if (f.desde || f.hasta) {
+                partes.push((f.desde ? 'desde ' + fechaHora(f.desde) : '') + (f.desde && f.hasta ? ' ' : '') + (f.hasta ? 'hasta ' + fechaHora(f.hasta) : ''));
+            }
+            return partes.join(' · ');
+        }
+
         function cargarLog(ci) {
-            $('#subtitulo-log').text(ci ? 'Documentos emitidos al estudiante con C.I. ' + ci + '.' : 'Emisiones más recientes de todo el sistema.');
+            if (ci !== undefined) ciLog = ci || '';
+            var f = filtrosLog();
+            var hayFiltros = ciLog || f.desde || f.hasta || f.tipo;
+            $('#subtitulo-log').text(hayFiltros ? 'Filtrado: ' + descripcionFiltros() + '.' : 'Emisiones más recientes de todo el sistema.');
 
             $.ajax({
                 url: 'ajax/certificado.ajax.php',
                 method: 'POST',
-                data: { accion: 'listarDocumentosEmitidos', ci: ci || '' },
+                data: $.extend({ accion: 'listarDocumentosEmitidos', ci: ciLog }, f),
                 dataType: 'json',
                 success: function(data) {
                     var $tbody = $('#tabla-log-body');
                     $tbody.empty();
+                    $('#tabla-log-pie').empty();
+                    ultimoLog = { documentos: (data && data.documentos) || [], tipos: (data && data.tipos) || {} };
 
                     if (!data.success || !data.documentos || data.documentos.length === 0) {
-                        $tbody.append('<tr><td colspan="7" class="text-center text-muted py-4">Sin documentos emitidos todavía</td></tr>');
+                        $tbody.append('<tr><td colspan="8" class="text-center text-muted py-4">' +
+                            (hayFiltros ? 'Sin documentos emitidos con estos filtros' : 'Sin documentos emitidos todavía') + '</td></tr>');
                         return;
                     }
 
+                    var total = 0;
+                    var sinMonto = 0;
                     data.documentos.forEach(function(doc) {
                         var etiquetaTipo = data.tipos[doc.TipoDocumento] || doc.TipoDocumento;
+                        if (doc.Monto !== null && doc.Monto !== undefined && doc.Monto !== '') {
+                            total += parseFloat(doc.Monto) || 0;
+                        } else {
+                            sinMonto++;
+                        }
                         $tbody.append(
                             '<tr>' +
-                            '<td class="text-nowrap">' + esc(doc.FechaEmision) + '</td>' +
+                            '<td class="text-nowrap">' + esc(fechaHora(doc.FechaEmision)) + '</td>' +
                             '<td><span class="rd-tipo">' + esc(etiquetaTipo) + '</span></td>' +
-                            '<td>' + esc(doc.NombreEstudiante || '-') + '</td>' +
+                            '<td>' + esc(doc.NombreEstudiante || '-') + (doc.Ci ? '<div class="text-muted small">C.I. ' + esc(doc.Ci) + '</div>' : '') + '</td>' +
                             '<td>' + esc(doc.NumeroVaucher || '-') + '</td>' +
+                            '<td class="rd-monto">' + (doc.Monto !== null && doc.Monto !== undefined && doc.Monto !== '' ? formatoBs(doc.Monto) : '<span class="text-muted font-weight-normal">-</span>') + '</td>' +
                             '<td>' + esc(doc.UsuarioEmisor || '-') + '</td>' +
                             '<td>' + htmlEstado(doc) + '</td>' +
                             '<td class="rd-celda-acciones"><div class="rd-acciones" style="margin:0;">' + htmlAcciones(doc) + '</div></td>' +
                             '</tr>'
                         );
                     });
+
+                    $('#tabla-log-pie').html(
+                        '<tr><td colspan="4">Total · ' + data.documentos.length + ' documento(s)' +
+                            (sinMonto ? ' <span class="text-muted font-weight-normal">(' + sinMonto + ' sin monto registrado)</span>' : '') + '</td>' +
+                        '<td class="rd-monto">' + formatoBs(total) + '</td><td colspan="3"></td></tr>'
+                    );
                 }
             });
         }
 
         cargarLog();
+
+        $('#btn-filtrar-pagos').on('click', function() { cargarLog(); });
+        $('#filtro-tipo').on('change', function() { cargarLog(); });
+        $('#btn-limpiar-pagos').on('click', function() {
+            $('#filtro-desde, #filtro-hasta, #filtro-tipo').val('');
+            cargarLog();
+        });
+
+        // Imprimir el detalle de pagos con los filtros actuales: cabecera institucional,
+        // tabla (sin acciones) y total, en hoja carta horizontal
+        $('#btn-imprimir-pagos').on('click', function() {
+            var docs = ultimoLog.documentos;
+            if (!docs.length) {
+                Swal.fire({ type: 'info', title: 'Sin datos', text: 'No hay documentos para imprimir con estos filtros' });
+                return;
+            }
+            var total = 0;
+            var filas = docs.map(function(doc, i) {
+                var conMonto = doc.Monto !== null && doc.Monto !== undefined && doc.Monto !== '';
+                if (conMonto) total += parseFloat(doc.Monto) || 0;
+                return '<tr>' +
+                    '<td class="c">' + (i + 1) + '</td>' +
+                    '<td>' + esc(fechaHora(doc.FechaEmision)) + '</td>' +
+                    '<td>' + esc(doc.NombreEstudiante || '-') + '</td>' +
+                    '<td>' + esc(doc.Ci || '-') + '</td>' +
+                    '<td>' + esc(ultimoLog.tipos[doc.TipoDocumento] || doc.TipoDocumento) + '</td>' +
+                    '<td>' + esc(doc.NombrePrograma || '-') + '</td>' +
+                    '<td>' + esc(doc.NumeroVaucher || '-') + '</td>' +
+                    '<td class="r">' + (conMonto ? formatoBs(doc.Monto) : '-') + '</td>' +
+                '</tr>';
+            }).join('');
+
+            var base = document.baseURI;
+            var ahora = new Date();
+            var dos = function(n) { return String(n).padStart(2, '0'); };
+            var emitido = dos(ahora.getDate()) + '/' + dos(ahora.getMonth() + 1) + '/' + ahora.getFullYear() + ' ' + dos(ahora.getHours()) + ':' + dos(ahora.getMinutes());
+            var filtros = descripcionFiltros();
+            var v = window.open('', '_blank');
+            v.document.write(
+                '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Detalle de pagos de certificados</title>' +
+                '<style>' +
+                '@page { size: letter landscape; margin: 12mm; }' +
+                'body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; color: #111; margin: 0; }' +
+                '.cab { display: flex; align-items: center; gap: 14px; border-bottom: 2px solid #1e3c72; padding-bottom: 8px; margin-bottom: 10px; }' +
+                '.cab img { height: 54px; } .cab .t { flex: 1; text-align: center; }' +
+                '.cab h1 { font-size: 14px; margin: 0; } .cab h2 { font-size: 11px; margin: 2px 0 0; font-weight: normal; }' +
+                'h3 { font-size: 13px; margin: 10px 0 2px; letter-spacing: .5px; } .meta { color: #555; margin-bottom: 8px; }' +
+                'table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #bbb; padding: 4px 6px; text-align: left; }' +
+                'th { background: #eef2f9; font-size: 9.5px; text-transform: uppercase; } .r { text-align: right; white-space: nowrap; } .c { text-align: center; }' +
+                'tfoot td { font-weight: bold; background: #f3f4f6; } .pie { margin-top: 10px; color: #777; font-size: 9px; }' +
+                '</style></head><body>' +
+                '<div class="cab"><img src="' + new URL('extensiones/imagenespdf/logouto.png', base).href + '">' +
+                    '<div class="t"><h1>UNIVERSIDAD TÉCNICA DE ORURO</h1><h2>FACULTAD DE CIENCIAS DE LA SALUD · COORDINACIÓN DE POSGRADO - ODONTOLOGÍA</h2></div>' +
+                    '<img src="' + new URL('extensiones/imagenespdf/logofcs.png', base).href + '"></div>' +
+                '<h3>DETALLE DE PAGOS DE CERTIFICADOS</h3>' +
+                '<div class="meta">' + (filtros ? esc(filtros) + ' · ' : '') + docs.length + ' documento(s) · Emitido el ' + emitido + '</div>' +
+                '<table><thead><tr><th class="c">N°</th><th>Fecha</th><th>Estudiante</th><th>C.I.</th><th>Certificado</th><th>Programa</th><th>N° voucher</th><th class="r">Monto</th></tr></thead>' +
+                '<tbody>' + filas + '</tbody>' +
+                '<tfoot><tr><td colspan="7">Total</td><td class="r">' + formatoBs(total) + '</td></tr></tfoot></table>' +
+                '<div class="pie">Sistema de Gestión Académica · Posgrado FCS</div>' +
+                '<script>window.onload = function () { window.print(); };<\/script>' +
+                '</body></html>'
+            );
+            v.document.close();
+        });
 
         function limpiarResultadoBusqueda() {
             $('#select-inscripcion').empty().append('<option value="">-- Seleccione --</option>');
@@ -681,7 +837,7 @@ date_default_timezone_set("America/La_Paz");
         // ===== Reimprimir con los datos guardados (editables) =====
         var ETIQUETAS_CAMPO = {
             nombre: 'Nombre del estudiante', programa: 'Programa', nivel: 'Nivel', anio: 'Año',
-            vaucher: 'N° de voucher', fecha: 'Fecha del documento', curso: 'Curso',
+            vaucher: 'N° de voucher', monto: 'Monto pagado (Bs.)', fecha: 'Fecha del documento', curso: 'Curso',
             titulo: 'Título del trabajo', tribunal: 'Tribunal (uno por línea)', entrega: 'Fecha de entrega',
             horaEntrega: 'Hora de entrega', calificacion: 'Calificación', tratamiento: 'Tratamiento',
             tipotrabajo: 'Tipo de trabajo', coordinador: 'Coordinador(a)', director: 'Director(a)'

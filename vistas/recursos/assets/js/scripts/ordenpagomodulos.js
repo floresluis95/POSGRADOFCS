@@ -28,6 +28,13 @@ $(document).ready(function() {
         return fecha.getFullYear() + '-' + pad(fecha.getMonth() + 1) + '-' + pad(fecha.getDate());
     }
 
+    // Fecha de hoy (Y-m-d): fecha de la orden por defecto y tope (no se aceptan futuras)
+    function fechaHoy() {
+        const fecha = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        return fecha.getFullYear() + '-' + pad(fecha.getMonth() + 1) + '-' + pad(fecha.getDate());
+    }
+
     // ========================================
     // CARGAR PESTAÑA: resumen de pago + orden pendiente (si existe)
     // Invocado desde inscripcionmodulo.js al abrir el modal unificado de Gestión de Pagos
@@ -75,9 +82,17 @@ $(document).ready(function() {
     };
 
     function renderOrdenPago(r, orden) {
-        // Cuota que corresponde según lo ya cancelado (no un plan fijo): la próxima
-        // orden que se genere es la cuota N+1, siendo N las cuotas ya pagadas.
-        opContexto.numeroCuotaActual = (parseInt(r.cuotasPagadasCount, 10) || 0) + 1;
+        // Cuota que corresponde: la próxima orden es la N+1, siendo N las cuotas pagadas
+        // más las órdenes con voucher extraviado (ya pagadas, falta su voucher). Es la
+        // misma posición que usa el servidor (PagoModuloModelo::NumeroCuotaDeOrdenModelo).
+        opContexto.numeroCuotaActual = (parseInt(r.cuotasPagadasCount, 10) || 0) + (parseInt(r.cuotasEnEspera, 10) || 0) + 1;
+        const montoEnEspera = parseFloat(r.montoEnEspera) || 0;
+        const notaEspera = montoEnEspera > 0
+            ? '<div class="gp-nota is-neutra mb-2"><i class="fa fa-search-dollar"></i><span>' +
+                  (parseInt(r.cuotasEnEspera, 10) === 1 ? '1 orden' : r.cuotasEnEspera + ' órdenes') +
+                  ' con <strong>voucher por validar</strong> (' + window.formatoBs(montoEnEspera) + '): ya se pagó y no se vuelve a pedir. ' +
+                  'Registre su voucher en <a href="#" class="btn-ir-cuotas-programa">Cuotas del programa</a> cuando Tesoro dé el código.</span></div>'
+            : '';
         // Total de cuotas del plan (definido en Pre-Registro), para mostrar "1/12"
         opContexto.numeroCuotasPlan = parseInt(r.numeroCuotasPlan, 10) || 0;
         const bs = window.formatoBs;
@@ -116,8 +131,10 @@ $(document).ready(function() {
                         '<div class="op-cab-monto">' + bs(orden.MontoTotal) + '</div>' +
                     '</div>' +
                     '<div class="op-pie">' +
-                        '<button type="button" class="btn btn-link text-danger mr-auto" id="btnAnularOrdenCuota" ' +
+                        '<button type="button" class="btn btn-link text-danger" id="btnAnularOrdenCuota" ' +
                             'data-id="' + orden.IdOrdenPago + '" data-confirmando="0">Anular orden</button>' +
+                        // El estudiante pagó pero perdió el voucher: se aparta para poder generar la siguiente
+                        '<button type="button" class="btn btn-link mr-auto btn-abrir-extraviado" data-caja="#cajaExtraviadoCuota">Voucher por validar</button>' +
                         '<button type="button" class="btn btn-outline-secondary" id="btnReimprimirOrdenCuota" ' +
                             'data-id="' + orden.IdOrdenPago + '" data-monto="' + orden.MontoTotal + '" ' +
                             'data-nombre-factura="' + esc(orden.NombreFactura || '') + '" data-nit-ci="' + esc(orden.NitCiFactura || '') + '" ' +
@@ -128,12 +145,20 @@ $(document).ready(function() {
                         '<button type="button" class="btn btn-primary btn-ir-cuotas-programa">Registrar voucher</button>' +
                     '</div>' +
                     '<div id="avisoAnularOrdenCuota" class="small text-danger px-3 pb-2" style="display:none;"></div>' +
+                    window.cajaVoucherExtraviado('cajaExtraviadoCuota', orden.IdOrdenPago) +
                 '</div>'
             );
+            if (notaEspera) $('#ordenPagoContenido').prepend(notaEspera);
             return;
         }
 
-        const saldoPendiente = parseFloat(r.saldoPendiente) || 0;
+        // Tope de la orden: el saldo menos lo que está en órdenes con voucher extraviado
+        const saldoPendiente = parseFloat(r.disponibleOrden != null ? r.disponibleOrden : r.saldoPendiente) || 0;
+        if (saldoPendiente <= 0) {
+            $('#ordenPagoContenido').html(notaEspera + nota('is-neutra', 'fa-info-circle',
+                'Todo el saldo del programa está en órdenes con voucher por validar: no hay otra cuota que generar.'));
+            return;
+        }
 
         // Monto sugerido: la cuota pactada en Pre-Registro (la última cuota, todo el
         // saldo); en planes sin monto pactado, el saldo repartido entre las cuotas que
@@ -170,7 +195,8 @@ $(document).ready(function() {
             '<div class="op-form">' +
                 '<div class="op-cab">' +
                     '<div class="op-cab-titulo">Nueva orden &middot; ' + textoCuota + '</div>' +
-                    '<div class="op-cab-meta">Saldo ' + bs(saldoPendiente) + '</div>' +
+                    // Con órdenes de voucher extraviado, el tope es lo que falta pedir (no el saldo)
+                    '<div class="op-cab-meta">' + (montoEnEspera > 0 ? 'Por pedir ' : 'Saldo ') + bs(saldoPendiente) + '</div>' +
                 '</div>' +
 
                 '<div class="op-cuerpo">' +
@@ -189,6 +215,15 @@ $(document).ready(function() {
                             '<select class="form-control" id="opCuentaPago">' +
                                 '<option value="">Cargando cuentas...</option>' +
                             '</select>' +
+                        '</div>' +
+                        // Fecha de la orden: hoy y bloqueada; con la casilla se puede cambiar
+                        '<div class="col-md-6 form-group">' +
+                            '<label class="gp-label" for="opFechaOrden">Fecha de la orden</label>' +
+                            '<input type="date" class="form-control" id="opFechaOrden" value="' + fechaHoy() + '" max="' + fechaHoy() + '" readonly>' +
+                            '<div class="custom-control custom-checkbox mt-1">' +
+                                '<input type="checkbox" class="custom-control-input" id="opChkModificarFecha">' +
+                                '<label class="custom-control-label small" for="opChkModificarFecha">Modificar fecha</label>' +
+                            '</div>' +
                         '</div>' +
                         '<div class="col-md-6 form-group">' +
                             '<label class="gp-label" for="opFechaVencimiento">Fecha límite</label>' +
@@ -242,7 +277,7 @@ $(document).ready(function() {
                 '</div>' +
             '</div>';
 
-        $('#ordenPagoContenido').html(html);
+        $('#ordenPagoContenido').html(notaEspera + html);
         cargarOpcionesCuentaPago();
         // Se preselecciona la última firma usada (en este navegador)
         cargarOpcionesFirmante(localStorage.getItem('opUltimaFirma') || '');
@@ -440,6 +475,16 @@ $(document).ready(function() {
         });
     });
 
+    // Al desmarcar "Modificar fecha" la fecha de la orden vuelve a hoy
+    $(document).on('change', '#opChkModificarFecha', function() {
+        $('#opFechaOrden').prop('readonly', !this.checked);
+        if (this.checked) {
+            $('#opFechaOrden').trigger('focus');
+        } else {
+            $('#opFechaOrden').val(fechaHoy());
+        }
+    });
+
     $(document).on('click', '#opBtnGenerarOrden', function() {
         const firma = $('#opFirma').val() || '';
         const nombreFactura = ($('#opNombreFactura').val() || '').trim();
@@ -448,9 +493,14 @@ $(document).ready(function() {
         const numeroCuentaDeposito = $('#opCuentaPago option:selected').data('numero') || '';
         const fechaVencimiento = $('#opFechaVencimiento').val() || '';
         const monto = parseFloat($('#opMontoCuota').val());
+        const fechaOrden = $('#opFechaOrden').val() || '';
 
         if (!monto || monto <= 0) {
             Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingrese un monto válido para la cuota' });
+            return;
+        }
+        if (!fechaOrden || fechaOrden > fechaHoy()) {
+            Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingrese una fecha de orden válida (no puede ser posterior a hoy)' });
             return;
         }
 
@@ -466,6 +516,7 @@ $(document).ready(function() {
         const resumen = '<table style="width:100%;text-align:left;font-size:14px;border-collapse:collapse;">' +
             fila('Monto', '<strong style="font-size:20px;color:#1e3c72;">' + window.formatoBs(monto) + '</strong>') +
             fila('Cuota', '<strong>' + esc(etiquetaCuota(opContexto.numeroCuotaActual, opContexto.numeroCuotasPlan)) + '</strong> (N° ' + opContexto.numeroCuotaActual + ')') +
+            fila('Fecha', esc(fechaOrden.split('-').reverse().join('/'))) +
             fila('Programa', esc(programaTexto)) +
             fila('Cuenta', cuentaTexto
                 ? esc(cuentaTexto)
@@ -505,6 +556,7 @@ $(document).ready(function() {
                 nombreFactura: nombreFactura,
                 nitCiFactura: nitCiFactura,
                 fechaVencimiento: fechaVencimiento,
+                fechaGeneracion: fechaOrden,
                 // Solo los módulos elegidos ahora (los bloqueados ya tienen su cuota)
                 modulos: $('#opModulosCuota .op-chk-modulo:checked:not(:disabled)').map(function() { return this.value; }).get()
             },
@@ -564,7 +616,8 @@ $(document).ready(function() {
     });
 
     // Botón "Registrar voucher" en la tarjeta de orden pendiente: salta a la pestaña de cuotas
-    $(document).on('click', '.btn-ir-cuotas-programa', function() {
+    $(document).on('click', '.btn-ir-cuotas-programa', function(e) {
+        e.preventDefault(); // también es un enlace dentro del aviso de voucher extraviado
         $('#tab-pago-modulos-link').tab('show');
     });
 
@@ -620,6 +673,90 @@ $(document).ready(function() {
             error: function() {
                 $aviso.text('No se pudo anular la orden').show();
                 $btn.prop('disabled', false).data('confirmando', 0).html('Anular orden');
+            }
+        });
+    });
+
+    // ========================================
+    // VOUCHER EXTRAVIADO (cuotas y clínicas): el estudiante pagó pero perdió el voucher
+    // y aún no se tiene el código. La orden se aparta (estado EXTRAVIADO) con su motivo
+    // y se puede generar la siguiente; el voucher se registra cuando Tesoro dé el código.
+    // Caja en línea, no SweetAlert: un <textarea> en un popup sobre el modal de
+    // Bootstrap no recibe el foco del teclado (igual que en "Agregar firmante").
+    // ========================================
+    window.cajaVoucherExtraviado = function(idCaja, idOrdenPago) {
+        return '<div class="vx-caja" id="' + idCaja + '" style="display:none;">' +
+            '<div class="vx-caja-cab"><i class="fa fa-file-alt"></i> Marcar voucher por validar</div>' +
+            '<div class="vx-caja-cuerpo">' +
+                '<label class="gp-label" for="' + idCaja + 'Motivo">Motivo <span class="gp-req">*</span></label>' +
+                '<textarea class="form-control vx-motivo" id="' + idCaja + 'Motivo" rows="2" maxlength="255" ' +
+                    'placeholder="Ej.: Pagó en el banco pero no tiene el voucher; se solicitó el código a Tesorería"></textarea>' +
+                '<div class="vx-nota">La orden quedará registrada como <strong>voucher por validar</strong>. El monto no se considera ' +
+                    'cobrado hasta registrar el voucher, pero no se vuelve a cobrar y se habilita la orden siguiente.</div>' +
+                '<div class="vx-aviso" style="display:none;"></div>' +
+                '<div class="vx-pie">' +
+                    '<button type="button" class="btn btn-sm btn-outline-secondary btn-cerrar-extraviado">Cancelar</button>' +
+                    '<button type="button" class="btn btn-sm btn-primary btn-confirmar-extraviado" data-id="' + idOrdenPago + '">Confirmar</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    };
+
+    // "Anular orden" y "Voucher extraviado" no se mezclan: abrir uno cancela el otro
+    function cancelarAnulacionEnCurso() {
+        $('#btnAnularOrdenCuota, #clBtnAnular').each(function() {
+            if ($(this).data('confirmando') === 1) {
+                $(this).data('confirmando', 0).html('Anular orden');
+            }
+        });
+        $('#avisoAnularOrdenCuota, #clAvisoAnular').hide();
+    }
+    $(document).on('click', '#btnAnularOrdenCuota, #clBtnAnular', function() {
+        $('.vx-caja:visible').slideUp(150);
+    });
+
+    $(document).on('click', '.btn-abrir-extraviado', function() {
+        cancelarAnulacionEnCurso();
+        const $caja = $($(this).data('caja'));
+        $caja.slideDown(150);
+        $caja.find('.vx-motivo').trigger('focus');
+    });
+    $(document).on('click', '.btn-cerrar-extraviado', function() {
+        $(this).closest('.vx-caja').slideUp(150);
+    });
+    $(document).on('click', '.btn-confirmar-extraviado', function() {
+        const $btn = $(this);
+        const $caja = $btn.closest('.vx-caja');
+        const motivo = ($caja.find('.vx-motivo').val() || '').trim();
+        const $aviso = $caja.find('.vx-aviso');
+        if (motivo.length < 5) {
+            $aviso.text('Escriba el motivo.').show();
+            $caja.find('.vx-motivo').trigger('focus');
+            return;
+        }
+        $aviso.hide();
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Guardando...');
+
+        $.ajax({
+            url: 'ajax/ordenpago.ajax.php',
+            type: 'POST',
+            dataType: 'json',
+            data: { accion: 'marcarVoucherExtraviado', idOrdenPago: $btn.data('id'), motivo: motivo },
+            success: function(resp) {
+                if (!resp.success) {
+                    $aviso.text(resp.mensaje || 'No se pudo marcar la orden').show();
+                    $btn.prop('disabled', false).html('Confirmar');
+                    return;
+                }
+                // Cambian las tres pestañas (orden, cuotas y clínicas)
+                window.cargarOrdenPagoModulos(opContexto);
+                if (typeof window.cargarCuotasPrograma === 'function') window.cargarCuotasPrograma(opContexto.programaID);
+                if (typeof window.cargarClinica === 'function') window.cargarClinica(opContexto);
+                Swal.fire({ type: 'success', title: 'Voucher por validar', text: resp.mensaje, timer: 2200, showConfirmButton: false });
+            },
+            error: function() {
+                $aviso.text('No se pudo marcar la orden').show();
+                $btn.prop('disabled', false).html('Confirmar');
             }
         });
     });

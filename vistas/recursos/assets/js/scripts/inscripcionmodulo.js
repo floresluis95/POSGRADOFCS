@@ -137,7 +137,8 @@ $(document).ready(function() {
 
             renderResumenPagoPrograma(r);
             renderCuotaPendienteInfo(r, orden);
-            renderHistorialCuotas(resp.cuotas || [], r.numeroCuotasPlan);
+            renderCuotasExtraviadas(resp.extraviadas || [], r);
+            renderHistorialCuotas(resp.cuotas || [], r.numeroCuotasPlan, resp.porPagar || []);
         }).fail(function() {
             $('#resumenPagoPrograma').html('<div class="gp-aviso">No se pudo cargar el resumen de pago</div>');
         });
@@ -151,9 +152,10 @@ $(document).ready(function() {
 
     // Chip de estado (PAGADO / PENDIENTE / RECHAZADO / CONFIRMADO...) con estilos del modal
     window.chipEstadoPago = function(estado) {
-        const clases = { PAGADO: 'is-pagado', CONFIRMADO: 'is-pagado', PENDIENTE: 'is-pendiente', RECHAZADO: 'is-rechazado', VENCIDO: 'is-rechazado' };
+        const clases = { PAGADO: 'is-pagado', CONFIRMADO: 'is-pagado', PENDIENTE: 'is-pendiente', RECHAZADO: 'is-rechazado', VENCIDO: 'is-rechazado', EXTRAVIADO: 'is-extraviado' };
         const texto = String(estado || '-');
-        return '<span class="gp-chip ' + (clases[texto] || '') + '">' + texto.charAt(0) + texto.slice(1).toLowerCase() + '</span>';
+        const etiqueta = texto === 'EXTRAVIADO' ? 'Voucher por validar' : texto.charAt(0) + texto.slice(1).toLowerCase();
+        return '<span class="gp-chip ' + (clases[texto] || '') + '">' + etiqueta + '</span>';
     };
 
     function renderResumenPagoPrograma(r) {
@@ -228,8 +230,14 @@ $(document).ready(function() {
         );
     }
 
+    // Última orden pendiente y resumen: para volver a ella después de elegir una
+    // orden con voucher extraviado
+    let cuotaPendienteActual = { r: null, orden: null };
+
     function renderCuotaPendienteInfo(r, orden) {
+        cuotaPendienteActual = { r: r, orden: orden };
         $('#montoCuota').val('');
+        $('#formPagoModulo').removeData('idOrdenPago');
 
         if (!r.tienePlan) {
             estadoCuotaSinValidar('fa-exclamation-triangle', 'is-alerta', 'Sin plan de pago del programa.');
@@ -247,27 +255,45 @@ $(document).ready(function() {
             return;
         }
 
-        // Orden a validar: cuota y monto, y en una línea lo que se compara con el voucher
-        const numeroCuota = (parseInt(r.cuotasPagadasCount, 10) || 0) + 1;
-        const textoCuota = 'Cuota ' + numeroCuota + (r.numeroCuotasPlan ? ' de ' + r.numeroCuotasPlan : '');
+        // Orden a validar: cuota y monto, y en una línea lo que se compara con el voucher.
+        // Su N° es la posición de la orden: pagadas + con voucher extraviado + 1
+        const numeroCuota = (parseInt(r.cuotasPagadasCount, 10) || 0) + (parseInt(r.cuotasEnEspera, 10) || 0) + 1;
+        mostrarOrdenAValidar(orden, numeroCuota, r.numeroCuotasPlan, false);
+    }
+
+    /**
+     * Encabezado de la orden a la que se le registra el voucher y formulario visible.
+     * Con extraviada = true es una orden con voucher extraviado (se envía su id).
+     */
+    function mostrarOrdenAValidar(orden, numeroCuota, numeroCuotasPlan, extraviada) {
+        const textoCuota = 'Cuota ' + numeroCuota + (numeroCuotasPlan ? ' de ' + numeroCuotasPlan : '');
         const meta = ['Orden ' + escHtml(orden.NumeroOrden)];
         if (orden.NumeroCuentaDeposito) meta.push('Cuenta ' + escHtml(orden.NumeroCuentaDeposito));
         if (orden.FechaVencimiento) meta.push('Vence ' + fechaCorta(orden.FechaVencimiento));
         if (orden.ModulosCubiertos) meta.push(escHtml(orden.ModulosCubiertos));
 
         $('#montoCuota').val(orden.MontoTotal);
+        if (extraviada) {
+            $('#formPagoModulo').data('idOrdenPago', orden.IdOrdenPago);
+        } else {
+            $('#formPagoModulo').removeData('idOrdenPago');
+        }
         // Para el resumen que se confirma antes de guardar
-        $('#formPagoModulo').data('cuota', { texto: textoCuota });
+        $('#formPagoModulo').data('cuota', { texto: textoCuota + (extraviada ? ' (voucher por validar)' : '') });
         $('#cuotaPendienteInfo').html(
             '<div class="vc-orden">' +
-                '<div class="vc-orden-cab">' +
+                '<div class="vc-orden-cab' + (extraviada ? ' is-extraviada' : '') + '">' +
                     '<div>' +
-                        '<div class="vc-orden-titulo">' + textoCuota + '</div>' +
+                        '<div class="vc-orden-titulo">' + textoCuota + (extraviada ? ' ' + window.chipEstadoPago('EXTRAVIADO') : '') + '</div>' +
                         '<div class="vc-orden-meta">' + meta.join(' &middot; ') + '</div>' +
                     '</div>' +
                     '<div class="vc-orden-monto">' + formatoBs(orden.MontoTotal) + '</div>' +
                 '</div>' +
-            '</div>'
+            '</div>' +
+            (extraviada
+                ? '<div class="text-right small mt-1 mb-2"><a href="#" class="btn-volver-cuota-pendiente">' +
+                      (cuotaPendienteActual.orden ? 'Volver a la orden pendiente' : 'Cancelar') + '</a></div>'
+                : '')
         );
 
         if (!$('#fechaPago').val()) {
@@ -277,13 +303,64 @@ $(document).ready(function() {
         $('#btnGuardarPagoCuota').prop('disabled', false).html(textoBotonValidar());
     }
 
-    function renderHistorialCuotas(cuotas, numeroCuotasPlan) {
-        if (!cuotas || cuotas.length === 0) {
-            $('#tablaCuotasBody').html('<tr><td colspan="5" class="gp-vacio">Sin cuotas registradas</td></tr>');
+    // Órdenes con voucher extraviado: ya se pagaron, falta el código del voucher (Tesoro).
+    // "Registrar voucher" lleva el formulario de abajo a esa orden.
+    let cuotasExtraviadas = [];
+    function renderCuotasExtraviadas(extraviadas, r) {
+        cuotasExtraviadas = extraviadas;
+        if (!extraviadas.length) {
+            $('#cuotasExtraviadas').html('');
             return;
         }
+        const items = extraviadas.map(function(o) {
+            const marcado = [];
+            if (o.FechaExtraviado) marcado.push(fechaCorta(o.FechaExtraviado));
+            if (o.ResponsableExtraviado) marcado.push(escHtml(o.ResponsableExtraviado));
+            return '<div class="vx-item">' +
+                '<div class="vx-item-datos">' +
+                    '<div class="vx-item-titulo">Cuota ' + escHtml(o.NumeroCuota) + (r.numeroCuotasPlan ? ' de ' + escHtml(r.numeroCuotasPlan) : '') +
+                        ' &middot; Orden ' + escHtml(o.NumeroOrden) + '</div>' +
+                    '<div class="vx-item-meta">' + escHtml(o.MotivoExtraviado || '') +
+                        (marcado.length ? ' &middot; marcado ' + marcado.join(' por ') : '') + '</div>' +
+                '</div>' +
+                '<div class="vx-item-monto">' + formatoBs(o.MontoTotal) + '</div>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger btn-registrar-extraviada" data-id="' + o.IdOrdenPago + '">Registrar voucher</button>' +
+            '</div>';
+        }).join('');
+        $('#cuotasExtraviadas').html(
+            '<div class="vx-lista">' +
+                '<div class="vx-lista-titulo"><i class="fa fa-search-dollar"></i> Órdenes con voucher por validar ' +
+                    '<span class="font-weight-normal">(no cuentan como cobrado hasta registrar su voucher)</span></div>' +
+                items +
+            '</div>'
+        );
+    }
 
-        let html = '';
+    $(document).on('click', '.btn-registrar-extraviada', function() {
+        const id = $(this).data('id');
+        const o = cuotasExtraviadas.filter(function(x) { return String(x.IdOrdenPago) === String(id); })[0];
+        if (!o) return;
+        mostrarOrdenAValidar(o, o.NumeroCuota, cuotaPendienteActual.r ? cuotaPendienteActual.r.numeroCuotasPlan : null, true);
+        $('#numeroVaucher').val('');
+        $('#numeroVaucher_largo').trigger('focus');
+    });
+
+    $(document).on('click', '.btn-volver-cuota-pendiente', function(e) {
+        e.preventDefault();
+        renderCuotaPendienteInfo(cuotaPendienteActual.r, cuotaPendienteActual.orden);
+    });
+
+    function renderHistorialCuotas(cuotas, numeroCuotasPlan, porPagar) {
+        porPagar = porPagar || [];
+        if ((!cuotas || cuotas.length === 0) && !porPagar.length) {
+            $('#tablaCuotasBody').html('<tr><td colspan="6" class="gp-vacio">Sin cuotas registradas</td></tr>');
+            return;
+        }
+        cuotas = cuotas || [];
+
+        // Pagadas y pendientes juntas, en orden correlativo por N° de cuota (1, 2, 3...)
+        const filas = [];
+        const numero = function(n) { return parseInt(n, 10) || 9999; };
         cuotas.forEach(function(c) {
             const etiquetaCuota = (c.NumeroCuota && numeroCuotasPlan)
                 ? (c.NumeroCuota + ' de ' + numeroCuotasPlan)
@@ -294,15 +371,29 @@ $(document).ready(function() {
                 ? ' <a href="#" class="btn-ver-foto-cuota vc-ver-foto" data-idpago="' + c.Idpagomodulo + '" data-nvaucher="' + escHtml(c.nvaucher || '').replace(/"/g, '&quot;') + '" title="Ver foto del voucher"><i class="fa fa-image"></i></a>'
                 : '';
 
-            html += '<tr>' +
+            filas.push({ n: numero(c.NumeroCuota), html: '<tr>' +
                 '<td class="text-center"><strong>' + etiquetaCuota + '</strong></td>' +
                 '<td class="text-right">' + formatoBs(c.montocuota) + '</td>' +
+                '<td class="text-center">' + (c.FechaSolicitud ? fechaCorta(c.FechaSolicitud) : '-') + '</td>' +
                 '<td class="text-center">' + fechaCorta(c.fechapago) + '</td>' +
                 '<td>' + escHtml(c.nvaucher || '-') + btnFoto + '</td>' +
                 '<td class="text-center">' + window.chipEstadoPago(c.Estado) + '</td>' +
-            '</tr>';
+            '</tr>' });
         });
-        $('#tablaCuotasBody').html(html);
+        // Cuotas con orden pero sin voucher validado: Pendiente (o voucher extraviado)
+        porPagar.forEach(function(o) {
+            const etiquetaCuota = (o.NumeroCuota && numeroCuotasPlan) ? (o.NumeroCuota + ' de ' + numeroCuotasPlan) : (o.NumeroCuota || '-');
+            filas.push({ n: numero(o.NumeroCuota), html: '<tr class="gp-fila-pendiente">' +
+                '<td class="text-center"><strong>' + escHtml(etiquetaCuota) + '</strong></td>' +
+                '<td class="text-right">' + formatoBs(o.MontoTotal) + '</td>' +
+                '<td class="text-center">' + fechaCorta(o.FechaGeneracion) + '</td>' +
+                '<td class="text-center">-</td>' +
+                '<td><span class="text-muted small">' + (o.Estado === 'EXTRAVIADO' ? 'Voucher por validar' : 'Pendiente de pago') + '</span></td>' +
+                '<td class="text-center">' + window.chipEstadoPago(o.Estado) + '</td>' +
+            '</tr>' });
+        });
+        filas.sort(function(a, b) { return a.n - b.n; });
+        $('#tablaCuotasBody').html(filas.map(function(f) { return f.html; }).join(''));
     }
 
     // Miniatura del voucher apenas se selecciona; con clic se ve en grande junto
@@ -466,6 +557,10 @@ $(document).ready(function() {
         const formData = new FormData(form);
         formData.append('accion', 'registrarPagoModulo');
         formData.append('idinscripcion', idinscripcion);
+        // Orden con voucher extraviado elegida en la lista (sin ella, la pendiente)
+        if ($(form).data('idOrdenPago')) {
+            formData.append('idOrdenPago', $(form).data('idOrdenPago'));
+        }
 
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Validando...');
 
@@ -599,6 +694,7 @@ $(document).ready(function() {
             $('#detalleTipoPago').append(' ', $('<span class="badge badge-light">').text(d.grupo).prepend('<i class="fa fa-users"></i> '));
         }
         $('#detalleVoucher').text(valor(d.voucher));
+        $('#detalleFechaOrden').text(valor(d.fechaOrden));
         $('#detalleCosto').text('Bs. ' + d.costo);
         $('#detalleDescuento').text(d.descuento
             ? 'Bs. ' + d.descuento + (d.porcentaje ? ' (' + d.porcentaje + '%)' : '')

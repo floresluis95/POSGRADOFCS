@@ -190,6 +190,7 @@
 
         .badge-pendiente { background: linear-gradient(135deg, #b7791f 0%, #d4a017 100%); color: white; }
         .badge-confirmado { background: linear-gradient(135deg, #1e7145 0%, #27ae60 100%); color: white; }
+        .badge-extraviado { background: #eef2f9; color: #1e3c72; border: 1px solid #c9d6ee; }
         .badge-anulado { background: #e4e6ef; color: #7e8299; }
         .badge-vencido { background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%); color: white; }
 

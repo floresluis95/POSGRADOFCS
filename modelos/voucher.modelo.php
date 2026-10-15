@@ -9,6 +9,42 @@ require_once 'conexion.modelo.php';
 class VoucherModelo
 {
     /**
+     * Subconsulta con la fecha en que se generó la orden de pago de la MATRÍCULA de una
+     * inscripción, para mostrarla junto al voucher en historiales y recibos. Es la orden
+     * confirmada de la inscripción que no es de cuota ni de clínica (la que se validó en
+     * Inscripción). Las cuotas y clínicas no la necesitan: enlazan su orden por IdOrdenPago.
+     * @param string $columnaInscripcion Columna con el idInscripcion (ej. 'ep.idInscripcion')
+     * @return string
+     */
+    public static function SqlFechaOrdenMatricula($columnaInscripcion)
+    {
+        return "(SELECT opm.FechaGeneracion FROM ordenpago opm
+                 WHERE opm.idinscripcion = $columnaInscripcion AND " . self::CONDICION_ORDEN_MATRICULA . "
+                 ORDER BY opm.IdOrdenPago ASC LIMIT 1)";
+    }
+
+    /** Qué orden (alias opm) es la de la matrícula: la primera confirmada que no es cuota ni clínica. */
+    const CONDICION_ORDEN_MATRICULA = "opm.Estado = 'CONFIRMADO' AND opm.ListaModulos IS NULL
+                 AND COALESCE(opm.Observaciones, '') NOT IN ('CUOTA PROGRAMA', 'CLINICA')";
+
+    /**
+     * IdOrdenPago de la orden de matrícula de una inscripción (la misma que muestra
+     * SqlFechaOrdenMatricula), para poder corregir su fecha desde el Historial de Pagos.
+     * @return int|null
+     */
+    public static function IdOrdenMatriculaModelo($idInscripcion, $pdo = null)
+    {
+        $stmt = ($pdo ?: Conexion::Conectar())->prepare(
+            "SELECT opm.IdOrdenPago FROM ordenpago opm
+             WHERE opm.idinscripcion = :id AND " . self::CONDICION_ORDEN_MATRICULA . "
+             ORDER BY opm.IdOrdenPago ASC LIMIT 1"
+        );
+        $stmt->execute([':id' => (int)$idInscripcion]);
+        $id = $stmt->fetchColumn();
+        return $id !== false ? (int)$id : null;
+    }
+
+    /**
      * El N° de voucher es ÚNICO en todo el sistema: un mismo depósito no puede
      * registrarse dos veces, ni en dos matrículas, ni en dos cuotas, ni en una
      * matrícula y una cuota o clínica. Compara sin distinguir mayúsculas ni espacios.
@@ -55,6 +91,20 @@ class VoucherModelo
         return null;
     }
 
+    /**
+     * El N° de voucher solo lleva dígitos, con un guion opcional entre la parte larga y
+     * la corta: "1469337" o "1469337-002" (voucher-partes.js lo arma así en pantalla).
+     * @param string $numeroVoucher
+     * @return bool
+     */
+    public static function FormatoVoucherValido($numeroVoucher)
+    {
+        return (bool)preg_match('/^\d+(-\d+)?$/', trim((string)$numeroVoucher));
+    }
+
+    /** Mensaje para el usuario cuando el N° de voucher no tiene el formato. */
+    const MENSAJE_FORMATO_VOUCHER = 'El N° de voucher solo puede tener números (y un guion entre la parte larga y la corta, ej.: 1469337-002)';
+
     /** Mensaje para el usuario cuando el voucher ya fue usado. */
     public static function MensajeVoucherRepetido($numeroVoucher, $donde)
     {
@@ -63,7 +113,7 @@ class VoucherModelo
     }
 
     /**
-     * Obtener vouchers de cuotas del programa pagadas por el estudiante.
+     * Obtener vouchers de cuotas del programa y de clínicas pagadas por el estudiante.
      * Las cuotas ya no están ligadas a módulos: cada voucher corresponde a una cuota.
      * @param int $estudianteID
      * @param int $programaID
@@ -91,20 +141,42 @@ class VoucherModelo
 
             $idinscripcion = $inscripcion['idInscripcion'];
 
+            // Cuotas y clínicas pagadas (Tipo distingue de qué tabla sale la foto:
+            // obtener-voucher-imagen.php o obtener-voucher-clinica.php)
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT
-                    Idpagomodulo as IdPago,
-                    NumeroCuota,
-                    nvaucher as NumeroVoucher,
-                    fechapago as FechaPago,
-                    montocuota as MontoTotal,
-                    CASE WHEN fmodulo IS NOT NULL THEN 'SI' ELSE 'NO' END as TieneImagen
-                FROM pagomodulo
-                WHERE idinscripcion = :idinscripcion
-                AND Estado = 'PAGADO'
-                ORDER BY fechapago DESC"
+                    'CUOTA' as Tipo,
+                    pm.Idpagomodulo as IdPago,
+                    pm.NumeroCuota,
+                    pm.nvaucher as NumeroVoucher,
+                    pm.fechapago as FechaPago,
+                    pm.montocuota as MontoTotal,
+                    op.FechaGeneracion as FechaOrden,
+                    CASE WHEN pm.fmodulo IS NOT NULL THEN 'SI' ELSE 'NO' END as TieneImagen,
+                    0 as EsPdf
+                FROM pagomodulo pm
+                LEFT JOIN ordenpago op ON op.IdOrdenPago = pm.IdOrdenPago
+                WHERE pm.idinscripcion = :idinscripcion
+                AND pm.Estado = 'PAGADO'
+                UNION ALL
+                SELECT
+                    'CLINICA',
+                    pcl.IdPagoClinica,
+                    NULL,
+                    pcl.NumeroVoucher,
+                    pcl.FechaPago,
+                    pcl.Monto,
+                    op.FechaGeneracion,
+                    CASE WHEN pcl.FotoVoucher IS NOT NULL THEN 'SI' ELSE 'NO' END,
+                    (LEFT(pcl.FotoVoucher, 4) = '%PDF')
+                FROM pagoclinica pcl
+                LEFT JOIN ordenpago op ON op.IdOrdenPago = pcl.IdOrdenPago
+                WHERE pcl.idinscripcion = :idinscripcionClinica
+                AND pcl.Estado = 'PAGADO'
+                ORDER BY FechaPago DESC"
             );
             $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
+            $stmt->bindParam(":idinscripcionClinica", $idinscripcion, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
 

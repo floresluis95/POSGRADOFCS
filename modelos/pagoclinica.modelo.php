@@ -11,6 +11,7 @@
  */
 
 require_once file_exists(__DIR__ . '/conexion.modelo.php') ? __DIR__ . '/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
+require_once __DIR__ . '/ordenpagoprincipal.modelo.php'; // OrdenPagoModelos::NumeroOrdenLibre
 
 class PagoClinicaModelo
 {
@@ -108,9 +109,11 @@ class PagoClinicaModelo
                 return ['estado' => 'validacion', 'mensaje' => 'Ya existe una orden de clínica pendiente para esta inscripción. Confirme su pago o anúlela antes de generar otra'];
             }
 
-            $numeroOrden = 'CLI-' . str_pad($datos['EstudianteID'], 4, '0', STR_PAD_LEFT) . '-' .
-                           str_pad($datos['ProgramaID'], 3, '0', STR_PAD_LEFT) . '-' .
-                           date('YmdHis');
+            // Con voucher extraviado puede haber dos órdenes del mismo estudiante en el mismo segundo
+            $numeroOrden = OrdenPagoModelos::NumeroOrdenLibre($pdo,
+                'CLI-' . str_pad($datos['EstudianteID'], 4, '0', STR_PAD_LEFT) . '-' .
+                str_pad($datos['ProgramaID'], 3, '0', STR_PAD_LEFT) . '-' .
+                date('YmdHis'));
 
             $stmt = $pdo->prepare(
                 "INSERT INTO ordenpago
@@ -118,7 +121,7 @@ class PagoClinicaModelo
                   ResponsableGeneracion, Firma, NombreFactura, NitCiFactura, NumeroOrden, FechaGeneracion, Observaciones, Estado)
                  VALUES
                  (:estudianteID, :idinscripcion, :programaID, :programaCuentaID, :montoTotal, :fechaVencimiento,
-                  :responsable, :firma, :nombreFactura, :nitCiFactura, :numeroOrden, NOW(), :marca, 'PENDIENTE')"
+                  :responsable, :firma, :nombreFactura, :nitCiFactura, :numeroOrden, :fechaGeneracion, :marca, 'PENDIENTE')"
             );
             $stmt->execute([
                 ':estudianteID' => $datos['EstudianteID'],
@@ -132,6 +135,7 @@ class PagoClinicaModelo
                 ':nombreFactura' => $datos['NombreFactura'],
                 ':nitCiFactura' => $datos['NitCiFactura'],
                 ':numeroOrden' => $numeroOrden,
+                ':fechaGeneracion' => $datos['FechaGeneracion'] ?? date('Y-m-d H:i:s'),
                 ':marca' => self::MARCA_ORDEN,
             ]);
 
@@ -159,14 +163,26 @@ class PagoClinicaModelo
         try {
             $pdo->beginTransaction();
 
-            // FOR UPDATE: evita que dos registros simultáneos confirmen la misma orden
-            $stmtOrden = $pdo->prepare(
-                "SELECT IdOrdenPago, MontoTotal FROM ordenpago
-                 WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND Observaciones = :marca
-                 ORDER BY FechaGeneracion ASC LIMIT 1
-                 FOR UPDATE"
-            );
-            $stmtOrden->execute([':idinscripcion' => $datos['idinscripcion'], ':marca' => self::MARCA_ORDEN]);
+            // FOR UPDATE: evita que dos registros simultáneos confirmen la misma orden.
+            // Con IdOrdenPago se confirma esa orden (voucher extraviado ya recuperado);
+            // sin él, la pendiente.
+            if (!empty($datos['IdOrdenPago'])) {
+                $stmtOrden = $pdo->prepare(
+                    "SELECT IdOrdenPago, MontoTotal FROM ordenpago
+                     WHERE IdOrdenPago = :id AND idinscripcion = :idinscripcion
+                     AND Estado IN ('PENDIENTE', 'EXTRAVIADO') AND Observaciones = :marca
+                     FOR UPDATE"
+                );
+                $stmtOrden->execute([':id' => (int)$datos['IdOrdenPago'], ':idinscripcion' => $datos['idinscripcion'], ':marca' => self::MARCA_ORDEN]);
+            } else {
+                $stmtOrden = $pdo->prepare(
+                    "SELECT IdOrdenPago, MontoTotal FROM ordenpago
+                     WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND Observaciones = :marca
+                     ORDER BY FechaGeneracion ASC LIMIT 1
+                     FOR UPDATE"
+                );
+                $stmtOrden->execute([':idinscripcion' => $datos['idinscripcion'], ':marca' => self::MARCA_ORDEN]);
+            }
             $orden = $stmtOrden->fetch(PDO::FETCH_ASSOC);
 
             if (!$orden) {
@@ -215,8 +231,10 @@ class PagoClinicaModelo
         try {
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT op.IdOrdenPago, op.NumeroOrden, op.MontoTotal, op.FechaGeneracion, op.Estado,
+                        op.MotivoExtraviado, op.FechaExtraviado, op.ResponsableExtraviado,
                         pcl.IdPagoClinica, pcl.FechaPago, pcl.NumeroVoucher,
-                        (pcl.FotoVoucher IS NOT NULL) AS TieneFoto
+                        (pcl.FotoVoucher IS NOT NULL) AS TieneFoto,
+                        (LEFT(pcl.FotoVoucher, 4) = '%PDF') AS EsPdf
                  FROM ordenpago op
                  LEFT JOIN pagoclinica pcl ON pcl.IdOrdenPago = op.IdOrdenPago AND pcl.Estado = 'PAGADO'
                  WHERE op.idinscripcion = :idinscripcion
@@ -229,6 +247,27 @@ class PagoClinicaModelo
         } catch (PDOException $e) {
             error_log("Error en ListarPorInscripcionModelo (clínica): " . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * ¿El pago de clínica es de una inscripción de ese estudiante? Para que un
+     * estudiante solo vea SUS vouchers aunque cambie el id en la URL.
+     * @return bool
+     */
+    public static function PagoEsDelEstudianteModelo($idPagoClinica, $estudianteID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT 1 FROM pagoclinica pcl
+                 INNER JOIN estudianteprograma ep ON ep.idInscripcion = pcl.idinscripcion
+                 WHERE pcl.IdPagoClinica = :id AND ep.EstudianteID = :estudianteID"
+            );
+            $stmt->execute([':id' => (int)$idPagoClinica, ':estudianteID' => (int)$estudianteID]);
+            return (bool)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("Error en PagoEsDelEstudianteModelo (clínica): " . $e->getMessage());
+            return false;
         }
     }
 

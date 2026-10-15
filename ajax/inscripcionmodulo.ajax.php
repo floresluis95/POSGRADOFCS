@@ -64,7 +64,9 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
 
     $listar = new InscripcionModuloControladores();
     $requisitos = in_array($_POST["requisitosFiltro"] ?? "", ["INCOMPLETOS", "COMPLETOS"], true) ? $_POST["requisitosFiltro"] : null;
-    $listar->ListarEstudiantesMatriculadosControlador($programaID, $sede, $estado, $requisitos);
+    // Grado académico del programa (filtro de Matriculados)
+    $grado = isset($_POST["gradoFiltro"]) && trim($_POST["gradoFiltro"]) !== '' ? trim($_POST["gradoFiltro"]) : null;
+    $listar->ListarEstudiantesMatriculadosControlador($programaID, $sede, $estado, $requisitos, $grado);
     exit();
 }
 

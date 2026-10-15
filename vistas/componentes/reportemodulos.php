@@ -302,10 +302,22 @@ date_default_timezone_set("America/La_Paz");
 
                                     <!-- ===== Pestaña: Gráficos para la toma de decisiones (reportegraficos.js) ===== -->
                                     <div class="tab-pane fade rp-body" id="rpTabGraficos" role="tabpanel">
+                                        <!-- Sede, grado y programa: la lista de programas se acota con
+                                             la sede y el grado elegidos (reportegraficos.js) -->
                                         <div class="rp-filtros">
+                                            <div class="rp-filtro">
+                                                <select class="form-control select2-uniforme" id="rgSede" aria-label="Sede">
+                                                    <option value="">Todas las sedes</option>
+                                                </select>
+                                            </div>
                                             <div class="rp-filtro">
                                                 <select class="form-control select2-uniforme" id="rgGrado" aria-label="Grado académico">
                                                     <option value="">Todos los grados</option>
+                                                </select>
+                                            </div>
+                                            <div class="rp-filtro rp-filtro-busqueda">
+                                                <select class="form-control select2-uniforme" id="rgPrograma" aria-label="Programa">
+                                                    <option value="">Todos los programas</option>
                                                 </select>
                                             </div>
                                             <div class="rp-filtro">
@@ -430,6 +442,7 @@ date_default_timezone_set("America/La_Paz");
                             <tbody id="tablaDetallePagosEstudianteBody">
                                 <tr><td colspan="8" class="rp-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>
                             </tbody>
+                            <tfoot id="tablaDetallePagosEstudianteFooter"></tfoot>
                         </table>
                     </div>
                 </div>
@@ -599,6 +612,11 @@ date_default_timezone_set("America/La_Paz");
         .rp-prog-nombre { font-weight: 600; line-height: 1.3; }
         .rp-prog-meta { font-size: 11.5px; color: var(--rp-texto-2); margin-top: 2px; }
         .rp-sub { display: block; font-size: 11px; color: var(--rp-texto-2); font-weight: 400; margin-top: 1px; }
+        /* Detalle por estudiante: con el costo desglosado hay más columnas; los títulos
+           pueden ir en dos líneas y el nombre no se aprieta */
+        #tablaDetallePagosEstudiante thead th { white-space: normal; vertical-align: bottom; }
+        #tablaDetallePagosEstudiante td:first-child { min-width: 170px; }
+        @media (min-width: 1300px) { #modalDetallePagosPrograma .modal-dialog { max-width: 1260px; } }
         .rp-inscritos { font-size: 16px; font-weight: 600; }
         .rp-muted { color: var(--rp-texto-2); }
         .rp-cobrado { color: var(--rp-exito); font-weight: 600; }
@@ -978,7 +996,7 @@ date_default_timezone_set("America/La_Paz");
         .rg-llave.is-pendiente, .rg-seg.is-pendiente { background: var(--rg-pendiente); }
 
         /* Órdenes por cobrar */
-        .rg-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+        .rg-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
         .rg-tile { border: 1px solid var(--rp-borde); border-radius: 8px; padding: 10px 14px; background: #fff; }
         .rg-tile-cab { font-size: 12px; font-weight: 600; color: var(--rp-texto-2); }
         .rg-tile-cab i { width: 16px; color: #94a3b8; }

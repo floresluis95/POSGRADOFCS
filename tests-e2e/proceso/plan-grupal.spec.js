@@ -50,7 +50,7 @@ test.describe('Plan Grupal armado en Pre-Registro', () => {
     expect(codigoDeOrden(ordenSegundo)).toBe(codigo);
 
     for (const idOrden of [ordenPrimero, ordenSegundo]) {
-      const r = await validarVoucherMatricula(page, idOrden, 'MAT-' + unico());
+      const r = await validarVoucherMatricula(page, idOrden, unico() + '-01');
       expect(r.success, r.mensaje).toBe(true);
     }
 

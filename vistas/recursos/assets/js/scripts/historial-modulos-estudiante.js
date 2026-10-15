@@ -15,9 +15,15 @@ $(document).ready(function() {
     // (.foto-recibo-tamano-fijo en historialmodulosestudiante.php), igual que ya
     // funciona en Historial de Vouchers, para que todas las fotos se vean del
     // mismo tamaño sin importar su resolución original.
-    $(document).on('click', '.btn-ver-foto-cuota-estudiante', function() {
+    $(document).on('click', 'button.btn-ver-foto-cuota-estudiante:not(.btn-ver-foto-clinica-estudiante)', function() {
         const idpago = $(this).data('idpago');
         $('#imagen_recibo_grande').attr('src', 'ajax/obtener-voucher-imagen.php?id=' + idpago);
+        $('#modalFotoRecibo').modal('show');
+    });
+
+    // Foto del voucher de una clínica (un PDF se abre con un enlace, ver actualizarTablaClinicas)
+    $(document).on('click', '.btn-ver-foto-clinica-estudiante', function() {
+        $('#imagen_recibo_grande').attr('src', 'ajax/obtener-voucher-clinica.php?id=' + $(this).data('idpago'));
         $('#modalFotoRecibo').modal('show');
     });
 
@@ -33,7 +39,7 @@ $(document).ready(function() {
     mostrarFechaActual();
 });
 
-const ETIQUETAS_ESTADO_CUOTA = { PAGADO: 'Pagada', PENDIENTE: 'Pendiente', RECHAZADO: 'Rechazada', ANULADO: 'Anulada' };
+const ETIQUETAS_ESTADO_CUOTA = { PAGADO: 'Pagada', PENDIENTE: 'Pendiente', RECHAZADO: 'Rechazada', ANULADO: 'Anulada', EXTRAVIADO: 'Voucher por validar' };
 
 function mostrarError(titulo, texto) {
     Swal.fire({ icon: 'error', title: titulo, text: texto });
@@ -120,7 +126,8 @@ function cargarDetalleModulos(programaID) {
 
                 actualizarResumen(detalle.resumen, cuotasPagadas);
                 actualizarMatricula(detalle.matricula);
-                actualizarTablaPagados(cuotas);
+                actualizarTablaPagados(cuotas, detalle.cuotasPorPagar || []);
+                actualizarTablaClinicas(detalle.clinicas || []);
             } else {
                 mostrarError('Error', response.error || 'No se pudo cargar el detalle de pagos');
                 ocultarResultados();
@@ -172,6 +179,7 @@ function actualizarMatricula(matricula) {
 
     if (matricula.pagada) {
         const detalle = [];
+        if (matricula.fechaOrden) detalle.push('Orden del ' + formatearFecha(matricula.fechaOrden));
         if (matricula.fecha) detalle.push('Registrada el ' + formatearFecha(matricula.fecha));
         if (matricula.voucher) detalle.push('Voucher N° ' + matricula.voucher);
 
@@ -197,13 +205,17 @@ function actualizarMatricula(matricula) {
 /**
  * Tabla de cuotas (en celular cada fila se muestra como tarjeta, ver CSS)
  */
-function actualizarTablaPagados(cuotas) {
-    if (!cuotas || !cuotas.length) {
+function actualizarTablaPagados(cuotas, porPagar) {
+    porPagar = porPagar || [];
+    cuotas = cuotas || [];
+    if (!cuotas.length && !porPagar.length) {
         $('#tbody_modulos_pagados').html(filaSinCuotas());
         return;
     }
 
-    let html = '';
+    // Pagadas y pendientes juntas, en orden correlativo por N° de cuota (1, 2, 3...)
+    const filas = [];
+    const numero = function(n) { return parseInt(n, 10) || 9999; };
     cuotas.forEach(function(cuota) {
         const estado = cuota.Estado || 'PENDIENTE';
         const voucher = cuota.nvaucher || '-';
@@ -217,7 +229,7 @@ function actualizarTablaPagados(cuotas) {
                </button>`
             : '';
 
-        html += `
+        filas.push({ n: numero(cuota.NumeroCuota), html: `
             <tr>
                 <td data-label="N° cuota"><strong>${cuota.NumeroCuota || '-'}</strong></td>
                 <td data-label="Monto" class="text-right">${formatoMoneda(cuota.montocuota)}</td>
@@ -228,10 +240,65 @@ function actualizarTablaPagados(cuotas) {
                     <span class="hm-insignia hm-insignia-${estado.toLowerCase()}">${ETIQUETAS_ESTADO_CUOTA[estado] || estado}</span>
                 </td>
             </tr>
+        ` });
+    });
+
+    // Cuotas con orden de pago pero sin voucher validado todavía: Pendiente
+    porPagar.forEach(function(o) {
+        const estado = o.Estado === 'EXTRAVIADO' ? 'EXTRAVIADO' : 'PENDIENTE';
+        filas.push({ n: numero(o.NumeroCuota), html: `
+            <tr>
+                <td data-label="N° cuota"><strong>${o.NumeroCuota || '-'}</strong></td>
+                <td data-label="Monto" class="text-right">${formatoMoneda(o.MontoTotal)}</td>
+                <td data-label="Generada">${o.FechaGeneracion ? formatearFecha(o.FechaGeneracion) : '-'}</td>
+                <td data-label="Pagada">-</td>
+                <td data-label="N° voucher"><span class="text-muted">${estado === 'EXTRAVIADO' ? 'Voucher por validar' : 'Pendiente de pago'}</span></td>
+                <td data-label="Estado" class="text-center">
+                    <span class="hm-insignia hm-insignia-pendiente">${ETIQUETAS_ESTADO_CUOTA[estado] || estado}</span>
+                </td>
+            </tr>
+        ` });
+    });
+
+    filas.sort(function(a, b) { return a.n - b.n; });
+    $('#tbody_modulos_pagados').html(filas.map(function(f) { return f.html; }).join(''));
+}
+
+/**
+ * Tabla de clínicas: solo se muestra si tiene alguna. Una orden CONFIRMADA es una
+ * clínica pagada (su voucher está en pagoclinica).
+ */
+function actualizarTablaClinicas(clinicas) {
+    if (!clinicas.length) {
+        $('#tbody_clinicas').html('');
+        $('#clinicas_container').hide();
+        return;
+    }
+
+    let html = '';
+    clinicas.forEach(function(cl) {
+        const estado = cl.Estado === 'CONFIRMADO' ? 'PAGADO' : (cl.Estado || 'PENDIENTE');
+        let btnFoto = '';
+        if (cl.IdPagoClinica && cl.TieneFoto == 1) {
+            btnFoto = cl.EsPdf == 1
+                ? `<a href="ajax/obtener-voucher-clinica.php?id=${cl.IdPagoClinica}" target="_blank" class="btn-ver-foto-cuota-estudiante" title="Ver recibo (PDF)"><i class="fa fa-file-pdf"></i></a>`
+                : `<button type="button" class="btn-ver-foto-cuota-estudiante btn-ver-foto-clinica-estudiante" data-idpago="${cl.IdPagoClinica}" title="Ver foto del recibo"><i class="flaticon2-photograph"></i></button>`;
+        }
+        html += `
+            <tr>
+                <td data-label="Monto" class="text-right">${formatoMoneda(cl.MontoTotal)}</td>
+                <td data-label="Generada">${cl.FechaGeneracion ? formatearFecha(cl.FechaGeneracion) : '-'}</td>
+                <td data-label="Pagada">${cl.FechaPago ? formatearFecha(cl.FechaPago) : '-'}</td>
+                <td data-label="N° voucher"><span>${$('<div>').text(cl.NumeroVoucher || '-').html()}${btnFoto}</span></td>
+                <td data-label="Estado" class="text-center">
+                    <span class="hm-insignia hm-insignia-${estado.toLowerCase()}">${ETIQUETAS_ESTADO_CUOTA[estado] || estado}</span>
+                </td>
+            </tr>
         `;
     });
 
-    $('#tbody_modulos_pagados').html(html);
+    $('#tbody_clinicas').html(html);
+    $('#clinicas_container').show();
 }
 
 function filaSinCuotas() {
@@ -252,6 +319,7 @@ function ocultarResultados() {
     $('#aviso_elegir_programa').show();
     $('#matricula_cuerpo').html('<span class="text-muted">Sin información de matrícula</span>');
     $('#tbody_modulos_pagados').html(filaSinCuotas());
+    actualizarTablaClinicas([]);
 }
 
 function formatoMoneda(valor) {

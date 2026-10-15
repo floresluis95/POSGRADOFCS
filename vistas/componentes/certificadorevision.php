@@ -134,7 +134,15 @@ date_default_timezone_set("America/La_Paz");
                                     <div class="col-md-8">
                                         <div class="form-group">
                                             <label for="input-vaucher"><strong>N° de Recibo / Vaucher</strong> <span class="text-muted font-weight-normal">(opcional; no se imprime, queda en el registro)</span></label>
-                                            <input type="text" class="form-control" id="input-vaucher" placeholder="Número de recibo de caja">
+                                            <input type="text" class="form-control" id="input-vaucher" placeholder="Número de recibo de caja" data-voucher-partes>
+                                        </div>
+                                    </div>
+                                    <!-- Monto pagado: llega con el precio del certificado (Autoridades) y se puede cambiar -->
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="input-monto"><strong>Monto pagado (Bs.)</strong> <span class="text-muted font-weight-normal">(opcional)</span></label>
+                                            <input type="number" class="form-control" id="input-monto" min="0" step="0.01" placeholder="0.00"
+                                                   value="<?php $preciosCert = CertificadoModelo::PreciosCertificados(); echo $preciosCert['REVISION'] !== null ? number_format($preciosCert['REVISION'], 2, '.', '') : ''; ?>">
                                         </div>
                                     </div>
                                 </div>
@@ -168,6 +176,7 @@ date_default_timezone_set("America/La_Paz");
         <input type="hidden" name="curso" id="hidden-curso">
         <input type="hidden" name="fecha" id="hidden-fecha">
         <input type="hidden" name="vaucher" id="hidden-vaucher">
+        <input type="hidden" name="monto" id="hidden-monto">
     </form>
 
     <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
@@ -289,6 +298,12 @@ date_default_timezone_set("America/La_Paz");
             $('#hidden-curso').val($opt.data('curso'));
             $('#hidden-fecha').val(fecha);
             $('#hidden-vaucher').val($('#input-vaucher').val().trim());
+            var monto = ($('#input-monto').val() || '').trim();
+            if (monto !== '' && (isNaN(monto) || parseFloat(monto) < 0)) {
+                Swal.fire({ type: 'warning', title: 'Monto no válido', text: 'Revise el monto pagado (Bs.)' });
+                return;
+            }
+            $('#hidden-monto').val(monto);
 
             $('#form-generar-certificado').submit();
         });

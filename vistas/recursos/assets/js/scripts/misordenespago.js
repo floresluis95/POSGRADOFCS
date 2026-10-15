@@ -28,6 +28,8 @@
 
     function badgeEstado(o) {
         if (o.estado === 'CONFIRMADO') return '<span class="badge-orden badge-confirmado">Pagada</span>';
+        // Pagó pero perdió el voucher: Posgrado lo registra cuando Tesoro dé el código
+        if (o.estado === 'EXTRAVIADO') return '<span class="badge-orden badge-extraviado" title="Pagada; falta validar el voucher">Voucher por validar</span>';
         if (o.vencida) return '<span class="badge-orden badge-vencido">Vencida</span>';
         return '<span class="badge-orden badge-pendiente">Pendiente</span>';
     }

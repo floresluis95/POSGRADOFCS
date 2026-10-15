@@ -7,6 +7,8 @@
  */
 
 require_once 'conexion.modelo.php';
+require_once __DIR__ . '/voucher.modelo.php';
+require_once __DIR__ . '/pagoclinica.modelo.php';
 
 class PagoModuloModelo
 {
@@ -99,6 +101,18 @@ class PagoModuloModelo
                 $saldoPendiente = 0.0;
             }
 
+            // Órdenes de cuota con voucher extraviado: el estudiante ya pagó, pero sin
+            // voucher no cuentan como cobrado; sí se descuentan de lo que se puede pedir
+            // en la orden siguiente (no se cobra dos veces lo mismo)
+            $stmtEspera = Conexion::Conectar()->prepare(
+                "SELECT COALESCE(SUM(MontoTotal), 0) AS monto, COUNT(*) AS cantidad FROM ordenpago
+                 WHERE idinscripcion = :idinscripcion AND Estado = 'EXTRAVIADO' AND Observaciones = 'CUOTA PROGRAMA'"
+            );
+            $stmtEspera->execute([':idinscripcion' => $idinscripcion]);
+            $filaEspera = $stmtEspera->fetch(PDO::FETCH_ASSOC);
+            $montoEnEspera = round(floatval($filaEspera['monto']), 2);
+            $disponibleOrden = max(0.0, round($saldoPendiente - $montoEnEspera, 2));
+
             // Todos los planes (Regular, Contado y Grupal) admiten cuotas de monto libre
             // hasta cubrir el saldo; el plan solo define el % de descuento del programa.
             return [
@@ -112,14 +126,20 @@ class PagoModuloModelo
                 'numeroCuotasPlan' => isset($plan['NumeroCuotas']) ? (int)$plan['NumeroCuotas'] : null,
                 // Monto de cada cuota pactado en Pre-Registro (la última ajusta); null en planes anteriores
                 'montoCuotaPlan' => isset($plan['MontoCuota']) ? (float)$plan['MontoCuota'] : null,
-                'cuotasPagadasCount' => $cuotasPagadasCount
+                'cuotasPagadasCount' => $cuotasPagadasCount,
+                // Voucher extraviado: monto y cuántas órdenes; disponibleOrden = saldo menos
+                // ese monto (tope de la orden siguiente)
+                'montoEnEspera' => $montoEnEspera,
+                'cuotasEnEspera' => (int)$filaEspera['cantidad'],
+                'disponibleOrden' => $disponibleOrden
             ];
         } catch (PDOException $e) {
             error_log("Error en ObtenerResumenPagoProgramaModelo: " . $e->getMessage());
             return [
                 'tienePlan' => false, 'tipoPlan' => null, 'costoTotal' => 0,
                 'totalPagado' => 0, 'saldoPendiente' => 0, 'completado' => false,
-                'numeroCuotasPlan' => null, 'montoCuotaPlan' => null, 'cuotasPagadasCount' => 0
+                'numeroCuotasPlan' => null, 'montoCuotaPlan' => null, 'cuotasPagadasCount' => 0,
+                'montoEnEspera' => 0, 'cuotasEnEspera' => 0, 'disponibleOrden' => 0
             ];
         }
     }
@@ -173,9 +193,77 @@ class PagoModuloModelo
     }
 
     /**
+     * N° de cuota de una orden: su posición entre las órdenes de cuota de la inscripción
+     * (sin las anuladas). Así una orden con voucher extraviado conserva su número aunque
+     * la siguiente se pague antes (con "pagadas + 1" las dos dirían la misma cuota).
+     * Para las cuotas ya registradas da el mismo número que tenían.
+     * @param PDO $pdo
+     * @param int $idOrdenPago
+     * @return int
+     */
+    public static function NumeroCuotaDeOrdenModelo($pdo, $idOrdenPago)
+    {
+        $stmt = $pdo->prepare(
+            "SELECT COUNT(*) FROM ordenpago o2
+             INNER JOIN ordenpago o1 ON o1.IdOrdenPago = :id
+             WHERE o2.idinscripcion = o1.idinscripcion AND o2.Observaciones = 'CUOTA PROGRAMA'
+             AND o2.Estado <> 'ANULADO' AND o2.IdOrdenPago <= o1.IdOrdenPago"
+        );
+        $stmt->execute([':id' => (int)$idOrdenPago]);
+        return max(1, (int)$stmt->fetchColumn());
+    }
+
+    /**
+     * Órdenes de cuota de la inscripción con voucher extraviado (se les registra el
+     * voucher cuando se recupera el código en Tesoro).
+     * @param int $idinscripcion
+     * @return array
+     */
+    public static function ListarCuotasExtraviadasModelo($idinscripcion)
+    {
+        return self::ListarCuotasSinPagarModelo($idinscripcion, ['EXTRAVIADO']);
+    }
+
+    /**
+     * Órdenes de cuota que aún no tienen voucher validado: pendientes de pago y con
+     * voucher extraviado. Los historiales las muestran como "Pendiente" junto a las
+     * cuotas pagadas (antes solo se veían los pagos ya registrados).
+     * @param int $idinscripcion
+     * @param array $estados Estados de ordenpago a incluir
+     * @return array Con NumeroCuota (posición de la orden)
+     */
+    public static function ListarCuotasSinPagarModelo($idinscripcion, array $estados = ['PENDIENTE', 'EXTRAVIADO'])
+    {
+        try {
+            $pdo = Conexion::Conectar();
+            $estados = array_values(array_intersect($estados, ['PENDIENTE', 'EXTRAVIADO']));
+            if (!$estados) return [];
+            $marcadores = implode(',', array_fill(0, count($estados), '?'));
+            $stmt = $pdo->prepare(
+                "SELECT IdOrdenPago, NumeroOrden, MontoTotal, FechaGeneracion, FechaVencimiento, Estado,
+                        MotivoExtraviado, FechaExtraviado, ResponsableExtraviado
+                 FROM ordenpago
+                 WHERE idinscripcion = ? AND Estado IN ($marcadores) AND Observaciones = 'CUOTA PROGRAMA'
+                 ORDER BY IdOrdenPago ASC"
+            );
+            $stmt->execute(array_merge([$idinscripcion], $estados));
+            $ordenes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($ordenes as &$orden) {
+                $orden['NumeroCuota'] = self::NumeroCuotaDeOrdenModelo($pdo, $orden['IdOrdenPago']);
+            }
+            unset($orden);
+            return $ordenes;
+        } catch (PDOException $e) {
+            error_log("Error en ListarCuotasSinPagarModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Registrar el pago (con voucher) de una cuota del programa.
-     * Requiere que exista una orden de pago pendiente para la inscripción.
-     * @param array $datos idinscripcion, montocuota, fechapago, nvaucher, fmodulo
+     * Confirma la orden pendiente de la inscripción o, si se indica IdOrdenPago, esa
+     * orden (la de un voucher extraviado que ya se recuperó).
+     * @param array $datos idinscripcion, montocuota, fechapago, nvaucher, fmodulo, IdOrdenPago (opcional)
      * @return string 'exitoso'|'sin_orden'|'monto_distinto'|'error'
      */
     public static function RegistrarCuotaProgramaModelo($datos)
@@ -184,7 +272,18 @@ class PagoModuloModelo
             $pdo = Conexion::Conectar();
             $pdo->beginTransaction();
 
-            $orden = self::BuscarOrdenPagoPendienteCuotaModelo($pdo, $datos['idinscripcion']);
+            if (!empty($datos['IdOrdenPago'])) {
+                $stmtOrden = $pdo->prepare(
+                    "SELECT IdOrdenPago, MontoTotal FROM ordenpago
+                     WHERE IdOrdenPago = :id AND idinscripcion = :idinscripcion
+                     AND Estado IN ('PENDIENTE', 'EXTRAVIADO') AND Observaciones = 'CUOTA PROGRAMA'
+                     FOR UPDATE"
+                );
+                $stmtOrden->execute([':id' => (int)$datos['IdOrdenPago'], ':idinscripcion' => $datos['idinscripcion']]);
+                $orden = $stmtOrden->fetch(PDO::FETCH_ASSOC) ?: null;
+            } else {
+                $orden = self::BuscarOrdenPagoPendienteCuotaModelo($pdo, $datos['idinscripcion']);
+            }
             if ($orden === null) {
                 $pdo->rollBack();
                 return "sin_orden";
@@ -196,12 +295,7 @@ class PagoModuloModelo
                 return "monto_distinto";
             }
 
-            $stmtNum = $pdo->prepare(
-                "SELECT COUNT(*) as total FROM pagomodulo WHERE idinscripcion = :idinscripcion AND Estado != 'ANULADO'"
-            );
-            $stmtNum->bindParam(":idinscripcion", $datos['idinscripcion'], PDO::PARAM_INT);
-            $stmtNum->execute();
-            $numeroCuota = intval($stmtNum->fetch(PDO::FETCH_ASSOC)['total']) + 1;
+            $numeroCuota = self::NumeroCuotaDeOrdenModelo($pdo, $orden['IdOrdenPago']);
 
             $fmodulo = !empty($datos['fmodulo']) ? $datos['fmodulo'] : null;
 
@@ -360,11 +454,12 @@ class PagoModuloModelo
     {
         try {
             $stmtInsc = Conexion::Conectar()->prepare(
-                "SELECT idInscripcion, costomatricula, montoPagado, nvauchermatricula, FechaInscripcion
-                 FROM estudianteprograma
-                 WHERE EstudianteID = :estudianteID
-                 AND ProgramaID = :programaID
-                 AND Estado = 'ACTIVO'
+                "SELECT ep.idInscripcion, ep.costomatricula, ep.montoPagado, ep.nvauchermatricula, ep.FechaInscripcion,
+                        " . VoucherModelo::SqlFechaOrdenMatricula('ep.idInscripcion') . " AS FechaOrdenMatricula
+                 FROM estudianteprograma ep
+                 WHERE ep.EstudianteID = :estudianteID
+                 AND ep.ProgramaID = :programaID
+                 AND ep.Estado = 'ACTIVO'
                  LIMIT 1"
             );
             $stmtInsc->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
@@ -373,7 +468,7 @@ class PagoModuloModelo
             $inscripcion = $stmtInsc->fetch(PDO::FETCH_ASSOC);
 
             if (!$inscripcion) {
-                return ['resumen' => null, 'cuotas' => [], 'matricula' => null];
+                return ['resumen' => null, 'cuotas' => [], 'clinicas' => [], 'matricula' => null];
             }
 
             $idinscripcion = $inscripcion['idInscripcion'];
@@ -381,17 +476,22 @@ class PagoModuloModelo
             return [
                 'resumen' => self::ObtenerResumenPagoProgramaModelo($idinscripcion, $programaID),
                 'cuotas' => self::ObtenerCuotasPorInscripcionModelo($idinscripcion),
+                // Cuotas con orden pero sin voucher validado (se ven como Pendiente)
+                'cuotasPorPagar' => self::ListarCuotasSinPagarModelo($idinscripcion),
+                // Clínicas: aparte de las cuotas (no cuentan para el saldo del programa)
+                'clinicas' => PagoClinicaModelo::ListarPorInscripcionModelo($idinscripcion),
                 'matricula' => [
                     'costo' => round(floatval($inscripcion['costomatricula']), 2),
                     'montoPagado' => round(floatval($inscripcion['montoPagado']), 2),
                     'voucher' => $inscripcion['nvauchermatricula'],
                     'fecha' => $inscripcion['FechaInscripcion'],
+                    'fechaOrden' => $inscripcion['FechaOrdenMatricula'],
                     'pagada' => floatval($inscripcion['montoPagado']) >= floatval($inscripcion['costomatricula']) && floatval($inscripcion['costomatricula']) > 0
                 ]
             ];
         } catch (PDOException $e) {
             error_log("Error en ObtenerDetalleModulosEstudianteModelo: " . $e->getMessage());
-            return ['resumen' => null, 'cuotas' => [], 'matricula' => null];
+            return ['resumen' => null, 'cuotas' => [], 'clinicas' => [], 'matricula' => null];
         }
     }
 }

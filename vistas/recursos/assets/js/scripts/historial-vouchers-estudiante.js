@@ -159,21 +159,33 @@ function mostrarVouchers(vouchers) {
     } else {
         vouchers.forEach(function(voucher, index) {
             const fechaPago = voucher.FechaPago ? formatearFecha(voucher.FechaPago) : 'N/A';
+            const fechaOrden = voucher.FechaOrden ? formatearFecha(voucher.FechaOrden) : '-';
             const numeroVoucher = voucher.NumeroVoucher || 'S/N';
             const monto = parseFloat(voucher.MontoTotal || 0).toFixed(2);
 
-            const numeroCuota = voucher.NumeroCuota ? `Cuota N° ${voucher.NumeroCuota}` : 'Cuota del programa';
+            const esClinica = voucher.Tipo === 'CLINICA';
+            const numeroCuota = esClinica
+                ? 'Clínica'
+                : (voucher.NumeroCuota ? `Cuota N° ${voucher.NumeroCuota}` : 'Cuota del programa');
 
-            // Verificar si tiene imagen
-            const tieneImagen = voucher.TieneImagen && voucher.TieneImagen === 'SI';
-            const imagenURL = tieneImagen ? `ajax/obtener-voucher-imagen.php?id=${voucher.IdPago}&thumb=1` : '';
-            const imagenURLGrande = tieneImagen ? `ajax/obtener-voucher-imagen.php?id=${voucher.IdPago}` : '';
+            // Verificar si tiene imagen (las clínicas tienen su propio endpoint y pueden ser PDF)
+            const tieneArchivo = voucher.TieneImagen && voucher.TieneImagen === 'SI';
+            const esPdf = esClinica && voucher.EsPdf == 1;
+            const tieneImagen = tieneArchivo && !esPdf;
+            const urlBase = esClinica ? 'ajax/obtener-voucher-clinica.php' : 'ajax/obtener-voucher-imagen.php';
+            const imagenURL = tieneArchivo ? `${urlBase}?id=${voucher.IdPago}&thumb=1` : '';
+            const imagenURLGrande = tieneArchivo ? `${urlBase}?id=${voucher.IdPago}` : '';
 
             html += `
                 <div class="voucher-card">
                     <div class="row">
                         <div class="col-md-4">
-                            ${tieneImagen ? `
+                            ${esPdf ? `
+                                <a href="${imagenURLGrande}" target="_blank" class="no-image-placeholder" style="display: block; text-decoration: none;">
+                                    <i class="fa fa-file-pdf" style="font-size: 3rem; color: #e74c3c;"></i>
+                                    <p style="margin-top: 1rem; font-weight: 500;">Ver voucher (PDF)</p>
+                                </a>
+                            ` : tieneImagen ? `
                                 <div class="voucher-image-container" style="position: relative;">
                                     <div class="image-loader" style="display: flex; align-items: center; justify-content: center; height: 200px; background: #f8f9fa; border-radius: 10px;">
                                         <div class="kt-spinner kt-spinner--sm kt-spinner--brand"></div>
@@ -208,11 +220,17 @@ function mostrarVouchers(vouchers) {
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-12">
+                                    <div class="col-6">
                                         <h6 style="color: #B5B5C3; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem;">Monto Total</h6>
                                         <h4 style="color: #11998e; font-weight: 700; margin: 0; font-size: 1.8rem;">
                                             Bs. ${monto}
                                         </h4>
+                                    </div>
+                                    <div class="col-6">
+                                        <h6 style="color: #B5B5C3; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem;">Fecha de la orden</h6>
+                                        <h5 style="color: #464E5F; font-weight: 700; margin: 0;">
+                                            <i class="flaticon2-calendar-8" style="color: #667eea;"></i> ${fechaOrden}
+                                        </h5>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -344,12 +362,10 @@ function ocultarAreaVouchers() {
 function formatearFecha(fecha) {
     if (!fecha) return 'N/A';
 
-    const date = new Date(fecha);
-    const dia = String(date.getDate()).padStart(2, '0');
-    const mes = String(date.getMonth() + 1).padStart(2, '0');
-    const anio = date.getFullYear();
-
-    return `${dia}/${mes}/${anio}`;
+    // Se lee el texto tal cual: new Date('2026-10-13') es medianoche UTC y en
+    // Bolivia (UTC-4) mostraba el día anterior
+    const partes = String(fecha).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return partes ? `${partes[3]}/${partes[2]}/${partes[1]}` : fecha;
 }
 
 /**

@@ -62,6 +62,7 @@
                                 <div class="op-contador op-c-vencida"><span>Vencidas</span><strong id="op_vencidas">0</strong></div>
                                 <div class="op-contador op-c-pagada"><span>Pagadas</span><strong id="op_pagadas">0</strong></div>
                                 <div class="op-contador op-c-anulada"><span>Anuladas</span><strong id="op_anuladas">0</strong></div>
+                                <div class="op-contador op-c-extraviado"><span>Voucher por validar</span><strong id="op_extraviadas">0</strong></div>
                             </div>
 
                             <div class="op-tarjeta">
@@ -69,7 +70,7 @@
                                 <div class="op-filtros">
                                     <div class="op-filtro op-filtro-buscar">
                                         <label for="op_buscar">Buscar</label>
-                                        <input type="search" class="form-control" id="op_buscar" placeholder="Nombre, C.I. o N° de orden" autocomplete="off">
+                                        <input type="search" class="form-control" id="op_buscar" placeholder="Nombre, C.I. o N° de orden (opcional)" autocomplete="off">
                                     </div>
                                     <div class="op-filtro">
                                         <label for="op_tipo">Tipo</label>
@@ -89,6 +90,7 @@
                                             <option value="VENCIDA">Vencida</option>
                                             <option value="PAGADA">Pagada</option>
                                             <option value="ANULADO">Anulada</option>
+                                            <option value="EXTRAVIADO">Voucher por validar</option>
                                         </select>
                                     </div>
                                     <div class="op-filtro op-filtro-programa">
@@ -106,8 +108,16 @@
                                         <input type="date" class="form-control" id="op_hasta">
                                     </div>
                                     <div class="op-filtro op-filtro-limpiar">
+                                        <!-- Lista con los filtros elegidos, sin necesidad de escribir un estudiante -->
+                                        <button type="button" class="btn op-btn-buscar" id="op_btn_buscar" title="Listar las órdenes con los filtros elegidos">
+                                            <i class="fa fa-search"></i> Buscar
+                                        </button>
                                         <button type="button" class="btn btn-outline-secondary" id="op_limpiar" title="Quitar filtros">
                                             <i class="fa fa-undo"></i> Limpiar
+                                        </button>
+                                        <!-- Sin búsqueda exporta todas las órdenes del periodo con los filtros elegidos -->
+                                        <button type="button" class="btn btn-success op-btn-excel" id="op_exportar" title="Exportar a Excel las órdenes filtradas">
+                                            <i class="fa fa-file-excel"></i> Exportar Excel
                                         </button>
                                     </div>
                                 </div>
@@ -116,6 +126,7 @@
                                 <table class="table mb-0" id="op_tabla">
                                     <thead>
                                         <tr>
+                                            <th class="text-center">N°</th>
                                             <th>N° Orden</th>
                                             <th>Estudiante</th>
                                             <th>Programa</th>
@@ -127,7 +138,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="op_cuerpo">
-                                        <tr><td colspan="8" class="op-vacio">Cargando órdenes de pago...</td></tr>
+                                        <tr><td colspan="9" class="op-vacio">Cargando órdenes de pago...</td></tr>
                                     </tbody>
                                 </table>
 
@@ -183,6 +194,21 @@
         #op_tabla tbody td { padding: 0.6rem 0.75rem; vertical-align: middle; font-size: 0.86rem; color: #464E5F; border-top: 1px solid #f3f4f8; }
         #op_tabla tbody tr.op-anulada td { color: #9aa0ac; }
         .op-numero { font-weight: 600; white-space: nowrap; }
+        .op-correlativo { text-align: center; color: #7e8299; font-variant-numeric: tabular-nums; width: 48px; }
+        .op-filtro-limpiar { display: flex; gap: 8px; }
+        .op-btn-excel { white-space: nowrap; background: #1d6f42 !important; border-color: #1d6f42 !important; color: #fff !important; }
+        .op-btn-excel:hover { background: #155a35 !important; border-color: #155a35 !important; }
+        .op-btn-buscar { white-space: nowrap; background: #1e3c72; border-color: #1e3c72; color: #fff; }
+        .op-btn-buscar:hover, .op-btn-buscar:focus { background: #152c55; border-color: #152c55; color: #fff; }
+        /* Tipo de orden: cada uno con su color para distinguirlos de un vistazo */
+        .op-tipo {
+            display: inline-block; padding: 2px 10px; border-radius: 6px; border-left: 3px solid transparent;
+            font-size: 0.78rem; font-weight: 600; white-space: nowrap;
+        }
+        .op-tipo-matricula { background: #eef2f9; color: #1e3c72; border-left-color: #1e3c72; }
+        .op-tipo-cuota { background: #e6f4ec; color: #1e7145; border-left-color: #1e7145; }
+        .op-tipo-clinica { background: #f3edfb; color: #6b3fa0; border-left-color: #6b3fa0; }
+        .op-tipo-modulos { background: #f3f4f6; color: #4b5563; border-left-color: #9ca3af; }
         .op-sub { display: block; font-size: 0.75rem; color: #9aa0ac; }
         .op-monto { font-weight: 600; white-space: nowrap; }
         .op-fecha { white-space: nowrap; }
@@ -247,6 +273,16 @@
             color: #fff; background: #1e7145; font-size: 0.8rem; font-weight: 600; cursor: pointer;
         }
         .op-validar:hover { background: #155a35; border-color: #155a35; color: #fff; text-decoration: none; }
+        /* Voucher extraviado: botón para marcar la orden, insignia y motivo */
+        .op-extraviado {
+            display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+            padding: 5px 12px; border-radius: 20px; border: 1px solid #1e3c72;
+            color: #1e3c72; background: #fff; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+        }
+        .op-extraviado:hover { background: #eef2f9; }
+        .op-estado-extraviado { background: #eef2f9; color: #1e3c72; }
+        .op-c-extraviado { border-left-color: #1e3c72; }
+        .op-motivo { max-width: 180px; margin: 4px auto 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         /* Ventana "Validar voucher" */
         #op_modal_validar .modal-content { border: 0; border-radius: 14px; overflow: hidden; }
@@ -281,7 +317,7 @@
                         </div>
                         <div class="form-group col-sm-6">
                             <label for="opv_numero">N° de voucher / comprobante <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="opv_numero" placeholder="Ej: 123456" autocomplete="off" required>
+                            <input type="text" class="form-control" id="opv_numero" autocomplete="off" required data-voucher-partes>
                         </div>
                     </div>
                     <div class="form-group mb-0">

@@ -101,7 +101,7 @@ test.describe('Órdenes de pago de matrícula (Pre-Registro)', () => {
     expect(sinNumero.success).toBe(false);
 
     const sinFoto = await ajax(page, 'ordenpago.ajax.php', {
-      accion: 'validarVoucherMatricula', idOrdenPago: String(idOrden), numeroVoucher: 'MAT-' + unico(),
+      accion: 'validarVoucherMatricula', idOrdenPago: String(idOrden), numeroVoucher: unico() + '-01',
     });
     expect(sinFoto.success).toBe(false);
     expect(valor(`SELECT COUNT(*) FROM estudianteprograma WHERE EstudianteID = ${estudianteID}`)).toBe('0');
@@ -138,7 +138,7 @@ test.describe('Órdenes de cuota y pagos (Matriculados > Gestión de Pagos)', ()
   test('no se registra un pago de cuota en cero', async ({ page }) => {
     const inscrito = await estudianteInscrito(page);
     await generarOrdenCuota(page, inscrito, '1000');
-    const r = await pagarCuota(page, inscrito.idInscripcion, '0', 'CUO-' + unico());
+    const r = await pagarCuota(page, inscrito.idInscripcion, '0', unico() + '-02');
     expect(r.estado).toBe('validacion');
     expect(valor(`SELECT COUNT(*) FROM pagomodulo WHERE idinscripcion = ${inscrito.idInscripcion}`)).toBe('0');
   });
@@ -146,7 +146,7 @@ test.describe('Órdenes de cuota y pagos (Matriculados > Gestión de Pagos)', ()
   test('el pago de la cuota debe ser por el monto de su orden', async ({ page }) => {
     const inscrito = await estudianteInscrito(page);
     await generarOrdenCuota(page, inscrito, '3000');
-    await pagarCuota(page, inscrito.idInscripcion, '1', 'CUO-' + unico());
+    await pagarCuota(page, inscrito.idInscripcion, '1', unico() + '-02');
     const pagado = valor(`SELECT COALESCE(SUM(montocuota), 0) FROM pagomodulo WHERE idinscripcion = ${inscrito.idInscripcion} AND Estado = 'PAGADO'`);
     expect(['0', '0.00', '3000.00'], `Orden de Bs. 3000 confirmada con un voucher de Bs. ${pagado}`).toContain(pagado);
   });

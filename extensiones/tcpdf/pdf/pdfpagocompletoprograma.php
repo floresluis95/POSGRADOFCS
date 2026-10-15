@@ -28,6 +28,7 @@ $baseDir = realpath(__DIR__ . '/../../../');
 require_once $baseDir . '/vendor/autoload.php';
 // La conexión está en core/ (modelos/conexion.modelo.php ya no existe; antes este PDF salía en blanco)
 require_once file_exists($baseDir . '/modelos/conexion.modelo.php') ? $baseDir . '/modelos/conexion.modelo.php' : $baseDir . '/core/conexion.modelo.php';
+require_once $baseDir . '/modelos/voucher.modelo.php';
 
 // Validar ID de inscripción
 if (!isset($_GET['idinscripcion']) || empty($_GET['idinscripcion'])) {
@@ -44,6 +45,7 @@ try {
                ep.idInscripcion, ep.ProgramaID, ep.FechaInscripcion,
                ep.costomatricula, ep.montoPagado, ep.montoDescuento, ep.porcentajeDescuento,
                ep.pagoCompleto, ep.nvauchermatricula,
+               " . VoucherModelo::SqlFechaOrdenMatricula('ep.idInscripcion') . " AS FechaOrdenMatricula,
                p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico,
                p.Costo AS CostoTotalPrograma, p.Version, p.NumeroTramite
         FROM estudianteprograma ep
@@ -332,6 +334,12 @@ $y += 6;
 $pdf->SetXY(15, $y);
 $pdf->Cell(50, 5, 'N° Voucher:', 0, 0, 'L');
 $pdf->Cell(0, 5, $estudiante['nvauchermatricula'] ?: 'N/A', 0, 1, 'L');
+
+$y += 6;
+
+$pdf->SetXY(15, $y);
+$pdf->Cell(50, 5, 'Fecha de la orden de pago:', 0, 0, 'L');
+$pdf->Cell(0, 5, $estudiante['FechaOrdenMatricula'] ? date('d/m/Y', strtotime($estudiante['FechaOrdenMatricula'])) : 'N/A', 0, 1, 'L');
 
 // ========================================
 // NOTA IMPORTANTE

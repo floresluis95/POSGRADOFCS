@@ -138,6 +138,31 @@
             </form>
           </div>
         </div>
+
+        <!-- Costos de los certificados (configuracion COSTO_CERT_<TIPO>): llegan prellenados
+             como "Monto pagado" al generar cada certificado y se ven en Registro de documentos -->
+        <div class="card shadow-sm mt-4">
+          <div class="card-header bg-gradient-primary">
+            <h4 class="card-title text-white mb-0">
+              <i class="fas fa-file-invoice-dollar"></i> Costos de certificados
+            </h4>
+          </div>
+          <div class="card-body">
+            <p class="text-muted" style="font-size:13px;">
+              Precio de cada certificado en Bs. Al generarlo, el campo "Monto pagado" ya viene con este valor y
+              se puede cambiar si el estudiante pagó otro monto. Deje vacío si aún no tiene precio definido.
+            </p>
+            <form id="formCostosCertificados" autocomplete="off">
+              <div class="row" id="camposCostosCertificados"></div>
+              <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:8px;">
+                <small class="text-muted" id="actualizadoCostos"></small>
+                <button type="submit" class="btn btn-success" id="btnGuardarCostos">
+                  <i class="fas fa-save"></i> Guardar costos
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </section>
 </div>
 
@@ -251,8 +276,61 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // ---- Costos de certificados ----
+    function cargarCostos() {
+        $.post('ajax/autoridad.ajax.php', { accion: 'obtenerCostosCertificados' }, function (resp) {
+            if (!resp || !resp.success) return;
+            var $campos = $('#camposCostosCertificados').empty();
+            Object.keys(resp.tipos).forEach(function (tipo) {
+                var precio = resp.precios[tipo];
+                var $col = $('<div class="col-md-4 col-sm-6 form-group"></div>');
+                $col.append($('<label></label>').attr('for', 'costo_' + tipo).append($('<strong></strong>').text(resp.tipos[tipo])));
+                $col.append(
+                    $('<div class="input-group"></div>')
+                        .append('<div class="input-group-prepend"><span class="input-group-text">Bs.</span></div>')
+                        .append($('<input type="number" class="form-control costo-certificado" min="0" step="0.01" placeholder="Sin definir">')
+                            .attr('id', 'costo_' + tipo).attr('data-tipo', tipo)
+                            .val(precio !== null ? Number(precio).toFixed(2) : ''))
+                );
+                $campos.append($col);
+            });
+            var d = resp.ultimaActualizacion;
+            $('#actualizadoCostos').text(d && d.ResponsableActualizacion
+                ? 'Último cambio: ' + d.FechaActualizacion + ' por ' + d.ResponsableActualizacion : '');
+        }, 'json');
+    }
+
+    $('#formCostosCertificados').on('submit', function (e) {
+        e.preventDefault();
+        var costos = {};
+        var invalido = false;
+        $('.costo-certificado').each(function () {
+            var valor = $(this).val().trim();
+            if (valor !== '' && (isNaN(valor) || parseFloat(valor) < 0)) invalido = true;
+            costos[$(this).data('tipo')] = valor;
+        });
+        if (invalido) {
+            Swal.fire('Atención', 'Los costos deben ser montos en Bs. iguales o mayores a 0', 'warning');
+            return;
+        }
+        var $btn = $('#btnGuardarCostos').prop('disabled', true);
+        $.post('ajax/autoridad.ajax.php', { accion: 'guardarCostosCertificados', costos: costos }, function (resp) {
+            if (resp && resp.success) {
+                Swal.fire({ type: 'success', title: resp.mensaje, timer: 1800, showConfirmButton: false });
+                cargarCostos();
+            } else {
+                Swal.fire('Atención', (resp && resp.mensaje) || 'No se pudo guardar', 'warning');
+            }
+        }, 'json').fail(function () {
+            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+        }).always(function () {
+            $btn.prop('disabled', false);
+        });
+    });
+
     cargar();
     cargarParametros();
+    cargarCostos();
 });
 </script>
 

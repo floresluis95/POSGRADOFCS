@@ -465,7 +465,7 @@ kt-aside--fixed kt-page--loading">
                 <div class="row" id="filaCamposVoucher">
                   <div class="col-md-4 form-group mb-2" id="grupoVoucherNumero">
                     <label class="filtro-label" for="voucherNumero">N° de voucher</label>
-                    <input type="text" class="form-control form-control-sm" id="voucherNumero" maxlength="25" required>
+                    <input type="text" class="form-control form-control-sm" id="voucherNumero" maxlength="25" required data-voucher-partes>
                   </div>
                   <div class="col-md-3 form-group mb-2">
                     <label class="filtro-label" for="voucherFecha">Fecha</label>
@@ -801,7 +801,8 @@ kt-aside--fixed kt-page--loading">
           $('#avisoMatriculaExonerada').toggle(sinPago);
           $('.vv-comparar').toggle(!sinPago);
           $('#grupoVoucherNumero, #grupoVoucherFoto').toggle(!sinPago);
-          $('#voucherNumero').prop('required', !sinPago);
+          // voucher-partes.js: lo que se ve es #voucherNumero_largo (el original queda oculto)
+          $('#voucherNumero, #voucherNumero_largo').prop('required', !sinPago);
           $('#voucherFoto').prop('required', !sinPago);
       }
 

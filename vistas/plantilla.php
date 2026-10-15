@@ -56,6 +56,7 @@ ob_start();
   <link href="vistas/recursos/assets/vendors/general/sweetalert2/dist/sweetalert2.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/general/cropperjs/cropper.min.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/css/captura-foto.css?v=<?php echo filemtime(__DIR__ . '/recursos/assets/css/captura-foto.css'); ?>" rel="stylesheet" type="text/css" />
+  <link href="vistas/recursos/assets/css/voucher-partes.css?v=<?php echo filemtime(__DIR__ . '/recursos/assets/css/voucher-partes.css'); ?>" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/general/socicon/css/socicon.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/custom/vendors/line-awesome/css/line-awesome.css" rel="stylesheet" type="text/css" />
   <link href="vistas/recursos/assets/vendors/custom/vendors/flaticon/flaticon.css" rel="stylesheet" type="text/css" />
@@ -177,6 +178,10 @@ ob_start();
   <!-- Foto del voucher: cámara y recorte (input type="file" data-captura-foto) -->
   <script src="vistas/recursos/assets/vendors/general/cropperjs/cropper.min.js" type="text/javascript"></script>
   <script src="vistas/recursos/assets/js/scripts/captura-foto.js?v=<?php echo filemtime(__DIR__ . '/recursos/assets/js/scripts/captura-foto.js'); ?>" type="text/javascript"></script>
+  <!-- N° de voucher en dos partes, largo - corto (input data-voucher-partes) -->
+  <script src="vistas/recursos/assets/js/scripts/voucher-partes.js?v=<?php echo filemtime(__DIR__ . '/recursos/assets/js/scripts/voucher-partes.js'); ?>" type="text/javascript"></script>
+  <!-- Exportar listas a Excel (.xlsx) con JSZip de datatables.bundle.js: window.exportarExcel -->
+  <script src="vistas/recursos/assets/js/scripts/exportar-excel.js?v=<?php echo filemtime(__DIR__ . '/recursos/assets/js/scripts/exportar-excel.js'); ?>" type="text/javascript"></script>
   <?php
   // No cargar SweetAlert2 en páginas que usan SweetAlert v1
   $action = isset($_GET['action']) ? $_GET['action'] : '';

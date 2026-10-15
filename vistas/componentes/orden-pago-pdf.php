@@ -23,6 +23,7 @@ if ($idOrdenPago === 0) {
 
 require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
 require_once __DIR__ . '/orden-pago-pdf-render.php';
+require_once __DIR__ . '/../../modelos/modulopagos_core.php'; // N° de cuota de la orden
 
 try {
     $pdo = Conexion::Conectar();
@@ -104,9 +105,10 @@ try {
         $programaTexto = $orden['NombrePrograma'] . "\nPago de clínica";
         $version = !empty($orden['Version']) ? $orden['Version'] : 'V-1';
     } elseif ($esCuota) {
-        // Número de cuota al momento en que se generó esta orden: las cuotas ya
-        // pagadas (PAGADO) antes de esa fecha, +1. No queda guardado en la propia
-        // orden, se reconstruye igual que lo hizo el administrador al imprimirla.
+        // Número de cuota: la posición de esta orden entre las órdenes de cuota de la
+        // inscripción (sin anuladas), igual que al generarla y al registrar su voucher
+        // (PagoModuloModelo::NumeroCuotaDeOrdenModelo). Así una orden con voucher
+        // extraviado y la siguiente no salen con el mismo número.
         $numeroCuota = 1;
         $totalCuotas = null;
         if (!empty($orden['idinscripcion'])) {
@@ -120,14 +122,7 @@ try {
             $stmtPlan->execute();
             $totalCuotas = $stmtPlan->fetchColumn() ?: null;
 
-            $stmtCuota = $pdo->prepare(
-                "SELECT COUNT(*) as total FROM pagomodulo
-                 WHERE idinscripcion = :idinscripcion AND Estado = 'PAGADO' AND FechaRegistro < :fechaGeneracion"
-            );
-            $stmtCuota->bindParam(':idinscripcion', $orden['idinscripcion'], PDO::PARAM_INT);
-            $stmtCuota->bindParam(':fechaGeneracion', $orden['FechaGeneracion'], PDO::PARAM_STR);
-            $stmtCuota->execute();
-            $numeroCuota = (int)$stmtCuota->fetch(PDO::FETCH_ASSOC)['total'] + 1;
+            $numeroCuota = PagoModuloModelo::NumeroCuotaDeOrdenModelo($pdo, $orden['IdOrdenPago']);
         }
 
         $programaTexto = $orden['NombrePrograma'] . "\n" . etiquetaCuotaOrdenPago($numeroCuota, $totalCuotas);

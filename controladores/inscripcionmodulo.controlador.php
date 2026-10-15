@@ -16,9 +16,9 @@ class InscripcionModuloControladores
      * @param string|null $sede
      * @param string $estado 'ACTIVO' (por defecto), 'ABANDONO', o 'TODOS'
      */
-    public function ListarEstudiantesMatriculadosControlador($programaID = null, $sede = null, $estado = 'ACTIVO', $requisitos = null)
+    public function ListarEstudiantesMatriculadosControlador($programaID = null, $sede = null, $estado = 'ACTIVO', $requisitos = null, $grado = null)
     {
-        $estudiantes = InscripcionModuloModelos::ListarEstudiantesMatriculadosModelo($programaID, $sede, $estado, $requisitos);
+        $estudiantes = InscripcionModuloModelos::ListarEstudiantesMatriculadosModelo($programaID, $sede, $estado, $requisitos, $grado);
 
         if (empty($estudiantes)) {
             echo '<tr>
@@ -93,6 +93,7 @@ class InscripcionModuloControladores
                 'montoPagado'   => $montoPagado > 0 ? number_format($montoPagado, 2) : '',
                 'pagoCompleto'  => $pagoCompleto,
                 'voucher'       => $estudiante['nvauchermatricula'] ?? '',
+                'fechaOrden'    => !empty($estudiante['FechaOrdenMatricula']) ? date('d/m/Y', strtotime($estudiante['FechaOrdenMatricula'])) : '',
                 'grupo'         => $estudiante['CodigoGrupo'] ?? ''
             ];
 
@@ -138,6 +139,10 @@ class InscripcionModuloControladores
                                    data-idinscripcion="' . $estudiante['idInscripcion'] . '">
                                 <i class="fa fa-credit-card"></i> Pagos
                             </button>
+                            <a class="btn btn-sm mt-btn-ordenes" title="Órdenes de pago del estudiante en este programa"
+                               href="ordenespago?ci=' . urlencode($estudiante['Ci']) . '&programa=' . (int)$estudiante['ProgramaID'] . '">
+                                <i class="fa fa-receipt"></i> Órdenes
+                            </a>
                             <button type="button" class="btn btn-primary btn-sm dropdown-toggle btn-actions-dropdown"
                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fa fa-cog"></i>
@@ -158,9 +163,6 @@ class InscripcionModuloControladores
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="vistas/componentes/recibo-pago-modulos.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">
                                     <i class="fa fa-file-invoice-dollar"></i> Recibo de pagos
-                                </a>
-                                <a class="dropdown-item" href="ordenespago?ci=' . urlencode($estudiante['Ci']) . '&programa=' . (int)$estudiante['ProgramaID'] . '">
-                                    <i class="fa fa-receipt"></i> Órdenes de pago
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="extensiones/tcpdf/pdf/pdfestudiante.php?idinscripcion=' . $estudiante['idInscripcion'] . '" target="_blank">

@@ -12,8 +12,8 @@ test.describe.configure({ mode: 'serial' });
 const hoy = new Date().toISOString().slice(0, 10);
 const ci = unico();
 const estudiante = { nombre: 'ANA PRUEBA', apaterno: 'PROCESO', amaterno: 'COMPLETO' };
-const voucherMatricula = 'MAT-' + ci;
-const voucherCuota = 'CUO-' + ci;
+const voucherMatricula = ci + '-01';
+const voucherCuota = ci + '-02';
 const MONTO_CUOTA = 3000;
 
 /** Datos que se van llenando a medida que avanza el proceso */
@@ -101,7 +101,7 @@ test.describe('Proceso completo: del registro a los informes', () => {
     const modal = page.locator('#modalValidarVoucher');
     await expect(modal).toBeVisible();
     await expect(modal.locator('#detalleCi')).toContainText(ci);
-    await modal.locator('#voucherNumero').fill(voucherMatricula);
+    await modal.locator('#voucherNumero_largo').fill(voucherMatricula);
     await modal.locator('#voucherFecha').fill(hoy);
     await modal.locator('#voucherFoto').setInputFiles(IMAGEN_VOUCHER);
     // Al elegir la foto se abre la ventana de recorte (captura-foto.js)
@@ -168,7 +168,7 @@ test.describe('Proceso completo: del registro a los informes', () => {
     await expect(page.locator('.swal2-popup')).toHaveCount(0, { timeout: 10_000 });
     await modal.locator('#tab-pago-modulos-link').click();
     await expect(modal.locator('#btnGuardarPagoCuota')).toBeEnabled({ timeout: 15_000 });
-    await modal.locator('#numeroVaucher').fill(voucherCuota);
+    await modal.locator('#numeroVaucher_largo').fill(voucherCuota);
     await modal.locator('#fmodulo').setInputFiles(IMAGEN_VOUCHER);
     // Al elegir la foto se abre la ventana de recorte (captura-foto.js)
     await page.locator('#capturaRecorteSinCambios').click();

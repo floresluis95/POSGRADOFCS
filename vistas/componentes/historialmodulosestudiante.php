@@ -141,6 +141,28 @@
                                             </div>
                                         </div>
 
+                                        <!-- Clínicas: solo si tiene alguna (aparte del saldo del programa) -->
+                                        <div class="hm-seccion mt-4" id="clinicas_container" style="display: none;">
+                                            <div class="hm-seccion-titulo">
+                                                <i class="flaticon2-medical-records"></i> Clínicas
+                                                <small class="text-muted font-weight-normal">(aparte del saldo del programa)</small>
+                                            </div>
+                                            <div class="hm-seccion-cuerpo">
+                                                <table class="table table-sm mb-0" id="tabla_clinicas">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="text-right">Monto</th>
+                                                            <th>Generada</th>
+                                                            <th>Pagada</th>
+                                                            <th>N° voucher</th>
+                                                            <th class="text-center">Estado</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tbody_clinicas"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
                                     </div>
 
                                 </div>
@@ -295,7 +317,7 @@
         .hm-insignia-rechazado { background: #c0392b; }
         .hm-insignia-anulado { background: #9aa0ac; }
 
-        #tabla_modulos_pagados thead th {
+        :is(#tabla_modulos_pagados, #tabla_clinicas) thead th {
             border-top: none;
             border-bottom: 2px solid #E4E6EF;
             font-size: 0.75rem;
@@ -305,17 +327,17 @@
             white-space: nowrap;
         }
 
-        #tabla_modulos_pagados th,
-        #tabla_modulos_pagados td {
+        :is(#tabla_modulos_pagados, #tabla_clinicas) th,
+        :is(#tabla_modulos_pagados, #tabla_clinicas) td {
             padding: 0.6rem 1rem;
         }
 
-        #tabla_modulos_pagados tbody td {
+        :is(#tabla_modulos_pagados, #tabla_clinicas) tbody td {
             vertical-align: middle;
             color: #464E5F;
         }
 
-        #tabla_modulos_pagados td[data-label="Monto"] {
+        :is(#tabla_modulos_pagados, #tabla_clinicas) td[data-label="Monto"] {
             font-weight: 600;
             white-space: nowrap;
         }
@@ -360,30 +382,30 @@
                 padding: 0.75rem;
             }
 
-            #tabla_modulos_pagados thead {
+            :is(#tabla_modulos_pagados, #tabla_clinicas) thead {
                 display: none;
             }
 
-            #tabla_modulos_pagados,
-            #tabla_modulos_pagados tbody,
-            #tabla_modulos_pagados tr,
-            #tabla_modulos_pagados td {
+            :is(#tabla_modulos_pagados, #tabla_clinicas),
+            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody,
+            :is(#tabla_modulos_pagados, #tabla_clinicas) tr,
+            :is(#tabla_modulos_pagados, #tabla_clinicas) td {
                 display: block;
                 width: 100%;
             }
 
-            #tabla_modulos_pagados tbody tr {
+            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody tr {
                 border: 1px solid #eef0f5;
                 border-radius: 8px;
                 margin-bottom: 10px;
                 padding: 2px 12px;
             }
 
-            #tabla_modulos_pagados tbody tr:last-child {
+            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody tr:last-child {
                 margin-bottom: 0;
             }
 
-            #tabla_modulos_pagados tbody td {
+            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody td {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -393,11 +415,11 @@
                 text-align: right !important;
             }
 
-            #tabla_modulos_pagados tbody tr td:first-child {
+            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody tr td:first-child {
                 border-top: none;
             }
 
-            #tabla_modulos_pagados tbody td::before {
+            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody td::before {
                 content: attr(data-label);
                 flex-shrink: 0;
                 font-size: 0.75rem;
@@ -405,13 +427,13 @@
                 color: #7e8299;
             }
 
-            #tabla_modulos_pagados tbody td[colspan] {
+            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody td[colspan] {
                 display: block;
                 text-align: center !important;
                 border: none;
             }
 
-            #tabla_modulos_pagados tbody td[colspan]::before {
+            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody td[colspan]::before {
                 content: none;
             }
         }

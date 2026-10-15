@@ -1,5 +1,6 @@
 <?php
 require_once 'conexion.modelo.php';
+require_once __DIR__ . '/voucher.modelo.php';
 require_once __DIR__ . '/requisito.modelo.php';
 require_once __DIR__ . '/configuracion.modelo.php'; // nota mínima de aprobación // RequisitoModelo::CondicionGrado() (conteo de requisitos por grado)
 
@@ -16,7 +17,7 @@ class InscripcionModuloModelos
      * @param string $estado 'ACTIVO' (por defecto), 'ABANDONO', o 'TODOS' para no filtrar por estado
      * @return array
      */
-    public static function ListarEstudiantesMatriculadosModelo($programaID = null, $sede = null, $estado = 'ACTIVO', $requisitos = null)
+    public static function ListarEstudiantesMatriculadosModelo($programaID = null, $sede = null, $estado = 'ACTIVO', $requisitos = null, $grado = null)
     {
         try {
             $sql = "SELECT
@@ -30,6 +31,7 @@ class InscripcionModuloModelos
                     ep.porcentajeDescuento,
                     ep.montoDescuento,
                     ep.nvauchermatricula,
+                    " . VoucherModelo::SqlFechaOrdenMatricula('ep.idInscripcion') . " AS FechaOrdenMatricula,
                     ep.Estado,
                     e.Nombre,
                     e.Apaterno,
@@ -79,6 +81,11 @@ class InscripcionModuloModelos
                 $sql .= " AND p.Sede = :sede";
             }
 
+            // Grado académico del programa (Especialidad, Maestría, Diplomado...)
+            if ($grado !== null && $grado !== '') {
+                $sql .= " AND p.GradoAcademico = :grado";
+            }
+
             // Requisitos de matriculación entregados (ver requisito.modelo.php)
             if ($requisitos === 'INCOMPLETOS') {
                 $sql .= " HAVING RequisitosEntregados < RequisitosTotal";
@@ -100,6 +107,10 @@ class InscripcionModuloModelos
 
             if ($sede !== null && $sede !== '') {
                 $stmt->bindParam(":sede", $sede, PDO::PARAM_STR);
+            }
+
+            if ($grado !== null && $grado !== '') {
+                $stmt->bindParam(":grado", $grado, PDO::PARAM_STR);
             }
 
             $stmt->execute();
@@ -294,6 +305,7 @@ class InscripcionModuloModelos
                     ep.costomatricula,
                     ep.montoPagado,
                     ep.nvauchermatricula,
+                    " . VoucherModelo::SqlFechaOrdenMatricula('ep.idInscripcion') . " AS FechaOrdenMatricula,
                     ep.Estado,
                     e.Nombre,
                     e.Apaterno,

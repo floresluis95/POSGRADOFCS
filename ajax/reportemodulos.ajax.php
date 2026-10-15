@@ -37,6 +37,11 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerReportePagosPrograma
     ReporteModulosControlador::ObtenerReportePagosPorProgramaControlador();
 }
 
+// Pestaña "Gráficos": opciones de los filtros (sede, grado y programa)
+if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerOpcionesFiltros') {
+    ReporteModulosControlador::ObtenerOpcionesFiltrosControlador();
+}
+
 // Pestaña "Gráficos": cobrado e inscritos por mes, órdenes por cobrar
 if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerDatosGraficos') {
     ReporteModulosControlador::ObtenerDatosGraficosControlador();
