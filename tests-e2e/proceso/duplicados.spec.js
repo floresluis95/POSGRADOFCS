@@ -218,7 +218,7 @@ test.describe('Duplicados en formularios', () => {
   });
 
   test('inscripción: el N° de voucher de matrícula no se repite entre estudiantes', async ({ page }) => {
-    const voucher = 'MAT-REP-' + unico();
+    const voucher = unico() + '-21';
     const a = await registrarEstudiante(page);
     const b = await registrarEstudiante(page);
     await preregistrar(page, a.respuesta.estudianteID);
@@ -234,21 +234,23 @@ test.describe('Duplicados en formularios', () => {
     expect(valor(`SELECT COUNT(*) FROM estudianteprograma WHERE EstudianteID = ${b.respuesta.estudianteID}`), 'el segundo no quedó inscrito').toBe('0');
   });
 
-  test('voucher: no distingue mayúsculas ni espacios', async ({ page }) => {
-    const voucher = 'MAT-MAY-' + unico();
+  test('voucher: no distingue espacios alrededor del número', async ({ page }) => {
+    const voucher = unico() + '-22';
     const a = await registrarEstudiante(page);
     const b = await registrarEstudiante(page);
     await preregistrar(page, a.respuesta.estudianteID);
     await preregistrar(page, b.respuesta.estudianteID);
     await validarVoucherMatricula(page, ordenPendiente(a.respuesta.estudianteID), voucher);
-    const segundo = await validarVoucherMatricula(page, ordenPendiente(b.respuesta.estudianteID), `  ${voucher.toLowerCase()} `);
+    const segundo = await validarVoucherMatricula(page, ordenPendiente(b.respuesta.estudianteID), `  ${voucher} `);
     expect(segundo.success).toBe(false);
+    // Rechazado por repetido (no por el formato)
+    expect(segundo.mensaje).toContain('ya fue registrado');
   });
 
   test('voucher: el N° usado en una cuota no se vuelve a usar en una matrícula', async ({ page }) => {
     const inscrito = await estudianteInscrito(page);
     await generarOrdenCuota(page, inscrito, '1000');
-    const voucher = 'CUO-MAT-' + unico();
+    const voucher = unico() + '-23';
     expect((await pagarCuota(page, inscrito.idInscripcion, '1000', voucher)).estado).toBe('exitoso');
 
     const otro = await registrarEstudiante(page);
