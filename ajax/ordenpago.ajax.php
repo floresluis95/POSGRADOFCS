@@ -882,9 +882,9 @@ function obtenerOrdenesModulosPendientes()
 }
 
 /**
- * Obtener la orden de pago PENDIENTE de una cuota del programa (si existe) para
- * esta inscripción. Las cuotas ya no se ligan a módulos: solo puede haber una
- * orden de cuota pendiente a la vez por inscripción.
+ * Orden de cuota PENDIENTE que toca validar: la de N° de cuota menor (si el
+ * estudiante adelantó varias, primero la 10, luego la 11). Trae su N° de cuota y
+ * los módulos que cubre; 'siguientes' son las demás pendientes, en orden.
  */
 function obtenerOrdenPendienteCuotaPrograma()
 {
@@ -914,14 +914,24 @@ function obtenerOrdenPendienteCuotaPrograma()
             WHERE op.idinscripcion = :idinscripcion
             AND op.Estado = 'PENDIENTE'
             AND op.ListaModulos IS NULL AND COALESCE(op.Observaciones, '') <> 'CLINICA'
-            ORDER BY op.FechaGeneracion DESC
-            LIMIT 1
+            ORDER BY op.IdOrdenPago ASC
         ");
         $stmt->bindParam(':idinscripcion', $idinscripcion, PDO::PARAM_INT);
         $stmt->execute();
-        $orden = $stmt->fetch(PDO::FETCH_ASSOC);
+        $pendientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        echo json_encode(['success' => true, 'orden' => $orden ?: null]);
+        foreach ($pendientes as &$p) {
+            $p['NumeroCuota'] = PagoModuloModelo::NumeroCuotaDeOrdenModelo($conexion, $p['IdOrdenPago']);
+        }
+        unset($p);
+
+        echo json_encode([
+            'success' => true,
+            'orden' => $pendientes[0] ?? null,
+            'siguientes' => array_map(function ($p) {
+                return ['NumeroOrden' => $p['NumeroOrden'], 'NumeroCuota' => $p['NumeroCuota'], 'ModulosCubiertos' => $p['ModulosCubiertos']];
+            }, array_slice($pendientes, 1)),
+        ]);
     } catch (Exception $e) {
         error_log("Error en obtenerOrdenPendienteCuotaPrograma: " . $e->getMessage());
         echo json_encode(['success' => false, 'mensaje' => 'Error al obtener la orden de pago pendiente']);
@@ -1669,12 +1679,13 @@ function misOrdenesPago()
 }
 
 /**
- * El estudiante genera la orden de su siguiente cuota. No elige nada: monto (la
- * cuota de su plan; la última, lo que falta), N° de cuota, cuenta de cuotas del
+ * El estudiante genera la orden de su siguiente cuota, o de varias para pagar por
+ * adelantado ($_POST['cantidad']): una orden por cuota. Solo elige cuántas; el monto
+ * (la cuota de su plan; la última, lo que falta), N° de cuota, cuenta de cuotas del
  * programa, módulo que cubre y fecha límite los pone el sistema. Solo si tiene plan,
  * saldo y ninguna orden de cuota sin pagar. Con $generar = false solo calcula (para
- * mostrarle el resumen antes de confirmar). La orden queda marcada como generada por
- * el estudiante: al imprimirla lleva la firma del coordinador y el sello.
+ * mostrarle el resumen antes de confirmar). Las órdenes quedan marcadas como generadas
+ * por el estudiante: al imprimirlas llevan la firma del coordinador y el sello.
  */
 function miCuota($generar)
 {
@@ -1739,19 +1750,20 @@ function miCuota($generar)
         if ($montoCuota <= 0) {
             $montoCuota = round($disponible / $maxCantidad, 2);
         }
-        $cuotas = [];
+        // Todas las que puede adelantar (la pantalla muestra el detalle y el total según
+        // la cantidad elegida); se generan las primeras $cantidad
+        $posibles = [];
         $queda = $disponible;
-        for ($i = 0; $i < $cantidad && $queda > 0.004; $i++) {
+        for ($i = 0; $i < $maxCantidad && $queda > 0.004; $i++) {
             $numero = $primeraCuota + $i;
             $monto = ($totalCuotas > 0 && $numero >= $totalCuotas) ? $queda : min($montoCuota, $queda);
             $monto = round($monto, 2);
-            $cuotas[] = ['numeroCuota' => $numero, 'monto' => $monto];
+            $posibles[] = ['numeroCuota' => $numero, 'monto' => $monto];
             $queda = round($queda - $monto, 2);
         }
         // Lo que alcanza el saldo puede ser menos que lo pedido
-        if (count($cuotas) < $maxCantidad && $queda <= 0.004) {
-            $maxCantidad = count($cuotas);
-        }
+        $maxCantidad = max(1, count($posibles));
+        $cuotas = array_slice($posibles, 0, min($cantidad, $maxCantidad));
 
         // Cuenta de cuotas del programa (la principal, si hay varias)
         $stmt = $pdo->prepare("SELECT ProgramaCuentaID FROM programacuenta WHERE ProgramaID = :p AND TipoCuenta = 'CUOTAS' AND Estado = 1
@@ -1774,6 +1786,7 @@ function miCuota($generar)
         $fechaVencimiento = date('Y-m-d', strtotime('+5 days'));
         $calculo = [
             'cuotas' => $cuotas,
+            'posibles' => $posibles,
             'total' => round(array_sum(array_column($cuotas, 'monto')), 2),
             'maxCantidad' => $maxCantidad,
             'totalCuotas' => $totalCuotas ?: null,
@@ -1866,7 +1879,7 @@ function datosOrdenParaLista($o)
         'fechaVencimiento' => $o['FechaVencimiento'],
         'fechaConfirmacion' => $o['FechaConfirmacion'] ?? null,
         'estado' => $o['Estado'],
-        // Cuota: su N° y el total del plan ("Cuota 3 de 10"); solo en la lista del personal
+        // Cuota: su N° y el total del plan ("Cuota 3 de 10"); en las dos listas
         'numeroCuota' => isset($o['NumeroCuota']) ? (int)$o['NumeroCuota'] : null,
         'cuotasPlan' => isset($o['CuotasPlan']) ? (int)$o['CuotasPlan'] : null,
         // Voucher extraviado: motivo, cuándo y quién lo marcó

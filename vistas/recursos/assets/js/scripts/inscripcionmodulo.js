@@ -145,6 +145,7 @@ $(document).ready(function() {
             const r = resp.resumen;
             const ordenResp = respOrden[0];
             const orden = (ordenResp && ordenResp.success) ? ordenResp.orden : null;
+            ordenesSiguientes = (ordenResp && ordenResp.siguientes) || [];
 
             renderResumenPagoPrograma(r);
             renderCuotaPendienteInfo(r, orden);
@@ -244,6 +245,8 @@ $(document).ready(function() {
     // Última orden pendiente y resumen: para volver a ella después de elegir una
     // orden con voucher extraviado
     let cuotaPendienteActual = { r: null, orden: null };
+    // Otras órdenes de cuota pendientes (el estudiante adelantó varias): se validan después, en orden
+    let ordenesSiguientes = [];
 
     function renderCuotaPendienteInfo(r, orden) {
         cuotaPendienteActual = { r: r, orden: orden };
@@ -266,9 +269,10 @@ $(document).ready(function() {
             return;
         }
 
-        // Orden a validar: cuota y monto, y en una línea lo que se compara con el voucher.
-        // Su N° es la posición de la orden: pagadas + con voucher extraviado + 1
-        const numeroCuota = (parseInt(r.cuotasPagadasCount, 10) || 0) + (parseInt(r.cuotasEnEspera, 10) || 0) + 1;
+        // Orden a validar: la de N° de cuota menor, con el N° que le da el servidor (su
+        // posición entre las órdenes de cuota), así coincide con su módulo
+        const numeroCuota = parseInt(orden.NumeroCuota, 10) ||
+            (parseInt(r.cuotasPagadasCount, 10) || 0) + (parseInt(r.cuotasEnEspera, 10) || 0) + 1;
         mostrarOrdenAValidar(orden, numeroCuota, r.numeroCuotasPlan, false);
     }
 
@@ -284,11 +288,9 @@ $(document).ready(function() {
         if (orden.ModulosCubiertos) meta.push(escHtml(orden.ModulosCubiertos));
 
         $('#montoCuota').val(orden.MontoTotal);
-        if (extraviada) {
-            $('#formPagoModulo').data('idOrdenPago', orden.IdOrdenPago);
-        } else {
-            $('#formPagoModulo').removeData('idOrdenPago');
-        }
+        // Se envía siempre la orden que se ve: el voucher queda en esa cuota y no en otra
+        $('#formPagoModulo').data('idOrdenPago', orden.IdOrdenPago);
+        const despues = extraviada ? [] : ordenesSiguientes;
         // Para el resumen que se confirma antes de guardar
         $('#formPagoModulo').data('cuota', { texto: textoCuota + (extraviada ? ' (voucher por validar)' : '') });
         $('#cuotaPendienteInfo').html(
@@ -300,6 +302,12 @@ $(document).ready(function() {
                     '</div>' +
                     '<div class="vc-orden-monto">' + formatoBs(orden.MontoTotal) + '</div>' +
                 '</div>' +
+                (despues.length
+                    ? '<div class="vc-orden-despues"><i class="fa fa-info-circle"></i> Se valida en orden: primero esta cuota; después ' +
+                          despues.map(function(s) {
+                              return '<strong>Cuota ' + escHtml(s.NumeroCuota) + '</strong>' + (s.ModulosCubiertos ? ' (' + escHtml(s.ModulosCubiertos) + ')' : '');
+                          }).join(', ') + '.</div>'
+                    : '') +
             '</div>' +
             (extraviada
                 ? '<div class="text-right small mt-1 mb-2"><a href="#" class="btn-volver-cuota-pendiente">' +

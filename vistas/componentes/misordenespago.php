@@ -97,7 +97,29 @@
                                         <div class="mop-por-pagar" id="lista_por_pagar"></div>
                                     </div>
 
-                                    <div class="mop-seccion-titulo" id="titulo_todas" style="display:none;">Todas mis órdenes</div>
+                                    <!-- Matrícula: aparte de la tabla (no entra en la numeración de cuotas y clínicas) -->
+                                    <div id="matricula" style="display:none;">
+                                        <div class="mop-seccion-titulo">Matrícula</div>
+                                        <div class="table-responsive mb-3">
+                                            <table class="table mop-tabla mop-resp" id="tabla_matricula">
+                                                <thead>
+                                                    <tr>
+                                                        <th>N° de orden</th>
+                                                        <th>Programa</th>
+                                                        <th>Concepto</th>
+                                                        <th class="text-right">Monto</th>
+                                                        <th>Generada</th>
+                                                        <th>Fecha límite</th>
+                                                        <th class="text-center">Estado</th>
+                                                        <th class="text-center">Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="contenido_matricula"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div class="mop-seccion-titulo" id="titulo_todas" style="display:none;">Cuotas y clínicas</div>
                                     <div class="mop-filtros" id="ordenes_filtros" style="display:none;">
                                         <div class="mop-filtro">
                                             <label for="filtro_programa">Programa</label>
@@ -119,9 +141,10 @@
                                     </div>
 
                                     <div class="table-responsive" id="ordenes_tabla_wrap" style="display:none;">
-                                        <table class="table mop-tabla" id="tabla_ordenes_pago">
+                                        <table class="table mop-tabla mop-resp" id="tabla_ordenes_pago">
                                             <thead>
                                                 <tr>
+                                                    <th class="text-center">N°</th>
                                                     <th>N° de orden</th>
                                                     <th>Programa</th>
                                                     <th>Concepto</th>
@@ -215,6 +238,11 @@
         .btn-generar-cuota { align-self: flex-start; margin-top: 4px; display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; background: #1e7145; color: #fff; border: 1px solid #1e7145; }
         .btn-generar-cuota:hover { background: #17603a; color: #fff; }
         .btn-generar-cuota:disabled { opacity: .6; }
+        /* Ventana "Generar orden de pago": detalle por cuota y total */
+        .mop-detalle-cuotas { width: 100%; margin-top: 10px; font-size: 13.5px; border: 1px solid #e3e7ef; border-radius: 8px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+        .mop-detalle-cuotas td { padding: 6px 12px; text-align: left; border-bottom: 1px solid #eef1f6; color: #1f2937; }
+        .mop-detalle-cuotas td.text-right { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .mop-detalle-cuotas .mop-detalle-total td { background: #f4f7fc; border-bottom: 0; font-weight: 700; color: #1e3c72; font-size: 15px; }
 
         .mop-filtros { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 16px; }
         .mop-filtro { flex: 1 1 260px; max-width: 420px; }
@@ -227,6 +255,7 @@
         .mop-tabla thead th { background: #f8fafc; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; border-top: 0; border-bottom: 1px solid #e3e7ef; white-space: nowrap; }
         .mop-tabla td { vertical-align: middle; border-color: #eef1f6; color: #1f2937; }
         .mop-tabla td small { color: #64748b; }
+        .mop-tabla td.mop-numero { color: #64748b; font-weight: 600; width: 44px; }
         .mop-tabla td[data-label="Monto"], .mop-tabla td[data-label="Generada"], .mop-tabla td[data-label="Fecha límite"] { white-space: nowrap; }
         .mop-tabla td[data-label="Monto"] { font-weight: 700; font-variant-numeric: tabular-nums; }
 
@@ -261,18 +290,18 @@
             .mop-filtro-boton { margin-left: 0; }
             #btn_historial_pagos { width: 100%; }
             .mop-por-pagar { grid-template-columns: 1fr; }
-            #tabla_ordenes_pago thead { display: none; }
-            #tabla_ordenes_pago, #tabla_ordenes_pago tbody, #tabla_ordenes_pago tr, #tabla_ordenes_pago td { display: block; width: 100%; }
-            #tabla_ordenes_pago tr { background: #fff; border: 1px solid #e3e7ef; border-radius: 10px; margin-bottom: 12px; padding: 4px 14px 12px; }
-            #tabla_ordenes_pago tbody td { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: none; border-bottom: 1px solid #f0f1f5; padding: 8px 0; text-align: right !important; min-width: 0; }
-            #tabla_ordenes_pago tbody td > * { min-width: 0; overflow-wrap: anywhere; }
-            #tabla_ordenes_pago tbody td::before { content: attr(data-label); flex-shrink: 0; font-size: 11.5px; font-weight: 600; color: #64748b; text-align: left; }
-            #tabla_ordenes_pago .badge-orden { max-width: 60%; }
-            #tabla_ordenes_pago tbody td[colspan] { display: block; text-align: center !important; }
-            #tabla_ordenes_pago tbody td[colspan]::before, #tabla_ordenes_pago td.celda-accion::before { content: none; }
-            #tabla_ordenes_pago td.celda-accion { border-bottom: none; padding-top: 12px; }
-            #tabla_ordenes_pago td.celda-accion .mop-acciones { width: 100%; }
-            #tabla_ordenes_pago td.celda-accion .mop-acciones > * { flex: 1; justify-content: center; padding: 9px 12px; }
+            .mop-resp thead { display: none; }
+            .mop-resp, .mop-resp tbody, .mop-resp tr, .mop-resp td { display: block; width: 100%; }
+            .mop-resp tr { background: #fff; border: 1px solid #e3e7ef; border-radius: 10px; margin-bottom: 12px; padding: 4px 14px 12px; }
+            .mop-resp tbody td { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: none; border-bottom: 1px solid #f0f1f5; padding: 8px 0; text-align: right !important; min-width: 0; }
+            .mop-resp tbody td > * { min-width: 0; overflow-wrap: anywhere; }
+            .mop-resp tbody td::before { content: attr(data-label); flex-shrink: 0; font-size: 11.5px; font-weight: 600; color: #64748b; text-align: left; }
+            .mop-resp .badge-orden { max-width: 60%; }
+            .mop-resp tbody td[colspan] { display: block; text-align: center !important; }
+            .mop-resp tbody td[colspan]::before, .mop-resp td.celda-accion::before { content: none; }
+            .mop-resp td.celda-accion { border-bottom: none; padding-top: 12px; }
+            .mop-resp td.celda-accion .mop-acciones { width: 100%; }
+            .mop-resp td.celda-accion .mop-acciones > * { flex: 1; justify-content: center; padding: 9px 12px; }
         }
     </style>
 

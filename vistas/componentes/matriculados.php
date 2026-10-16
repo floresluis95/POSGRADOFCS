@@ -233,6 +233,8 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     }
     #modalInscribirModulo .vc-orden-titulo { font-size: 14px; font-weight: 600; color: var(--gp-texto); }
     #modalInscribirModulo .vc-orden-meta { font-size: 12px; color: var(--gp-texto-2); margin-top: 1px; }
+    /* Varias órdenes de cuota pendientes: cuál se valida después */
+    #modalInscribirModulo .vc-orden-despues { padding: 7px 12px; font-size: 12px; color: #1e3c72; background: #eef2f9; border-top: 1px solid #dbe3f1; }
     #modalInscribirModulo .vc-orden-monto { font-size: 18px; font-weight: 600; color: var(--gp-primario); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
     #modalInscribirModulo .vc-validar { background: #fff; border: 1px solid var(--gp-borde); border-radius: 0 0 6px 6px; margin-bottom: 14px; }

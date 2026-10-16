@@ -184,7 +184,9 @@ class PagoModuloModelo
         $stmt = $pdo->prepare(
             "SELECT IdOrdenPago, MontoTotal FROM ordenpago
              WHERE idinscripcion = :idinscripcion AND Estado = 'PENDIENTE' AND ListaModulos IS NULL AND COALESCE(Observaciones, '') <> 'CLINICA'
-             ORDER BY FechaGeneracion ASC LIMIT 1"
+             ORDER BY IdOrdenPago ASC LIMIT 1"
+            // Por IdOrdenPago: la cuota de N° menor primero (las que genera el estudiante
+            // juntas tienen la misma FechaGeneracion, y esa fecha se puede editar)
         );
         $stmt->bindParam(":idinscripcion", $idinscripcion, PDO::PARAM_INT);
         $stmt->execute();

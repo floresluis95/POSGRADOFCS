@@ -230,7 +230,7 @@ class PagoClinicaModelo
     {
         try {
             $stmt = Conexion::Conectar()->prepare(
-                "SELECT op.IdOrdenPago, op.NumeroOrden, op.MontoTotal, op.FechaGeneracion, op.Estado,
+                "SELECT op.IdOrdenPago, op.NumeroOrden, op.MontoTotal, op.FechaGeneracion, op.FechaVencimiento, op.Estado,
                         op.MotivoExtraviado, op.FechaExtraviado, op.ResponsableExtraviado,
                         pcl.IdPagoClinica, pcl.FechaPago, pcl.NumeroVoucher,
                         (pcl.FotoVoucher IS NOT NULL) AS TieneFoto,

@@ -37,7 +37,12 @@ test('muestra sus órdenes, el comprobante de la matrícula y el recibo de pagos
 
   // Historial de pagos: comprobante de la matrícula (la imagen carga) y recibo de pagos
   await expect(page).toHaveURL(/historialmodulosestudiante/);
-  const fila = page.locator('#tbody_pagos tr', { hasText: 'Matrícula' });
+  // La matrícula va en su tabla; cuotas y clínicas aparte, sin correlativo (se ve el N° de cuota)
+  await expect(page.locator('#tbody_matricula tr')).toHaveCount(1, { timeout: 15_000 });
+  await expect(page.locator('#tbody_pagos', { hasText: 'Cargando' })).toHaveCount(0);
+  await expect(page.locator('#tbody_pagos', { hasText: 'Matrícula' })).toHaveCount(0);
+  await expect(page.locator('#area_resultados_modulos td[data-label="N°"]')).toHaveCount(0);
+  const fila = page.locator('#tbody_matricula tr', { hasText: 'Matrícula' });
   await fila.locator('.btn-comprobante').click({ timeout: 15_000 });
   const imagen = page.locator('#imagen_recibo_grande');
   await expect(imagen).toBeVisible();

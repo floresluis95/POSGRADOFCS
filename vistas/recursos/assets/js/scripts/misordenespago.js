@@ -1,7 +1,8 @@
 /**
  * Mis Órdenes de Pago (Estudiante): lo que tiene que pagar. Arriba, las órdenes por
  * pagar (pendientes, vencidas o con voucher por validar) con su monto y fecha límite;
- * abajo, todas sus órdenes con el botón para imprimir cada una. Lo ya pagado, sus
+ * luego la matrícula, aparte; abajo, la tabla de cuotas y clínicas numerada, con el
+ * botón para imprimir cada una. Lo ya pagado, sus
  * comprobantes y el recibo de pagos están en Historial de pagos.
  * Filtros por Programa y por Concepto (solo los conceptos que el estudiante tiene).
  * Las órdenes ANULADAS no se muestran en la tabla principal: quedan en un modal
@@ -34,8 +35,10 @@
     }
 
     // Matrícula al Contado sin matrícula: la orden es por el programa completo
+    // Cuota con su número: "Cuota 3 de 10"
     function concepto(o) {
         if (o.tipo === 'MATRICULA' && o.pagoCompleto) return 'Programa completo';
+        if (o.tipo === 'CUOTA' && o.numeroCuota) return 'Cuota ' + o.numeroCuota + (o.cuotasPlan ? ' de ' + o.cuotasPlan : '');
         return ETIQUETAS_TIPO[o.tipo] || o.tipo;
     }
 
@@ -60,7 +63,7 @@
         var tipos = {};
         ordenes.forEach(function (o) {
             programas[o.programaID] = o.nombrePrograma;
-            tipos[o.tipo] = true;
+            if (o.tipo !== 'MATRICULA') tipos[o.tipo] = true; // la matrícula va en su sección
         });
 
         var $programa = $('#filtro_programa');
@@ -99,34 +102,54 @@
         $('#por_pagar').show();
     }
 
+    // Botón para imprimir la orden; si ya está pagada, avisa antes (se imprime igual)
+    function botonImprimir(o, texto) {
+        return '<a href="vistas/componentes/orden-pago-pdf.php?idordenpago=' + o.idOrdenPago + '" target="_blank" class="btn-imprimir-orden"' +
+            (o.estado === 'CONFIRMADO' ? ' data-pagada="1" data-fecha-pago="' + escapar(o.fechaConfirmacion || '') + '" data-orden="' + escapar(o.numeroOrden || '') + '"' : '') +
+            '><i class="fa fa-print"></i> ' + texto + '</a>';
+    }
+
+    // Fila de una orden; con número cuando va en la tabla numerada (cuotas y clínicas)
+    function filaOrden(o, numero) {
+        return '<tr>' +
+            (numero != null ? '<td data-label="N°" class="text-center mop-numero">' + numero + '</td>' : '') +
+            '<td data-label="N° de orden"><strong>' + escapar(o.numeroOrden || '-') + '</strong></td>' +
+            '<td data-label="Programa"><span>' + escapar(o.nombrePrograma) + '<br><small>' + escapar(o.gradoAcademico) + ' · ' + escapar(o.sede) + '</small></span></td>' +
+            '<td data-label="Concepto">' + escapar(concepto(o)) + '</td>' +
+            '<td data-label="Monto" class="text-right">' + formatoMoneda(o.monto) + '</td>' +
+            '<td data-label="Generada">' + formatoFecha(o.fechaGeneracion) + '</td>' +
+            '<td data-label="Fecha límite">' + (o.fechaVencimiento ? formatoFecha(o.fechaVencimiento) : '-') + '</td>' +
+            '<td data-label="Estado" class="text-center">' + badgeEstado(o) + '</td>' +
+            '<td class="text-center celda-accion"><span class="mop-acciones">' + botonImprimir(o, 'Orden') + '</span></td>' +
+            '</tr>';
+    }
+
+    // Matrícula: tabla aparte, sin numerar (no entra en la numeración de las cuotas)
+    function renderMatricula(ordenes) {
+        if (!ordenes.length) {
+            $('#matricula').hide();
+            return;
+        }
+        $('#contenido_matricula').html(ordenes.map(function (o) { return filaOrden(o, null); }).join(''));
+        $('#matricula').show();
+    }
+
     function renderTabla(ordenes) {
         var $tbody = $('#contenido_ordenes_pago');
         $tbody.empty();
 
         if (!ordenes.length) {
-            $tbody.html('<tr><td colspan="8" class="text-center text-muted py-4">Ninguna orden coincide con el filtro seleccionado.</td></tr>');
+            $tbody.html('<tr><td colspan="9" class="text-center text-muted py-4">' +
+                (todasLasOrdenes.some(function (o) { return o.tipo !== 'MATRICULA' && o.estado !== 'ANULADO'; })
+                    ? 'Ninguna orden coincide con el filtro seleccionado.'
+                    : 'Todavía no tiene órdenes de cuotas ni de clínicas.') + '</td></tr>');
             return;
         }
 
-        ordenes.forEach(function (o) {
-            var fila = '<tr>' +
-                '<td data-label="N° de orden"><strong>' + escapar(o.numeroOrden || '-') + '</strong></td>' +
-                '<td data-label="Programa"><span>' + escapar(o.nombrePrograma) + '<br><small>' + escapar(o.gradoAcademico) + ' · ' + escapar(o.sede) + '</small></span></td>' +
-                '<td data-label="Concepto">' + escapar(concepto(o)) + '</td>' +
-                '<td data-label="Monto" class="text-right">' + formatoMoneda(o.monto) + '</td>' +
-                '<td data-label="Generada">' + formatoFecha(o.fechaGeneracion) + '</td>' +
-                '<td data-label="Fecha límite">' + (o.fechaVencimiento ? formatoFecha(o.fechaVencimiento) : '-') + '</td>' +
-                '<td data-label="Estado" class="text-center">' + badgeEstado(o) + '</td>' +
-                '<td class="text-center celda-accion"><span class="mop-acciones">' +
-                    '<a href="vistas/componentes/orden-pago-pdf.php?idordenpago=' + o.idOrdenPago + '" ' +
-                    'target="_blank" class="btn-imprimir-orden"' +
-                    // Pagada: antes de imprimir se avisa que ya se pagó (se puede imprimir igual)
-                    (o.estado === 'CONFIRMADO' ? ' data-pagada="1" data-fecha-pago="' + escapar(o.fechaConfirmacion || '') + '" data-orden="' + escapar(o.numeroOrden || '') + '"' : '') +
-                    '><i class="fa fa-print"></i> Orden</a>' +
-                '</span></td>' +
-                '</tr>';
-            $tbody.append(fila);
-        });
+        // N° correlativo según el orden en que se generaron (1 = la primera); la última
+        // generada va arriba con el número más alto (el servidor ya las manda así).
+        // La matrícula no entra: va en su propia tabla.
+        $tbody.html(ordenes.map(function (o, i) { return filaOrden(o, ordenes.length - i); }).join(''));
     }
 
     // Tabla del modal "Anuladas": sin acciones (no tienen validez para el pago)
@@ -154,11 +177,12 @@
         var programaID = $('#filtro_programa').val();
         var tipo = $('#filtro_tipo').val();
 
-        renderTabla(todasLasOrdenes.filter(function (o) {
-            if (o.estado === 'ANULADO') return false;
-            if (programaID && String(o.programaID) !== String(programaID)) return false;
-            if (tipo && o.tipo !== tipo) return false;
-            return true;
+        var delPrograma = todasLasOrdenes.filter(function (o) {
+            return o.estado !== 'ANULADO' && (!programaID || String(o.programaID) === String(programaID));
+        });
+        renderMatricula(delPrograma.filter(function (o) { return o.tipo === 'MATRICULA'; }));
+        renderTabla(delPrograma.filter(function (o) {
+            return o.tipo !== 'MATRICULA' && (!tipo || o.tipo === tipo);
         }));
     }
 
@@ -237,6 +261,20 @@
         }, 'json');
     }
 
+    // Detalle de las cuotas elegidas (una orden por cuota) y el total a pagar
+    function detalleCuotas(c, cantidad) {
+        var lista = (c.posibles && c.posibles.length ? c.posibles : [{ numeroCuota: c.numeroCuota, monto: c.monto }]).slice(0, cantidad);
+        var total = lista.reduce(function (s, q) { return s + (parseFloat(q.monto) || 0); }, 0);
+        return '<table class="mop-detalle-cuotas">' +
+            lista.map(function (q, i) {
+                return '<tr><td>Orden ' + (i + 1) + ' · <strong>' + escapar(etiquetaCuota({ numeroCuota: q.numeroCuota, totalCuotas: c.totalCuotas })) + '</strong></td>' +
+                    '<td class="text-right">' + formatoMoneda(q.monto) + '</td></tr>';
+            }).join('') +
+            '<tr class="mop-detalle-total"><td>Total a pagar' + (lista.length > 1 ? ' (' + lista.length + ' órdenes)' : '') + '</td>' +
+                '<td class="text-right">' + formatoMoneda(total) + '</td></tr>' +
+            '</table>';
+    }
+
     function generarCuota() {
         var $boton = $(this);
         var c = $boton.data('cuota');
@@ -251,12 +289,17 @@
                 (c.maxCantidad > 1 ? fila('Cuotas a pagar', '<select id="cantidad_cuotas" class="form-control form-control-sm" style="max-width:120px;">' +
                     Array.from({ length: c.maxCantidad }, function (_, i) { return '<option value="' + (i + 1) + '">' + (i + 1) + '</option>'; }).join('') +
                     '</select><small style="color:#64748b;">Se genera una orden por cada cuota</small>') : '') +
-                fila('Concepto', escapar(etiquetaCuota(c))) +
-                fila('Monto', '<strong style="font-size:18px;color:#1e3c72;">' + formatoMoneda(c.monto) + '</strong>') +
                 fila('Programa', escapar(c.programa)) +
                 fila('Pagar hasta', formatoFecha(c.fechaVencimiento)) +
                 '</table>' +
+                '<div id="detalle_cuotas">' + detalleCuotas(c, 1) + '</div>' +
                 '<p style="margin:12px 0 0;font-size:13px;color:#475569;">Imprima la orden y preséntela en <strong>Tesoro Universitario</strong>.</p>',
+            // Al cambiar la cantidad se ve al momento cada cuota y el total
+            onOpen: function () {
+                $('#cantidad_cuotas').on('change', function () {
+                    $('#detalle_cuotas').html(detalleCuotas(c, parseInt($(this).val(), 10) || 1));
+                });
+            },
             showCancelButton: true,
             confirmButtonText: 'Sí, generar',
             // La cantidad se lee antes de que se cierre la ventana (luego ya no existe)

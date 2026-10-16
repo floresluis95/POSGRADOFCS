@@ -112,10 +112,49 @@
                                         <!-- Si hay órdenes por pagar se avisa y se manda a Mis órdenes de pago -->
                                         <a href="misordenespago" class="hp-por-pagar" id="aviso_por_pagar" style="display:none;"></a>
 
-                                        <!-- Pagos realizados: matrícula, cuotas y clínicas -->
-                                        <div class="hp-seccion-titulo">Pagos realizados</div>
+                                        <!-- Órdenes aún no validadas: por pagar o con voucher por validar (cuotas y clínicas) -->
+                                        <div id="seccion_sin_validar" style="display:none;">
+                                            <div class="hp-seccion-titulo">Órdenes aún no validadas <span class="hp-orden-nota">· De la última orden generada a la primera</span></div>
+                                            <div class="table-responsive mb-3">
+                                                <table class="table hp-tabla hp-resp" id="tabla_sin_validar">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>N° de orden</th>
+                                                            <th>Concepto</th>
+                                                            <th class="text-right">Monto</th>
+                                                            <th>Generada</th>
+                                                            <th>Fecha límite</th>
+                                                            <th class="text-center">Estado</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tbody_sin_validar"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <!-- Matrícula: aparte, sin numerar -->
+                                        <div id="seccion_matricula" style="display:none;">
+                                            <div class="hp-seccion-titulo">Matrícula</div>
+                                            <div class="table-responsive mb-3">
+                                                <table class="table hp-tabla hp-resp" id="tabla_matricula">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Fecha de pago</th>
+                                                            <th>Concepto</th>
+                                                            <th>N° de voucher</th>
+                                                            <th class="text-right">Monto</th>
+                                                            <th class="text-center">Comprobante</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tbody_matricula"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <!-- Pagos realizados: cuotas y clínicas, numerados (el último pago arriba) -->
+                                        <div class="hp-seccion-titulo">Pagos realizados <span class="hp-orden-nota">· Del último pago realizado al primero</span></div>
                                         <div class="table-responsive">
-                                            <table class="table hp-tabla" id="tabla_pagos_realizados">
+                                            <table class="table hp-tabla hp-resp" id="tabla_pagos_realizados">
                                                 <thead>
                                                     <tr>
                                                         <th>Fecha de pago</th>
@@ -210,6 +249,15 @@
         .hp-tabla td[data-label="Monto"] { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
         .hp-tabla td[data-label="Fecha de pago"] { white-space: nowrap; }
         .hp-concepto-clinica { color: #6b4e0e; }
+        .hp-orden-nota { font-weight: 500; color: #64748b; text-transform: none; letter-spacing: 0; }
+        /* N° de cuota destacado en el concepto */
+        .hp-cuota { display: inline-block; padding: 2px 10px; border-radius: 6px; background: #eef2f9; color: #1e3c72; font-weight: 700; white-space: nowrap; }
+        .hp-cuota small { color: #64748b; font-weight: 600; }
+        .hp-tabla td[data-label="Generada"], .hp-tabla td[data-label="Fecha límite"] { white-space: nowrap; }
+        .hp-estado { display: inline-block; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600; line-height: 1.35; white-space: normal; text-align: center; }
+        .hp-estado.is-pendiente { background: #fff7e6; color: #8a5a00; border: 1px solid #f0d9a6; }
+        .hp-estado.is-vencida { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .hp-estado.is-por-validar { background: #eef2f9; color: #1e3c72; border: 1px solid #c9d6ee; }
         .btn-comprobante { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 600; background: #fff; color: #1e3c72; border: 1px solid #c9d5ea; }
         .btn-comprobante:hover { background: #eef2f9; color: #1e3c72; text-decoration: none; }
         .hp-nota { margin: 10px 2px 0; font-size: 12px; color: #64748b; }
@@ -233,14 +281,14 @@
             .hp-dato:last-child { border-bottom: 0; }
             .hp-dato strong { font-size: 1.1rem; }
             .hp-dato small { width: 100%; text-align: right; }
-            #tabla_pagos_realizados thead { display: none; }
-            #tabla_pagos_realizados, #tabla_pagos_realizados tbody, #tabla_pagos_realizados tr, #tabla_pagos_realizados td { display: block; width: 100%; }
-            #tabla_pagos_realizados tr { border: 1px solid #e3e7ef; border-radius: 10px; margin-bottom: 10px; padding: 2px 14px 10px; }
-            #tabla_pagos_realizados td { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: none; border-bottom: 1px solid #f0f1f5; padding: 8px 0; text-align: right !important; }
-            #tabla_pagos_realizados td::before { content: attr(data-label); flex-shrink: 0; font-size: 11.5px; font-weight: 600; color: #64748b; text-align: left; }
-            #tabla_pagos_realizados td[colspan] { display: block; text-align: center !important; border: none; }
-            #tabla_pagos_realizados td[colspan]::before { content: none; }
-            #tabla_pagos_realizados td:last-child { border-bottom: none; }
+            .hp-resp thead { display: none; }
+            .hp-resp, .hp-resp tbody, .hp-resp tr, .hp-resp td { display: block; width: 100%; }
+            .hp-resp tr { border: 1px solid #e3e7ef; border-radius: 10px; margin-bottom: 10px; padding: 2px 14px 10px; }
+            .hp-resp td { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: none; border-bottom: 1px solid #f0f1f5; padding: 8px 0; text-align: right !important; }
+            .hp-resp td::before { content: attr(data-label); flex-shrink: 0; font-size: 11.5px; font-weight: 600; color: #64748b; text-align: left; }
+            .hp-resp td[colspan] { display: block; text-align: center !important; border: none; }
+            .hp-resp td[colspan]::before { content: none; }
+            .hp-resp td:last-child { border-bottom: none; }
         }
     </style>
 

@@ -1152,11 +1152,22 @@ class OrdenPagoModelos
                     op.IdOrdenPago, op.NumeroOrden, op.ProgramaID, op.ListaModulos, op.MontoTotal,
                     op.MontoDescuento, op.MontoFinal, op.PagoCompleto, op.FechaGeneracion,
                     op.FechaVencimiento, op.FechaConfirmacion, op.Estado, op.Observaciones,
+                    -- N° de cuota y total del plan (igual que en la lista del personal)
+                    CASE WHEN op.Observaciones = 'CUOTA PROGRAMA' AND op.Estado <> 'ANULADO' THEN
+                        (SELECT COUNT(*) FROM ordenpago o2
+                         WHERE o2.idinscripcion = op.idinscripcion AND o2.Observaciones = 'CUOTA PROGRAMA'
+                         AND o2.Estado <> 'ANULADO' AND o2.IdOrdenPago <= op.IdOrdenPago)
+                    END AS NumeroCuota,
+                    (SELECT pp.NumeroCuotas FROM pagoprograma pp
+                     WHERE pp.idInscripcion = op.idinscripcion AND pp.Estado <> 'ANULADO'
+                     ORDER BY pp.IdPagoPrograma DESC LIMIT 1) AS CuotasPlan,
                     p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico, p.Sede
                  FROM ordenpago op
                  INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
                  WHERE op.EstudianteID = :estudianteID
-                 ORDER BY op.FechaGeneracion DESC"
+                 -- De la última generada a la primera, por cómo se crearon (la fecha de la
+                 -- orden se puede modificar a mano; el Id sigue el orden real y el de las cuotas)
+                 ORDER BY op.IdOrdenPago DESC"
             );
             $stmt->bindParam(":estudianteID", $estudianteID, PDO::PARAM_INT);
             $stmt->execute();

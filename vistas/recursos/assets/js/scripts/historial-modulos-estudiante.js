@@ -112,6 +112,7 @@ function cargarDetalleModulos(programaID) {
             }
             const detalle = response.detalle;
             const cuotas = detalle.cuotas || [];
+            cuotasDelPlan = parseInt(detalle.resumen.numeroCuotasPlan, 10) || 0;
             actualizarResumen(detalle.resumen, cuotas.filter(function(c) { return c.Estado === 'PAGADO'; }).length);
             actualizarPorPagar(detalle.cuotasPorPagar || [], detalle.clinicas || []);
             actualizarPagos(detalle, cuotas);
@@ -178,24 +179,99 @@ function actualizarPorPagar(cuotasPorPagar, clinicas) {
     $('#aviso_por_pagar')
         .html(partes.length ? '<i class="fas fa-file-invoice"></i> <span>' + escapar(partes.join(' · ')) + '</span><span class="hp-ir">Ver mis órdenes <i class="fas fa-arrow-right"></i></span>' : '')
         .toggle(partes.length > 0);
+
+    actualizarSinValidar(cuotasPorPagar.concat(clinicas.filter(function(cl) {
+        return cl.Estado === 'PENDIENTE' || cl.Estado === 'VENCIDO' || cl.Estado === 'EXTRAVIADO';
+    }).map(function(cl) { return $.extend({ clinica: true }, cl); })));
+}
+
+// Cuotas del plan del programa elegido, para mostrar "Cuota 3 de 10"
+let cuotasDelPlan = 0;
+
+/**
+ * Concepto de una cuota con su número destacado: texto (para el comprobante) y HTML (para la tabla)
+ */
+function conceptoCuota(numeroCuota) {
+    const n = parseInt(numeroCuota, 10);
+    if (!n) return { texto: 'Cuota del programa', html: 'Cuota del programa' };
+    const de = cuotasDelPlan ? ' de ' + cuotasDelPlan : '';
+    return { texto: 'Cuota ' + n + de, html: '<span class="hp-cuota">Cuota ' + n + (de ? ' <small>' + de + '</small>' : '') + '</span>' };
 }
 
 /**
- * Pagos realizados (matrícula, cuotas y clínicas), del más reciente al más antiguo
+ * Tabla de órdenes aún no validadas (por pagar o con voucher por validar), de la
+ * última generada a la primera; cada cuota con su número
+ */
+function actualizarSinValidar(ordenes) {
+    if (!ordenes.length) {
+        $('#seccion_sin_validar').hide();
+        return;
+    }
+    const d = new Date(); // fecha local (toISOString daría la de UTC)
+    const hoy = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    ordenes.sort(function(a, b) { return (parseInt(b.IdOrdenPago, 10) || 0) - (parseInt(a.IdOrdenPago, 10) || 0); });
+    $('#tbody_sin_validar').html(ordenes.map(function(o) {
+        let estado = '<span class="hp-estado is-pendiente">Pendiente de pago</span>';
+        if (o.Estado === 'EXTRAVIADO') {
+            estado = '<span class="hp-estado is-por-validar" title="Pagada; falta validar el voucher">Voucher por validar</span>';
+        } else if (o.Estado === 'VENCIDO' || (o.FechaVencimiento && String(o.FechaVencimiento).slice(0, 10) < hoy)) {
+            estado = '<span class="hp-estado is-vencida">Vencida</span>';
+        }
+        return '<tr>' +
+            '<td data-label="N° de orden"><strong>' + escapar(o.NumeroOrden || '-') + '</strong></td>' +
+            '<td data-label="Concepto"' + (o.clinica ? ' class="hp-concepto-clinica"' : '') + '>' + (o.clinica ? 'Clínica' : conceptoCuota(o.NumeroCuota).html) + '</td>' +
+            '<td data-label="Monto" class="text-right">' + formatoMoneda(o.MontoTotal) + '</td>' +
+            '<td data-label="Generada">' + formatearFecha(o.FechaGeneracion) + '</td>' +
+            '<td data-label="Fecha límite">' + formatearFecha(o.FechaVencimiento) + '</td>' +
+            '<td data-label="Estado" class="text-center">' + estado + '</td>' +
+            '</tr>';
+    }).join(''));
+    $('#seccion_sin_validar').show();
+}
+
+/**
+ * Fila de un pago (matrícula, cuota o clínica)
+ */
+function filaPago(p) {
+    let comprobante = '<span class="text-muted small">Sin imagen</span>';
+    if (p.url && p.pdf) {
+        comprobante = '<a href="' + p.url + '" target="_blank" class="btn-comprobante"><i class="fa fa-file-pdf"></i> Ver PDF</a>';
+    } else if (p.url) {
+        comprobante = '<button type="button" class="btn-comprobante" data-url="' + p.url + '" data-concepto="' + escapar(p.concepto) + '" ' +
+            'data-voucher="' + escapar(p.voucher) + '" data-fecha="' + formatearFecha(p.fecha) + '" data-monto="' + escapar(formatoMoneda(p.monto)) + '">' +
+            '<i class="fa fa-receipt"></i> Ver</button>';
+    }
+    return '<tr>' +
+        '<td data-label="Fecha de pago">' + formatearFecha(p.fecha) + '</td>' +
+        '<td data-label="Concepto"' + (p.clinica ? ' class="hp-concepto-clinica"' : '') + '>' + (p.conceptoHtml || escapar(p.concepto)) + '</td>' +
+        '<td data-label="N° de voucher">' + escapar(p.voucher || '-') + '</td>' +
+        '<td data-label="Monto" class="text-right">' + formatoMoneda(p.monto) + '</td>' +
+        '<td data-label="Comprobante" class="text-center">' + comprobante + '</td>' +
+        '</tr>';
+}
+
+/**
+ * Matrícula aparte. Debajo, los pagos de cuotas y clínicas, del último al primero;
+ * cada cuota con su número ("Cuota 3 de 10")
  */
 function actualizarPagos(detalle, cuotas) {
-    const pagos = [];
     const m = detalle.matricula;
     if (m && m.pagada && !m.sinMatricula) {
-        pagos.push({
+        $('#tbody_matricula').html(filaPago({
             fecha: m.fecha, concepto: 'Matrícula', voucher: m.voucher, monto: m.costo,
             url: m.tieneFoto ? 'ajax/obtener-foto-matricula.php?idInscripcion=' + detalle.idInscripcion : null
-        });
+        }));
+        $('#seccion_matricula').show();
+    } else {
+        $('#seccion_matricula').hide();
     }
+
+    const pagos = [];
     cuotas.filter(function(c) { return c.Estado === 'PAGADO'; }).forEach(function(c) {
+        const concepto = conceptoCuota(c.NumeroCuota);
         pagos.push({
-            fecha: c.fechapago, voucher: c.nvaucher, monto: c.montocuota,
-            concepto: c.NumeroCuota ? 'Cuota N° ' + c.NumeroCuota : 'Cuota del programa',
+            fecha: c.fechapago, voucher: c.nvaucher, monto: c.montocuota, orden: parseInt(c.NumeroCuota, 10) || 0,
+            concepto: concepto.texto, conceptoHtml: concepto.html,
             url: c.TieneImagen === 'SI' ? 'ajax/obtener-voucher-imagen.php?id=' + c.Idpagomodulo : null
         });
     });
@@ -203,33 +279,20 @@ function actualizarPagos(detalle, cuotas) {
         const url = cl.TieneFoto == 1 ? 'ajax/obtener-voucher-clinica.php?id=' + cl.IdPagoClinica : null;
         pagos.push({
             fecha: cl.FechaPago, voucher: cl.NumeroVoucher, monto: cl.MontoTotal, concepto: 'Clínica', clinica: true,
-            url: url, pdf: url && cl.EsPdf == 1
+            url: url, pdf: url && cl.EsPdf == 1, orden: 0
         });
     });
 
     if (!pagos.length) {
-        $('#tbody_pagos').html('<tr><td colspan="5" class="text-center text-muted py-4">Todavía no tiene pagos registrados.</td></tr>');
+        $('#tbody_pagos').html('<tr><td colspan="5" class="text-center text-muted py-4">Todavía no tiene pagos de cuotas ni de clínicas.</td></tr>');
         return;
     }
 
-    pagos.sort(function(a, b) { return String(b.fecha || '').localeCompare(String(a.fecha || '')); });
-    $('#tbody_pagos').html(pagos.map(function(p) {
-        let comprobante = '<span class="text-muted small">Sin imagen</span>';
-        if (p.url && p.pdf) {
-            comprobante = '<a href="' + p.url + '" target="_blank" class="btn-comprobante"><i class="fa fa-file-pdf"></i> Ver PDF</a>';
-        } else if (p.url) {
-            comprobante = '<button type="button" class="btn-comprobante" data-url="' + p.url + '" data-concepto="' + escapar(p.concepto) + '" ' +
-                'data-voucher="' + escapar(p.voucher) + '" data-fecha="' + formatearFecha(p.fecha) + '" data-monto="' + escapar(formatoMoneda(p.monto)) + '">' +
-                '<i class="fa fa-receipt"></i> Ver</button>';
-        }
-        return '<tr>' +
-            '<td data-label="Fecha de pago">' + formatearFecha(p.fecha) + '</td>' +
-            '<td data-label="Concepto"' + (p.clinica ? ' class="hp-concepto-clinica"' : '') + '>' + escapar(p.concepto) + '</td>' +
-            '<td data-label="N° de voucher">' + escapar(p.voucher || '-') + '</td>' +
-            '<td data-label="Monto" class="text-right">' + formatoMoneda(p.monto) + '</td>' +
-            '<td data-label="Comprobante" class="text-center">' + comprobante + '</td>' +
-            '</tr>';
-    }).join(''));
+    // Del último pago al primero; el mismo día, la cuota mayor arriba
+    pagos.sort(function(a, b) {
+        return String(b.fecha || '').localeCompare(String(a.fecha || '')) || (b.orden - a.orden);
+    });
+    $('#tbody_pagos').html(pagos.map(filaPago).join(''));
 }
 
 function ocultarResultados() {
