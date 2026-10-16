@@ -26,7 +26,23 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'buscarPorCI') {
         exit();
     }
 
-    $resultados = CertificadoModelo::BuscarInscripcionesPorCIModelo($ci);
+    $resultados = CertificadoModelo::BuscarInscripcionesModelo($ci);
+    echo json_encode(['success' => true, 'resultados' => $resultados]);
+    exit();
+}
+
+// Buscador de los certificados: C.I. (solo números) o nombre y/o apellidos
+if (isset($_POST['accion']) && $_POST['accion'] === 'buscarEstudiantes') {
+    $termino = trim($_POST['termino'] ?? '');
+    if (mb_strlen($termino) < 3 && !ctype_digit($termino)) {
+        echo json_encode(['success' => false, 'mensaje' => 'Escriba el C.I. o al menos 3 letras del nombre']);
+        exit();
+    }
+    $resultados = CertificadoModelo::BuscarInscripcionesModelo($termino);
+    foreach ($resultados as &$fila) {
+        $fila['GradoLegible'] = CertificadoModelo::GradoLegible($fila['GradoAcademico']);
+    }
+    unset($fila);
     echo json_encode(['success' => true, 'resultados' => $resultados]);
     exit();
 }

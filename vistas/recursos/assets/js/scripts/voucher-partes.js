@@ -10,6 +10,9 @@
  *
  * Cuando una pantalla le pone valor al original con jQuery (.val('...') al editar o
  * .val('') al limpiar), los dos campos se actualizan solos (valHooks).
+ *
+ * Por defecto solo acepta números. Con data-voucher-partes="alfanumerico" (vouchers de
+ * los certificados) acepta también letras, que se pasan a MAYÚSCULAS.
  */
 (function () {
     'use strict';
@@ -31,21 +34,27 @@
         return corto ? largo + '-' + corto : largo;
     }
 
-    // El N° de voucher solo lleva números (el guion lo pone el sistema): se quita lo
-    // demás y se avisa un momento debajo del campo
+    // El N° de voucher solo lleva números (o letras y números si es alfanumérico; el
+    // guion lo pone el sistema): se quita lo demás y se avisa un momento debajo del campo
+    function esAlfanumerico(input) {
+        const grupo = input.closest('.voucher-partes');
+        return !!(grupo && grupo.dataset.alfanumerico);
+    }
     function soloDigitos(input, valor) {
-        const limpio = String(valor).replace(/\D/g, '');
-        if (limpio !== String(valor)) avisarSoloNumeros(input);
+        const alfa = esAlfanumerico(input);
+        const texto = alfa ? String(valor).toUpperCase() : String(valor);
+        const limpio = texto.replace(alfa ? /[^0-9A-ZÑ]/g : /\D/g, '');
+        if (limpio !== texto) avisarSoloNumeros(input, alfa);
         return limpio;
     }
-    function avisarSoloNumeros(input) {
+    function avisarSoloNumeros(input, alfa) {
         const grupo = input.closest('.voucher-partes');
         if (!grupo) return;
         let aviso = grupo.querySelector('.vp-aviso');
         if (!aviso) {
             aviso = document.createElement('small');
             aviso.className = 'vp-aviso';
-            aviso.textContent = 'Solo se aceptan números';
+            aviso.textContent = alfa ? 'Solo se aceptan letras y números' : 'Solo se aceptan números';
             grupo.appendChild(aviso);
         }
         aviso.style.display = 'block';
@@ -99,16 +108,19 @@
         // Mismo estilo que el campo original (tamaño, clases propias de cada pantalla)
         const clases = original.className.replace(/\bd-none\b/g, '').trim();
         const requerido = original.required;
+        const alfa = original.getAttribute('data-voucher-partes') === 'alfanumerico';
+        const teclado = alfa ? 'autocapitalize="characters" ' : 'inputmode="numeric" pattern="[0-9]*" ';
 
         const grupo = document.createElement('div');
         grupo.className = 'voucher-partes';
+        if (alfa) grupo.dataset.alfanumerico = '1';
         grupo.innerHTML =
             '<div class="input-group">' +
                 '<input type="text" class="' + clases + ' vp-largo" id="' + original.id + '_largo" ' +
-                    'inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="Ej: 1469337" aria-label="N° de voucher">' +
+                    teclado + 'autocomplete="off" placeholder="Ej: 1469337" aria-label="N° de voucher">' +
                 '<div class="input-group-append input-group-prepend"><span class="input-group-text vp-guion">-</span></div>' +
                 '<input type="text" class="' + clases + ' vp-corto" id="' + original.id + '_corto" ' +
-                    'inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="002" aria-label="N° corto del voucher (opcional)" ' +
+                    teclado + 'autocomplete="off" placeholder="002" aria-label="N° corto del voucher (opcional)" ' +
                     'title="Parte corta del voucher (opcional)">' +
             '</div>' +
             '<small class="vp-se-guarda" style="display:none;">Se guarda como: <strong id="' + original.id + '_vista"></strong></small>';

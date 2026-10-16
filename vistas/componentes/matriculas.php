@@ -81,7 +81,7 @@
               </div>
                 <div class="kt-portlet__body">
                   <!--begin: Datatable -->
-                  <table class="table table-striped- table-bordered table-hover table-checkable TablaUsuarios" id="kt_table_1">
+                  <table class="table table-striped- table-bordered table-hover table-checkable TablaUsuarios" id="kt_table_1" data-exportar="Matrículas">
                     <thead>
                     <tr>
 										<th scope="col">N°</th>

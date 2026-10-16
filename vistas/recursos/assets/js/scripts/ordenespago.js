@@ -139,12 +139,12 @@
     }
 
     // ========================================
-    // EXPORTAR A EXCEL: lo que se ve en la tabla (con búsqueda) o, sin búsqueda, todas
+    // EXPORTAR A EXCEL O PDF: lo que se ve en la tabla (con búsqueda) o, sin búsqueda, todas
     // las órdenes del periodo que cumplen los filtros de tipo, estado y programa
     // ========================================
     var ETIQUETAS_ESTADO = { PAGADA: 'Pagada', ANULADO: 'Anulada', VENCIDA: 'Vencida', PENDIENTE: 'Pendiente', EXTRAVIADO: 'Voucher por validar' };
 
-    function exportarExcel() {
+    function exportarListado(formato) {
         var buscar = $('#op_buscar').val().trim();
         var lista = (buscar || buscarPorFiltros) ? filtradas : todas.filter(cumpleFiltros);
         if (!lista.length) {
@@ -172,7 +172,8 @@
         });
         var hoy = new Date();
         var dos = function (n) { return String(n).padStart(2, '0'); };
-        window.exportarExcel({
+        var exportar = formato === 'pdf' ? window.exportarPdf : window.exportarExcel;
+        exportar({
             archivo: 'ordenes-de-pago-' + hoy.getFullYear() + dos(hoy.getMonth() + 1) + dos(hoy.getDate()),
             hoja: 'Órdenes de pago',
             titulo: 'ÓRDENES DE PAGO · POSGRADO FCS',
@@ -528,7 +529,8 @@
             cargar();
         });
         $('#op_mas').on('click', mostrarMas);
-        $('#op_exportar').on('click', exportarExcel);
+        $('#op_exportar').on('click', function () { exportarListado('excel'); });
+        $('#op_exportar_pdf').on('click', function () { exportarListado('pdf'); });
 
         $('#op_cuerpo').on('click', '.op-btn-validar', function () { abrirValidar($(this).data('id')); });
         $('#op_cuerpo').on('click', '.op-btn-extraviado', function () { marcarExtraviado($(this).data('id')); });

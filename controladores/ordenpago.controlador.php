@@ -40,8 +40,10 @@ class OrdenPagoControladores
                 return;
             }
 
-            // Verificar si es pago completo
-            $pagoCompleto = isset($_POST['pagoCompleto']) && $_POST['pagoCompleto'] == '1' ? 1 : 0;
+            // Plan al Contado SIN matrícula ("Cobrar matrícula" sin marcar): una sola orden
+            // por el programa completo (pagoCompleto = 1). Lo decide el servidor con el plan y
+            // la casilla, no un campo del formulario.
+            $pagoCompleto = (($_POST['tipoPagoCodigo'] ?? '') === 'CONTADO' && !isset($_POST['pagarMatricula'])) ? 1 : 0;
 
             // Obtener el monto que viene del formulario (ya con el descuento del plan de pago aplicado)
             $montoDesdeFormulario = floatval($_POST['montoAPagar']);
@@ -72,6 +74,9 @@ class OrdenPagoControladores
             // máximo 3). Pasa al plan al validar el voucher: con él se arma el compromiso
             // y la orden de cada cuota muestra "1/N".
             $planPropuestoNumeroCuotas = !empty($_POST['numeroCuotas']) ? (int)$_POST['numeroCuotas'] : 0;
+            if ($pagoCompleto) {
+                $planPropuestoNumeroCuotas = 1; // el programa entero en esta misma orden
+            }
             $maxCuotasPlan = $planPropuestoTipo === 'CONTADO' ? 3 : 60;
             if ($planPropuestoNumeroCuotas < 1 || $planPropuestoNumeroCuotas > $maxCuotasPlan) {
                 echo '
@@ -193,7 +198,7 @@ class OrdenPagoControladores
                 echo '
                 <script>
                 window.addEventListener("load", function() {
-                    swal("¡Pre-registro exitoso!", "La orden de pago de matrícula se generó correctamente.", "success")
+                    swal("¡Pre-registro exitoso!", "' . ($pagoCompleto ? 'La orden de pago del programa completo' : 'La orden de pago de matrícula') . ' se generó correctamente.", "success")
                     .then(function () {
                         window.location.href = "preregistro?ordenGenerada=' . $idOrdenPago . '";
                     });
@@ -253,7 +258,7 @@ class OrdenPagoControladores
     {
         $unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
         $decenas = ['', '', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
-        $especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+        $especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
         $centenas = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
 
         if ($numero == 0) return 'CERO';

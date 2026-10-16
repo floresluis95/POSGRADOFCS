@@ -44,6 +44,7 @@
                 $enlace == 'certificadomediomagnetico'||
                 $enlace == 'certificadorevision'||
                 $enlace == 'registrodocumentos'||
+                $enlace == 'costoscertificados'||
                 $enlace == 'calendario'||
                 $enlace == 'autoridades'||
                 $enlace == 'requisitos'||

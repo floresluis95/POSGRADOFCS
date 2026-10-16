@@ -116,9 +116,12 @@
                                             <i class="fa fa-undo"></i> Limpiar
                                         </button>
                                         <!-- Sin búsqueda exporta todas las órdenes del periodo con los filtros elegidos -->
-                                        <button type="button" class="btn btn-success op-btn-excel" id="op_exportar" title="Exportar a Excel las órdenes filtradas">
-                                            <i class="fa fa-file-excel"></i> Exportar Excel
-                                        </button>
+                                        <div class="exportar-barra exportar-en-linea ml-auto">
+                                            <div class="btn-group btn-group-sm" role="group" aria-label="Exportar">
+                                                <button type="button" class="btn" id="op_exportar" title="Exportar a Excel las órdenes filtradas"><i class="fa fa-file-excel"></i>Excel</button>
+                                                <button type="button" class="btn" id="op_exportar_pdf" title="Exportar a PDF las órdenes filtradas"><i class="fa fa-file-pdf"></i>PDF</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -196,8 +199,6 @@
         .op-numero { font-weight: 600; white-space: nowrap; }
         .op-correlativo { text-align: center; color: #7e8299; font-variant-numeric: tabular-nums; width: 48px; }
         .op-filtro-limpiar { display: flex; gap: 8px; }
-        .op-btn-excel { white-space: nowrap; background: #1d6f42 !important; border-color: #1d6f42 !important; color: #fff !important; }
-        .op-btn-excel:hover { background: #155a35 !important; border-color: #155a35 !important; }
         .op-btn-buscar { white-space: nowrap; background: #1e3c72; border-color: #1e3c72; color: #fff; }
         .op-btn-buscar:hover, .op-btn-buscar:focus { background: #152c55; border-color: #152c55; color: #fff; }
         /* Tipo de orden: cada uno con su color para distinguirlos de un vistazo */

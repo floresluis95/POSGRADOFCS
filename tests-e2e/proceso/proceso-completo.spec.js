@@ -157,7 +157,12 @@ test.describe('Proceso completo: del registro a los informes', () => {
     await expect(modal.locator('#opMontoCuota')).toBeVisible({ timeout: 15_000 });
     await modal.locator('#opMontoCuota').fill(String(MONTO_CUOTA));
     await modal.locator('#opCuentaPago').selectOption({ index: 1 }).catch(() => {});
+    await modal.locator('#opFirma').selectOption({ index: 1 }, { timeout: 3_000 }).catch(() => {});
     await modal.locator('#opBtnGenerarOrden').click();
+    // Sin responsable de la firma (catálogo vacío): "Generar de todas formas"
+    if (await page.locator('.swal2-popup', { hasText: 'responsable de la firma' }).isVisible()) {
+      await page.locator('.swal2-cancel').click();
+    }
     // Resumen para verificar monto, cuota, programa y cuenta antes de generar
     await page.locator('.swal2-confirm').click();
     await expect.poll(() => valor(`SELECT MontoTotal FROM ordenpago WHERE idinscripcion = ${datos.idInscripcion} AND Estado = 'PENDIENTE'`), { timeout: 15_000 })

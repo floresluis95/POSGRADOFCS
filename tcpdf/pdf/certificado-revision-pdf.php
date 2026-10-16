@@ -33,7 +33,10 @@ $tratamiento = trim($_POST['tratamiento'] ?? 'la señora');
 $nombre = trim($_POST['nombre'] ?? '');
 $curso = trim($_POST['curso'] ?? '');
 $fecha = $_POST['fecha'] ?? '';
-$vaucher = trim($_POST['vaucher'] ?? '');
+$vaucher = CertificadoModelo::NormalizarVoucher($_POST['vaucher'] ?? '');
+if ($vaucher === false) {
+    die('Error: El N° de voucher solo puede tener letras y números (y un guion entre las dos partes)');
+}
 
 if ($nombre === '' || $curso === '' || empty($fecha) || !strtotime($fecha)) {
     die('Error: Faltan datos requeridos para generar el certificado');
@@ -41,10 +44,13 @@ if ($nombre === '' || $curso === '' || empty($fecha) || !strtotime($fecha)) {
 
 // Se guardan los datos del formulario para poder reimprimirlo (y corregirlo) desde
 // Registro de documentos; con idDocumento es una reimpresión de ese registro.
-CertificadoModelo::RegistrarEmisionModelo(
-    'REVISION', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
-    $_POST, intval($_POST['idDocumento'] ?? 0)
-);
+// En la vista previa (antes de generar) no se registra nada.
+if (!CertificadoModelo::EsVistaPrevia()) {
+    CertificadoModelo::RegistrarEmisionModelo(
+        'REVISION', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
+        $_POST, intval($_POST['idDocumento'] ?? 0)
+    );
+}
 
 $meses = [1 => 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 $t = strtotime($fecha);
@@ -131,6 +137,10 @@ $pdf->SetXY($X_CONFORMIDAD, $yLinea);
 $pdf->Cell($W_TEXTO, $INTERLINEA, 'Este despacho da conformidad al informe que antecede, para fines consiguientes pase', 0, 1, 'J');
 $pdf->SetXY($X_CONFORMIDAD, $yLinea + $INTERLINEA);
 $pdf->Cell($W_TEXTO, $INTERLINEA, 'a conocimiento del señor Vicerrector de la Universidad Técnica de Oruro.', 0, 1, 'L');
+
+if (CertificadoModelo::EsVistaPrevia()) {
+    CertificadoModelo::MarcarVistaPrevia($pdf, true);
+}
 
 if (ob_get_contents()) {
     ob_end_clean();

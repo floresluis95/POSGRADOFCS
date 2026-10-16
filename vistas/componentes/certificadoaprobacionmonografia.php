@@ -1,144 +1,47 @@
 <?php
-$Validar = new FuncionesControladores();
-$Validar->ValidarSessionControlador();
-date_default_timezone_set("America/La_Paz");
-
-require_once 'modelos/certificado.modelo.php';
+$certTitulo = 'CERTIFICADO DE APROBACIÓN PROGRAMA DE POSGRADO';
+$certSubtitulo = 'FORMATO PRE-IMPRESO DE POSGRADO CENTRAL';
+include __DIR__ . '/modulos/certificado-encabezado.php';
 ?>
 
-<link rel="stylesheet" href="vistas/recursos/assets/css/certificados.css?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/css/certificados.css'); ?>">
-
-<body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
-  <!-- Header móvil: botón para desplegar el menú lateral en pantallas pequeñas -->
-  <div id="kt_header_mobile" class="kt-header-mobile kt-header-mobile--fixed">
-    <div class="kt-header-mobile__logo">
-      <a href="panel">
-        <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
-      </a>
-    </div>
-    <div class="kt-header-mobile__toolbar">
-      <button class="kt-header-mobile__toolbar-toggler kt-header-mobile__toolbar-toggler--left" id="kt_aside_mobile_toggler">
-        <span></span>
-      </button>
-      <button class="kt-header-mobile__toolbar-toggler" id="kt_header_mobile_toggler">
-        <span></span>
-      </button>
-      <button class="kt-header-mobile__toolbar-topbar-toggler" id="kt_header_mobile_topbar_toggler">
-        <i class="flaticon-more-1"></i>
-      </button>
-    </div>
-  </div>
-
-    <div class="kt-grid kt-grid--hor kt-grid--root" style="background:#E0DEDE;">
-        <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
-            <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
-
-                <?php
-                $NavBar = new FuncionesControladores();
-                $NavBar->NavBarControlador();
-                ?>
-                <button class="kt-aside-close" id="kt_aside_close_btn"><i class="la la-close"></i></button>
-                <?php
-                $Sidebar = new FuncionesControladores();
-                $Sidebar->SidebarControlador();
-                ?>
-
-                <div class="kt-body kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-grid--stretch" id="kt_body">
-                    <div class="kt-content kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
-
-                        <!-- Subheader -->
-                        <div class="kt-subheader kt-grid__item" id="kt_subheader">
-                            <div class="kt-container">
-                                <div class="kt-subheader__main">
-                                    <h2>CERTIFICADO DE APROBACIÓN PROGRAMA DE POSGRADO</h2>
-                                    <span class="kt-subheader__separator kt-hidden"></span>
-                                    <div class="kt-subheader__breadcrumbs">
-                                        <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
-                                        <span class="kt-subheader__breadcrumbs-separator"></span>
-                                        <h4>SOBRE FORMATO PRE-IMPRESO DE POSGRADO CENTRAL</h4>
-                                    </div>
+                            <div class="card-certificado">
+                                <h3><span class="paso-numero">1</span> Estudiante</h3>
+                                <div class="certificado-cuerpo">
+                                    <div id="buscador-certificado"></div>
+                                    <select id="select-inscripcion" class="d-none" aria-hidden="true"><option value="">-- Seleccione --</option></select>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="container certificado-container">
-
-                            <div class="card-certificado">
-                                <h3><span class="paso-numero">1</span> <i class="fas fa-id-card"></i> Buscar Estudiante por Carnet (CI)</h3>
+                            <div class="card-certificado" id="bloque-datos" style="display:none;">
+                                <h3><span class="paso-numero">2</span> Datos del certificado</h3>
                                 <div class="certificado-cuerpo">
-                                <div class="row">
-                                    <div class="col-md-5">
-                                        <div class="form-group">
-                                            <label><strong>N° de Carnet</strong></label>
-                                            <div class="input-group">
-                                                <input type="text" class="form-control" id="input-buscar-ci" placeholder="Ej: 7456178" inputmode="numeric" autocomplete="off">
-                                                <div class="input-group-append">
-                                                    <button type="button" class="btn btn-primary" id="btn-buscar-ci">
-                                                        <i class="fas fa-search"></i> Buscar
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-7" id="col-resultado-busqueda" style="display:none;">
-                                        <div class="form-group">
-                                            <label><strong>Resultado</strong></label>
-                                            <select class="form-control" id="select-inscripcion" style="width: 100%;">
-                                                <option value="">-- Seleccione --</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="alerta-sin-resultado" class="alert alert-warning" style="display:none;">
-                                    <i class="fas fa-exclamation-triangle"></i> No se encontró ningún estudiante activo con ese carnet.
-                                </div>
-
-                                <div id="bloque-datos" style="display:none;">
-                                    <div class="certificado-subtitulo">Datos del estudiante</div>
                                     <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label><strong>Nombre</strong></label>
-                                                <div class="dato-solo-lectura" id="dato-nombre"></div>
-                                            </div>
+                                        <div class="col-md-9 form-group">
+                                            <label>Programa</label>
+                                            <div class="dato-solo-lectura" id="dato-programa"></div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label><strong>Programa</strong></label>
-                                                <div class="dato-solo-lectura" id="dato-programa"></div>
-                                            </div>
+                                        <div class="col-md-3 form-group">
+                                            <label>Grado académico</label>
+                                            <div class="dato-solo-lectura" id="dato-grado"></div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label><strong>Grado académico</strong></label>
-                                                <div class="dato-solo-lectura" id="dato-grado"></div>
-                                            </div>
+                                        <div class="col-md-6 form-group">
+                                            <label for="input-vaucher">N° de recibo de caja o voucher</label>
+                                            <input type="text" class="form-control" id="input-vaucher" data-voucher-partes="alfanumerico">
                                         </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label><strong>N° de Recibo de Caja (Vaucher)</strong></label>
-                                                <input type="text" class="form-control" id="input-vaucher" placeholder="Número de recibo de caja" data-voucher-partes>
-                                            </div>
-                                        </div>
-                                        <!-- Monto pagado: llega con el precio del certificado (Autoridades) y se puede cambiar -->
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="input-monto"><strong>Monto pagado (Bs.)</strong></label>
-                                                <input type="number" class="form-control" id="input-monto" min="0" step="0.01" placeholder="0.00"
-                                                       value="<?php $preciosCert = CertificadoModelo::PreciosCertificados(); echo $preciosCert['APROBACION_MONOGRAFIA'] !== null ? number_format($preciosCert['APROBACION_MONOGRAFIA'], 2, '.', '') : ''; ?>">
-                                            </div>
+                                        <div class="col-md-6 form-group">
+                                            <label for="input-monto">Monto pagado (Bs.)</label>
+                                            <input type="number" class="form-control" id="input-monto" min="0" step="0.01" placeholder="0.00">
                                         </div>
                                     </div>
-                                </div>
                                 </div>
                             </div>
 
                             <div class="card-certificado" id="card-monografia" style="display:none;">
-                                <h3><span class="paso-numero">2</span> <i class="fas fa-file-alt"></i> Datos del Trabajo de Grado</h3>
+                                <h3><span class="paso-numero">3</span> Trabajo de grado</h3>
                                 <div class="certificado-cuerpo">
 
                                 <div class="form-group">
-                                    <label><strong>Título del Trabajo de Grado</strong> <small class="text-muted">(se escribe en MAYÚSCULAS)</small></label>
+                                    <label for="input-titulo">Título del trabajo de grado</label>
                                     <textarea class="form-control" id="input-titulo" rows="3" spellcheck="true" lang="es"
                                               placeholder="ESCRIBA EL TÍTULO COMPLETO DEL TRABAJO DE GRADO"></textarea>
 
@@ -155,7 +58,7 @@ require_once 'modelos/certificado.modelo.php';
                                             <i class="fas fa-save"></i> Guardar título
                                         </button>
                                         <small class="text-muted" id="estado-titulo-guardado">
-                                            El título guardado se usa en Medio Magnético, Registro de Documentos y el Cronograma de defensas.
+                                            Se usa también en Medio Magnético y en el Cronograma de defensas.
                                         </small>
                                     </div>
                                 </div>
@@ -175,7 +78,7 @@ require_once 'modelos/certificado.modelo.php';
                                 </style>
 
                                 <div class="form-group">
-                                    <label><strong>Miembros del Tribunal</strong></label>
+                                    <label>Miembros del tribunal</label>
                                     <div id="contenedor-tribunal"></div>
                                     <button type="button" class="btn-agregar-miembro" id="btn-agregar-miembro">
                                         <i class="fas fa-plus"></i> Agregar miembro del tribunal
@@ -185,7 +88,7 @@ require_once 'modelos/certificado.modelo.php';
                                 <div class="row mt-3">
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label><strong>Entrega de Informe Final</strong></label>
+                                            <label for="input-entrega">Entrega del informe final</label>
                                             <div class="d-flex" style="gap:6px;">
                                                 <input type="date" class="form-control" id="input-entrega" title="Fecha de entrega">
                                                 <input type="time" class="form-control" id="input-hora-entrega" title="Hora de entrega" style="max-width:130px;">
@@ -194,13 +97,13 @@ require_once 'modelos/certificado.modelo.php';
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label><strong>Calificación Numeral</strong></label>
+                                            <label for="input-calificacion">Calificación numeral</label>
                                             <input type="number" class="form-control" id="input-calificacion" min="0" max="100" placeholder="Ej: 92">
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label><strong>Calificación Literal</strong></label>
+                                            <label>Calificación literal</label>
                                             <div class="dato-solo-lectura" id="dato-literal">-</div>
                                         </div>
                                     </div>
@@ -208,24 +111,13 @@ require_once 'modelos/certificado.modelo.php';
 
                                 <div class="certificado-acciones">
                                     <button type="button" class="btn-generar-certificado" id="btn-generar-certificado">
-                                        <i class="fas fa-file-pdf"></i> Generar Certificado PDF
+                                        <i class="fas fa-eye"></i> Revisar y generar
                                     </button>
                                 </div>
                                 </div>
                             </div>
 
-                        </div>
-
-                        <?php
-                        $Footer = new FuncionesControladores();
-                        $Footer->FooterResumidoControlador();
-                        ?>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<?php include __DIR__ . '/modulos/certificado-pie.php'; ?>
 
     <form id="form-generar-certificado" method="POST" action="tcpdf/pdf/certificado-aprobacion-monografia-pdf.php" target="_blank">
         <input type="hidden" name="estudianteID" id="hidden-estudianteID">
@@ -242,7 +134,6 @@ require_once 'modelos/certificado.modelo.php';
         <input type="hidden" name="calificacion" id="hidden-calificacion">
     </form>
 
-    <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
     <script>
     $(document).ready(function() {
 
@@ -253,8 +144,8 @@ require_once 'modelos/certificado.modelo.php';
 
             var unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
             var decenas = ['', 'DIEZ', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
-            var especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
-            var veintenas = ['VEINTE', 'VEINTIUNO', 'VEINTIDOS', 'VEINTITRES', 'VEINTICUATRO', 'VEINTICINCO', 'VEINTISEIS', 'VEINTISIETE', 'VEINTIOCHO', 'VEINTINUEVE'];
+            var especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+            var veintenas = ['VEINTE', 'VEINTIUNO', 'VEINTIDÓS', 'VEINTITRÉS', 'VEINTICUATRO', 'VEINTICINCO', 'VEINTISÉIS', 'VEINTISIETE', 'VEINTIOCHO', 'VEINTINUEVE'];
 
             var literal;
             if (entero === 0) {
@@ -454,7 +345,7 @@ require_once 'modelos/certificado.modelo.php';
                 $('#input-titulo').val(t ? t.TituloTrabajo : '');
                 $('#estado-titulo-guardado').removeClass('text-warning').text(t && t.TituloTrabajo
                     ? 'Título ya registrado. Si lo cambia, presione "Guardar título".'
-                    : 'El título guardado se usa en Medio Magnético, Registro de Documentos y el Cronograma de defensas.');
+                    : 'Se usa también en Medio Magnético y en el Cronograma de defensas.');
                 if (t) {
                     if (t.FechaEntrega) $('#input-entrega').val(t.FechaEntrega);
                     if (t.HoraEntrega) $('#input-hora-entrega').val(String(t.HoraEntrega).substring(0, 5));
@@ -499,75 +390,18 @@ require_once 'modelos/certificado.modelo.php';
             });
         });
 
-        // ---- Búsqueda por CI ----
-        function limpiarResultadoBusqueda() {
-            $('#select-inscripcion').empty().append('<option value="">-- Seleccione --</option>');
-            $('#col-resultado-busqueda').hide();
-            $('#bloque-datos').hide();
-            $('#card-monografia').hide();
-        }
-
-        function buscarPorCI() {
-            var ci = $('#input-buscar-ci').val().trim();
-            $('#alerta-sin-resultado').hide();
-            limpiarResultadoBusqueda();
-
-            if (!ci) {
-                Swal.fire({ type: 'warning', title: 'Ingrese un carnet', text: 'Escriba el número de carnet del estudiante' });
-                return;
-            }
-
-            $.ajax({
-                url: 'ajax/certificado.ajax.php',
-                method: 'POST',
-                data: { accion: 'buscarPorCI', ci: ci },
-                dataType: 'json',
-                success: function(data) {
-                    if (!data.success || !data.resultados || data.resultados.length === 0) {
-                        $('#alerta-sin-resultado').show();
-                        return;
-                    }
-
-                    var $select = $('#select-inscripcion');
-                    $select.empty();
-
-                    if (data.resultados.length > 1) {
-                        $select.append('<option value="">-- Seleccione --</option>');
-                    }
-
-                    data.resultados.forEach(function(insc) {
-                        var nombreCompleto = (insc.Apaterno + ' ' + insc.Amaterno + ' ' + insc.Nombre).trim();
-                        var ciCompleto = insc.Ci + (insc.Complemento ? '-' + insc.Complemento : '');
-                        var etiqueta = nombreCompleto + ' (' + ciCompleto + ') - ' + insc.NombrePrograma + ' - ' + insc.GradoAcademico;
-
-                        var $option = $('<option></option>')
-                            .val(insc.EstudianteID)
-                            .attr('data-programa-id', insc.ProgramaID)
-                            .attr('data-nombre', nombreCompleto)
-                            .attr('data-programa', insc.NombrePrograma)
-                            .attr('data-grado', insc.GradoAcademico || '')
-                            .text(etiqueta);
-
-                        $select.append($option);
-                    });
-
-                    $('#col-resultado-busqueda').show();
-
-                    if (data.resultados.length === 1) {
-                        $select.val(data.resultados[0].EstudianteID).trigger('change');
-                    }
-                },
-                error: function() {
-                    Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo realizar la búsqueda' });
-                }
-            });
-        }
-
-        $('#btn-buscar-ci').on('click', buscarPorCI);
-        $('#input-buscar-ci').on('keypress', function(e) {
-            if (e.which === 13) {
-                e.preventDefault();
-                buscarPorCI();
+        // ---- Estudiante: buscador por C.I. o nombre ----
+        Certificado.buscador({
+            contenedor: '#buscador-certificado',
+            tipo: 'APROBACION_MONOGRAFIA',
+            precios: window.PRECIOS_CERTIFICADOS,
+            opcion: function(insc) {
+                return $('<option></option>')
+                    .val(insc.EstudianteID)
+                    .attr('data-programa-id', insc.ProgramaID)
+                    .attr('data-nombre', [insc.Apaterno, insc.Amaterno, insc.Nombre].filter(Boolean).join(' ').toLocaleUpperCase('es'))
+                    .attr('data-programa', insc.NombrePrograma)
+                    .attr('data-grado', insc.GradoAcademico || '');
             }
         });
 
@@ -581,7 +415,6 @@ require_once 'modelos/certificado.modelo.php';
                 return;
             }
 
-            $('#dato-nombre').text($opt.data('nombre'));
             $('#dato-programa').text($opt.data('programa'));
             $('#dato-grado').text(textoGrado($opt.data('grado')));
             $('#bloque-datos').show();
@@ -651,21 +484,23 @@ require_once 'modelos/certificado.modelo.php';
             $('#hidden-hora-entrega').val(entrega ? $('#input-hora-entrega').val() : '');
             $('#hidden-calificacion').val(calificacion);
 
-            // Si la revisión marcó posibles errores, se pregunta antes de imprimir
-            if (erroresTitulo.length) {
-                Swal.fire({
-                    type: 'warning',
-                    title: 'El título tiene ' + erroresTitulo.length + (erroresTitulo.length === 1 ? ' posible error' : ' posibles errores'),
-                    text: 'Palabras marcadas: ' + erroresTitulo.map(function(e) { return e.palabra; }).join(', ') + '. ¿Generar el certificado de todas formas?',
-                    showCancelButton: true,
-                    confirmButtonText: 'Sí, generar',
-                    cancelButtonText: 'Revisar título'
-                }).then(function(r) {
-                    if (r.value) $('#form-generar-certificado').submit();
-                });
-                return;
-            }
-            $('#form-generar-certificado').submit();
+            // Antes de imprimir: datos, revisión ortográfica y vista previa
+            Certificado.confirmar({
+                titulo: 'Certificado de Aprobación Programa de Posgrado',
+                form: '#form-generar-certificado',
+                datos: [
+                    ['Estudiante', nombre],
+                    ['Programa', String(programa).toLocaleUpperCase('es')],
+                    ['Grado académico', curso],
+                    ['N° de recibo o voucher', vaucher],
+                    ['Monto pagado', Certificado.formatoBs(monto)],
+                    ['Título', titulo],
+                    ['Tribunal', tribunal.join(' · ')],
+                    ['Entrega del informe final', entrega ? entrega.split('-').reverse().join('/') + ($('#input-hora-entrega').val() ? ' ' + $('#input-hora-entrega').val() : '') : ''],
+                    ['Calificación', calificacion + ' (' + numeroALetrasJS(calificacion) + ')']
+                ],
+                ortografia: [{ texto: String(programa).toLocaleUpperCase('es') }, { texto: titulo }]
+            });
         });
     });
     </script>

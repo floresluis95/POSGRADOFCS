@@ -31,9 +31,12 @@ $estudianteID = intval($_POST['estudianteID'] ?? 0);
 $programaID = intval($_POST['programaID'] ?? 0);
 $nombre = $_POST['nombre'] ?? '';
 $programa = $_POST['programa'] ?? '';
-$nivel = $_POST['nivel'] ?? '';
+$nivel = CertificadoModelo::GradoLegible($_POST['nivel'] ?? ''); // MAESTRIA → MAESTRÍA
 $anio = $_POST['anio'] ?? '';
-$vaucher = $_POST['vaucher'] ?? '';
+$vaucher = CertificadoModelo::NormalizarVoucher($_POST['vaucher'] ?? '');
+if ($vaucher === false) {
+    die('Error: El N° de voucher solo puede tener letras y números (y un guion entre las dos partes)');
+}
 $fecha = $_POST['fecha'] ?? '';
 
 if (!$estudianteID || !$programaID || empty($nombre) || empty($fecha)) {
@@ -49,10 +52,13 @@ if (empty($modulos)) {
 
 // Se guardan los datos del formulario para poder reimprimirlo (y corregirlo) desde
 // Registro de documentos; con idDocumento es una reimpresión de ese registro.
-CertificadoModelo::RegistrarEmisionModelo(
-    'CALIFICACIONES', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
-    $_POST, intval($_POST['idDocumento'] ?? 0)
-);
+// En la vista previa (antes de generar) no se registra nada.
+if (!CertificadoModelo::EsVistaPrevia()) {
+    CertificadoModelo::RegistrarEmisionModelo(
+        'CALIFICACIONES', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
+        $_POST, intval($_POST['idDocumento'] ?? 0)
+    );
+}
 
 /**
  * Convierte un número entero (0-100) a su literal en español, en mayúsculas.
@@ -63,8 +69,8 @@ function numeroALetras($numero)
 
     $unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
     $decenas = ['', 'DIEZ', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
-    $especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
-    $veintenas = ['VEINTE', 'VEINTIUNO', 'VEINTIDOS', 'VEINTITRES', 'VEINTICUATRO', 'VEINTICINCO', 'VEINTISEIS', 'VEINTISIETE', 'VEINTIOCHO', 'VEINTINUEVE'];
+    $especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+    $veintenas = ['VEINTE', 'VEINTIUNO', 'VEINTIDÓS', 'VEINTITRÉS', 'VEINTICUATRO', 'VEINTICINCO', 'VEINTISÉIS', 'VEINTISIETE', 'VEINTIOCHO', 'VEINTINUEVE'];
 
     if ($entero == 0) {
         $literal = 'CERO';
@@ -206,6 +212,10 @@ foreach ($modulosPorHoja as $chunk) {
     $pdf->Cell($ANCHO_MES, 6, $mesFecha, 0, 0, 'C');
     $pdf->SetXY($X_ANIOFECHA, $Y_FECHA);
     $pdf->Cell($ANCHO_ANIOFECHA, 6, $anioFecha, 0, 0, 'C');
+}
+
+if (CertificadoModelo::EsVistaPrevia()) {
+    CertificadoModelo::MarcarVistaPrevia($pdf, true);
 }
 
 if (ob_get_contents()) {

@@ -1,12 +1,17 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
-// Solo el personal (se abre desde Matriculados)
-if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX'], true)) die('Acceso denegado');
+// El personal (desde Matriculados) o el propio estudiante (Mis órdenes de pago), solo el suyo
+if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX', 'EST'], true)) die('Acceso denegado');
 
 $idinscripcion = isset($_GET['idinscripcion']) ? intval($_GET['idinscripcion']) : 0;
 if ($idinscripcion === 0) die('ID de inscripción inválido');
 
 require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
+if ($_SESSION['Tipo'] === 'EST') {
+    $stmtDueno = Conexion::Conectar()->prepare("SELECT 1 FROM estudianteprograma WHERE idInscripcion = :id AND EstudianteID = :est");
+    $stmtDueno->execute([':id' => $idinscripcion, ':est' => (int)($_SESSION['EstudianteID'] ?? 0)]);
+    if (!$stmtDueno->fetchColumn()) die('Acceso denegado');
+}
 require_once '../../modelos/modulopagos_core.php';
 require_once __DIR__ . '/../../modelos/voucher.modelo.php';
 require_once __DIR__ . '/../../modelos/pagoclinica.modelo.php';

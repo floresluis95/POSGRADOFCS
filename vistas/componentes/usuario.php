@@ -74,7 +74,7 @@
               <div class="card-content collapse show">
                 <div class="card-body card-dashboard">
                   <div class="table-responsive">
-                    <table class="table table-hover table-bordered align-middle TablaUsuarios" id="kt_table_1">
+                    <table class="table table-hover table-bordered align-middle TablaUsuarios" id="kt_table_1" data-exportar="Usuarios">
                       <thead class="thead-dark">
                         <tr>
                           <th class="text-center" style="width: 5%;">Nº</th>

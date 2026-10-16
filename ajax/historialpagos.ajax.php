@@ -44,6 +44,10 @@ switch ($_POST['accion']) {
         actualizarCuota();
         break;
 
+    case 'actualizarClinica':
+        actualizarClinica();
+        break;
+
     default:
         echo json_encode(['success' => false, 'mensaje' => 'Acción no válida']);
 }
@@ -125,7 +129,7 @@ function buscarPorEstudianteId()
  * nueva (reemplaza a la guardada; si no se envía, se conserva la actual).
  * @return array|null null si falta algún dato obligatorio (ya responde el error)
  */
-function leerDatosEdicionPago()
+function leerDatosEdicionPago($permitirPdf = false)
 {
     $numeroVoucher = isset($_POST['numeroVoucher']) ? trim($_POST['numeroVoucher']) : '';
     $fechaPago = isset($_POST['fechaPago']) ? trim($_POST['fechaPago']) : '';
@@ -154,11 +158,16 @@ function leerDatosEdicionPago()
     $foto = null;
     if (isset($_FILES['fotoVoucher']) && $_FILES['fotoVoucher']['error'] === UPLOAD_ERR_OK) {
         $tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if ($permitirPdf) {
+            $tiposPermitidos[] = 'application/pdf'; // el voucher de clínica también se guarda en PDF
+        }
         $tipoArchivo = $_FILES['fotoVoucher']['type'];
         $tamanioMaximo = 5 * 1024 * 1024; // 5MB
 
         if (!in_array($tipoArchivo, $tiposPermitidos)) {
-            echo json_encode(['success' => false, 'mensaje' => 'Formato de imagen no permitido. Solo JPG, PNG, GIF o WEBP']);
+            echo json_encode(['success' => false, 'mensaje' => $permitirPdf
+                ? 'Formato no permitido. Solo JPG, PNG, GIF, WEBP o PDF'
+                : 'Formato de imagen no permitido. Solo JPG, PNG, GIF o WEBP']);
             return null;
         }
         if ($_FILES['fotoVoucher']['size'] > $tamanioMaximo) {
@@ -223,5 +232,30 @@ function actualizarCuota()
     echo json_encode([
         'success' => $resultado === 'exitoso',
         'mensaje' => $resultado === 'exitoso' ? 'Cuota actualizada correctamente' : 'No se pudo actualizar la cuota'
+    ]);
+}
+
+/**
+ * Corregir el pago de una orden de clínica ya confirmada (fecha/voucher/monto y,
+ * opcionalmente, la foto o PDF). No cambia su Estado.
+ */
+function actualizarClinica()
+{
+    if (empty($_POST['idPagoClinica']) || !is_numeric($_POST['idPagoClinica'])) {
+        echo json_encode(['success' => false, 'mensaje' => 'El pago de clínica es requerido']);
+        return;
+    }
+
+    $datos = leerDatosEdicionPago(true);
+    if ($datos === null) {
+        return;
+    }
+
+    $resultado = HistorialPagosModelos::ActualizarClinicaModelo((int)$_POST['idPagoClinica'], $datos);
+
+    echo json_encode([
+        'success' => $resultado === 'exitoso',
+        'mensaje' => $resultado === 'exitoso' ? 'Pago de clínica actualizado correctamente'
+            : ($resultado === 'error' ? 'No se pudo actualizar el pago de clínica' : $resultado)
     ]);
 }

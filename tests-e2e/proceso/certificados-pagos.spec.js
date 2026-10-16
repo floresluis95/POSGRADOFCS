@@ -23,28 +23,44 @@ async function emitirMedioMagnetico(page, estudianteID, voucher, monto, fecha = 
   expect(pdf.headers()['content-type']).toContain('application/pdf');
 }
 
-test('los costos se guardan en Autoridades y llegan prellenados al certificado', async ({ page }) => {
+test('los costos se guardan por grado académico y llegan al certificado según el programa', async ({ page }) => {
+  const grado = String(valor(`SELECT REPLACE(UPPER(GradoAcademico), 'Í', 'I') FROM programa WHERE ProgramaID = ${PROGRAMA_ID}`));
+  const otroGrado = grado === 'DOCTORADO' ? 'DIPLOMADO' : 'DOCTORADO';
   const guardar = await ajax(page, 'autoridad.ajax.php', {
-    accion: 'guardarCostosCertificados', 'costos[MEDIO_MAGNETICO]': '85', 'costos[CALIFICACIONES]': '120.5',
+    accion: 'guardarCostosCertificados',
+    [`costos[MEDIO_MAGNETICO][${grado}]`]: '85', [`costos[MEDIO_MAGNETICO][${otroGrado}]`]: '300',
+    [`costos[CALIFICACIONES][${grado}]`]: '120.5',
   });
   expect(guardar.success, guardar.mensaje).toBe(true);
   const costos = await ajax(page, 'autoridad.ajax.php', { accion: 'obtenerCostosCertificados' });
-  expect(costos.precios.MEDIO_MAGNETICO).toBe(85);
-  expect(costos.precios.CALIFICACIONES).toBe(120.5);
+  expect(costos.precios.MEDIO_MAGNETICO[grado]).toBe(85);
+  expect(costos.precios.MEDIO_MAGNETICO[otroGrado]).toBe(300);
+  expect(costos.precios.CALIFICACIONES[grado]).toBe(120.5);
 
   // Un costo negativo no se guarda
-  const malo = await ajax(page, 'autoridad.ajax.php', { accion: 'guardarCostosCertificados', 'costos[REVISION]': '-5' });
+  const malo = await ajax(page, 'autoridad.ajax.php', { accion: 'guardarCostosCertificados', [`costos[REVISION][${grado}]`]: '-5' });
   expect(malo.success).toBe(false);
 
-  // El formulario del certificado trae el precio en "Monto pagado"
+  // Al elegir al estudiante, "Monto pagado" llega con el precio del grado de su programa
+  const { estudianteID } = await estudianteInscrito(page);
+  const ci = String(valor(`SELECT Ci FROM estudiante WHERE EstudianteID = ${estudianteID}`));
   await page.goto('certificadomediomagnetico');
+  await page.locator('#cert-termino').fill(ci);
+  await expect(page.locator('#cert-elegido')).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('#input-monto')).toHaveValue('85.00');
-  await page.goto('certificadocalificaciones');
-  await expect(page.locator('#input-monto')).toHaveValue('120.50');
+  await expect(page.locator('#ayuda-monto')).toContainText('Bs. 85,00');
 
-  // Pantalla Autoridades: los campos muestran los costos
-  await page.goto('autoridades');
-  await expect(page.locator('#costo_MEDIO_MAGNETICO')).toHaveValue('85.00', { timeout: 15_000 });
+  // Pantalla Costos de certificados: la tabla muestra los costos y se pueden editar
+  await page.goto('costoscertificados');
+  const campo = page.locator(`.costo-certificado[data-tipo="MEDIO_MAGNETICO"][data-grado="${grado}"]`);
+  await expect(campo).toHaveValue('85.00', { timeout: 15_000 });
+  await campo.fill('90');
+  await expect(page.locator('#estadoCambios')).toContainText('1 cambio sin guardar');
+  await page.locator('#btnGuardarCostos').click();
+  // Confirmación con los precios que cambian
+  await expect(page.locator('.swal2-popup')).toContainText('Bs. 90,00');
+  await page.locator('.swal2-confirm').click();
+  await expect.poll(() => valor(`SELECT Valor FROM configuracion WHERE Clave = 'COSTO_CERT_MEDIO_MAGNETICO_${grado}'`), { timeout: 15_000 }).toBe('90.00');
 });
 
 test('el monto se guarda con la emisión y el historial filtra, suma e imprime', async ({ page }) => {

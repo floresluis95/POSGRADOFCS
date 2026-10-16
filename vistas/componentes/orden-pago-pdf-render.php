@@ -51,7 +51,7 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
 
     $pdf->SetFont('helvetica', 'B', 8.5);
     $pdf->SetX($x_left);
-    $pdf->Cell($content_width, 4, 'COORDINACION DE POSGRADO-ODONTOLOGIA', 0, 1, 'C');
+    $pdf->Cell($content_width, 4, 'COORDINACIÓN DE POSGRADO-ODONTOLOGÍA', 0, 1, 'C');
 
     $pdf->SetFont('helvetica', '', 7);
     $pdf->SetX($x_left);
@@ -294,7 +294,26 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     $pdf->Ln(2);
     $W_FIRMA = 75;
     $x_firma = $x_left + ($content_width - $W_FIRMA) / 2;
-    $y_linea = $pdf->GetY() + 4;
+    // Orden generada por el estudiante: firma y sello impresos (ver orden-pago-pdf.php),
+    // firma de 2,8 cm de largo, en azul, cruzando la línea de firma sobre el nombre del
+    // coordinador, y sello de 4 x 4 cm a su derecha.
+    // Como en un documento sellado a mano, se montan sobre la parte baja de la tabla
+    // (son transparentes: el texto se sigue leyendo).
+    $conFirmaImpresa = !empty($firmaImagen) || !empty($selloImagen);
+    $y_linea = $pdf->GetY() + ($conFirmaImpresa ? 5 : 4);
+
+    $anchoFirma = 28;
+    $x_imagenFirma = $x_firma + ($W_FIRMA - $anchoFirma) / 2;
+    if (!empty($firmaImagen)) {
+        // Sobre la línea de firma, cruzándola (puede pasar sobre el nombre, como a mano)
+        $altoFirma = 30;
+        $pdf->Image('@' . $firmaImagen, $x_imagenFirma, $y_linea - $altoFirma + 6, $anchoFirma, $altoFirma, 'PNG', '', '', false, 300, '', false, false, 0, 'CB');
+    }
+    if (!empty($selloImagen)) {
+        $lado = 40;
+        // Lo más cerca de la firma sin tapar el N° de cuenta de depósito (termina a ~152 mm)
+        $pdf->Image('@' . $selloImagen, max($x_imagenFirma + $anchoFirma + 2, 154), $y_linea - $lado + 6, $lado, $lado, 'PNG', '', '', false, 300, '', false, false, 0, 'CM');
+    }
 
     $pdf->SetLineWidth(0.3);
     $pdf->SetDrawColor(0, 0, 0);
@@ -312,9 +331,21 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
         $pdf->SetFont('helvetica', '', 6);
         $pdf->SetTextColor(150, 150, 150);
         $pdf->SetXY($x_left, $y_linea + 1.5);
-        $pdf->Cell($content_width, 3, 'Ctrl. ' . $numeroOrden, 0, 0, 'R');
+        // Con sello impreso (a la derecha), el código va a la izquierda para que no lo tape
+        $pdf->Cell($content_width, 3, 'Ctrl. ' . $numeroOrden, 0, 0, $conFirmaImpresa ? 'L' : 'R');
         $pdf->SetTextColor(0, 0, 0);
         $pdf->SetY($y_linea + 5);
+    }
+
+    // Copia: dónde se entrega (recuadro al pie, en negrita para que no se pase por alto)
+    if ($esCopia) {
+        $pdf->Ln(1);
+        $pdf->SetX($x_left);
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->SetLineWidth(0.3);
+        $pdf->SetDrawColor(0, 0, 0);
+        $pdf->Cell($content_width, 5.5, 'IMPORTANTE: ESTA COPIA DEBE ENTREGARSE EN LA SECRETARÍA DE POSGRADO ODONTOLOGÍA', 1, 1, 'C');
+        $pdf->SetLineWidth(0.2);
     }
 
     return $pdf->GetY() - $yInicio;
@@ -362,13 +393,13 @@ function generarPdfOrdenPagoOficial(array $datos)
     $alturaBloque = dibujarOrdenPago($pdf, 8, false, $datos, $colorEtiqueta, $colorTexto, $colorTitulo, $colorTituloTexto);
 
     // Línea divisoria punteada entre original y copia
-    $y_divisoria = 8 + $alturaBloque + 6;
+    $y_divisoria = 8 + $alturaBloque + 4;
     $pdf->SetLineStyle(['width' => 0.2, 'dash' => 2, 'color' => [150, 150, 150]]);
     $pdf->Line(10, $y_divisoria, $pdf->GetPageWidth() - 10, $y_divisoria);
     $pdf->SetLineStyle(['dash' => 0]);
 
     // COPIA (mitad inferior de la hoja)
-    dibujarOrdenPago($pdf, $y_divisoria + 6, true, $datos, $colorEtiqueta, $colorTexto, $colorTitulo, $colorTituloTexto);
+    dibujarOrdenPago($pdf, $y_divisoria + 4, true, $datos, $colorEtiqueta, $colorTexto, $colorTitulo, $colorTituloTexto);
 
     // ========================================
     // SALIDA DEL PDF
@@ -393,7 +424,7 @@ function numeroALetrasOrdenPagoOficial($numero)
 
     $unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
     $decenas = ['', '', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
-    $especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+    $especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
     $centenas = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
 
     $convertirEntero = function ($num) use (&$convertirEntero, $unidades, $decenas, $especiales, $centenas) {
@@ -424,8 +455,9 @@ function numeroALetrasOrdenPagoOficial($numero)
         if ($num >= 10 && $num < 20) {
             $resultado .= $especiales[$num - 10] . ' ';
         } elseif ($num > 20 && $num < 30) {
-            // 21-29 se escriben en una palabra: VEINTIUNO, VEINTIDOS...
-            $resultado .= 'VEINTI' . $unidades[$num - 20] . ' ';
+            // 21-29 se escriben en una palabra: VEINTIUNO, VEINTIDÓS...
+            $veinti = ['', 'VEINTIUNO', 'VEINTIDÓS', 'VEINTITRÉS', 'VEINTICUATRO', 'VEINTICINCO', 'VEINTISÉIS', 'VEINTISIETE', 'VEINTIOCHO', 'VEINTINUEVE'];
+            $resultado .= $veinti[$num - 20] . ' ';
         } elseif ($num >= 20) {
             $resultado .= $decenas[(int)floor($num / 10)];
             if ($num % 10 > 0) $resultado .= ' Y ' . $unidades[$num % 10];

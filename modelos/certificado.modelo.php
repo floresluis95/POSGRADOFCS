@@ -8,31 +8,40 @@ require_once __DIR__ . '/configuracion.modelo.php'; // precios de los certificad
 
 class CertificadoModelo
 {
-    /* Inscripciones (estudiante+programa) cuyo CI empieza con lo digitado */
-    public static function BuscarInscripcionesPorCIModelo($ci)
+    /**
+     * Buscar inscripciones activas por C.I. (si son solo números, el C.I. empieza con
+     * ellos) o por nombre y/o apellidos (cada palabra debe aparecer en el nombre
+     * completo, en cualquier orden). Para el panel de resultados de los certificados.
+     * @param string $termino
+     * @return array
+     */
+    public static function BuscarInscripcionesModelo($termino)
     {
-        $stmt = Conexion::Conectar()->prepare("
+        $termino = trim(preg_replace('/\s+/u', ' ', (string)$termino));
+        $sql = "
             SELECT
-                ep.idInscripcion,
-                e.EstudianteID,
-                e.Ci,
-                e.Complemento,
-                e.Nombre,
-                e.Apaterno,
-                e.Amaterno,
-                p.ProgramaID,
-                p.NombrePrograma,
-                p.GradoAcademico,
-                p.Codigo
+                ep.idInscripcion, ep.FechaInscripcion,
+                e.EstudianteID, e.Ci, e.Complemento, e.Exp, e.Nombre, e.Apaterno, e.Amaterno,
+                p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Sede, p.Version
             FROM estudianteprograma ep
             INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
             INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
             WHERE ep.Estado = 'ACTIVO'
-              AND e.Ci LIKE :ci
-            ORDER BY e.Apaterno, e.Amaterno, e.Nombre, p.NombrePrograma
-        ");
-        $stmt->bindValue(':ci', $ci . '%', PDO::PARAM_STR);
-        $stmt->execute();
+        ";
+        $parametros = [];
+        if (preg_match('/^\d+[A-Za-z0-9-]*$/', $termino)) {
+            $sql .= " AND e.Ci LIKE :ci ";
+            $parametros[':ci'] = preg_replace('/-.*$/', '', $termino) . '%';
+        } else {
+            foreach (array_slice(explode(' ', $termino), 0, 5) as $i => $palabra) {
+                $sql .= " AND CONCAT_WS(' ', e.Nombre, e.Apaterno, e.Amaterno) LIKE :p$i ";
+                $parametros[":p$i"] = '%' . $palabra . '%';
+            }
+        }
+        $sql .= " ORDER BY e.Apaterno, e.Amaterno, e.Nombre, p.NombrePrograma LIMIT 30";
+
+        $stmt = Conexion::Conectar()->prepare($sql);
+        $stmt->execute($parametros);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -181,19 +190,132 @@ class CertificadoModelo
         ];
     }
 
+    /* Grados académicos de los programas (clave de la BD => nombre bien escrito) */
+    public static function GradosAcademicos()
+    {
+        return [
+            'DIPLOMADO' => 'Diplomado',
+            'ESPECIALIDAD' => 'Especialidad',
+            'MAESTRIA' => 'Maestría',
+            'DOCTORADO' => 'Doctorado',
+        ];
+    }
+
     /**
-     * Precio de cada tipo de certificado (Bs.), definido por el ADM en la pantalla
-     * Autoridades (configuracion, clave COSTO_CERT_<TIPO>). null si aún no se definió.
-     * @return array [TIPO => float|null]
+     * Grado académico tal como se imprime: en MAYÚSCULAS y con tilde (la BD guarda
+     * MAESTRIA sin tilde). "MAESTRIA" → "MAESTRÍA".
+     */
+    public static function GradoLegible($grado)
+    {
+        $grado = mb_strtoupper(trim((string)$grado), 'UTF-8');
+        $clave = self::ClaveGrado($grado);
+        return isset(self::GradosAcademicos()[$clave]) ? mb_strtoupper(self::GradosAcademicos()[$clave], 'UTF-8') : $grado;
+    }
+
+    /* "Maestría" / "MAESTRÍA" / "MAESTRIA" → "MAESTRIA" (clave de la BD) */
+    private static function ClaveGrado($grado)
+    {
+        return strtr(mb_strtoupper(trim((string)$grado), 'UTF-8'), ['Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U']);
+    }
+
+    /* Clave en configuracion del precio de un tipo de certificado para un grado */
+    private static function ClavePrecio($tipo, $grado)
+    {
+        return 'COSTO_CERT_' . $tipo . '_' . self::ClaveGrado($grado);
+    }
+
+    /**
+     * Precio de cada tipo de certificado por grado académico (Bs.), definido por el
+     * ADM en la pantalla Costos de certificados (configuracion, clave
+     * COSTO_CERT_<TIPO>_<GRADO>). null si aún no se definió.
+     * @return array [TIPO => [GRADO => float|null]]
      */
     public static function PreciosCertificados()
     {
         $precios = [];
         foreach (array_keys(self::TiposDocumento()) as $tipo) {
-            $valor = ConfiguracionModelo::Obtener('COSTO_CERT_' . $tipo);
-            $precios[$tipo] = ($valor === null || $valor === '') ? null : (float)$valor;
+            foreach (array_keys(self::GradosAcademicos()) as $grado) {
+                $valor = ConfiguracionModelo::Obtener(self::ClavePrecio($tipo, $grado));
+                $precios[$tipo][$grado] = ($valor === null || $valor === '') ? null : (float)$valor;
+            }
         }
         return $precios;
+    }
+
+    /**
+     * Guarda el precio de un certificado para un grado ('' = sin precio definido).
+     * @return bool|null null si no cambió
+     */
+    public static function GuardarPrecioCertificado($tipo, $grado, $valor, $responsable)
+    {
+        $clave = self::ClavePrecio($tipo, $grado);
+        $nuevo = $valor === '' ? '' : number_format((float)$valor, 2, '.', '');
+        if ($nuevo === (string)ConfiguracionModelo::Obtener($clave, '')) {
+            return null;
+        }
+        return ConfiguracionModelo::Guardar($clave, $nuevo, $responsable);
+    }
+
+    /* Último cambio de cualquiera de los precios (quién y cuándo), o null */
+    public static function UltimoCambioPrecios()
+    {
+        $ultima = null;
+        foreach (array_keys(self::TiposDocumento()) as $tipo) {
+            foreach (array_keys(self::GradosAcademicos()) as $grado) {
+                $d = ConfiguracionModelo::Detalle(self::ClavePrecio($tipo, $grado));
+                if ($d && (!$ultima || $d['FechaActualizacion'] > $ultima['FechaActualizacion'])) {
+                    $ultima = $d;
+                }
+            }
+        }
+        return $ultima;
+    }
+
+    /* El formulario pidió la vista previa (no se registra la emisión y lleva marca de agua) */
+    public static function EsVistaPrevia()
+    {
+        return !empty($_POST['vistaPrevia']);
+    }
+
+    /**
+     * Marca de agua "VISTA PREVIA" en todas las hojas, para que no se confunda con el
+     * documento emitido. En los formatos pre-impresos avisa además que el papel no se ve.
+     * @param TCPDF $pdf
+     * @param bool $preImpreso
+     */
+    public static function MarcarVistaPrevia($pdf, $preImpreso = false)
+    {
+        $total = $pdf->getNumPages();
+        for ($pagina = 1; $pagina <= $total; $pagina++) {
+            $pdf->setPage($pagina);
+            $ancho = $pdf->getPageWidth();
+            $alto = $pdf->getPageHeight();
+            $pdf->SetAutoPageBreak(false);
+            $pdf->SetTextColor(200, 205, 215);
+            $pdf->SetFont('helvetica', 'B', 60);
+            $pdf->StartTransform();
+            $pdf->Rotate(35, $ancho / 2, $alto / 2);
+            $pdf->Text($ancho / 2 - 75, $alto / 2 - 12, 'VISTA PREVIA');
+            $pdf->StopTransform();
+            if ($preImpreso) {
+                $pdf->SetFont('helvetica', '', 8);
+                $pdf->SetTextColor(120, 130, 145);
+                $pdf->Text(8, 4, 'Vista previa: solo los datos que se imprimen sobre el formato pre-impreso de Posgrado Central.');
+            }
+            $pdf->SetTextColor(0, 0, 0);
+        }
+    }
+
+    /**
+     * N° de voucher o recibo de un certificado: letras y números (y un guion entre la
+     * parte larga y la corta), en MAYÚSCULAS. '' si viene vacío.
+     * @return string|false false si tiene otros caracteres
+     */
+    public static function NormalizarVoucher($vaucher)
+    {
+        $vaucher = mb_strtoupper(trim((string)$vaucher), 'UTF-8');
+        if ($vaucher === '') return '';
+        return preg_match('/^[0-9A-ZÑ]+(-[0-9A-ZÑ]+)?$/u', $vaucher) ? $vaucher : false;
     }
 
     /**
@@ -228,8 +350,11 @@ class CertificadoModelo
      */
     public static function RegistrarEmisionModelo($tipoDocumento, $estudianteID, $programaID, $nombreEstudiante, $vaucher, $usuarioID, array $datos, $idDocumento = 0)
     {
-        unset($datos['idDocumento']);
+        unset($datos['idDocumento'], $datos['vistaPrevia']);
         $datos = array_map(function ($v) { return is_scalar($v) ? (string)$v : ''; }, $datos);
+        if (isset($datos['vaucher']) && self::NormalizarVoucher($datos['vaucher']) !== false) {
+            $datos['vaucher'] = self::NormalizarVoucher($datos['vaucher']);
+        }
         $json = json_encode($datos, JSON_UNESCAPED_UNICODE);
         // Monto pagado: viene en el mismo formulario del certificado (campo "monto")
         $monto = self::MontoDeDatos($datos);

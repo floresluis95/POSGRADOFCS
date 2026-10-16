@@ -185,6 +185,21 @@ class OrdenPagoModelos
             $costomatriculaFinal = $orden['CostoMatricula'];
             $montoPagadoFinal = $orden['MontoFinal'];
 
+            // Programa completo (al Contado sin matrícula): no hay matrícula; el voucher es el
+            // pago del programa y se guarda como su única cuota, ya pagada (más abajo)
+            $programaCompleto = (int)$orden['PagoCompleto'] === 1;
+            $voucherPrograma = null;
+            $fotoPrograma = null;
+            if ($programaCompleto) {
+                $voucherPrograma = $numeroVoucher;
+                $fotoPrograma = $fotoVoucher;
+                $numeroVoucher = 'SIN MATRÍCULA';
+                $fotoVoucher = null;
+                $costomatriculaFinal = 0;
+                $montoPagadoFinal = 0;
+                $orden['MontoDescuento'] = 0; // el de la orden es descuento del programa, no de matrícula
+            }
+
             $stmtInsert = $pdo->prepare(
                 "INSERT INTO estudianteprograma
                 (EstudianteID, ProgramaID, costomatricula, montoPagado, pagoCompleto,
@@ -281,6 +296,29 @@ class OrdenPagoModelos
                     $stmtGrupo->bindParam(":codigo", $planPago['CodigoGrupo'], PDO::PARAM_STR);
                     $stmtGrupo->execute();
                 }
+            }
+
+            // Programa completo: el voucher queda como la cuota 1 PAGADA (saldo del programa en
+            // 0) y la orden cubre todos los módulos (solo control, como las órdenes de cuota)
+            if ($programaCompleto) {
+                $stmtCuota = $pdo->prepare(
+                    "INSERT INTO pagomodulo
+                     (idinscripcion, IdOrdenPago, NumeroCuota, montocuota, fechapago, nvaucher, fmodulo, Estado)
+                     VALUES (:idinscripcion, :idOrdenPago, 1, :monto, :fechapago, :nvaucher, :fmodulo, 'PAGADO')"
+                );
+                $stmtCuota->bindValue(":idinscripcion", $idInscripcion, PDO::PARAM_INT);
+                $stmtCuota->bindValue(":idOrdenPago", $idOrdenPago, PDO::PARAM_INT);
+                $stmtCuota->bindValue(":monto", $orden['MontoFinal']);
+                $stmtCuota->bindValue(":fechapago", $fechaInscripcionFinal, PDO::PARAM_STR);
+                $stmtCuota->bindValue(":nvaucher", $voucherPrograma, PDO::PARAM_STR);
+                $stmtCuota->bindValue(":fmodulo", $fotoPrograma, PDO::PARAM_LOB);
+                $stmtCuota->execute();
+
+                $stmtModulos = $pdo->prepare(
+                    "INSERT IGNORE INTO ordenpagomodulo (IdOrdenPago, IdModulo)
+                     SELECT :idOrdenPago, Idmodulo FROM modulos WHERE ProgramaId = :programaID"
+                );
+                $stmtModulos->execute([':idOrdenPago' => $idOrdenPago, ':programaID' => $orden['ProgramaID']]);
             }
 
             $pdo->commit();
@@ -469,51 +507,53 @@ class OrdenPagoModelos
             $pdo = Conexion::Conectar();
             $pdo->beginTransaction();
 
-            // Verificar si el estudiante ya está inscrito ACTIVAMENTE en el mismo programa.
-            // Una orden de "Solo Matrícula" no tiene sentido si ya está inscrito (esa matrícula
-            // ya se pagó y validó). Una orden de "Programa Completo" sí es válida en ese caso:
-            // es justamente cómo se cobra el resto del programa tras la inscripción formal.
-            if ($datos['pagoCompleto'] != 1) {
-                $stmtCheck = $pdo->prepare(
-                    "SELECT idInscripcion FROM estudianteprograma
-                     WHERE EstudianteID = :estudianteID
-                     AND ProgramaID = :programaID
-                     AND Estado IN ('ACTIVO', 'CONFIRMADO')"
-                );
-                $stmtCheck->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
-                $stmtCheck->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
-                $stmtCheck->execute();
+            // Verificar si el estudiante ya está inscrito ACTIVAMENTE en el mismo programa: el
+            // pre-registro (de matrícula o, al Contado sin matrícula, del programa completo)
+            // es siempre para inscribirse.
+            $stmtCheck = $pdo->prepare(
+                "SELECT idInscripcion FROM estudianteprograma
+                 WHERE EstudianteID = :estudianteID
+                 AND ProgramaID = :programaID
+                 AND Estado IN ('ACTIVO', 'CONFIRMADO')"
+            );
+            $stmtCheck->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
+            $stmtCheck->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
+            $stmtCheck->execute();
 
-                if ($stmtCheck->fetch()) {
-                    $pdo->rollBack();
-                    return [
-                        'status' => 'duplicado',
-                        'mensaje' => 'El estudiante ya tiene una inscripción activa en este programa'
-                    ];
-                }
+            if ($stmtCheck->fetch()) {
+                $pdo->rollBack();
+                return [
+                    'status' => 'duplicado',
+                    'mensaje' => 'El estudiante ya tiene una inscripción activa en este programa'
+                ];
             }
 
-            // Un estudiante solo puede tener UN pre-registro pendiente del mismo tipo por programa (1:1).
-            // Verificamos contra las órdenes de pago (ordenpago) que sigan PENDIENTES.
+            // Un estudiante solo puede tener UN pre-registro pendiente por programa (1:1), sea
+            // de matrícula o del programa completo. Las cuotas y clínicas no cuentan.
             $stmtCheckPendiente = $pdo->prepare(
                 "SELECT IdOrdenPago FROM ordenpago
                  WHERE EstudianteID = :estudianteID
                  AND ProgramaID = :programaID
-                 AND PagoCompleto = :pagoCompleto
                  AND Estado = 'PENDIENTE'
-                 AND COALESCE(Observaciones, '') <> 'CLINICA'"
+                 AND COALESCE(Observaciones, '') NOT IN ('CLINICA', 'CUOTA PROGRAMA')"
             );
             $stmtCheckPendiente->bindParam(":estudianteID", $datos['EstudianteID'], PDO::PARAM_INT);
             $stmtCheckPendiente->bindParam(":programaID", $datos['ProgramaID'], PDO::PARAM_INT);
-            $stmtCheckPendiente->bindParam(":pagoCompleto", $datos['pagoCompleto'], PDO::PARAM_INT);
             $stmtCheckPendiente->execute();
 
             if ($stmtCheckPendiente->fetch()) {
                 $pdo->rollBack();
                 return [
                     'status' => 'duplicado',
-                    'mensaje' => 'El estudiante ya tiene un pre-registro pendiente de este tipo para este programa'
+                    'mensaje' => 'El estudiante ya tiene un pre-registro pendiente para este programa'
                 ];
+            }
+
+            // Programa completo (al Contado sin matrícula): solo en el plan al Contado
+            $pagoCompleto = (int)$datos['pagoCompleto'] === 1;
+            if ($pagoCompleto && ($datos['PlanPropuestoTipo'] ?? '') !== 'CONTADO') {
+                $pdo->rollBack();
+                return ['status' => 'error', 'mensaje' => 'El pago del programa completo en una sola orden es solo del Plan al Contado'];
             }
 
             // Obtener el costo de matrícula del programa
@@ -565,13 +605,16 @@ class OrdenPagoModelos
             // en cuyo caso se espera un monto de Bs. 0 en vez de matrícula con descuento.
             $matriculaExonerada = !empty($datos['MatriculaExonerada']);
 
-            $errorMonto = self::ValidarMontoPreregistro(
-                $pdo, $datos['EstudianteID'], $costoMatriculaPrograma, $datos['pagoCompleto'] == 1,
-                floatval($datos['montoPagado']), $porcentajeDescuento, $matriculaExonerada
-            );
-            if ($errorMonto !== null) {
-                $pdo->rollBack();
-                return ['status' => 'error', 'mensaje' => $errorMonto];
+            // Programa completo: el monto lo calcula el servidor más abajo (total del programa)
+            if (!$pagoCompleto) {
+                $errorMonto = self::ValidarMontoPreregistro(
+                    $pdo, $datos['EstudianteID'], $costoMatriculaPrograma, false,
+                    floatval($datos['montoPagado']), $porcentajeDescuento, $matriculaExonerada
+                );
+                if ($errorMonto !== null) {
+                    $pdo->rollBack();
+                    return ['status' => 'error', 'mensaje' => $errorMonto];
+                }
             }
 
             // Generar número de orden único ANTES de insertar
@@ -661,6 +704,18 @@ class OrdenPagoModelos
                 } else {
                     $planCodigoGrupo = $codigoPedido;
                 }
+            }
+
+            // Programa completo (al Contado sin matrícula): la orden cobra el total del programa
+            // (con su descuento o aumento) en una sola cuota; no hay matrícula ni % de matrícula
+            if ($pagoCompleto) {
+                $planNumeroCuotas = 1;
+                $planMontoCuota = $totalPrograma;
+                $montoFinal = $totalPrograma;
+                $montoDescuento = max(0, round($costoPrograma - $totalPrograma, 2));
+                $montoTotal = $montoFinal + $montoDescuento;
+                $costoMatricula = 0;
+                $porcentajeDescuento = 0;
             }
 
             // INSERTAR SOLO EN ORDENPAGO - NO tocar estudianteprograma
@@ -957,7 +1012,9 @@ class OrdenPagoModelos
             }
 
             $pagoCompleto = (int)$orden['PagoCompleto'] === 1;
-            $montoFinal = floatval($datos['montoPagado']);
+            // Programa completo: el monto es el total del plan pactado; para cambiarlo se
+            // anula el pre-registro y se rehace (aquí solo cambia la fecha)
+            $montoFinal = $pagoCompleto ? floatval($orden['MontoFinal']) : floatval($datos['montoPagado']);
             $montoDescuento = floatval($orden['MontoDescuento']);
             $porcentajeDescuento = floatval($orden['PorcentajeDescuento']);
 

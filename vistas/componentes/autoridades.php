@@ -139,29 +139,52 @@
           </div>
         </div>
 
-        <!-- Costos de los certificados (configuracion COSTO_CERT_<TIPO>): llegan prellenados
-             como "Monto pagado" al generar cada certificado y se ven en Registro de documentos -->
+        <!-- Firma del coordinador y sello (imágenes): solo en las órdenes que genera el estudiante -->
         <div class="card shadow-sm mt-4">
           <div class="card-header bg-gradient-primary">
             <h4 class="card-title text-white mb-0">
-              <i class="fas fa-file-invoice-dollar"></i> Costos de certificados
+              <i class="fas fa-signature"></i> Firma y sello para órdenes de pago
             </h4>
           </div>
           <div class="card-body">
             <p class="text-muted" style="font-size:13px;">
-              Precio de cada certificado en Bs. Al generarlo, el campo "Monto pagado" ya viene con este valor y
-              se puede cambiar si el estudiante pagó otro monto. Deje vacío si aún no tiene precio definido.
+              Se imprimen solo en las órdenes de pago de <strong>matrícula y cuotas que el estudiante genera desde el sistema</strong>.
+              Las que genera el personal se firman a mano. Cuando cambie el coordinador, suba aquí su firma.
             </p>
-            <form id="formCostosCertificados" autocomplete="off">
-              <div class="row" id="camposCostosCertificados"></div>
-              <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:8px;">
-                <small class="text-muted" id="actualizadoCostos"></small>
-                <button type="submit" class="btn btn-success" id="btnGuardarCostos">
-                  <i class="fas fa-save"></i> Guardar costos
-                </button>
+            <div class="row" id="imagenesFirma">
+              <?php foreach (['FIRMA' => 'Firma del coordinador', 'SELLO' => 'Sello de Posgrado'] as $claveImagen => $nombreImagen) { ?>
+              <div class="col-md-6 mb-3">
+                <div class="firma-caja" data-clave="<?php echo $claveImagen; ?>">
+                  <div class="firma-titulo"><?php echo $nombreImagen; ?></div>
+                  <div class="firma-vista" id="vista_<?php echo $claveImagen; ?>"><span class="text-muted small">Sin imagen</span></div>
+                  <small class="text-muted d-block mb-2" id="actualizado_<?php echo $claveImagen; ?>"></small>
+                  <div class="d-flex flex-wrap" style="gap:8px;">
+                    <label class="btn btn-sm btn-primary mb-0">
+                      <i class="fas fa-upload"></i> Subir imagen
+                      <input type="file" accept="image/png,image/jpeg" class="d-none input-imagen-firma" data-clave="<?php echo $claveImagen; ?>">
+                    </label>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-quitar-firma" data-clave="<?php echo $claveImagen; ?>" style="display:none;">
+                      <i class="fas fa-trash"></i> Quitar
+                    </button>
+                  </div>
+                </div>
               </div>
-            </form>
+              <?php } ?>
+            </div>
+            <small class="text-muted">PNG o JPG. Al subir la firma, su fondo blanco se vuelve transparente.</small>
           </div>
+        </div>
+        <style>
+          .firma-caja { border: 1px solid #e3e7ef; border-radius: 10px; padding: 14px; height: 100%; }
+          .firma-titulo { font-weight: 700; color: #1e3c72; font-size: 13px; margin-bottom: 8px; }
+          .firma-vista { height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px;
+            border-radius: 8px; background: repeating-conic-gradient(#f1f3f7 0% 25%, #fff 0% 50%) 50% / 16px 16px; }
+          .firma-vista img { max-height: 120px; max-width: 100%; }
+        </style>
+
+        <!-- Los costos de los certificados (por grado académico) están en su propia pantalla -->
+        <div class="text-right mt-3">
+          <a href="costoscertificados" class="btn btn-sm btn-outline-primary"><i class="fas fa-file-invoice-dollar"></i> Costos de certificados</a>
         </div>
       </section>
 </div>
@@ -276,61 +299,65 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ---- Costos de certificados ----
-    function cargarCostos() {
-        $.post('ajax/autoridad.ajax.php', { accion: 'obtenerCostosCertificados' }, function (resp) {
+    // ---- Firma y sello para las órdenes que genera el estudiante ----
+    function cargarImagenesFirma() {
+        $.post('ajax/autoridad.ajax.php', { accion: 'estadoImagenesFirma' }, function (resp) {
             if (!resp || !resp.success) return;
-            var $campos = $('#camposCostosCertificados').empty();
-            Object.keys(resp.tipos).forEach(function (tipo) {
-                var precio = resp.precios[tipo];
-                var $col = $('<div class="col-md-4 col-sm-6 form-group"></div>');
-                $col.append($('<label></label>').attr('for', 'costo_' + tipo).append($('<strong></strong>').text(resp.tipos[tipo])));
-                $col.append(
-                    $('<div class="input-group"></div>')
-                        .append('<div class="input-group-prepend"><span class="input-group-text">Bs.</span></div>')
-                        .append($('<input type="number" class="form-control costo-certificado" min="0" step="0.01" placeholder="Sin definir">')
-                            .attr('id', 'costo_' + tipo).attr('data-tipo', tipo)
-                            .val(precio !== null ? Number(precio).toFixed(2) : ''))
-                );
-                $campos.append($col);
+            Object.keys(resp.imagenes).forEach(function (clave) {
+                var img = resp.imagenes[clave];
+                $('#vista_' + clave).html(img.imagen
+                    ? $('<img>').attr({ src: img.imagen, alt: img.nombre })
+                    : '<span class="text-muted small">Sin imagen</span>');
+                $('.btn-quitar-firma[data-clave="' + clave + '"]').toggle(!!img.imagen);
+                var d = img.actualizado;
+                $('#actualizado_' + clave).text(d && d.ResponsableActualizacion
+                    ? 'Actualizada: ' + d.FechaActualizacion + ' por ' + d.ResponsableActualizacion : '');
             });
-            var d = resp.ultimaActualizacion;
-            $('#actualizadoCostos').text(d && d.ResponsableActualizacion
-                ? 'Último cambio: ' + d.FechaActualizacion + ' por ' + d.ResponsableActualizacion : '');
         }, 'json');
     }
 
-    $('#formCostosCertificados').on('submit', function (e) {
-        e.preventDefault();
-        var costos = {};
-        var invalido = false;
-        $('.costo-certificado').each(function () {
-            var valor = $(this).val().trim();
-            if (valor !== '' && (isNaN(valor) || parseFloat(valor) < 0)) invalido = true;
-            costos[$(this).data('tipo')] = valor;
-        });
-        if (invalido) {
-            Swal.fire('Atención', 'Los costos deben ser montos en Bs. iguales o mayores a 0', 'warning');
-            return;
-        }
-        var $btn = $('#btnGuardarCostos').prop('disabled', true);
-        $.post('ajax/autoridad.ajax.php', { accion: 'guardarCostosCertificados', costos: costos }, function (resp) {
-            if (resp && resp.success) {
-                Swal.fire({ type: 'success', title: resp.mensaje, timer: 1800, showConfirmButton: false });
-                cargarCostos();
-            } else {
-                Swal.fire('Atención', (resp && resp.mensaje) || 'No se pudo guardar', 'warning');
-            }
-        }, 'json').fail(function () {
-            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
-        }).always(function () {
-            $btn.prop('disabled', false);
+    $(document).on('change', '.input-imagen-firma', function () {
+        var archivo = this.files[0];
+        if (!archivo) return;
+        var datos = new FormData();
+        datos.append('accion', 'subirImagenFirma');
+        datos.append('clave', $(this).data('clave'));
+        datos.append('imagen', archivo);
+        var input = this;
+        $.ajax({ url: 'ajax/autoridad.ajax.php', type: 'POST', data: datos, processData: false, contentType: false, dataType: 'json' })
+            .done(function (resp) {
+                if (resp && resp.success) {
+                    Swal.fire({ type: 'success', title: resp.mensaje, timer: 1500, showConfirmButton: false });
+                    cargarImagenesFirma();
+                } else {
+                    Swal.fire('Atención', (resp && resp.mensaje) || 'No se pudo guardar la imagen', 'warning');
+                }
+            })
+            .fail(function () { Swal.fire('Error', 'No se pudo conectar con el servidor', 'error'); })
+            .always(function () { input.value = ''; });
+    });
+
+    $(document).on('click', '.btn-quitar-firma', function () {
+        var clave = $(this).data('clave');
+        Swal.fire({
+            type: 'warning',
+            title: '¿Quitar la imagen?',
+            text: 'Las órdenes que genere el estudiante saldrán sin ella.',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, quitar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        }).then(function (r) {
+            if (!r.value) return;
+            $.post('ajax/autoridad.ajax.php', { accion: 'quitarImagenFirma', clave: clave }, function () {
+                cargarImagenesFirma();
+            }, 'json');
         });
     });
 
     cargar();
     cargarParametros();
-    cargarCostos();
+    cargarImagenesFirma();
 });
 </script>
 

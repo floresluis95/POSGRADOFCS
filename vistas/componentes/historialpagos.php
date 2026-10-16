@@ -647,6 +647,10 @@ function iniciarHistorialPagos() {
                     '<td>' + escaparAtributo(cl.NumeroVoucher || '-') + '</td>' +
                     '<td class="text-center"><span class="hp-chip ' + (chipEstadoCuota[pagada ? 'PAGADO' : cl.Estado] || '') + '">' + (pagada ? 'PAGADO' : (cl.Estado === 'EXTRAVIADO' ? 'VOUCHER POR VALIDAR' : escaparAtributo(cl.Estado))) + '</span></td>' +
                     '<td class="text-center">' + foto + '</td>' +
+                    '<td class="text-center">' + (pagada && cl.IdPagoClinica
+                        ? botonEditar('clinica', cl.IdPagoClinica, cl.FechaPago, cl.NumeroVoucher, cl.MontoTotal,
+                            'Editar clínica ' + (cl.NumeroOrden || ''), cl.FechaGeneracion)
+                        : '<span class="text-muted small">Sin validar</span>') + '</td>' +
                 '</tr>';
             });
             seccionClinicas =
@@ -664,6 +668,7 @@ function iniciarHistorialPagos() {
                                 '<th>Voucher</th>' +
                                 '<th class="text-center">Estado</th>' +
                                 '<th class="text-center">Foto</th>' +
+                                '<th class="text-center" style="width:90px;">Acción</th>' +
                             '</tr></thead>' +
                             '<tbody>' + filasClinicas + '</tbody>' +
                         '</table>' +
@@ -996,7 +1001,7 @@ function iniciarHistorialPagos() {
             fecha: String($btn.data('fecha') || ''),
             monto: parseFloat($btn.data('monto')) || 0
         });
-        $('#editPagoFoto').val('');
+        $('#editPagoFoto').val('').attr('accept', $btn.data('tipo') === 'clinica' ? 'image/*,application/pdf' : 'image/*');
         $('#editPagoFotoLabel').text('Conservar la foto actual');
 
         $('#modalEditarPagoHistorial').modal('show');
@@ -1069,11 +1074,16 @@ function iniciarHistorialPagos() {
     function enviarEdicionPago(form) {
         const tipo = $('#editPagoTipo').val();
         const id = $('#editPagoId').val();
-        const accion = tipo === 'matricula' ? 'actualizarMatricula' : 'actualizarCuota';
+        const acciones = {
+            matricula: ['actualizarMatricula', 'idInscripcion'],
+            cuota: ['actualizarCuota', 'idPagoModulo'],
+            clinica: ['actualizarClinica', 'idPagoClinica']
+        };
+        const accion = acciones[tipo] || acciones.cuota;
 
         const formData = new FormData();
-        formData.append('accion', accion);
-        formData.append(tipo === 'matricula' ? 'idInscripcion' : 'idPagoModulo', id);
+        formData.append('accion', accion[0]);
+        formData.append(accion[1], id);
         formData.append('numeroVoucher', $('#editPagoVoucher').val().trim());
         formData.append('fechaPago', $('#editPagoFecha').val());
         formData.append('monto', $('#editPagoMonto').val());

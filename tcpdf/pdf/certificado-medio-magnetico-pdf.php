@@ -31,9 +31,13 @@ $programaID = intval($_POST['programaID'] ?? 0);
 $tratamiento = $_POST['tratamiento'] ?? 'El Sr.';
 $nombre = $_POST['nombre'] ?? '';
 $curso = $_POST['curso'] ?? '';
-$tipoTrabajo = $_POST['tipotrabajo'] ?? '';
+// Con tildes aunque venga de un registro antiguo ("MEDIO FISICO ... MONOGRAFICO")
+$tipoTrabajo = str_replace(['FISICO', 'MONOGRAFICO'], ['FÍSICO', 'MONOGRÁFICO'], mb_strtoupper($_POST['tipotrabajo'] ?? '', 'UTF-8'));
 $titulo = $_POST['titulo'] ?? '';
-$vaucher = $_POST['vaucher'] ?? '';
+$vaucher = CertificadoModelo::NormalizarVoucher($_POST['vaucher'] ?? '');
+if ($vaucher === false) {
+    die('Error: El N° de voucher solo puede tener letras y números (y un guion entre las dos partes)');
+}
 $fecha = $_POST['fecha'] ?? '';
 $coordinador = $_POST['coordinador'] ?? '';
 $director = $_POST['director'] ?? '';
@@ -44,10 +48,13 @@ if (empty($nombre) || empty($titulo) || empty($vaucher) || empty($fecha)) {
 
 // Se guardan los datos del formulario para poder reimprimirlo (y corregirlo) desde
 // Registro de documentos; con idDocumento es una reimpresión de ese registro.
-CertificadoModelo::RegistrarEmisionModelo(
-    'MEDIO_MAGNETICO', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
-    $_POST, intval($_POST['idDocumento'] ?? 0)
-);
+// En la vista previa (antes de generar) no se registra nada.
+if (!CertificadoModelo::EsVistaPrevia()) {
+    CertificadoModelo::RegistrarEmisionModelo(
+        'MEDIO_MAGNETICO', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
+        $_POST, intval($_POST['idDocumento'] ?? 0)
+    );
+}
 
 $mesesEspanolMinuscula = [
     1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
@@ -102,10 +109,10 @@ $pdf->SetFont('helvetica', 'B', 18);
 $pdf->Cell(0, 7.2, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
 $pdf->Cell(0, 7.2, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C');
 $pdf->SetFont('helvetica', 'B', 14);
-$pdf->Cell(0, 5.8, 'COORDINACION DE POSGRADO - ODONTOLOGIA', 0, 1, 'C');
+$pdf->Cell(0, 5.8, 'COORDINACIÓN DE POSGRADO - ODONTOLOGÍA', 0, 1, 'C');
 $pdf->Ln(2.5);
 $pdf->SetFont('helvetica', '', 8);
-$pdf->Cell(0, 3.6, 'C. Presidente Montes entre C/ Murguia y Aldana Edificio de Posgrado UTO 2do Piso, Teléfonos: 5237317- Fax 5247110', 0, 1, 'C');
+$pdf->Cell(0, 3.6, 'C. Presidente Montes entre C/ Murguía y Aldana Edificio de Posgrado UTO 2do Piso, Teléfonos: 5237317- Fax 5247110', 0, 1, 'C');
 $pdf->Cell(0, 3.6, 'Oruro – Bolivia', 0, 1, 'C');
 $pdf->setFontStretching(100);
 
@@ -185,6 +192,10 @@ firmaMedioMagnetico($pdf, 111, $yFirmas, 80, $director, ['DIRECTOR POSGRADO', 'U
 $pdf->SetY($yFirmas + 24);
 $pdf->SetFont('times', '', 12);
 $pdf->Cell(0, 6, 'N° ' . mb_strtoupper($vaucher, 'UTF-8'), 0, 1, 'L');
+
+if (CertificadoModelo::EsVistaPrevia()) {
+    CertificadoModelo::MarcarVistaPrevia($pdf, false);
+}
 
 if (ob_get_contents()) {
     ob_end_clean();

@@ -31,8 +31,11 @@ $estudianteID = intval($_POST['estudianteID'] ?? 0);
 $programaID = intval($_POST['programaID'] ?? 0);
 $nombre = $_POST['nombre'] ?? '';
 $programa = $_POST['programa'] ?? '';
-$nivel = $_POST['nivel'] ?? '';
-$vaucher = $_POST['vaucher'] ?? '';
+$nivel = CertificadoModelo::GradoLegible($_POST['nivel'] ?? ''); // MAESTRIA → MAESTRÍA
+$vaucher = CertificadoModelo::NormalizarVoucher($_POST['vaucher'] ?? '');
+if ($vaucher === false) {
+    die('Error: El N° de voucher solo puede tener letras y números (y un guion entre las dos partes)');
+}
 $fecha = $_POST['fecha'] ?? '';
 
 if (!$estudianteID || !$programaID || empty($nombre) || empty($fecha)) {
@@ -48,10 +51,13 @@ if (empty($modulos)) {
 
 // Se guardan los datos del formulario para poder reimprimirlo (y corregirlo) desde
 // Registro de documentos; con idDocumento es una reimpresión de ese registro.
-CertificadoModelo::RegistrarEmisionModelo(
-    'HISTORIAL_ACADEMICO', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
-    $_POST, intval($_POST['idDocumento'] ?? 0)
-);
+// En la vista previa (antes de generar) no se registra nada.
+if (!CertificadoModelo::EsVistaPrevia()) {
+    CertificadoModelo::RegistrarEmisionModelo(
+        'HISTORIAL_ACADEMICO', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
+        $_POST, intval($_POST['idDocumento'] ?? 0)
+    );
+}
 
 /**
  * "MODULO I" -> "MOD.I" (así se abrevia en el formato pre-impreso)
@@ -223,6 +229,10 @@ foreach ($modulosPorHoja as $chunk) {
             $y += $altos[$k];
         }
     }
+}
+
+if (CertificadoModelo::EsVistaPrevia()) {
+    CertificadoModelo::MarcarVistaPrevia($pdf, true);
 }
 
 if (ob_get_contents()) {

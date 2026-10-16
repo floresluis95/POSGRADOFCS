@@ -152,7 +152,7 @@ $sedes = ProgramasModelos::ListarSedesModelo();
             <!-- Tabla de módulos del programa -->
             <div class="md-tabla-wrap">
                 <div class="table-responsive">
-                    <table class="table md-tabla mb-0" id="tablaModulos" style="width: 100%;">
+                    <table class="table md-tabla mb-0" id="tablaModulos" data-exportar="Módulos" style="width: 100%;">
                         <thead>
                             <tr>
                                 <th class="md-num">#</th>

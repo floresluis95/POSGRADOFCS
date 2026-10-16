@@ -230,7 +230,7 @@ $(document).ready(function() {
                             '<input type="date" class="form-control" id="opFechaVencimiento" value="' + fechaPorDefectoVencimiento() + '">' +
                         '</div>' +
                         '<div class="col-md-6 form-group">' +
-                            '<label class="gp-label" for="opFirma">Firma</label>' +
+                            '<label class="gp-label" for="opFirma">Responsable de la firma <span class="gp-req">*</span></label>' +
                             '<div class="input-group">' +
                                 '<select class="form-control" id="opFirma">' +
                                     '<option value="">Cargando...</option>' +
@@ -424,6 +424,10 @@ $(document).ready(function() {
     // Agregar un nuevo nombre al catálogo de firmantes: se abre una caja en línea
     // (no un popup de SweetAlert) para no chocar con el foco del modal de Bootstrap
     // ya abierto (ver comentario más arriba, junto al HTML de #opNuevoFirmanteBox).
+    $(document).on('change', '#opFirma', function() {
+        $(this).toggleClass('is-invalid', !$(this).val());
+    });
+
     $(document).on('click', '#opBtnAgregarFirmante', function() {
         $('#opNuevoFirmanteBox').show();
         $('#opNuevoFirmanteNombre').val('').focus();
@@ -504,6 +508,30 @@ $(document).ready(function() {
             return;
         }
 
+        // Sin responsable de la firma se pregunta antes: elegirlo o generar sin nombre
+        // (la línea de firma sale con "FIRMA COORDINADOR(A) / RESPONSABLE")
+        if (!firma && !$(this).data('sinFirmaAceptada')) {
+            const $boton = $(this);
+            $('#opFirma').addClass('is-invalid');
+            Swal.fire({
+                type: 'warning', // SweetAlert2 v8
+                title: 'Seleccione el responsable de la firma',
+                text: 'La orden no tiene un nombre para la línea de firma.',
+                showCancelButton: true,
+                confirmButtonText: 'Seleccionar responsable',
+                cancelButtonText: 'Generar de todas formas',
+                reverseButtons: true
+            }).then(function(result) {
+                if (result.value) {
+                    $('#opFirma').trigger('focus');
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    $boton.data('sinFirmaAceptada', true).trigger('click');
+                }
+            });
+            return;
+        }
+        $(this).removeData('sinFirmaAceptada');
+
         // Antes de generar: resumen para verificar monto, N° de cuota, programa y cuenta
         const esc = function(t) { return $('<div>').text(t == null ? '' : String(t)).html(); };
         const cuentaTexto = programaCuentaID ? $('#opCuentaPago option:selected').text().trim() : '';
@@ -522,6 +550,7 @@ $(document).ready(function() {
                 ? esc(cuentaTexto)
                 : '<span style="color:#b7791f;">Sin cuenta de cuotas elegida' +
                   (opContexto.numeroTramite ? ': se imprimirá la cuenta auxiliar ' + esc(opContexto.numeroTramite) : '') + '</span>') +
+            fila('Firma', firma ? esc(firma) : '<span style="color:#b7791f;">Sin responsable de la firma</span>') +
             '</table>';
 
         Swal.fire({

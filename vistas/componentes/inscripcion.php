@@ -732,9 +732,11 @@ kt-aside--fixed kt-page--loading">
                   const planPorcentaje = parseFloat(p.PlanPropuestoPorcentaje) || 0;
                   const nombresPlan = { REGULAR: 'Regular', CONTADO: 'al Contado', GRUPAL: 'Grupal' };
 
+                  const programaCompleto = parseInt(p.PagoCompleto, 10) === 1;
                   $('#planPropuestaInfo').html(
                       '<span class="vv-chip" title="Plan elegido en Pre-Registro; queda definitivo al inscribir">' +
                       'Plan ' + nombresPlan[planTipo] +
+                      (programaCompleto ? ' &middot; sin matrícula: programa completo en esta orden' : '') +
                       (planPorcentaje > 0 ? ' &middot; ' + parseFloat(planPorcentaje.toFixed(2)) + '% programa' : '') +
                       (planPorcentaje < 0 ? ' &middot; aumento de ' + parseFloat((-planPorcentaje).toFixed(2)) + '% programa' : '') +
                       (parseInt(p.PlanPropuestoNumeroCuotas, 10) > 0

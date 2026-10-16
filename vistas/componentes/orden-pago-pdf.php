@@ -24,6 +24,7 @@ if ($idOrdenPago === 0) {
 require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
 require_once __DIR__ . '/orden-pago-pdf-render.php';
 require_once __DIR__ . '/../../modelos/modulopagos_core.php'; // N° de cuota de la orden
+require_once __DIR__ . '/../../modelos/texto-orden-pago.php'; // texto del programa (matrícula)
 
 try {
     $pdo = Conexion::Conectar();
@@ -33,7 +34,7 @@ try {
             e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Complemento, e.Exp, e.Correo, e.Celular,
             op.IdOrdenPago, op.NumeroOrden, op.ProgramaID, op.idinscripcion, op.FechaGeneracion,
             op.MontoTotal, op.MontoFinal, op.MontoDescuento, op.PorcentajeDescuento, op.PagoCompleto,
-            op.Observaciones, op.NombreFactura, op.NitCiFactura, op.Firma, op.ProgramaCuentaID,
+            op.Observaciones, op.NombreFactura, op.NitCiFactura, op.Firma, op.ProgramaCuentaID, op.GeneradaPorEstudiante,
             p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico, p.Version, p.NumeroTramite
         FROM ordenpago op
         INNER JOIN estudiante e ON op.EstudianteID = e.EstudianteID
@@ -128,14 +129,7 @@ try {
         $programaTexto = $orden['NombrePrograma'] . "\n" . etiquetaCuotaOrdenPago($numeroCuota, $totalCuotas);
         $version = !empty($orden['Version']) ? $orden['Version'] : 'V-1';
     } else {
-        // No se imprime la versión "V-1": es la versión base/por defecto y no aporta
-        // información distinta al nombre del programa. Solo se muestran versiones
-        // reales (V-2, V-3, etc.).
-        $mostrarVersion = !empty($orden['Version']) && strtoupper($orden['Version']) !== 'V-1';
-        $programaTexto = 'PROGRAMA DE POSGRADO EN LA ' . mb_strtoupper($orden['GradoAcademico'], 'UTF-8') .
-            ' EN ' . mb_strtoupper($orden['NombrePrograma'], 'UTF-8') .
-            ($mostrarVersion ? ' "' . mb_strtoupper($orden['Version'], 'UTF-8') . '"' : '') .
-            ' ' . ((int)$orden['PagoCompleto'] === 1 ? 'PROGRAMA COMPLETO' : 'MATRICULA');
+        $programaTexto = textoProgramaOrdenPago($orden['GradoAcademico'], $orden['NombrePrograma'], $orden['Version'], (int)$orden['PagoCompleto'] === 1);
         $version = $orden['Version'] ?: '';
     }
 
@@ -161,6 +155,14 @@ try {
         'firma' => $orden['Firma'],
         'numeroOrden' => $orden['NumeroOrden'],
     ];
+
+    // Órdenes de matrícula y cuota que generó el propio estudiante: llevan impresas la
+    // firma del coordinador y el sello (Configuración). Las del personal se firman a mano.
+    if ((int)$orden['GeneradaPorEstudiante'] === 1 && ($orden['Observaciones'] ?? '') !== 'CLINICA') {
+        require_once __DIR__ . '/../../modelos/imagenfirma.modelo.php';
+        $datos['firmaImagen'] = ImagenFirmaModelo::Obtener('FIRMA');
+        $datos['selloImagen'] = ImagenFirmaModelo::Obtener('SELLO');
+    }
 
     generarPdfOrdenPagoOficial($datos);
 } catch (PDOException $e) {

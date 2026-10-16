@@ -38,7 +38,7 @@
                             <div class="kt-container">
                                 <div class="kt-subheader__main">
                                     <h2 class="kt-subheader__title">
-                                        HISTORIAL DE MÓDULOS
+                                        HISTORIAL DE PAGOS
                                     </h2>
                                     <span class="kt-subheader__separator kt-hidden"></span>
                                     <div class="kt-subheader__breadcrumbs">
@@ -57,114 +57,79 @@
                             </div>
                         </div>
                         <div class="kt-container kt-grid__item kt-grid__item--fluid">
-                            <div class="kt-portlet">
-                                <div class="kt-portlet__head">
-                                    <div class="kt-portlet__head-label">
-                                        <h3 class="kt-portlet__head-title">
-                                            Estado de pagos del programa
-                                        </h3>
+                            <div class="hp-card">
+                                <div class="hp-cab">
+                                    <div>
+                                        <h3><i class="fas fa-wallet"></i> Estado de cuenta</h3>
+                                        <p>Lo pagado y el saldo de su programa, con el comprobante de cada pago.</p>
                                     </div>
+                                    <a href="#" target="_blank" class="btn hp-btn-recibo" id="btn_recibo_pagos" style="display:none;">
+                                        <i class="fa fa-print"></i> Imprimir recibo de pagos
+                                    </a>
                                 </div>
-                                <div class="kt-portlet__body hm-cuerpo">
 
+                                <div class="hp-cuerpo">
                                     <!-- Selector de programa (si tiene uno solo, se elige solo) -->
-                                    <div class="form-group mb-4">
-                                        <label for="select_programa_modulos" class="hm-etiqueta">Programa</label>
-                                        <select class="form-control select2-uniforme" id="select_programa_modulos" name="select_programa_modulos" disabled>
+                                    <div class="hp-programa" id="grupo_programa">
+                                        <label for="select_programa_modulos">Programa</label>
+                                        <select class="form-control" id="select_programa_modulos" name="select_programa_modulos" disabled>
                                             <option value="">Cargando programas...</option>
                                         </select>
                                     </div>
 
-                                    <div id="aviso_elegir_programa" class="hm-vacio" style="display: none;">
+                                    <div id="aviso_elegir_programa" class="hp-vacio" style="display: none;">
                                         <i class="flaticon2-layers"></i>
-                                        <p>Elija un programa para ver sus pagos.</p>
+                                        <p>Elija un programa para ver su estado de cuenta.</p>
                                     </div>
 
-                                    <!-- Área de resultados -->
                                     <div id="area_resultados_modulos" style="display: none;">
 
-                                        <!-- Resumen de pagos -->
-                                        <div class="hm-resumen mb-4" id="resumen_pagos_container">
-                                            <div class="row">
-                                                <div class="col-4 hm-dato">
-                                                    <span class="hm-dato-titulo">Costo total</span>
-                                                    <strong id="total_programa">Bs. 0,00</strong>
-                                                </div>
-                                                <div class="col-4 hm-dato">
-                                                    <span class="hm-dato-titulo">Pagado</span>
-                                                    <strong class="text-success" id="total_pagado">Bs. 0,00</strong>
-                                                    <small class="text-muted"><span id="cantidad_pagados">0</span> cuota(s)</small>
-                                                </div>
-                                                <div class="col-4 hm-dato">
-                                                    <span class="hm-dato-titulo">Saldo</span>
-                                                    <strong class="text-danger" id="total_pendiente">Bs. 0,00</strong>
-                                                </div>
+                                        <!-- Resumen: total, pagado y saldo con su avance -->
+                                        <div class="hp-resumen">
+                                            <div class="hp-dato">
+                                                <span>Total del programa</span>
+                                                <strong id="total_programa">Bs. 0,00</strong>
+                                                <small id="plan_texto"></small>
                                             </div>
-                                            <div class="progress hm-barra" title="Avance del pago">
+                                            <div class="hp-dato is-pagado">
+                                                <span>Pagado</span>
+                                                <strong id="total_pagado">Bs. 0,00</strong>
+                                                <small><span id="cantidad_pagados">0</span> cuota(s)</small>
+                                            </div>
+                                            <div class="hp-dato is-saldo">
+                                                <span>Saldo</span>
+                                                <strong id="total_pendiente">Bs. 0,00</strong>
+                                                <small id="estado_plan_texto"></small>
+                                            </div>
+                                        </div>
+                                        <div class="hp-avance">
+                                            <div class="progress hp-barra" title="Avance del pago">
                                                 <div class="progress-bar" id="barra_avance" role="progressbar" style="width: 0%;"></div>
                                             </div>
-                                            <div class="d-flex justify-content-between flex-wrap hm-avance">
-                                                <span><strong id="porcentaje_avance">0%</strong> pagado</span>
-                                                <span id="estado_plan_texto">Saldo por cancelar</span>
-                                            </div>
+                                            <span><strong id="porcentaje_avance">0%</strong> pagado</span>
                                         </div>
 
-                                        <!-- Matrícula -->
-                                        <div class="hm-seccion mb-4" id="matricula_container">
-                                            <div class="hm-seccion-titulo">
-                                                <i class="flaticon2-correct"></i> Matrícula
-                                            </div>
-                                            <div class="hm-seccion-cuerpo" id="matricula_cuerpo">
-                                                <span class="text-muted">Sin información de matrícula</span>
-                                            </div>
-                                        </div>
+                                        <!-- Si hay órdenes por pagar se avisa y se manda a Mis órdenes de pago -->
+                                        <a href="misordenespago" class="hp-por-pagar" id="aviso_por_pagar" style="display:none;"></a>
 
-                                        <!-- Cuotas del programa -->
-                                        <div class="hm-seccion" id="modulos_pagados_container">
-                                            <div class="hm-seccion-titulo">
-                                                <i class="flaticon2-list-3"></i> Cuotas
-                                            </div>
-                                            <div class="hm-seccion-cuerpo">
-                                                <table class="table table-sm mb-0" id="tabla_modulos_pagados">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>N°</th>
-                                                            <th class="text-right">Monto</th>
-                                                            <th>Generada</th>
-                                                            <th>Pagada</th>
-                                                            <th>N° voucher</th>
-                                                            <th class="text-center">Estado</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="tbody_modulos_pagados"></tbody>
-                                                </table>
-                                            </div>
+                                        <!-- Pagos realizados: matrícula, cuotas y clínicas -->
+                                        <div class="hp-seccion-titulo">Pagos realizados</div>
+                                        <div class="table-responsive">
+                                            <table class="table hp-tabla" id="tabla_pagos_realizados">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Fecha de pago</th>
+                                                        <th>Concepto</th>
+                                                        <th>N° de voucher</th>
+                                                        <th class="text-right">Monto</th>
+                                                        <th class="text-center">Comprobante</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tbody_pagos"></tbody>
+                                            </table>
                                         </div>
-
-                                        <!-- Clínicas: solo si tiene alguna (aparte del saldo del programa) -->
-                                        <div class="hm-seccion mt-4" id="clinicas_container" style="display: none;">
-                                            <div class="hm-seccion-titulo">
-                                                <i class="flaticon2-medical-records"></i> Clínicas
-                                                <small class="text-muted font-weight-normal">(aparte del saldo del programa)</small>
-                                            </div>
-                                            <div class="hm-seccion-cuerpo">
-                                                <table class="table table-sm mb-0" id="tabla_clinicas">
-                                                    <thead>
-                                                        <tr>
-                                                            <th class="text-right">Monto</th>
-                                                            <th>Generada</th>
-                                                            <th>Pagada</th>
-                                                            <th>N° voucher</th>
-                                                            <th class="text-center">Estado</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="tbody_clinicas"></tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-
+                                        <p class="hp-nota">Las clínicas se pagan aparte y no cuentan para el saldo del programa.</p>
                                     </div>
-
                                 </div>
                             </div>
                         </div>
@@ -178,287 +143,116 @@
         </div>
     </div>
 
-    <!-- Modal: Foto del recibo/voucher de una cuota. Tamaño fijo (ver estilo abajo)
-         para que todas las fotos se muestren igual sin importar su resolución
-         original. -->
+    <!-- Modal: comprobante (voucher) de un pago -->
     <div class="modal fade" id="modalFotoRecibo" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="flaticon2-photograph"></i> Foto del Recibo</h5>
+                <div class="modal-header hp-modal-cab">
+                    <div>
+                        <small>Comprobante de pago</small>
+                        <h5 class="modal-title" id="comprobante_titulo"></h5>
+                    </div>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body text-center">
-                    <img id="imagen_recibo_grande" src="" alt="Foto del recibo" class="foto-recibo-tamano-fijo">
+                <div class="modal-body">
+                    <div class="hp-comprobante-datos" id="comprobante_datos"></div>
+                    <div class="hp-comprobante-imagen">
+                        <img id="imagen_recibo_grande" src="" alt="Comprobante de pago">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
 
     <style>
-        .hm-cuerpo {
-            padding: 2rem;
-            background: #f8f9fa;
-        }
+        /* Historial de pagos (estado de cuenta): mismo estilo sobrio que Mis órdenes de pago */
+        .hp-card { background: #fff; border: 1px solid #e3e7ef; border-radius: 12px; box-shadow: 0 2px 10px rgba(20, 40, 80, .05); overflow: hidden; margin-bottom: 24px; }
+        .hp-cab { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 18px 24px; background: #1e3c72; border-bottom: 3px solid #d9a941; }
+        .hp-cab h3 { margin: 0; color: #fff; font-size: 17px; font-weight: 700; }
+        .hp-cab p { margin: 3px 0 0; color: #c9d5ea; font-size: 12.5px; }
+        .hp-btn-recibo { background: #fff; color: #1e3c72; font-weight: 600; border-radius: 8px; padding: 7px 16px; }
+        .hp-btn-recibo:hover { background: #eef2f9; color: #1e3c72; }
+        .hp-cuerpo { padding: 20px 24px 24px; }
+        .hp-programa { max-width: 520px; margin-bottom: 18px; }
+        .hp-programa label { display: block; font-size: 11.5px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+        .hp-programa .form-control { height: 40px; border-radius: 8px; border-color: #d8dde8; }
+        .hp-vacio { text-align: center; padding: 2.5rem 1rem; color: #94a3b8; }
+        .hp-vacio i { font-size: 2.5rem; color: #e2e8f0; }
+        .hp-vacio p { margin: .75rem 0 0; font-weight: 500; }
 
-        .hm-etiqueta {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            color: #56637a;
-            margin-bottom: 4px;
-        }
+        .hp-resumen { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #e3e7ef; border-radius: 10px; overflow: hidden; }
+        .hp-dato { display: flex; flex-direction: column; padding: 14px 18px; border-right: 1px solid #e3e7ef; min-width: 0; }
+        .hp-dato:last-child { border-right: 0; }
+        .hp-dato span { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .4px; }
+        .hp-dato strong { font-size: 1.3rem; color: #1f2937; white-space: nowrap; font-variant-numeric: tabular-nums; margin: 2px 0; }
+        .hp-dato small { color: #64748b; font-size: 12px; }
+        .hp-dato.is-pagado strong { color: #1e7145; }
+        .hp-dato.is-saldo strong { color: #b91c1c; }
+        .hp-dato.is-saldo.is-al-dia strong { color: #1e7145; }
+        .hp-avance { display: flex; align-items: center; gap: 12px; margin: 12px 0 18px; font-size: 12.5px; color: #475569; white-space: nowrap; }
+        .hp-barra { flex: 1; height: 8px; border-radius: 4px; background: #eef0f5; margin: 0; }
+        .hp-barra .progress-bar { background: #1e7145; border-radius: 4px; }
 
-        .hm-vacio {
-            text-align: center;
-            padding: 2.5rem 1rem;
-            color: #B5B5C3;
-        }
+        .hp-por-pagar { display: flex; align-items: center; gap: 10px; padding: 11px 16px; margin-bottom: 18px; border-radius: 10px; background: #fff7e6; border: 1px solid #f0d9a6; color: #8a5a00; font-size: 13px; font-weight: 600; }
+        .hp-por-pagar:hover { color: #6b4500; text-decoration: none; background: #fff1d6; }
+        .hp-por-pagar .hp-ir { margin-left: auto; white-space: nowrap; }
 
-        .hm-vacio i {
-            font-size: 2.5rem;
-            color: #E4E6EF;
-        }
+        .hp-seccion-titulo { font-size: 11.5px; font-weight: 700; color: #1e3c72; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+        .hp-tabla { margin: 0; font-size: 13px; }
+        .hp-tabla thead th { background: #f8fafc; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; border-top: 0; border-bottom: 1px solid #e3e7ef; white-space: nowrap; }
+        .hp-tabla td { vertical-align: middle; border-color: #eef1f6; color: #1f2937; }
+        .hp-tabla td small { color: #64748b; }
+        .hp-tabla td[data-label="Monto"] { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .hp-tabla td[data-label="Fecha de pago"] { white-space: nowrap; }
+        .hp-concepto-clinica { color: #6b4e0e; }
+        .btn-comprobante { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 600; background: #fff; color: #1e3c72; border: 1px solid #c9d5ea; }
+        .btn-comprobante:hover { background: #eef2f9; color: #1e3c72; text-decoration: none; }
+        .hp-nota { margin: 10px 2px 0; font-size: 12px; color: #64748b; }
 
-        .hm-vacio p {
-            margin: 0.75rem 0 0;
-            font-weight: 500;
-        }
+        .hp-modal-cab { background: #1e3c72; color: #fff; border-bottom: 3px solid #d9a941; }
+        .hp-modal-cab small { color: #c9d5ea; font-size: 11.5px; }
+        .hp-modal-cab .modal-title { color: #fff !important; font-weight: 700; }
+        .hp-modal-cab .close { color: #fff; opacity: .85; text-shadow: none; }
+        .hp-comprobante-datos { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-bottom: 14px; font-size: 13px; color: #475569; }
+        .hp-comprobante-datos strong { color: #1f2937; }
+        .hp-comprobante-imagen { text-align: center; background: #f1f3f7; border-radius: 10px; padding: 12px; }
+        .hp-comprobante-imagen img { max-width: 100%; max-height: 70vh; border-radius: 6px; }
 
-        /* Resumen: costo, pagado y saldo con la barra de avance */
-        .hm-resumen {
-            background: #fff;
-            border: 1px solid #E4E6EF;
-            border-radius: 8px;
-            padding: 1.25rem 1.5rem;
-        }
-
-        .hm-dato {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .hm-dato-titulo {
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            color: #7e8299;
-        }
-
-        .hm-dato strong {
-            font-size: 1.25rem;
-            color: #464E5F;
-            white-space: nowrap;
-        }
-
-        .hm-dato strong.text-success { color: #1e7145 !important; }
-        .hm-dato strong.text-danger { color: #c0392b !important; }
-
-        .hm-barra {
-            height: 8px;
-            border-radius: 4px;
-            background: #eef0f5;
-            margin: 1rem 0 0.5rem;
-        }
-
-        .hm-barra .progress-bar {
-            background: linear-gradient(90deg, #1e7145 0%, #27ae60 100%);
-            border-radius: 4px;
-        }
-
-        .hm-avance {
-            gap: 4px 12px;
-            font-size: 0.82rem;
-            color: #7e8299;
-        }
-
-        /* Matrícula y cuotas */
-        .hm-seccion {
-            background: #fff;
-            border: 1px solid #E4E6EF;
-            border-radius: 8px;
-        }
-
-        .hm-seccion-titulo {
-            padding: 0.85rem 1.25rem;
-            border-bottom: 1px solid #E4E6EF;
-            font-weight: 600;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            color: #464E5F;
-        }
-
-        .hm-seccion-titulo i {
-            color: #1e3c72;
-            margin-right: 4px;
-        }
-
-        .hm-seccion-cuerpo {
-            padding: 1rem 1.25rem;
-        }
-
-        .hm-insignia {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            color: #fff;
-            font-weight: 600;
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
-
-        .hm-insignia-pagado { background: #1e7145; }
-        .hm-insignia-pendiente { background: #b7791f; }
-        .hm-insignia-rechazado { background: #c0392b; }
-        .hm-insignia-anulado { background: #9aa0ac; }
-
-        :is(#tabla_modulos_pagados, #tabla_clinicas) thead th {
-            border-top: none;
-            border-bottom: 2px solid #E4E6EF;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #7e8299;
-            white-space: nowrap;
-        }
-
-        :is(#tabla_modulos_pagados, #tabla_clinicas) th,
-        :is(#tabla_modulos_pagados, #tabla_clinicas) td {
-            padding: 0.6rem 1rem;
-        }
-
-        :is(#tabla_modulos_pagados, #tabla_clinicas) tbody td {
-            vertical-align: middle;
-            color: #464E5F;
-        }
-
-        :is(#tabla_modulos_pagados, #tabla_clinicas) td[data-label="Monto"] {
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        .btn-ver-foto-cuota-estudiante {
-            background: none;
-            border: none;
-            margin-left: 6px;
-            padding: 0 4px;
-            cursor: pointer;
-            color: #2a5298;
-        }
-
-        /* Celular: resumen más compacto y cada cuota como tarjeta, con la etiqueta de
-           cada dato a la izquierda */
+        /* Celular: resumen en una columna y cada pago como tarjeta */
         @media (max-width: 767px) {
-            .hm-cuerpo {
-                padding: 1rem;
-            }
-
-            .hm-resumen {
-                padding: 1rem;
-            }
-
-            .hm-resumen .row {
-                margin: 0 -4px;
-            }
-
-            .hm-resumen [class*="col-"] {
-                padding: 0 4px;
-            }
-
-            .hm-dato strong {
-                font-size: 0.95rem;
-            }
-
-            .hm-dato-titulo {
-                font-size: 0.65rem;
-            }
-
-            .hm-seccion-cuerpo {
-                padding: 0.75rem;
-            }
-
-            :is(#tabla_modulos_pagados, #tabla_clinicas) thead {
-                display: none;
-            }
-
-            :is(#tabla_modulos_pagados, #tabla_clinicas),
-            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody,
-            :is(#tabla_modulos_pagados, #tabla_clinicas) tr,
-            :is(#tabla_modulos_pagados, #tabla_clinicas) td {
-                display: block;
-                width: 100%;
-            }
-
-            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody tr {
-                border: 1px solid #eef0f5;
-                border-radius: 8px;
-                margin-bottom: 10px;
-                padding: 2px 12px;
-            }
-
-            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody tr:last-child {
-                margin-bottom: 0;
-            }
-
-            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody td {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: 12px;
-                padding: 7px 0;
-                border-top: 1px solid #f3f4f8;
-                text-align: right !important;
-            }
-
-            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody tr td:first-child {
-                border-top: none;
-            }
-
-            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody td::before {
-                content: attr(data-label);
-                flex-shrink: 0;
-                font-size: 0.75rem;
-                font-weight: 600;
-                color: #7e8299;
-            }
-
-            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody td[colspan] {
-                display: block;
-                text-align: center !important;
-                border: none;
-            }
-
-            :is(#tabla_modulos_pagados, #tabla_clinicas) tbody td[colspan]::before {
-                content: none;
-            }
-        }
-
-        .foto-recibo-tamano-fijo {
-            width: 500px;
-            max-width: 100%;
-            height: 500px;
-            object-fit: contain;
-            border-radius: 10px;
-            background: #f8f9fa;
+            .hp-cab { padding: 16px; }
+            .hp-cuerpo { padding: 14px 12px 16px; }
+            .hp-btn-recibo { width: 100%; text-align: center; }
+            .hp-resumen { grid-template-columns: 1fr; }
+            .hp-dato { border-right: 0; border-bottom: 1px solid #e3e7ef; flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 10px; }
+            .hp-dato:last-child { border-bottom: 0; }
+            .hp-dato strong { font-size: 1.1rem; }
+            .hp-dato small { width: 100%; text-align: right; }
+            #tabla_pagos_realizados thead { display: none; }
+            #tabla_pagos_realizados, #tabla_pagos_realizados tbody, #tabla_pagos_realizados tr, #tabla_pagos_realizados td { display: block; width: 100%; }
+            #tabla_pagos_realizados tr { border: 1px solid #e3e7ef; border-radius: 10px; margin-bottom: 10px; padding: 2px 14px 10px; }
+            #tabla_pagos_realizados td { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: none; border-bottom: 1px solid #f0f1f5; padding: 8px 0; text-align: right !important; }
+            #tabla_pagos_realizados td::before { content: attr(data-label); flex-shrink: 0; font-size: 11.5px; font-weight: 600; color: #64748b; text-align: left; }
+            #tabla_pagos_realizados td[colspan] { display: block; text-align: center !important; border: none; }
+            #tabla_pagos_realizados td[colspan]::before { content: none; }
+            #tabla_pagos_realizados td:last-child { border-bottom: none; }
         }
     </style>
 
     <script>
-        // Esperar a que jQuery esté completamente cargado
+        // El script se carga cuando jQuery ya está disponible
         window.addEventListener('load', function() {
             if (typeof jQuery === 'undefined') {
                 console.error('jQuery no está cargado!');
                 return;
             }
-
-            // Cargar el script después de que jQuery esté disponible
             var script = document.createElement('script');
-            script.src = 'vistas/recursos/assets/js/scripts/historial-modulos-estudiante.js?v=<?php echo time(); ?>';
+            script.src = 'vistas/recursos/assets/js/scripts/historial-modulos-estudiante.js?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/js/scripts/historial-modulos-estudiante.js'); ?>';
             document.body.appendChild(script);
         });
     </script>

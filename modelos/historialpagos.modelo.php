@@ -180,6 +180,21 @@ class HistorialPagosModelos
     }
 
     /**
+     * ¿La inscripción es de ese estudiante? Para que un estudiante solo vea su
+     * comprobante de matrícula y su recibo aunque cambie el id en la URL.
+     * @return bool
+     */
+    public static function InscripcionEsDelEstudianteModelo($idInscripcion, $estudianteID)
+    {
+        if (!(int)$estudianteID) return false;
+        $stmt = Conexion::Conectar()->prepare(
+            "SELECT 1 FROM estudianteprograma WHERE idInscripcion = :id AND EstudianteID = :estudianteID"
+        );
+        $stmt->execute([':id' => (int)$idInscripcion, ':estudianteID' => (int)$estudianteID]);
+        return (bool)$stmt->fetchColumn();
+    }
+
+    /**
      * Foto del voucher de MATRÍCULA de una inscripción (distinta de las fotos de
      * cuota, que ya se sirven desde VoucherModelo/pagomodulo).
      * @param int $idInscripcion
@@ -283,6 +298,69 @@ class HistorialPagosModelos
         } catch (PDOException $e) {
             if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
             error_log("Error en ActualizarCuotaModelo: " . $e->getMessage());
+            return 'error';
+        }
+    }
+
+    /**
+     * Corregir el pago (voucher) de una orden de clínica ya confirmada: fecha, N° de
+     * voucher, monto y, opcionalmente, la foto o PDF. El monto se corrige también en
+     * su orden (el historial y los reportes de clínicas muestran el de la orden).
+     * Igual que las cuotas: no cambia el Estado. El voucher sigue siendo único en
+     * todo el sistema: si se cambió, se revisa que no esté usado en otro pago.
+     * @param int $idPagoClinica
+     * @param array $datos numeroVoucher, fechaPago, monto, foto (binario u null), fechaOrden (Y-m-d o null)
+     * @return string 'exitoso'|'error'|mensaje de voucher repetido
+     */
+    public static function ActualizarClinicaModelo($idPagoClinica, $datos)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+            $pdo->beginTransaction();
+
+            $stmtActual = $pdo->prepare(
+                "SELECT IdOrdenPago, NumeroVoucher FROM pagoclinica
+                 WHERE IdPagoClinica = :id AND Estado = 'PAGADO' FOR UPDATE"
+            );
+            $stmtActual->execute([':id' => $idPagoClinica]);
+            $actual = $stmtActual->fetch(PDO::FETCH_ASSOC);
+            if (!$actual) {
+                $pdo->rollBack();
+                return 'error';
+            }
+
+            $voucherCambio = mb_strtolower(trim($actual['NumeroVoucher']), 'UTF-8') !== mb_strtolower(trim($datos['numeroVoucher']), 'UTF-8');
+            if ($voucherCambio) {
+                $usadoEn = VoucherModelo::VoucherYaUsadoModelo($datos['numeroVoucher'], $pdo);
+                if ($usadoEn !== null) {
+                    $pdo->rollBack();
+                    return VoucherModelo::MensajeVoucherRepetido($datos['numeroVoucher'], $usadoEn);
+                }
+            }
+
+            $campos = "NumeroVoucher = :numeroVoucher, FechaPago = :fechaPago, Monto = :monto";
+            if ($datos['foto'] !== null) {
+                $campos .= ", FotoVoucher = :foto";
+            }
+            $stmt = $pdo->prepare("UPDATE pagoclinica SET $campos WHERE IdPagoClinica = :id");
+            $stmt->bindParam(":numeroVoucher", $datos['numeroVoucher'], PDO::PARAM_STR);
+            $stmt->bindParam(":fechaPago", $datos['fechaPago'], PDO::PARAM_STR);
+            $stmt->bindParam(":monto", $datos['monto']);
+            if ($datos['foto'] !== null) {
+                $stmt->bindParam(":foto", $datos['foto'], PDO::PARAM_LOB);
+            }
+            $stmt->bindParam(":id", $idPagoClinica, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $stmtOrden = $pdo->prepare("UPDATE ordenpago SET MontoTotal = :monto WHERE IdOrdenPago = :id");
+            $stmtOrden->execute([':monto' => $datos['monto'], ':id' => (int)$actual['IdOrdenPago']]);
+            self::ActualizarFechaOrden($pdo, $actual['IdOrdenPago'], $datos['fechaOrden'] ?? null);
+
+            $pdo->commit();
+            return 'exitoso';
+        } catch (PDOException $e) {
+            if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
+            error_log("Error en ActualizarClinicaModelo: " . $e->getMessage());
             return 'error';
         }
     }

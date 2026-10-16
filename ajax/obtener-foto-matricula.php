@@ -10,8 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../modelos/historialpagos.modelo.php';
 
-// Solo el personal ve las fotos de matrícula
-if (!isset($_SESSION['Validar']) || !$_SESSION['Validar'] || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX'], true)) {
+if (!isset($_SESSION['Validar']) || !$_SESSION['Validar']) {
     header('HTTP/1.1 403 Forbidden');
     exit('Acceso denegado');
 }
@@ -22,6 +21,15 @@ if (!isset($_GET['idInscripcion'])) {
 }
 
 $idInscripcion = (int)$_GET['idInscripcion'];
+
+// El personal ve cualquier foto de matrícula; el estudiante solo la de sus inscripciones
+$esPersonal = in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX'], true);
+$esSuya = ($_SESSION['Tipo'] ?? '') === 'EST'
+    && HistorialPagosModelos::InscripcionEsDelEstudianteModelo($idInscripcion, $_SESSION['EstudianteID'] ?? 0);
+if (!$esPersonal && !$esSuya) {
+    header('HTTP/1.1 403 Forbidden');
+    exit('Acceso denegado');
+}
 $esThumbnail = isset($_GET['thumb']) && $_GET['thumb'] == '1';
 
 $imagen = HistorialPagosModelos::ObtenerFotoMatriculaModelo($idInscripcion);

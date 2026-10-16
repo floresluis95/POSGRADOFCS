@@ -455,6 +455,7 @@ class PagoModuloModelo
         try {
             $stmtInsc = Conexion::Conectar()->prepare(
                 "SELECT ep.idInscripcion, ep.costomatricula, ep.montoPagado, ep.nvauchermatricula, ep.FechaInscripcion,
+                        ep.foto IS NOT NULL AS TieneFotoMatricula,
                         " . VoucherModelo::SqlFechaOrdenMatricula('ep.idInscripcion') . " AS FechaOrdenMatricula
                  FROM estudianteprograma ep
                  WHERE ep.EstudianteID = :estudianteID
@@ -474,6 +475,8 @@ class PagoModuloModelo
             $idinscripcion = $inscripcion['idInscripcion'];
 
             return [
+                // Para el recibo de pagos y el comprobante de la matrícula
+                'idInscripcion' => (int)$idinscripcion,
                 'resumen' => self::ObtenerResumenPagoProgramaModelo($idinscripcion, $programaID),
                 'cuotas' => self::ObtenerCuotasPorInscripcionModelo($idinscripcion),
                 // Cuotas con orden pero sin voucher validado (se ven como Pendiente)
@@ -486,6 +489,9 @@ class PagoModuloModelo
                     'voucher' => $inscripcion['nvauchermatricula'],
                     'fecha' => $inscripcion['FechaInscripcion'],
                     'fechaOrden' => $inscripcion['FechaOrdenMatricula'],
+                    'tieneFoto' => (bool)$inscripcion['TieneFotoMatricula'],
+                    // Exonerada o al Contado sin matrícula: no hubo pago de matrícula
+                    'sinMatricula' => mb_strtoupper((string)$inscripcion['nvauchermatricula'], 'UTF-8') === 'SIN MATRÍCULA',
                     'pagada' => floatval($inscripcion['montoPagado']) >= floatval($inscripcion['costomatricula']) && floatval($inscripcion['costomatricula']) > 0
                 ]
             ];

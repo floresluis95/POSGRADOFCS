@@ -47,23 +47,54 @@ switch ($_POST['accion'] ?? '') {
         ]);
         break;
 
-    // Costos de los certificados (configuracion COSTO_CERT_<TIPO>)
+    // Firma del coordinador y sello de Posgrado (imágenes) para las órdenes de pago
+    // que genera el estudiante
+    case 'estadoImagenesFirma':
+        require_once __DIR__ . '/../modelos/imagenfirma.modelo.php';
+        $imagenes = [];
+        foreach (ImagenFirmaModelo::Estado() as $clave => $detalle) {
+            $png = $detalle ? ImagenFirmaModelo::Obtener($clave) : null;
+            $imagenes[$clave] = [
+                'nombre' => ImagenFirmaModelo::CLAVES[$clave],
+                'imagen' => $png ? 'data:image/png;base64,' . base64_encode($png) : null,
+                'actualizado' => $detalle,
+            ];
+        }
+        echo json_encode(['success' => true, 'imagenes' => $imagenes]);
+        break;
+
+    case 'subirImagenFirma':
+        require_once __DIR__ . '/../modelos/imagenfirma.modelo.php';
+        $clave = $_POST['clave'] ?? '';
+        $archivo = $_FILES['imagen'] ?? null;
+        if (!$archivo || $archivo['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(['success' => false, 'mensaje' => 'Elija la imagen (PNG o JPG)']);
+            break;
+        }
+        if ($archivo['size'] > 3 * 1024 * 1024) {
+            echo json_encode(['success' => false, 'mensaje' => 'La imagen es muy grande (máx. 3 MB)']);
+            break;
+        }
+        $resultado = ImagenFirmaModelo::Guardar($clave, file_get_contents($archivo['tmp_name']), AutoridadControlador::UsuarioSesion());
+        echo json_encode(['success' => $resultado === true, 'mensaje' => $resultado === true ? 'Imagen guardada' : $resultado]);
+        break;
+
+    case 'quitarImagenFirma':
+        require_once __DIR__ . '/../modelos/imagenfirma.modelo.php';
+        $ok = isset(ImagenFirmaModelo::CLAVES[$_POST['clave'] ?? '']) && ImagenFirmaModelo::Quitar($_POST['clave']);
+        echo json_encode(['success' => (bool)$ok, 'mensaje' => $ok ? 'Imagen quitada' : 'No se pudo quitar la imagen']);
+        break;
+
+    // Costos de los certificados por grado académico (configuracion COSTO_CERT_<TIPO>_<GRADO>),
+    // pantalla Costos de certificados
     case 'obtenerCostosCertificados':
         require_once __DIR__ . '/../modelos/certificado.modelo.php';
-        $tipos = CertificadoModelo::TiposDocumento();
-        // Último cambio de cualquiera de los costos (quién y cuándo)
-        $ultima = null;
-        foreach (array_keys($tipos) as $tipo) {
-            $d = ConfiguracionModelo::Detalle('COSTO_CERT_' . $tipo);
-            if ($d && (!$ultima || $d['FechaActualizacion'] > $ultima['FechaActualizacion'])) {
-                $ultima = $d;
-            }
-        }
         echo json_encode([
             'success' => true,
-            'tipos' => $tipos,
+            'tipos' => CertificadoModelo::TiposDocumento(),
+            'grados' => CertificadoModelo::GradosAcademicos(),
             'precios' => CertificadoModelo::PreciosCertificados(),
-            'ultimaActualizacion' => $ultima,
+            'ultimaActualizacion' => CertificadoModelo::UltimoCambioPrecios(),
         ]);
         break;
 
@@ -74,20 +105,20 @@ switch ($_POST['accion'] ?? '') {
         $guardados = 0;
         $error = false;
         foreach (array_keys(CertificadoModelo::TiposDocumento()) as $tipo) {
-            if (!array_key_exists($tipo, $costos)) continue;
-            $valor = str_replace(',', '.', trim((string)$costos[$tipo]));
-            if ($valor !== '' && (!is_numeric($valor) || (float)$valor < 0)) {
-                $error = true;
-                continue;
-            }
-            // Vacío = sin precio definido (el formulario del certificado llega en blanco)
-            $nuevo = $valor === '' ? '' : number_format((float)$valor, 2, '.', '');
-            $actual = ConfiguracionModelo::Obtener('COSTO_CERT_' . $tipo, '');
-            if ($nuevo === (string)$actual) continue;
-            if (ConfiguracionModelo::Guardar('COSTO_CERT_' . $tipo, $nuevo, $responsable)) {
-                $guardados++;
-            } else {
-                $error = true;
+            foreach (array_keys(CertificadoModelo::GradosAcademicos()) as $grado) {
+                if (!isset($costos[$tipo]) || !is_array($costos[$tipo]) || !array_key_exists($grado, $costos[$tipo])) continue;
+                $valor = str_replace(',', '.', trim((string)$costos[$tipo][$grado]));
+                if ($valor !== '' && (!is_numeric($valor) || (float)$valor < 0)) {
+                    $error = true;
+                    continue;
+                }
+                // Vacío = sin precio definido (el formulario del certificado llega en blanco)
+                $resultado = CertificadoModelo::GuardarPrecioCertificado($tipo, $grado, $valor, $responsable);
+                if ($resultado === true) {
+                    $guardados++;
+                } elseif ($resultado === false) {
+                    $error = true;
+                }
             }
         }
         echo json_encode([

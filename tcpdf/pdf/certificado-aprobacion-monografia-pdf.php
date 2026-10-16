@@ -34,7 +34,10 @@ $programaID = intval($_POST['programaID'] ?? 0);
 $nombre = $_POST['nombre'] ?? '';
 $programa = $_POST['programa'] ?? '';
 $curso = $_POST['curso'] ?? '';
-$vaucher = $_POST['vaucher'] ?? '';
+$vaucher = CertificadoModelo::NormalizarVoucher($_POST['vaucher'] ?? '');
+if ($vaucher === false) {
+    die('Error: El N° de voucher solo puede tener letras y números (y un guion entre las dos partes)');
+}
 // Siempre en MAYÚSCULAS, igual que se guarda en trabajogrado
 $titulo = CertificadoModelo::NormalizarTitulo($_POST['titulo'] ?? '');
 $tribunalRaw = $_POST['tribunal'] ?? '';
@@ -67,10 +70,13 @@ if ($estudianteID && $programaID) {
 
 // Se guardan los datos del formulario para poder reimprimirlo (y corregirlo) desde
 // Registro de documentos; con idDocumento es una reimpresión de ese registro.
-CertificadoModelo::RegistrarEmisionModelo(
-    'APROBACION_MONOGRAFIA', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
-    $_POST, intval($_POST['idDocumento'] ?? 0)
-);
+// En la vista previa (antes de generar) no se registra nada.
+if (!CertificadoModelo::EsVistaPrevia()) {
+    CertificadoModelo::RegistrarEmisionModelo(
+        'APROBACION_MONOGRAFIA', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
+        $_POST, intval($_POST['idDocumento'] ?? 0)
+    );
+}
 
 /**
  * Convierte un número entero (0-100) a su literal en español, en mayúsculas.
@@ -81,8 +87,8 @@ function numeroALetrasMonografia($numero)
 
     $unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
     $decenas = ['', 'DIEZ', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
-    $especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
-    $veintenas = ['VEINTE', 'VEINTIUNO', 'VEINTIDOS', 'VEINTITRES', 'VEINTICUATRO', 'VEINTICINCO', 'VEINTISEIS', 'VEINTISIETE', 'VEINTIOCHO', 'VEINTINUEVE'];
+    $especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+    $veintenas = ['VEINTE', 'VEINTIUNO', 'VEINTIDÓS', 'VEINTITRÉS', 'VEINTICUATRO', 'VEINTICINCO', 'VEINTISÉIS', 'VEINTISIETE', 'VEINTIOCHO', 'VEINTINUEVE'];
 
     if ($entero == 0) {
         $literal = 'CERO';
@@ -289,6 +295,10 @@ $centrado($calificacionLiteral, $X_LITERAL, $Y_LITERAL);
 
 // N° de recibo de caja (voucher)
 $centrado(mb_strtoupper($vaucher, 'UTF-8'), $X_RECIBO, $Y_RECIBO);
+
+if (CertificadoModelo::EsVistaPrevia()) {
+    CertificadoModelo::MarcarVistaPrevia($pdf, true);
+}
 
 if (ob_get_contents()) {
     ob_end_clean();

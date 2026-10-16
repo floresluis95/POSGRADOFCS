@@ -209,7 +209,7 @@ kt-aside--fixed kt-page--loading">
                       <small class="text-muted d-block mb-2" id="contadorPreregistros"></small>
 
                       <div class="table-responsive">
-                        <table class="table table-striped table-bordered table-hover" id="tablaPreregistros">
+                        <table class="table table-striped table-bordered table-hover" id="tablaPreregistros" data-exportar="Pre-registros">
                           <thead style="background: #f4f4f4;">
                             <tr>
                               <th class="text-center" style="width: 40px;">#</th>
@@ -626,6 +626,8 @@ kt-aside--fixed kt-page--loading">
                               <div class="small text-muted mt-1" id="textoMatriculaExonerada" style="display:none;">
                                 <i class="flaticon2-information"></i> Exonerada: no se cobra.
                               </div>
+                              <!-- Al Contado sin matrícula: una sola orden por el programa completo -->
+                              <div class="alert alert-info py-2 px-3 mt-2 mb-0 small" id="avisoProgramaCompleto" style="display:none;"></div>
                               <div class="small text-warning mt-1" id="avisoMatriculaEditable" style="display:none;">
                                 <i class="fa fa-unlock-alt"></i> Matrícula a pagar editable: universidad privada, extranjera o de convenio.
                               </div>
@@ -1563,7 +1565,14 @@ function iniciarPreregistro() {
     const MAX_CUOTAS_CONTADO = 3;
     let modulosPrograma = 0;
 
+    // Al Contado sin matrícula: una sola orden por el programa completo (una cuota, ya
+    // pagada al validar el voucher). El servidor lo decide igual con el plan y la casilla.
+    function esProgramaCompleto() {
+        return $('#tipoPagoCodigo').val() === 'CONTADO' && !$('#pagarMatricula').is(':checked');
+    }
+
     function maxCuotasPlan() {
+        if (esProgramaCompleto()) return 1;
         return $('#tipoPagoCodigo').val() === 'CONTADO' ? MAX_CUOTAS_CONTADO : 60;
     }
 
@@ -1624,6 +1633,25 @@ function iniciarPreregistro() {
             $('#montoCuota').val(n ? cuotaRedondeada(total, n).toFixed(2) : '');
         }
         actualizarTextoCuotas();
+        actualizarProgramaCompleto();
+    }
+
+    // Programa completo: la orden cobra el total del programa; N° de cuotas fijo en 1
+    function actualizarProgramaCompleto() {
+        const completo = esProgramaCompleto();
+        const total = parseFloat($('#montoProgramaConDescuento').val()) || 0;
+        $('#numeroCuotas').prop('readonly', completo);
+        $('#modificarCuota').prop('disabled', completo);
+        if (completo) {
+            $('#montoAPagar').val(total.toFixed(2));
+            $('#textoCuotasPrograma').removeClass('text-danger').addClass('text-muted')
+                .text('Se paga completo en esta misma orden (' + formatoBs(total) + ').');
+            $('#avisoModulosCuotas').hide();
+        }
+        $('#avisoProgramaCompleto').toggle(completo).html(completo
+            ? '<i class="fa fa-info-circle"></i> <strong>Sin matrícula:</strong> se genera una sola orden por el programa completo (' +
+              formatoBs(total) + '). Al validar el voucher el estudiante queda matriculado con el programa pagado.'
+            : '');
     }
 
     // "10 cuotas de Bs. 2.730,00 y la última de Bs. 2.700,00"
@@ -1702,6 +1730,7 @@ function iniciarPreregistro() {
         // quede un monto manual "fantasma" que no se vaya a cobrar en realidad.
         $('#montoSoloMatricula').prop('disabled', matriculaExonerada);
         actualizarVariacionMatricula();
+        actualizarProgramaCompleto();
     }
 
     // ============================================
@@ -1772,7 +1801,10 @@ function iniciarPreregistro() {
         recalcularCuota();
     });
 
-    $('#pagarMatricula').on('change', recalcularMontoMatricula);
+    $('#pagarMatricula').on('change', function() {
+        recalcularMontoMatricula();
+        reiniciarNumeroCuotas();
+    });
 
     // Fecha de la orden: hoy y bloqueada; con la casilla se puede cambiar. Al
     // desmarcarla (o con "Limpiar") vuelve a hoy.
@@ -2568,7 +2600,7 @@ function iniciarPreregistro() {
         const vMatricula = variacion(costoMatricula, montoMatricula);
         const matriculaAMano = Math.abs(montoMatricula - Math.round((costoMatricula - costoMatricula * porcentajeMatricula / 100) * 100) / 100) > 0.005;
         $('#resumenDescuentoMatricula').text(!$('#pagarMatricula').is(':checked')
-            ? 'Exonerada: no se cobra'
+            ? (esProgramaCompleto() ? 'Sin matrícula: la orden es por el programa completo' : 'Exonerada: no se cobra')
             : (vMatricula
                 ? vMatricula.texto.charAt(0).toUpperCase() + vMatricula.texto.slice(1) + (matriculaAMano ? ' · monto ajustado a mano' : '')
                 : 'Sin descuento'));
@@ -2586,7 +2618,9 @@ function iniciarPreregistro() {
         // Cuotas: cuántas, de cuánto (la última ajusta) y frente a los módulos
         const cuotas = detalleCuotas();
         $('#resumenModulosPrograma').text(modulosPrograma ? modulosPrograma + (modulosPrograma === 1 ? ' módulo' : ' módulos') : '-');
-        $('#resumenCuotasPrograma').text(cuotas.n
+        $('#resumenCuotasPrograma').text(esProgramaCompleto()
+            ? 'Una sola orden por el programa completo: ' + formatoBs(descuento.total)
+            : cuotas.n
             ? textoCuotas(cuotas) + (variacionCuota(cuotas)
                 ? ' (cuota modificada a mano: ' + variacionCuota(cuotas).texto + ' frente a ' + formatoBs(variacionCuota(cuotas).base) + ')'
                 : '')

@@ -16,8 +16,19 @@ $(document).ready(function() {
     }
     if (!$('#tablaMatriculadosBody tr:first td[colspan]').length) {
         $('#tablaMatriculados').DataTable({
+            // Textos en español aquí mismo: el archivo de idioma de cdn.datatables.net ya no
+            // se puede pedir desde el sistema (redirige a https y el navegador lo bloquea) y,
+            // mientras esperaba, la tabla quedaba a medio iniciar
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json'
+                search: 'Buscar:',
+                lengthMenu: 'Mostrar _MENU_ registros',
+                info: 'Mostrando _START_ a _END_ de _TOTAL_ estudiantes',
+                infoEmpty: 'Mostrando 0 a 0 de 0 estudiantes',
+                infoFiltered: '(filtrado de _MAX_ estudiantes totales)',
+                loadingRecords: 'Cargando...',
+                zeroRecords: 'No se encontraron estudiantes',
+                emptyTable: 'No hay estudiantes matriculados',
+                paginate: { first: 'Primero', previous: 'Anterior', next: 'Siguiente', last: 'Último' }
             },
             order: [[0, 'asc']], // El modelo ya entrega las filas por fecha de inscripción descendente
             pageLength: 25,

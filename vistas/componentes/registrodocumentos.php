@@ -388,9 +388,11 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                                         <h3><i class="fas fa-history"></i> Documentos emitidos y pagos</h3>
                                         <p id="subtitulo-log">Emisiones más recientes de todo el sistema.</p>
                                     </div>
-                                    <button type="button" class="btn rd-btn-primario" id="btn-imprimir-pagos">
-                                        <i class="fas fa-print"></i> Imprimir detalle
-                                    </button>
+                                    <div class="d-flex align-items-center" id="rd-exportar" style="gap:8px;">
+                                        <button type="button" class="btn rd-btn-primario" id="btn-imprimir-pagos">
+                                            <i class="fas fa-print"></i> Imprimir detalle
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="rd-card-body">
                                     <!-- Filtros del historial de pagos (con el C.I. buscado arriba, si hay uno) -->
@@ -418,7 +420,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                                         </div>
                                     </div>
                                     <div class="rd-tabla-marco table-responsive">
-                                        <table class="table table-hover tabla-log" id="tabla-log">
+                                        <table class="table table-hover tabla-log" id="tabla-log" data-exportar="Documentos emitidos y pagos" data-exportar-botones="#rd-exportar">
                                             <thead>
                                                 <tr>
                                                     <th>Fecha</th>

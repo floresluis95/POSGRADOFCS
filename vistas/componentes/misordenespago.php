@@ -57,101 +57,107 @@
                             </div>
                         </div>
                         <div class="kt-container kt-grid__item kt-grid__item--fluid">
-                            <div class="kt-portlet">
-                                <div class="kt-portlet__head">
-                                    <div class="kt-portlet__head-label">
-                                        <h3 class="kt-portlet__head-title">
-                                            Órdenes de Pago de Matrícula, Cuotas y Módulos
-                                        </h3>
+                            <div class="mop-card">
+                                <div class="mop-cab">
+                                    <div>
+                                        <h3><i class="fas fa-file-invoice"></i> Mis órdenes de pago</h3>
+                                        <p>Matrícula, cuotas del programa y clínicas.</p>
                                     </div>
+                                    <!-- Lo pagado, sus comprobantes y el recibo están en Historial de pagos -->
+                                    <a href="historialmodulosestudiante" class="btn mop-btn-recibo" id="btn_historial_pagos">
+                                        <i class="fas fa-wallet"></i> Mis pagos y recibo
+                                    </a>
                                 </div>
-                                <div class="kt-portlet__body ordenes-cuerpo">
 
-                                    <div class="alert alert-light mb-4" style="border-left: 4px solid #1e3c72; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.06);">
-                                        <div class="alert-icon"><i class="flaticon2-information text-primary"></i></div>
-                                        <div class="alert-text">
-                                            Presione <strong>Imprimir</strong> para descargar el comprobante que debe presentar en el banco.
-                                        </div>
-                                    </div>
+                                <div class="mop-aviso">
+                                    <i class="fas fa-university"></i>
+                                    <span>Imprima su orden de pago y preséntela en <strong>Tesoro Universitario</strong> para realizar el pago.</span>
+                                </div>
 
+                                <div class="mop-cuerpo">
                                     <div id="ordenes_cargando" class="text-center" style="padding: 3rem;">
                                         <div class="kt-spinner kt-spinner--lg kt-spinner--brand"></div>
                                         <p class="mt-3 text-muted">Cargando sus órdenes de pago...</p>
                                     </div>
 
-                                    <div id="ordenes_vacio" style="display:none; text-align:center; padding: 3rem; color:#B5B5C3;">
-                                        <i class="flaticon2-file" style="font-size: 3rem; color:#E4E6EF;"></i>
-                                        <p style="margin-top:1rem; font-size:1.1rem; font-weight:500;">Todavía no tiene órdenes de pago generadas.</p>
+                                    <div id="ordenes_vacio" class="mop-vacio" style="display:none;">
+                                        <i class="flaticon2-file"></i>
+                                        <p>Todavía no tiene órdenes de pago generadas.</p>
                                     </div>
 
-                                    <div class="row mb-3 align-items-end" id="ordenes_filtros" style="display:none;">
-                                        <div class="col-md-6 col-lg-4 mb-2">
-                                            <label class="small font-weight-bold mb-1">Programa</label>
-                                            <select class="form-control select2-uniforme" id="filtro_programa">
+                                    <!-- Siguiente cuota: el estudiante genera su orden (solo si no tiene una por pagar) -->
+                                    <div id="generar_cuota" style="display:none;">
+                                        <div class="mop-seccion-titulo">Su siguiente cuota</div>
+                                        <div class="mop-por-pagar" id="lista_generar_cuota"></div>
+                                    </div>
+
+                                    <!-- Lo que falta pagar: arriba y destacado -->
+                                    <div id="por_pagar" style="display:none;">
+                                        <div class="mop-seccion-titulo">Por pagar</div>
+                                        <div class="mop-por-pagar" id="lista_por_pagar"></div>
+                                    </div>
+
+                                    <div class="mop-seccion-titulo" id="titulo_todas" style="display:none;">Todas mis órdenes</div>
+                                    <div class="mop-filtros" id="ordenes_filtros" style="display:none;">
+                                        <div class="mop-filtro">
+                                            <label for="filtro_programa">Programa</label>
+                                            <select class="form-control" id="filtro_programa">
                                                 <option value="">Todos los programas</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-6 col-lg-4 mb-2">
-                                            <label class="small font-weight-bold mb-1">Tipo</label>
-                                            <select class="form-control select2-uniforme" id="filtro_tipo">
+                                        <div class="mop-filtro mop-filtro-tipo">
+                                            <label for="filtro_tipo">Concepto</label>
+                                            <select class="form-control" id="filtro_tipo">
                                                 <option value="">Todos</option>
-                                                <option value="MATRICULA">Matrícula</option>
-                                                <option value="CUOTA">Cuota</option>
-                                                <option value="CLINICA">Clínica</option>
-                                                <option value="MODULOS">Pago de Módulos</option>
                                             </select>
                                         </div>
-                                        <div class="col-lg-4 mb-2 text-lg-right">
+                                        <div class="mop-filtro-boton">
                                             <button type="button" class="btn btn-outline-secondary btn-sm" id="btn_ver_anuladas" style="display:none;" data-toggle="modal" data-target="#modalOrdenesAnuladas">
-                                                <i class="fa fa-ban"></i> Ver anuladas (<span id="conteo_anuladas">0</span>)
+                                                <i class="fa fa-ban"></i> Anuladas (<span id="conteo_anuladas">0</span>)
                                             </button>
                                         </div>
                                     </div>
 
                                     <div class="table-responsive" id="ordenes_tabla_wrap" style="display:none;">
-                                        <table class="table table-hover" id="tabla_ordenes_pago">
+                                        <table class="table mop-tabla" id="tabla_ordenes_pago">
                                             <thead>
                                                 <tr>
-                                                    <th>N° Orden</th>
+                                                    <th>N° de orden</th>
                                                     <th>Programa</th>
-                                                    <th>Tipo</th>
+                                                    <th>Concepto</th>
                                                     <th class="text-right">Monto</th>
                                                     <th>Generada</th>
-                                                    <th>Fecha Límite</th>
+                                                    <th>Fecha límite</th>
                                                     <th class="text-center">Estado</th>
-                                                    <th class="text-center">Acción</th>
+                                                    <th class="text-center">Acciones</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="contenido_ordenes_pago"></tbody>
                                         </table>
                                     </div>
-
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Modal: Órdenes de Pago Anuladas (fuera de la lista principal, solo consulta) -->
+                        <!-- Modal: órdenes anuladas (fuera de la lista principal, solo consulta) -->
                         <div class="modal fade" id="modalOrdenesAnuladas" tabindex="-1" role="dialog" aria-hidden="true">
                             <div class="modal-dialog modal-lg" role="document">
                                 <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title"><i class="fa fa-ban text-muted"></i> Órdenes de Pago Anuladas</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
+                                    <div class="modal-header mop-modal-cab">
+                                        <div>
+                                            <small>Solo como referencia: no tienen validez para el pago</small>
+                                            <h5 class="modal-title">Órdenes de pago anuladas</h5>
+                                        </div>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
                                     </div>
                                     <div class="modal-body">
-                                        <small class="text-muted d-block mb-3">
-                                            <i class="flaticon2-information"></i> Estas órdenes fueron anuladas y no tienen validez para el pago.
-                                            Se muestran aquí solo como referencia.
-                                        </small>
                                         <div class="table-responsive">
-                                            <table class="table table-sm table-bordered mb-0">
-                                                <thead class="thead-light">
+                                            <table class="table table-sm mop-tabla-anuladas mb-0">
+                                                <thead>
                                                     <tr>
-                                                        <th>N° Orden</th>
+                                                        <th>N° de orden</th>
                                                         <th>Programa</th>
-                                                        <th>Tipo</th>
+                                                        <th>Concepto</th>
                                                         <th class="text-right">Monto</th>
                                                         <th>Generada</th>
                                                     </tr>
@@ -177,127 +183,96 @@
         </div>
     </div>
 
-    <script src="vistas/recursos/assets/js/scripts/misordenespago.js?v=<?php echo time(); ?>"></script>
+    <script src="vistas/recursos/assets/js/scripts/misordenespago.js?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/js/scripts/misordenespago.js'); ?>"></script>
 
     <style>
-        .badge-orden {
-            padding: 7px 14px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.78rem;
-            text-transform: uppercase;
-        }
+        /* Mis órdenes de pago: vista sobria con el azul institucional */
+        .mop-card { background: #fff; border: 1px solid #e3e7ef; border-radius: 12px; box-shadow: 0 2px 10px rgba(20, 40, 80, .05); overflow: hidden; margin-bottom: 24px; }
+        .mop-cab { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 18px 24px; background: #1e3c72; border-bottom: 3px solid #d9a941; }
+        .mop-cab h3 { margin: 0; color: #fff; font-size: 17px; font-weight: 700; }
+        .mop-cab p { margin: 3px 0 0; color: #c9d5ea; font-size: 12.5px; }
+        .mop-btn-recibo { background: #fff; color: #1e3c72; font-weight: 600; border-radius: 8px; padding: 7px 16px; }
+        .mop-btn-recibo:hover, .mop-btn-recibo:focus { background: #eef2f9; color: #1e3c72; }
+        .mop-aviso { display: flex; align-items: center; gap: 10px; padding: 12px 24px; background: #f8fafc; border-bottom: 1px solid #e3e7ef; color: #334155; font-size: 13px; }
+        .mop-aviso i { color: #1e3c72; font-size: 16px; }
+        .mop-cuerpo { padding: 20px 24px 24px; }
+        .mop-vacio { text-align: center; padding: 3rem 1rem; color: #94a3b8; }
+        .mop-vacio i { font-size: 3rem; color: #e2e8f0; }
+        .mop-vacio p { margin-top: 1rem; font-size: 1rem; font-weight: 500; }
 
-        .badge-pendiente { background: linear-gradient(135deg, #b7791f 0%, #d4a017 100%); color: white; }
-        .badge-confirmado { background: linear-gradient(135deg, #1e7145 0%, #27ae60 100%); color: white; }
+        /* Por pagar: una tarjeta por orden, con monto, fecha límite y botón para imprimirla */
+        .mop-seccion-titulo { font-size: 11.5px; font-weight: 700; color: #1e3c72; text-transform: uppercase; letter-spacing: .5px; margin: 0 0 8px; }
+        .mop-por-pagar { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-bottom: 16px; }
+        .mop-pp { border: 1px solid #e3e7ef; border-left: 3px solid #d9a941; border-radius: 8px; padding: 8px 12px; background: #fff; display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+        .mop-pp.is-vencida { border-left-color: #b91c1c; }
+        .mop-pp.is-espera { border-left-color: #1e3c72; }
+        .mop-pp-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .mop-pp-concepto { font-weight: 700; color: #1f2937; font-size: 12.5px; }
+        .mop-pp-monto { font-size: 1rem; font-weight: 700; color: #1e3c72; font-variant-numeric: tabular-nums; }
+        .mop-pp small { color: #64748b; font-size: 12px; }
+        .mop-pp .btn-imprimir-orden { align-self: flex-start; margin-top: 4px; }
+        .mop-pp.is-nueva { border-left-color: #1e7145; background: #fbfefc; }
+        .btn-generar-cuota { align-self: flex-start; margin-top: 4px; display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; background: #1e7145; color: #fff; border: 1px solid #1e7145; }
+        .btn-generar-cuota:hover { background: #17603a; color: #fff; }
+        .btn-generar-cuota:disabled { opacity: .6; }
+
+        .mop-filtros { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 16px; }
+        .mop-filtro { flex: 1 1 260px; max-width: 420px; }
+        .mop-filtro-tipo { flex: 0 1 220px; }
+        .mop-filtro label { display: block; font-size: 11.5px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+        .mop-filtro .form-control { height: 40px; border-radius: 8px; border-color: #d8dde8; }
+        .mop-filtro-boton { margin-left: auto; }
+
+        .mop-tabla { margin: 0; font-size: 13px; }
+        .mop-tabla thead th { background: #f8fafc; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; border-top: 0; border-bottom: 1px solid #e3e7ef; white-space: nowrap; }
+        .mop-tabla td { vertical-align: middle; border-color: #eef1f6; color: #1f2937; }
+        .mop-tabla td small { color: #64748b; }
+        .mop-tabla td[data-label="Monto"], .mop-tabla td[data-label="Generada"], .mop-tabla td[data-label="Fecha límite"] { white-space: nowrap; }
+        .mop-tabla td[data-label="Monto"] { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+        /* Estados: discretos y con el texto completo aunque la pantalla sea angosta */
+        .badge-orden { display: inline-block; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600; line-height: 1.35; white-space: normal; text-align: center; max-width: 150px; }
+        .badge-pendiente { background: #fff7e6; color: #8a5a00; border: 1px solid #f0d9a6; }
+        .badge-confirmado { background: #ecfdf3; color: #1e7145; border: 1px solid #b7e4c7; }
         .badge-extraviado { background: #eef2f9; color: #1e3c72; border: 1px solid #c9d6ee; }
-        .badge-anulado { background: #e4e6ef; color: #7e8299; }
-        .badge-vencido { background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%); color: white; }
+        .badge-anulado { background: #f1f3f7; color: #64748b; border: 1px solid #e3e7ef; }
+        .badge-vencido { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 
-        .btn-imprimir-orden {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 6px 16px;
-            font-size: 0.82rem;
-            font-weight: 600;
-        }
+        .mop-acciones { display: inline-flex; gap: 6px; flex-wrap: nowrap; }
+        .btn-imprimir-orden { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 600; }
+        .btn-imprimir-orden { background: #1e3c72; color: #fff; border: 1px solid #1e3c72; }
+        .btn-imprimir-orden:hover { background: #16305c; color: #fff; }
+        /* Orden ya pagada: botón claro (al pulsarlo se avisa que ya se pagó) */
+        .btn-imprimir-orden[data-pagada] { background: #fff; color: #1e3c72; border-color: #c9d5ea; }
+        .btn-imprimir-orden[data-pagada]:hover { background: #eef2f9; color: #1e3c72; }
 
-        .btn-imprimir-orden {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-        }
+        .mop-modal-cab { background: #1e3c72; color: #fff; border-bottom: 3px solid #d9a941; }
+        .mop-modal-cab small { color: #c9d5ea; font-size: 11.5px; }
+        .mop-modal-cab .modal-title { color: #fff !important; font-weight: 700; }
+        .mop-modal-cab .close { color: #fff; opacity: .85; text-shadow: none; }
+        .mop-tabla-anuladas th { font-size: 11px; text-transform: uppercase; color: #64748b; background: #f8fafc; }
 
-        .btn-imprimir-orden:hover {
-            color: white;
-            opacity: 0.9;
-        }
-
-        #tabla_ordenes_pago tbody td {
-            vertical-align: middle;
-        }
-
-        #tabla_ordenes_pago td[data-label="Monto"],
-        #tabla_ordenes_pago td[data-label="Generada"],
-        #tabla_ordenes_pago td[data-label="Fecha límite"] {
-            white-space: nowrap;
-        }
-
-        .ordenes-cuerpo {
-            padding: 2rem;
-            background: #f8f9fa;
-        }
-
-        /* Tablet y celular: cada orden es una tarjeta con la etiqueta de cada dato a
-           la izquierda, así no hace falta desplazarse de lado para ver el botón */
+        /* Tablet y celular: cada orden es una tarjeta, con la etiqueta de cada dato a la
+           izquierda; nada se corta ni hay que desplazarse de lado */
         @media (max-width: 767px) {
-            .ordenes-cuerpo {
-                padding: 1rem;
-            }
-
-            #tabla_ordenes_pago thead {
-                display: none;
-            }
-
-            #tabla_ordenes_pago,
-            #tabla_ordenes_pago tbody,
-            #tabla_ordenes_pago tr,
-            #tabla_ordenes_pago td {
-                display: block;
-                width: 100%;
-            }
-
-            #tabla_ordenes_pago tr {
-                background: #fff;
-                border-radius: 10px;
-                box-shadow: 0 1px 6px rgba(30, 60, 114, 0.08);
-                margin-bottom: 12px;
-                padding: 6px 14px 12px;
-            }
-
-            #tabla_ordenes_pago tbody td {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: 12px;
-                border: none;
-                border-bottom: 1px solid #f0f1f5;
-                padding: 8px 0;
-                text-align: right !important;
-            }
-
-            #tabla_ordenes_pago tbody td::before {
-                content: attr(data-label);
-                flex-shrink: 0;
-                font-size: 0.75rem;
-                font-weight: 600;
-                color: #7e8299;
-                text-align: left;
-            }
-
-            #tabla_ordenes_pago tbody td[colspan] {
-                display: block;
-                text-align: center !important;
-            }
-
-            #tabla_ordenes_pago tbody td[colspan]::before,
-            #tabla_ordenes_pago td.celda-accion::before {
-                content: none;
-            }
-
-            #tabla_ordenes_pago td.celda-accion {
-                border-bottom: none;
-                padding-top: 12px;
-            }
-
-            #tabla_ordenes_pago td.celda-accion .btn-imprimir-orden {
-                width: 100%;
-                justify-content: center;
-                padding: 10px 16px;
-            }
+            .mop-cab, .mop-aviso { padding-left: 16px; padding-right: 16px; }
+            .mop-cuerpo { padding: 14px 12px 16px; }
+            .mop-filtro, .mop-filtro-tipo { flex: 1 1 100%; max-width: none; }
+            .mop-filtro-boton { margin-left: 0; }
+            #btn_historial_pagos { width: 100%; }
+            .mop-por-pagar { grid-template-columns: 1fr; }
+            #tabla_ordenes_pago thead { display: none; }
+            #tabla_ordenes_pago, #tabla_ordenes_pago tbody, #tabla_ordenes_pago tr, #tabla_ordenes_pago td { display: block; width: 100%; }
+            #tabla_ordenes_pago tr { background: #fff; border: 1px solid #e3e7ef; border-radius: 10px; margin-bottom: 12px; padding: 4px 14px 12px; }
+            #tabla_ordenes_pago tbody td { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: none; border-bottom: 1px solid #f0f1f5; padding: 8px 0; text-align: right !important; min-width: 0; }
+            #tabla_ordenes_pago tbody td > * { min-width: 0; overflow-wrap: anywhere; }
+            #tabla_ordenes_pago tbody td::before { content: attr(data-label); flex-shrink: 0; font-size: 11.5px; font-weight: 600; color: #64748b; text-align: left; }
+            #tabla_ordenes_pago .badge-orden { max-width: 60%; }
+            #tabla_ordenes_pago tbody td[colspan] { display: block; text-align: center !important; }
+            #tabla_ordenes_pago tbody td[colspan]::before, #tabla_ordenes_pago td.celda-accion::before { content: none; }
+            #tabla_ordenes_pago td.celda-accion { border-bottom: none; padding-top: 12px; }
+            #tabla_ordenes_pago td.celda-accion .mop-acciones { width: 100%; }
+            #tabla_ordenes_pago td.celda-accion .mop-acciones > * { flex: 1; justify-content: center; padding: 9px 12px; }
         }
     </style>
 

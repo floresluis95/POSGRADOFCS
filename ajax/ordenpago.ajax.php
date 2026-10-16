@@ -15,6 +15,7 @@ require_once __DIR__ . '/../controladores/usuario.controlador.php';
 require_once __DIR__ . '/../modelos/modulopagos_core.php';
 require_once __DIR__ . '/../modelos/ordenpagoprincipal.modelo.php';
 require_once __DIR__ . '/../modelos/planpago.modelo.php';
+require_once __DIR__ . '/../modelos/texto-orden-pago.php'; // texto del programa en la orden de matrícula
 require_once __DIR__ . '/../modelos/firmante.modelo.php';
 
 // Configurar cabecera JSON
@@ -29,11 +30,12 @@ if (!isset($_SESSION['Validar']) || !$_SESSION['Validar']) {
     exit;
 }
 
-// Permisos por acción: el estudiante solo ve SUS órdenes (misOrdenesPago);
-// todo lo demás (pre-registro, validar vouchers, planes, firmantes...) es del personal.
+// Permisos por acción: el estudiante solo ve SUS órdenes (misOrdenesPago) y genera la
+// de su siguiente cuota (calcularMiCuota, generarMiCuota); todo lo demás (pre-registro,
+// validar vouchers, planes, firmantes...) es del personal.
 $tipoSesionOrden = $_SESSION['Tipo'] ?? '';
 $permitidoOrden = $tipoSesionOrden === 'EST'
-    ? (($_POST['accion'] ?? '') === 'misOrdenesPago')
+    ? in_array($_POST['accion'] ?? '', ['misOrdenesPago', 'calcularMiCuota', 'generarMiCuota'], true)
     : in_array($tipoSesionOrden, ['ADM', 'SEC', 'AUX'], true);
 if (!$permitidoOrden) {
     http_response_code(403);
@@ -163,6 +165,15 @@ switch ($accion) {
 
     case 'misOrdenesPago':
         misOrdenesPago();
+        break;
+
+    // El estudiante genera la orden de su siguiente cuota (Mis órdenes de pago)
+    case 'calcularMiCuota':
+        miCuota(false);
+        break;
+
+    case 'generarMiCuota':
+        miCuota(true);
         break;
 
     case 'listarOrdenesGeneradas':
@@ -1258,14 +1269,9 @@ function obtenerPreregistro()
             ' ' . $preregistro['Exp']
         );
         $preregistro['MontoLiteral'] = numeroALetrasOrdenPago((float)$preregistro['MontoFinal']);
-        // No se imprime la versión "V-1": es la versión base/por defecto y no aporta
-        // información distinta al nombre del programa. Solo se muestran versiones
-        // reales (V-2, V-3, etc.).
-        $mostrarVersion = !empty($preregistro['Version']) && strtoupper($preregistro['Version']) !== 'V-1';
-        $preregistro['ProgramaTexto'] = 'PROGRAMA DE POSGRADO EN LA ' . strtoupper($preregistro['GradoAcademico']) .
-            ' EN ' . strtoupper($preregistro['NombrePrograma']) .
-            ($mostrarVersion ? ' "' . strtoupper($preregistro['Version']) . '"' : '') .
-            ' ' . ((int)$preregistro['PagoCompleto'] === 1 ? 'PROGRAMA COMPLETO' : 'MATRICULA');
+        $preregistro['ProgramaTexto'] = textoProgramaOrdenPago(
+            $preregistro['GradoAcademico'], $preregistro['NombrePrograma'], $preregistro['Version'], (int)$preregistro['PagoCompleto'] === 1
+        );
 
         echo json_encode(['success' => true, 'preregistro' => $preregistro]);
     } else {
@@ -1283,7 +1289,7 @@ function numeroALetrasOrdenPago($numero)
 
     $unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
     $decenas = ['', '', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
-    $especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+    $especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
     $centenas = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
 
     $convertirEntero = function ($num) use (&$convertirEntero, $unidades, $decenas, $especiales, $centenas) {
@@ -1660,6 +1666,176 @@ function misOrdenesPago()
     $ordenes = OrdenPagoModelos::ListarOrdenesPorEstudianteModelo($estudianteID);
 
     echo json_encode(['success' => true, 'ordenes' => array_map('datosOrdenParaLista', $ordenes)]);
+}
+
+/**
+ * El estudiante genera la orden de su siguiente cuota. No elige nada: monto (la
+ * cuota de su plan; la última, lo que falta), N° de cuota, cuenta de cuotas del
+ * programa, módulo que cubre y fecha límite los pone el sistema. Solo si tiene plan,
+ * saldo y ninguna orden de cuota sin pagar. Con $generar = false solo calcula (para
+ * mostrarle el resumen antes de confirmar). La orden queda marcada como generada por
+ * el estudiante: al imprimirla lleva la firma del coordinador y el sello.
+ */
+function miCuota($generar)
+{
+    $estudianteID = (int)($_SESSION['EstudianteID'] ?? 0);
+    $idInscripcion = (int)($_POST['idinscripcion'] ?? 0);
+    $responder = function ($exito, $mensaje, $extra = []) {
+        echo json_encode(['success' => $exito, 'mensaje' => $mensaje] + $extra);
+    };
+
+    try {
+        $pdo = Conexion::Conectar();
+        $stmt = $pdo->prepare(
+            "SELECT ep.idInscripcion, ep.ProgramaID, p.NombrePrograma, e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Complemento
+             FROM estudianteprograma ep
+             INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
+             INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID
+             WHERE ep.idInscripcion = :id AND ep.EstudianteID = :est AND ep.Estado = 'ACTIVO'"
+        );
+        $stmt->execute([':id' => $idInscripcion, ':est' => $estudianteID]);
+        $insc = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$insc) {
+            $responder(false, 'No se encontró su inscripción');
+            return;
+        }
+        $programaID = (int)$insc['ProgramaID'];
+
+        // Una sola orden de cuota sin pagar a la vez (pendiente o vencida)
+        $stmt = $pdo->prepare(
+            "SELECT NumeroOrden FROM ordenpago WHERE idinscripcion = :id AND Observaciones = 'CUOTA PROGRAMA'
+             AND Estado IN ('PENDIENTE', 'VENCIDO') LIMIT 1"
+        );
+        $stmt->execute([':id' => $idInscripcion]);
+        if ($pendiente = $stmt->fetchColumn()) {
+            $responder(false, 'Ya tiene una orden de cuota por pagar (' . $pendiente . '). Pague esa primero o imprímala de nuevo.');
+            return;
+        }
+
+        $resumen = PagoModuloModelo::ObtenerResumenPagoProgramaModelo($idInscripcion, $programaID);
+        if (!$resumen['tienePlan']) {
+            $responder(false, 'Su programa todavía no tiene plan de pago. Consulte en Secretaría de Posgrado.');
+            return;
+        }
+        $disponible = round((float)$resumen['disponibleOrden'], 2);
+        if ($resumen['completado'] || $disponible <= 0) {
+            $responder(false, $resumen['montoEnEspera'] > 0
+                ? 'No tiene cuotas por generar: lo que falta ya está en órdenes con voucher por validar.'
+                : 'Su programa ya está pagado en su totalidad.');
+            return;
+        }
+
+        // Cuotas que puede adelantar: las que faltan según su plan (sin plan de N° de
+        // cuotas, una). Una orden por cuota, con N° correlativo.
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM ordenpago WHERE idinscripcion = :id AND Observaciones = 'CUOTA PROGRAMA' AND Estado <> 'ANULADO'");
+        $stmt->execute([':id' => $idInscripcion]);
+        $primeraCuota = (int)$stmt->fetchColumn() + 1;
+        $totalCuotas = (int)($resumen['numeroCuotasPlan'] ?? 0);
+        $maxCantidad = $totalCuotas > 0 ? max(1, $totalCuotas - $primeraCuota + 1) : 1;
+        $cantidad = min($maxCantidad, max(1, (int)($_POST['cantidad'] ?? 1)));
+
+        // Monto de cada una: la cuota del plan; la última (o si ya no alcanza), lo que falta
+        $montoCuota = (float)($resumen['montoCuotaPlan'] ?? 0);
+        if ($montoCuota <= 0) {
+            $montoCuota = round($disponible / $maxCantidad, 2);
+        }
+        $cuotas = [];
+        $queda = $disponible;
+        for ($i = 0; $i < $cantidad && $queda > 0.004; $i++) {
+            $numero = $primeraCuota + $i;
+            $monto = ($totalCuotas > 0 && $numero >= $totalCuotas) ? $queda : min($montoCuota, $queda);
+            $monto = round($monto, 2);
+            $cuotas[] = ['numeroCuota' => $numero, 'monto' => $monto];
+            $queda = round($queda - $monto, 2);
+        }
+        // Lo que alcanza el saldo puede ser menos que lo pedido
+        if (count($cuotas) < $maxCantidad && $queda <= 0.004) {
+            $maxCantidad = count($cuotas);
+        }
+
+        // Cuenta de cuotas del programa (la principal, si hay varias)
+        $stmt = $pdo->prepare("SELECT ProgramaCuentaID FROM programacuenta WHERE ProgramaID = :p AND TipoCuenta = 'CUOTAS' AND Estado = 1
+                               ORDER BY Principal DESC, ProgramaCuentaID LIMIT 1");
+        $stmt->execute([':p' => $programaID]);
+        $programaCuentaID = $stmt->fetchColumn() ?: null;
+
+        // Módulos que cubren: los primeros del programa que aún no tienen orden vigente
+        // (uno por cuota, en orden)
+        $stmt = $pdo->prepare(
+            "SELECT m.Idmodulo FROM modulos m
+             WHERE m.ProgramaId = :p AND m.estadomodulo = 'ACTIVO'
+             AND NOT EXISTS (SELECT 1 FROM ordenpagomodulo opm INNER JOIN ordenpago op ON op.IdOrdenPago = opm.IdOrdenPago
+                             WHERE opm.IdModulo = m.Idmodulo AND op.idinscripcion = :id AND op.Estado <> 'ANULADO')
+             ORDER BY m.Idmodulo"
+        );
+        $stmt->execute([':p' => $programaID, ':id' => $idInscripcion]);
+        $modulosLibres = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $fechaVencimiento = date('Y-m-d', strtotime('+5 days'));
+        $calculo = [
+            'cuotas' => $cuotas,
+            'total' => round(array_sum(array_column($cuotas, 'monto')), 2),
+            'maxCantidad' => $maxCantidad,
+            'totalCuotas' => $totalCuotas ?: null,
+            'programa' => $insc['NombrePrograma'],
+            'fechaVencimiento' => $fechaVencimiento,
+            'saldo' => (float)$resumen['saldoPendiente'],
+            // la primera (lo que muestra el recuadro "Su siguiente cuota")
+            'numeroCuota' => $cuotas[0]['numeroCuota'],
+            'monto' => $cuotas[0]['monto'],
+        ];
+        if (!$generar) {
+            $responder(true, '', ['cuota' => $calculo]);
+            return;
+        }
+
+        // Nombre que acompaña la firma: el coordinador vigente (pantalla Autoridades)
+        require_once __DIR__ . '/../modelos/autoridad.modelo.php';
+        $autoridades = AutoridadModelo::ListarModelo();
+        $firma = !empty($autoridades['COORDINADOR']['Nombre']) ? mb_strtoupper(trim($autoridades['COORDINADOR']['Nombre']), 'UTF-8') : '';
+        $nombreFactura = trim($insc['Apaterno'] . ' ' . $insc['Amaterno'] . ' ' . $insc['Nombre']);
+        $nitCi = $insc['Ci'] . (!empty($insc['Complemento']) ? '-' . $insc['Complemento'] : '');
+
+        $stmtOrden = $pdo->prepare(
+            "INSERT INTO ordenpago
+             (EstudianteID, idinscripcion, ProgramaID, ProgramaCuentaID, MontoTotal, FechaVencimiento,
+              ResponsableGeneracion, GeneradaPorEstudiante, Firma, NombreFactura, NitCiFactura, NumeroOrden, FechaGeneracion, Observaciones, Estado)
+             VALUES
+             (:est, :id, :p, :cuenta, :monto, :vence, :responsable, 1, :firma, :nombre, :nit, :numero, NOW(), 'CUOTA PROGRAMA', 'PENDIENTE')"
+        );
+        $stmtModulo = $pdo->prepare("INSERT INTO ordenpagomodulo (IdOrdenPago, IdModulo) VALUES (:o, :m)");
+        $generadas = [];
+
+        // Todas las órdenes juntas: si falla una, no queda ninguna
+        $pdo->beginTransaction();
+        foreach ($cuotas as $i => $cuota) {
+            $numeroOrden = OrdenPagoModelos::NumeroOrdenLibre($pdo,
+                'ORD-' . str_pad($estudianteID, 4, '0', STR_PAD_LEFT) . '-' . str_pad($programaID, 3, '0', STR_PAD_LEFT) . '-' . date('YmdHis'));
+            $stmtOrden->execute([
+                ':est' => $estudianteID, ':id' => $idInscripcion, ':p' => $programaID, ':cuenta' => $programaCuentaID,
+                ':monto' => $cuota['monto'], ':vence' => $fechaVencimiento, ':responsable' => OrdenPagoModelos::ResponsableSesion(),
+                ':firma' => $firma, ':nombre' => $nombreFactura, ':nit' => $nitCi, ':numero' => $numeroOrden,
+            ]);
+            $idOrdenPago = (int)$pdo->lastInsertId();
+            if (!empty($modulosLibres[$i])) {
+                $stmtModulo->execute([':o' => $idOrdenPago, ':m' => (int)$modulosLibres[$i]]);
+            }
+            $generadas[] = ['idOrdenPago' => $idOrdenPago, 'numeroOrden' => $numeroOrden] + $cuota;
+        }
+        $pdo->commit();
+
+        $responder(true, count($generadas) === 1 ? 'Orden generada' : count($generadas) . ' órdenes generadas', [
+            'ordenes' => $generadas,
+            // la primera, para quien solo genera una
+            'idOrdenPago' => $generadas[0]['idOrdenPago'],
+            'numeroOrden' => $generadas[0]['numeroOrden'],
+            'cuota' => $calculo,
+        ]);
+    } catch (Exception $e) {
+        if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
+        error_log("Error en miCuota: " . $e->getMessage());
+        $responder(false, 'No se pudo generar la orden. Intente de nuevo o consulte en Secretaría de Posgrado.');
+    }
 }
 
 /**

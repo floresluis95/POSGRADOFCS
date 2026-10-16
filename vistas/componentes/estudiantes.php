@@ -84,7 +84,7 @@ $csrf_token = bin2hex(random_bytes(32));
               <div class="card-content collapse show">
                 <div class="card-body card-dashboard">
                   <div class="table-responsive">
-                    <table class="table table-hover table-bordered align-middle TablaEstudiantes" id="kt_table_1">
+                    <table class="table table-hover table-bordered align-middle TablaEstudiantes" id="kt_table_1" data-exportar="Estudiantes">
                       <thead class="thead-dark">
                         <tr>
                           <th class="text-center" style="width: 5%;">Nº</th>

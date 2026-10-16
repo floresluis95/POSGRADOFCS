@@ -168,7 +168,7 @@ date_default_timezone_set("America/La_Paz");
 
                                         <!-- Tabla por programa -->
                                         <div class="rp-tabla-wrap table-responsive">
-                                            <table class="table rp-tabla mb-0" id="tablaReportePagos">
+                                            <table class="table rp-tabla mb-0" id="tablaReportePagos" data-exportar="Reporte de pagos">
                                                 <thead>
                                                     <tr class="rp-grupos">
                                                         <th rowspan="2" class="rp-col-programa">Programa</th>

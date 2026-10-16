@@ -64,13 +64,16 @@ test('el Certificado de Revisión se genera desde su pantalla y queda en Registr
   const nombreCertificado = String(valor(`SELECT UPPER(CONCAT(Nombre, ' ', Apaterno, ' ', Amaterno)) FROM estudiante WHERE EstudianteID = ${estudianteID}`));
 
   await page.goto('certificadorevision');
-  await page.locator('#input-buscar-ci').fill(ci);
-  await page.locator('#btn-buscar-ci').click();
-  await expect(page.locator('#dato-nombre')).toHaveText(nombreCertificado);
+  await page.locator('#cert-termino').fill(ci);
+  await expect(page.locator('#cert-elegido')).toContainText(ci, { timeout: 15_000 });
+  await expect(page.locator('#select-inscripcion option:checked')).toHaveAttribute('data-nombre', nombreCertificado);
   await expect(page.locator('#dato-curso')).toContainText(' EN ');
   await page.locator('#input-tratamiento').selectOption('el señor');
   await page.locator('#input-fecha').fill('2026-09-15');
-  await Promise.all([page.waitForEvent('popup'), page.locator('#btn-generar-certificado').click()]);
+  // "Revisar y generar" muestra los datos y la vista previa; se emite con "Generar e imprimir"
+  await page.locator('#btn-generar-certificado').click();
+  await expect(page.locator('#certModalDatos')).toContainText(nombreCertificado);
+  await Promise.all([page.waitForEvent('popup'), page.locator('#certModalGenerar').click()]);
 
   const condicion = `TipoDocumento = 'REVISION' AND EstudianteID = ${estudianteID}`;
   await expect.poll(() => valor(`SELECT COUNT(*) FROM documentoemitido WHERE ${condicion}`)).toBe('1');

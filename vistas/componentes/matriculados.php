@@ -1340,7 +1340,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
 
             <div class="mt-card-body">
                 <div class="table-responsive">
-                    <table class="table mt-tabla" id="tablaMatriculados">
+                    <table class="table mt-tabla" id="tablaMatriculados" data-exportar="Matriculados">
                         <thead>
                             <tr>
                                 <th class="text-center" style="width: 50px;">#</th>

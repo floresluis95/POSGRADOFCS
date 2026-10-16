@@ -94,7 +94,7 @@ $csrf_token = bin2hex(random_bytes(32));
                     </div>
                   </div>
                   <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
-                    <table class="table table-hover table-bordered align-middle TablaDocentes" id="tablaDocentes">
+                    <table class="table table-hover table-bordered align-middle TablaDocentes" id="tablaDocentes" data-exportar="Docentes">
                       <thead class="thead-dark" style="position: sticky; top: 0; z-index: 2;">
                         <tr>
                           <th class="text-center" style="width: 4%;">Nº</th>

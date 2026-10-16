@@ -231,6 +231,12 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Registro de Documentos</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="costoscertificados" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-percentage" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Costos de Certificados</span>
+                  </a>
+                </li>
 
                   <!-- REPORTES PDF -->
                 <li class="kt-menu__section">
