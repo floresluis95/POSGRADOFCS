@@ -189,6 +189,34 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Configuración</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <!-- Descarga un .sql con toda la base (ajax/backup.php, solo ADM) -->
+                  <a href="ajax/backup.php" class="kt-menu__link" id="btn-backup-bd">
+                    <i class="kt-menu__link-icon flaticon2-download" style="color: #9c27b0;"></i>
+                    <span class="kt-menu__link-text">Respaldo de la Base de Datos</span>
+                  </a>
+                </li>
+                <script>
+                document.getElementById('btn-backup-bd').addEventListener('click', function(e) {
+                  e.preventDefault();
+                  var url = this.href;
+                  var descargar = function() { window.location.href = url; };
+                  if (!window.Swal) {
+                    if (confirm('¿Descargar un respaldo completo de la base de datos?')) descargar();
+                    return;
+                  }
+                  Swal.fire({
+                    title: 'Respaldo de la base de datos',
+                    text: 'Se descargará un archivo .sql con todos los datos del sistema. Guárdelo en un lugar seguro.',
+                    type: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Descargar',
+                    cancelButtonText: 'Cancelar'
+                  }).then(function(r) {
+                    if (r.isConfirmed || r.value) descargar();
+                  });
+                });
+                </script>
                   <!-- CERTIFICADOS -->
                 <li class="kt-menu__section">
                   <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">

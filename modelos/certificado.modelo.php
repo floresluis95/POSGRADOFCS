@@ -54,7 +54,9 @@ class CertificadoModelo
                 m.codigomodulo,
                 m.nombremodulo,
                 c.Nota,
-                c.FechaRegistro
+                c.FechaRegistro,
+                m.FechaInicio,
+                m.FechaFinal
             FROM calificacion c
             INNER JOIN modulos m ON c.Idmodulo = m.Idmodulo AND m.ProgramaId = c.ProgramaId
             WHERE c.EstudianteID = :estudianteID

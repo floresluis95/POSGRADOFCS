@@ -25,8 +25,8 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                                             <div class="dato-solo-lectura" id="dato-nivel"></div>
                                         </div>
                                         <div class="col-md-2 col-6 form-group">
-                                            <label>Año</label>
-                                            <div class="dato-solo-lectura" id="dato-anio"></div>
+                                            <label for="input-anio">Año</label>
+                                            <input type="text" class="form-control" id="input-anio" maxlength="20" placeholder="2024 - 2025" title="Años en que se cursó el programa; puede corregirlo">
                                         </div>
                                         <div class="col-md-4 form-group">
                                             <label for="input-vaucher">N° de voucher</label>
@@ -90,6 +90,19 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
 
         var modulosActuales = [];
 
+        function rangoAnios(modulos) {
+            var anios = [];
+            modulos.forEach(function(m) {
+                [m.FechaInicio, m.FechaFinal].forEach(function(f) {
+                    var a = parseInt(String(f || '').substring(0, 4), 10);
+                    if (a > 1900) anios.push(a);
+                });
+            });
+            if (!anios.length) return '';
+            var desde = Math.min.apply(null, anios), hasta = Math.max.apply(null, anios);
+            return desde === hasta ? String(desde) : desde + ' - ' + hasta;
+        }
+
         // En el formato pre-impreso el nombre va primero: "ANA MARÍA PÉREZ LÓPEZ"
         Certificado.buscador({
             contenedor: '#buscador-certificado',
@@ -118,7 +131,7 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
 
             $('#dato-programa').text($opt.data('programa'));
             $('#dato-nivel').text($opt.data('nivel'));
-            $('#dato-anio').text($opt.data('anio'));
+            $('#input-anio').val($opt.data('anio'));
             $('#bloque-datos').show();
 
             $.ajax({
@@ -132,6 +145,9 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                     modulosActuales = (data.success && data.modulos) ? data.modulos : [];
                     $('#alerta-sin-modulos').toggle(!modulosActuales.length);
                     $('#btn-generar-certificado').prop('disabled', !modulosActuales.length);
+                    // Año sugerido: del inicio del primer módulo al fin del último ("2024 - 2025")
+                    var rango = rangoAnios(modulosActuales);
+                    if (rango) $('#input-anio').val(rango);
                     modulosActuales.forEach(function(mod) {
                         $tbody.append(
                             '<tr>' +
@@ -153,7 +169,12 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
             var vaucher = $('#input-vaucher').val().trim();
             var fecha = $('#input-fecha').val();
             var monto = ($('#input-monto').val() || '').trim();
+            var anio = $('#input-anio').val().trim().replace(/\s*-\s*/g, ' - ');
 
+            if (!anio) {
+                Certificado.aviso('warning', 'Falta el año', 'Ingrese los años en que se cursó el programa (ej. 2024 - 2025)');
+                return;
+            }
             if (!vaucher) {
                 Certificado.aviso('warning', 'Falta el N° de voucher', 'Ingrese el número de voucher del pago');
                 return;
@@ -176,7 +197,7 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
             $('#hidden-nombre').val($opt.data('nombre'));
             $('#hidden-programa').val($opt.data('programa'));
             $('#hidden-nivel').val($opt.data('nivel'));
-            $('#hidden-anio').val($opt.data('anio'));
+            $('#hidden-anio').val(anio);
             $('#hidden-vaucher').val(vaucher);
             $('#hidden-monto').val(monto);
             $('#hidden-fecha').val(fecha);
@@ -188,7 +209,7 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                     ['Estudiante', $opt.data('nombre')],
                     ['Programa', String($opt.data('programa')).toLocaleUpperCase('es')],
                     ['Nivel', $opt.data('nivel')],
-                    ['Año', $opt.data('anio')],
+                    ['Año', anio],
                     ['N° de voucher', vaucher],
                     ['Monto pagado', Certificado.formatoBs(monto)],
                     ['Fecha', fecha.split('-').reverse().join('/')],
