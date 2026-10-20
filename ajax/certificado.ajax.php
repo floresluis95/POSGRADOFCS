@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/control-solicitud.php'; // corte de internet: sin envíos duplicados
 require_once __DIR__ . '/validar-sesion.php';
 ExigirSesionAjax(['ADM', 'SEC']); // Solo Administración y Secretaría (igual que las páginas de certificados)
 /**
@@ -57,7 +58,17 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'modulosCalificados') {
     }
 
     $modulos = CertificadoModelo::ObtenerModulosCalificadosModelo($estudianteID, $programaID);
-    echo json_encode(['success' => true, 'modulos' => $modulos]);
+    echo json_encode([
+        'success' => true,
+        'modulos' => $modulos,
+        'totalModulos' => CertificadoModelo::ContarModulosProgramaModelo($programaID),
+    ]);
+    exit();
+}
+
+// Docentes y personas de tribunales anteriores, para elegir el tribunal
+if (isset($_POST['accion']) && $_POST['accion'] === 'sugerenciasTribunal') {
+    echo json_encode(['success' => true, 'personas' => CertificadoModelo::SugerenciasTribunalModelo()]);
     exit();
 }
 
@@ -186,6 +197,17 @@ if (isset($_POST['accion']) && in_array($_POST['accion'], ['aprobarDocumento', '
     echo json_encode([
         'success' => (bool)$ok,
         'mensaje' => $ok ? ($aprobar ? 'Documento aprobado' : 'El documento volvió a pendiente de aprobación') : 'No se pudo cambiar el estado del documento',
+    ]);
+    exit();
+}
+
+// Borrar un documento emitido: solo si aún no lo aprobó el decano
+if (isset($_POST['accion']) && $_POST['accion'] === 'eliminarDocumento') {
+    $idDocumento = intval($_POST['idDocumento'] ?? 0);
+    $ok = $idDocumento && CertificadoModelo::EliminarDocumentoPendienteModelo($idDocumento);
+    echo json_encode([
+        'success' => (bool)$ok,
+        'mensaje' => $ok ? 'Documento borrado' : 'No se pudo borrar: el documento ya fue aprobado por el decano o ya no existe',
     ]);
     exit();
 }

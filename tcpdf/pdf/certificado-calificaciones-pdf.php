@@ -6,6 +6,9 @@
  * Las coordenadas están calibradas contra el formato físico pre-impreso;
  * si algo se desalinea al imprimir en el papel real, ajustar las constantes
  * del bloque "COORDENADAS" más abajo (en milímetros).
+ *
+ * Con completo=1 (demostración) dibuja también todo el formato (membrete, cuadrícula,
+ * firmas, escudo de marca de agua...) en hoja en blanco y NO registra la emisión.
  */
 
 error_reporting(E_ALL);
@@ -24,6 +27,7 @@ if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC'], true)) {
 
 require_once '../../vendor/autoload.php';
 require_once '../../modelos/certificado.modelo.php';
+require_once __DIR__ . '/formatos-certificados.php';
 
 date_default_timezone_set('America/La_Paz');
 
@@ -38,6 +42,7 @@ if ($vaucher === false) {
     die('Error: El N° de voucher solo puede tener letras y números (y un guion entre las dos partes)');
 }
 $fecha = $_POST['fecha'] ?? '';
+$completo = !empty($_POST['completo']); // demostración con el formato completo
 
 if (!$estudianteID || !$programaID || empty($nombre) || empty($fecha)) {
     die('Error: Faltan datos requeridos para generar el certificado');
@@ -52,8 +57,8 @@ if (empty($modulos)) {
 
 // Se guardan los datos del formulario para poder reimprimirlo (y corregirlo) desde
 // Registro de documentos; con idDocumento es una reimpresión de ese registro.
-// En la vista previa (antes de generar) no se registra nada.
-if (!CertificadoModelo::EsVistaPrevia()) {
+// En la vista previa (antes de generar) y en la demostración no se registra nada.
+if (!CertificadoModelo::EsVistaPrevia() && !$completo) {
     CertificadoModelo::RegistrarEmisionModelo(
         'CALIFICACIONES', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
         $_POST, intval($_POST['idDocumento'] ?? 0)
@@ -114,11 +119,58 @@ function numeroALetras($numero)
 }
 
 /**
- * "MODULO I" -> "MOD.I" (así se abrevia en el formato pre-impreso)
+ * "MODULO VII" -> "MOD. VII" (así se abrevia en el formato pre-impreso)
  */
 function siglaModulo($codigoModulo)
 {
-    return str_ireplace('MODULO ', 'MOD.', trim($codigoModulo));
+    return preg_replace('/^M[OÓ]DULO\s*/iu', 'MOD. ', trim($codigoModulo));
+}
+
+// Letra del formato: Cambria (negrita, cursiva y negrita cursiva, convertida desde las
+// fuentes de Windows a tcpdf/fuentes/ para que también funcione en el servidor)
+const FUENTE_CERT = 'cambria';
+const LETRA_MINIMA = 6;
+
+/**
+ * Tamaño de letra (empezando en $tamano) con el que $texto entra en $ancho:
+ * de una sola línea, o sin pasar de $alto si se le da alto (texto en varias líneas).
+ */
+function tamanoQueEntra($pdf, $texto, $estilo, $tamano, $ancho, $alto = null)
+{
+    for (; $tamano > LETRA_MINIMA; $tamano -= 0.5) {
+        $pdf->SetFont(FUENTE_CERT, $estilo, $tamano);
+        $entra = $alto === null
+            ? $pdf->GetStringWidth($texto) <= $ancho
+            : $pdf->getStringHeight($ancho, $texto) <= $alto;
+        if ($entra) {
+            break;
+        }
+    }
+    $pdf->SetFont(FUENTE_CERT, $estilo, $tamano);
+    return $tamano;
+}
+
+/**
+ * Escribe un dato sobre la línea punteada del formato: $yLinea es el renglón donde
+ * se apoya la letra; si no entra en $ancho se achica (nunca invade el campo vecino).
+ */
+function campoEnLinea($pdf, $x, $yLinea, $ancho, $texto, $estilo, $tamano, $alin = 'L')
+{
+    $tamano = tamanoQueEntra($pdf, $texto, $estilo, $tamano, $ancho);
+    $alto = $tamano * 0.3528 * 1.3;
+    $descenso = $pdf->getFontDescent(FUENTE_CERT, $estilo, $tamano);
+    $pdf->SetXY($x, $yLinea + $descenso - $alto);
+    $pdf->Cell($ancho, $alto, $texto, 0, 0, $alin, false, '', 0, false, 'T', 'B');
+}
+
+/**
+ * Escribe una casilla de la tabla centrada en vertical dentro del renglón impreso.
+ * $varias: el texto puede partirse en líneas (nombre del módulo); si no, va en una.
+ */
+function casillaTabla($pdf, $x, $y, $ancho, $alto, $texto, $estilo, $tamano, $alin, $varias = false)
+{
+    tamanoQueEntra($pdf, $texto, $estilo, $tamano, $ancho, $varias ? $alto : null);
+    $pdf->MultiCell($ancho, $alto, $texto, 0, $alin, false, 0, $x, $y, true, 0, false, false, $alto, 'M');
 }
 
 $mesesEspanol = [
@@ -134,20 +186,27 @@ $anioFecha = date('Y', $timestampFecha);
 
 // ===================================
 // COORDENADAS (mm) calibradas contra el formato pre-impreso (Carta / Letter)
+// Y_ = renglón (línea punteada) donde se apoya el texto; X_/W_ = inicio y ancho
+// del espacio libre entre la etiqueta impresa y la siguiente.
 // ===================================
-$X_NOMBRE = 60;      $Y_NOMBRE = 62;      $W_NOMBRE = 108;
-$X_VAUCHER = 171;    $Y_VAUCHER = 62;     $W_VAUCHER = 36;
-$X_PROGRAMA = 33;    $Y_PROGRAMA = 71;    $W_PROGRAMA = 174;
-$X_NIVEL = 23;       $Y_NIVEL = 80;       $W_NIVEL = 138;
-$X_ANIO = 171;       $Y_ANIO = 80;        $W_ANIO = 36;
+$X_NOMBRE = 59.5;    $Y_NOMBRE = 67.7;    $W_NOMBRE = 100;
+$X_VAUCHER = 169.5;  $Y_VAUCHER = 67.7;   $W_VAUCHER = 36;
+$X_PROGRAMA = 39.5;  $Y_PROGRAMA = 75.5;  $W_PROGRAMA = 166;
+$X_NIVEL = 29.5;     $Y_NIVEL = 83.9;     $W_NIVEL = 130;
+$X_ANIO = 172.5;     $Y_ANIO = 83.9;      $W_ANIO = 33;
 
-$X_TABLA = 9.65;     $Y_TABLA = 106;      $W_TABLA = 197.85;
-$W_SIGLA_PCT = 9.22; $W_NOMBREMOD_PCT = 46.75; $W_NUM_PCT = 10.36; $W_LITERAL_PCT = 33.67;
+// Cuerpo de la tabla: 6 renglones iguales; el primero 2,5 mm debajo del encabezado
+// y el último termina en el borde inferior (180,9 mm)
+$Y_TABLA = 108.3;    $ALTO_FILA = 12.1;   $MARGEN_CASILLA = 1.2;
+$X_SIGLA = 10.9;     $W_SIGLA = 16.9;
+$X_NOMBREMOD = 27.8; $W_NOMBREMOD = 92.5; $SANGRIA_NOMBREMOD = 5.8;
+$X_NUM = 120.3;      $W_NUM = 19.8;
+$X_LITERAL = 140.1;  $W_LITERAL = 65.8;   $SANGRIA_LITERAL = 11;
 
-$X_DIA = 123.1;      $ANCHO_DIA = 9.2;
-$X_MES = 136.6;      $ANCHO_MES = 41.9;
-$X_ANIOFECHA = 182.8; $ANCHO_ANIOFECHA = 24.7;
-$Y_FECHA = 200.3;
+$X_DIA = 137.0;      $ANCHO_DIA = 10.6;
+$X_MES = 152.8;      $ANCHO_MES = 35.5;
+$X_ANIOFECHA = 193.9; $ANCHO_ANIOFECHA = 12.2;
+$Y_FECHA = 197.8;
 
 // ===================================
 // GENERACIÓN DEL PDF
@@ -162,56 +221,54 @@ $pdf->setPrintHeader(false);
 $pdf->setPrintFooter(false);
 $pdf->SetMargins(0, 0, 0);
 $pdf->SetAutoPageBreak(false);
+$pdf->setCellPaddings(0, 0, 0, 0);
+$dirFuentes = __DIR__ . '/../fuentes/';
+$pdf->AddFont(FUENTE_CERT, 'B', $dirFuentes . 'cambriab.php');
+$pdf->AddFont(FUENTE_CERT, 'I', $dirFuentes . 'cambriai.php');
+$pdf->AddFont(FUENTE_CERT, 'BI', $dirFuentes . 'cambriaz.php');
 
 $modulosPorHoja = array_chunk($modulos, 6);
+$coordenadas = compact('Y_NOMBRE', 'Y_VAUCHER', 'Y_PROGRAMA', 'Y_NIVEL', 'Y_ANIO', 'Y_TABLA', 'ALTO_FILA',
+    'X_SIGLA', 'X_NOMBREMOD', 'X_NUM', 'X_LITERAL', 'W_LITERAL', 'X_DIA', 'ANCHO_DIA', 'X_MES', 'ANCHO_MES',
+    'X_ANIOFECHA', 'ANCHO_ANIOFECHA', 'Y_FECHA');
+$correlativo = $completo ? CertificadoModelo::ContarEmitidosModelo('CALIFICACIONES') + 1 : 0;
 
 foreach ($modulosPorHoja as $chunk) {
     $pdf->AddPage();
+    if ($completo) {
+        dibujarFormatoCalificaciones($pdf, $coordenadas, $correlativo, ConfiguracionModelo::NotaAprobacion());
+    }
     $pdf->SetTextColor(0, 0, 0);
 
     // Bloque de datos del encabezado (se repite en cada hoja)
-    $pdf->SetFont('helvetica', 'B', 11);
-    $pdf->SetXY($X_NOMBRE, $Y_NOMBRE);
-    $pdf->Cell($W_NOMBRE, 6, mb_strtoupper($nombre, 'UTF-8'), 0, 0, 'L');
+    campoEnLinea($pdf, $X_NOMBRE, $Y_NOMBRE, $W_NOMBRE, mb_strtoupper($nombre, 'UTF-8'), 'I', 12);
+    campoEnLinea($pdf, $X_VAUCHER, $Y_VAUCHER, $W_VAUCHER, mb_strtoupper($vaucher, 'UTF-8'), 'B', 12);
+    campoEnLinea($pdf, $X_PROGRAMA, $Y_PROGRAMA, $W_PROGRAMA, mb_strtoupper($programa, 'UTF-8'), 'B', 13);
+    campoEnLinea($pdf, $X_NIVEL, $Y_NIVEL, $W_NIVEL, mb_strtoupper($nivel, 'UTF-8'), 'B', 13);
+    campoEnLinea($pdf, $X_ANIO, $Y_ANIO, $W_ANIO, mb_strtoupper($anio, 'UTF-8'), 'B', 13, 'C');
 
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->SetXY($X_VAUCHER, $Y_VAUCHER);
-    $pdf->Cell($W_VAUCHER, 6, mb_strtoupper($vaucher, 'UTF-8'), 0, 0, 'L');
-
-    $pdf->SetFont('helvetica', 'B', 11);
-    $pdf->SetXY($X_PROGRAMA, $Y_PROGRAMA);
-    $pdf->Cell($W_PROGRAMA, 6, mb_strtoupper($programa, 'UTF-8'), 0, 0, 'L');
-
-    $pdf->SetXY($X_NIVEL, $Y_NIVEL);
-    $pdf->Cell($W_NIVEL, 6, mb_strtoupper($nivel, 'UTF-8'), 0, 0, 'L');
-
-    $pdf->SetXY($X_ANIO, $Y_ANIO);
-    $pdf->Cell($W_ANIO, 6, mb_strtoupper($anio, 'UTF-8'), 0, 0, 'L');
-
-    // Tabla de módulos (sin bordes: la cuadrícula ya está impresa en el papel)
-    $filasHtml = '';
-    foreach ($chunk as $mod) {
+    // Tabla de módulos (sin bordes: la cuadrícula ya está impresa en el papel).
+    // Cada módulo ocupa su renglón fijo; la letra se achica si no entra.
+    $m = $MARGEN_CASILLA;
+    foreach ($chunk as $i => $mod) {
         $nota = intval($mod['Nota']);
-        $filasHtml .= '<tr>
-            <td width="' . $W_SIGLA_PCT . '%" style="font-weight:bold;">' . htmlspecialchars(siglaModulo($mod['codigomodulo'])) . '</td>
-            <td width="' . $W_NOMBREMOD_PCT . '%">' . htmlspecialchars(mb_strtoupper($mod['nombremodulo'], 'UTF-8')) . '</td>
-            <td width="' . $W_NUM_PCT . '%" style="font-weight:bold; text-align:center;">' . $nota . '</td>
-            <td width="' . $W_LITERAL_PCT . '%">' . htmlspecialchars(numeroALetras($nota)) . '</td>
-        </tr>';
+        $y = $Y_TABLA + $i * $ALTO_FILA;
+        $altoUtil = $ALTO_FILA - 2 * $m;
+
+        casillaTabla($pdf, $X_SIGLA + $m, $y + $m, $W_SIGLA - 2 * $m, $altoUtil,
+            siglaModulo($mod['codigomodulo']), 'I', 10, 'C');
+        casillaTabla($pdf, $X_NOMBREMOD + $SANGRIA_NOMBREMOD, $y + $m, $W_NOMBREMOD - $SANGRIA_NOMBREMOD - 2 * $m, $altoUtil,
+            mb_strtoupper($mod['nombremodulo'], 'UTF-8'), 'I', 10, 'L', true);
+        casillaTabla($pdf, $X_NUM + $m, $y + $m, $W_NUM - 2 * $m, $altoUtil,
+            (string) $nota, 'B', 10, 'C');
+        casillaTabla($pdf, $X_LITERAL + $SANGRIA_LITERAL, $y + $m, $W_LITERAL - $SANGRIA_LITERAL - $m, $altoUtil,
+            numeroALetras($nota), 'BI', 10, 'L');
     }
 
-    $pdf->SetFont('helvetica', '', 10);
-    $tablaHtml = '<table cellpadding="1.5" style="font-size:10pt;">' . $filasHtml . '</table>';
-    $pdf->writeHTMLCell($W_TABLA, 0, $X_TABLA, $Y_TABLA, $tablaHtml, 0, 0, false, true, 'L');
-
-    // Fecha (el "de ... de ..." ya está impreso en el papel)
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->SetXY($X_DIA, $Y_FECHA);
-    $pdf->Cell($ANCHO_DIA, 6, $diaFecha, 0, 0, 'C');
-    $pdf->SetXY($X_MES, $Y_FECHA);
-    $pdf->Cell($ANCHO_MES, 6, $mesFecha, 0, 0, 'C');
-    $pdf->SetXY($X_ANIOFECHA, $Y_FECHA);
-    $pdf->Cell($ANCHO_ANIOFECHA, 6, $anioFecha, 0, 0, 'C');
+    // Fecha (el "Oruro, ... de ... de ..." ya está impreso en el papel)
+    campoEnLinea($pdf, $X_DIA, $Y_FECHA, $ANCHO_DIA, (string) $diaFecha, 'B', 11, 'C');
+    campoEnLinea($pdf, $X_MES, $Y_FECHA, $ANCHO_MES, $mesFecha, 'B', 11, 'C');
+    campoEnLinea($pdf, $X_ANIOFECHA, $Y_FECHA, $ANCHO_ANIOFECHA, $anioFecha, 'B', 11, 'C');
 }
 
 if (CertificadoModelo::EsVistaPrevia()) {
@@ -222,6 +279,6 @@ if (ob_get_contents()) {
     ob_end_clean();
 }
 
-$nombreArchivo = 'Certificado_Calificaciones_' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $nombre) . '_' . date('Ymd') . '.pdf';
+$nombreArchivo = ($completo ? 'Demostracion_' : '') . 'Certificado_Calificaciones_' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $nombre) . '_' . date('Ymd') . '.pdf';
 $pdf->Output($nombreArchivo, 'I');
 exit;

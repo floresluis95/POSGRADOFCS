@@ -85,3 +85,43 @@ test('el Certificado de Revisión se genera desde su pantalla y queda en Registr
   await page.locator('#btn-buscar-ci').click();
   await expect(page.locator('#contenedor-checklist .item-checklist', { hasText: 'Certificado de Revisión' })).toContainText('Por aprobar');
 });
+
+test('un documento por aprobar se puede borrar; uno aprobado no', async ({ page }) => {
+  await ingresar(page, 'adm');
+  const { estudianteID } = await estudianteInscrito(page);
+  const ci = valor(`SELECT Ci FROM estudiante WHERE EstudianteID = ${estudianteID}`);
+  const pdf = await page.request.post('tcpdf/pdf/certificado-medio-magnetico-pdf.php', {
+    form: {
+      estudianteID: String(estudianteID), programaID: String(PROGRAMA_ID), tratamiento: 'El Sr.', nombre: 'PRUEBA BORRAR',
+      curso: 'ESPECIALIDAD DE PRUEBA', tipotrabajo: 'TRABAJO DE GRADO', titulo: 'TÍTULO DE PRUEBA', vaucher: 'BORRA-' + estudianteID,
+      fecha: '2026-10-10', coordinador: 'COORDINADOR DE PRUEBA', director: 'DIRECTOR DE PRUEBA',
+    },
+  });
+  expect(pdf.headers()['content-type']).toContain('application/pdf');
+  const idDocumento = valor(`SELECT IdDocumento FROM documentoemitido WHERE EstudianteID = ${estudianteID}`);
+  const existe = () => valor(`SELECT COUNT(*) FROM documentoemitido WHERE IdDocumento = ${idDocumento}`);
+
+  await page.goto('registrodocumentos');
+  await page.locator('#input-buscar-ci').fill(String(ci));
+  await page.locator('#btn-buscar-ci').click();
+  const item = page.locator('#contenedor-checklist .item-checklist', { hasText: 'Medio Magnético' });
+
+  // Aprobado: no aparece el botón y el ajax tampoco lo borra
+  await item.locator('[data-aprobar]').click();
+  await page.locator('.swal2-confirm').click();
+  await expect(item).toContainText('Aprobado');
+  await expect(item.locator('[data-borrar-documento]')).toHaveCount(0);
+  const rechazo = await page.request.post('ajax/certificado.ajax.php', { form: { accion: 'eliminarDocumento', idDocumento: String(idDocumento) } });
+  expect((await rechazo.json()).success).toBe(false);
+  expect(existe()).toBe('1');
+
+  // Por aprobar: se borra después de confirmar
+  await item.locator('[data-quitar-aprobacion]').click();
+  await page.locator('.swal2-confirm').click();
+  await expect(item).toContainText('Por aprobar');
+  await item.locator('[data-borrar-documento]').click();
+  await expect(page.locator('.swal2-popup')).toContainText('BORRA-' + estudianteID);
+  await page.locator('.swal2-confirm').click();
+  await expect.poll(existe).toBe('0');
+  await expect(item.locator('[data-borrar-documento]')).toHaveCount(0);
+});

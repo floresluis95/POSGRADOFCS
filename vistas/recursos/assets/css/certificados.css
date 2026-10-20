@@ -215,6 +215,17 @@
     margin-bottom: 10px;
 }
 
+/* Select con buscador (select2) para elegir al docente */
+.caja-docente-tribunal {
+    flex: 0 0 280px;
+    min-width: 0;
+}
+.caja-docente-tribunal .select2-container .select2-selection--single {
+    height: 40px;
+    display: flex;
+    align-items: center;
+}
+
 /* Quitar miembro: mismo formato que los botones de acción de las tablas (rojo) */
 .btn-quitar-miembro {
     width: 40px;
@@ -261,6 +272,7 @@
 .certificado-acciones {
     display: flex;
     justify-content: flex-end;
+    flex-wrap: wrap;
     align-items: center;
     gap: 12px;
     margin: 22px -24px -22px;
@@ -290,6 +302,16 @@
     border-color: var(--cert-primario-hover);
     box-shadow: 0 4px 12px rgba(30, 60, 114, .25);
     color: #fff;
+}
+
+/* Demostración del documento completo: acción secundaria, con borde */
+.btn-generar-certificado.btn-documento-completo {
+    background: #fff;
+    color: var(--cert-primario);
+}
+.btn-generar-certificado.btn-documento-completo:hover:not(:disabled) {
+    background: #eef3fb;
+    color: var(--cert-primario);
 }
 
 .btn-generar-certificado:disabled {
@@ -324,6 +346,7 @@
     .btn-generar-certificado { width: 100%; justify-content: center; }
     .fila-tribunal { flex-wrap: wrap; }
     .fila-tribunal .form-control { max-width: none !important; flex: 1 1 100%; }
+    .fila-tribunal .caja-docente-tribunal { flex: 1 1 100%; }
 }
 
 /* Aviso debajo de la tabla (ej. "sin calificaciones"): separado de la tabla vacía */
@@ -432,6 +455,7 @@
 .cert-cambiar:hover { background: var(--cert-primario); color: #fff; }
 
 .cert-ayuda { display: block; margin-top: 5px; font-size: 11.5px; color: var(--cert-texto-2); }
+.cert-ayuda-aviso { color: #b45309; font-weight: 600; }
 
 /* ========================================================
    Confirmación con vista previa

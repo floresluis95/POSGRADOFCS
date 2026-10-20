@@ -204,6 +204,8 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 .rd-btn-mini:hover { border-color: #1e3c72; color: #1e3c72; }
 .rd-btn-mini.aprobar { border-color: #2f855a; color: #2f855a; }
 .rd-btn-mini.aprobar:hover { background: #2f855a; color: #fff; }
+.rd-btn-mini.borrar { border-color: #c53030; color: #c53030; }
+.rd-btn-mini.borrar:hover { background: #c53030; color: #fff; }
 .rd-btn-mini[disabled] { opacity: .5; cursor: not-allowed; }
 .item-checklist { flex-wrap: wrap; }
 .item-checklist .rd-doc-texto { flex: 1; min-width: 0; }
@@ -491,7 +493,8 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                 : '<span class="rd-estado pendiente">Por aprobar</span>';
         }
 
-        // Botones Imprimir (con los datos guardados) y Aprobar / Quitar aprobación
+        // Botones Imprimir (con los datos guardados), Aprobar / Quitar aprobación y
+        // Borrar (solo mientras no lo apruebe el decano)
         function htmlAcciones(doc) {
             var tieneDatos = doc.TieneDatos !== undefined ? Number(doc.TieneDatos) === 1 : !!doc.Datos;
             var imprimir = '<button type="button" class="rd-btn-mini" data-reimprimir="' + doc.IdDocumento + '"' +
@@ -500,7 +503,11 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
             var estado = doc.Estado === 'APROBADO'
                 ? '<button type="button" class="rd-btn-mini" data-quitar-aprobacion="' + doc.IdDocumento + '"><i class="fas fa-undo"></i> Quitar aprobación</button>'
                 : '<button type="button" class="rd-btn-mini aprobar" data-aprobar="' + doc.IdDocumento + '"><i class="fas fa-check"></i> Aprobado por el decano</button>';
-            return imprimir + estado;
+            var borrar = doc.Estado === 'APROBADO' ? ''
+                : '<button type="button" class="rd-btn-mini borrar" data-borrar-documento="' + doc.IdDocumento + '"' +
+                  ' data-voucher="' + esc(doc.NumeroVaucher) + '" data-estudiante="' + esc(doc.NombreEstudiante) + '"' +
+                  ' title="Borrar este registro (aún no está aprobado)"><i class="fas fa-trash-alt"></i> Borrar</button>';
+            return imprimir + estado + borrar;
         }
 
         // Vuelve a cargar la lista y los documentos del estudiante elegido
@@ -953,6 +960,34 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                 confirmButtonText: 'Sí, quitar',
                 cancelButtonText: 'Cancelar'
             }).then(function(r) { if (r.value) cambiarEstado(id, false); });
+        });
+
+        // ===== Borrar un documento que aún no aprobó el decano =====
+        $(document).on('click', '[data-borrar-documento]', function() {
+            var $btn = $(this);
+            var id = $btn.data('borrar-documento');
+            var detalle = [$btn.attr('data-estudiante'), $btn.attr('data-voucher') ? 'voucher ' + $btn.attr('data-voucher') : '']
+                .filter(Boolean).join(' · ');
+            Swal.fire({
+                type: 'warning',
+                title: '¿Borrar este documento?',
+                html: (detalle ? '<b>' + esc(detalle) + '</b><br>' : '') +
+                    'Se quitará del registro y del historial de pagos de certificados. No se puede deshacer.',
+                showCancelButton: true,
+                confirmButtonColor: '#c53030',
+                confirmButtonText: 'Sí, borrar',
+                cancelButtonText: 'Cancelar'
+            }).then(function(r) {
+                if (!r.value) return;
+                $.post('ajax/certificado.ajax.php', { accion: 'eliminarDocumento', idDocumento: id }, function(data) {
+                    if (data.success) {
+                        Swal.fire({ type: 'success', title: data.mensaje, timer: 1400, showConfirmButton: false });
+                    } else {
+                        Swal.fire({ type: 'error', title: data.mensaje || 'No se pudo borrar el documento' });
+                    }
+                    refrescar();
+                }, 'json');
+            });
         });
     });
     </script>

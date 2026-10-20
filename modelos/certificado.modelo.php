@@ -1,5 +1,5 @@
 <?php
-require_once 'conexion.modelo.php';
+require_once __DIR__ . '/../core/conexion.modelo.php';
 require_once __DIR__ . '/configuracion.modelo.php'; // precios de los certificados
 
 // ===========================
@@ -70,6 +70,22 @@ class CertificadoModelo
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /* Cuántos documentos de un tipo se emitieron (correlativo de la demostración) */
+    public static function ContarEmitidosModelo($tipo)
+    {
+        $stmt = Conexion::Conectar()->prepare("SELECT COUNT(*) FROM documentoemitido WHERE TipoDocumento = :tipo");
+        $stmt->execute([':tipo' => $tipo]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /* Cuántos módulos tiene el programa (para mostrar "3 de 12 módulos con nota") */
+    public static function ContarModulosProgramaModelo($programaID)
+    {
+        $stmt = Conexion::Conectar()->prepare("SELECT COUNT(*) FROM modulos WHERE ProgramaId = :programaID");
+        $stmt->execute([':programaID' => (int)$programaID]);
+        return (int)$stmt->fetchColumn();
+    }
+
     /**
      * El título del trabajo de grado se guarda siempre en MAYÚSCULAS y sin
      * espacios de más, venga de donde venga (certificado de aprobación, defensas,
@@ -102,6 +118,41 @@ class CertificadoModelo
     }
 
     /* Trabajo de grado (Tesis/Monografía) registrado para un estudiante+programa */
+    /**
+     * Nombres para elegir en el tribunal del Certificado de Aprobación: los docentes
+     * activos (con su mención, "Esp. Lic. ...") y las personas ya escritas a mano en
+     * tribunales anteriores (así quien no es docente queda registrado para la próxima).
+     */
+    public static function SugerenciasTribunalModelo()
+    {
+        $con = Conexion::Conectar();
+        $lista = [];
+        $docentes = $con->query("SELECT Menciones, Nombre, Apaterno, Amaterno FROM docente WHERE Estado = 1 ORDER BY Apaterno, Amaterno, Nombre");
+        foreach ($docentes->fetchAll(PDO::FETCH_ASSOC) as $d) {
+            $persona = mb_convert_case(trim(preg_replace('/\s+/', ' ', $d['Nombre'] . ' ' . $d['Apaterno'] . ' ' . $d['Amaterno'])), MB_CASE_TITLE, 'UTF-8');
+            $lista[] = ['nombre' => trim(trim($d['Menciones'] ?? '') . ' ' . $persona), 'origen' => 'Docente'];
+        }
+        $tribunales = $con->query("SELECT Tribunal FROM trabajogrado WHERE Tribunal IS NOT NULL AND Tribunal <> ''");
+        foreach ($tribunales->fetchAll(PDO::FETCH_COLUMN) as $tribunal) {
+            foreach (explode('|', $tribunal) as $miembro) {
+                $partes = explode(':', $miembro, 2);
+                $persona = trim(end($partes));
+                if ($persona !== '') {
+                    $lista[] = ['nombre' => $persona, 'origen' => 'Tribunal anterior'];
+                }
+            }
+        }
+        // Sin repetidos (sin importar mayúsculas); gana el primero (el docente)
+        $vistos = [];
+        return array_values(array_filter($lista, function ($p) use (&$vistos) {
+            $clave = mb_strtolower($p['nombre'], 'UTF-8');
+            if (isset($vistos[$clave])) {
+                return false;
+            }
+            return $vistos[$clave] = true;
+        }));
+    }
+
     public static function ObtenerTrabajoGradoModelo($estudianteID, $programaID)
     {
         $stmt = Conexion::Conectar()->prepare("
@@ -426,6 +477,19 @@ class CertificadoModelo
                 WHERE IdDocumento = :id");
             $stmt->execute([':id' => $idDocumento]);
         }
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Borra un documento emitido que aún no aprobó el decano (p. ej. se generó por error).
+     * La condición de estado va en el mismo DELETE: uno ya aprobado nunca se borra.
+     * @return bool false si no existe o ya está aprobado
+     */
+    public static function EliminarDocumentoPendienteModelo($idDocumento)
+    {
+        $stmt = Conexion::Conectar()->prepare("
+            DELETE FROM documentoemitido WHERE IdDocumento = :id AND Estado = 'PENDIENTE'");
+        $stmt->execute([':id' => (int)$idDocumento]);
         return $stmt->rowCount() > 0;
     }
 

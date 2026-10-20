@@ -63,6 +63,10 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                                         <button type="button" class="btn-generar-certificado" id="btn-generar-certificado" disabled>
                                             <i class="fas fa-eye"></i> Revisar y generar
                                         </button>
+                                        <button type="button" class="btn-generar-certificado btn-documento-completo" id="btn-documento-completo" disabled
+                                            title="Demostración: genera todo el historial (membrete, cuadrícula y firmas) en hoja oficio. No se registra.">
+                                            <i class="fas fa-file-alt"></i> Documento completo (demostración)
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -124,7 +128,7 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                     var $tbody = $('#tabla-modulos-certificado tbody').empty();
                     modulosActuales = (data.success && data.modulos) ? data.modulos : [];
                     $('#alerta-sin-modulos').toggle(!modulosActuales.length);
-                    $('#btn-generar-certificado').prop('disabled', !modulosActuales.length);
+                    $('#btn-generar-certificado, #btn-documento-completo').prop('disabled', !modulosActuales.length);
                     modulosActuales.forEach(function(mod) {
                         var fecha = mod.FechaRegistro ? String(mod.FechaRegistro).substring(0, 10).split('-').reverse().join('/') : '-';
                         $tbody.append(
@@ -141,6 +145,29 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                     Certificado.aviso('error', 'Error', 'No se pudieron obtener las calificaciones');
                 }
             });
+        });
+
+        // Demostración: todo el historial (membrete, cuadrícula, firmas) en hoja oficio,
+        // con los datos puestos. No se registra ni pide voucher.
+        $('#btn-documento-completo').on('click', function() {
+            var $opt = $('#select-inscripcion').find('option:selected');
+            var fecha = $('#input-fecha').val();
+            if (!modulosActuales.length || !fecha) {
+                Certificado.aviso('warning', 'Faltan datos', 'Elija un estudiante con notas y la fecha del historial');
+                return;
+            }
+            var $form = $('#form-generar-certificado');
+            $('#hidden-estudianteID').val($('#select-inscripcion').val());
+            $('#hidden-programaID').val($opt.data('programa-id'));
+            $('#hidden-nombre').val($opt.data('nombre'));
+            $('#hidden-programa').val($opt.data('programa'));
+            $('#hidden-nivel').val($opt.data('nivel'));
+            $('#hidden-vaucher').val($('#input-vaucher').val().trim());
+            $('#hidden-monto').val('');
+            $('#hidden-fecha').val(fecha);
+            var $completo = $('<input type="hidden" name="completo" value="1">').appendTo($form);
+            $form.attr('target', '_blank')[0].submit();
+            $completo.remove();
         });
 
         $('#btn-generar-certificado').on('click', function() {

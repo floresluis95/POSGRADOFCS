@@ -59,12 +59,15 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                                             <tbody></tbody>
                                         </table>
                                     </div>
-                                    <div id="alerta-sin-modulos" class="alert alert-warning" style="display:none;">
-                                        <i class="fas fa-exclamation-triangle"></i> Sin calificaciones registradas en este programa.
-                                    </div>
+                                    <div id="resumen-modulos" class="alert alert-info" style="display:none;"></div>
+                                    <div id="alerta-sin-modulos" class="alert alert-warning" style="display:none;"></div>
                                     <div class="certificado-acciones">
                                         <button type="button" class="btn-generar-certificado" id="btn-generar-certificado" disabled>
                                             <i class="fas fa-eye"></i> Revisar y generar
+                                        </button>
+                                        <button type="button" class="btn-generar-certificado btn-documento-completo" id="btn-documento-completo" disabled
+                                            title="Demostración: genera todo el certificado (membrete, cuadrícula, firmas y escudo) en hoja en blanco. No se registra.">
+                                            <i class="fas fa-file-alt"></i> Documento completo (demostración)
                                         </button>
                                     </div>
                                 </div>
@@ -143,8 +146,19 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                     $('#card-modulos').show();
                     var $tbody = $('#tabla-modulos-certificado tbody').empty();
                     modulosActuales = (data.success && data.modulos) ? data.modulos : [];
-                    $('#alerta-sin-modulos').toggle(!modulosActuales.length);
-                    $('#btn-generar-certificado').prop('disabled', !modulosActuales.length);
+                    // No hace falta que estén todos los módulos: se imprimen los que ya tienen nota
+                    var total = parseInt(data.totalModulos, 10) || 0;
+                    var deTotal = total ? ' de ' + total : '';
+                    $('#resumen-modulos').toggle(!!modulosActuales.length).html(
+                        '<i class="fas fa-info-circle"></i> <strong>' + modulosActuales.length + deTotal + ' módulos con nota.</strong> ' +
+                        (total > modulosActuales.length ? 'El certificado sale con los módulos que ya tienen nota; los demás no se imprimen.' : '')
+                    );
+                    $('#alerta-sin-modulos').toggle(!modulosActuales.length).html(
+                        '<i class="fas fa-exclamation-triangle"></i> <strong>Este estudiante aún no tiene ninguna nota' +
+                        (total ? ' (0 de ' + total + ' módulos)' : '') + '.</strong> ' +
+                        'No hace falta que tenga todos los módulos: basta con que tenga al menos una nota registrada para generar el certificado.'
+                    );
+                    $('#btn-generar-certificado, #btn-documento-completo').prop('disabled', !modulosActuales.length);
                     // Año sugerido: del inicio del primer módulo al fin del último ("2024 - 2025")
                     var rango = rangoAnios(modulosActuales);
                     if (rango) $('#input-anio').val(rango);
@@ -162,6 +176,31 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                     Certificado.aviso('error', 'Error', 'No se pudieron obtener las calificaciones');
                 }
             });
+        });
+
+        // Demostración: el mismo certificado con TODO el formato dibujado (membrete, cuadrícula,
+        // firmas, escudo de marca de agua) en hoja en blanco. No se registra ni pide voucher.
+        $('#btn-documento-completo').on('click', function() {
+            var $opt = $('#select-inscripcion').find('option:selected');
+            var fecha = $('#input-fecha').val();
+            var anio = $('#input-anio').val().trim().replace(/\s*-\s*/g, ' - ');
+            if (!modulosActuales.length || !fecha) {
+                Certificado.aviso('warning', 'Faltan datos', 'Elija un estudiante con notas y la fecha del certificado');
+                return;
+            }
+            var $form = $('#form-generar-certificado');
+            $('#hidden-estudianteID').val($('#select-inscripcion').val());
+            $('#hidden-programaID').val($opt.data('programa-id'));
+            $('#hidden-nombre').val($opt.data('nombre'));
+            $('#hidden-programa').val($opt.data('programa'));
+            $('#hidden-nivel').val($opt.data('nivel'));
+            $('#hidden-anio').val(anio);
+            $('#hidden-vaucher').val($('#input-vaucher').val().trim());
+            $('#hidden-monto').val('');
+            $('#hidden-fecha').val(fecha);
+            var $completo = $('<input type="hidden" name="completo" value="1">').appendTo($form);
+            $form.attr('target', '_blank')[0].submit();
+            $completo.remove();
         });
 
         $('#btn-generar-certificado').on('click', function() {

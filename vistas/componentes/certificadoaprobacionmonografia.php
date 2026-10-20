@@ -79,6 +79,7 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
 
                                 <div class="form-group">
                                     <label>Miembros del tribunal</label>
+                                    <small class="form-text text-muted mb-2">Seleccione al docente en la lista; si no está, escriba el nombre a mano: al generar el certificado queda registrado y aparece en la lista la próxima vez.</small>
                                     <div id="contenedor-tribunal"></div>
                                     <button type="button" class="btn-agregar-miembro" id="btn-agregar-miembro">
                                         <i class="fas fa-plus"></i> Agregar miembro del tribunal
@@ -112,6 +113,10 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                                 <div class="certificado-acciones">
                                     <button type="button" class="btn-generar-certificado" id="btn-generar-certificado">
                                         <i class="fas fa-eye"></i> Revisar y generar
+                                    </button>
+                                    <button type="button" class="btn-generar-certificado btn-documento-completo" id="btn-documento-completo"
+                                        title="Demostración: genera todo el certificado (recuadros, membrete, firmas y escudo) en hoja oficio. No se registra.">
+                                        <i class="fas fa-file-alt"></i> Documento completo (demostración)
                                     </button>
                                 </div>
                                 </div>
@@ -193,19 +198,59 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
             var $fila = $(
                 '<div class="fila-tribunal">' +
                     '<input type="text" class="form-control input-rol-tribunal" placeholder="Rol (Ej: Presidente, Tribunal)" style="max-width:220px;">' +
+                    '<div class="caja-docente-tribunal"><select class="form-control select-docente-tribunal"></select></div>' +
                     '<input type="text" class="form-control input-nombre-tribunal" placeholder="Nombre completo">' +
                     '<button type="button" class="btn-quitar-miembro" title="Quitar"><i class="fas fa-times"></i></button>' +
                 '</div>'
             );
             $fila.find('.input-rol-tribunal').val(rol || '');
             $fila.find('.input-nombre-tribunal').val(nombre || '');
+            llenarSelectTribunal($fila.find('.select-docente-tribunal'), nombre);
+            // Elegir a alguien de la lista pone su nombre; escribir a mano vuelve a "Otro"
+            $fila.find('.select-docente-tribunal').on('change', function() {
+                if (this.value) $fila.find('.input-nombre-tribunal').val(this.value);
+                else $fila.find('.input-nombre-tribunal').val('').trigger('focus');
+            });
+            $fila.find('.input-nombre-tribunal').on('input', function() {
+                marcarEnSelect($fila.find('.select-docente-tribunal'), this.value);
+            });
             $fila.find('.btn-quitar-miembro').on('click', function() {
                 if ($('#contenedor-tribunal .fila-tribunal').length > 1) {
                     $fila.remove();
                 }
             });
             $('#contenedor-tribunal').append($fila);
+            // Select con buscador: se escribe parte del nombre y se filtra la lista
+            $fila.find('.select-docente-tribunal').select2({
+                width: '100%',
+                language: { noResults: function() { return 'No está en la lista: elija "Otro" y escríbalo a mano'; } }
+            });
         }
+
+        // Lista para elegir el tribunal: docentes y personas de tribunales anteriores
+        var personasTribunal = [];
+        function llenarSelectTribunal($select, nombre) {
+            $select.empty().append('<option value="">-- Otro (escribir a mano) --</option>');
+            [['Docente', 'Docentes'], ['Tribunal anterior', 'Tribunales anteriores']].forEach(function(grupo) {
+                var $grupo = $('<optgroup></optgroup>').attr('label', grupo[1]);
+                personasTribunal.filter(function(p) { return p.origen === grupo[0]; }).forEach(function(p) {
+                    $('<option></option>').val(p.nombre).text(p.nombre).appendTo($grupo);
+                });
+                if ($grupo.children().length) $select.append($grupo);
+            });
+            marcarEnSelect($select, nombre);
+        }
+        function marcarEnSelect($select, nombre) {
+            var buscado = String(nombre || '').trim().toLowerCase();
+            var $opcion = $select.find('option').filter(function() { return buscado && this.value.toLowerCase() === buscado; }).first();
+            $select.val($opcion.length ? $opcion.val() : '').trigger('change.select2'); // solo refresca lo que se ve
+        }
+        $.post('ajax/certificado.ajax.php', { accion: 'sugerenciasTribunal' }, function(data) {
+            personasTribunal = (data && data.personas) || [];
+            $('#contenedor-tribunal .fila-tribunal').each(function() {
+                llenarSelectTribunal($(this).find('.select-docente-tribunal'), $(this).find('.input-nombre-tribunal').val());
+            });
+        }, 'json');
 
         agregarFilaTribunal('PRESIDENTE', '');
         agregarFilaTribunal('TRIBUNAL', '');
@@ -423,7 +468,9 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
         });
 
         // ---- Generar PDF ----
-        $('#btn-generar-certificado').on('click', function() {
+        // Valida y copia los datos al formulario oculto; null si falta algo. En la
+        // demostración (documento completo) no se piden el recibo ni el monto.
+        function prepararFormulario(demostracion) {
             var $opt = $('#select-inscripcion').find('option:selected');
             var nombre = $opt.data('nombre');
             var programa = $opt.data('programa');
@@ -436,20 +483,20 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
 
             if (!nombre) {
                 Swal.fire({ type: 'warning', title: 'Falta el estudiante', text: 'Busque y seleccione un estudiante' });
-                return;
+                return null;
             }
             if (!titulo) {
                 Swal.fire({ type: 'warning', title: 'Falta el título', text: 'Ingrese el título del trabajo de grado' });
-                return;
+                return null;
             }
             titulo = titulo.replace(/\s+/g, ' '); // sin espacios dobles
-            if (!vaucher) {
+            if (!vaucher && !demostracion) {
                 Swal.fire({ type: 'warning', title: 'Falta el N° de recibo', text: 'Ingrese el número de recibo de caja' });
-                return;
+                return null;
             }
             if (!calificacion) {
                 Swal.fire({ type: 'warning', title: 'Falta la calificación', text: 'Ingrese la calificación numeral' });
-                return;
+                return null;
             }
 
             var tribunal = [];
@@ -463,7 +510,7 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
 
             if (tribunal.length === 0) {
                 Swal.fire({ type: 'warning', title: 'Falta el tribunal', text: 'Registre al menos un miembro del tribunal' });
-                return;
+                return null;
             }
 
             $('#hidden-estudianteID').val($('#select-inscripcion').val());
@@ -473,34 +520,52 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
             $('#hidden-curso').val(curso);
             $('#hidden-vaucher').val(vaucher);
             var monto = ($('#input-monto').val() || '').trim();
-            if (monto === '' || isNaN(monto) || parseFloat(monto) < 0) {
+            if (!demostracion && (monto === '' || isNaN(monto) || parseFloat(monto) < 0)) {
                 Swal.fire({ type: 'warning', title: 'Falta el monto', text: 'Ingrese el monto pagado por el certificado (Bs.)' });
-                return;
+                return null;
             }
-            $('#hidden-monto').val(monto);
+            $('#hidden-monto').val(demostracion ? '' : monto);
             $('#hidden-titulo').val(titulo);
             $('#hidden-tribunal').val(tribunal.join('|'));
             $('#hidden-entrega').val(entrega);
             $('#hidden-hora-entrega').val(entrega ? $('#input-hora-entrega').val() : '');
             $('#hidden-calificacion').val(calificacion);
 
+            return { nombre: nombre, programa: programa, curso: curso, vaucher: vaucher, monto: monto,
+                titulo: titulo, tribunal: tribunal, entrega: entrega, calificacion: calificacion };
+        }
+
+        $('#btn-generar-certificado').on('click', function() {
+            var d = prepararFormulario(false);
+            if (!d) return;
+
             // Antes de imprimir: datos, revisión ortográfica y vista previa
             Certificado.confirmar({
                 titulo: 'Certificado de Aprobación Programa de Posgrado',
                 form: '#form-generar-certificado',
                 datos: [
-                    ['Estudiante', nombre],
-                    ['Programa', String(programa).toLocaleUpperCase('es')],
-                    ['Grado académico', curso],
-                    ['N° de recibo o voucher', vaucher],
-                    ['Monto pagado', Certificado.formatoBs(monto)],
-                    ['Título', titulo],
-                    ['Tribunal', tribunal.join(' · ')],
-                    ['Entrega del informe final', entrega ? entrega.split('-').reverse().join('/') + ($('#input-hora-entrega').val() ? ' ' + $('#input-hora-entrega').val() : '') : ''],
-                    ['Calificación', calificacion + ' (' + numeroALetrasJS(calificacion) + ')']
+                    ['Estudiante', d.nombre],
+                    ['Programa', String(d.programa).toLocaleUpperCase('es')],
+                    ['Grado académico', d.curso],
+                    ['N° de recibo o voucher', d.vaucher],
+                    ['Monto pagado', Certificado.formatoBs(d.monto)],
+                    ['Título', d.titulo],
+                    ['Tribunal', d.tribunal.join(' · ')],
+                    ['Entrega del informe final', d.entrega ? d.entrega.split('-').reverse().join('/') + ($('#input-hora-entrega').val() ? ' ' + $('#input-hora-entrega').val() : '') : ''],
+                    ['Calificación', d.calificacion + ' (' + numeroALetrasJS(d.calificacion) + ')']
                 ],
-                ortografia: [{ texto: String(programa).toLocaleUpperCase('es') }, { texto: titulo }]
+                ortografia: [{ texto: String(d.programa).toLocaleUpperCase('es') }, { texto: d.titulo }]
             });
+        });
+
+        // Demostración: todo el certificado (recuadros, membrete, firmas, escudo) en hoja
+        // oficio, con los datos puestos. No se registra ni guarda el trabajo de grado.
+        $('#btn-documento-completo').on('click', function() {
+            if (!prepararFormulario(true)) return;
+            var $form = $('#form-generar-certificado');
+            var $completo = $('<input type="hidden" name="completo" value="1">').appendTo($form);
+            $form.attr('target', '_blank')[0].submit();
+            $completo.remove();
         });
     });
     </script>

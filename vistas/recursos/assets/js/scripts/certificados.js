@@ -212,12 +212,15 @@
                 ($monto.closest('.input-group').length ? $monto.closest('.input-group') : $monto).after($ayuda);
             }
             const nombreGrado = NOMBRES_GRADO[grado] || insc.GradoAcademico;
-            if (precio !== null && precio !== undefined) {
+            const hayPrecio = precio !== null && precio !== undefined;
+            $ayuda.toggleClass('cert-ayuda-aviso', !hayPrecio);
+            if (hayPrecio) {
                 $monto.val(Number(precio).toFixed(2));
                 $ayuda.text('Precio para ' + nombreGrado + ': ' + formatoBs(precio) + '. Puede cambiarlo.');
             } else {
                 $monto.val('');
-                $ayuda.text('Sin precio definido para ' + nombreGrado + '.');
+                $ayuda.text('Aún no hay precio de este certificado para ' + nombreGrado +
+                    ': defínalo en Costos de Certificados o escriba aquí el monto.');
             }
         }
 

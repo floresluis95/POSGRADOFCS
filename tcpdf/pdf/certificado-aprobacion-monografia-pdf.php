@@ -8,6 +8,9 @@
  * Las coordenadas se midieron sobre el formato en Word que usa Posgrado
  * (CERT_APROBACION_*.docx); si algo se desalinea en el papel real, ajustar
  * las constantes del bloque "COORDENADAS".
+ *
+ * Con completo=1 (demostración) dibuja también todo el formato, en hoja oficio boliviano
+ * (215,9 x 330,2 mm, la del escaneo), y NO registra nada (ni la emisión ni el trabajo de grado).
  */
 
 error_reporting(E_ALL);
@@ -26,6 +29,7 @@ if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC'], true)) {
 
 require_once '../../vendor/autoload.php';
 require_once '../../modelos/certificado.modelo.php';
+require_once __DIR__ . '/formatos-certificados.php';
 
 date_default_timezone_set('America/La_Paz');
 
@@ -44,8 +48,9 @@ $tribunalRaw = $_POST['tribunal'] ?? '';
 $entrega = $_POST['entrega'] ?? '';
 $horaEntrega = $_POST['horaEntrega'] ?? '';
 $calificacion = $_POST['calificacion'] ?? '';
+$completo = !empty($_POST['completo']); // demostración con el formato completo (sin recibo)
 
-if (empty($nombre) || empty($titulo) || empty($vaucher) || $calificacion === '') {
+if (empty($nombre) || empty($titulo) || (empty($vaucher) && !$completo) || $calificacion === '') {
     die('Error: Faltan datos requeridos para generar el certificado');
 }
 
@@ -53,7 +58,7 @@ $miembrosTribunal = array_filter(array_map('trim', explode('|', $tribunalRaw)));
 
 // Se guarda (o actualiza) el trabajo de grado para reutilizar el título
 // automáticamente en el certificado de Medio Magnético
-if ($estudianteID && $programaID) {
+if ($estudianteID && $programaID && !$completo) {
     CertificadoModelo::GuardarTrabajoGradoModelo([
         'estudianteID' => $estudianteID,
         'programaID' => $programaID,
@@ -70,8 +75,8 @@ if ($estudianteID && $programaID) {
 
 // Se guardan los datos del formulario para poder reimprimirlo (y corregirlo) desde
 // Registro de documentos; con idDocumento es una reimpresión de ese registro.
-// En la vista previa (antes de generar) no se registra nada.
-if (!CertificadoModelo::EsVistaPrevia()) {
+// En la vista previa (antes de generar) y en la demostración no se registra nada.
+if (!CertificadoModelo::EsVistaPrevia() && !$completo) {
     CertificadoModelo::RegistrarEmisionModelo(
         'APROBACION_MONOGRAFIA', $estudianteID, $programaID, $nombre, $vaucher, $_SESSION['IdUsuario'] ?? null,
         $_POST, intval($_POST['idDocumento'] ?? 0)
@@ -210,20 +215,23 @@ foreach (array_keys($espaciosTribunal) as $clave) {
 // ===================================
 $ALTO_LINEA = 5.2;
 $X_APELLIDOS = 83.5;   $X_NOMBRES = 155;      $Y_NOMBRE = 53.2;    $Y_ROTULO_NOMBRE = 58.5;
-$X_PROGRAMA = 84.7;    $Y_PROGRAMA = 64;
+$X_PROGRAMA = 65.0;    $Y_PROGRAMA = 64;       $W_PROGRAMA = 136;   // inicio (poco después de "Programa de Posgrado:")
 $X_CURSO = 50.9;       $Y_CURSO = 73;          // inicio
 $X_TITULO = 21.4;      $Y_TITULO = 95.8;       $W_TITULO = 174.5;   $INTERLINEA_TITULO = 5.95; // inicio
+$ALTO_TITULO = 19.3;    // del primer renglón al borde de abajo del recuadro
 $X_PRESIDENTE = 59.5;  $X_SECRETARIO = 155.8;  $Y_TRIBUNAL_1 = 129.1;
 $X_VOCAL = 104.7;      $Y_TRIBUNAL_2 = 140;    $SEPARACION_CARGO = 5.3;
 $X_ENTREGA = 27.4;     $Y_ENTREGA = 164.6;     // inicio
 $X_NUMERAL = 126.2;    $Y_NUMERAL = 164.6;
 $X_LITERAL = 126.4;    $Y_LITERAL = 179.4;
-$X_RECIBO = 64.2;      $Y_RECIBO = 303.2;
+$X_RECIBO = 54.0;      $Y_RECIBO = 303.2;      // inicio, justo después de "N° de recibo de caja:"
 
 // ===================================
 // GENERACIÓN DEL PDF
 // ===================================
-$pdf = new TCPDF('P', 'mm', array(215.9, 355.6), true, 'UTF-8', false);
+$pdf = $completo
+    ? new TCPDF('P', 'mm', array(215.9, 330.2), true, 'UTF-8', false)
+    : new TCPDF('P', 'mm', array(215.9, 355.6), true, 'UTF-8', false);
 $pdf->SetCreator('Sistema de Gestión Académica - Posgrado FCS');
 $pdf->SetAuthor('Posgrado FCS - Universidad Técnica de Oruro');
 $pdf->SetTitle('Certificado de Aprobación Programa de Posgrado - ' . $nombre);
@@ -234,42 +242,66 @@ $pdf->setPrintFooter(false);
 $pdf->SetMargins(0, 0, 0);
 $pdf->SetAutoPageBreak(false);
 $pdf->setCellPaddings(0, 0, 0, 0);
+// Letra Cambria (negrita, cursiva y negrita cursiva, en tcpdf/fuentes/), como los
+// certificados de calificaciones e historial
+const APROB_FUENTE = 'cambria';
+$dirFuentes = __DIR__ . '/../fuentes/';
+$pdf->AddFont(APROB_FUENTE, 'B', $dirFuentes . 'cambriab.php');
+$pdf->AddFont(APROB_FUENTE, 'I', $dirFuentes . 'cambriai.php');
+$pdf->AddFont(APROB_FUENTE, 'BI', $dirFuentes . 'cambriaz.php');
 $pdf->AddPage();
+if ($completo) {
+    dibujarFormatoAprobacion($pdf, CertificadoModelo::ContarEmitidosModelo('APROBACION_MONOGRAFIA') + 1);
+}
 $pdf->SetTextColor(0, 0, 0);
-// Helvetica 11 un poco angosta (88 %) ocupa casi lo mismo que la Calibri 12 del
-// formato en Word, así el título corta las líneas en las mismas palabras. (La
-// Calibri no se incluye en el sistema: su licencia no permite distribuirla.)
-$pdf->SetFont('helvetica', '', 11);
-$pdf->setFontStretching(88);
 
-// Texto centrado en una X (ancho 0 = solo lo que mide el texto)
-$centrado = function ($texto, $xCentro, $y) use ($pdf, $ALTO_LINEA) {
+// Texto centrado en una X; si pasa de $maximo (mm) se achica la letra (hasta 6 pt)
+$centrado = function ($texto, $xCentro, $y, $estilo, $tamano = 11, $maximo = 90) use ($pdf, $ALTO_LINEA) {
+    $pdf->SetFont(APROB_FUENTE, $estilo, $tamano);
+    while ($tamano > 6 && $pdf->GetStringWidth($texto) > $maximo) {
+        $tamano -= 0.5;
+        $pdf->SetFont(APROB_FUENTE, $estilo, $tamano);
+    }
     $ancho = $pdf->GetStringWidth($texto);
     $pdf->SetXY($xCentro - $ancho / 2, $y);
     $pdf->Cell($ancho, $ALTO_LINEA, $texto, 0, 0, 'L');
 };
-$desde = function ($texto, $x, $y) use ($pdf, $ALTO_LINEA) {
+$desde = function ($texto, $x, $y, $estilo, $tamano = 11, $maximo = 150) use ($pdf, $ALTO_LINEA) {
+    $pdf->SetFont(APROB_FUENTE, $estilo, $tamano);
+    while ($tamano > 6 && $pdf->GetStringWidth($texto) > $maximo) {
+        $tamano -= 0.5;
+        $pdf->SetFont(APROB_FUENTE, $estilo, $tamano);
+    }
     $pdf->SetXY($x, $y);
     $pdf->Cell(0, $ALTO_LINEA, $texto, 0, 0, 'L');
 };
 
-// Apellidos y nombres, con sus rótulos
-$centrado(mb_strtoupper($apellidos, 'UTF-8'), $X_APELLIDOS, $Y_NOMBRE);
-$centrado(mb_strtoupper($nombres, 'UTF-8'), $X_NOMBRES, $Y_NOMBRE);
-$centrado('(Apellidos)', $X_APELLIDOS, $Y_ROTULO_NOMBRE);
-$centrado('(Nombres)', $X_NOMBRES, $Y_ROTULO_NOMBRE);
+// Apellidos y nombres en cursiva, con sus rótulos
+$centrado(mb_strtoupper($apellidos, 'UTF-8'), $X_APELLIDOS, $Y_NOMBRE, 'I', 12, 70);
+$centrado(mb_strtoupper($nombres, 'UTF-8'), $X_NOMBRES, $Y_NOMBRE, 'I', 12, 70);
+$centrado('(Apellidos)', $X_APELLIDOS, $Y_ROTULO_NOMBRE, 'I', 10);
+$centrado('(Nombres)', $X_NOMBRES, $Y_ROTULO_NOMBRE, 'I', 10);
 
-// Programa y grado académico
-$centrado(mb_strtoupper($programaTexto, 'UTF-8'), $X_PROGRAMA, $Y_PROGRAMA);
-$desde(mb_strtoupper($curso, 'UTF-8'), $X_CURSO, $Y_CURSO);
+// Programa y grado académico en negrita
+$desde(mb_strtoupper($programaTexto, 'UTF-8'), $X_PROGRAMA, $Y_PROGRAMA, 'B', 12, $W_PROGRAMA);
+$desde(mb_strtoupper($curso, 'UTF-8'), $X_CURSO, $Y_CURSO, 'B', 12);
 
-// Título del trabajo de grado, justificado
-$pdf->setCellHeightRatio($INTERLINEA_TITULO / ($pdf->getFontSize() ?: 3.88));
+// Título del trabajo de grado en negrita, justificado. Si es largo, la letra (y con
+// ella el espacio entre renglones) se achica lo necesario para entrar en el recuadro.
+$tituloMayus = mb_strtoupper($titulo, 'UTF-8');
+for ($tamanoTitulo = 11; $tamanoTitulo > 6; $tamanoTitulo -= 0.5) {
+    $pdf->SetFont(APROB_FUENTE, 'B', $tamanoTitulo);
+    $interlinea = $INTERLINEA_TITULO * $tamanoTitulo / 11;
+    if ($pdf->getNumLines($tituloMayus, $W_TITULO) * $interlinea <= $ALTO_TITULO) {
+        break;
+    }
+}
+$pdf->setCellHeightRatio($interlinea / $pdf->getFontSize());
 // (el salto final evita que TCPDF estire también la última línea)
-$pdf->MultiCell($W_TITULO, $INTERLINEA_TITULO, mb_strtoupper($titulo, 'UTF-8') . "\n", 0, 'J', false, 1, $X_TITULO, $Y_TITULO);
+$pdf->MultiCell($W_TITULO, $interlinea, $tituloMayus . "\n", 0, 'J', false, 1, $X_TITULO, $Y_TITULO);
 $pdf->setCellHeightRatio(1.25);
 
-// Tribunal
+// Tribunal: nombre en cursiva y cargo en negrita
 $posiciones = [
     'PRESIDENTE' => [$X_PRESIDENTE, $Y_TRIBUNAL_1],
     'SECRETARIO' => [$X_SECRETARIO, $Y_TRIBUNAL_1],
@@ -278,23 +310,23 @@ $posiciones = [
 foreach ($posiciones as $clave => $pos) {
     $miembro = $espaciosTribunal[$clave];
     if (!$miembro) continue;
-    $centrado($miembro['nombre'], $pos[0], $pos[1]);
-    $centrado($miembro['rol'] !== '' ? $miembro['rol'] : ($clave === 'SECRETARIO' ? 'SECRETARIO/A' : $clave), $pos[0], $pos[1] + $SEPARACION_CARGO);
+    $centrado($miembro['nombre'], $pos[0], $pos[1], 'I', 11);
+    $centrado($miembro['rol'] !== '' ? $miembro['rol'] : ($clave === 'SECRETARIO' ? 'SECRETARIO/A' : $clave), $pos[0], $pos[1] + $SEPARACION_CARGO, 'B', 11);
 }
 $yExtra = $Y_TRIBUNAL_2 + 2 * $SEPARACION_CARGO + 1;
 foreach ($otrosTribunal as $miembro) {
-    $centrado($miembro['nombre'], $X_VOCAL, $yExtra);
-    if ($miembro['rol'] !== '') $centrado($miembro['rol'], $X_VOCAL, $yExtra + $SEPARACION_CARGO);
+    $centrado($miembro['nombre'], $X_VOCAL, $yExtra, 'I', 11);
+    if ($miembro['rol'] !== '') $centrado($miembro['rol'], $X_VOCAL, $yExtra + $SEPARACION_CARGO, 'B', 11);
     $yExtra += 2 * $SEPARACION_CARGO + 1;
 }
 
-// Fecha y hora; calificación numeral y literal
-$desde($fechaEntregaTexto, $X_ENTREGA, $Y_ENTREGA);
-$centrado((string)intval($calificacion), $X_NUMERAL, $Y_NUMERAL);
-$centrado($calificacionLiteral, $X_LITERAL, $Y_LITERAL);
+// Fecha y hora y calificación numeral en negrita; literal en negrita cursiva
+$desde($fechaEntregaTexto, $X_ENTREGA, $Y_ENTREGA, 'B', 11);
+$centrado((string)intval($calificacion), $X_NUMERAL, $Y_NUMERAL, 'B', 12);
+$centrado($calificacionLiteral, $X_LITERAL, $Y_LITERAL, 'BI', 11, 75);
 
-// N° de recibo de caja (voucher)
-$centrado(mb_strtoupper($vaucher, 'UTF-8'), $X_RECIBO, $Y_RECIBO);
+// N° de recibo de caja (voucher) en negrita
+$desde(mb_strtoupper($vaucher, 'UTF-8'), $X_RECIBO, $Y_RECIBO, 'B', 12);
 
 if (CertificadoModelo::EsVistaPrevia()) {
     CertificadoModelo::MarcarVistaPrevia($pdf, true);
@@ -304,6 +336,6 @@ if (ob_get_contents()) {
     ob_end_clean();
 }
 
-$nombreArchivo = 'Certificado_Aprobacion_Posgrado_' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $nombre) . '_' . date('Ymd') . '.pdf';
+$nombreArchivo = ($completo ? 'Demostracion_' : '') . 'Certificado_Aprobacion_Posgrado_' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $nombre) . '_' . date('Ymd') . '.pdf';
 $pdf->Output($nombreArchivo, 'I');
 exit;
