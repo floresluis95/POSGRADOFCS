@@ -56,6 +56,15 @@ if (empty($nombre) || empty($titulo) || (empty($vaucher) && !$completo) || $cali
 
 $miembrosTribunal = array_filter(array_map('trim', explode('|', $tribunalRaw)));
 
+// Una persona no puede estar dos veces en el tribunal (presidente y vocal, etc.)
+$repetido = CertificadoModelo::TribunalRepetidoModelo(array_map(function ($miembro) {
+    $partes = explode(':', $miembro, 2);
+    return end($partes);
+}, $miembrosTribunal));
+if ($repetido !== null) {
+    die('Error: ' . htmlspecialchars($repetido) . ' está dos veces en el tribunal. Cada miembro debe ser una persona distinta.');
+}
+
 // Se guarda (o actualiza) el trabajo de grado para reutilizar el título
 // automáticamente en el certificado de Medio Magnético
 if ($estudianteID && $programaID && !$completo) {

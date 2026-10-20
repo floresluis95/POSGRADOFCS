@@ -210,13 +210,16 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
             $fila.find('.select-docente-tribunal').on('change', function() {
                 if (this.value) $fila.find('.input-nombre-tribunal').val(this.value);
                 else $fila.find('.input-nombre-tribunal').val('').trigger('focus');
+                bloquearElegidos();
             });
             $fila.find('.input-nombre-tribunal').on('input', function() {
                 marcarEnSelect($fila.find('.select-docente-tribunal'), this.value);
+                bloquearElegidos();
             });
             $fila.find('.btn-quitar-miembro').on('click', function() {
                 if ($('#contenedor-tribunal .fila-tribunal').length > 1) {
                     $fila.remove();
+                    bloquearElegidos();
                 }
             });
             $('#contenedor-tribunal').append($fila);
@@ -224,6 +227,29 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
             $fila.find('.select-docente-tribunal').select2({
                 width: '100%',
                 language: { noResults: function() { return 'No está en la lista: elija "Otro" y escríbalo a mano'; } }
+            });
+            bloquearElegidos();
+        }
+
+        // Una persona no puede estar dos veces en el tribunal (presidente y vocal, etc.).
+        // Se compara sin tildes, mayúsculas ni el grado del inicio ("M.Sc. Dr.", "Esp. Lic.").
+        function claveMiembro(nombre) {
+            return String(nombre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+                .replace(/^(\s*\S+\.)+\s*/, '').replace(/\s+/g, ' ').trim();
+        }
+        // Quien ya está en una fila aparece deshabilitado en el select de las demás
+        function bloquearElegidos() {
+            var $filas = $('#contenedor-tribunal .fila-tribunal');
+            $filas.each(function() {
+                var $propia = $(this);
+                var otros = {};
+                $filas.not($propia).each(function() {
+                    var clave = claveMiembro($(this).find('.input-nombre-tribunal').val());
+                    if (clave) otros[clave] = true;
+                });
+                $propia.find('.select-docente-tribunal option').each(function() {
+                    this.disabled = !!this.value && !!otros[claveMiembro(this.value)];
+                });
             });
         }
 
@@ -250,6 +276,7 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
             $('#contenedor-tribunal .fila-tribunal').each(function() {
                 llenarSelectTribunal($(this).find('.select-docente-tribunal'), $(this).find('.input-nombre-tribunal').val());
             });
+            bloquearElegidos();
         }, 'json');
 
         agregarFilaTribunal('PRESIDENTE', '');
@@ -510,6 +537,16 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
 
             if (tribunal.length === 0) {
                 Swal.fire({ type: 'warning', title: 'Falta el tribunal', text: 'Registre al menos un miembro del tribunal' });
+                return null;
+            }
+            var vistos = {}, repetido = null;
+            $('#contenedor-tribunal .input-nombre-tribunal').each(function() {
+                var clave = claveMiembro(this.value);
+                if (clave && vistos[clave] && !repetido) repetido = this.value.trim();
+                if (clave) vistos[clave] = true;
+            });
+            if (repetido) {
+                Swal.fire({ type: 'warning', title: 'Miembro repetido en el tribunal', text: repetido + ' está dos veces. Cada miembro del tribunal debe ser una persona distinta.' });
                 return null;
             }
 

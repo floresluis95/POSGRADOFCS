@@ -44,3 +44,31 @@ test('tribunal: select con docentes y personas de tribunales anteriores', async 
   await expect(select).toHaveValue(manual);
   await expect(fila.locator('.select2-selection__rendered')).toHaveText(manual);
 });
+
+test('tribunal: la misma persona no puede estar dos veces', async ({ page }) => {
+  const { estudianteID } = await estudianteInscrito(page);
+  await page.goto('certificadoaprobacionmonografia');
+  await page.locator('#cert-termino').fill(String(valor(`SELECT Ci FROM estudiante WHERE EstudianteID = ${estudianteID}`)));
+  await expect(page.locator('#card-monografia')).toBeVisible({ timeout: 15_000 });
+
+  // El docente elegido como presidente queda deshabilitado en la otra fila
+  const filas = page.locator('#contenedor-tribunal .fila-tribunal');
+  const docente = String(await filas.nth(0).locator('optgroup[label="Docentes"] option').first().getAttribute('value'));
+  await filas.nth(0).locator('.select-docente-tribunal').selectOption(docente);
+  await expect(filas.nth(1).locator(`.select-docente-tribunal option[value="${docente}"]`)).toBeDisabled();
+  await expect(filas.nth(0).locator(`.select-docente-tribunal option[value="${docente}"]`)).toBeEnabled();
+
+  // Escrito a mano con otro grado y sin tildes también cuenta como repetido
+  const sinGrado = docente.replace(/^(\s*\S+\.)+\s*/, '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+  await filas.nth(1).locator('.input-nombre-tribunal').fill(`M.Sc. Dr. ${sinGrado}`);
+  await page.locator('#input-titulo').fill('evaluación de prueba del tribunal repetido');
+  await page.locator('#input-calificacion').fill('85');
+  await page.locator('#btn-documento-completo').click();
+  await expect(page.locator('.swal2-popup')).toContainText('Miembro repetido en el tribunal');
+
+  // El servidor también lo rechaza
+  const respuesta = await page.request.post('tcpdf/pdf/certificado-aprobacion-monografia-pdf.php', { form: {
+    estudianteID: '0', programaID: '0', nombre: 'PRUEBA DEL TRIBUNAL', titulo: 'TRABAJO DE PRUEBA', calificacion: '80', completo: '1',
+    tribunal: `Presidente: ${docente}|Vocal: M.Sc. Dr. ${sinGrado}` } });
+  expect(await respuesta.text()).toContain('está dos veces en el tribunal');
+});

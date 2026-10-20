@@ -153,6 +153,29 @@ class CertificadoModelo
         }));
     }
 
+    /**
+     * Persona del tribunal repetida (la misma no puede ser presidente y vocal, etc.).
+     * Compara sin tildes, mayúsculas ni el grado del inicio ("M.Sc. Dr.", "Esp. Lic."),
+     * así "Esp. Lic. Ana Pérez" y "M.Sc. ana perez" cuentan como la misma.
+     * Devuelve el nombre repetido o null.
+     */
+    public static function TribunalRepetidoModelo(array $nombres)
+    {
+        $vistos = [];
+        foreach ($nombres as $nombre) {
+            $clave = strtr(mb_strtolower(trim($nombre), 'UTF-8'), ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n']);
+            $clave = trim(preg_replace(['/^(\s*\S+\.)+\s*/u', '/\s+/u'], ['', ' '], $clave));
+            if ($clave === '') {
+                continue;
+            }
+            if (isset($vistos[$clave])) {
+                return trim($nombre);
+            }
+            $vistos[$clave] = true;
+        }
+        return null;
+    }
+
     public static function ObtenerTrabajoGradoModelo($estudianteID, $programaID)
     {
         $stmt = Conexion::Conectar()->prepare("
