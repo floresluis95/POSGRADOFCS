@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/control-solicitud.php'; // corte de internet: sin envíos duplicados
 /**
  * AJAX de Recuperación de Contraseña por correo (página de ingreso).
  * Es el único endpoint de ajax/ que NO exige sesión: lo usa quien no puede

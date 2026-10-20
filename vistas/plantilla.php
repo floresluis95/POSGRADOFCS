@@ -13,6 +13,8 @@ ob_start();
        la usan los scripts de calificaciones en lugar de un número fijo. -->
   <script>window.NOTA_APROBACION = <?php echo class_exists('ConfiguracionModelo') ? (int)ConfiguracionModelo::NotaAprobacion() : 76; ?>;</script>
   <title>SISTEMA - POSGRADOFCS</title>
+  <!-- Corte de internet: envíos sin duplicar, aviso y franja "sin conexión". En el <head>, antes que cualquier vista -->
+  <script src="vistas/recursos/assets/js/scripts/control-envio.js?v=<?php echo filemtime(__DIR__ . '/recursos/assets/js/scripts/control-envio.js'); ?>" type="text/javascript"></script>
   <meta name="description" content="Latest updates and statistic charts">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="description" content="Modal examples">

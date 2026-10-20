@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/control-solicitud.php'; // corte de internet: sin envíos duplicados
 /**
  * AJAX del Cronograma de Defensa (Tesis/Monografía) del Panel principal
  */

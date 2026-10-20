@@ -241,8 +241,6 @@ class InscripcionModuloControladores
      */
     public function RegistrarInscripcionModuloControlador()
     {
-        error_log("=== RegistrarInscripcionModuloControlador ejecutado ===");
-        error_log("POST data: " . print_r($_POST, true));
 
         if (isset($_POST["registrarInscripcionModulo"])) {
             error_log("POST registrarInscripcionModulo detectado");

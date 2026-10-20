@@ -1,5 +1,5 @@
 <?php
-require_once 'conexion.modelo.php';
+require_once __DIR__ . '/../core/conexion.modelo.php';
 require_once __DIR__ . '/voucher.modelo.php';
 require_once __DIR__ . '/pagoclinica.modelo.php';
 require_once __DIR__ . '/modulopagos_core.php'; // cuotas sin voucher validado

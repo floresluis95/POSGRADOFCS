@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/control-solicitud.php'; // corte de internet: sin envíos duplicados
 /**
  * AJAX de Requisitos de Matriculación (ventana "Requisitos" de Matriculados,
  * lista de requisitos del modal de Inscripción, pantalla "Catálogo de

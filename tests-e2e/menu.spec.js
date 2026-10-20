@@ -20,7 +20,8 @@ for (const rol of ['adm', 'sec', 'aux', 'doc', 'est']) {
 
     const enlaces = await page.locator('#kt_aside_menu a.kt-menu__link[href]').evaluateAll(
       (as) => [...new Set(as.map((a) => a.getAttribute('href')))]
-        .filter((h) => h && !h.startsWith('#') && !h.startsWith('javascript') && h !== 'panel' && h !== 'salir'),
+        // ajax/ son descargas (respaldo de la base), no páginas
+        .filter((h) => h && !h.startsWith('#') && !h.startsWith('javascript') && !h.startsWith('ajax/') && h !== 'panel' && h !== 'salir'),
     );
     expect(enlaces.length).toBeGreaterThan(0);
 

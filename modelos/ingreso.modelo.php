@@ -1,5 +1,5 @@
 <?php
-    require_once 'conexion.modelo.php';
+    require_once __DIR__ . '/../core/conexion.modelo.php';
     class IngresoModelos
     {
         public static function ValidarIngresoModelo($usuario)

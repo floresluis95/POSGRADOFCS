@@ -4,7 +4,7 @@
  * Gestiona el catálogo de números de cuenta disponibles para los programas
  */
 
-require_once 'conexion.modelo.php';
+require_once __DIR__ . '/../core/conexion.modelo.php';
 
 class CuentaModelo
 {

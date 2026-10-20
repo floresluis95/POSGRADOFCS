@@ -14,9 +14,6 @@ class MatriculaControladores
      */
     public function RegistrarMatriculaControlador()
     {
-        // DEBUG: Ver si se está ejecutando
-        error_log("=== RegistrarMatriculaControlador ejecutado ===");
-        error_log("POST data: " . print_r($_POST, true));
 
         if (isset($_POST["registrarMatricula"])) {
             error_log("POST registrarMatricula detectado");

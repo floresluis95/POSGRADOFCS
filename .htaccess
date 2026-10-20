@@ -1,22 +1,5 @@
 Options All -Indexes
 
-# --- WORKAROUND TEMPORAL ---
-# modelos/conexion.modelo.php fue eliminado por el antivirus del equipo y no se
-# puede recrear en esa ruta exacta (bloqueo a nivel de Windows, no de la app).
-# Mientras se soluciona a nivel de sistema, se agrega core/ al include_path de
-# PHP para que los require_once 'conexion.modelo.php' (relativos) encuentren la
-# copia funcional guardada en core/conexion.modelo.php.
-# QUITAR esta sección en cuanto modelos/conexion.modelo.php exista de nuevo.
-<IfModule mod_php.c>
-    php_value include_path ".;C:\xampp\htdocs\POSGRADOFCS\core"
-</IfModule>
-<IfModule mod_php7.c>
-    php_value include_path ".;C:\xampp\htdocs\POSGRADOFCS\core"
-</IfModule>
-<IfModule php_module>
-    php_value include_path ".;C:\xampp\htdocs\POSGRADOFCS\core"
-</IfModule>
-# --- FIN WORKAROUND TEMPORAL ---
 
 RewriteEngine on
 

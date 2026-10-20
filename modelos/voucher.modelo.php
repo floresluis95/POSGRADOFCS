@@ -4,7 +4,7 @@
  * Gestiona la consulta de vouchers de pago
  */
 
-require_once 'conexion.modelo.php';
+require_once __DIR__ . '/../core/conexion.modelo.php';
 
 class VoucherModelo
 {

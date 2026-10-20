@@ -69,10 +69,6 @@
         public static function ListaUsuariosControlador()
         {
             $ListaUsuarios = UsuarioModelos::ListaUsuariosModelo();
-                // PREFORMATEAR CODIGO - VARDUMP
-                /*echo '<pre>';
-                    var_dump($ListaUsuarios);
-                echo '</pre>';*/
             $contador=0;
             foreach ($ListaUsuarios as $key => $Usuario)
             {
@@ -377,9 +373,6 @@
 
         public function CrearUsuarioEstudianteControlador()
         {
-            // Debug: Registrar todos los datos POST recibidos
-            error_log("=== DEBUG CrearUsuarioEstudianteControlador ===");
-            error_log("POST recibido: " . print_r($_POST, true));
 
             if(isset($_POST['estudiante_id']) && isset($_POST['estudiante_ci']))
             {
@@ -584,9 +577,6 @@
 
         public function CrearUsuarioDocenteControlador()
         {
-            // Debug: Registrar todos los datos POST recibidos
-            error_log("=== DEBUG CrearUsuarioDocenteControlador ===");
-            error_log("POST recibido: " . print_r($_POST, true));
 
             if(isset($_POST['docente_id']) && isset($_POST['docente_ci']))
             {

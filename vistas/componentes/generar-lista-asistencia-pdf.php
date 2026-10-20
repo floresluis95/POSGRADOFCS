@@ -9,7 +9,7 @@ date_default_timezone_set('America/La_Paz');
 
 // Habilitar reporte de errores para debug
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 
 // Iniciar búfer de salida
 ob_start();

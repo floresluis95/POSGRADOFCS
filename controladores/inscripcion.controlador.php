@@ -24,8 +24,6 @@ class InscripcionControladores
         header('Content-Type: application/json; charset=utf-8');
 
         try {
-            // Log de depuración
-            error_log("ObtenerProgramasPorGradoControlador - POST recibido: " . print_r($_POST, true));
 
             if (!isset($_POST['gradoAcademico']) || empty($_POST['gradoAcademico'])) {
                 error_log("ObtenerProgramasPorGradoControlador - ERROR: gradoAcademico no proporcionado");

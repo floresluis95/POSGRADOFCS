@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/control-solicitud.php'; // corte de internet: sin envíos duplicados
 /**
  * AJAX del formulario suelto de "Inscribirme" (Solicitudes de Inscripción).
  * 'crear' la usa el formulario público (cualquier usuario con sesión válida,

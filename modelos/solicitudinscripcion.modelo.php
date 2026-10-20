@@ -1,5 +1,5 @@
 <?php
-require_once 'conexion.modelo.php';
+require_once __DIR__ . '/../core/conexion.modelo.php';
 
 /**
  * Modelo de Solicitudes de Inscripción (formulario suelto de "Inscribirme"

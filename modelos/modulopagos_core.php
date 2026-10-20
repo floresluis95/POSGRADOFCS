@@ -6,7 +6,7 @@
  * (Plan Regular), o una única cuota por el total (Plan Contado/Grupal).
  */
 
-require_once 'conexion.modelo.php';
+require_once __DIR__ . '/../core/conexion.modelo.php';
 require_once __DIR__ . '/voucher.modelo.php';
 require_once __DIR__ . '/pagoclinica.modelo.php';
 

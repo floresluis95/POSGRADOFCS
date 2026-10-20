@@ -7,7 +7,7 @@
  * esa es la que se usa automáticamente al imprimir la orden de pago.
  */
 
-require_once 'conexion.modelo.php';
+require_once __DIR__ . '/../core/conexion.modelo.php';
 
 class ProgramaCuentaModelo
 {

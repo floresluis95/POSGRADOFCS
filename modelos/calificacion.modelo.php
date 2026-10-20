@@ -4,7 +4,7 @@
  * Gestiona las calificaciones finales de los estudiantes
  */
 
-require_once 'conexion.modelo.php';
+require_once __DIR__ . '/../core/conexion.modelo.php';
 require_once __DIR__ . '/configuracion.modelo.php'; // nota mínima de aprobación
 
 class CalificacionModelo
