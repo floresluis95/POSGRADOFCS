@@ -49,7 +49,8 @@ class AjaxEstudiantes
 
         } catch (PDOException $e) {
             header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['error' => 'Error en la base de datos: ' . $e->getMessage()]);
+            error_log('Error en estudiantes.ajax.php: ' . $e->getMessage());
+            echo json_encode(['error' => 'Error en la base de datos']);
             exit(); // Detener ejecución
         }
     }

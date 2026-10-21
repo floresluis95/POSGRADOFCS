@@ -110,7 +110,6 @@ class MatriculaControladores
                 "foto" => $imagenBlob
             );
 
-            error_log("Datos de matrícula preparados: " . print_r($datosMatricula, true));
 
             // Registrar en la base de datos
             $resultado = MatriculaModelos::RegistrarMatriculaModelo($datosMatricula);

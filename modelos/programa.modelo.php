@@ -99,7 +99,7 @@ class ProgramasModelos
     if ($stmt->execute()) {
         return "exitoso";
     } else {
-        print_r($stmt->errorInfo()); // para depuración
+        error_log("Error SQL: " . print_r($stmt->errorInfo(), true)); // para depuración
         return "error";
     }
 
@@ -207,7 +207,7 @@ private static function GenerarCodigo($sede, $grado, $fechaInicio)
         if ($stmt->execute()) {
             return "exitoso";
         } else {
-            print_r($stmt->errorInfo());
+            error_log("Error SQL: " . print_r($stmt->errorInfo(), true));
             return "error";
         }
 
@@ -249,7 +249,7 @@ class ProgramaEstadoModelo
         return "exitoso";
     } else {
         // 👇 para ver el error exacto de SQL
-        print_r($stmt->errorInfo());
+        error_log("Error SQL: " . print_r($stmt->errorInfo(), true));
         return "error";
     }
 

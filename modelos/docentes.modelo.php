@@ -114,7 +114,7 @@
             return 'exitoso';
         } else {
 
-        print_r($stmt->errorInfo());
+        error_log("Error SQL: " . print_r($stmt->errorInfo(), true));
             return 'error';
         }
     }
@@ -171,7 +171,7 @@
         if ($stmt->execute()) {
             return 'exitoso';
         } else {
-            print_r($stmt->errorInfo());
+            error_log("Error SQL: " . print_r($stmt->errorInfo(), true));
             return 'error';
         }
     }

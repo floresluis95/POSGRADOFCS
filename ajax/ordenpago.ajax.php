@@ -839,7 +839,7 @@ function registrarOrdenPago()
         error_log("Error en registrarOrdenPago: " . $e->getMessage());
         echo json_encode([
             'success' => false,
-            'mensaje' => 'Error al registrar la orden de pago: ' . $e->getMessage()
+            'mensaje' => 'Error al registrar la orden de pago'
         ]);
     }
 }
@@ -1160,7 +1160,7 @@ function registrarOrdenPagoCuotaPrograma()
         error_log("Error en registrarOrdenPagoCuotaPrograma: " . $e->getMessage());
         echo json_encode([
             'success' => false,
-            'mensaje' => 'Error al registrar la orden de pago: ' . $e->getMessage()
+            'mensaje' => 'Error al registrar la orden de pago'
         ]);
     }
 }
@@ -1236,7 +1236,7 @@ function registrarOrdenPagoModulosPendientes()
         error_log("Error en registrarOrdenPagoModulosPendientes: " . $e->getMessage());
         echo json_encode([
             'success' => false,
-            'mensaje' => 'Error al registrar la orden de pago: ' . $e->getMessage()
+            'mensaje' => 'Error al registrar la orden de pago'
         ]);
     }
 }

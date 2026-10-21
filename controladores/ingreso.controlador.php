@@ -9,6 +9,14 @@
                 $User = $_POST["IUsuario"];
                 $Password = $_POST["IPassword"];
 
+                // Demasiados intentos fallidos con este usuario: no se revisa la contraseña
+                // hasta que pase el tiempo de bloqueo (evita adivinarla probando muchas).
+                if (IngresoModelos::ContarIntentosFallidosModelo($User) >= IngresoModelos::MAX_INTENTOS_INGRESO)
+                {
+                    $this->MostrarAlertaIngreso('Demasiados intentos fallidos. Espere ' . IngresoModelos::MINUTOS_BLOQUEO_INGRESO . ' minutos e intente de nuevo.');
+                    return;
+                }
+
                 $TraerUsuario = IngresoModelos::ValidarIngresoModelo($User);
 
                 // Verificar si el usuario existe y está activo
@@ -28,7 +36,13 @@
                     }
 
                     if ($passwordValido) {
-                        session_start();
+                        if (session_status() === PHP_SESSION_NONE) {
+                            session_start();
+                        }
+                        // Nuevo identificador de sesión al ingresar: el que tenía antes del
+                        // login (que alguien pudo conocer o fijar) deja de servir.
+                        session_regenerate_id(true);
+                        IngresoModelos::LimpiarIntentosModelo($User);
                         $_SESSION["Validar"] = true;
                         $_SESSION["IdUsuario"] = $TraerUsuario["ID"];
                         $_SESSION["Usuario"] = $TraerUsuario["Usuario"];
@@ -83,19 +97,23 @@
 
                 // Si llegó aquí no ingresó: usuario inexistente, inactivo o contraseña incorrecta.
                 // (Antes solo avisaba cuando el usuario no existía.)
-                {
-                    echo '
-                    <div class="alert alert-primary fade show" role="alert">
-                            <div class="alert-icon"><i class="flaticon-warning"></i></div>
-                            <div class="alert-text">Usuario o Contraseña incorrecto </div>
-                            <div class="alert-close">
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true"><i class="la la-close"></i></span>
-                                </button>
-                            </div>
-                        </div>
-                    ';
-                }
+                IngresoModelos::RegistrarIntentoFallidoModelo($User);
+                $this->MostrarAlertaIngreso('Usuario o Contraseña incorrecto');
             }
+        }
+
+        private function MostrarAlertaIngreso($mensaje)
+        {
+            echo '
+            <div class="alert alert-primary fade show" role="alert">
+                    <div class="alert-icon"><i class="flaticon-warning"></i></div>
+                    <div class="alert-text">' . htmlspecialchars($mensaje) . ' </div>
+                    <div class="alert-close">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true"><i class="la la-close"></i></span>
+                        </button>
+                    </div>
+                </div>
+            ';
         }
     }

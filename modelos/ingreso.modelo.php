@@ -50,4 +50,54 @@
             $stmt -> execute();
             return $stmt -> fetch();
         }
+
+        // Límite de intentos fallidos de ingreso (tabla intentoingreso, paso 25 del LEEME).
+        // Se cuenta por nombre de usuario y no por IP: en la facultad muchos equipos salen
+        // a internet con la misma IP y se bloquearía a todos.
+        const MAX_INTENTOS_INGRESO = 5;
+        const MINUTOS_BLOQUEO_INGRESO = 15;
+
+        // Cantidad de intentos fallidos de este usuario en los últimos minutos de bloqueo.
+        // Si la tabla aún no existe devuelve 0 (el login funciona igual, sin el límite).
+        public static function ContarIntentosFallidosModelo($usuario)
+        {
+            try {
+                $stmt = Conexion::Conectar()->prepare("
+                    SELECT COUNT(*) FROM intentoingreso
+                    WHERE Usuario = :usuario
+                      AND Fecha > NOW() - INTERVAL " . (int)self::MINUTOS_BLOQUEO_INGRESO . " MINUTE
+                ");
+                $stmt->execute([':usuario' => $usuario]);
+                return (int)$stmt->fetchColumn();
+            } catch (PDOException $e) {
+                error_log("ContarIntentosFallidosModelo: " . $e->getMessage());
+                return 0;
+            }
+        }
+
+        public static function RegistrarIntentoFallidoModelo($usuario)
+        {
+            try {
+                $conexion = Conexion::Conectar();
+                $stmt = $conexion->prepare("INSERT INTO intentoingreso (Usuario, IP) VALUES (:usuario, :ip)");
+                $stmt->execute([
+                    ':usuario' => mb_substr($usuario, 0, 100),
+                    ':ip' => $_SERVER['REMOTE_ADDR'] ?? '',
+                ]);
+                // Limpieza: los intentos de más de un día ya no sirven
+                $conexion->exec("DELETE FROM intentoingreso WHERE Fecha < NOW() - INTERVAL 1 DAY");
+            } catch (PDOException $e) {
+                error_log("RegistrarIntentoFallidoModelo: " . $e->getMessage());
+            }
+        }
+
+        public static function LimpiarIntentosModelo($usuario)
+        {
+            try {
+                $stmt = Conexion::Conectar()->prepare("DELETE FROM intentoingreso WHERE Usuario = :usuario");
+                $stmt->execute([':usuario' => $usuario]);
+            } catch (PDOException $e) {
+                error_log("LimpiarIntentosModelo: " . $e->getMessage());
+            }
+        }
     }

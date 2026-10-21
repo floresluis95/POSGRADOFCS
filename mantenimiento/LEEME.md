@@ -37,3 +37,23 @@ Ejecutar en este orden, **con respaldo previo de la base de datos**:
 21. `documentoemitido_monto.sql`: columna `documentoemitido.Monto` (monto pagado por cada certificado; historial de pagos de certificados en Registro de documentos). Los precios por tipo y grado académico se guardan en `configuracion` (claves `COSTO_CERT_<TIPO>_<GRADO>`) desde la pantalla Costos de certificados: no hace falta cargarlos por SQL. Ya ejecutado en la BD local.
 22. `firma_orden_estudiante.sql`: columna `ordenpago.GeneradaPorEstudiante` (orden de cuota que genera el propio estudiante desde Mis órdenes de pago) y tabla `imagenfirma` (firma del coordinador y sello de Posgrado, en imagen, que se imprimen solo en esas órdenes; se cargan desde Configuración). Ya ejecutado en la BD local.
 23. `crear_solicitudprocesada.sql`: tabla `solicitudprocesada` (control de envíos repetidos por corte de internet: si la respuesta no llegó y el usuario vuelve a enviar los mismos datos, se devuelve la respuesta del primer envío en vez de registrar todo otra vez; las filas se borran solas a los 2 días). Mientras no exista, el sistema funciona igual pero sin ese control. Ya ejecutado en la BD local.
+24. `crear_calificacionreseteo.sql`: tabla `calificacionreseteo` (copia de las notas de un módulo antes de resetearlas desde Reporte de Notas, con quién lo hizo, cuándo y el motivo). Ya ejecutado en la BD local.
+25. `crear_intentoingreso.sql`: tabla `intentoingreso` (límite de intentos de ingreso: con 5 contraseñas incorrectas en 15 minutos ese usuario queda bloqueado 15 minutos). Mientras no exista, el login funciona igual pero sin el límite. Ya ejecutado en la BD local.
+
+## Configuración del servidor de producción
+
+En el `php.ini` del servidor (Ubuntu: `/etc/php/8.3/apache2/php.ini`), además de la zona horaria:
+
+```ini
+display_errors = Off
+log_errors = On
+date.timezone = America/La_Paz
+session.cookie_httponly = 1
+session.cookie_samesite = Lax
+session.use_strict_mode = 1
+; Solo cuando el sitio ya funcione con HTTPS (con http el login deja de funcionar):
+session.cookie_secure = 1
+```
+
+El `.htaccess` de la raíz ya pone `httponly`, `samesite` y `use_strict_mode` cuando PHP corre como
+módulo de Apache, pero `cookie_secure` va solo en el servidor porque en XAMPP local no hay HTTPS.

@@ -94,7 +94,7 @@ try {
     }
 } catch (PDOException $e) {
     error_log('Error en asignacion.ajax.php: ' . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Error en la base de datos: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Error en la base de datos']);
 } catch (Exception $e) {
     error_log('Error general en asignacion.ajax.php: ' . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'Error del servidor']);
