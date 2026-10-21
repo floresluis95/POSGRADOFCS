@@ -49,11 +49,14 @@ class VoucherModelo
      * registrarse dos veces, ni en dos matrículas, ni en dos cuotas, ni en una
      * matrícula y una cuota o clínica. Compara sin distinguir mayúsculas ni espacios.
      * Las cuotas/clínicas ANULADAS no cuentan (su voucher queda libre).
+     * También cuentan los certificados (documentoemitido); al reimprimir uno se pasa su
+     * IdDocumento para que no choque con su propio voucher.
      * @param string $numeroVoucher
      * @param PDO|null $pdo Conexión de una transacción ya abierta (opcional)
+     * @param int $idDocumentoPropio Certificado que se está reimprimiendo (0 si ninguno)
      * @return string|null Dónde se usó (para el mensaje), o null si está libre
      */
-    public static function VoucherYaUsadoModelo($numeroVoucher, $pdo = null)
+    public static function VoucherYaUsadoModelo($numeroVoucher, $pdo = null, $idDocumentoPropio = 0)
     {
         $numero = trim((string)$numeroVoucher);
         if ($numero === '' || mb_strtoupper($numero, 'UTF-8') === 'SIN MATRÍCULA') {
@@ -78,11 +81,28 @@ class VoucherModelo
                  INNER JOIN estudianteprograma ep ON ep.idInscripcion = pc.idinscripcion
                  INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID
                  WHERE LOWER(TRIM(pc.NumeroVoucher)) = LOWER(:numero) AND pc.Estado <> 'ANULADO' LIMIT 1",
+            'un certificado de' =>
+                "SELECT CONCAT(d.NombreEstudiante, ' (', REPLACE(d.TipoDocumento, '_', ' '), ')')
+                 FROM documentoemitido d
+                 WHERE LOWER(TRIM(d.NumeroVaucher)) = LOWER(:numero) AND d.IdDocumento <> :idPropio LIMIT 1",
         ];
 
         foreach ($consultas as $donde => $sql) {
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([':numero' => $numero]);
+            $parametros = [':numero' => $numero];
+            if (strpos($sql, ':idPropio') !== false) {
+                $parametros[':idPropio'] = (int)$idDocumentoPropio;
+            }
+            try {
+                $stmt->execute($parametros);
+            } catch (PDOException $e) {
+                // Tabla de una migración aún no aplicada: esa consulta se salta para no
+                // bloquear matrícula, cuotas ni clínicas
+                if ($e->getCode() === '42S02') {
+                    continue;
+                }
+                throw $e;
+            }
             $estudiante = $stmt->fetchColumn();
             if ($estudiante !== false) {
                 return $donde . ' ' . $estudiante;

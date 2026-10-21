@@ -32,7 +32,7 @@
                 'orden-generada', 'matriculas', 'detalles',
             ],
             'DOC' => ['reportecalificaciones'],
-            'EST' => ['historialnotaestudiante', 'historialmodulosestudiante', 'historialreciboestudiante', 'misordenespago', 'misrequisitos'],
+            'EST' => ['historialnotaestudiante', 'historialmodulosestudiante', 'historialreciboestudiante', 'misordenespago', 'misrequisitos', 'miscertificados'],
         ];
 
         /**

@@ -19,61 +19,79 @@ $directorCarta = AutoridadModelo::NombreParaDocumento($autoridadesCarta, 'DIRECT
                                 </div>
                             </div>
 
-                            <div class="card-certificado" id="card-carta" style="display:none;">
-                                <h3><span class="paso-numero">2</span> Datos de la certificación</h3>
-                                <div class="certificado-cuerpo">
-                                    <div class="row">
-                                        <div class="col-md-3 form-group">
-                                            <label for="input-tratamiento">Tratamiento</label>
-                                            <select class="form-control" id="input-tratamiento">
-                                                <option value="El Sr.">El Sr.</option>
-                                                <option value="La Sra.">La Sra.</option>
-                                                <option value="La Srta.">La Srta.</option>
-                                            </select>
+                            <div class="card-certificado" id="cert-vacio">
+                                <div class="cert-vacio">
+                                    <i class="fas fa-user-graduate"></i>
+                                    <p>Busque al estudiante por su C.I. o nombre.</p>
+                                </div>
+                            </div>
+
+                            <!-- #card-carta agrupa los pasos 2 y 3 (se muestra al elegir al estudiante) -->
+                            <div id="card-carta" style="display:none;">
+                                <!-- Paso 2: lo que dice la carta -->
+                                <div class="card-certificado">
+                                    <h3><span class="paso-numero">2</span> Datos de la carta</h3>
+                                    <div class="certificado-cuerpo">
+                                        <div class="cert-fijos">
+                                            <div><span>Curso realizado</span><div class="dato-solo-lectura" id="dato-curso"></div></div>
                                         </div>
-                                        <div class="col-md-9 form-group">
-                                            <label>Curso realizado</label>
-                                            <div class="dato-solo-lectura" id="dato-curso"></div>
-                                        </div>
-                                        <div class="col-md-12 form-group">
-                                            <label for="input-tipotrabajo">Trabajo entregado</label>
-                                            <select class="form-control" id="input-tipotrabajo">
-                                                <option value="MEDIO FÍSICO Y DIGITAL DEL TRABAJO DE TESIS">Medio físico y digital del Trabajo de Tesis</option>
-                                                <option value="MEDIO FÍSICO Y DIGITAL DEL TRABAJO MONOGRÁFICO">Medio físico y digital del Trabajo Monográfico</option>
-                                                <option value="MEDIO FÍSICO Y DIGITAL DEL TRABAJO DE GRADO">Medio físico y digital del Trabajo de Grado</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-12 form-group">
-                                            <label for="input-titulo">Título del trabajo</label>
-                                            <textarea class="form-control" id="input-titulo" rows="3" spellcheck="true" lang="es"></textarea>
-                                            <small class="cert-ayuda" id="ayuda-titulo"></small>
-                                        </div>
-                                        <div class="col-md-4 form-group">
-                                            <label for="input-vaucher">N° de recibo o voucher</label>
-                                            <input type="text" class="form-control" id="input-vaucher" data-voucher-partes="alfanumerico">
-                                        </div>
-                                        <div class="col-md-4 form-group">
-                                            <label for="input-monto">Monto pagado (Bs.)</label>
-                                            <input type="number" class="form-control" id="input-monto" min="0" step="0.01" placeholder="0.00">
-                                        </div>
-                                        <div class="col-md-4 form-group">
-                                            <label for="input-fecha">Fecha de la carta</label>
-                                            <input type="date" class="form-control" id="input-fecha">
-                                        </div>
-                                        <div class="col-md-6 form-group">
-                                            <label for="input-coordinador">Coordinador de Posgrado</label>
-                                            <input type="text" class="form-control" id="input-coordinador" value="<?php echo htmlspecialchars($coordinadorCarta, ENT_QUOTES); ?>">
-                                        </div>
-                                        <div class="col-md-6 form-group">
-                                            <label for="input-director">Director de Posgrado</label>
-                                            <input type="text" class="form-control" id="input-director" value="<?php echo htmlspecialchars($directorCarta, ENT_QUOTES); ?>">
+                                        <div class="row">
+                                            <div class="col-md-3 form-group">
+                                                <label for="input-tratamiento">Tratamiento</label>
+                                                <select class="form-control" id="input-tratamiento">
+                                                    <option value="El Sr.">El Sr.</option>
+                                                    <option value="La Sra.">La Sra.</option>
+                                                    <option value="La Srta.">La Srta.</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-9 form-group">
+                                                <label for="input-tipotrabajo">Trabajo entregado</label>
+                                                <select class="form-control" id="input-tipotrabajo">
+                                                    <option value="MEDIO FÍSICO Y DIGITAL DEL TRABAJO DE TESIS">Medio físico y digital del Trabajo de Tesis</option>
+                                                    <option value="MEDIO FÍSICO Y DIGITAL DEL TRABAJO MONOGRÁFICO">Medio físico y digital del Trabajo Monográfico</option>
+                                                    <option value="MEDIO FÍSICO Y DIGITAL DEL TRABAJO DE GRADO">Medio físico y digital del Trabajo de Grado</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-12 form-group">
+                                                <label for="input-titulo">Título del trabajo<span class="cert-requerido">*</span></label>
+                                                <textarea class="form-control" id="input-titulo" rows="3" spellcheck="true" lang="es"></textarea>
+                                                <small class="cert-ayuda" id="ayuda-titulo"></small>
+                                            </div>
+                                            <div class="col-md-6 form-group mb-md-0">
+                                                <label for="input-coordinador">Coordinador de Posgrado (firma)</label>
+                                                <input type="text" class="form-control" id="input-coordinador" value="<?php echo htmlspecialchars($coordinadorCarta, ENT_QUOTES); ?>">
+                                            </div>
+                                            <div class="col-md-6 form-group mb-0">
+                                                <label for="input-director">Director de Posgrado (firma)</label>
+                                                <input type="text" class="form-control" id="input-director" value="<?php echo htmlspecialchars($directorCarta, ENT_QUOTES); ?>">
+                                            </div>
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div class="certificado-acciones">
-                                        <button type="button" class="btn-generar-certificado" id="btn-generar-certificado">
-                                            <i class="fas fa-eye"></i> Revisar y generar
-                                        </button>
+                                <!-- Paso 3: pago y fecha; aquí se genera -->
+                                <div class="card-certificado">
+                                    <h3><span class="paso-numero">3</span> Pago y fecha</h3>
+                                    <div class="certificado-cuerpo">
+                                        <div class="row">
+                                            <div class="col-md-5 form-group mb-md-0">
+                                                <label for="input-vaucher">N° de recibo o voucher<span class="cert-requerido">*</span></label>
+                                                <input type="text" class="form-control" id="input-vaucher" data-voucher-partes="alfanumerico">
+                                            </div>
+                                            <div class="col-md-3 form-group mb-md-0">
+                                                <label for="input-monto">Monto pagado (Bs.)<span class="cert-requerido">*</span></label>
+                                                <input type="number" class="form-control" id="input-monto" min="0" step="0.01" placeholder="0.00">
+                                            </div>
+                                            <div class="col-md-4 form-group mb-0">
+                                                <label for="input-fecha">Fecha de la carta<span class="cert-requerido">*</span></label>
+                                                <input type="date" class="form-control" id="input-fecha">
+                                            </div>
+                                        </div>
+                                        <div class="certificado-acciones cert-acciones">
+                                            <button type="button" class="btn-generar-certificado" id="btn-generar-certificado">
+                                                <i class="fas fa-eye"></i> Revisar y generar
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

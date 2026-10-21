@@ -12,40 +12,58 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                                 </div>
                             </div>
 
-                            <div class="card-certificado" id="card-revision" style="display:none;">
-                                <h3><span class="paso-numero">2</span> Datos del certificado</h3>
-                                <div class="certificado-cuerpo">
-                                    <div class="row">
-                                        <div class="col-md-3 form-group">
-                                            <label for="input-tratamiento">Tratamiento</label>
-                                            <select class="form-control" id="input-tratamiento">
-                                                <option value="la señora">la señora</option>
-                                                <option value="el señor">el señor</option>
-                                                <option value="la señorita">la señorita</option>
-                                            </select>
+                            <div class="card-certificado" id="cert-vacio">
+                                <div class="cert-vacio">
+                                    <i class="fas fa-user-graduate"></i>
+                                    <p>Busque al estudiante por su C.I. o nombre.</p>
+                                </div>
+                            </div>
+
+                            <!-- #card-revision agrupa los pasos 2 y 3 (se muestra al elegir al estudiante) -->
+                            <div id="card-revision" style="display:none;">
+                                <!-- Paso 2: lo que dice el certificado -->
+                                <div class="card-certificado">
+                                    <h3><span class="paso-numero">2</span> Datos del certificado</h3>
+                                    <div class="certificado-cuerpo">
+                                        <div class="cert-fijos">
+                                            <div><span>Programa</span><div class="dato-solo-lectura" id="dato-curso"></div></div>
                                         </div>
-                                        <div class="col-md-9 form-group">
-                                            <label>Programa</label>
-                                            <div class="dato-solo-lectura" id="dato-curso"></div>
-                                        </div>
-                                        <div class="col-md-4 form-group">
-                                            <label for="input-fecha">Fecha</label>
-                                            <input type="date" class="form-control" id="input-fecha">
-                                        </div>
-                                        <div class="col-md-4 form-group">
-                                            <label for="input-vaucher">N° de recibo o voucher <span class="text-muted font-weight-normal">(opcional)</span></label>
-                                            <input type="text" class="form-control" id="input-vaucher" data-voucher-partes="alfanumerico">
-                                        </div>
-                                        <div class="col-md-4 form-group">
-                                            <label for="input-monto">Monto pagado (Bs.) <span class="text-muted font-weight-normal">(opcional)</span></label>
-                                            <input type="number" class="form-control" id="input-monto" min="0" step="0.01" placeholder="0.00">
+                                        <div class="row">
+                                            <div class="col-md-4 form-group mb-0">
+                                                <label for="input-tratamiento">Tratamiento</label>
+                                                <select class="form-control" id="input-tratamiento">
+                                                    <option value="la señora">la señora</option>
+                                                    <option value="el señor">el señor</option>
+                                                    <option value="la señorita">la señorita</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div class="certificado-acciones">
-                                        <button type="button" class="btn-generar-certificado" id="btn-generar-certificado">
-                                            <i class="fas fa-eye"></i> Revisar y generar
-                                        </button>
+                                <!-- Paso 3: pago y fecha; aquí se genera -->
+                                <div class="card-certificado">
+                                    <h3><span class="paso-numero">3</span> Pago y fecha</h3>
+                                    <div class="certificado-cuerpo">
+                                        <div class="row">
+                                            <div class="col-md-5 form-group mb-md-0">
+                                                <label for="input-vaucher">N° de recibo o voucher<span class="cert-opcional">(opcional)</span></label>
+                                                <input type="text" class="form-control" id="input-vaucher" data-voucher-partes="alfanumerico">
+                                            </div>
+                                            <div class="col-md-3 form-group mb-md-0">
+                                                <label for="input-monto">Monto pagado (Bs.)<span class="cert-opcional">(opcional)</span></label>
+                                                <input type="number" class="form-control" id="input-monto" min="0" step="0.01" placeholder="0.00">
+                                            </div>
+                                            <div class="col-md-4 form-group mb-0">
+                                                <label for="input-fecha">Fecha del certificado<span class="cert-requerido">*</span></label>
+                                                <input type="date" class="form-control" id="input-fecha">
+                                            </div>
+                                        </div>
+                                        <div class="certificado-acciones cert-acciones">
+                                            <button type="button" class="btn-generar-certificado" id="btn-generar-certificado">
+                                                <i class="fas fa-eye"></i> Revisar y generar
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

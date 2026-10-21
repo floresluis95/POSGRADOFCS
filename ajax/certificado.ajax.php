@@ -66,6 +66,15 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'modulosCalificados') {
     exit();
 }
 
+// ¿El N° de voucher ya se usó? (en otro certificado, matrícula, cuota o clínica).
+// La pantalla lo pregunta antes de la vista previa; el PDF lo vuelve a revisar.
+if (isset($_POST['accion']) && $_POST['accion'] === 'verificarVoucher') {
+    $vaucher = CertificadoModelo::NormalizarVoucher($_POST['vaucher'] ?? '');
+    $mensaje = $vaucher ? CertificadoModelo::VoucherRepetidoMensaje($vaucher, intval($_POST['idDocumento'] ?? 0)) : null;
+    echo json_encode(['success' => true, 'repetido' => (bool)$mensaje, 'mensaje' => $mensaje]);
+    exit();
+}
+
 // Docentes y personas de tribunales anteriores, para elegir el tribunal
 if (isset($_POST['accion']) && $_POST['accion'] === 'sugerenciasTribunal') {
     echo json_encode(['success' => true, 'personas' => CertificadoModelo::SugerenciasTribunalModelo()]);
@@ -116,12 +125,16 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'estadoDocumentos') {
         exit();
     }
 
-    $estado = CertificadoModelo::EstadoDocumentosEstudianteModelo($estudianteID, $programaID);
+    // Todas las emisiones del estudiante en ese programa (si se emitieron 3 certificados de
+    // calificaciones aparecen los 3), de la más reciente a la más antigua
+    $documentos = CertificadoModelo::ListarDocumentosEmitidosModelo(null, 5000, ['estudianteID' => $estudianteID, 'programaID' => $programaID]);
     $trabajo = CertificadoModelo::ObtenerTrabajoGradoModelo($estudianteID, $programaID);
     echo json_encode([
         'success' => true,
-        'tipos' => CertificadoModelo::TiposDocumento(),
-        'estado' => $estado,
+        'tipos' => CertificadoModelo::TiposParaListado(),
+        'documentos' => $documentos,
+        // Certificados que exige su grado para titularse y cuáles ya tiene en este programa
+        'titulacion' => CertificadoModelo::EstadoTitulacionModelo($estudianteID, $programaID),
         'trabajo' => $trabajo,
     ]);
     exit();
@@ -155,13 +168,16 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'listarDocumentosEmitidos') 
     $filtros = [
         'desde' => $fecha('desde'),
         'hasta' => $fecha('hasta'),
-        'tipo' => array_key_exists($tipo, CertificadoModelo::TiposDocumento()) ? $tipo : null,
+        'tipo' => array_key_exists($tipo, CertificadoModelo::TiposParaListado()) ? $tipo : null,
+        'programaID' => intval($_POST['programaID'] ?? 0) ?: null,
+        'sede' => trim($_POST['sede'] ?? '') ?: null,
+        'grado' => array_key_exists($_POST['grado'] ?? '', CertificadoModelo::GradosAcademicos()) ? $_POST['grado'] : null,
     ];
-    $conFiltros = $filtros['desde'] || $filtros['hasta'] || $filtros['tipo'];
+    $conFiltros = (bool)array_filter($filtros);
     $documentos = CertificadoModelo::ListarDocumentosEmitidosModelo($ci !== '' ? $ci : null, $conFiltros ? 5000 : 100, $filtros);
     echo json_encode([
         'success' => true,
-        'tipos' => CertificadoModelo::TiposDocumento(),
+        'tipos' => CertificadoModelo::TiposParaListado(),
         'documentos' => $documentos,
     ]);
     exit();
@@ -186,6 +202,75 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerDocumento') {
             'rutaPdf' => $rutas[$documento['TipoDocumento']] ?? null,
         ],
     ]);
+    exit();
+}
+
+// Documento que registró un envío (marca tokenEmision): al generar un certificado la
+// pantalla pasa a Registro de documentos, que lo pregunta hasta que el PDF termine de guardarlo
+if (isset($_POST['accion']) && $_POST['accion'] === 'documentoPorEmision') {
+    $idDocumento = CertificadoModelo::DocumentoDeEmision((string)($_POST['token'] ?? ''));
+    $filas = $idDocumento ? CertificadoModelo::ListarDocumentosEmitidosModelo(null, 1, ['idDocumento' => $idDocumento]) : [];
+    if (!$filas) {
+        echo json_encode(['success' => false]);
+        exit();
+    }
+    $doc = $filas[0];
+    echo json_encode([
+        'success' => true,
+        'documento' => [
+            'idDocumento' => (int)$doc['IdDocumento'],
+            'estudianteID' => (int)$doc['EstudianteID'],
+            'programaID' => (int)$doc['ProgramaID'],
+            'ci' => $doc['Ci'],
+        ],
+    ]);
+    exit();
+}
+
+// ===== Certificados exigidos para la titulación (se marcan en Costos de certificados) =====
+if (isset($_POST['accion']) && $_POST['accion'] === 'requisitosTitulacion') {
+    echo json_encode(['success' => true, 'requisitos' => CertificadoModelo::RequisitosTitulacionModelo(), 'grados' => CertificadoModelo::GradosAcademicos()]);
+    exit();
+}
+if (isset($_POST['accion']) && $_POST['accion'] === 'guardarRequisitoTitulacion') {
+    if (($_SESSION['Tipo'] ?? '') !== 'ADM') {
+        echo json_encode(['success' => false, 'mensaje' => 'Solo el Administrador define los requisitos de titulación']);
+        exit();
+    }
+    echo json_encode(CertificadoModelo::GuardarRequisitoTitulacionModelo($_POST['clave'] ?? '', $_POST['grado'] ?? '', !empty($_POST['exigir'])));
+    exit();
+}
+
+// ===== Certificados sin documento (solo se registra el pago) =====
+// Catálogo: todos lo leen; solo el ADM lo cambia
+if (isset($_POST['accion']) && $_POST['accion'] === 'catalogoSinDocumento') {
+    echo json_encode(['success' => true, 'certificados' => CertificadoModelo::ListarSinDocumentoModelo(empty($_POST['todos']))]);
+    exit();
+}
+if (isset($_POST['accion']) && $_POST['accion'] === 'guardarSinDocumento') {
+    if (($_SESSION['Tipo'] ?? '') !== 'ADM') {
+        echo json_encode(['success' => false, 'mensaje' => 'Solo el Administrador cambia la lista de certificados']);
+        exit();
+    }
+    echo json_encode(CertificadoModelo::GuardarSinDocumentoModelo(
+        intval($_POST['id'] ?? 0), $_POST['nombre'] ?? '', $_POST['monto'] ?? '', !empty($_POST['activo'])
+    ));
+    exit();
+}
+if (isset($_POST['accion']) && $_POST['accion'] === 'registrarSinDocumento') {
+    echo json_encode(CertificadoModelo::RegistrarSinDocumentoModelo(
+        intval($_POST['estudianteID'] ?? 0), intval($_POST['programaID'] ?? 0), intval($_POST['idCertificadoSD'] ?? 0),
+        $_POST['vaucher'] ?? '', $_POST['monto'] ?? '', $_POST['fechaPago'] ?? '', $_SESSION['IdUsuario'] ?? null
+    ));
+    exit();
+}
+
+// Corregir los datos guardados de un documento sin imprimirlo (Registro de documentos)
+if (isset($_POST['accion']) && $_POST['accion'] === 'editarDocumento') {
+    $idDocumento = intval($_POST['idDocumento'] ?? 0);
+    $cambios = is_array($_POST['datos'] ?? null) ? $_POST['datos'] : [];
+    echo json_encode($idDocumento ? CertificadoModelo::EditarDocumentoModelo($idDocumento, $cambios)
+        : ['success' => false, 'mensaje' => 'Documento no válido']);
     exit();
 }
 

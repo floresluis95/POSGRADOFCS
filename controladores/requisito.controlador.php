@@ -6,6 +6,7 @@
  */
 
 require_once __DIR__ . '/../modelos/requisito.modelo.php';
+require_once __DIR__ . '/../modelos/certificado.modelo.php'; // certificados exigidos para la titulación
 
 class RequisitoControlador
 {
@@ -173,6 +174,15 @@ class RequisitoControlador
                 ];
             }, $requisitos);
 
+            // Certificados que su grado exige para titularse y cuáles ya pagó en este
+            // programa (solo nombre, precio, fecha y voucher: no puede verlos ni imprimirlos)
+            try {
+                $titulacion = CertificadoModelo::EstadoTitulacionModelo($estudianteID, $inscripcion['ProgramaID']);
+            } catch (PDOException $e) {
+                error_log('MisRequisitos (titulación): ' . $e->getMessage());
+                $titulacion = ['total' => 0, 'cumplidos' => 0, 'completo' => false, 'certificados' => []];
+            }
+
             $programas[] = [
                 'idInscripcion' => (int)$inscripcion['idInscripcion'],
                 'programa' => $inscripcion['NombrePrograma'],
@@ -180,6 +190,7 @@ class RequisitoControlador
                 'fechaInscripcion' => $inscripcion['FechaInscripcion'],
                 'situacion' => self::SituacionPrograma($inscripcion),
                 'requisitos' => $requisitos,
+                'titulacion' => $titulacion,
             ] + self::Resumen($requisitos);
         }
 

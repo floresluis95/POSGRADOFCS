@@ -10,6 +10,11 @@ test.beforeEach(async ({ page }) => {
   await ingresar(page, 'adm');
 });
 
+/** Elige una opción en un select con buscador (select2: el select queda oculto) */
+async function elegir(page, selector, valor) {
+  await page.locator(selector).evaluate((s, v) => { s.value = v; window.jQuery(s).trigger('change'); }, String(valor));
+}
+
 /** Genera la carta de Medio Magnético (no exige calificaciones) con el voucher y monto dados. */
 async function emitirMedioMagnetico(page, estudianteID, voucher, monto, fecha = '2026-10-10') {
   const nombre = valor(`SELECT CONCAT(Apaterno, ' ', Amaterno, ' ', Nombre) FROM estudiante WHERE EstudianteID = ${estudianteID}`);
@@ -52,6 +57,7 @@ test('los costos se guardan por grado académico y llegan al certificado según 
 
   // Pantalla Costos de certificados: la tabla muestra los costos y se pueden editar
   await page.goto('costoscertificados');
+  await page.locator('#btnModoEdicion').click(); // al entrar está bloqueado
   const campo = page.locator(`.costo-certificado[data-tipo="MEDIO_MAGNETICO"][data-grado="${grado}"]`);
   await expect(campo).toHaveValue('85.00', { timeout: 15_000 });
   await campo.fill('90');
@@ -83,29 +89,79 @@ test('el monto se guarda con la emisión y el historial filtra, suma e imprime',
   await page.goto('registrodocumentos');
   await page.locator('#input-buscar-ci').fill(String(ci));
   await page.locator('#btn-buscar-ci').click();
-  const fila = page.locator('#tabla-log-body tr', { hasText: voucher });
+  // Por estudiante: sus emisiones con monto y total
+  const fila = page.locator('#tabla-estudiante-body tr', { hasText: voucher });
   await expect(fila).toContainText('Bs. 85,00', { timeout: 15_000 });
-  await expect(page.locator('#tabla-log-pie')).toContainText('Bs. 85,00');
-  await expect(page.locator('#tabla-log-pie')).toContainText('1 documento(s)');
+  await expect(page.locator('#tabla-estudiante-pie')).toContainText('Bs. 85,00');
+  await expect(page.locator('#tabla-estudiante-pie')).toContainText('1 documento(s)');
 
-  await page.locator('#filtro-tipo').selectOption('CALIFICACIONES');
-  await expect(page.locator('#tabla-log-body')).toContainText('Sin documentos emitidos con estos filtros', { timeout: 15_000 });
-  await page.locator('#btn-limpiar-pagos').click();
-  await expect(fila).toBeVisible({ timeout: 15_000 });
+  // Reporte de pagos: filtra por tipo al pulsar Consultar; Limpiar lo vacía
+  await page.locator('#tab-reporte').click();
+  await elegir(page, '#filtro-tipo', 'CALIFICACIONES');
+  await page.locator('#btn-filtrar-pagos').click();
+  await expect(page.locator('#tabla-log-body')).not.toContainText('pulse Consultar', { timeout: 15_000 });
+  await expect(page.locator('#tabla-log-body tr', { hasText: voucher })).toHaveCount(0);
+  await expect(page.locator('#tabla-log-body .rd-tipo', { hasText: 'Medio Magnético' })).toHaveCount(0);
+  await elegir(page, '#filtro-tipo', 'MEDIO_MAGNETICO');
+  await page.locator('#btn-filtrar-pagos').click();
+  const filaReporte = page.locator('#tabla-log-body tr', { hasText: voucher });
+  await expect(filaReporte).toContainText('Bs. 85,00', { timeout: 15_000 });
 
+  // Filtro por programa: con el suyo aparece; con otro programa, no
+  await elegir(page, '#filtro-programa', String(PROGRAMA_ID));
+  await page.locator('#btn-filtrar-pagos').click();
+  await expect(filaReporte).toBeVisible({ timeout: 15_000 });
+  const otroPrograma = valor(`SELECT ProgramaID FROM programa WHERE ProgramaID <> ${PROGRAMA_ID} LIMIT 1`);
+  if (otroPrograma) {
+    await elegir(page, '#filtro-programa', String(otroPrograma));
+    await page.locator('#btn-filtrar-pagos').click();
+    await expect(filaReporte).toHaveCount(0, { timeout: 15_000 });
+    await elegir(page, '#filtro-programa', String(PROGRAMA_ID));
+    await page.locator('#btn-filtrar-pagos').click();
+    await expect(filaReporte).toBeVisible({ timeout: 15_000 });
+  }
+
+  // Grado académico: con otro grado no aparece y Programa deja de mostrar el suyo
+  const grado = String(valor(`SELECT GradoAcademico FROM programa WHERE ProgramaID = ${PROGRAMA_ID}`));
+  const otroGrado = grado === 'DOCTORADO' ? 'DIPLOMADO' : 'DOCTORADO';
+  await elegir(page, '#filtro-grado', otroGrado);
+  await expect(page.locator(`#filtro-programa option[value="${PROGRAMA_ID}"]`)).toHaveCount(0);
+  await page.locator('#btn-filtrar-pagos').click();
+  await expect(filaReporte).toHaveCount(0, { timeout: 15_000 });
+  await elegir(page, '#filtro-grado', grado);
+  await elegir(page, '#filtro-programa', String(PROGRAMA_ID));
+  await page.locator('#btn-filtrar-pagos').click();
+  await expect(filaReporte).toBeVisible({ timeout: 15_000 });
+
+  // Imprimir reporte: el recibo de pagos de certificados con los filtros consultados
   const [ventana] = await Promise.all([page.waitForEvent('popup'), page.locator('#btn-imprimir-pagos').click()]);
   await ventana.waitForLoadState();
   const html = await ventana.content();
-  expect(html).toContain('DETALLE DE PAGOS DE CERTIFICADOS');
+  expect(html).toContain('REPORTE DE PAGOS DE CERTIFICADOS');
+  expect(html).toContain('Medio Magnético');
   expect(html).toContain(voucher);
   expect(html).toContain('Bs. 85,00');
   await ventana.close();
 
+  await page.locator('#btn-limpiar-pagos').click();
+  await expect(page.locator('#tabla-log-body')).toContainText('pulse Consultar');
+
+  // Recibo del estudiante: sus certificados pagados en el programa
+  await page.locator('#tab-estudiante').click();
+  const [recibo] = await Promise.all([page.waitForEvent('popup'), page.locator('#btn-imprimir-estudiante').click()]);
+  await recibo.waitForLoadState();
+  const htmlRecibo = await recibo.content();
+  expect(htmlRecibo).toContain('RECIBO DE PAGO DE CERTIFICADOS');
+  expect(htmlRecibo).toContain(voucher);
+  expect(htmlRecibo).toContain('Total pagado');
+  expect(htmlRecibo).toContain('Bs. 85,00');
+  await recibo.close();
+
   // Reimprimir corrigiendo el monto lo actualiza en el registro
-  const item = page.locator('#contenedor-checklist .item-checklist', { hasText: 'Medio Magnético' });
-  await item.locator('[data-reimprimir]').click();
+  const item = page.locator('#tabla-estudiante-body tr', { hasText: 'Medio Magnético' });
+  await item.locator('[data-editar]').click();
   await expect(page.locator('#reimp-monto')).toHaveValue('85');
   await page.locator('#reimp-monto').fill('90');
-  await Promise.all([page.waitForEvent('popup'), page.locator('#form-reimprimir button[type="submit"]').click()]);
+  await Promise.all([page.waitForEvent('popup'), page.locator('#btn-guardar-imprimir').click()]);
   await expect.poll(() => valor(`SELECT Monto FROM documentoemitido WHERE NumeroVaucher = '${voucher}'`)).toBe('90.00');
 });

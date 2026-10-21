@@ -310,7 +310,7 @@ class RequisitoModelo
     {
         try {
             $stmt = Conexion::Conectar()->prepare(
-                "SELECT ep.idInscripcion, ep.FechaInscripcion, ep.Estado,
+                "SELECT ep.idInscripcion, ep.ProgramaID, ep.FechaInscripcion, ep.Estado,
                         p.NombrePrograma, p.GradoAcademico, p.Modulos AS ModulosPrograma,
                         (SELECT COUNT(*) FROM modulos m
                          WHERE m.ProgramaId = p.ProgramaID AND m.FechaFinal IS NOT NULL) AS ModulosConFecha,

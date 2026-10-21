@@ -147,6 +147,14 @@
     .mr-fecha { display: none; }
     .mr-detalle-fecha { display: inline; }
 }
+/* Certificados para la titulación */
+.mr-titulacion { padding: 16px 22px 10px; border-top: 1px solid #eef0f5; background: #fbfcfe; }
+.mr-titulacion-cabeza { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; font-weight: 700; color: #1e3c72; font-size: 0.95rem; }
+.mr-titulacion-cabeza i { margin-right: 4px; }
+.mr-titulacion-cuenta { font-size: 0.78rem; padding: 3px 10px; border-radius: 20px; background: #fdecec; color: #b91c1c; }
+.mr-titulacion-completa .mr-titulacion-cuenta { background: #e6f4ec; color: #1e7145; }
+.mr-titulacion .mr-mensaje { margin-bottom: 8px; }
+.mr-tit-falta .mr-detalle { color: #b91c1c; font-weight: 600; }
 </style>
 
 <script>
@@ -191,8 +199,41 @@ document.addEventListener('DOMContentLoaded', function () {
         '</li>';
     }
 
+    function bs(monto) {
+        return 'Bs. ' + (parseFloat(monto) || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Certificados que su grado exige para titularse: pagados (fecha y voucher) y los que
+    // faltan (con su precio). Solo consulta.
+    function seccionTitulacion(p) {
+        var t = p.titulacion;
+        if (!t || !t.total) return '';
+        var lista = t.certificados.map(function (c) {
+            var detalle = c.pagado
+                ? 'Pagado el ' + fecha(c.fecha) + (c.voucher ? ' · Voucher ' + esc(c.voucher) : '')
+                : 'Falta pagar' + (c.precio ? ' · ' + bs(c.precio) : '');
+            return '<li class="mr-item' + (c.pagado ? '' : ' mr-tit-falta') + '">' +
+                '<span class="mr-icono ' + (c.pagado ? 'mr-icono-entregado' : 'mr-icono-pendiente') + '">' +
+                    (c.pagado ? '<i class="fas fa-check"></i>' : '<i class="fas fa-graduation-cap"></i>') + '</span>' +
+                '<div class="mr-texto"><div class="mr-nombre">' + esc(c.nombre) + '</div>' +
+                '<div class="mr-detalle">' + detalle + '</div></div></li>';
+        }).join('');
+        var faltan = t.total - t.cumplidos;
+        return '<div class="mr-titulacion' + (t.completo ? ' mr-titulacion-completa' : '') + '" id="mr-titulacion-' + p.idInscripcion + '">' +
+            '<div class="mr-titulacion-cabeza">' +
+                '<span><i class="fas fa-graduation-cap"></i> Certificados para la titulación</span>' +
+                '<span class="mr-titulacion-cuenta">' + t.cumplidos + ' de ' + t.total + ' pagados</span>' +
+            '</div>' +
+            '<div class="mr-mensaje ' + (t.completo ? 'mr-mensaje-completo' : 'mr-mensaje-pendiente') + '"><i class="fas ' + (t.completo ? 'fa-check-circle' : 'fa-info-circle') + '"></i><span>' +
+                (t.completo ? 'Tiene todos los certificados que se exigen para titularse.'
+                    : (faltan === 1 ? 'Le falta pagar <strong>1 certificado</strong>.' : 'Le falta pagar <strong>' + faltan + ' certificados</strong>.') +
+                      ' Solicítelos en Secretaría de Posgrado.') + '</span></div>' +
+            '<ul class="mr-lista">' + lista + '</ul>' +
+        '</div>';
+    }
+
     // Tarjeta con los requisitos de un programa: avance arriba, luego lo que falta
-    // entregar y al final lo ya entregado
+    // entregar y al final lo ya entregado; abajo, los certificados para la titulación
     function tarjeta(p) {
         var situacion = situaciones[p.situacion] || situaciones['EN CURSO'];
         var pendientes = p.requisitos.filter(function (r) { return r.Entregado !== 1; });
@@ -209,7 +250,8 @@ document.addEventListener('DOMContentLoaded', function () {
             '</div>';
 
         if (!p.requisitos.length) {
-            return html + '<div class="mr-avance"><div class="mr-vacio" style="padding:1rem;">Este programa no tiene requisitos registrados.</div></div></div>';
+            return html + '<div class="mr-avance"><div class="mr-vacio" style="padding:1rem;">Este programa no tiene requisitos registrados.</div></div>' +
+                seccionTitulacion(p) + '</div>';
         }
 
         var faltan = pendientes.length;
@@ -236,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<ul class="mr-lista mr-entregados-lista">' + entregados.map(function (r) { return item(r, true); }).join('') + '</ul></div>';
         }
 
-        return html + '</div></div>';
+        return html + '</div>' + seccionTitulacion(p) + '</div>';
     }
 
     $.post('ajax/requisito.ajax.php', { accion: 'misRequisitos' }, function (resp) {

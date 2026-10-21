@@ -513,3 +513,48 @@
 }
 .cert-modal .modal-header .modal-title,
 .cert-modal .modal-header h5 { color: #fff !important; }
+
+/* ========================================================
+   Forma común de las 5 pantallas (2026-10-21):
+   Estudiante → datos propios del certificado → Pago y fecha → Generar
+   ======================================================== */
+
+/* Mientras no se elige al estudiante */
+.cert-vacio { text-align: center; padding: 34px 20px 38px; color: var(--cert-texto-2); }
+.cert-vacio i { display: block; font-size: 30px; color: #c3cad8; margin-bottom: 10px; }
+.cert-vacio p { margin: 0; font-size: 13.5px; }
+.cert-cabeza-extra { margin-left: auto; font-size: 12.5px; font-weight: 600; color: var(--cert-texto-2); }
+
+/* Datos que salen del programa (no se editan aquí): una franja, no campos */
+.cert-fijos { display: flex; flex-wrap: wrap; gap: 10px 28px; padding: 12px 16px; margin-bottom: 20px; background: #f8fafc; border: 1px solid var(--cert-borde); border-radius: 10px; }
+.cert-fijos > div { min-width: 0; }
+.cert-fijos > div > span { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; color: var(--cert-texto-2); }
+.cert-fijos .dato-solo-lectura { padding: 0; min-height: 0; background: none; border: 0; margin-top: 2px; font-size: 13.5px; font-weight: 700; color: var(--cert-texto); }
+.cert-requerido { color: #c53030; margin-left: 2px; }
+.cert-opcional { color: var(--cert-texto-2); font-weight: 400; margin-left: 4px; font-size: 11.5px; }
+
+/* El N° de voucher no ocupa todo el ancho: son unos pocos dígitos */
+.certificado-container .voucher-partes { max-width: 300px; }
+
+/* Acciones: la principal a la derecha; la demostración, discreta a la izquierda */
+.cert-acciones { justify-content: space-between; }
+.cert-acciones:not(:has(.cert-demo)) { justify-content: flex-end; }
+.cert-demo { background: none; border: 0; padding: 0; color: var(--cert-texto-2); font-size: 13px; font-weight: 600; cursor: pointer; }
+.cert-demo:hover:not(:disabled) { color: var(--cert-primario); text-decoration: underline; }
+.cert-demo:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Tabla de notas y avance (Calificaciones e Historial) */
+.cert-avance { margin-top: 16px; }
+.cert-avance-texto { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--cert-texto); }
+.cert-avance-texto small { color: var(--cert-texto-2); font-size: 12px; }
+.cert-barra { height: 6px; margin-top: 8px; border-radius: 999px; background: #edf0f5; overflow: hidden; }
+.cert-barra span { display: block; height: 100%; background: var(--cert-primario); border-radius: 999px; }
+.tabla-certificado td.cert-n { width: 48px; color: var(--cert-texto-2); font-variant-numeric: tabular-nums; }
+.tabla-certificado td.cert-sigla { white-space: nowrap; color: var(--cert-texto-2); font-size: 12.5px; }
+.cert-nota { display: inline-block; min-width: 40px; padding: 3px 10px; border-radius: 8px; background: var(--cert-primario-suave); color: var(--cert-primario); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 575.98px) {
+    .cert-acciones { flex-direction: column-reverse; align-items: stretch; }
+    .cert-acciones .btn-generar-certificado { justify-content: center; }
+    .certificado-container .voucher-partes { max-width: none; }
+}

@@ -53,7 +53,60 @@
   .cc-pie .btn-guardar:hover { background: #16305c; color: #fff; }
   .cc-pie .btn-guardar:disabled { opacity: .5; }
 
+  /* Activar / bloquear edición */
+  .cc-barra-edicion { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; padding: 10px 16px; background: #fff; border: 1px solid var(--cc-borde); border-left: 4px solid #94a3b8; border-radius: 10px; }
+  .cc-modo { font-size: 13px; font-weight: 600; color: #475569; }
+  .cc-modo i { margin-right: 4px; }
+  .cc-btn-modo { height: 38px; padding: 0 16px; border-radius: 8px; font-weight: 600; background: var(--cc-azul); border: 1px solid var(--cc-azul); color: #fff; }
+  .cc-btn-modo:hover { background: #16305c; color: #fff; }
+  .cc-pagina:not(.bloqueado) .cc-barra-edicion { border-left-color: var(--cc-dorado); background: #fffaf0; }
+  .cc-pagina:not(.bloqueado) .cc-modo { color: #8a5a00; }
+  .cc-pagina:not(.bloqueado) .cc-btn-modo { background: #fff; color: #1f2937; border-color: var(--cc-borde); }
+  /* Bloqueado: sin acciones de edición a la vista */
+  .cc-pagina.bloqueado .cc-copiar,
+  .cc-pagina.bloqueado .cc-tit-fila,
+  .cc-pagina.bloqueado .cc-btn-editar,
+  .cc-pagina.bloqueado .cc-otros-form,
+  .cc-pagina.bloqueado #btnDescartarCostos,
+  .cc-pagina.bloqueado #btnGuardarCostos,
+  .cc-pagina.bloqueado .cc-guia { display: none !important; }
+  .cc-pagina.bloqueado .costo-certificado { background: #f8fafc; }
+  .cc-pagina.bloqueado .cc-tit { cursor: default; }
+
+  /* Casilla "Titulación" bajo cada precio */
+  .cc-tit { display: flex; align-items: center; justify-content: center; gap: 5px; margin: 6px 0 0; font-size: 11.5px; font-weight: 600; color: var(--cc-gris); cursor: pointer; user-select: none; }
+  .cc-tit input { width: 14px; height: 14px; accent-color: var(--cc-azul); cursor: pointer; }
+  .cc-tit.is-exigido { color: var(--cc-azul); }
+  .cc-otros .cc-tit { margin: 0; }
+  /* "Titulación en todos los grados": marca o desmarca toda la fila */
+  .cc-tit-fila { display: block; font-size: 11.5px; color: var(--cc-azul); padding: 0; margin-top: 2px; font-weight: 600; text-align: left; }
+  .cc-tit-fila:hover { color: #16305c; text-decoration: underline; }
+  .cc-tit-fila.is-todas { color: #b91c1c; }
+  .cc-otros .cc-tabla thead th small { display: block; font-weight: 500; text-transform: none; letter-spacing: 0; color: #94a3b8; }
+
+  /* Otros certificados (sin documento) */
+  .cc-otros { margin-top: 22px; }
+  .cc-otros-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; padding: 16px 24px; background: #f8fafc; border-bottom: 1px solid var(--cc-borde); }
+  .cc-otros-form label { display: block; font-size: 12px; font-weight: 600; color: #1f2937; margin-bottom: 6px; }
+  .cc-otros-nombre { flex: 1 1 280px; }
+  .cc-otros-nombre .form-control { height: 38px; border-color: #dfe3ea; }
+  .cc-otros-monto { flex: 0 0 180px; }
+  .cc-otros-monto .cc-precio { max-width: none; margin: 0; }
+  .cc-otros-activo { height: 38px; display: flex; align-items: center; font-weight: 600; font-size: 13px; }
+  .cc-otros-botones { display: flex; gap: 8px; }
+  .cc-otros-botones .btn { height: 38px; font-weight: 600; }
+  .cc-otros-botones .btn-guardar { background: var(--cc-azul); border-color: var(--cc-azul); color: #fff; }
+  .cc-otros-botones .btn-guardar:hover { background: #16305c; color: #fff; }
+  .cc-otros .cc-tabla thead th { text-align: left; }
+  .cc-otros .cc-tabla td:first-child, .cc-otros .cc-tabla th:first-child { padding-left: 24px; }
+  .cc-estado { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .cc-estado.activo { background: #e7f6ee; color: #2f855a; }
+  .cc-estado.inactivo { background: #f1f3f6; color: #8a94a6; }
+  .cc-btn-editar { white-space: nowrap; font-size: 12px; font-weight: 600; border: 1px solid var(--cc-borde); background: #fff; border-radius: 8px; padding: 4px 10px; color: #1f2937; }
+  .cc-btn-editar:hover { border-color: var(--cc-azul); color: var(--cc-azul); }
+
   @media (max-width: 767.98px) {
+    .cc-otros-form { padding-left: 16px; padding-right: 16px; }
     .cc-cab, .cc-guia, .cc-pie { padding-left: 16px; padding-right: 16px; }
     .cc-tipo { padding-left: 16px !important; }
   }
@@ -101,7 +154,13 @@
             </div>
 
 <div class="kt-container kt-grid__item kt-grid__item--fluid">
-  <div class="cc-pagina">
+  <div class="cc-pagina bloqueado" id="ccPagina">
+    <!-- Al entrar todo está bloqueado (solo lectura): así no se cambia un precio por accidente -->
+    <div class="cc-barra-edicion" id="barraEdicion">
+      <span class="cc-modo" id="textoModo"><i class="fas fa-lock"></i> Edición bloqueada: solo puede ver los precios y requisitos.</span>
+      <button type="button" class="btn cc-btn-modo" id="btnModoEdicion"><i class="fas fa-pen"></i> Activar edición</button>
+    </div>
+
     <div class="cc-card">
       <div class="cc-cab">
         <div>
@@ -115,6 +174,7 @@
         <span><b>1</b> Escriba el precio en Bs. de cada grado</span>
         <span><b>2</b> Pulse Guardar</span>
         <span><b>3</b> Al emitir el certificado, el monto llega solo y se puede ajustar</span>
+        <span><b><i class="fas fa-graduation-cap" style="font-size:10px;"></i></b> Marque <strong>Titulación</strong> si ese grado lo exige para titularse (se guarda al marcar)</span>
       </div>
 
       <form id="formCostosCertificados" autocomplete="off">
@@ -139,6 +199,48 @@
           </div>
         </div>
       </form>
+    </div>
+
+    <!-- Otros certificados: el sistema no los genera; en Registro de documentos solo se
+         registra su pago. Aquí el ADM mantiene la lista y su precio. -->
+    <div class="cc-card cc-otros" id="cardOtrosCertificados">
+      <div class="cc-cab">
+        <div>
+          <h3><i class="fas fa-tags"></i> Otros certificados (sin documento)</h3>
+          <p>Se registra solo el pago en Registro de documentos y salen en el recibo de certificados.</p>
+        </div>
+        <div class="cc-resumen" id="resumenOtros"></div>
+      </div>
+      <div class="cc-otros-form">
+        <input type="hidden" id="sdc-id" value="">
+        <div class="cc-otros-nombre">
+          <label for="sdc-nombre">Nombre del certificado</label>
+          <input type="text" class="form-control" id="sdc-nombre" maxlength="150" placeholder="Ej: PRO BIBLIOTECA">
+        </div>
+        <div class="cc-otros-monto">
+          <label for="sdc-monto">Precio</label>
+          <div class="input-group cc-precio">
+            <div class="input-group-prepend"><span class="input-group-text">Bs.</span></div>
+            <input type="number" class="form-control" id="sdc-monto" min="0" step="0.01" placeholder="0.00">
+          </div>
+        </div>
+        <div class="cc-otros-activo" id="sdc-activo-grupo" style="display:none;">
+          <label class="mb-0"><input type="checkbox" id="sdc-activo" checked> Activo</label>
+        </div>
+        <div class="cc-otros-botones">
+          <button type="button" class="btn btn-outline-secondary" id="sdc-cancelar" style="display:none;">Cancelar</button>
+          <button type="button" class="btn btn-guardar" id="sdc-guardar"><i class="fas fa-plus"></i> Agregar</button>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table cc-tabla" id="tabla-sd-catalogo">
+          <thead><tr><th>Certificado</th><th>Precio</th><th>Estado</th><th></th></tr></thead>
+          <tbody><tr><td colspan="4" class="text-center text-muted py-4"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="cc-pie">
+        <div class="cc-pie-info"><i class="fas fa-info-circle"></i> El precio se sugiere al registrar el pago y se puede ajustar. Uno inactivo ya no se ofrece, pero lo registrado se conserva.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -165,6 +267,120 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     var grados = {};
     var tipos = {};
+    // Certificados exigidos para la titulación: { clave: { GRADO: true } }. Clave: el tipo
+    // generado o 'SD:<id>' para un certificado sin documento. Se guardan al marcarlos.
+    var requisitosTit = {};
+    var gradosTit = {};
+
+    function casillaTitulacion(clave, grado) {
+        var marcado = !!(requisitosTit[clave] && requisitosTit[clave][grado]);
+        return $('<label class="cc-tit" title="Se exige para que el estudiante de este grado pueda titularse"></label>')
+            .toggleClass('is-exigido', marcado)
+            .append($('<input type="checkbox" class="req-titulacion">').attr({ 'data-clave': clave, 'data-grado': grado }).prop('checked', marcado))
+            .append(' Titulación');
+    }
+
+    function cargarRequisitosTit() {
+        return $.post('ajax/certificado.ajax.php', { accion: 'requisitosTitulacion' }, function (resp) {
+            requisitosTit = (resp && resp.requisitos) || {};
+            if (Array.isArray(requisitosTit)) requisitosTit = {};
+            gradosTit = (resp && resp.grados) || {};
+        }, 'json');
+    }
+
+    // Guarda una casilla (marcada o no). Devuelve la promesa; si falla, la casilla vuelve atrás.
+    function guardarTitulacion($c, exigir) {
+        var clave = $c.data('clave'), grado = $c.data('grado');
+        $c.prop('checked', exigir).closest('.cc-tit').toggleClass('is-exigido', exigir);
+        return $.post('ajax/certificado.ajax.php', { accion: 'guardarRequisitoTitulacion', clave: clave, grado: grado, exigir: exigir ? 1 : '' }, null, 'json')
+            .then(function (resp) {
+                if (!resp.success) return $.Deferred().reject(resp.mensaje).promise();
+                requisitosTit[clave] = requisitosTit[clave] || {};
+                if (exigir) requisitosTit[clave][grado] = true; else delete requisitosTit[clave][grado];
+                actualizarBotonesFila();
+                return resp;
+            })
+            .fail(function () {
+                $c.prop('checked', !exigir).closest('.cc-tit').toggleClass('is-exigido', !exigir);
+                actualizarBotonesFila();
+            });
+    }
+
+    function avisoGuardado(titulo) {
+        Swal.fire({ type: 'success', title: titulo, toast: true, position: 'top-end', timer: 1600, showConfirmButton: false });
+    }
+    function avisoError(mensaje) {
+        Swal.fire({ type: 'error', title: 'No se guardó', text: typeof mensaje === 'string' ? mensaje : 'No se pudo conectar con el servidor' });
+    }
+
+    // Marcar / desmarcar una: se guarda en el momento (no espera al botón Guardar de los precios)
+    $(document).on('change', '.req-titulacion', function () {
+        guardarTitulacion($(this), $(this).is(':checked'))
+            .done(function (resp) { avisoGuardado(resp.mensaje); })
+            .fail(avisoError);
+    });
+
+    // ===== Activar / bloquear edición (al entrar, bloqueado) =====
+    var modoEdicion = false;
+    function aplicarModoEdicion() {
+        $('#ccPagina').toggleClass('bloqueado', !modoEdicion);
+        $('.costo-certificado, .req-titulacion, #sdc-nombre, #sdc-monto, #sdc-activo').prop('disabled', !modoEdicion);
+        $('#textoModo').html(modoEdicion
+            ? '<i class="fas fa-pen"></i> Edición activa: los cambios de precio se guardan con Guardar; las casillas de titulación, al marcarlas.'
+            : '<i class="fas fa-lock"></i> Edición bloqueada: solo puede ver los precios y requisitos.');
+        $('#btnModoEdicion').html(modoEdicion ? '<i class="fas fa-lock"></i> Bloquear edición' : '<i class="fas fa-pen"></i> Activar edición');
+    }
+    function bloquear() {
+        modoEdicion = false;
+        limpiarOtro();
+        aplicarModoEdicion();
+    }
+    $('#btnModoEdicion').on('click', function () {
+        if (!modoEdicion) {
+            modoEdicion = true;
+            aplicarModoEdicion();
+            return;
+        }
+        // Precios cambiados sin guardar: se avisa antes de bloquear
+        var cambiados = $('.costo-certificado').filter(function () { return $(this).val() !== String($(this).data('original')); }).length;
+        if (!cambiados) { bloquear(); return; }
+        Swal.fire({
+            type: 'warning',
+            title: 'Hay cambios sin guardar',
+            text: cambiados + (cambiados === 1 ? ' precio cambiado no se guardó.' : ' precios cambiados no se guardaron.') + ' ¿Descartarlos y bloquear?',
+            showCancelButton: true,
+            confirmButtonText: 'Descartar y bloquear',
+            cancelButtonText: 'Seguir editando'
+        }).then(function (r) {
+            if (!r.value) return;
+            $('#btnDescartarCostos').trigger('click');
+            bloquear();
+        });
+    });
+
+    // "Titulación en todos los grados": marca toda la fila; si ya estaban todas, la desmarca
+    function casillasDeFila(clave) {
+        return $('.req-titulacion').filter(function () { return String($(this).data('clave')) === String(clave); });
+    }
+    function actualizarBotonesFila() {
+        $('.cc-tit-fila').each(function () {
+            var $casillas = casillasDeFila($(this).data('clave'));
+            var todas = $casillas.length && $casillas.filter(':checked').length === $casillas.length;
+            $(this).toggleClass('is-todas', !!todas)
+                .html(todas ? '<i class="fas fa-times-circle"></i> Quitar titulación en todos' : '<i class="fas fa-graduation-cap"></i> Titulación en todos los grados');
+        });
+    }
+    function botonFila(clave) {
+        return $('<button type="button" class="btn btn-link btn-sm cc-tit-fila"></button>').attr('data-clave', clave);
+    }
+    $(document).on('click', '.cc-tit-fila', function () {
+        var $casillas = casillasDeFila($(this).data('clave'));
+        var exigir = $casillas.filter(':checked').length !== $casillas.length;
+        var $cambian = $casillas.filter(function () { return $(this).is(':checked') !== exigir; });
+        $.when.apply($, $cambian.map(function () { return guardarTitulacion($(this), exigir); }).get())
+            .done(function () { avisoGuardado(exigir ? 'Se exige en todos los grados' : 'Ya no se exige en ningún grado'); })
+            .fail(avisoError);
+    });
 
     function precioTexto(valor) {
         return valor === null || valor === undefined ? '' : Number(valor).toFixed(2);
@@ -214,7 +430,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     .append($('<small></small>').text(DESCRIPCION[tipo] || ''))
                     .append($('<button type="button" class="btn btn-link btn-sm cc-copiar"></button>')
                         .attr('title', 'Copiar el precio de ' + primerGrado + ' a los demás grados')
-                        .html('<i class="fas fa-copy"></i> Mismo precio en todos los grados'));
+                        .html('<i class="fas fa-copy"></i> Mismo precio en todos los grados'))
+                    .append(botonFila(tipo));
                 var $fila = $('<tr></tr>').append($tipo);
                 Object.keys(grados).forEach(function (grado) {
                     var valor = precioTexto(resp.precios[tipo] ? resp.precios[tipo][grado] : null);
@@ -225,10 +442,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         $('<div class="input-group input-group-sm cc-precio"></div>')
                             .append('<div class="input-group-prepend"><span class="input-group-text">Bs.</span></div>')
                             .append($input)
-                    ));
+                    ).append(casillaTitulacion(tipo, grado)));
                 });
                 $cuerpo.append($fila);
             });
+
+            actualizarBotonesFila();
+            aplicarModoEdicion();   // los campos recién dibujados respetan el bloqueo
 
             var d = resp.ultimaActualizacion;
             $('#actualizadoCostos').text(d && d.ResponsableActualizacion
@@ -327,7 +547,78 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    cargarCostos();
+    // ===== Otros certificados (sin documento): lista y precio =====
+    var otros = [];
+    function esc(t) { return $('<div>').text(t == null ? '' : String(t)).html(); }
+
+    function cargarOtros() {
+        $.post('ajax/certificado.ajax.php', { accion: 'catalogoSinDocumento', todos: 1 }, function (resp) {
+            otros = (resp && resp.certificados) || [];
+            var activos = otros.filter(function (c) { return Number(c.Activo) === 1; }).length;
+            $('#resumenOtros').html('<span class="cc-chip"><i class="fas fa-check-circle"></i> ' + activos + (activos === 1 ? ' activo' : ' activos') + '</span>' +
+                (otros.some(function (c) { return Number(c.Activo) === 1 && !(Number(c.Monto) > 0); })
+                    ? '<span class="cc-chip is-falta"><i class="fas fa-exclamation-circle"></i> Hay certificados sin precio</span>' : ''));
+            // Una columna por grado con la casilla "Titulación"
+            var clavesGrado = Object.keys(gradosTit);
+            $('#tabla-sd-catalogo thead tr').html('<th>Certificado</th><th>Precio</th>' +
+                clavesGrado.map(function (g) { return '<th class="text-center">' + esc(gradosTit[g]) + '<small>Titulación</small></th>'; }).join('') +
+                '<th>Estado</th><th></th>');
+            var $cuerpo = $('#tabla-sd-catalogo tbody').empty();
+            if (!otros.length) {
+                $cuerpo.html('<tr><td colspan="' + (4 + clavesGrado.length) + '" class="text-center text-muted py-4">Todavía no hay otros certificados.</td></tr>');
+            }
+            otros.forEach(function (c) {
+                var $fila = $('<tr></tr>')
+                    .append($('<td></td>').append($('<strong></strong>').text(c.Nombre)).append(botonFila('SD:' + c.IdCertificadoSD)))
+                    .append('<td class="text-nowrap">' + (Number(c.Monto) > 0 ? formatoBs(c.Monto) : '<span class="text-muted">Sin precio</span>') + '</td>');
+                clavesGrado.forEach(function (g) { $fila.append($('<td class="text-center"></td>').append(casillaTitulacion('SD:' + c.IdCertificadoSD, g))); });
+                $fila.append('<td><span class="cc-estado ' + (Number(c.Activo) ? 'activo">Activo' : 'inactivo">Inactivo') + '</span></td>')
+                    .append('<td class="text-right pr-4"><button type="button" class="cc-btn-editar" data-editar-sd="' + c.IdCertificadoSD + '"><i class="fas fa-pen"></i> Editar</button></td>');
+                $cuerpo.append($fila);
+            });
+            actualizarBotonesFila();
+            aplicarModoEdicion();   // los campos recién dibujados respetan el bloqueo
+        }, 'json');
+    }
+
+    function limpiarOtro() {
+        $('#sdc-id, #sdc-nombre, #sdc-monto').val('');
+        $('#sdc-activo').prop('checked', true);
+        $('#sdc-activo-grupo, #sdc-cancelar').hide();
+        $('#sdc-guardar').html('<i class="fas fa-plus"></i> Agregar');
+    }
+
+    $('#tabla-sd-catalogo').on('click', '[data-editar-sd]', function () {
+        var id = String($(this).data('editar-sd'));
+        var c = otros.filter(function (x) { return String(x.IdCertificadoSD) === id; })[0];
+        if (!c) return;
+        $('#sdc-id').val(c.IdCertificadoSD);
+        $('#sdc-nombre').val(c.Nombre).focus();
+        $('#sdc-monto').val(Number(c.Monto).toFixed(2));
+        $('#sdc-activo').prop('checked', Number(c.Activo) === 1);
+        $('#sdc-activo-grupo, #sdc-cancelar').show();
+        $('#sdc-guardar').html('<i class="fas fa-save"></i> Guardar');
+    });
+    $('#sdc-cancelar').on('click', limpiarOtro);
+
+    $('#sdc-guardar').on('click', function () {
+        if (!$('#sdc-nombre').val().trim()) { Swal.fire({ type: 'warning', title: 'Escriba el nombre del certificado' }); return; }
+        $.post('ajax/certificado.ajax.php', {
+            accion: 'guardarSinDocumento', id: $('#sdc-id').val(), nombre: $('#sdc-nombre').val(),
+            monto: $('#sdc-monto').val() || '0', activo: $('#sdc-activo').is(':checked') ? 1 : ''
+        }, function (resp) {
+            if (!resp.success) { Swal.fire({ type: 'error', title: 'No se guardó', text: resp.mensaje }); return; }
+            Swal.fire({ type: 'success', title: resp.mensaje, timer: 1300, showConfirmButton: false });
+            limpiarOtro();
+            cargarOtros();
+        }, 'json');
+    });
+
+    // Primero qué exige cada grado (las casillas se dibujan con las tablas)
+    cargarRequisitosTit().always(function () {
+        cargarCostos();
+        cargarOtros();
+    });
 });
 </script>
 

@@ -46,6 +46,13 @@ if (empty($nombre) || empty($titulo) || empty($vaucher) || empty($fecha)) {
     die('Error: Faltan datos requeridos para generar la carta');
 }
 
+// El N° de voucher es único en todo el sistema (también entre certificados). La
+// demostración (completo=1) no registra nada, así que no se revisa.
+$voucherRepetido = empty($_POST['completo']) ? CertificadoModelo::VoucherRepetidoMensaje($vaucher, intval($_POST['idDocumento'] ?? 0)) : null;
+if ($voucherRepetido) {
+    die('Error: ' . htmlspecialchars($voucherRepetido));
+}
+
 // Se guardan los datos del formulario para poder reimprimirlo (y corregirlo) desde
 // Registro de documentos; con idDocumento es una reimpresión de ese registro.
 // En la vista previa (antes de generar) no se registra nada.

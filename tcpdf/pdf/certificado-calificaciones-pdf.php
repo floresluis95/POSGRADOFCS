@@ -55,6 +55,13 @@ if (empty($modulos)) {
     die('Error: El estudiante no tiene calificaciones registradas en este programa');
 }
 
+// El N° de voucher es único en todo el sistema (también entre certificados). La
+// demostración (completo=1) no registra nada, así que no se revisa.
+$voucherRepetido = empty($_POST['completo']) ? CertificadoModelo::VoucherRepetidoMensaje($vaucher, intval($_POST['idDocumento'] ?? 0)) : null;
+if ($voucherRepetido) {
+    die('Error: ' . htmlspecialchars($voucherRepetido));
+}
+
 // Se guardan los datos del formulario para poder reimprimirlo (y corregirlo) desde
 // Registro de documentos; con idDocumento es una reimpresión de ese registro.
 // En la vista previa (antes de generar) y en la demostración no se registra nada.

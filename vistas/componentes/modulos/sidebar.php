@@ -831,6 +831,12 @@ if ($_SESSION["Tipo"] == "EST") {
                     <span class="kt-menu__link-text">MIS REQUISITOS</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="miscertificados" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-document" style="color: #fd397a;"></i>
+                    <span class="kt-menu__link-text">MIS CERTIFICADOS</span>
+                  </a>
+                </li>
                
               </ul>
             </div>

@@ -105,6 +105,9 @@
             '<div class="cert-elegido" id="cert-elegido" style="display:none;"></div>'
         );
 
+        // "Busque al estudiante…" (#cert-vacio) solo mientras no hay uno elegido
+        $select.on('change', function () { $('#cert-vacio').toggle(!$(this).val()); });
+
         function estado(html) {
             $('#cert-estado').html(html || '').toggle(!!html);
         }
@@ -349,6 +352,32 @@
      */
     function confirmar(op) {
         const $ = window.jQuery;
+        const $form = $(op.form);
+        // El N° de voucher es único en todo el sistema: si ya se usó se avisa aquí, antes de
+        // la vista previa. Si la consulta falla se sigue igual (el PDF lo vuelve a revisar).
+        const vaucher = String($form.find('input[name="vaucher"]').val() || '').trim();
+        if (!vaucher) {
+            mostrarConfirmacion(op);
+            return;
+        }
+        $.ajax({
+            url: 'ajax/certificado.ajax.php',
+            method: 'POST',
+            dataType: 'json',
+            data: { accion: 'verificarVoucher', vaucher: vaucher, idDocumento: $form.find('input[name="idDocumento"]').val() || 0 },
+            success: function (resp) {
+                if (resp && resp.repetido) {
+                    aviso('warning', 'Voucher ya registrado', resp.mensaje);
+                    return;
+                }
+                mostrarConfirmacion(op);
+            },
+            error: function () { mostrarConfirmacion(op); }
+        });
+    }
+
+    function mostrarConfirmacion(op) {
+        const $ = window.jQuery;
         crearModal();
         const $form = $(op.form);
         $('#certModalTitulo').text(op.titulo || 'Documento');
@@ -374,8 +403,16 @@
 
         $('#certModalGenerar').off('click').on('click', function () {
             $('#modalConfirmarCertificado').modal('hide');
-            $form.attr('target', destinoOriginal);
+            // El PDF se abre en otra pestaña y esta pasa a Registro de documentos, que abre al
+            // estudiante y resalta el documento recién generado. La marca (tokenEmision) le dice
+            // cuál es: el servidor la anota en la sesión al registrarlo.
+            const token = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+            $form.find('input[name="tokenEmision"]').remove();
+            $form.append($('<input type="hidden" name="tokenEmision">').val(token)).attr('target', destinoOriginal);
             $form[0].submit();
+            $form.find('input[name="tokenEmision"]').remove();
+            // Un momento de espera para que el navegador alcance a enviar el formulario
+            setTimeout(function () { window.location.href = 'registrodocumentos?emision=' + token; }, 800);
         });
         $('#modalConfirmarCertificado').modal('show');
     }

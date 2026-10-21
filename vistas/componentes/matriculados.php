@@ -1338,6 +1338,23 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                     <h3><i class="fa fa-user-graduate"></i> Estudiantes matriculados</h3>
                     <p>Pulse <strong>Pagos</strong> para gestionar la matrícula, las cuotas y las clínicas de cada estudiante.</p>
                 </div>
+                <?php if (EnlacesControladores::PuedeVerPagina($_SESSION['Tipo'] ?? '', 'certificadocalificaciones')): ?>
+                <!-- Acceso directo a Certificados (el AUX no los ve: no tiene esas páginas) -->
+                <div class="dropdown">
+                    <button type="button" class="btn btn-outline-primary btn-abrir-panel dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-certificate"></i> Certificados
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a class="dropdown-item" href="certificadocalificaciones"><i class="fa fa-file-alt"></i> Certificado de Calificaciones</a>
+                        <a class="dropdown-item" href="certificadohistorialacademico"><i class="fa fa-file-alt"></i> Historial Académico</a>
+                        <a class="dropdown-item" href="certificadoaprobacionmonografia"><i class="fa fa-file-alt"></i> Aprobación Programa de Posgrado</a>
+                        <a class="dropdown-item" href="certificadomediomagnetico"><i class="fa fa-file-alt"></i> Medio Magnético</a>
+                        <a class="dropdown-item" href="certificadorevision"><i class="fa fa-file-alt"></i> Certificado de Revisión</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="registrodocumentos"><i class="fa fa-folder-open"></i> Registro de Documentos</a>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
 
             <div class="mt-card-body">

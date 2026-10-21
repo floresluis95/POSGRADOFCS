@@ -12,45 +12,22 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                                 </div>
                             </div>
 
-                            <div class="card-certificado" id="bloque-datos" style="display:none;">
-                                <h3><span class="paso-numero">2</span> Datos del certificado</h3>
-                                <div class="certificado-cuerpo">
-                                    <div class="row">
-                                        <div class="col-md-8 form-group">
-                                            <label>Programa</label>
-                                            <div class="dato-solo-lectura" id="dato-programa"></div>
-                                        </div>
-                                        <div class="col-md-2 col-6 form-group">
-                                            <label>Nivel</label>
-                                            <div class="dato-solo-lectura" id="dato-nivel"></div>
-                                        </div>
-                                        <div class="col-md-2 col-6 form-group">
-                                            <label for="input-anio">Año</label>
-                                            <input type="text" class="form-control" id="input-anio" maxlength="20" placeholder="2024 - 2025" title="Años en que se cursó el programa; puede corregirlo">
-                                        </div>
-                                        <div class="col-md-4 form-group">
-                                            <label for="input-vaucher">N° de voucher</label>
-                                            <input type="text" class="form-control" id="input-vaucher" data-voucher-partes="alfanumerico">
-                                        </div>
-                                        <div class="col-md-4 form-group">
-                                            <label for="input-monto">Monto pagado (Bs.)</label>
-                                            <input type="number" class="form-control" id="input-monto" min="0" step="0.01" placeholder="0.00">
-                                        </div>
-                                        <div class="col-md-4 form-group">
-                                            <label for="input-fecha">Fecha del certificado</label>
-                                            <input type="date" class="form-control" id="input-fecha">
-                                        </div>
-                                    </div>
+                            <div class="card-certificado" id="cert-vacio">
+                                <div class="cert-vacio">
+                                    <i class="fas fa-user-graduate"></i>
+                                    <p>Busque al estudiante por su C.I. o nombre.</p>
                                 </div>
                             </div>
 
+                            <!-- Paso 2: las notas que saldrán impresas -->
                             <div class="card-certificado" id="card-modulos" style="display:none;">
-                                <h3><span class="paso-numero">3</span> Módulos y calificaciones</h3>
+                                <h3><span class="paso-numero">2</span> Calificaciones <span class="cert-cabeza-extra" id="cert-hojas"></span></h3>
                                 <div class="certificado-cuerpo">
                                     <div class="table-responsive">
                                         <table class="table tabla-certificado" id="tabla-modulos-certificado">
                                             <thead>
                                                 <tr>
+                                                    <th>N°</th>
                                                     <th>Sigla</th>
                                                     <th>Módulo</th>
                                                     <th class="text-center">Nota</th>
@@ -59,15 +36,50 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                                             <tbody></tbody>
                                         </table>
                                     </div>
-                                    <div id="resumen-modulos" class="alert alert-info" style="display:none;"></div>
+                                    <div id="resumen-modulos" class="cert-avance" style="display:none;"></div>
                                     <div id="alerta-sin-modulos" class="alert alert-warning" style="display:none;"></div>
-                                    <div class="certificado-acciones">
+                                </div>
+                            </div>
+
+                            <!-- Paso 3: pago y fecha; aquí se genera -->
+                            <div class="card-certificado" id="bloque-datos" style="display:none;">
+                                <h3><span class="paso-numero">3</span> Pago y fecha</h3>
+                                <div class="certificado-cuerpo">
+                                    <div class="cert-fijos">
+                                        <div>
+                                            <span>Programa</span>
+                                            <div class="dato-solo-lectura" id="dato-programa"></div>
+                                        </div>
+                                        <div>
+                                            <span>Nivel</span>
+                                            <div class="dato-solo-lectura" id="dato-nivel"></div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 form-group">
+                                            <label for="input-vaucher">N° de voucher<span class="cert-requerido">*</span></label>
+                                            <input type="text" class="form-control" id="input-vaucher" data-voucher-partes="alfanumerico">
+                                        </div>
+                                        <div class="col-md-6 form-group">
+                                            <label for="input-monto">Monto pagado (Bs.)<span class="cert-requerido">*</span></label>
+                                            <input type="number" class="form-control" id="input-monto" min="0" step="0.01" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-6 form-group mb-md-0">
+                                            <label for="input-anio">Años cursados<span class="cert-requerido">*</span></label>
+                                            <input type="text" class="form-control" id="input-anio" maxlength="20" placeholder="2024 - 2025" title="Se calcula con las fechas de los módulos; puede corregirlo">
+                                        </div>
+                                        <div class="col-md-6 form-group mb-0">
+                                            <label for="input-fecha">Fecha del certificado<span class="cert-requerido">*</span></label>
+                                            <input type="date" class="form-control" id="input-fecha">
+                                        </div>
+                                    </div>
+                                    <div class="certificado-acciones cert-acciones">
+                                        <button type="button" class="cert-demo" id="btn-documento-completo" disabled
+                                            title="Imprime todo el formato (membrete, cuadrícula, firmas y escudo) en hoja en blanco. No se registra.">
+                                            <i class="fas fa-file-alt"></i> Ver formato completo (demostración)
+                                        </button>
                                         <button type="button" class="btn-generar-certificado" id="btn-generar-certificado" disabled>
                                             <i class="fas fa-eye"></i> Revisar y generar
-                                        </button>
-                                        <button type="button" class="btn-generar-certificado btn-documento-completo" id="btn-documento-completo" disabled
-                                            title="Demostración: genera todo el certificado (membrete, cuadrícula, firmas y escudo) en hoja en blanco. No se registra.">
-                                            <i class="fas fa-file-alt"></i> Documento completo (demostración)
                                         </button>
                                     </div>
                                 </div>
@@ -149,10 +161,15 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                     // No hace falta que estén todos los módulos: se imprimen los que ya tienen nota
                     var total = parseInt(data.totalModulos, 10) || 0;
                     var deTotal = total ? ' de ' + total : '';
+                    var porcentaje = total ? Math.min(100, Math.round(modulosActuales.length * 100 / total)) : 100;
                     $('#resumen-modulos').toggle(!!modulosActuales.length).html(
-                        '<i class="fas fa-info-circle"></i> <strong>' + modulosActuales.length + deTotal + ' módulos con nota.</strong> ' +
-                        (total > modulosActuales.length ? 'El certificado sale con los módulos que ya tienen nota; los demás no se imprimen.' : '')
+                        '<div class="cert-avance-texto"><span><strong>' + modulosActuales.length + deTotal + '</strong> módulos con nota</span>' +
+                        (total > modulosActuales.length ? '<small>Solo se imprimen los módulos que ya tienen nota.</small>' : '') + '</div>' +
+                        '<div class="cert-barra"><span style="width:' + porcentaje + '%"></span></div>'
                     );
+                    // El formato lleva 6 módulos por hoja
+                    var hojas = Math.ceil(modulosActuales.length / 6);
+                    $('#cert-hojas').text(hojas > 1 ? hojas + ' hojas' : '');
                     $('#alerta-sin-modulos').toggle(!modulosActuales.length).html(
                         '<i class="fas fa-exclamation-triangle"></i> <strong>Este estudiante aún no tiene ninguna nota' +
                         (total ? ' (0 de ' + total + ' módulos)' : '') + '.</strong> ' +
@@ -162,12 +179,13 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                     // Año sugerido: del inicio del primer módulo al fin del último ("2024 - 2025")
                     var rango = rangoAnios(modulosActuales);
                     if (rango) $('#input-anio').val(rango);
-                    modulosActuales.forEach(function(mod) {
+                    modulosActuales.forEach(function(mod, i) {
                         $tbody.append(
                             '<tr>' +
-                            '<td>' + $('<div>').text(mod.codigomodulo || '').html() + '</td>' +
+                            '<td class="cert-n">' + (i + 1) + '</td>' +
+                            '<td class="cert-sigla">' + $('<div>').text(mod.codigomodulo || '').html() + '</td>' +
                             '<td>' + $('<div>').text(mod.nombremodulo || '').html() + '</td>' +
-                            '<td class="text-center">' + parseInt(mod.Nota, 10) + '</td>' +
+                            '<td class="text-center"><span class="cert-nota">' + parseInt(mod.Nota, 10) + '</span></td>' +
                             '</tr>'
                         );
                     });

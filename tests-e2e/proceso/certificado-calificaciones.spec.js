@@ -52,6 +52,23 @@ test('sin notas avisa; con algunas notas genera y el precio se puede cambiar', a
   await expect(modal.locator('#certModalDatos')).toContainText('Bs. 120,00');
   await expect(modal.locator('#certModalDatos')).toContainText('2 módulos');
   expect((await previa).headers()['content-type']).toContain('application/pdf');
+
+  // Al generar: el PDF sale en otra pestaña, queda registrado y la pantalla pasa a Registro
+  // de documentos con el estudiante abierto y el documento nuevo resaltado
+  const [ventana] = await Promise.all([page.waitForEvent('popup'), modal.locator('#certModalGenerar').click()]);
+  await expect.poll(() => valor(`SELECT COUNT(*) FROM documentoemitido WHERE TipoDocumento = 'CALIFICACIONES' AND EstudianteID = ${estudianteID}`), { timeout: 15_000 }).toBe('1');
+  await ventana.close();
+  const idDocumento = valor(`SELECT IdDocumento FROM documentoemitido WHERE TipoDocumento = 'CALIFICACIONES' AND EstudianteID = ${estudianteID}`);
+  const fila = page.locator(`#tabla-estudiante-body tr[data-id="${idDocumento}"]`);
+  await expect(fila).toHaveClass(/rd-ultimo/, { timeout: 15_000 });
+  await expect(fila.locator('.rd-ultimo-badge')).toContainText('Último');
+  await expect(fila).toContainText('Certificado de Calificaciones');
+  await expect(page).toHaveURL(/registrodocumentos\?ci=.+&inscripcion=/);
+
+  // Al recargar sigue abierto el estudiante y el documento sigue marcado
+  await page.reload();
+  await expect(fila).toHaveClass(/rd-ultimo/, { timeout: 15_000 });
+  await expect(page.locator('#tabla-estudiante-body tr.rd-ultimo')).toHaveCount(1);
 });
 
 test('sin precio para el grado avisa dónde definirlo', async ({ page }) => {

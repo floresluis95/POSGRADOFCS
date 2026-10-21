@@ -48,7 +48,8 @@
                 $enlace == 'calendario'||
                 $enlace == 'autoridades'||
                 $enlace == 'requisitos'||
-                $enlace == 'misrequisitos'
+                $enlace == 'misrequisitos'||
+                $enlace == 'miscertificados'
 
                 )
             {
