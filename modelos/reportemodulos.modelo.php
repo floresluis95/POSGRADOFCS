@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../core/conexion.modelo.php';
+require_once __DIR__ . '/configuracion.modelo.php'; // nota mínima de aprobación (gráficos de notas)
 
 class ReporteModulosModelo
 {
@@ -333,6 +334,7 @@ class ReporteModulosModelo
                         ep.idInscripcion,
                         e.EstudianteID,
                         CONCAT(e.Nombre, ' ', e.Apaterno, ' ', IFNULL(e.Amaterno, '')) AS NombreCompleto,
+                        TRIM(CONCAT_WS(' ', e.Apaterno, e.Amaterno, e.Nombre)) AS NombreLista, -- apellidos primero (listas PDF)
                         e.Ci,
                         e.Celular,
                         ep.Estado AS EstadoInscripcion,
@@ -533,7 +535,71 @@ class ReporteModulosModelo
                 $resumenOrdenes[$f['Grupo']] = ['cantidad' => (int)$f['Cantidad'], 'monto' => (float)$f['Monto']];
             }
 
-            return ['meses' => array_values($porMes), 'ordenes' => $resumenOrdenes];
+            // Antigüedad de la deuda vencida (cuotas y clínicas pendientes con fecha límite pasada)
+            $vencidas = $ejecutar(
+                "SELECT
+                    CASE
+                        WHEN DATEDIFF(CURDATE(), op.FechaVencimiento) <= 30 THEN '1-30'
+                        WHEN DATEDIFF(CURDATE(), op.FechaVencimiento) <= 60 THEN '31-60'
+                        WHEN DATEDIFF(CURDATE(), op.FechaVencimiento) <= 90 THEN '61-90'
+                        ELSE '90+'
+                    END AS Tramo,
+                    COUNT(*) AS Cantidad, COALESCE(SUM(op.MontoTotal), 0) AS Monto
+                 FROM ordenpago op
+                 INNER JOIN programa p ON p.ProgramaID = op.ProgramaID
+                 WHERE op.Estado = 'PENDIENTE' AND op.Observaciones IN ('CUOTA PROGRAMA', 'CLINICA')
+                   AND op.FechaVencimiento IS NOT NULL AND op.FechaVencimiento < CURDATE()" . $filtroProgramas . "
+                 GROUP BY Tramo",
+                false
+            );
+            $antiguedad = [];
+            foreach (['1-30', '31-60', '61-90', '90+'] as $tramo) {
+                $antiguedad[$tramo] = ['tramo' => $tramo, 'cantidad' => 0, 'monto' => 0];
+            }
+            foreach ($vencidas as $f) {
+                $antiguedad[$f['Tramo']] = ['tramo' => $f['Tramo'], 'cantidad' => (int)$f['Cantidad'], 'monto' => (float)$f['Monto']];
+            }
+
+            // Notas registradas (todas, sin el periodo): rangos y aprobación por programa
+            $notaMinima = ConfiguracionModelo::NotaAprobacion();
+            $notas = $ejecutar(
+                "SELECT p.ProgramaID, p.NombrePrograma, c.Nota
+                 FROM calificacion c
+                 INNER JOIN programa p ON p.ProgramaID = c.ProgramaId
+                 WHERE c.Nota IS NOT NULL" . $filtroProgramas,
+                false
+            );
+            $rangos = [
+                ['rango' => '0-' . ($notaMinima - 1), 'desde' => 0, 'hasta' => $notaMinima - 0.01, 'reprobado' => true, 'cantidad' => 0],
+                ['rango' => $notaMinima . '-84', 'desde' => $notaMinima, 'hasta' => 84.99, 'reprobado' => false, 'cantidad' => 0],
+                ['rango' => '85-94', 'desde' => 85, 'hasta' => 94.99, 'reprobado' => false, 'cantidad' => 0],
+                ['rango' => '95-100', 'desde' => 95, 'hasta' => 100, 'reprobado' => false, 'cantidad' => 0],
+            ];
+            $porPrograma = [];
+            foreach ($notas as $n) {
+                $nota = (float)$n['Nota'];
+                foreach ($rangos as &$r) {
+                    if ($nota >= $r['desde'] && $nota <= $r['hasta']) { $r['cantidad']++; break; }
+                }
+                unset($r);
+                $id = $n['ProgramaID'];
+                $porPrograma[$id] = $porPrograma[$id] ?? ['programaID' => (int)$id, 'nombre' => $n['NombrePrograma'], 'calificados' => 0, 'aprobados' => 0, 'suma' => 0];
+                $porPrograma[$id]['calificados']++;
+                $porPrograma[$id]['suma'] += $nota;
+                if ($nota >= $notaMinima) $porPrograma[$id]['aprobados']++;
+            }
+            foreach ($porPrograma as &$pp) {
+                $pp['promedio'] = round($pp['suma'] / $pp['calificados'], 1);
+                unset($pp['suma']);
+            }
+            unset($pp);
+
+            return [
+                'meses' => array_values($porMes),
+                'ordenes' => $resumenOrdenes,
+                'antiguedad' => array_values($antiguedad),
+                'notas' => ['minima' => $notaMinima, 'rangos' => $rangos, 'programas' => array_values($porPrograma)],
+            ];
         } catch (PDOException $e) {
             error_log("Error en ObtenerDatosGraficosModelo: " . $e->getMessage());
             return ['meses' => [], 'ordenes' => []];

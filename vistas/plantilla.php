@@ -237,7 +237,7 @@ var KTAppOptions = {"colors":{"state":{"brand":"#591df1","light":"#ffffff","dark
                         <!--end::Page Scripts -->
                         <script src="vistas/recursos/assets/js/demo9/pages/wizard/wizard-1.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/scripts/app.js" type="text/javascript"></script>
-                        <script src="vistas/recursos/assets/js/scripts/usuarios.js" type="text/javascript"></script>
+                        <script src="vistas/recursos/assets/js/scripts/usuarios.js?v=<?php echo filemtime(__DIR__ . '/recursos/assets/js/scripts/usuarios.js'); ?>" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/demo9/pages/crud/forms/widgets/bootstrap-datepicker.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/demo9/pages/crud/forms/widgets/bootstrap-touchspin.js" type="text/javascript"></script>
                         <script src="vistas/recursos/assets/js/demo9/scripts.bundle.js" type="text/javascript"></script>

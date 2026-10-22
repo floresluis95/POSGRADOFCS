@@ -15,6 +15,9 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+// Si al personal le cambiaron el rol o lo dieron de baja, su sesión deja de valer
+require_once __DIR__ . '/../core/sesion-vigente.php';
+SesionPersonalVigente();
 
 if (!function_exists('ExigirSesionAjax')) {
     /**

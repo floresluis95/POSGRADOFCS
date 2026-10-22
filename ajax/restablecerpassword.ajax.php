@@ -6,8 +6,8 @@ require_once __DIR__ . '/control-solicitud.php'; // corte de internet: sin enví
  * genera una nueva desde el detalle del estudiante/docente, o la escribe a mano
  * desde la lista de usuarios del personal (ADM, SEC, AUX).
  *
- * Permisos:
- *  - Estudiantes y docentes: ADM, SEC y AUX (son quienes gestionan esas páginas).
+ * Permisos (UsuarioControladores::GESTIONAN_CUENTAS):
+ *  - Estudiantes: ADM y AUX. Docentes: solo ADM. La Secretaría no restablece.
  *  - Personal administrativo: solo ADM (evita que una secretaria restablezca
  *    la contraseña del administrador y pueda ingresar con su cuenta).
  */
@@ -38,7 +38,7 @@ if ($id <= 0) {
 try {
     switch ($accion) {
         case 'estudiante':
-            if (!in_array($tipoSesion, ['ADM', 'SEC', 'AUX'])) {
+            if (!UsuarioControladores::PuedeGestionarCuentas('estudiante')) {
                 echo json_encode(['success' => false, 'mensaje' => 'No tiene permisos para esta acción']);
                 exit;
             }
@@ -52,8 +52,7 @@ try {
             break;
 
         case 'docente':
-            // Desde la página Docentes, que el Auxiliar no tiene
-            if (!in_array($tipoSesion, ['ADM', 'SEC'])) {
+            if (!UsuarioControladores::PuedeGestionarCuentas('docente')) {
                 echo json_encode(['success' => false, 'mensaje' => 'No tiene permisos para esta acción']);
                 exit;
             }

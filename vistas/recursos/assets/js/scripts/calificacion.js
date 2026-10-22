@@ -400,7 +400,14 @@ function renderTablaAsignacionesAbiertas(modulosAbiertos) {
             fechaInfo += '<br><small class="text-muted">' + iconoTipo + 'Por: ' + asig.RegistradoPor + '</small>';
         }
 
-        html += '<tr class="asignacion-row">';
+        // Ya terminó y faltan notas: se marca (lo mismo que lista "Calificaciones pendientes")
+        var hoy = new Date().toLocaleDateString('en-CA');
+        var faltaCalificar = !!asig.FechaFinal && asig.FechaFinal < hoy && totalEstudiantes > 0 && totalCalificados < totalEstudiantes;
+        if (faltaCalificar) {
+            fechaInfo += '<br><span class="rn-marca-pendiente"><i class="fa fa-exclamation-circle"></i> Falta calificar · terminó el ' + formatearFechaDDMMAAAA(asig.FechaFinal) + '</span>';
+        }
+
+        html += '<tr class="asignacion-row' + (faltaCalificar ? ' rn-fila-pendiente' : '') + '">';
         html += '<td class="text-center">' + (index + 1) + '</td>';
         html += '<td><span class="kt-badge kt-badge--inline kt-badge--primary">' + asig.GradoAcademico + '</span></td>';
         html += '<td><strong>' + asig.NombrePrograma + '</strong><br><small class="text-muted">' + asig.CodigoPrograma + '</small></td>';

@@ -19,6 +19,14 @@ $('.TablaUsuarios tbody').on('click', 'button.btnEditarUsuario', function(){
     $('#UECelular').val(Celular);
     $('#UETelefono').val(Telefono);
     $('#UECorreo').val(Correo);
+    // Rol: el propio no se cambia (el select deshabilitado no se envía)
+    $('#UEIdUsuario').val($(this).attr("IdUsuario"));
+    const tipo = $(this).attr("Tipo") || '';
+    const esPropio = $(this).attr("EsPropio") === '1';
+    $('#UECargo').val(tipo).prop('disabled', esPropio).data('rol-original', tipo);
+    $('#UECargoAyuda').text(esPropio
+        ? 'No puede cambiar su propio rol: pídaselo a otro administrador.'
+        : 'Si la persona tiene la sesión abierta, deberá volver a ingresar.');
 
 });
 
@@ -116,4 +124,21 @@ $(document).on('click', '.TablaUsuarios button.btnRestablecerPasswordPersonal', 
             }
         });
     });
+});
+
+// Dar el rol de Administrador pide confirmación: tendrá acceso a todo el sistema
+$('#formEditarUsuario').on('submit', function(e){
+    const $cargo = $('#UECargo');
+    if ($cargo.prop('disabled') || $cargo.val() !== 'ADM' || $cargo.data('rol-original') === 'ADM' || this.dataset.confirmado) return;
+    e.preventDefault();
+    const form = this;
+    const enviar = function(){ form.dataset.confirmado = '1'; form.submit(); };
+    const texto = 'Tendrá acceso a todo el sistema: usuarios, configuración, certificados y respaldos.';
+    if (window.Swal && Swal.fire) {
+        Swal.fire({ type: 'warning', icon: 'warning', title: '¿Dar el rol de Administrador?', text: texto,
+            showCancelButton: true, confirmButtonText: 'Sí, dar el rol', cancelButtonText: 'Cancelar' })
+            .then(function(r){ if (r.value || r.isConfirmed) enviar(); });
+    } else if (confirm('¿Dar el rol de Administrador? ' + texto)) {
+        enviar();
+    }
 });

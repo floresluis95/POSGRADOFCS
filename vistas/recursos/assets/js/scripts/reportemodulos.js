@@ -13,8 +13,28 @@ $(document).ready(function() {
     cargarGradosParaReportePagos();
     cargarReportePagos();
 
-    $('#reportePagosGrado').on('change', cargarReportePagos);
+    // Los filtros trabajan sobre los datos ya cargados (no vuelven a pedirlos al servidor)
+    $('#reportePagosGrado, #reportePagosSede, #reportePagosSituacion, #reportePagosOrden').on('change', filtrarReportePagos);
     $('#reportePagosBuscar').on('input', filtrarReportePagos);
+    $('#reportePagosLimpiar').on('click', function() {
+        $('#reportePagosBuscar').val('');
+        $('#reportePagosGrado, #reportePagosSede, #reportePagosSituacion, #reportePagosOrden').val('').trigger('change.select2');
+        filtrarReportePagos();
+    });
+
+    // Programas y módulos: la tabla ya viene completa; los filtros ocultan filas
+    $('#rpProgGrado, #rpProgSede, #rpProgEstado, #rpProgInscritos').on('change', filtrarProgramas);
+    $('#rpProgBuscar').on('input', filtrarProgramas);
+    $('#rpProgLimpiar').on('click', function() {
+        $('#rpProgBuscar').val('');
+        $('#rpProgGrado, #rpProgSede, #rpProgEstado, #rpProgInscritos').val('').trigger('change.select2');
+        filtrarProgramas();
+    });
+    filtrarProgramas();
+
+    // Detalle por estudiante (modal)
+    $('#detallePagosEstado, #detallePagosPlan, #detallePagosOrden').on('change', filtrarDetallePagos);
+    $('#detallePagosBuscar').on('input', filtrarDetallePagos);
 
     // Actualizar / Imprimir solo aplican a la pestaña de pagos
     $('#rpTabPagosLink, #rpTabProgramasLink, #rpTabGraficosLink').on('shown.bs.tab', function() {
@@ -105,8 +125,6 @@ let datosReportePagos = [];
  * Cargar y renderizar el reporte de pagos por programa
  */
 function cargarReportePagos() {
-    const grado = $('#reportePagosGrado').val();
-
     $('#tablaReportePagosBody').html('<tr><td colspan="8" class="rp-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</td></tr>');
     $('#tablaReportePagosFooter').html('');
     $('#reportePagosKpis').html('');
@@ -114,10 +132,11 @@ function cargarReportePagos() {
     $.ajax({
         url: 'ajax/reportemodulos.ajax.php',
         method: 'POST',
-        data: { accion: 'obtenerReportePagosPrograma', grado: grado },
+        data: { accion: 'obtenerReportePagosPrograma', grado: '' },
         dataType: 'json',
         success: function(response) {
             datosReportePagos = Array.isArray(response) ? response : [];
+            llenarSedesReportePagos();
             filtrarReportePagos();
         },
         error: function() {
@@ -126,13 +145,85 @@ function cargarReportePagos() {
     });
 }
 
-// Búsqueda local por nombre, código o sede del programa
+// Sedes de los programas cargados (conserva la elegida al actualizar)
+function llenarSedesReportePagos() {
+    const $sede = $('#reportePagosSede');
+    const elegida = $sede.val();
+    const sedes = [...new Set(datosReportePagos.map(function(p) { return p.Sede; }).filter(Boolean))].sort();
+    $sede.html('<option value="">Todas las sedes</option>' + sedes.map(function(sd) {
+        return '<option value="' + escaparHtml(sd) + '">' + escaparHtml(sd) + '</option>';
+    }).join(''));
+    $sede.val(sedes.indexOf(elegida) !== -1 ? elegida : '').trigger('change.select2');
+}
+
+// Situación de cobro de un programa, para el filtro
+function situacionCobro(p) {
+    if ((parseInt(p.TotalInscritos, 10) || 0) === 0) return 'sin';
+    return (parseFloat(p.SaldoPendiente) || 0) > 0 ? 'saldo' : 'aldia';
+}
+
+// Filtros locales: búsqueda, grado, sede, situación de cobro y orden
 function filtrarReportePagos() {
     const texto = ($('#reportePagosBuscar').val() || '').trim().toLowerCase();
-    const filtrados = !texto ? datosReportePagos : datosReportePagos.filter(function(p) {
-        return [p.NombrePrograma, p.Codigo, p.Sede, p.GradoAcademico].join(' ').toLowerCase().indexOf(texto) !== -1;
+    const grado = $('#reportePagosGrado').val();
+    const sede = $('#reportePagosSede').val();
+    const situacion = $('#reportePagosSituacion').val();
+    const orden = $('#reportePagosOrden').val();
+
+    const filtrados = datosReportePagos.filter(function(p) {
+        if (texto && [p.NombrePrograma, p.Codigo, p.Sede, p.GradoAcademico].join(' ').toLowerCase().indexOf(texto) === -1) return false;
+        if (grado && p.GradoAcademico !== grado) return false;
+        if (sede && p.Sede !== sede) return false;
+        if (situacion === 'clinica') return (parseFloat(p.ClinicaPorCobrar) || 0) > 0;
+        if (situacion && situacionCobro(p) !== situacion) return false;
+        return true;
     });
+
+    const m = function(v) { return parseFloat(v) || 0; };
+    const criterios = {
+        saldo: function(a, b) { return m(b.SaldoPendiente) - m(a.SaldoPendiente); },
+        avance: function(a, b) { return porcentaje(m(a.TotalPagado), m(a.CostoTotalProgramado)) - porcentaje(m(b.TotalPagado), m(b.CostoTotalProgramado)); },
+        inscritos: function(a, b) { return (parseInt(b.TotalInscritos, 10) || 0) - (parseInt(a.TotalInscritos, 10) || 0); }
+    };
+    if (criterios[orden]) filtrados.sort(criterios[orden]);
+
+    const activos = [texto, grado, sede, situacion].filter(Boolean).length;
+    $('#reportePagosResultado').html(
+        'Mostrando <b>' + filtrados.length + '</b> de ' + datosReportePagos.length + ' programa(s)' +
+        (activos ? ' &middot; ' + activos + ' filtro(s) aplicado(s); los totales son de lo que se muestra' : '')
+    );
     renderTablaReportePagos(filtrados);
+}
+
+// Programas y módulos: oculta las filas que no cumplen los filtros y los grupos que quedan vacíos
+function filtrarProgramas() {
+    const texto = ($('#rpProgBuscar').val() || '').trim().toLowerCase();
+    const grado = $('#rpProgGrado').val();
+    const sede = $('#rpProgSede').val();
+    const estado = $('#rpProgEstado').val();
+    const inscritos = $('#rpProgInscritos').val();
+    let total = 0;
+    let visibles = 0;
+
+    $('#rpTablaProgramas tbody.rp-grupo-programas').each(function() {
+        let enGrupo = 0;
+        $(this).find('tr.rp-fila-programa').each(function() {
+            const $f = $(this);
+            const n = parseInt($f.data('inscritos'), 10) || 0;
+            const ok = (!texto || String($f.data('texto')).indexOf(texto) !== -1) &&
+                (!grado || $f.data('grado') === grado) &&
+                (!sede || $f.data('sede') === sede) &&
+                (!estado || $f.data('estado') === estado) &&
+                (!inscritos || (inscritos === 'con' ? n > 0 : n === 0));
+            $f.toggle(ok);
+            total++;
+            if (ok) enGrupo++;
+        });
+        $(this).toggle(enGrupo > 0).find('.rp-grupo-cuenta').text(enGrupo + ' programa(s)');
+        visibles += enGrupo;
+    });
+    $('#rpProgSinResultados').toggle(total > 0 && visibles === 0);
+    $('#rpProgResultado').html('Mostrando <b>' + visibles + '</b> de ' + total + ' programa(s)');
 }
 
 function renderTablaReportePagos(datos) {
@@ -319,7 +410,12 @@ function renderComposicionCobro(t) {
 /**
  * Ver el detalle de pagos por estudiante de un programa (modal)
  */
+// Datos del detalle abierto (los filtros del modal trabajan sobre ellos)
+let detallePagos = { datos: [], tieneClinica: false };
+
 function verDetallePagosPrograma(programaID, programaNombre, tieneClinica) {
+    $('#detallePagosBuscar').val('');
+    $('#detallePagosEstado, #detallePagosPlan, #detallePagosOrden').val('');
     $('#detallePagosProgramaNombre').text(programaNombre || '');
     $('#detallePagosKpis').html('');
     $('#tablaDetallePagosEstudianteHead').html('');
@@ -333,7 +429,8 @@ function verDetallePagosPrograma(programaID, programaNombre, tieneClinica) {
         data: { accion: 'obtenerReportePagosEstudiantes', programaID: programaID },
         dataType: 'json',
         success: function(response) {
-            renderDetallePagosEstudiante(Array.isArray(response) ? response : [], tieneClinica);
+            detallePagos = { datos: Array.isArray(response) ? response : [], tieneClinica: tieneClinica };
+            filtrarDetallePagos();
         },
         error: function() {
             $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="8" class="rp-vacio" style="color:#b91c1c">No se pudo cargar el detalle</td></tr>');
@@ -341,7 +438,33 @@ function verDetallePagosPrograma(programaID, programaNombre, tieneClinica) {
     });
 }
 
-function renderDetallePagosEstudiante(datos, tieneClinica) {
+// Situación de pago de un estudiante, para el filtro del detalle
+function situacionEstudiante(e) {
+    if (e.EstadoInscripcion === 'ABANDONO') return 'abandono';
+    if (!e.TipoPlan) return 'sinplan';
+    return (parseFloat(e.SaldoPendiente) || 0) > 0 ? 'saldo' : 'completado';
+}
+
+function filtrarDetallePagos() {
+    const texto = ($('#detallePagosBuscar').val() || '').trim().toLowerCase();
+    const estado = $('#detallePagosEstado').val();
+    const plan = $('#detallePagosPlan').val();
+    const orden = $('#detallePagosOrden').val();
+    const m = function(v) { return parseFloat(v) || 0; };
+
+    const lista = detallePagos.datos.filter(function(e) {
+        if (texto && [e.NombreCompleto, e.Ci].join(' ').toLowerCase().indexOf(texto) === -1) return false;
+        if (estado && situacionEstudiante(e) !== estado) return false;
+        if (plan && e.TipoPlan !== plan) return false;
+        return true;
+    });
+    if (orden === 'saldo') lista.sort(function(a, b) { return m(b.SaldoPendiente) - m(a.SaldoPendiente); });
+    if (orden === 'avance') lista.sort(function(a, b) { return porcentaje(m(a.TotalPagado), m(a.CostoTotal)) - porcentaje(m(b.TotalPagado), m(b.CostoTotal)); });
+
+    renderDetallePagosEstudiante(lista, detallePagos.tieneClinica, detallePagos.datos.length > 0);
+}
+
+function renderDetallePagosEstudiante(datos, tieneClinica, hayEstudiantes) {
     $('#tablaDetallePagosEstudianteHead').html(
         '<tr>' +
             '<th>Estudiante</th>' +
@@ -361,7 +484,8 @@ function renderDetallePagosEstudiante(datos, tieneClinica) {
     if (!datos || datos.length === 0) {
         $('#detallePagosKpis').html('');
         $('#tablaDetallePagosEstudianteFooter').html('');
-        $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="' + columnas + '" class="rp-vacio">Este programa no tiene estudiantes inscritos</td></tr>');
+        $('#tablaDetallePagosEstudianteBody').html('<tr><td colspan="' + columnas + '" class="rp-vacio">' +
+            (hayEstudiantes ? 'Ningún estudiante coincide con los filtros' : 'Este programa no tiene estudiantes inscritos') + '</td></tr>');
         return;
     }
 
@@ -597,8 +721,9 @@ function imprimirTabla(titulo, contenidoHtml) {
 function imprimirReportePagos() {
     const kpis = document.getElementById('reportePagosKpis').outerHTML;
     const tabla = document.getElementById('tablaReportePagos').outerHTML;
-    const grado = $('#reportePagosGrado').val();
-    imprimirTabla('REPORTE DE PAGOS POR PROGRAMA' + (grado ? ' - ' + grado : ''), kpis + tabla);
+    const filtros = [$('#reportePagosGrado').val(), $('#reportePagosSede').val(),
+        $('#reportePagosSituacion').val() ? $('#reportePagosSituacion option:selected').text() : ''].filter(Boolean);
+    imprimirTabla('REPORTE DE PAGOS POR PROGRAMA' + (filtros.length ? ' - ' + filtros.join(' - ').toUpperCase() : ''), kpis + tabla);
 }
 
 function imprimirDetallePagos() {

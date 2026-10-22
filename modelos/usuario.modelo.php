@@ -143,6 +143,31 @@
             }
         }
 
+        // Rol actual de una cuenta del personal (ADM, SEC o AUX). Por ID de usuario: una
+        // misma persona puede tener más de una cuenta
+        public static function RolCuentaPersonalModelo($idUsuario)
+        {
+            $stmt = Conexion::Conectar()->prepare("SELECT Tipo FROM usuario WHERE ID = :id AND IdPersonal IS NOT NULL");
+            $stmt->execute([':id' => (int)$idUsuario]);
+            return $stmt->fetchColumn() ?: null;
+        }
+
+        // Administradores con cuenta activa (nunca debe quedar ninguno)
+        public static function ContarAdministradoresActivosModelo()
+        {
+            return (int)Conexion::Conectar()->query("SELECT COUNT(*) FROM usuario WHERE Tipo = 'ADM' AND Estado = 1 AND IdPersonal IS NOT NULL")->fetchColumn();
+        }
+
+        /**
+         * Cambia el rol de una cuenta del personal (solo esa cuenta, por su ID). Quien tenga la
+         * sesión abierta con el rol anterior la pierde en su siguiente clic (core/sesion-vigente.php).
+         */
+        public static function CambiarRolCuentaPersonalModelo($idUsuario, $tipo)
+        {
+            $stmt = Conexion::Conectar()->prepare("UPDATE usuario SET Tipo = :tipo WHERE ID = :id AND IdPersonal IS NOT NULL");
+            return $stmt->execute([':tipo' => $tipo, ':id' => (int)$idUsuario]) ? 'exitoso' : 'error';
+        }
+
         public static function CambiarEstadoUsuario($idusr)
         {
             $stmt = Conexion::Conectar()->prepare("UPDATE usuario u, personal p SET `Estado`='0' WHERE u.IdPersonal=p.IdPersonal AND p.CedulaIdentidad=:idusr");

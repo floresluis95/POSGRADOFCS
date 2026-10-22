@@ -480,9 +480,11 @@ $csrf_token = bin2hex(random_bytes(32));
         </div>
       </div>
       <div class="modal-footer" style="background-color: #f8f9fa; border-top: 2px solid #e9ecef;">
+        <?php if (UsuarioControladores::PuedeGestionarCuentas('docente')): ?>
         <button type="button" class="btn btn-outline-warning" id="btnRestablecerPasswordDocenteDetalle">
           <i class="fa fa-key"></i> Restablecer contraseña
         </button>
+        <?php endif; ?>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
       </div>
     </div>
@@ -1391,15 +1393,18 @@ jQuery(document).on('click', '#btnRestablecerPasswordDocenteDetalle', function()
     const docenteID = jQuery(this).attr('data-docente-id');
     const nombre = jQuery('#detalleDocenteNombre').text();
 
-    Swal.fire({
-        type: 'warning',
+    // Esta página usa SweetAlert v1 (swal); SweetAlert2 (Swal) no se carga aquí (plantilla.php),
+    // por eso antes el botón no hacía nada: "Swal is not defined"
+    swal({
         title: '¿Restablecer contraseña?',
         text: 'Se generará una nueva contraseña para ' + nombre + '. La anterior dejará de funcionar.',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, restablecer',
-        cancelButtonText: 'Cancelar'
-    }).then(function(resultado) {
-        if (!resultado.value) return; // SweetAlert2 v8: no tiene isConfirmed
+        icon: 'warning',
+        buttons: {
+            cancel: { text: 'Cancelar', value: null, visible: true, className: 'btn btn-secondary', closeModal: true },
+            confirm: { text: 'Sí, restablecer', value: true, visible: true, className: 'btn btn-warning', closeModal: false }
+        }
+    }).then(function(confirmado) {
+        if (!confirmado) return;
 
         jQuery.ajax({
             url: 'ajax/restablecerpassword.ajax.php',
@@ -1408,7 +1413,7 @@ jQuery(document).on('click', '#btnRestablecerPasswordDocenteDetalle', function()
             dataType: 'json',
             success: function(resp) {
                 if (!resp.success) {
-                    Swal.fire({ type: 'error', title: 'Error', text: resp.mensaje || 'No se pudo restablecer la contraseña' });
+                    swal('Error', resp.mensaje || 'No se pudo restablecer la contraseña', 'error');
                     return;
                 }
 
@@ -1420,10 +1425,10 @@ jQuery(document).on('click', '#btnRestablecerPasswordDocenteDetalle', function()
                 // al reabrir el modal se muestre la nueva contraseña.
                 jQuery('.btnVerDetalleDocente[data-docente-id="' + docenteID + '"]').attr('data-password', resp.password);
 
-                Swal.fire({ type: 'success', title: 'Contraseña restablecida', text: 'Nueva contraseña: ' + resp.password });
+                swal('Contraseña restablecida', 'Nueva contraseña: ' + resp.password + '\n\nAnótela y entréguela al docente.', 'success');
             },
             error: function() {
-                Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo restablecer la contraseña' });
+                swal('Error', 'No se pudo restablecer la contraseña', 'error');
             }
         });
     });

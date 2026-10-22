@@ -1,6 +1,8 @@
 <?php
 require_once file_exists(__DIR__ . '/conexion.modelo.php') ? __DIR__ . '/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
 require_once __DIR__ . '/configuracion.modelo.php'; // nota mínima de aprobación
+require_once __DIR__ . '/reportemodulos.modelo.php'; // saldos por estudiante (mismo cálculo que el Reporte General)
+require_once __DIR__ . '/historialpagos.modelo.php'; // estado de cuenta (mismo armado que Historial de Pagos)
 
 class ReportesModelos
 {
@@ -225,13 +227,26 @@ class ReportesModelos
      * @return array filas con CuentaID (NULL si el programa no tiene cuenta
      *               configurada para ese concepto), datos de la cuenta y totales.
      */
+    // Cuenta Principal activa de un tipo (MATRICULA, CUOTAS o CLINICA) para el programa de la columna dada
+    private static function SqlCuentaPrincipal($tipo, $columnaPrograma)
+    {
+        return "(SELECT pc.ProgramaCuentaID FROM programacuenta pc
+                 WHERE pc.ProgramaID = $columnaPrograma AND pc.TipoCuenta = '$tipo'
+                 AND pc.Principal = 1 AND pc.Estado = 1 LIMIT 1)";
+    }
+
+    // Orden confirmada con la que se pagó la matrícula de la inscripción "ep"
+    const SQL_ORDEN_MATRICULA = "(
+                    SELECT o.IdOrdenPago FROM ordenpago o
+                    WHERE o.idinscripcion = ep.idInscripcion AND o.Estado = 'CONFIRMADO'
+                    AND o.ListaModulos IS NULL AND o.ListaPagosModulo IS NULL
+                    AND COALESCE(o.Observaciones, '') NOT IN ('CUOTA PROGRAMA', 'CLINICA')
+                    ORDER BY o.IdOrdenPago LIMIT 1
+                )";
+
     public static function RecaudacionPorCuenta($sede = null, $programaID = null, $fechaDesde = null, $fechaHasta = null)
     {
-        $principal = function ($tipo, $columnaPrograma) {
-            return "(SELECT pc.ProgramaCuentaID FROM programacuenta pc
-                     WHERE pc.ProgramaID = $columnaPrograma AND pc.TipoCuenta = '$tipo'
-                     AND pc.Principal = 1 AND pc.Estado = 1 LIMIT 1)";
-        };
+        $principal = [self::class, 'SqlCuentaPrincipal'];
 
         $condiciones = [];
         $params = [];
@@ -276,13 +291,7 @@ class ReportesModelos
                        ep.ProgramaID, 'MATRICULA' AS Concepto, ep.montoPagado AS Monto,
                        ep.FechaInscripcion AS Fecha, 1 AS Pagado
                 FROM estudianteprograma ep
-                LEFT JOIN ordenpago op ON op.IdOrdenPago = (
-                    SELECT o.IdOrdenPago FROM ordenpago o
-                    WHERE o.idinscripcion = ep.idInscripcion AND o.Estado = 'CONFIRMADO'
-                    AND o.ListaModulos IS NULL AND o.ListaPagosModulo IS NULL
-                    AND COALESCE(o.Observaciones, '') NOT IN ('CUOTA PROGRAMA', 'CLINICA')
-                    ORDER BY o.IdOrdenPago LIMIT 1
-                )
+                LEFT JOIN ordenpago op ON op.IdOrdenPago = " . self::SQL_ORDEN_MATRICULA . "
                 WHERE ep.montoPagado > 0
 
                 UNION ALL
@@ -396,6 +405,167 @@ class ReportesModelos
         });
 
         return $cuentas;
+    }
+    /**
+     * Cuentas bancarias distintas (banco + número) de los programas activos, para el filtro
+     * "Cuenta" de Movimientos e Ingresos por mes. Varias filas de programacuenta pueden ser
+     * la misma cuenta del banco usada por varios programas.
+     */
+    public static function ListaCuentas()
+    {
+        $stmt = Conexion::Conectar()->prepare(
+            "SELECT pc.NumeroCuenta, MAX(pc.Banco) AS Banco,
+                    GROUP_CONCAT(DISTINCT pc.TipoCuenta ORDER BY pc.TipoCuenta SEPARATOR ', ') AS Tipos
+             FROM programacuenta pc
+             INNER JOIN programa p ON p.ProgramaID = pc.ProgramaID
+             WHERE pc.Estado = 1 AND p.Estado = 1
+             GROUP BY pc.NumeroCuenta
+             ORDER BY Banco, pc.NumeroCuenta"
+        );
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Cada pago recibido (matrícula, cuota o clínica), con el estudiante, el voucher y la
+     * cuenta a la que fue (misma regla que Recaudación por cuenta). Para Movimientos de
+     * cuenta e Ingresos por mes. Los filtros vacíos no filtran.
+     * @param array $f sede, programaID, numeroCuenta, concepto, desde, hasta (AAAA-MM-DD)
+     * @return array ordenado por fecha de pago
+     */
+    public static function MovimientosPagados(array $f)
+    {
+        $condiciones = [];
+        $params = [];
+        $filtros = [
+            'sede' => 'p.Sede = :sede',
+            'programaID' => 'p.ProgramaID = :programaID',
+            'numeroCuenta' => 'pc.NumeroCuenta = :numeroCuenta',
+            'concepto' => 'mov.Concepto = :concepto',
+            'desde' => 'mov.Fecha >= :desde',
+            'hasta' => 'mov.Fecha <= :hasta',
+        ];
+        foreach ($filtros as $clave => $condicion) {
+            if (!empty($f[$clave])) {
+                $condiciones[] = $condicion;
+                $params[':' . $clave] = $f[$clave];
+            }
+        }
+
+        $sql = "
+            SELECT mov.Fecha, mov.Concepto, mov.Monto, mov.Voucher, mov.NumeroCuota,
+                   p.ProgramaID, p.NombrePrograma, p.Sede, pc.Banco, pc.NumeroCuenta, pc.TipoCuenta,
+                   e.Ci, e.Complemento, TRIM(CONCAT_WS(' ', e.Apaterno, e.Amaterno, e.Nombre)) AS Estudiante
+            FROM (
+                SELECT COALESCE(op.ProgramaCuentaID, " . self::SqlCuentaPrincipal('MATRICULA', 'ep.ProgramaID') . ") AS CuentaID,
+                       ep.ProgramaID, ep.EstudianteID, 'MATRICULA' AS Concepto, ep.montoPagado AS Monto,
+                       ep.FechaInscripcion AS Fecha, ep.nvauchermatricula AS Voucher, NULL AS NumeroCuota
+                FROM estudianteprograma ep
+                LEFT JOIN ordenpago op ON op.IdOrdenPago = " . self::SQL_ORDEN_MATRICULA . "
+                WHERE ep.montoPagado > 0
+
+                UNION ALL
+
+                SELECT COALESCE(op.ProgramaCuentaID, " . self::SqlCuentaPrincipal('CUOTAS', 'ep.ProgramaID') . "),
+                       ep.ProgramaID, ep.EstudianteID, 'CUOTAS', pm.montocuota, pm.fechapago, pm.nvaucher, pm.NumeroCuota
+                FROM pagomodulo pm
+                INNER JOIN estudianteprograma ep ON ep.idInscripcion = pm.idinscripcion
+                LEFT JOIN ordenpago op ON op.IdOrdenPago = pm.IdOrdenPago
+                WHERE pm.Estado = 'PAGADO'
+
+                UNION ALL
+
+                SELECT COALESCE(op.ProgramaCuentaID, " . self::SqlCuentaPrincipal('CLINICA', 'op.ProgramaID') . "),
+                       op.ProgramaID, ep.EstudianteID, 'CLINICA', pcl.Monto, pcl.FechaPago, pcl.NumeroVoucher, NULL
+                FROM pagoclinica pcl
+                INNER JOIN ordenpago op ON op.IdOrdenPago = pcl.IdOrdenPago
+                INNER JOIN estudianteprograma ep ON ep.idInscripcion = pcl.idinscripcion
+                WHERE pcl.Estado = 'PAGADO'
+            ) mov
+            INNER JOIN programa p ON p.ProgramaID = mov.ProgramaID
+            INNER JOIN estudiante e ON e.EstudianteID = mov.EstudianteID
+            LEFT JOIN programacuenta pc ON pc.ProgramaCuentaID = mov.CuentaID
+            " . ($condiciones ? "WHERE " . implode(' AND ', $condiciones) : "") . "
+            ORDER BY mov.Fecha, p.NombrePrograma, Estudiante
+        ";
+        $stmt = Conexion::Conectar()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Saldos por estudiante de cada programa (costo, pagado, saldo, cuotas pagadas): el
+     * mismo cálculo que el Reporte General de Programas, programa por programa.
+     * @return array [ ['programa' => fila de programa, 'estudiantes' => [...]], ... ]
+     */
+    public static function SaldosPorPrograma($sede = null, $programaID = null, $soloConSaldo = false)
+    {
+        $resultado = [];
+        foreach (self::ListaProgramas($sede) as $programa) {
+            if ($programaID && (int)$programa['ProgramaID'] !== (int)$programaID) {
+                continue;
+            }
+            $estudiantes = ReporteModulosModelo::ObtenerReportePagosPorEstudianteModelo($programa['ProgramaID']);
+            if ($soloConSaldo) {
+                $estudiantes = array_values(array_filter($estudiantes, function ($e) {
+                    return $e['EstadoInscripcion'] !== 'ABANDONO' && (float)$e['SaldoPendiente'] > 0;
+                }));
+            }
+            if ($estudiantes) {
+                $resultado[] = ['programa' => $programa, 'estudiantes' => $estudiantes];
+            }
+        }
+        return $resultado;
+    }
+
+    /**
+     * Consolidado de notas de un programa: los módulos (columnas) y, por estudiante
+     * activo, la nota de cada módulo. Sin nota = módulo aún no calificado.
+     * @return array ['programa' => ?array, 'modulos' => [...], 'estudiantes' => [...con 'Notas' => [Idmodulo => nota]]]
+     */
+    public static function ConsolidadoNotas($programaID)
+    {
+        $pdo = Conexion::Conectar();
+        $stmt = $pdo->prepare("SELECT * FROM programa WHERE ProgramaID = :id");
+        $stmt->execute([':id' => $programaID]);
+        $programa = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        $stmt = $pdo->prepare(
+            "SELECT Idmodulo, codigomodulo AS CodigoModulo, nombremodulo AS NombreModulo
+             FROM modulos WHERE ProgramaId = :id AND estadomodulo != 'INACTIVO'
+             ORDER BY Idmodulo"
+        );
+        $stmt->execute([':id' => $programaID]);
+        $modulos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $stmt = $pdo->prepare(
+            "SELECT e.EstudianteID, e.Ci, e.Complemento, TRIM(CONCAT_WS(' ', e.Apaterno, e.Amaterno, e.Nombre)) AS Estudiante
+             FROM estudianteprograma ep
+             INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID
+             WHERE ep.ProgramaID = :id AND ep.Estado = 'ACTIVO'
+             ORDER BY e.Apaterno, e.Amaterno, e.Nombre"
+        );
+        $stmt->execute([':id' => $programaID]);
+        $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $stmt = $pdo->prepare("SELECT EstudianteID, Idmodulo, Nota FROM calificacion WHERE ProgramaId = :id AND Nota IS NOT NULL");
+        $stmt->execute([':id' => $programaID]);
+        $notas = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $n) {
+            $notas[$n['EstudianteID']][$n['Idmodulo']] = (float)$n['Nota'];
+        }
+        foreach ($estudiantes as &$e) {
+            $e['Notas'] = $notas[$e['EstudianteID']] ?? [];
+        }
+        unset($e);
+
+        return ['programa' => $programa, 'modulos' => $modulos, 'estudiantes' => $estudiantes];
+    }
+
+    // Estado de cuenta de un estudiante por C.I.: el mismo armado que Historial de Pagos
+    public static function EstadoCuentaEstudiante($ci)
+    {
+        return HistorialPagosModelos::BuscarHistorialPorCiModelo($ci);
     }
 }
 ?>

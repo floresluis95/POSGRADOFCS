@@ -7,8 +7,8 @@
  *  - Reporte:    ?desde=&hasta=&tipo=&programaID= certificados pagados con esos filtros
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
-// Solo Administración y Secretaría (los mismos que ven Registro de documentos)
-if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC'], true)) die('Acceso denegado');
+// Solo Administración (la única que ve Registro de documentos)
+if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true || ($_SESSION['Tipo'] ?? '') !== 'ADM') die('Acceso denegado');
 
 require_once __DIR__ . '/../../modelos/certificado.modelo.php';
 

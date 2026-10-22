@@ -1,7 +1,15 @@
 <?php
 require_once __DIR__ . '/control-solicitud.php'; // corte de internet: sin envíos duplicados
 require_once __DIR__ . '/validar-sesion.php';
-ExigirSesionAjax(['ADM', 'SEC']); // Solo Administración y Secretaría (igual que las páginas de certificados)
+ExigirSesionAjax(['ADM', 'SEC']); // Certificados: solo Administración
+// La Secretaría no emite certificados: solo busca al estudiante y su trabajo de grado
+// para programar defensas desde el panel (panel-admin.js)
+if (($_SESSION['Tipo'] ?? '') === 'SEC' && !in_array($_POST['accion'] ?? '', ['buscarPorCI', 'obtenerTrabajoGrado'], true)) {
+    http_response_code(403);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'mensaje' => 'No tiene permisos para esta acción']);
+    exit;
+}
 /**
  * AJAX para Certificados (módulos calificados de un estudiante en un programa)
  */

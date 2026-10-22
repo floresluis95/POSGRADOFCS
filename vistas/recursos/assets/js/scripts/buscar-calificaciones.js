@@ -194,6 +194,11 @@ function mostrarResultados(data) {
                             <span class="kt-badge ${aprobados === notas.length ? 'kt-badge--success' : 'kt-badge--warning'} kt-badge--inline">
                                 ${aprobados} de ${notas.length} aprobados
                             </span>
+                            <a class="btn btn-sm btn-outline-primary ml-2 btn-situacion-academica" target="_blank" rel="noopener"
+                               href="vistas/componentes/situacion-academica-pdf.php?estudianteID=${encodeURIComponent(e.EstudianteID)}&programaID=${encodeURIComponent(e.ProgramaID)}"
+                               title="Todos los módulos del programa con su puntuación (hoja carta)">
+                                <i class="fa fa-file-pdf"></i> Situación académica
+                            </a>
                         </div>
                     </div>
                 </td>

@@ -7,6 +7,11 @@
  *  - Cartera por programa: cobrado frente a lo que falta cobrar.
  *  - Inscripciones por mes.
  *  - Planes de pago elegidos y descuentos otorgados.
+ *  - Antigüedad de la deuda vencida, estado de pago de los estudiantes, distribución de
+ *    notas y aprobación por programa.
+ *
+ * Dinámico: "Cobrado por mes" se ve por mes o acumulado y su leyenda muestra u oculta
+ * cada serie; un clic en un programa (Cartera, Aprobación) filtra toda la pestaña por él.
  *
  * Colores: posiciones 1-3 de la paleta categórica validada (azul, naranja, aqua) para
  * las series; el resto en tinta y grises. Los textos nunca van en el color de la serie.
@@ -24,6 +29,10 @@
     const MAX_PROGRAMAS = 8;
 
     let cargado = false;
+    // Estado de "Cobrado por mes": vista y series ocultas (se conservan al cambiar filtros)
+    let vistaCobrado = 'mensual';
+    const seriesOcultas = {};
+    let ultimosMeses = [];
 
     // ---------- Formatos ----------
     function bs(valor) {
@@ -152,6 +161,7 @@
     }
 
     function renderCobradoMes(meses) {
+        ultimosMeses = meses;
         const totalSerie = {};
         SERIES.forEach(function(s) {
             totalSerie[s.clave] = meses.reduce(function(t, m) { return t + (m[s.clave] || 0); }, 0);
@@ -159,22 +169,36 @@
         const total = SERIES.reduce(function(t, s) { return t + totalSerie[s.clave]; }, 0);
 
         $('#rgCobradoTotal').text(bs(total));
-        // Leyenda con el total de cada serie en el periodo (la identidad no depende solo del color)
+        // Leyenda con el total de cada serie en el periodo (la identidad no depende solo del color);
+        // cada una es un botón que la muestra u oculta en el gráfico
         $('#rgCobradoLeyenda').html(SERIES.map(function(s) {
-            return '<span><i class="rg-llave ' + s.clase + '"></i>' + s.nombre + ' <b>' + bs(totalSerie[s.clave]) + '</b></span>';
+            const oculta = !!seriesOcultas[s.clave];
+            return '<button type="button" class="' + (oculta ? 'is-oculta' : '') + '" data-rg-serie="' + s.clave + '" aria-pressed="' + !oculta + '">' +
+                '<i class="rg-llave ' + s.clase + '"></i>' + s.nombre + ' <b>' + bs(totalSerie[s.clave]) + '</b></button>';
         }).join(''));
 
-        if (total <= 0) {
-            $('#rgCobradoMes').html('<div class="rg-vacio">Sin cobros en el periodo</div>');
+        const visibles = SERIES.filter(function(s) { return !seriesOcultas[s.clave]; });
+        // Acumulado: cada mes suma todo lo cobrado desde el inicio del periodo
+        let datos = meses;
+        if (vistaCobrado === 'acumulado') {
+            const suma = { matricula: 0, cuotas: 0, clinicas: 0 };
+            datos = meses.map(function(m) {
+                const fila = { mes: m.mes };
+                SERIES.forEach(function(s) { suma[s.clave] += m[s.clave] || 0; fila[s.clave] = suma[s.clave]; });
+                return fila;
+            });
+        }
+        const totales = datos.map(function(m) { return visibles.reduce(function(t, s) { return t + (m[s.clave] || 0); }, 0); });
+
+        if (total <= 0 || !visibles.length || Math.max.apply(null, totales) <= 0) {
+            $('#rgCobradoMes').html('<div class="rg-vacio">' + (total <= 0 ? 'Sin cobros en el periodo' : 'Sin cobros de las series elegidas') + '</div>');
         } else {
             // Rótulo solo en el mes más alto y en el actual
-            const totales = meses.map(function(m) { return m.matricula + m.cuotas + m.clinicas; });
-            const maximo = Math.max.apply(null, totales);
-            const iMax = totales.indexOf(maximo);
-            $('#rgCobradoMes').html(graficoColumnas(meses, SERIES, {
+            const iMax = totales.indexOf(Math.max.apply(null, totales));
+            $('#rgCobradoMes').html(graficoColumnas(datos, visibles, {
                 formato: bs,
                 etiqueta: compacto,
-                etiquetar: function(i) { return i === iMax || i === meses.length - 1; }
+                etiquetar: function(i) { return i === iMax || i === datos.length - 1; }
             }));
         }
 
@@ -214,6 +238,7 @@
         const filas = programas
             .map(function(p) {
                 return {
+                    id: p.ProgramaID,
                     nombre: p.NombrePrograma,
                     codigo: p.Codigo,
                     programado: parseFloat(p.CostoTotalProgramado) || 0,
@@ -243,8 +268,8 @@
                 filaTip('is-pendiente', 'Por cobrar', bs(f.saldo)) +
                 filaTip('', 'Programado', bs(f.programado)) +
                 filaTip('', 'Inscritos', f.inscritos);
-            html += '<div class="rg-barra-fila" data-rg-tip="' + esc(tip) + '">' +
-                '<div class="rg-barra-nombre" title="' + esc(f.nombre) + '">' + esc(f.nombre) + '</div>' +
+            html += '<div class="rg-barra-fila rg-clic" data-rg-programa="' + esc(f.id) + '" data-rg-tip="' + esc(tip + clicPrograma) + '">' +
+                '<div class="rg-barra-nombre">' + esc(f.nombre) + '</div>' +
                 '<div class="rg-barra-pista">' +
                     '<div class="rg-barra-total" style="width:' + (f.programado / maximo * 100) + '%">' +
                         (f.cobrado > 0 ? '<span class="rg-seg is-s1" style="flex-grow:' + f.cobrado + '"></span>' : '') +
@@ -296,6 +321,116 @@
         }).join('') + '</div>');
     }
 
+    // Pie del tooltip en los elementos que filtran por programa
+    const clicPrograma = '<div class="rg-tip-pie">Clic para ver solo este programa</div>';
+
+    // Barra horizontal de una sola serie: [{ nombre, valor, clase, tip, programa?, rotulo }]
+    function barrasSimples(filas, maximo, corta) {
+        return '<div class="rg-barras">' + filas.map(function(f) {
+            return '<div class="rg-barra-fila' + (corta ? ' is-corta' : '') + (f.programa ? ' rg-clic' : '') + '"' +
+                (f.programa ? ' data-rg-programa="' + esc(f.programa) + '"' : '') + ' data-rg-tip="' + esc(f.tip) + '">' +
+                '<div class="rg-barra-nombre">' + f.nombre + '</div>' +
+                '<div class="rg-barra-pista">' +
+                    (f.valor > 0 ? '<div class="rg-barra-total" style="width:' + (f.valor / maximo * 100) + '%"><span class="rg-seg ' + f.clase + '" style="flex-grow:1"></span></div>' : '') +
+                '</div>' +
+                '<div class="rg-barra-valor">' + f.rotulo + '</div>' +
+            '</div>';
+        }).join('') + '</div>';
+    }
+
+    function renderAntiguedad(tramos) {
+        const total = tramos.reduce(function(t, x) { return t + x.monto; }, 0);
+        const cantidad = tramos.reduce(function(t, x) { return t + x.cantidad; }, 0);
+        $('#rgAntiguedadTotal').text(cantidad ? bs(total) + ' en ' + cantidad + ' orden(es) vencida(s)' : '');
+        if (!cantidad) {
+            $('#rgAntiguedad').html('<div class="rg-vacio"><i class="fa fa-check-circle" style="color:#0ca30c"></i> No hay cuotas vencidas</div>');
+            return;
+        }
+        const clases = ['is-a1', 'is-a2', 'is-a3', 'is-a4'];
+        const nombres = { '1-30': '1 a 30 días', '31-60': '31 a 60 días', '61-90': '61 a 90 días', '90+': 'Más de 90 días' };
+        const maximo = Math.max.apply(null, tramos.map(function(x) { return x.monto; }));
+        $('#rgAntiguedad').html(barrasSimples(tramos.map(function(x, i) {
+            return {
+                nombre: nombres[x.tramo] || x.tramo, valor: x.monto, clase: clases[i],
+                tip: '<div class="rg-tip-titulo">' + (nombres[x.tramo] || x.tramo) + ' de atraso</div>' +
+                    filaTip(clases[i], 'Monto', bs(x.monto)) + filaTip('', 'Órdenes', x.cantidad),
+                rotulo: x.cantidad ? bs(x.monto) + ' <span class="rp-muted">&middot; ' + x.cantidad + '</span>' : '<span class="rp-muted">—</span>'
+            };
+        }), maximo || 1));
+    }
+
+    function renderEstado(programas) {
+        const suma = function(campo) { return programas.reduce(function(t, p) { return t + (parseInt(p[campo], 10) || 0); }, 0); };
+        const estados = [
+            { nombre: 'Completaron el pago', valor: suma('CountCompletados'), clase: 'is-bien', icono: 'fa-check-circle' },
+            { nombre: 'Con saldo pendiente', valor: suma('CountPendientes'), clase: 'is-alerta', icono: 'fa-clock' },
+            { nombre: 'Abandonaron', valor: suma('CountAbandono'), clase: 'is-critico', icono: 'fa-user-times' }
+        ];
+        const total = estados.reduce(function(t, e) { return t + e.valor; }, 0);
+        $('#rgEstadoTotal').text(total ? total + ' estudiante(s)' : '');
+        if (!total) {
+            $('#rgEstado').html('<div class="rg-vacio">Sin estudiantes inscritos</div>');
+            return;
+        }
+        const pct = function(v) { return Math.round(v / total * 100); };
+        $('#rgEstado').html(
+            '<div class="rg-apilada" role="img" aria-label="' + esc(estados.map(function(e) { return e.nombre + ' ' + e.valor; }).join(', ')) + '">' +
+                estados.filter(function(e) { return e.valor > 0; }).map(function(e) {
+                    return '<span class="rg-seg ' + e.clase + '" style="flex-grow:' + e.valor + '" data-rg-tip="' +
+                        esc(filaTip(e.clase, e.nombre, e.valor + ' (' + pct(e.valor) + '%)')) + '"></span>';
+                }).join('') +
+            '</div>' +
+            '<div class="rg-estado-lista">' + estados.map(function(e) {
+                return '<div class="rg-estado-item ' + e.clase + '"><i class="fa ' + e.icono + '"></i>' + e.nombre +
+                    '<b>' + e.valor + ' <span class="rp-muted" style="font-size:12px;font-weight:400">' + pct(e.valor) + '%</span></b></div>';
+            }).join('') + '</div>'
+        );
+    }
+
+    function renderNotas(notas) {
+        const rangos = notas.rangos || [];
+        const total = rangos.reduce(function(t, r) { return t + r.cantidad; }, 0);
+        $('#rgNotasTotal').text(total ? total + ' nota(s) registrada(s) · aprueba con ' + notas.minima : '');
+        if (!total) {
+            $('#rgNotas').html('<div class="rg-vacio">Sin notas registradas</div>');
+            return;
+        }
+        const maximo = Math.max.apply(null, rangos.map(function(r) { return r.cantidad; }));
+        $('#rgNotas').html(barrasSimples(rangos.map(function(r) {
+            const pct = Math.round(r.cantidad / total * 100);
+            return {
+                nombre: r.rango + (r.reprobado ? ' <span class="rg-marca-reprobado">reprob.</span>' : ''),
+                valor: r.cantidad, clase: 'is-s1',
+                tip: '<div class="rg-tip-titulo">Notas de ' + r.rango + (r.reprobado ? ' (reprobados)' : '') + '</div>' +
+                    filaTip('', 'Notas', r.cantidad + ' (' + pct + '%)'),
+                rotulo: r.cantidad + ' <span class="rp-muted">&middot; ' + pct + '%</span>'
+            };
+        }), maximo || 1, true));
+    }
+
+    function renderAprobacion(notas) {
+        const programas = (notas.programas || []).map(function(p) {
+            return $.extend({ pct: Math.round(p.aprobados / p.calificados * 100) }, p);
+        }).sort(function(a, b) { return a.pct - b.pct; }); // los de menor aprobación primero
+        if (!programas.length) {
+            $('#rgAprobacionTotal').text('');
+            $('#rgAprobacion').html('<div class="rg-vacio">Sin notas registradas</div>');
+            return;
+        }
+        const aprobados = programas.reduce(function(t, p) { return t + p.aprobados; }, 0);
+        const calificados = programas.reduce(function(t, p) { return t + p.calificados; }, 0);
+        $('#rgAprobacionTotal').text(Math.round(aprobados / calificados * 100) + '% de aprobación general');
+        $('#rgAprobacion').html(barrasSimples(programas.slice(0, MAX_PROGRAMAS).map(function(p) {
+            return {
+                nombre: esc(p.nombre), valor: p.pct, clase: 'is-s1', programa: p.programaID,
+                tip: '<div class="rg-tip-titulo">' + esc(p.nombre) + '</div>' +
+                    filaTip('', 'Aprobados', p.aprobados + ' de ' + p.calificados + ' (' + p.pct + '%)') +
+                    filaTip('', 'Promedio', p.promedio) + clicPrograma,
+                rotulo: p.pct + '% <span class="rp-muted">&middot; prom. ' + p.promedio + '</span>'
+            };
+        }), 100));
+    }
+
     // ---------- Carga ----------
     function cargarGraficos() {
         const $ = window.jQuery;
@@ -305,7 +440,7 @@
             programaID: $('#rgPrograma').val() || ''
         };
         const meses = $('#rgPeriodo').val() || '12';
-        $('#rgCobradoMes, #rgInscritosMes, #rgCartera, #rgPlanes').html('<div class="rg-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>');
+        $('#rgCobradoMes, #rgInscritosMes, #rgCartera, #rgPlanes, #rgAntiguedad, #rgEstado, #rgNotas, #rgAprobacion').html('<div class="rg-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>');
 
         $.when(
             $.ajax({ url: 'ajax/reportemodulos.ajax.php', method: 'POST', dataType: 'json',
@@ -320,8 +455,12 @@
             renderInscripciones(datos.meses || []);
             renderCartera(programas);
             renderPlanes(programas);
+            renderAntiguedad(datos.antiguedad || []);
+            renderEstado(programas);
+            renderNotas(datos.notas || {});
+            renderAprobacion(datos.notas || {});
         }).fail(function() {
-            $('#rgCobradoMes, #rgInscritosMes, #rgCartera, #rgPlanes').html('<div class="rg-vacio">No se pudieron cargar los datos</div>');
+            $('#rgCobradoMes, #rgInscritosMes, #rgCartera, #rgPlanes, #rgAntiguedad, #rgEstado, #rgNotas, #rgAprobacion').html('<div class="rg-vacio">No se pudieron cargar los datos</div>');
         });
     }
 
@@ -379,6 +518,39 @@
             cargarGraficos();
         });
         $('#rgPrograma, #rgPeriodo').on('change', cargarGraficos);
+
+        // Botón "Quitar filtro" cuando hay un programa elegido
+        function mostrarQuitarPrograma() {
+            const $sel = $('#rgPrograma');
+            $('#rgQuitarPrograma').toggle(!!$sel.val()).find('span').text('Ver todos (quitar ' + $sel.find('option:selected').text() + ')');
+        }
+        $('#rgPrograma').on('change', mostrarQuitarPrograma);
+        $('#rgQuitarPrograma').on('click', function() {
+            $('#rgPrograma').val('').trigger('change');
+        });
+
+        // Clic en un programa de un gráfico: filtra toda la pestaña por ese programa
+        $(document).on('click', '#rpTabGraficos [data-rg-programa]', function() {
+            const id = String($(this).attr('data-rg-programa'));
+            if (!$('#rgPrograma option[value="' + id + '"]').length) return;
+            tooltip().hide();
+            $('#rgPrograma').val(id).trigger('change');
+        });
+
+        // Cobrado por mes: por mes / acumulado y series de la leyenda
+        $('[data-rg-vista]').on('click', function() {
+            vistaCobrado = $(this).attr('data-rg-vista');
+            $('[data-rg-vista]').each(function() {
+                const activo = $(this).attr('data-rg-vista') === vistaCobrado;
+                $(this).toggleClass('is-activo', activo).attr('aria-pressed', activo);
+            });
+            renderCobradoMes(ultimosMeses);
+        });
+        $(document).on('click', '#rgCobradoLeyenda [data-rg-serie]', function() {
+            const clave = $(this).attr('data-rg-serie');
+            seriesOcultas[clave] = !seriesOcultas[clave];
+            renderCobradoMes(ultimosMeses);
+        });
         $('#rgVerTabla').on('click', function() {
             const $tabla = $('#rgCobradoTabla').toggle();
             $(this).text($tabla.is(':visible') ? 'Ocultar datos' : 'Ver datos');

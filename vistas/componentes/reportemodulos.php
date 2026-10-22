@@ -44,7 +44,7 @@ date_default_timezone_set("America/La_Paz");
 
                         <!-- Subheader -->
                         <div class="kt-subheader kt-grid__item" id="kt_subheader">
-                            <div class="kt-container">
+                            <div class="kt-container kt-container--fluid rp-ancho">
                                 <div class="kt-subheader__main">
                                     <h2 class="">REPORTES</h2>
                                     <span class="kt-subheader__separator kt-hidden"></span>
@@ -68,7 +68,7 @@ date_default_timezone_set("America/La_Paz");
                         $resumenReporte = ReporteModulosControlador::DatosResumenControlador();
                         $st = $resumenReporte['stats'];
                         ?>
-                        <div class="container rp rp-pagina">
+                        <div class="container-fluid rp rp-pagina rp-ancho">
 
                             <!-- Indicadores generales: una sola franja, cada uno con su color de identidad y detalle -->
                             <div class="rp-resumen">
@@ -145,22 +145,57 @@ date_default_timezone_set("America/La_Paz");
                                 <div class="tab-content">
                                     <!-- ===== Pestaña: Pagos por programa (contenido en reportemodulos.js) ===== -->
                                     <div class="tab-pane fade show active rp-body" id="rpTabPagos" role="tabpanel">
-                                        <div class="rp-filtros">
+                                        <div class="rp-filtros rp-filtros-con-nombre">
+                                            <div class="rp-filtro rp-filtro-busqueda">
+                                                <label class="rp-label" for="reportePagosBuscar">Buscar</label>
+                                                <div class="rp-buscar">
+                                                    <i class="fa fa-search"></i>
+                                                    <input type="search" class="form-control" id="reportePagosBuscar" placeholder="Nombre o código del programa..." aria-label="Buscar programa">
+                                                </div>
+                                            </div>
                                             <div class="rp-filtro">
-                                                <select class="form-control select2-uniforme" id="reportePagosGrado" aria-label="Grado académico">
+                                                <label class="rp-label" for="reportePagosGrado">Grado académico</label>
+                                                <select class="form-control select2-uniforme" id="reportePagosGrado">
                                                     <option value="">Todos los grados</option>
                                                 </select>
                                             </div>
-                                            <div class="rp-filtro rp-filtro-busqueda">
-                                                <div class="rp-buscar">
-                                                    <i class="fa fa-search"></i>
-                                                    <input type="search" class="form-control" id="reportePagosBuscar" placeholder="Buscar programa por nombre, código o sede..." aria-label="Buscar programa">
-                                                </div>
+                                            <div class="rp-filtro">
+                                                <label class="rp-label" for="reportePagosSede">Sede</label>
+                                                <select class="form-control select2-uniforme" id="reportePagosSede">
+                                                    <option value="">Todas las sedes</option>
+                                                </select>
                                             </div>
-                                            <span class="rp-nota" title="Cobrado incluye la matrícula ya cancelada y las cuotas pagadas. Las clínicas se muestran aparte y no se suman a matrícula ni cuotas.">
-                                                <i class="fa fa-info-circle"></i> Las clínicas no se suman a matrícula ni cuotas
-                                            </span>
+                                            <div class="rp-filtro">
+                                                <label class="rp-label" for="reportePagosSituacion">Situación de cobro</label>
+                                                <select class="form-control select2-uniforme" id="reportePagosSituacion">
+                                                    <option value="">Todos los programas</option>
+                                                    <option value="saldo">Con saldo pendiente</option>
+                                                    <option value="aldia">Cobrado al 100%</option>
+                                                    <option value="clinica">Con clínicas por cobrar</option>
+                                                    <option value="sin">Sin inscritos</option>
+                                                </select>
+                                            </div>
+                                            <div class="rp-filtro">
+                                                <label class="rp-label" for="reportePagosOrden">Ordenar por</label>
+                                                <select class="form-control select2-uniforme" id="reportePagosOrden">
+                                                    <option value="">Grado y nombre</option>
+                                                    <option value="saldo">Mayor saldo pendiente</option>
+                                                    <option value="avance">Menor % cobrado</option>
+                                                    <option value="inscritos">Más estudiantes</option>
+                                                </select>
+                                            </div>
+                                            <div class="rp-filtro rp-filtro-boton">
+                                                <button type="button" class="btn rp-btn rp-btn-limpiar" id="reportePagosLimpiar"><i class="fa fa-times"></i> Limpiar</button>
+                                            </div>
                                         </div>
+                                        <div class="rp-ayuda-lectura">
+                                            <span><b>Programado:</b> lo que deben pagar los inscritos (matrícula + programa, ya con descuentos).</span>
+                                            <span><b>Cobrado:</b> matrícula y cuotas ya pagadas.</span>
+                                            <span><b>Saldo:</b> lo que falta cobrar.</span>
+                                            <span><b>Clínicas:</b> se cobran aparte y no se suman a lo anterior.</span>
+                                            <span><b>Detalle:</b> abre los pagos de cada estudiante.</span>
+                                        </div>
+                                        <div class="rp-resultado" id="reportePagosResultado"></div>
 
                                         <!-- Indicadores de cobranza (según el filtro) -->
                                         <div class="rp-kpis" id="reportePagosKpis"></div>
@@ -216,8 +251,71 @@ date_default_timezone_set("America/La_Paz");
                                             };
                                             $hoyTexto = date('Y-m-d');
                                         ?>
+                                        <?php
+                                            $sedesProgramas = [];
+                                            foreach ($resumenReporte['programasPorGrado'] as $programasGrado) {
+                                                foreach ($programasGrado as $pg) {
+                                                    if (!empty($pg['Sede'])) $sedesProgramas[$pg['Sede']] = true;
+                                                }
+                                            }
+                                            ksort($sedesProgramas);
+                                        ?>
+                                        <div class="rp-filtros rp-filtros-con-nombre">
+                                            <div class="rp-filtro rp-filtro-busqueda">
+                                                <label class="rp-label" for="rpProgBuscar">Buscar</label>
+                                                <div class="rp-buscar">
+                                                    <i class="fa fa-search"></i>
+                                                    <input type="search" class="form-control" id="rpProgBuscar" placeholder="Nombre o código del programa...">
+                                                </div>
+                                            </div>
+                                            <div class="rp-filtro">
+                                                <label class="rp-label" for="rpProgGrado">Grado académico</label>
+                                                <select class="form-control select2-uniforme" id="rpProgGrado">
+                                                    <option value="">Todos los grados</option>
+                                                    <?php foreach (array_keys($resumenReporte['programasPorGrado']) as $gradoOpcion): ?>
+                                                        <option value="<?php echo htmlspecialchars($gradoOpcion); ?>"><?php echo htmlspecialchars($gradoOpcion); ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+                                            <div class="rp-filtro">
+                                                <label class="rp-label" for="rpProgSede">Sede</label>
+                                                <select class="form-control select2-uniforme" id="rpProgSede">
+                                                    <option value="">Todas las sedes</option>
+                                                    <?php foreach (array_keys($sedesProgramas) as $sedeOpcion): ?>
+                                                        <option value="<?php echo htmlspecialchars($sedeOpcion); ?>"><?php echo htmlspecialchars($sedeOpcion); ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+                                            <div class="rp-filtro">
+                                                <label class="rp-label" for="rpProgEstado">Estado</label>
+                                                <select class="form-control select2-uniforme" id="rpProgEstado">
+                                                    <option value="">Todos</option>
+                                                    <option value="En desarrollo">En desarrollo</option>
+                                                    <option value="Por iniciar">Por iniciar</option>
+                                                    <option value="Concluido">Concluido</option>
+                                                    <option value="Sin módulos">Sin módulos</option>
+                                                </select>
+                                            </div>
+                                            <div class="rp-filtro">
+                                                <label class="rp-label" for="rpProgInscritos">Inscritos</label>
+                                                <select class="form-control select2-uniforme" id="rpProgInscritos">
+                                                    <option value="">Todos</option>
+                                                    <option value="con">Con inscritos</option>
+                                                    <option value="sin">Sin inscritos</option>
+                                                </select>
+                                            </div>
+                                            <div class="rp-filtro rp-filtro-boton">
+                                                <button type="button" class="btn rp-btn rp-btn-limpiar" id="rpProgLimpiar"><i class="fa fa-times"></i> Limpiar</button>
+                                            </div>
+                                        </div>
+                                        <div class="rp-ayuda-lectura">
+                                            <span><b>Avance académico:</b> cuántos módulos del programa ya terminaron y cuántos están en curso.</span>
+                                            <span><b>Docentes / Inscritos:</b> asignados al programa y estudiantes inscritos.</span>
+                                            <span><b>Módulos:</b> abre la lista de módulos con sus fechas.</span>
+                                        </div>
+                                        <div class="rp-resultado" id="rpProgResultado"></div>
                                         <div class="rp-tabla-wrap table-responsive">
-                                            <table class="table rp-tabla mb-0">
+                                            <table class="table rp-tabla mb-0" id="rpTablaProgramas">
                                                 <thead>
                                                     <tr>
                                                         <th>Programa</th>
@@ -229,9 +327,9 @@ date_default_timezone_set("America/La_Paz");
                                                     </tr>
                                                 </thead>
                                                 <?php foreach ($resumenReporte['programasPorGrado'] as $grado => $programasGrado): ?>
-                                                <tbody>
+                                                <tbody class="rp-grupo-programas">
                                                     <tr class="rp-fila-grupo">
-                                                        <td colspan="6"><?php echo htmlspecialchars($grado); ?> <span><?php echo count($programasGrado); ?> programa(s)</span></td>
+                                                        <td colspan="6"><?php echo htmlspecialchars($grado); ?> <span class="rp-grupo-cuenta"><?php echo count($programasGrado); ?> programa(s)</span></td>
                                                     </tr>
                                                     <?php foreach ($programasGrado as $pg): ?>
                                                     <?php
@@ -250,7 +348,12 @@ date_default_timezone_set("America/La_Paz");
                                                             $estadoProg = ['En desarrollo', 'is-info'];
                                                         }
                                                     ?>
-                                                    <tr class="<?php echo (int)$pg['TotalInscritos'] === 0 ? 'rp-fila-vacia' : ''; ?>">
+                                                    <tr class="rp-fila-programa <?php echo (int)$pg['TotalInscritos'] === 0 ? 'rp-fila-vacia' : ''; ?>"
+                                                        data-grado="<?php echo htmlspecialchars($grado); ?>"
+                                                        data-sede="<?php echo htmlspecialchars($pg['Sede'] ?? ''); ?>"
+                                                        data-estado="<?php echo htmlspecialchars($estadoProg[0]); ?>"
+                                                        data-inscritos="<?php echo (int)$pg['TotalInscritos']; ?>"
+                                                        data-texto="<?php echo htmlspecialchars(mb_strtolower($pg['NombrePrograma'] . ' ' . $pg['Codigo'] . ' ' . $pg['Sede'], 'UTF-8')); ?>">
                                                         <td>
                                                             <div class="rp-prog-nombre"><?php echo htmlspecialchars($pg['NombrePrograma']); ?></div>
                                                             <div class="rp-prog-meta"><?php echo htmlspecialchars($pg['Codigo']); ?> &middot; <?php echo htmlspecialchars($pg['Sede'] ?: '—'); ?></div>
@@ -290,6 +393,9 @@ date_default_timezone_set("America/La_Paz");
                                                     <?php endforeach; ?>
                                                 </tbody>
                                                 <?php endforeach; ?>
+                                                <tbody id="rpProgSinResultados" style="display:none;">
+                                                    <tr><td colspan="6" class="rp-vacio">Ningún programa coincide con los filtros.</td></tr>
+                                                </tbody>
                                             </table>
                                         </div>
                                         <div class="rp-leyenda">
@@ -329,6 +435,11 @@ date_default_timezone_set("America/La_Paz");
                                             </div>
                                         </div>
 
+                                        <div class="rg-ayuda">
+                                            <span><i class="fa fa-mouse-pointer"></i> Pase el mouse sobre un gráfico para ver las cifras; haga clic en un programa para ver solo ese programa.</span>
+                                            <button type="button" class="btn btn-sm rp-btn rg-quitar-programa" id="rgQuitarPrograma" style="display:none;"><i class="fa fa-times"></i> <span></span></button>
+                                        </div>
+
                                         <!-- Órdenes de pago pendientes (sin filtro de periodo: es el estado de hoy) -->
                                         <div class="rg-tiles" id="rgOrdenes"></div>
 
@@ -338,9 +449,15 @@ date_default_timezone_set("America/La_Paz");
                                                     <h6>Cobrado por mes</h6>
                                                     <span class="rg-panel-dato" id="rgCobradoTotal"></span>
                                                 </div>
-                                                <button type="button" class="btn btn-sm rp-btn" id="rgVerTabla">Ver datos</button>
+                                                <div class="rg-acciones-panel">
+                                                    <div class="rg-segmentado" role="group" aria-label="Forma de mostrar lo cobrado">
+                                                        <button type="button" class="is-activo" data-rg-vista="mensual" aria-pressed="true">Por mes</button>
+                                                        <button type="button" data-rg-vista="acumulado" aria-pressed="false">Acumulado</button>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm rp-btn" id="rgVerTabla">Ver datos</button>
+                                                </div>
                                             </div>
-                                            <div class="rg-leyenda" id="rgCobradoLeyenda"></div>
+                                            <div class="rg-leyenda rg-leyenda-botones" id="rgCobradoLeyenda" title="Clic para mostrar u ocultar"></div>
                                             <div id="rgCobradoMes"></div>
                                             <div class="rp-tabla-wrap table-responsive mt-3" id="rgCobradoTabla" style="display:none;"></div>
                                         </div>
@@ -367,6 +484,49 @@ date_default_timezone_set("America/La_Paz");
                                                     </div>
                                                 </div>
                                                 <div id="rgInscritosMes"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="rg-fila">
+                                            <div class="rg-panel">
+                                                <div class="rg-panel-cab">
+                                                    <div>
+                                                        <h6>Antigüedad de la deuda vencida</h6>
+                                                        <span class="rg-panel-dato" id="rgAntiguedadTotal"></span>
+                                                    </div>
+                                                </div>
+                                                <div class="rg-nota mt-0 mb-2">Cuotas y clínicas cuya fecha límite ya pasó, según los días de atraso. Más oscuro = más antigua.</div>
+                                                <div id="rgAntiguedad"></div>
+                                            </div>
+                                            <div class="rg-panel">
+                                                <div class="rg-panel-cab">
+                                                    <div>
+                                                        <h6>Estado de pago de los estudiantes</h6>
+                                                        <span class="rg-panel-dato" id="rgEstadoTotal"></span>
+                                                    </div>
+                                                </div>
+                                                <div id="rgEstado"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="rg-fila">
+                                            <div class="rg-panel">
+                                                <div class="rg-panel-cab">
+                                                    <div>
+                                                        <h6>Distribución de notas</h6>
+                                                        <span class="rg-panel-dato" id="rgNotasTotal"></span>
+                                                    </div>
+                                                </div>
+                                                <div id="rgNotas"></div>
+                                            </div>
+                                            <div class="rg-panel">
+                                                <div class="rg-panel-cab">
+                                                    <div>
+                                                        <h6>Aprobación por programa</h6>
+                                                        <span class="rg-panel-dato" id="rgAprobacionTotal"></span>
+                                                    </div>
+                                                </div>
+                                                <div id="rgAprobacion"></div>
                                             </div>
                                         </div>
 
@@ -435,6 +595,43 @@ date_default_timezone_set("America/La_Paz");
                 </div>
                 <div class="modal-body rp-body">
                     <div class="rp-kpis rp-kpis-compacto" id="detallePagosKpis"></div>
+
+                    <div class="rp-filtros rp-filtros-con-nombre">
+                        <div class="rp-filtro rp-filtro-busqueda">
+                            <label class="rp-label" for="detallePagosBuscar">Buscar estudiante</label>
+                            <div class="rp-buscar">
+                                <i class="fa fa-search"></i>
+                                <input type="search" class="form-control" id="detallePagosBuscar" placeholder="Nombre o C.I....">
+                            </div>
+                        </div>
+                        <div class="rp-filtro">
+                            <label class="rp-label" for="detallePagosEstado">Situación</label>
+                            <select class="form-control" id="detallePagosEstado">
+                                <option value="">Todos</option>
+                                <option value="saldo">Con saldo pendiente</option>
+                                <option value="completado">Pago completado</option>
+                                <option value="sinplan">Sin plan de pago</option>
+                                <option value="abandono">Abandonó</option>
+                            </select>
+                        </div>
+                        <div class="rp-filtro">
+                            <label class="rp-label" for="detallePagosPlan">Plan</label>
+                            <select class="form-control" id="detallePagosPlan">
+                                <option value="">Todos</option>
+                                <option value="REGULAR">Regular</option>
+                                <option value="DESCUENTO">Contado</option>
+                                <option value="GRUPAL">Grupal</option>
+                            </select>
+                        </div>
+                        <div class="rp-filtro">
+                            <label class="rp-label" for="detallePagosOrden">Ordenar por</label>
+                            <select class="form-control" id="detallePagosOrden">
+                                <option value="">Apellido</option>
+                                <option value="saldo">Mayor saldo</option>
+                                <option value="avance">Menor % pagado</option>
+                            </select>
+                        </div>
+                    </div>
 
                     <div class="rp-tabla-wrap table-responsive">
                         <table class="table rp-tabla mb-0" id="tablaDetallePagosEstudiante">
@@ -706,6 +903,27 @@ date_default_timezone_set("America/La_Paz");
 
         /* ===== Página compacta: franja de indicadores + tarjeta con pestañas ===== */
         .rp-pagina { padding-top: 4px; padding-bottom: 24px; }
+        /* Toda la pantalla, con el mismo margen a los lados que el subencabezado */
+        .rp-ancho { padding-left: 25px; padding-right: 25px; max-width: none; }
+        @media (max-width: 767px) { .rp-ancho { padding-left: 12px; padding-right: 12px; } }
+        /* Filtros con nombre (más específicos que .rp-card .rp-filtro, que va más abajo) */
+        .rp .rp-filtros.rp-filtros-con-nombre { align-items: flex-end; gap: 12px; margin-bottom: 10px; }
+        .rp .rp-filtros-con-nombre .rp-filtro { flex: 1 1 140px; min-width: 130px; }
+        .rp .rp-filtros-con-nombre .rp-filtro-busqueda { flex: 1.6 1 190px; }
+        .rp .rp-filtros-con-nombre .rp-filtro-boton { flex: 0 0 auto; min-width: 0; }
+        .rp .rp-filtros-con-nombre .rp-label { font-size: 11px; text-transform: uppercase; letter-spacing: .3px; color: var(--rp-texto-2); }
+        /* Misma altura para el buscador, los combos y el botón */
+        .rp .rp-filtros-con-nombre .form-control { height: 36px; }
+        .rp .rp-filtros-con-nombre .select2-container--default .select2-selection--single { height: 36px; display: flex; align-items: center; }
+        .rp .rp-filtros-con-nombre .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 34px; width: 100%; }
+        .rp .rp-filtros-con-nombre .select2-container--default .select2-selection--single .select2-selection__arrow { height: 34px; top: 1px; }
+        .rp .rp-btn-limpiar { height: 36px; }
+        @media (max-width: 575px) { .rp .rp-filtros-con-nombre .rp-filtro { flex-basis: 100%; } }
+        .rp-ayuda-lectura { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 12px; color: var(--rp-texto-2);
+            background: var(--rp-fondo); border: 1px solid var(--rp-borde); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
+        .rp-ayuda-lectura b { color: var(--rp-texto); font-weight: 600; }
+        .rp-resultado { font-size: 12.5px; color: var(--rp-texto-2); margin: 0 0 10px; }
+        .rp-resultado b { color: var(--rp-texto); }
         .rp-resumen {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -996,6 +1214,51 @@ date_default_timezone_set("America/La_Paz");
         .rg-llave.is-pendiente, .rg-seg.is-pendiente { background: var(--rg-pendiente); }
 
         /* Órdenes por cobrar */
+        /* Gráficos dinámicos: ayuda, filtro por programa, vista mensual/acumulada y leyenda con clic */
+        .rg-ayuda { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+            font-size: 12px; color: var(--rg-muted); margin: -6px 0 12px; }
+        .rg-ayuda i { margin-right: 4px; }
+        .rg-quitar-programa { font-size: 12px; }
+        .rg-acciones-panel { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .rg-segmentado { display: inline-flex; border: 1px solid var(--rp-borde); border-radius: 6px; overflow: hidden; }
+        .rg-segmentado button { border: 0; background: #fff; padding: 4px 10px; font-size: 12px; color: var(--rp-texto-2); cursor: pointer; }
+        .rg-segmentado button + button { border-left: 1px solid var(--rp-borde); }
+        .rg-segmentado button.is-activo { background: var(--rp-primario); color: #fff; }
+        .rg-leyenda-botones button { border: 1px solid transparent; background: none; padding: 2px 6px; border-radius: 6px;
+            display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--rp-texto); cursor: pointer; }
+        .rg-leyenda-botones button:hover { border-color: var(--rp-borde); }
+        .rg-leyenda-botones button.is-oculta { color: var(--rg-muted); text-decoration: line-through; }
+        .rg-leyenda-botones button.is-oculta .rg-llave { opacity: .25; }
+        .rg-clic { cursor: pointer; }
+        .rg-clic:hover .rg-barra-nombre { color: var(--rp-primario); text-decoration: underline; }
+        /* Antigüedad: rampa ordinal de un solo tono (más oscuro = más días de atraso) */
+        .rg-seg.is-a1 { background: #86b6ef; }
+        .rg-seg.is-a2 { background: #3987e5; }
+        .rg-seg.is-a3 { background: #1c5cab; }
+        .rg-seg.is-a4 { background: #0d366b; }
+        /* Estado de pago: colores de estado, siempre con ícono y nombre */
+        .rg-llave.is-bien, .rg-seg.is-bien { background: var(--rg-bien); }
+        .rg-llave.is-alerta, .rg-seg.is-alerta { background: var(--rg-alerta); }
+        .rg-llave.is-critico, .rg-seg.is-critico { background: var(--rg-critico); }
+        .rg-apilada { display: flex; height: 26px; gap: 2px; border-radius: 4px; overflow: hidden; margin: 6px 0 12px; }
+        .rg-apilada .rg-seg { height: 100%; min-width: 3px; }
+        .rg-estado-lista { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+        .rg-estado-item { border: 1px solid var(--rp-borde); border-radius: 8px; padding: 8px 10px; font-size: 12px; color: var(--rp-texto-2); }
+        .rg-estado-item b { display: block; font-size: 20px; color: var(--rp-texto); font-weight: 600; }
+        .rg-estado-item i.fa { margin-right: 4px; }
+        .rg-estado-item.is-bien i.fa { color: var(--rg-bien); }
+        .rg-estado-item.is-alerta i.fa { color: #b7791f; }
+        .rg-estado-item.is-critico i.fa { color: var(--rg-critico); }
+        .rg-marca-reprobado { font-size: 10.5px; color: var(--rg-critico); font-weight: 600; }
+        /* Las barras crecen al aparecer (sin animación si el sistema pide reducir el movimiento) */
+        @keyframes rgCrecerY { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+        @keyframes rgCrecerX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        .rg-pila { transform-origin: bottom; animation: rgCrecerY .5s ease-out both; }
+        .rg-barra-total, .rg-apilada { transform-origin: left; animation: rgCrecerX .5s ease-out both; }
+        @media (prefers-reduced-motion: reduce) {
+            .rg-pila, .rg-barra-total, .rg-apilada { animation: none; }
+        }
+        @media (max-width: 575px) { .rg-estado-lista { grid-template-columns: 1fr; } }
         .rg-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
         .rg-tile { border: 1px solid var(--rp-borde); border-radius: 8px; padding: 10px 14px; background: #fff; }
         .rg-tile-cab { font-size: 12px; font-weight: 600; color: var(--rp-texto-2); }
@@ -1052,6 +1315,7 @@ date_default_timezone_set("America/La_Paz");
             box-shadow: 0 6px 18px rgba(15, 23, 42, .14); padding: 8px 10px; font-size: 12px; color: #1f2937;
         }
         .rg-tip-titulo { font-weight: 600; margin-bottom: 4px; }
+        .rg-tip-pie { margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,.2); font-size: 11px; opacity: .8; }
         .rg-tip-fila { display: flex; align-items: center; gap: 4px; line-height: 1.7; }
         .rg-tip-fila span { flex: 1; color: #6b7280; }
         .rg-tip-fila b { font-weight: 600; font-variant-numeric: tabular-nums; }

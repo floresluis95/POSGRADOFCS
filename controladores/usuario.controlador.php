@@ -1,6 +1,18 @@
 <?php
     class UsuarioControladores
     {
+        // Quién asigna usuario y restablece contraseñas de estudiantes y docentes (acordado
+        // con Luis 2026-10-22: la Secretaría no; el Auxiliar no tiene la página Docentes)
+        const GESTIONAN_CUENTAS = ['estudiante' => ['ADM', 'AUX'], 'docente' => ['ADM']];
+
+        /**
+         * ¿La sesión actual puede asignar usuario o restablecer la contraseña de ese tipo de cuenta?
+         */
+        public static function PuedeGestionarCuentas($tipoCuenta)
+        {
+            return in_array($_SESSION['Tipo'] ?? '', self::GESTIONAN_CUENTAS[$tipoCuenta] ?? [], true);
+        }
+
         public function CambiarEstadoModelos()
         {
             if (isset($_POST["idusr"]))
@@ -141,6 +153,9 @@
                             Celular="'.$Usuario["Celular"].'"
                             Telefono="'.$Usuario["Telefono"].'"
                             Correo="'.htmlspecialchars($Usuario["Correo"] ?? '').'"
+                            IdUsuario="'.(int)$Usuario["ID"].'"
+                            Tipo="'.htmlspecialchars($Usuario["Tipo"]).'"
+                            EsPropio="'.((int)$Usuario["ID"] === (int)($_SESSION['IdUsuario'] ?? 0) ? '1' : '0').'"
                             title="Editar usuario">
                             <i class="fa fa-edit"></i>
                         </button>
@@ -286,6 +301,37 @@
                     return;
                 }
 
+                // Cambio de rol (solo el ADM): nunca el propio ni dejar el sistema sin administrador
+                // Por cuenta (ID de usuario): una misma persona puede tener varias cuentas
+                $idUsuarioEditado = (int)($_POST['editaridusuario'] ?? 0);
+                $rolNuevo = $_POST['editarcargo'] ?? '';
+                $rolActual = UsuarioModelos::RolCuentaPersonalModelo($idUsuarioEditado);
+                $cambiaRol = $rolNuevo !== '' && $rolActual !== null && $rolNuevo !== $rolActual;
+                if ($cambiaRol) {
+                    $errorRol = null;
+                    if (($_SESSION['Tipo'] ?? '') !== 'ADM') {
+                        $errorRol = 'Solo el administrador puede cambiar roles';
+                    } elseif (!in_array($rolNuevo, ['ADM', 'SEC', 'AUX'], true)) {
+                        $errorRol = 'Rol no válido';
+                    } elseif ($idUsuarioEditado === (int)($_SESSION['IdUsuario'] ?? 0)) {
+                        $errorRol = 'No puede cambiar su propio rol';
+                    } elseif ($rolActual === 'ADM' && UsuarioModelos::ContarAdministradoresActivosModelo() <= 1) {
+                        $errorRol = 'Es el único administrador activo: primero dé el rol de administrador a otra persona';
+                    }
+                    if ($errorRol !== null) {
+                        echo'
+                        <script src="vistas/recursos/sweetalert.min.js"></script>
+                        <script>
+                        swal("ERROR!", ' . json_encode($errorRol) . ', "error")
+                        .then(function () {
+                            location.href="usuario";
+                          })
+                          ;
+                         </script>';
+                        return;
+                    }
+                }
+
                 $DatosPersonal = array(
                     // Se edita por IdPersonal: hay personal que comparte C.I. y se editaba junto
                     "IdPersonal" => (int)($_POST['editaridpersonal'] ?? 0),
@@ -299,13 +345,23 @@
                 );
 
                 $EditarPersonal = UsuarioModelos::EditarUsuaario($DatosPersonal);
+                if ($EditarPersonal == 'exitoso' && $cambiaRol) {
+                    $EditarPersonal = UsuarioModelos::CambiarRolCuentaPersonalModelo($idUsuarioEditado, $rolNuevo);
+                    if ($EditarPersonal == 'exitoso') {
+                        error_log('Cambio de rol: usuario ' . $idUsuarioEditado . ' de ' . $rolActual . ' a ' . $rolNuevo . ' por ' . ($_SESSION['Usuario'] ?? '?'));
+                    }
+                }
+                $nombresRol = ['ADM' => 'Administrador', 'SEC' => 'Secretaría', 'AUX' => 'Auxiliar'];
+                $textoExito = $cambiaRol
+                    ? 'Se editó el personal. Su rol ahora es ' . $nombresRol[$rolNuevo] . '; si tenía la sesión abierta, deberá volver a ingresar.'
+                    : 'Se edito el personal correctamente';
 
                 if ($EditarPersonal == 'exitoso')
                 {
                     echo'
                     <script src="vistas/recursos/sweetalert.min.js"></script>
                     <script>
-                    swal("EXITOSO!", "Se edito el personal correctamente", "success")
+                    swal("EXITOSO!", ' . json_encode($textoExito) . ', "success")
                     .then(function () {
                         location.href="usuario";
                       })
@@ -374,7 +430,7 @@
         public function CrearUsuarioEstudianteControlador()
         {
 
-            if(isset($_POST['estudiante_id']) && isset($_POST['estudiante_ci']))
+            if(isset($_POST['estudiante_id']) && isset($_POST['estudiante_ci']) && self::PuedeGestionarCuentas('estudiante'))
             {
                 $estudianteID = $_POST['estudiante_id'];
                 $ci = $_POST['estudiante_ci'];
@@ -578,7 +634,7 @@
         public function CrearUsuarioDocenteControlador()
         {
 
-            if(isset($_POST['docente_id']) && isset($_POST['docente_ci']))
+            if(isset($_POST['docente_id']) && isset($_POST['docente_ci']) && self::PuedeGestionarCuentas('docente'))
             {
                 $docenteID = $_POST['docente_id'];
                 $ci = $_POST['docente_ci'];

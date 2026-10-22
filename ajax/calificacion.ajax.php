@@ -24,9 +24,12 @@ if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
 $accionesEstudiante = ['obtenerEstudianteLogueado', 'obtenerProgramasEstudiante', 'obtenerCalificacionesEstudiantePrograma'];
 $tipoSesion = $_SESSION['Tipo'] ?? '';
 $accionPedida = $_POST['accion'] ?? '';
+// La Secretaría solo consulta e imprime: no registra, cierra ni reabre notas
+$accionesEdicion = ['guardarCalificaciones', 'validarCerrarModulo', 'reabrirModulo'];
 $permitido = $tipoSesion === 'EST'
     ? in_array($accionPedida, $accionesEstudiante, true)
-    : in_array($tipoSesion, ['ADM', 'SEC', 'AUX', 'DOC'], true);
+    : in_array($tipoSesion, ['ADM', 'SEC', 'AUX', 'DOC'], true)
+        && !($tipoSesion === 'SEC' && in_array($accionPedida, $accionesEdicion, true));
 if (!$permitido) {
     http_response_code(403);
     echo json_encode([

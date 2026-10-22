@@ -58,7 +58,7 @@ test('un documento se aprueba, se reimprime corregido y vuelve a quedar por apro
 });
 
 test('el Certificado de Revisión se genera desde su pantalla y queda en Registro de documentos', async ({ page }) => {
-  await ingresar(page, 'sec');
+  await ingresar(page, 'adm'); // los certificados son solo del Administrador (2026-10-22)
   const { estudianteID } = await estudianteInscrito(page);
   const ci = String(valor(`SELECT Ci FROM estudiante WHERE EstudianteID = ${estudianteID}`));
   const nombreCertificado = String(valor(`SELECT UPPER(CONCAT(Nombre, ' ', Apaterno, ' ', Amaterno)) FROM estudiante WHERE EstudianteID = ${estudianteID}`));

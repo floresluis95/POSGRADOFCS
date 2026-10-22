@@ -17,6 +17,8 @@ for (const rol of ['adm', 'sec', 'aux', 'doc', 'est']) {
   test(`${rol.toUpperCase()}: todas las páginas de su menú abren sin errores`, async ({ page }) => {
     test.setTimeout(240_000);
     await ingresar(page, rol);
+    // El panel puede tardar: se espera a que el menú esté en la página antes de leerlo
+    await page.locator('#kt_aside_menu a.kt-menu__link[href]').first().waitFor({ state: 'attached' });
 
     const enlaces = await page.locator('#kt_aside_menu a.kt-menu__link[href]').evaluateAll(
       (as) => [...new Set(as.map((a) => a.getAttribute('href')))]
@@ -39,5 +41,22 @@ for (const rol of ['adm', 'sec', 'aux', 'doc', 'est']) {
     }
 
     expect(erroresJs, 'errores de JavaScript en las páginas').toEqual([]);
+  });
+}
+
+// Secciones del menú por prioridad de uso: primero Matriculación, PERSONAL al final
+const ORDEN_SECCIONES = {
+  adm: ['MATRICULACIÓN', 'CALIFICACIONES', 'CONSULTA DE NOTAS', 'CERTIFICADOS', 'REPORTES', 'PROGRAMAS DE POSGRADO', 'DOCENTES', 'AGENDA', 'PERSONAL'],
+  sec: ['MATRICULACIÓN', 'CALIFICACIONES', 'CONSULTA DE NOTAS', 'REPORTES', 'PROGRAMAS DE POSGRADO', 'DOCENTES', 'AGENDA', 'PERSONAL'],
+  aux: ['MATRICULACIÓN', 'CALIFICACIONES', 'CONSULTA DE NOTAS', 'PROGRAMAS DE POSGRADO', 'AGENDA', 'PERSONAL'],
+};
+for (const [rol, orden] of Object.entries(ORDEN_SECCIONES)) {
+  test(`${rol.toUpperCase()}: secciones del menú por prioridad, PERSONAL al final`, async ({ page }) => {
+    await ingresar(page, rol);
+    await page.locator('#kt_aside_menu .kt-menu__section-text').first().waitFor({ state: 'attached' });
+    const secciones = await page.locator('#kt_aside_menu .kt-menu__section-text').evaluateAll(
+      (hs) => hs.map((h) => (h.textContent || '').trim().replace(/\s+/g, ' ')),
+    );
+    expect(secciones).toEqual(orden);
   });
 }

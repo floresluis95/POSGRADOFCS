@@ -19,7 +19,11 @@ const CASOS = [
   // Usuarios del personal: solo el ADM (Secretaría podía crear un Administrador)
   ['sec', 'usuario', 'panel'],
   ['sec', 'programas', 'PROGRAMAS'],
-  ['sec', 'registrodocumentos', 'REGISTRO DE DOCUMENTOS'],
+  // Secretaría: sin Certificados ni Registrar Notas; las notas solo las consulta e imprime
+  ['sec', 'registrodocumentos', 'panel'],
+  ['sec', 'certificadocalificaciones', 'panel'],
+  ['sec', 'rnotasestudiante', 'panel'],
+  ['sec', 'reportenotas', 'REPORTES DE CALIFICACIONES'],
   ['sec', 'reportecalificaciones', '404'],
 
   // Auxiliar: matrícula, cobros, estudiantes y notas
@@ -62,4 +66,25 @@ test.describe('Permisos de páginas por rol', () => {
     });
   }
 
+});
+
+// Asignar usuario y restablecer contraseñas: la Secretaría ve las listas pero sin esos botones
+test.describe('Cuentas de estudiantes y docentes', () => {
+  test('SEC no ve Asignar ni Restablecer en Estudiantes y Docentes', async ({ page }) => {
+    await ingresar(page, 'sec');
+    await page.goto('estudiantes');
+    await expect(page.locator('#btnRestablecerPasswordEstudianteDetalle')).toHaveCount(0);
+    await expect(page.locator('.btnAsignarUsuario')).toHaveCount(0);
+    await page.goto('docentes');
+    await expect(page.locator('#btnRestablecerPasswordDocenteDetalle')).toHaveCount(0);
+    await expect(page.locator('.btnAsignarUsuarioDocente')).toHaveCount(0);
+  });
+
+  test('ADM sí tiene Restablecer en Estudiantes y Docentes', async ({ page }) => {
+    await ingresar(page, 'adm');
+    await page.goto('estudiantes');
+    await expect(page.locator('#btnRestablecerPasswordEstudianteDetalle')).toHaveCount(1);
+    await page.goto('docentes');
+    await expect(page.locator('#btnRestablecerPasswordDocenteDetalle')).toHaveCount(1);
+  });
 });

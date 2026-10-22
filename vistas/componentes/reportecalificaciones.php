@@ -66,6 +66,7 @@ date_default_timezone_set("America/La_Paz");
 
                     <!-- CONTENIDO PRINCIPAL -->
                     <div class="container-fluid">
+                        <?php include __DIR__ . '/modulos/aviso-calificaciones-docente.php'; ?>
                         <div class="kt-portlet kt-portlet--mobile">
                             <div class="kt-portlet__head" style="background-color: #34495e; border-radius: 4px 4px 0 0;">
                                 <div class="kt-portlet__head-label">

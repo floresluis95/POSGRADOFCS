@@ -33,6 +33,36 @@ $esAdministrador = ($tipoUsuario === 'ADM');
 }
 
 /* ---------- Pasos ---------- */
+/* ---------- Calificaciones pendientes (ADM) ---------- */
+.rn-pend { border-left: 4px solid #b91c1c; }
+.rn-pend .rn-card-head h3 i { color: #b91c1c; }
+.rn-pend-n { display: inline-block; min-width: 22px; padding: 1px 8px; margin-left: 6px; border-radius: 11px; background: #b91c1c;
+    color: #fff; font-size: 12px; font-weight: 700; text-align: center; vertical-align: middle; }
+.rn-pend-n.is-cero { background: #15803d; }
+.rn-pend-vacio { text-align: center; color: var(--rn-texto-2); padding: 14px; font-size: 13px; }
+.rn-pend-lista-scroll { max-height: 380px; overflow: auto; border: 1px solid var(--rn-borde); border-radius: 8px; }
+.rn-pend-tabla { width: 100%; font-size: 13px; margin: 0; }
+.rn-pend-tabla thead th { position: sticky; top: 0; background: #fff; z-index: 1; }
+.rn-pend-tabla th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; color: var(--rn-texto-2);
+    padding: 6px 10px; border-bottom: 1px solid var(--rn-borde); white-space: nowrap; }
+.rn-pend-tabla td { padding: 7px 10px; border-top: 1px solid #f1f5f9; vertical-align: middle; }
+.rn-pend-tabla tr.is-marcada td { background: #fff7f7; }
+.rn-pend-tabla td small { display: block; color: var(--rn-texto-2); font-size: 11.5px; }
+.rn-pend-atraso { color: #b91c1c; font-weight: 600; }
+.rn-pend-barra { display: inline-block; width: 70px; height: 6px; border-radius: 3px; background: #e5e7eb; overflow: hidden; vertical-align: middle; margin-right: 6px; }
+.rn-pend-barra span { display: block; height: 100%; background: var(--rn-primario); }
+.rn-pend-aviso-no { color: var(--rn-texto-2); font-style: italic; }
+.rn-pend-visto { color: #15803d; }
+.rn-pend-novisto { color: #b45309; }
+.rn-pend-caja { margin-top: 12px; padding: 12px; border: 1px solid var(--rn-borde); border-radius: 8px; background: #fafbfd; }
+.rn-pend-botones { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.rn-pend-enviar { background: #b91c1c; border: 1px solid #b91c1c; color: #fff; font-weight: 600; }
+.rn-pend-enviar:hover, .rn-pend-enviar:focus { background: #991b1b; color: #fff; }
+.rn-pend-enviar:disabled { opacity: .6; }
+/* Módulo del docente que ya terminó y falta calificar (tabla del paso 2) */
+.table-calificaciones tr.rn-fila-pendiente td { background: #fff7f7; }
+.table-calificaciones tr.rn-fila-pendiente td:first-child { box-shadow: inset 3px 0 0 #b91c1c; }
+.rn-marca-pendiente { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 700; color: #b91c1c; }
 .rn-pasos { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
 .rn-paso { display: flex; align-items: center; gap: 12px; }
 .rn-paso strong { display: block; font-size: 13.5px; color: var(--rn-texto-2); }
@@ -303,6 +333,35 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                     <div class="kt-container kt-grid__item kt-grid__item--fluid">
                         <div class="rn">
 
+                            <?php if (($_SESSION['Tipo'] ?? '') === 'ADM'): ?>
+                            <!-- Calificaciones pendientes (solo ADM): módulos terminados con estudiantes sin nota
+                                 y aviso a sus docentes (calificacion-pendientes.js) -->
+                            <div class="rn-card rn-pend" id="rnPendientes">
+                                <div class="rn-card-head">
+                                    <div>
+                                        <h3><i class="fa fa-bell"></i> Calificaciones pendientes <span class="rn-pend-n" id="rnPendN"></span></h3>
+                                        <p>Módulos que ya terminaron y tienen estudiantes sin nota. Marque los módulos y avise a sus docentes.</p>
+                                    </div>
+                                    <button type="button" class="btn btn-abrir-panel" id="rnPendToggle"><i class="fa fa-chevron-up"></i> Ocultar</button>
+                                </div>
+                                <div class="rn-card-body" id="rnPendCuerpo">
+                                    <div id="rnPendLista"><div class="rn-pend-vacio"><i class="fa fa-spinner fa-spin"></i> Cargando...</div></div>
+                                    <div class="rn-pend-caja" id="rnPendCaja" style="display:none;">
+                                        <label for="rnPendMensaje" class="rn-label">Mensaje para los docentes</label>
+                                        <textarea class="form-control" id="rnPendMensaje" rows="3" maxlength="600">La Coordinación de Posgrado le recuerda que el módulo a su cargo ya concluyó. Le solicitamos registrar las calificaciones finales en el sistema a la brevedad posible.</textarea>
+                                        <small class="rn-ayuda-campo">Cada docente lo verá al ingresar al sistema, junto con sus módulos pendientes.</small>
+                                        <div class="rn-pend-botones">
+                                            <button type="button" class="btn btn-sm btn-light" id="rnPendCancelar">Cancelar</button>
+                                            <button type="button" class="btn btn-sm rn-pend-enviar" id="rnPendEnviar"><i class="fa fa-paper-plane"></i> Enviar aviso</button>
+                                        </div>
+                                    </div>
+                                    <div class="rn-pend-botones" id="rnPendAcciones" style="display:none;">
+                                        <button type="button" class="btn btn-sm rn-pend-enviar" id="rnPendNotificar"><i class="fa fa-bell"></i> Notificar a los docentes</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
                             <!-- Indicador de pasos: lo actualiza actualizarPasosNotas() según
                                  cuál de los tres contenedores muestra calificacion.js -->
                             <div class="rn-pasos">
@@ -483,7 +542,10 @@ $esAdministrador = ($tipoUsuario === 'ADM');
     const tipoUsuario = '<?php echo $tipoUsuario; ?>';
 </script>
 
-<script src="vistas/recursos/assets/js/scripts/calificacion.js?v=7.1"></script>
+<script src="vistas/recursos/assets/js/scripts/calificacion.js?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/js/scripts/calificacion.js'); ?>"></script>
+<?php if (($_SESSION['Tipo'] ?? '') === 'ADM'): ?>
+<script src="vistas/recursos/assets/js/scripts/calificacion-pendientes.js?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/js/scripts/calificacion-pendientes.js'); ?>"></script>
+<?php endif; ?>
 
 <script>
 // Actualizar fecha

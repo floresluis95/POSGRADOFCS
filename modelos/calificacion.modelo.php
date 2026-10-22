@@ -1211,6 +1211,51 @@ class CalificacionModelo
             ];
         }
     }
+
+    /**
+     * Situación académica de un estudiante en un programa: todos los módulos del programa
+     * (en el orden en que se crearon) con su nota, aunque todavía no esté calificado.
+     * @return array|null ['estudiante' => [...], 'programa' => [...], 'modulos' => [... 'Nota' => ?float]]
+     *                    null si el estudiante no está inscrito en ese programa
+     */
+    public static function SituacionAcademicaModelo($estudianteID, $programaID)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+            $stmt = $pdo->prepare(
+                "SELECT e.EstudianteID, e.Ci, e.Complemento, e.Exp, e.Nombre, e.Apaterno, e.Amaterno,
+                        p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Version, p.Sede
+                 FROM estudianteprograma ep
+                 INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID
+                 INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
+                 WHERE ep.EstudianteID = :estudianteID AND ep.ProgramaID = :programaID
+                 ORDER BY (ep.Estado = 'ACTIVO') DESC LIMIT 1"
+            );
+            $stmt->execute([':estudianteID' => $estudianteID, ':programaID' => $programaID]);
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$fila) {
+                return null;
+            }
+
+            $stmt = $pdo->prepare(
+                "SELECT m.Idmodulo, m.nombremodulo AS NombreModulo, c.Nota
+                 FROM modulos m
+                 LEFT JOIN calificacion c ON c.Idmodulo = m.Idmodulo AND c.EstudianteID = :estudianteID
+                 WHERE m.ProgramaId = :programaID AND m.estadomodulo != 'INACTIVO'
+                 ORDER BY m.Idmodulo"
+            );
+            $stmt->execute([':estudianteID' => $estudianteID, ':programaID' => $programaID]);
+
+            return [
+                'estudiante' => $fila,
+                'programa' => $fila,
+                'modulos' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            ];
+        } catch (PDOException $e) {
+            error_log("Error en SituacionAcademicaModelo: " . $e->getMessage());
+            return null;
+        }
+    }
 }
 
 // Verificar índice único al cargar el modelo

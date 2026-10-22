@@ -243,6 +243,7 @@
 
               <?php elseif ($tipoSesion === 'DOC'): ?>
               <!-- ===== DOCENTE ===== -->
+              <?php include __DIR__ . '/modulos/aviso-calificaciones-docente.php'; ?>
               <div class="pn-grid">
                 <div class="pn-col">
                   <div class="pn-card">

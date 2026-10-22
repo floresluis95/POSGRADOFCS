@@ -7,11 +7,11 @@ const USUARIO_EXISTENTE = 'luis123';
 const USUARIO_INEXISTENTE = 'usuario_que_no_existe_xyz';
 const USUARIO_BLOQUEO = 'usuario_bloqueo_xyz';
 
-// Estas pruebas van contra el Apache de XAMPP (base "proyecto"). Fallan el ingreso a
-// propósito, así que se borran sus intentos para no bloquear a luis123 al correr la
-// suite varias veces seguidas. Es lo único que escriben en esa base.
+// Estas pruebas van contra el servidor de pruebas (copia "proyecto_pruebas"). Fallan el
+// ingreso a propósito, así que se borran sus intentos para no bloquear a luis123 en la copia
+// durante la misma corrida. La base real no se toca.
 function borrarIntentos() {
-  execFileSync('C:/xampp/mysql/bin/mysql.exe', ['-u', 'root', 'proyecto'], {
+  execFileSync('C:/xampp/mysql/bin/mysql.exe', ['-u', 'root', 'proyecto_pruebas'], {
     input: `DELETE FROM intentoingreso WHERE Usuario IN ('${USUARIO_EXISTENTE}', '${USUARIO_INEXISTENTE}', '${USUARIO_BLOQUEO}')`,
   });
 }

@@ -42,7 +42,7 @@ class EstudiantesControladores
                         </button>';
             } else {
                 $estadoUsuarioBadge = '<span class="badge badge-warning"><i class="fa fa-exclamation-triangle"></i> Sin usuario</span>';
-                $botonUsuario = '<button
+                $botonUsuario = !UsuarioControladores::PuedeGestionarCuentas('estudiante') ? '' : '<button
                                     data-toggle="modal"
                                     data-target="#ModalAsignarUsuario"
                                     type="button"

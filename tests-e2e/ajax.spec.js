@@ -73,7 +73,7 @@ test.describe('Ajax sin sesión', () => {
 const PERSONAL = ['adm', 'sec', 'aux'];
 const ARCHIVOS_POR_ROL = {
   'autoridad.ajax.php': ['adm'],
-  'certificado.ajax.php': ['adm', 'sec'],
+  'certificado.ajax.php': ['adm'], // SEC solo el buscador de defensas (ver casos por acción)
   'reportes.ajax.php': ['adm', 'sec'],
   'asignacion.ajax.php': ['adm', 'sec'], // el Auxiliar no tiene Asignación docente
   'cuenta.ajax.php': PERSONAL,
@@ -118,6 +118,13 @@ const CASOS_POR_ACCION = [
   ['est', 'calificacion.ajax.php', { accion: 'obtenerProgramasEstudiante' }, 'permitido'],
   ['est', 'calificacion.ajax.php', { accion: 'guardarCalificaciones' }, 'negado'],
   ['est', 'calificacion.ajax.php', { accion: 'validarCerrarModulo' }, 'negado'],
+  // La Secretaría consulta e imprime notas, pero no las registra ni cierra/reabre módulos
+  ['sec', 'calificacion.ajax.php', { accion: 'buscarCalificaciones' }, 'permitido'],
+  ['sec', 'calificacion.ajax.php', { accion: 'guardarCalificaciones' }, 'negado'],
+  ['sec', 'calificacion.ajax.php', { accion: 'reabrirModulo' }, 'negado'],
+  // certificado: la Secretaría solo busca al estudiante para programar defensas
+  ['sec', 'certificado.ajax.php', { accion: 'buscarPorCI', ci: '0' }, 'permitido'],
+  ['sec', 'certificado.ajax.php', { accion: 'listarDocumentosEmitidos' }, 'negado'],
 
   // B: pagomodulo — el EST consulta sus pagos; el DOC no entra
   ['est', 'pagomodulo.ajax.php', { accion: 'obtenerProgramasEstudiante' }, 'permitido'],
@@ -139,7 +146,10 @@ const CASOS_POR_ACCION = [
   ['sec', 'requisito.ajax.php', { accion: 'guardarCatalogo' }, 'negado'],
   ['aux', 'requisito.ajax.php', { accion: 'listarCatalogo' }, 'negado'],
 
-  // B: restablecerpassword — estudiantes/docentes el personal; el personal solo el ADM
+  // B: restablecerpassword — estudiantes ADM y AUX; docentes y personal solo el ADM (la Secretaría ninguno)
+  ['sec', 'restablecerpassword.ajax.php', { accion: 'estudiante', id: ID_INEXISTENTE }, 'negado'],
+  ['sec', 'restablecerpassword.ajax.php', { accion: 'docente', id: ID_INEXISTENTE }, 'negado'],
+  ['aux', 'restablecerpassword.ajax.php', { accion: 'estudiante', id: ID_INEXISTENTE }, 'permitido'],
   ['est', 'restablecerpassword.ajax.php', { accion: 'estudiante', id: ID_INEXISTENTE }, 'negado'],
   ['doc', 'restablecerpassword.ajax.php', { accion: 'docente', id: ID_INEXISTENTE }, 'negado'],
   ['sec', 'restablecerpassword.ajax.php', { accion: 'personal', id: ID_INEXISTENTE }, 'negado'],

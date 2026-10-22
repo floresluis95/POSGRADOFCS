@@ -14,16 +14,15 @@
         // exigían sesión, así un estudiante podía abrir "usuario" o "matriculados").
         // Al agregar una página nueva, agregarla también aquí al rol que corresponda.
         // Reparto acordado con Luis (2026-10-22): el ADM configura el sistema y maneja las
-        // cuentas del personal; Secretaría lleva toda la operación (sin Usuarios: podía
-        // crear un Administrador); el Auxiliar atiende matrícula, cobros y notas.
+        // cuentas del personal; Secretaría lleva la operación (sin Usuarios: podía crear un
+        // Administrador; sin Certificados ni registrar notas: solo las consulta e imprime);
+        // el Auxiliar atiende matrícula, cobros y notas.
         const PAGINAS_POR_ROL = [
             'SEC' => [
                 'programas', 'modulos', 'reportemodulos', 'preregistro', 'inscripcion', 'matriculados',
-                'historialpagos', 'ordenespago', 'solicitudesinscripcion', 'rnotasestudiante', 'reportenotas',
+                'historialpagos', 'ordenespago', 'solicitudesinscripcion', 'reportenotas',
                 'bnotaestudiante', 'historialnotaestudiante', 'asignaciondocente',
-                'estudiantes', 'docentes',
-                'certificadocalificaciones', 'certificadohistorialacademico',
-                'certificadoaprobacionmonografia', 'certificadomediomagnetico', 'certificadorevision', 'registrodocumentos', 'reportes',
+                'estudiantes', 'docentes', 'reportes',
                 'orden-generada', 'matriculas', 'detalles',
             ],
             // Auxiliar: matrícula, cobros, estudiantes y notas. Sin Programas, Módulos, Docentes,
@@ -71,6 +70,10 @@
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
             }
+            // Si al personal le cambiaron el rol o lo dieron de baja, la sesión se cierra
+            // (la vista lo manda al login) y al volver a ingresar entra con el rol nuevo
+            require_once __DIR__ . '/../core/sesion-vigente.php';
+            SesionPersonalVigente();
 
             // Con sesión iniciada, cada rol solo abre sus páginas; si escribe otra
             // URL a mano se le muestra el panel. (Sin sesión, cada vista ya manda al login.)

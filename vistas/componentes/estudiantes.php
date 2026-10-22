@@ -764,9 +764,11 @@ $csrf_token = bin2hex(random_bytes(32));
         </div>
       </div>
       <div class="modal-footer" style="background-color: #f8f9fa; border-top: 2px solid #e9ecef;">
+        <?php if (UsuarioControladores::PuedeGestionarCuentas('estudiante')): ?>
         <button type="button" class="btn btn-outline-warning btnRestablecerPasswordEstudiante" id="btnRestablecerPasswordEstudianteDetalle">
           <i class="fa fa-key"></i> Restablecer contraseña
         </button>
+        <?php endif; ?>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
       </div>
     </div>

@@ -325,7 +325,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form method="post" enctype="multipart/form-data">
+      <form method="post" enctype="multipart/form-data" id="formEditarUsuario">
         <div class="modal-body" style="padding: 30px;">
 
           <div class="row">
@@ -335,6 +335,7 @@
                   <i class="fas fa-id-card text-primary"></i> C.I.
                 </label>
                 <input type="hidden" id="UEIdPersonal" name="editaridpersonal">
+                <input type="hidden" id="UEIdUsuario" name="editaridusuario">
                 <input type="text" id="UECedulaIdentidad" name="editarci" class="form-control" readonly
                        style="background-color: #e9ecef;">
               </div>
@@ -400,6 +401,24 @@
                 </label>
                 <input type="email" id="UECorreo" name="editarcorreo" class="form-control" maxlength="150"
                        placeholder="Necesario para recuperar la contraseña por correo">
+              </div>
+            </div>
+          </div>
+
+          <!-- Rol: cambia lo que la persona puede ver y hacer. No se puede cambiar el propio
+               ni dejar el sistema sin administrador (lo valida el servidor). -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group mb-0">
+                <label for="UECargo">
+                  <i class="fas fa-user-shield text-danger"></i> Rol
+                </label>
+                <select class="form-control" name="editarcargo" id="UECargo">
+                  <option value="ADM">ADMINISTRADOR</option>
+                  <option value="SEC">SECRETARIA</option>
+                  <option value="AUX">AUXILIAR</option>
+                </select>
+                <small class="text-muted" id="UECargoAyuda">Si la persona tiene la sesión abierta, deberá volver a ingresar.</small>
               </div>
             </div>
           </div>

@@ -124,7 +124,7 @@ private function ConstruirFilaDocente($Docente, $numero)
                     </button>';
         } else {
             $estadoUsuarioBadge = '<span class="badge badge-warning"><i class="fa fa-exclamation-triangle"></i> Sin usuario</span>';
-            $botonUsuario = '<button
+            $botonUsuario = !UsuarioControladores::PuedeGestionarCuentas('docente') ? '' : '<button
                                 data-toggle="modal"
                                 data-target="#ModalAsignarUsuarioDocente"
                                 type="button"

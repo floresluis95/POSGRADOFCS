@@ -19,6 +19,29 @@ if (isset($_POST['tipo_reporte'])) {
         ? trim($_POST['sede'])
         : null;
 
+    // Fechas solo en formato AAAA-MM-DD; si las pusieron al revés se intercambian
+    // en lugar de mostrar un reporte vacío
+    $validarFecha = function ($campo) {
+        $valor = trim($_POST[$campo] ?? '');
+        $fecha = DateTime::createFromFormat('Y-m-d', $valor);
+        return ($fecha && $fecha->format('Y-m-d') === $valor) ? $valor : null;
+    };
+    $fechaDesde = $validarFecha('fecha_desde');
+    $fechaHasta = $validarFecha('fecha_hasta');
+    if ($fechaDesde && $fechaHasta && $fechaDesde > $fechaHasta) {
+        list($fechaDesde, $fechaHasta) = [$fechaHasta, $fechaDesde];
+    }
+
+    // Filtros de los reportes de cuentas (Movimientos e Ingresos por mes)
+    $filtrosCuenta = [
+        'sede' => $sede,
+        'programaID' => $programaID,
+        'numeroCuenta' => trim($_POST['numero_cuenta'] ?? '') ?: null,
+        'concepto' => in_array($_POST['concepto'] ?? '', ['MATRICULA', 'CUOTAS', 'CLINICA'], true) ? $_POST['concepto'] : null,
+        'desde' => $fechaDesde,
+        'hasta' => $fechaHasta,
+    ];
+
     switch ($tipoReporte) {
         case 'estudiantes':
             // Reporte completo de estudiantes
@@ -41,21 +64,38 @@ if (isset($_POST['tipo_reporte'])) {
             break;
 
         case 'recaudacion':
-            // Recaudación por cuenta bancaria; las fechas se aceptan solo en formato AAAA-MM-DD
-            $validarFecha = function ($campo) {
-                $valor = trim($_POST[$campo] ?? '');
-                $fecha = DateTime::createFromFormat('Y-m-d', $valor);
-                return ($fecha && $fecha->format('Y-m-d') === $valor) ? $valor : null;
-            };
-            $fechaDesde = $validarFecha('fecha_desde');
-            $fechaHasta = $validarFecha('fecha_hasta');
-
-            // Si las pusieron al revés, se intercambian en lugar de mostrar un reporte vacío
-            if ($fechaDesde && $fechaHasta && $fechaDesde > $fechaHasta) {
-                list($fechaDesde, $fechaHasta) = [$fechaHasta, $fechaDesde];
-            }
-
+            // Recaudación por cuenta bancaria (las fechas filtran solo lo recaudado)
             ReportesControladores::GenerarReporteRecaudacion($sede, $programaID, $fechaDesde, $fechaHasta);
+            break;
+
+        case 'estado_cuenta':
+            // Estado de cuenta de un estudiante por C.I. (sin complemento ni expedido: "1234567-1A LP" → "1234567")
+            ReportesControladores::GenerarReporteEstadoCuenta(preg_replace('/\D/', '', explode('-', trim($_POST['ci'] ?? ''))[0]));
+            break;
+
+        case 'saldos':
+            // Saldos por estudiante de cada programa
+            ReportesControladores::GenerarReporteSaldos($sede, $programaID, !empty($_POST['solo_con_saldo']));
+            break;
+
+        case 'notas_programa':
+            // Consolidado de notas (estudiantes × módulos) de un programa
+            ReportesControladores::GenerarReporteNotasPrograma($programaID);
+            break;
+
+        case 'movimientos':
+            // Cada pago recibido, con estudiante, voucher y cuenta
+            ReportesControladores::GenerarReporteMovimientos($filtrosCuenta);
+            break;
+
+        case 'cuentas_programa':
+            // Cuentas de cada programa: resumen y pagos de cada cuenta
+            ReportesControladores::GenerarReporteCuentasPrograma($sede, $programaID, $fechaDesde, $fechaHasta);
+            break;
+
+        case 'ingresos_mes':
+            // Lo recaudado mes a mes por concepto
+            ReportesControladores::GenerarReporteIngresosMes($filtrosCuenta);
             break;
 
         default:

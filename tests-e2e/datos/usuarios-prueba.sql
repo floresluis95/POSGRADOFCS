@@ -1,6 +1,7 @@
--- Usuarios de prueba para Playwright (uno por rol). SOLO para la base local.
+-- Usuarios de prueba para Playwright (uno por rol). SOLO para la copia "proyecto_pruebas":
+-- lo aplica tests-e2e/proceso/preparar-bd.setup.js después de copiar la base. NO ejecutarlo en
+-- "proyecto" ni en el servidor (la base real ya no tiene cuentas de prueba).
 -- Se puede ejecutar las veces que haga falta: primero borra los que existan.
---   C:\xampp\mysql\bin\mysql.exe -u root proyecto < tests-e2e\datos\usuarios-prueba.sql
 --
 -- Contraseña de todos: Prueba123 (hash bcrypt, igual que los usuarios reales).
 -- No crea personas: cada usuario se une al primer registro existente de
