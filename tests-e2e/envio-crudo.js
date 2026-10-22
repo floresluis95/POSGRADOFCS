@@ -18,12 +18,16 @@ export function envioCrudo({ url, cookie, tipo, cuerpo, enviar }) {
   const u = new URL(url);
   const cortar = enviar !== undefined && enviar < cuerpo.length;
   return new Promise((resolver, rechazar) => {
-    const socket = net.connect(Number(u.port || 80), u.hostname === 'localhost' ? '127.0.0.1' : u.hostname);
+    // Sin forzar 127.0.0.1: en Windows el servidor de pruebas puede escuchar solo en ::1
+    const socket = net.connect({ port: Number(u.port || 80), host: u.hostname, autoSelectFamily: true });
     let texto = '';
+    let conecto = false;
     socket.on('data', (d) => { texto += d.toString('utf8'); });
-    socket.on('error', (e) => (cortar ? resolver({ respondio: texto !== '', texto }) : rechazar(e)));
+    // Si nunca hubo conexión, el corte no se probó: es un error, no un "no respondió"
+    socket.on('error', (e) => (cortar && conecto ? resolver({ respondio: texto !== '', texto }) : rechazar(e)));
     socket.on('close', () => resolver({ respondio: texto !== '', texto }));
     socket.on('connect', () => {
+      conecto = true;
       socket.write(
         `POST ${u.pathname}${u.search} HTTP/1.1\r\n`
         + `Host: ${u.host}\r\n`
