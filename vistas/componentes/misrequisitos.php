@@ -71,7 +71,9 @@
         </div>
     </div>
 <style>
-/* ---- Mis requisitos ---- */
+/* ---- Mis requisitos ----
+   Por programa: resumen en dos pasos (documentos de matrícula y certificados para la
+   titulación), luego cada paso con lo que falta arriba y lo ya hecho plegado. */
 .mr-selector { margin-bottom: 16px; }
 .mr-selector label {
     display: block; margin-bottom: 4px;
@@ -79,82 +81,73 @@
 }
 
 .mr-tarjeta {
-    background: #fff; border-radius: 12px; margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(30, 60, 114, 0.08), 0 6px 16px rgba(30, 60, 114, 0.05);
+    background: #fff; border-radius: 8px; margin-bottom: 20px;
+    border: 1px solid #e3e7ef; box-shadow: 0 2px 10px rgba(15, 23, 42, .05);
     overflow: hidden;
 }
 
 /* Cabecera: programa, datos de inscripción y situación */
-.mr-cabecera { padding: 18px 22px 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.mr-cabecera { padding: 18px 22px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 1px solid #eef0f5; }
 .mr-programa { margin: 0; font-size: 1.05rem; font-weight: 700; color: #1e3c72; line-height: 1.35; }
 .mr-sub { margin-top: 2px; font-size: 0.8rem; color: #7e8299; }
-.mr-chip {
-    flex-shrink: 0; padding: 3px 10px; border-radius: 20px;
-    font-size: 0.72rem; font-weight: 600; white-space: nowrap;
-}
+.mr-chip { flex-shrink: 0; padding: 3px 10px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
 .mr-chip-curso { background: #e8eef9; color: #1e3c72; }
 .mr-chip-culminado { background: #e6f4ec; color: #1e7145; }
 .mr-chip-abandono { background: #eef0f5; color: #6b7280; }
 
-/* Avance: contador, barra y qué hacer */
-.mr-avance { padding: 16px 22px 18px; border-bottom: 1px solid #eef0f5; }
-.mr-avance-fila { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-.mr-contador { font-size: 1.5rem; font-weight: 700; color: #464E5F; line-height: 1; }
-.mr-contador small { font-size: 0.85rem; font-weight: 500; color: #7e8299; }
-.mr-porcentaje { font-size: 0.85rem; font-weight: 600; color: #7e8299; }
-.mr-barra { height: 8px; border-radius: 4px; background: #eef0f5; margin: 10px 0 12px; overflow: hidden; }
-.mr-barra > div { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #d4a017 0%, #e0b23a 100%); transition: width .4s ease; }
-.mr-tarjeta.mr-completo .mr-barra > div { background: linear-gradient(90deg, #1e7145 0%, #27ae60 100%); }
-.mr-mensaje { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; }
+/* Resumen: un recuadro por paso */
+.mr-pasos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; padding: 18px 22px; background: #f8fafc; border-bottom: 1px solid #eef0f5; }
+.mr-paso { display: flex; gap: 12px; align-items: center; padding: 14px 16px; background: #fff; border: 1px solid #e3e7ef; border-left: 4px solid #d4a017; border-radius: 6px; }
+.mr-paso.ok { border-left-color: #1e7145; }
+.mr-paso-num { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #fdf6e3; color: #b7791f; font-weight: 700; font-size: 0.85rem; }
+.mr-paso.ok .mr-paso-num { background: #e6f4ec; color: #1e7145; }
+.mr-paso-texto { min-width: 0; }
+.mr-paso-titulo { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #7e8299; }
+.mr-paso-cuenta { font-size: 1.15rem; font-weight: 700; color: #1f2937; line-height: 1.3; }
+.mr-paso-estado { font-size: 0.8rem; font-weight: 600; color: #b7791f; }
+.mr-paso.ok .mr-paso-estado { color: #1e7145; }
+
+/* Cada paso en detalle */
+.mr-seccion { padding: 18px 22px; }
+.mr-seccion + .mr-seccion { border-top: 1px solid #eef0f5; }
+.mr-seccion-titulo { margin: 0 0 10px; font-size: 0.95rem; font-weight: 700; color: #1e3c72; }
+.mr-mensaje { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 12px; }
 .mr-mensaje i { font-size: 1.05rem; margin-top: 1px; }
 .mr-mensaje-pendiente { background: #fdf6e3; color: #7a5a0c; }
 .mr-mensaje-completo { background: #e6f4ec; color: #1e5f3b; }
 
-/* Grupos de documentos */
-.mr-grupo { padding: 14px 22px 6px; }
-.mr-grupo + .mr-grupo { border-top: 1px solid #eef0f5; }
-/* Pantalla ancha: por entregar y entregados lado a lado */
-@media (min-width: 992px) {
-    .mr-grupos { display: flex; }
-    .mr-grupos .mr-grupo { flex: 1; min-width: 0; padding-bottom: 14px; }
-    .mr-grupo + .mr-grupo { border-top: none; border-left: 1px solid #eef0f5; }
-}
-.mr-grupo-titulo { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #7e8299; margin-bottom: 6px; }
 .mr-lista { list-style: none; margin: 0; padding: 0; }
-.mr-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #f3f4f8; }
+.mr-item { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid #f3f4f8; }
 .mr-item:first-child { border-top: none; }
-.mr-icono {
-    flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
-}
+.mr-icono { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
 .mr-icono-pendiente { background: #fdf6e3; color: #b7791f; }
 .mr-icono-entregado { background: #e6f4ec; color: #1e7145; }
 .mr-texto { flex: 1; min-width: 0; }
-.mr-nombre { font-weight: 600; color: #374151; font-size: 0.9rem; }
+.mr-nombre { font-weight: 600; color: #374151; font-size: 0.88rem; }
 .mr-opcional { margin-left: 6px; padding: 1px 6px; border-radius: 4px; background: #eef0f5; color: #6b7280; font-size: 0.68rem; font-weight: 600; vertical-align: middle; }
 .mr-detalle { font-size: 0.78rem; color: #7e8299; }
-.mr-detalle-fecha { display: none; }
-.mr-fecha { flex-shrink: 0; font-size: 0.78rem; color: #1e7145; font-weight: 600; white-space: nowrap; }
-.mr-entregados-lista .mr-nombre { color: #6b7280; font-weight: 500; }
+.mr-derecha { flex-shrink: 0; font-size: 0.82rem; font-weight: 600; color: #374151; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mr-derecha.mr-fecha { color: #1e7145; font-weight: 500; }
+.mr-consultar { color: #7e8299; font-weight: 500; }
+/* Certificados: el catálogo mezcla "Medio Magnético" con "PRO BIBLIOTECA..." */
+.mr-titulacion .mr-nombre { text-transform: uppercase; font-size: 0.8rem; }
+.mr-total { display: flex; justify-content: space-between; gap: 12px; margin-top: 4px; padding: 10px 0 0; border-top: 2px solid #e3e7ef; font-weight: 700; color: #1f2937; font-size: 0.9rem; }
 
-.mr-vacio { text-align: center; color: #9aa0ac; padding: 2.5rem 1rem; background: #fff; border-radius: 12px; }
+/* Lo ya hecho, plegado */
+.mr-hechos { margin-top: 10px; }
+.mr-hechos > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: #1e3c72; padding: 4px 0; }
+.mr-hechos > summary::-webkit-details-marker { display: none; }
+.mr-hechos > summary i { font-size: 0.7rem; transition: transform .15s; }
+.mr-hechos[open] > summary i { transform: rotate(90deg); }
+.mr-hechos .mr-lista { margin-top: 4px; }
+.mr-hechos .mr-nombre { color: #6b7280; font-weight: 500; }
 
-/* Celular: menos relleno y la fecha de entrega pasa debajo del nombre */
+.mr-vacio { text-align: center; color: #9aa0ac; padding: 2.5rem 1rem; background: #fff; border-radius: 8px; }
+
+/* Celular: menos relleno; fecha y precio bajo el nombre */
 @media (max-width: 575px) {
-    .mr-cabecera { padding: 14px 16px 0; }
-    .mr-avance { padding: 14px 16px; }
-    .mr-grupo { padding: 12px 16px 4px; }
-    .mr-fecha { display: none; }
-    .mr-detalle-fecha { display: inline; }
+    .mr-cabecera, .mr-pasos, .mr-seccion { padding-left: 16px; padding-right: 16px; }
 }
-/* Certificados para la titulación */
-.mr-titulacion { padding: 16px 22px 10px; border-top: 1px solid #eef0f5; background: #fbfcfe; }
-.mr-titulacion-cabeza { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; font-weight: 700; color: #1e3c72; font-size: 0.95rem; }
-.mr-titulacion-cabeza i { margin-right: 4px; }
-.mr-titulacion-cuenta { font-size: 0.78rem; padding: 3px 10px; border-radius: 20px; background: #fdecec; color: #b91c1c; }
-.mr-titulacion-completa .mr-titulacion-cuenta { background: #e6f4ec; color: #1e7145; }
-.mr-titulacion .mr-mensaje { margin-bottom: 8px; }
-.mr-tit-falta .mr-detalle { color: #b91c1c; font-weight: 600; }
 </style>
 
 <script>
@@ -178,107 +171,130 @@ document.addEventListener('DOMContentLoaded', function () {
         return p[2] + '/' + p[1] + '/' + p[0];
     }
 
-    // Un documento: ícono, nombre (con "Opcional" si no es obligatorio),
-    // observación y, si ya se entregó, la fecha a la derecha
-    function item(r, entregado) {
-        var detalle = [];
-        if (entregado && r.FechaEntrega) {
-            detalle.push('<span class="mr-detalle-fecha">Entregado el ' + fecha(r.FechaEntrega) + '</span>');
-        }
-        if (r.Observacion) detalle.push(esc(r.Observacion));
-
+    // Un documento o certificado: ícono, nombre (con "Opcional" si no es obligatorio),
+    // detalle debajo y, a la derecha, la fecha o el precio
+    function item(o) {
         return '<li class="mr-item">' +
-            '<span class="mr-icono ' + (entregado ? 'mr-icono-entregado' : 'mr-icono-pendiente') + '">' +
-                (entregado ? '<i class="fas fa-check"></i>' : '<i class="far fa-file-alt"></i>') + '</span>' +
+            '<span class="mr-icono ' + (o.hecho ? 'mr-icono-entregado' : 'mr-icono-pendiente') + '">' +
+                (o.hecho ? '<i class="fas fa-check"></i>' : '<i class="far fa-circle"></i>') + '</span>' +
             '<div class="mr-texto">' +
-                '<div class="mr-nombre">' + esc(r.Nombre) +
-                    (r.Obligatorio === 1 ? '' : '<span class="mr-opcional">Opcional</span>') + '</div>' +
-                (detalle.length ? '<div class="mr-detalle">' + detalle.join(' · ') + '</div>' : '') +
+                '<div class="mr-nombre">' + esc(o.nombre) + (o.opcional ? '<span class="mr-opcional">Opcional</span>' : '') + '</div>' +
+                (o.detalle ? '<div class="mr-detalle">' + o.detalle + '</div>' : '') +
             '</div>' +
-            (entregado && r.FechaEntrega ? '<span class="mr-fecha">' + fecha(r.FechaEntrega) + '</span>' : '') +
+            (o.derecha ? '<span class="mr-derecha' + (o.claseDerecha ? ' ' + o.claseDerecha : '') + '">' + o.derecha + '</span>' : '') +
         '</li>';
+    }
+
+    // Lo ya hecho va plegado: lo importante es lo que falta
+    function plegado(titulo, items) {
+        if (!items.length) return '';
+        return '<details class="mr-hechos"><summary><i class="fas fa-chevron-right"></i> ' + titulo + ' (' + items.length + ')</summary>' +
+            '<ul class="mr-lista">' + items.join('') + '</ul></details>';
+    }
+
+    function mensaje(completo, texto) {
+        return '<div class="mr-mensaje ' + (completo ? 'mr-mensaje-completo' : 'mr-mensaje-pendiente') + '">' +
+            '<i class="fas ' + (completo ? 'fa-check-circle' : 'fa-info-circle') + '"></i><span>' + texto + '</span></div>';
     }
 
     function bs(monto) {
         return 'Bs. ' + (parseFloat(monto) || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    // Certificados que su grado exige para titularse: pagados (fecha y voucher) y los que
-    // faltan (con su precio). Solo consulta.
+    // Recuadro del resumen de un paso
+    function paso(numero, titulo, cuenta, estado, ok) {
+        return '<div class="mr-paso' + (ok ? ' ok' : '') + '">' +
+            '<span class="mr-paso-num">' + (ok ? '<i class="fas fa-check"></i>' : numero) + '</span>' +
+            '<div class="mr-paso-texto"><div class="mr-paso-titulo">' + titulo + '</div>' +
+            '<div class="mr-paso-cuenta">' + cuenta + '</div>' +
+            '<div class="mr-paso-estado">' + estado + '</div></div></div>';
+    }
+
+    // Lo que falta pagar de la titulación (los que no tienen precio definido no suman)
+    function totalPorPagar(t) {
+        return t.certificados.reduce(function (suma, c) { return suma + (!c.pagado && c.precio ? parseFloat(c.precio) : 0); }, 0);
+    }
+
+    // Paso 1: documentos de matrícula
+    function seccionDocumentos(p) {
+        if (!p.requisitos.length) {
+            return '<div class="mr-seccion"><h6 class="mr-seccion-titulo">Documentos de matrícula</h6>' +
+                '<div class="mr-detalle">Este programa no tiene requisitos registrados.</div></div>';
+        }
+        var pendientes = p.requisitos.filter(function (r) { return r.Entregado !== 1; });
+        var entregados = p.requisitos.filter(function (r) { return r.Entregado === 1; }).map(function (r) {
+            return item({ hecho: true, nombre: r.Nombre, opcional: r.Obligatorio !== 1, detalle: r.Observacion ? esc(r.Observacion) : '',
+                derecha: r.FechaEntrega ? fecha(r.FechaEntrega) : '', claseDerecha: 'mr-fecha' });
+        });
+        var faltan = p.total - p.entregados;
+        var html = '<div class="mr-seccion"><h6 class="mr-seccion-titulo">Documentos de matrícula</h6>';
+        if (p.completo) {
+            html += mensaje(true, 'Entregó todos sus documentos. No necesita hacer nada más.');
+        } else {
+            html += mensaje(false, (faltan === 1 ? 'Le falta entregar <strong>1 documento</strong>.' : 'Le faltan entregar <strong>' + faltan + ' documentos</strong>.') +
+                ' Preséntelos en la Coordinación de Posgrado.');
+        }
+        if (pendientes.length) {
+            html += '<ul class="mr-lista">' + pendientes.map(function (r) {
+                return item({ hecho: false, nombre: r.Nombre, opcional: r.Obligatorio !== 1, detalle: r.Observacion ? esc(r.Observacion) : '' });
+            }).join('') + '</ul>';
+        }
+        return html + plegado('Ver documentos entregados', entregados) + '</div>';
+    }
+
+    // Paso 2: certificados que su grado exige para titularse. Solo consulta.
     function seccionTitulacion(p) {
         var t = p.titulacion;
         if (!t || !t.total) return '';
-        var lista = t.certificados.map(function (c) {
-            var detalle = c.pagado
-                ? 'Pagado el ' + fecha(c.fecha) + (c.voucher ? ' · Voucher ' + esc(c.voucher) : '')
-                : 'Falta pagar' + (c.precio ? ' · ' + bs(c.precio) : '');
-            return '<li class="mr-item' + (c.pagado ? '' : ' mr-tit-falta') + '">' +
-                '<span class="mr-icono ' + (c.pagado ? 'mr-icono-entregado' : 'mr-icono-pendiente') + '">' +
-                    (c.pagado ? '<i class="fas fa-check"></i>' : '<i class="fas fa-graduation-cap"></i>') + '</span>' +
-                '<div class="mr-texto"><div class="mr-nombre">' + esc(c.nombre) + '</div>' +
-                '<div class="mr-detalle">' + detalle + '</div></div></li>';
-        }).join('');
-        var faltan = t.total - t.cumplidos;
-        return '<div class="mr-titulacion' + (t.completo ? ' mr-titulacion-completa' : '') + '" id="mr-titulacion-' + p.idInscripcion + '">' +
-            '<div class="mr-titulacion-cabeza">' +
-                '<span><i class="fas fa-graduation-cap"></i> Certificados para la titulación</span>' +
-                '<span class="mr-titulacion-cuenta">' + t.cumplidos + ' de ' + t.total + ' pagados</span>' +
-            '</div>' +
-            '<div class="mr-mensaje ' + (t.completo ? 'mr-mensaje-completo' : 'mr-mensaje-pendiente') + '"><i class="fas ' + (t.completo ? 'fa-check-circle' : 'fa-info-circle') + '"></i><span>' +
-                (t.completo ? 'Tiene todos los certificados que se exigen para titularse.'
-                    : (faltan === 1 ? 'Le falta pagar <strong>1 certificado</strong>.' : 'Le falta pagar <strong>' + faltan + ' certificados</strong>.') +
-                      ' Solicítelos en Secretaría de Posgrado.') + '</span></div>' +
-            '<ul class="mr-lista">' + lista + '</ul>' +
-        '</div>';
+        var pendientes = t.certificados.filter(function (c) { return !c.pagado; });
+        var pagados = t.certificados.filter(function (c) { return c.pagado; }).map(function (c) {
+            return item({ hecho: true, nombre: c.nombre, detalle: c.voucher ? 'Voucher ' + esc(c.voucher) : '',
+                derecha: c.fecha ? fecha(c.fecha) : '', claseDerecha: 'mr-fecha' });
+        });
+        var html = '<div class="mr-seccion mr-titulacion' + (t.completo ? ' mr-titulacion-completa' : '') + '" id="mr-titulacion-' + p.idInscripcion + '">' +
+            '<h6 class="mr-seccion-titulo">Certificados para la titulación</h6>';
+        if (t.completo) {
+            html += mensaje(true, 'Tiene todos los certificados que se exigen para titularse.');
+        } else {
+            html += mensaje(false, (pendientes.length === 1 ? 'Le falta <strong>1 certificado</strong>.' : 'Le faltan <strong>' + pendientes.length + ' certificados</strong>.') +
+                ' Solicítelos en Secretaría de Posgrado.');
+            html += '<ul class="mr-lista">' + pendientes.map(function (c) {
+                return item({ hecho: false, nombre: c.nombre, derecha: c.precio ? bs(c.precio) : '<span class="mr-consultar">Consultar</span>' });
+            }).join('') + '</ul>';
+            var sinPrecio = pendientes.filter(function (c) { return !c.precio; }).length;
+            html += '<div class="mr-total"><span>Total por pagar' + (sinPrecio ? ' <small class="mr-consultar">(sin los que dicen "Consultar")</small>' : '') + '</span>' +
+                '<span>' + bs(totalPorPagar(t)) + '</span></div>';
+        }
+        return html + plegado('Ver certificados pagados', pagados) + '</div>';
     }
 
-    // Tarjeta con los requisitos de un programa: avance arriba, luego lo que falta
-    // entregar y al final lo ya entregado; abajo, los certificados para la titulación
+    // Tarjeta de un programa: resumen de los dos pasos y luego cada uno en detalle
     function tarjeta(p) {
         var situacion = situaciones[p.situacion] || situaciones['EN CURSO'];
-        var pendientes = p.requisitos.filter(function (r) { return r.Entregado !== 1; });
-        var entregados = p.requisitos.filter(function (r) { return r.Entregado === 1; });
-        var porcentaje = p.total > 0 ? Math.round((p.entregados / p.total) * 100) : 100;
         var sub = [nombresGrado[p.grado] || p.grado || ''];
         if (p.fechaInscripcion) sub.push('Inscrito el ' + fecha(p.fechaInscripcion));
 
-        var html = '<div class="mr-tarjeta' + (p.completo ? ' mr-completo' : '') + '">' +
+        var t = p.titulacion;
+        var pasos = '';
+        if (p.requisitos.length) {
+            pasos += paso(1, 'Documentos de matrícula', p.entregados + ' de ' + p.total + ' entregados',
+                p.completo ? 'Completo' : 'Pendiente', p.completo);
+        }
+        if (t && t.total) {
+            pasos += paso(2, 'Certificados para la titulación', t.cumplidos + ' de ' + t.total + ' pagados',
+                t.completo ? 'Completo' : 'Por pagar: ' + bs(totalPorPagar(t)), t.completo);
+        }
+
+        return '<div class="mr-tarjeta">' +
             '<div class="mr-cabecera">' +
                 '<div><h5 class="mr-programa">' + esc(p.programa) + '</h5>' +
                 '<div class="mr-sub">' + esc(sub.filter(Boolean).join(' · ')) + '</div></div>' +
                 '<span class="mr-chip ' + situacion.clase + '">' + situacion.texto + '</span>' +
-            '</div>';
-
-        if (!p.requisitos.length) {
-            return html + '<div class="mr-avance"><div class="mr-vacio" style="padding:1rem;">Este programa no tiene requisitos registrados.</div></div>' +
-                seccionTitulacion(p) + '</div>';
-        }
-
-        var faltan = pendientes.length;
-        html += '<div class="mr-avance">' +
-                '<div class="mr-avance-fila">' +
-                    '<span class="mr-contador">' + p.entregados + ' <small>de ' + p.total + ' documentos entregados</small></span>' +
-                    '<span class="mr-porcentaje">' + porcentaje + '%</span>' +
-                '</div>' +
-                '<div class="mr-barra"><div style="width:' + porcentaje + '%;"></div></div>' +
-                (p.completo
-                    ? '<div class="mr-mensaje mr-mensaje-completo"><i class="fas fa-check-circle"></i><span>Entregó todos sus documentos. No necesita hacer nada más.</span></div>'
-                    : '<div class="mr-mensaje mr-mensaje-pendiente"><i class="fas fa-info-circle"></i><span>' +
-                        (faltan === 1 ? 'Le falta <strong>1 documento</strong>.' : 'Le faltan <strong>' + faltan + ' documentos</strong>.') +
-                        ' Preséntelos en la Coordinación de Posgrado.</span></div>') +
-            '</div>';
-
-        html += '<div class="mr-grupos">';
-        if (pendientes.length) {
-            html += '<div class="mr-grupo"><div class="mr-grupo-titulo">Por entregar (' + pendientes.length + ')</div>' +
-                '<ul class="mr-lista">' + pendientes.map(function (r) { return item(r, false); }).join('') + '</ul></div>';
-        }
-        if (entregados.length) {
-            html += '<div class="mr-grupo"><div class="mr-grupo-titulo">Entregados (' + entregados.length + ')</div>' +
-                '<ul class="mr-lista mr-entregados-lista">' + entregados.map(function (r) { return item(r, true); }).join('') + '</ul></div>';
-        }
-
-        return html + '</div>' + seccionTitulacion(p) + '</div>';
+            '</div>' +
+            (pasos ? '<div class="mr-pasos">' + pasos + '</div>' : '') +
+            seccionDocumentos(p) +
+            seccionTitulacion(p) +
+        '</div>';
     }
 
     $.post('ajax/requisito.ajax.php', { accion: 'misRequisitos' }, function (resp) {
