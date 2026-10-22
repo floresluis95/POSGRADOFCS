@@ -61,7 +61,6 @@ test('sin notas avisa; con algunas notas genera y el precio se puede cambiar', a
   const idDocumento = valor(`SELECT IdDocumento FROM documentoemitido WHERE TipoDocumento = 'CALIFICACIONES' AND EstudianteID = ${estudianteID}`);
   const fila = page.locator(`#tabla-estudiante-body tr[data-id="${idDocumento}"]`);
   await expect(fila).toHaveClass(/rd-ultimo/, { timeout: 15_000 });
-  await expect(fila.locator('.rd-ultimo-badge')).toContainText('Último');
   await expect(fila).toContainText('Certificado de Calificaciones');
   await expect(page).toHaveURL(/registrodocumentos\?ci=.+&inscripcion=/);
 

@@ -929,6 +929,8 @@ class CertificadoModelo
                 (d.Datos IS NOT NULL) AS TieneDatos,
                 e.Ci,
                 e.Complemento,
+                -- Nombre de la ficha del estudiante (el del documento puede estar escrito en otro orden)
+                TRIM(CONCAT_WS(' ', e.Apaterno, e.Amaterno, e.Nombre)) AS NombreFicha,
                 u.Usuario as UsuarioEmisor,
                 ua.Usuario as UsuarioAprobador
             FROM documentoemitido d

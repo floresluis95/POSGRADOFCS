@@ -32,10 +32,10 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 
 /* ---------- Pestañas y botón "Emitir certificado" ---------- */
 .rd-barra { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
-.rd-tabs { display: inline-flex; background: #fff; border: 1px solid var(--rd-borde); border-radius: 12px; padding: 4px; gap: 4px; }
+.rd-tabs { display: inline-flex; background: #fff; border: 1px solid var(--rd-borde); border-radius: 8px; padding: 4px; gap: 4px; }
 .rd-tab {
     display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 18px;
-    border: 0; border-radius: 9px; background: transparent; color: var(--rd-texto-2);
+    border: 0; border-radius: 6px; background: transparent; color: var(--rd-texto-2);
     font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .rd-tab:hover { color: var(--rd-primario); }
@@ -47,7 +47,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 .rd-ir-certificado summary::-webkit-details-marker { display: none; }
 .rd-btn-ir {
     display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 18px;
-    border: 1px solid var(--rd-primario); border-radius: 10px; color: var(--rd-primario);
+    border: 1px solid var(--rd-primario); border-radius: 6px; color: var(--rd-primario);
     font-weight: 600; font-size: 13px; cursor: pointer; user-select: none; background: #fff;
 }
 .rd-btn-ir:hover, .rd-ir-certificado[open] .rd-btn-ir { background: var(--rd-primario); color: #fff; }
@@ -55,7 +55,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 .rd-ir-certificado[open] .rd-ir-flecha { transform: rotate(180deg); }
 .rd-ir-menu {
     position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 300px; padding: 6px;
-    background: #fff; border: 1px solid var(--rd-borde); border-radius: 10px; box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
+    background: #fff; border: 1px solid var(--rd-borde); border-radius: 6px; box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
 }
 .rd-ir-menu a { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 6px; color: var(--rd-texto); font-size: 13px; text-decoration: none; }
 .rd-ir-menu a:hover { background: var(--rd-primario-suave); color: var(--rd-primario); text-decoration: none; }
@@ -65,7 +65,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 .rd-card {
     background: #fff;
     border: 1px solid var(--rd-borde);
-    border-radius: 14px;
+    border-radius: 8px;
     box-shadow: 0 2px 10px rgba(15, 23, 42, .05);
     overflow: hidden;
     margin-bottom: 16px;
@@ -79,18 +79,18 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 .rd-card-body { padding: 20px 22px; }
 
 .rd-label { display: block; font-size: 12px; font-weight: 600; color: var(--rd-texto); margin-bottom: 6px; }
-.rd .form-control, .rd-ventana .form-control { border: 1px solid #d8dde8; border-radius: 10px; }
+.rd .form-control, .rd-ventana .form-control { border: 1px solid #d8dde8; border-radius: 6px; }
 .rd .form-control:focus, .rd-ventana .form-control:focus { border-color: var(--rd-primario); box-shadow: 0 0 0 3px rgba(30, 60, 114, .12); }
 
 .rd-btn-primario {
     display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 46px; padding: 0 22px;
     background: var(--rd-primario); border: 1px solid var(--rd-primario); color: #fff;
-    border-radius: 10px; font-weight: 600; white-space: nowrap;
+    border-radius: 6px; font-weight: 600; white-space: nowrap;
 }
 .rd-btn-primario:hover, .rd-btn-primario:focus { background: #16305c; border-color: #16305c; color: #fff; box-shadow: 0 4px 12px rgba(30, 60, 114, .25); }
 .rd-btn-secundario {
     display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 16px;
-    background: #fff; border: 1px solid var(--rd-borde); color: var(--rd-texto); border-radius: 10px; font-weight: 600; font-size: 13px;
+    background: #fff; border: 1px solid var(--rd-borde); color: var(--rd-texto); border-radius: 6px; font-weight: 600; font-size: 13px; white-space: nowrap;
 }
 .rd-btn-secundario:hover { border-color: var(--rd-primario); color: var(--rd-primario); }
 
@@ -101,7 +101,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 .rd-buscar-campo .form-control { height: 46px; padding-left: 42px; font-size: 14px; }
 .rd-buscar-programa { flex: 1 1 100%; }
 .rd-buscar-programa select.form-control { height: 46px; }
-.rd-aviso { margin: 12px 0 0; padding: 10px 14px; background: #fff8e6; border: 1px solid #f1d58a; border-radius: 10px; font-size: 13px; color: #6b4e0e; }
+.rd-aviso { margin: 12px 0 0; padding: 10px 14px; background: #fff8e6; border: 1px solid #f1d58a; border-radius: 6px; font-size: 13px; color: #6b4e0e; }
 .rd-aviso i { color: #d69e2e; margin-right: 6px; }
 
 /* ---------- Estado vacío ---------- */
@@ -110,32 +110,33 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 .rd-vacio p { margin: 0; font-size: 14px; }
 
 /* ---------- Ficha del estudiante y resumen por certificado ---------- */
-.rd-alumno { display: flex; align-items: center; gap: 14px; padding: 18px 22px; border-bottom: 1px solid var(--rd-borde); }
+.rd-alumno { display: flex; align-items: center; gap: 14px; padding: 18px 22px; }
 .rd-avatar {
     width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
     background: var(--rd-primario-suave); color: var(--rd-primario); font-weight: 700; font-size: 15px;
 }
 .rd-alumno-nombre { font-size: 16px; font-weight: 700; color: var(--rd-texto); line-height: 1.25; }
 .rd-alumno-sub { font-size: 12.5px; color: var(--rd-texto-2); margin-top: 2px; }
-.rd-resumen { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 22px; }
-.rd-chip {
-    display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px;
-    font-size: 12.5px; font-weight: 600; border: 1px solid transparent;
-}
-.rd-chip.ok { background: var(--rd-ok-suave); color: var(--rd-ok); }
-.rd-chip.falta { background: #f4f6f9; color: #8a94a6; border-color: #e6e9ef; }
-.rd-chip b { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--rd-ok); color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; }
-/* Para la titulación: avance y lo que falta */
-.rd-titulacion { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 22px 16px; border-top: 1px dashed var(--rd-borde); }
-.rd-tit-cabeza { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--rd-texto); margin-right: 4px; }
-.rd-tit-cabeza i { color: var(--rd-primario); }
-.rd-tit-cuenta { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #fdecec; color: #b91c1c; }
-.rd-titulacion.completo .rd-tit-cuenta { background: var(--rd-ok-suave); color: var(--rd-ok); }
-.rd-tit-falta { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #fff; border: 1px dashed #f0a5a5; color: #b91c1c; }
-.rd-tit-ok { font-size: 12.5px; color: var(--rd-ok); font-weight: 600; }
+/* Certificados para la titulación: lista de control (emitido / pendiente) */
+.rd-titulacion { padding: 16px 22px 18px; border-top: 1px solid var(--rd-borde); }
+.rd-tit-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.rd-tit-titulo { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--rd-texto-2); }
+.rd-tit-cuenta { font-size: 13px; font-weight: 700; color: var(--rd-texto); white-space: nowrap; }
+.rd-tit-barra { height: 4px; background: #e9edf3; border-radius: 2px; overflow: hidden; margin-bottom: 12px; }
+.rd-tit-barra span { display: block; height: 100%; background: var(--rd-primario); }
+.rd-titulacion.completo .rd-tit-barra span { background: var(--rd-ok); }
+.rd-tit-lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 24px; margin: 0; padding: 0; list-style: none; }
+/* En mayúsculas: el catálogo mezcla "Medio Magnético" con "PRO BIBLIOTECA..." */
+.rd-tit-lista li { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; font-size: 12px; color: var(--rd-texto); border-bottom: 1px solid #f1f4f8; text-transform: uppercase; }
+.rd-tit-lista li i { width: 14px; flex-shrink: 0; text-align: center; }
+.rd-tit-lista .rd-tit-hecho i { color: var(--rd-ok); }
+.rd-tit-lista .rd-tit-falta { color: var(--rd-texto-2); }
+.rd-tit-lista .rd-tit-falta i { color: #c3cad8; }
+.rd-tit-ok { margin: 10px 0 0; font-size: 12.5px; color: var(--rd-ok); font-weight: 600; }
+@media (max-width: 767.98px) { .rd-tit-lista { grid-template-columns: 1fr; } }
 
 /* ---------- Tablas ---------- */
-.rd-tabla-marco { border: 1px solid var(--rd-borde); border-radius: 10px; overflow: hidden; }
+.rd-tabla-marco { border: 1px solid var(--rd-borde); border-radius: 6px; overflow: hidden; }
 .tabla-log { margin: 0; font-size: 13px; }
 .tabla-log thead th {
     background: #f8fafc; color: var(--rd-texto-2); font-size: 11px; font-weight: 700; text-transform: uppercase;
@@ -145,7 +146,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 .tabla-log .rd-monto { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
 .tabla-log tfoot td { background: #f7f8fa; font-weight: 700; border-top: 2px solid #e2e6ee; }
 .tabla-log .rd-sin-filas td { text-align: center; color: var(--rd-texto-2); padding: 34px 12px; }
-.rd-tipo { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--rd-primario-suave); color: var(--rd-primario); font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.rd-tipo { font-weight: 600; color: var(--rd-texto); }
 .rd-estado { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .rd-estado.pendiente { background: var(--rd-espera-suave); color: var(--rd-espera); }
 .rd-estado.aprobado { background: var(--rd-ok-suave); color: var(--rd-ok); }
@@ -164,22 +165,6 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 .rd-btn-mini.borrar:hover { border-color: #c53030; background: #c53030; color: #fff; }
 .rd-btn-mini[disabled] { opacity: .5; cursor: not-allowed; }
 
-/* Documento recién generado (al llegar desde la pantalla del certificado) */
-/* Un color por tipo de certificado (etiqueta del tipo y marca "Último") */
-[data-tipo="CALIFICACIONES"] { --rd-tipo-color: #1e3c72; --rd-tipo-suave: #eef2f9; }
-[data-tipo="HISTORIAL_ACADEMICO"] { --rd-tipo-color: #0f766e; --rd-tipo-suave: #e3f5f2; }
-[data-tipo="APROBACION_MONOGRAFIA"] { --rd-tipo-color: #6b21a8; --rd-tipo-suave: #f3e8ff; }
-[data-tipo="MEDIO_MAGNETICO"] { --rd-tipo-color: #b45309; --rd-tipo-suave: #fff1dc; }
-[data-tipo="REVISION"] { --rd-tipo-color: #be123c; --rd-tipo-suave: #ffe4ea; }
-[data-tipo="SIN_DOCUMENTO"] { --rd-tipo-color: #475569; --rd-tipo-suave: #eef1f5; }
-.rd-tipo[data-tipo] { background: var(--rd-tipo-suave); color: var(--rd-tipo-color); }
-
-/* Último documento emitido de cada tipo: franja y marca en el color de su tipo */
-.tabla-log tr.rd-ultimo td:first-child { box-shadow: inset 4px 0 0 var(--rd-tipo-color); }
-.rd-ultimo-badge {
-    display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 2px 8px; border-radius: 999px;
-    background: var(--rd-tipo-color); color: #fff; font-size: 10.5px; font-weight: 700;
-}
 /* Recién generado (al llegar desde la pantalla del certificado): un destello al aparecer */
 .tabla-log tr.rd-recien td { animation: rd-destello 2.4s ease-out; }
 @keyframes rd-destello { 0%, 35% { background: #fff3c4; } 100% { background: transparent; } }
@@ -187,8 +172,18 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 /* Casillas del recibo */
 .tabla-log .rd-col-check { width: 36px; text-align: center; padding-left: 10px; padding-right: 4px; }
 .tabla-log .rd-col-check input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--rd-primario); vertical-align: middle; }
-.rd-ayuda-recibo { margin: -6px 0 12px; font-size: 12.5px; color: var(--rd-texto-2); }
-.rd-ayuda-recibo i { color: var(--rd-primario); margin-right: 4px; }
+/* Últimos emitidos / Anteriores */
+.rd-subtabs { display: flex; gap: 22px; margin-bottom: 14px; border-bottom: 1px solid var(--rd-borde); }
+.rd-subtab {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 2px; margin-bottom: -1px;
+    border: 0; border-bottom: 2px solid transparent; background: none;
+    font-size: 13px; font-weight: 600; color: var(--rd-texto-2); cursor: pointer;
+}
+.rd-subtab:hover { color: var(--rd-primario); }
+.rd-subtab.activa { color: var(--rd-primario); border-bottom-color: var(--rd-primario); }
+.rd-subtab-n { min-width: 20px; padding: 1px 6px; border-radius: 10px; background: #eef1f5; color: var(--rd-texto-2); font-size: 11px; font-weight: 700; text-align: center; }
+.rd-subtab.activa .rd-subtab-n { background: var(--rd-primario-suave); color: var(--rd-primario); }
+.rd-tabla-marco[hidden] { display: none; }
 .rd-contador-recibo { font-weight: 700; }
 
 /* ---------- Reporte de pagos: filtros ---------- */
@@ -216,7 +211,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 /* (el tema también estiliza select2: por eso los !important) */
 .rd-filtros .select2-container { width: 100% !important; display: block !important; }
 .rd-filtros .select2-container--default .select2-selection--single {
-    height: 42px !important; border: 1px solid #d8dde8 !important; border-radius: 10px !important;
+    height: 42px !important; border: 1px solid #d8dde8 !important; border-radius: 6px !important;
     display: flex !important; align-items: center !important; background: #fff !important; padding: 0 !important;
 }
 .rd-filtros .select2-container--default .select2-selection--single .select2-selection__rendered {
@@ -226,7 +221,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 .rd-filtros .select2-container--default .select2-selection--single .select2-selection__arrow { top: 50% !important; transform: translateY(-50%); height: auto !important; right: 6px !important; }
 .rd-filtros .select2-container--focus .select2-selection--single,
 .rd-filtros .select2-container--open .select2-selection--single { border-color: #1e3c72 !important; box-shadow: 0 0 0 3px rgba(30, 60, 114, .12); }
-.rd-select2-lista { border: 1px solid #d8dde8 !important; border-radius: 10px !important; box-shadow: 0 8px 24px rgba(15, 23, 42, .12); overflow: hidden; }
+.rd-select2-lista { border: 1px solid #d8dde8 !important; border-radius: 6px !important; box-shadow: 0 8px 24px rgba(15, 23, 42, .12); overflow: hidden; }
 .rd-select2-lista .select2-search__field { border: 1px solid #d8dde8 !important; border-radius: 8px; padding: 6px 10px !important; }
 .rd-select2-lista .select2-results__option { font-size: 13px; padding: 7px 12px; white-space: normal; }
 .rd-select2-lista .select2-results__option--highlighted[aria-selected] { background: #1e3c72 !important; color: #fff !important; }
@@ -248,7 +243,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 /* ---------- Ventana para reimprimir (propia, sin depender de Bootstrap) ---------- */
 .rd-ventana-fondo { position: fixed; inset: 0; background: rgba(15, 23, 42, .45); z-index: 1060; display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; }
 .rd-ventana-fondo.abierta { display: flex; }
-.rd-ventana { background: #fff; border-radius: 14px; width: 100%; max-width: 620px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+.rd-ventana { background: #fff; border-radius: 8px; width: 100%; max-width: 620px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
 .rd-ventana-cabeza { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 18px 22px; border-bottom: 1px solid var(--rd-borde); }
 .rd-ventana-cabeza h4 { margin: 0; font-size: 16px; font-weight: 700; color: var(--rd-texto); }
 .rd-ventana-cerrar { background: none; border: none; font-size: 22px; line-height: 1; color: #94a3b8; cursor: pointer; }
@@ -260,7 +255,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 .rd-ventana-cabeza .rd-ventana-sub { margin: 3px 0 0; font-size: 12.5px; color: var(--rd-texto-2); }
 .rd-req { color: #c53030; margin-left: 2px; }
 #ventana-sd .voucher-partes { max-width: 300px; }
-.rd-ventana-pie { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px; border-top: 1px solid var(--rd-borde); background: #f8fafc; border-radius: 0 0 14px 14px; }
+.rd-ventana-pie { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px; border-top: 1px solid var(--rd-borde); background: #f8fafc; border-radius: 0 0 8px 8px; }
 .rd-ventana-pie .rd-btn-primario { height: 40px; }
 
 @media (max-width: 767.98px) {
@@ -399,8 +394,9 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                                                 <div class="rd-alumno-sub" id="dato-programa"></div>
                                             </div>
                                         </div>
-                                        <div class="rd-resumen" id="rd-resumen-tipos"></div>
-                                        <!-- Certificados que exige su grado para titularse (se marcan en Costos de certificados) -->
+                                        <!-- Certificados que exige su grado para titularse (se marcan en Costos de certificados);
+                                             lo emitido en sí está en la tabla de abajo -->
+
                                         <div class="rd-titulacion" id="rd-titulacion" style="display:none;"></div>
                                     </div>
 
@@ -408,18 +404,26 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                                     <div class="rd-card">
                                         <div class="rd-card-head">
                                             <h3><i class="fas fa-file-alt"></i> Certificados emitidos</h3>
-                                            <div class="d-flex align-items-center" id="rd-exportar-estudiante" style="gap:8px;">
+                                            <div class="d-flex flex-wrap align-items-center" id="rd-exportar-estudiante" style="gap:8px;">
                                                 <button type="button" class="btn rd-btn-secundario" id="btn-registrar-sd" title="Certificado que el sistema no genera: solo se registra el pago"><i class="fas fa-plus"></i> Registrar otro certificado</button>
-                                                <button type="button" class="btn rd-btn-secundario" id="btn-imprimir-estudiante" title="Recibo de los pagos marcados en la tabla"><i class="fas fa-receipt"></i> Imprimir recibo <span class="rd-contador-recibo" id="contador-recibo"></span></button>
+                                                <button type="button" class="btn rd-btn-secundario" id="btn-imprimir-estudiante" title="Recibo con los pagos marcados en la tabla"><i class="fas fa-receipt"></i> Imprimir recibo <span class="rd-contador-recibo" id="contador-recibo"></span></button>
                                             </div>
                                         </div>
                                         <div class="rd-card-body">
-                                            <p class="rd-ayuda-recibo"><i class="fas fa-info-circle"></i> Marque los pagos que van en el recibo. Vienen marcados los del último día.</p>
-                                            <div class="rd-tabla-marco table-responsive">
+                                            <!-- El último de cada certificado y, aparte, los que se emitieron antes -->
+                                            <div class="rd-subtabs" role="tablist">
+                                                <button type="button" class="rd-subtab activa" role="tab" id="subtab-ultimos" data-subpanel="#subpanel-ultimos" aria-selected="true">
+                                                    Últimos emitidos <span class="rd-subtab-n" id="n-ultimos"></span>
+                                                </button>
+                                                <button type="button" class="rd-subtab" role="tab" id="subtab-anteriores" data-subpanel="#subpanel-anteriores" aria-selected="false">
+                                                    Anteriores <span class="rd-subtab-n" id="n-anteriores"></span>
+                                                </button>
+                                            </div>
+                                            <div class="rd-tabla-marco table-responsive" id="subpanel-ultimos">
                                                 <table class="table table-hover tabla-log" id="tabla-estudiante" data-exportar="Certificados del estudiante" data-exportar-botones="#rd-exportar-estudiante">
                                                     <thead>
                                                         <tr>
-                                                            <th class="rd-col-check" data-no-exportar><input type="checkbox" id="check-recibo-todos" title="Marcar todos" aria-label="Marcar todos los pagos para el recibo"></th>
+                                                            <th class="rd-col-check" data-no-exportar><input type="checkbox" id="check-recibo-todos" title="Pagos que van en el recibo (vienen marcados los del último día)" aria-label="Marcar todos los pagos para el recibo"></th>
                                                             <th>Fecha</th>
                                                             <th>Certificado</th>
                                                             <th>N° voucher</th>
@@ -430,6 +434,23 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                                                     </thead>
                                                     <tbody id="tabla-estudiante-body"></tbody>
                                                     <tfoot id="tabla-estudiante-pie"></tfoot>
+                                                </table>
+                                            </div>
+                                            <div class="rd-tabla-marco table-responsive" id="subpanel-anteriores" hidden>
+                                                <table class="table table-hover tabla-log" id="tabla-anteriores">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="rd-col-check"><input type="checkbox" id="check-recibo-anteriores" title="Pagos que van en el recibo" aria-label="Marcar todos los anteriores para el recibo"></th>
+                                                            <th>Fecha</th>
+                                                            <th>Certificado</th>
+                                                            <th>N° voucher</th>
+                                                            <th class="text-right">Monto</th>
+                                                            <th>Estado</th>
+                                                            <th class="text-right">Acciones</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tabla-anteriores-body"></tbody>
+                                                    <tfoot id="tabla-anteriores-pie"></tfoot>
                                                 </table>
                                             </div>
                                         </div>
@@ -475,7 +496,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                                 <div class="rd-card">
                                     <div class="rd-card-head">
                                         <h3><i class="fas fa-chart-bar"></i> Pagos de certificados</h3>
-                                        <div class="d-flex align-items-center" id="rd-exportar" style="gap:8px;">
+                                        <div class="d-flex flex-wrap align-items-center" id="rd-exportar" style="gap:8px;">
                                             <button type="button" class="btn rd-btn-secundario" id="btn-imprimir-pagos"><i class="fas fa-print"></i> Imprimir reporte</button>
                                         </div>
                                     </div>
@@ -608,7 +629,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                                         <label class="rd-label" for="sd-monto">Monto pagado (Bs.)</label>
                                         <input type="number" class="form-control" id="sd-monto" min="0" step="0.01" placeholder="0.00">
                                     </div>
-                                    <p class="rd-ventana-aviso rd-ventana-info"><i class="fas fa-info-circle"></i> No se genera ningún documento: queda registrado el pago (con la fecha de hoy como fecha de registro) y sale en el recibo de certificados de este programa.</p>
+                                    <p class="rd-ventana-aviso rd-ventana-info"><i class="fas fa-info-circle"></i> Solo se registra el pago; no se genera ningún documento.</p>
                                 </div>
                                 <div class="rd-ventana-pie">
                                     <button type="button" class="btn rd-btn-secundario mr-auto" data-cerrar-sd>Cancelar</button>
@@ -746,6 +767,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
             docsEstudiante = [];
             idTrabajoActual = null;
             $('#rd-estudiante').hide();
+            mostrarSubtab('#subtab-ultimos');
             $('#card-trabajo').hide().removeAttr('open');
             $('#rd-vacio-estudiante').show();
         }
@@ -849,72 +871,69 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                     $('#dato-nombre').text(insc.nombre);
                     $('#dato-programa').text('C.I. ' + insc.ci + ' · ' + insc.programa + (insc.grado ? ' · ' + insc.grado : ''));
 
-                    // Resumen: cuántas veces se emitió cada certificado
-                    var cuenta = {};
-                    docsEstudiante.forEach(function(doc) { cuenta[doc.TipoDocumento] = (cuenta[doc.TipoDocumento] || 0) + 1; });
-                    $('#rd-resumen-tipos').html(Object.keys(TIPOS).map(function(clave) {
-                        var n = cuenta[clave] || 0;
-                        return n
-                            ? '<span class="rd-chip ok" title="Emitido ' + n + (n === 1 ? ' vez' : ' veces') + '"><i class="fas fa-check-circle"></i> ' + esc(TIPOS[clave]) + ' <b>' + n + '</b></span>'
-                            : '<span class="rd-chip falta" title="Sin emitir"><i class="far fa-circle"></i> ' + esc(TIPOS[clave]) + '</span>';
-                    }).join(''));
-
-                    // Para la titulación: los que exige su grado (Costos de certificados) y cuáles faltan
+                    // Para la titulación: los que exige su grado (Costos de certificados), emitidos
+                    // primero y pendientes después, con el avance
                     var tit = data.titulacion || { total: 0 };
                     if (!tit.total) {
                         $('#rd-titulacion').hide().empty();
                     } else {
-                        var faltan = tit.certificados.filter(function(c) { return !c.pagado; });
+                        var orden = tit.certificados.slice().sort(function(a, b) { return (b.pagado ? 1 : 0) - (a.pagado ? 1 : 0); });
                         $('#rd-titulacion').toggleClass('completo', !!tit.completo).html(
-                            '<span class="rd-tit-cabeza"><i class="fas fa-graduation-cap"></i> Para la titulación</span>' +
-                            '<span class="rd-tit-cuenta">' + tit.cumplidos + ' de ' + tit.total + '</span>' +
-                            (faltan.length
-                                ? faltan.map(function(c) {
-                                    return '<span class="rd-tit-falta" title="Falta pagar' + (c.precio ? ' · ' + esc(formatoBs(c.precio)) : '') + '"><i class="fas fa-times-circle"></i> ' + esc(c.nombre) + '</span>';
-                                }).join('')
-                                : '<span class="rd-tit-ok"><i class="fas fa-check-circle"></i> Tiene todos los certificados exigidos</span>')
+                            '<div class="rd-tit-cabeza"><span class="rd-tit-titulo">Certificados para la titulación</span>' +
+                            '<span class="rd-tit-cuenta">' + tit.cumplidos + ' de ' + tit.total + '</span></div>' +
+                            '<div class="rd-tit-barra"><span style="width:' + Math.round(100 * tit.cumplidos / tit.total) + '%"></span></div>' +
+                            '<ul class="rd-tit-lista">' + orden.map(function(c) {
+                                return c.pagado
+                                    ? '<li class="rd-tit-hecho" title="Emitido' + (c.fecha ? ' el ' + esc(fechaHora(c.fecha)) : '') + '"><i class="fas fa-check"></i> ' + esc(c.nombre) + '</li>'
+                                    : '<li class="rd-tit-falta" title="Pendiente' + (c.precio ? ' · ' + esc(formatoBs(c.precio)) : '') + '"><i class="far fa-circle"></i> ' + esc(c.nombre) + '</li>';
+                            }).join('') + '</ul>' +
+                            (tit.completo ? '<p class="rd-tit-ok"><i class="fas fa-check-circle"></i> Tiene todos los certificados exigidos</p>' : '')
                         ).show();
                     }
 
-                    // Tabla con todas las emisiones
-                    var $tbody = $('#tabla-estudiante-body').empty();
-                    $('#tabla-estudiante-pie').empty();
-                    if (!docsEstudiante.length) {
-                        $tbody.html('<tr class="rd-sin-filas"><td colspan="7">Todavía no se le emitió ningún certificado en este programa.</td></tr>');
-                    } else {
-                        // El último documento de cada tipo queda marcado (sale de los datos: sigue
-                        // marcado al recargar y pasa a otro solo cuando se genera uno nuevo de ese tipo).
-                        // La lista viene de la más reciente a la más antigua.
-                        var ultimoPorTipo = {};
-                        docsEstudiante.forEach(function(doc) {
-                            if (!ultimoPorTipo[claveUltimo(doc)]) ultimoPorTipo[claveUltimo(doc)] = Number(doc.IdDocumento);
-                        });
-                        // Para el recibo vienen marcados los pagos del último día con emisiones
-                        var ultimoDia = String(docsEstudiante[0].FechaEmision || '').substring(0, 10);
+                    // "Últimos emitidos": el más reciente de cada certificado (sale de los datos: pasa
+                    // a otro solo cuando se genera uno nuevo de ese tipo). "Anteriores": los demás.
+                    // La lista viene de la más reciente a la más antigua.
+                    var ultimoPorTipo = {};
+                    docsEstudiante.forEach(function(doc) {
+                        if (!ultimoPorTipo[claveUltimo(doc)]) ultimoPorTipo[claveUltimo(doc)] = Number(doc.IdDocumento);
+                    });
+                    var ultimos = docsEstudiante.filter(function(doc) { return ultimoPorTipo[claveUltimo(doc)] === Number(doc.IdDocumento); });
+                    var anteriores = docsEstudiante.filter(function(doc) { return ultimos.indexOf(doc) === -1; });
+                    // Para el recibo vienen marcados los pagos del último día con emisiones (en las dos tablas)
+                    var ultimoDia = docsEstudiante.length ? String(docsEstudiante[0].FechaEmision || '').substring(0, 10) : '';
 
-                        docsEstudiante.forEach(function(doc) {
-                            var id = Number(doc.IdDocumento);
-                            var ultimo = ultimoPorTipo[claveUltimo(doc)] === id;
-                            var tipo = esc(doc.TipoDocumento);
-                            var clases = (ultimo ? 'rd-ultimo' : '') + (id === docResaltado ? ' rd-recien' : '');
-                            $tbody.append(
-                                '<tr data-id="' + id + '" data-tipo="' + tipo + '"' + (clases.trim() ? ' class="' + clases.trim() + '"' : '') + '>' +
-                                '<td class="rd-col-check"><input type="checkbox" class="rd-check-recibo" value="' + id + '"' +
-                                    (String(doc.FechaEmision || '').substring(0, 10) === ultimoDia ? ' checked' : '') +
-                                    ' aria-label="Incluir en el recibo"></td>' +
-                                '<td class="text-nowrap">' + htmlFechas(doc) +
-                                    (ultimo ? '<div><span class="rd-ultimo-badge" data-tipo="' + tipo + '" title="Último ' + esc(nombreDoc(doc)) + ' emitido">' +
-                                        '<i class="fas fa-bookmark"></i> Último</span></div>' : '') + '</td>' +
-                                '<td><span class="rd-tipo" data-tipo="' + tipo + '">' + esc(nombreDoc(doc)) + '</span></td>' +
-                                '<td class="text-nowrap">' + esc(doc.NumeroVaucher || '-') + '</td>' +
-                                '<td class="rd-monto">' + htmlMonto(doc) + '</td>' +
-                                '<td>' + htmlEstado(doc) + '</td>' +
-                                '<td>' + htmlAcciones(doc) + '</td>' +
-                                '</tr>'
-                            );
-                        });
-                        $('#tabla-estudiante-pie').html(htmlTotal(docsEstudiante, 4, 2));
+                    function filaDocumento(doc, ultimo) {
+                        var id = Number(doc.IdDocumento);
+                        var tipo = esc(doc.TipoDocumento);
+                        var clases = (ultimo ? 'rd-ultimo' : '') + (id === docResaltado ? ' rd-recien' : '');
+                        return '<tr data-id="' + id + '" data-tipo="' + tipo + '"' + (clases.trim() ? ' class="' + clases.trim() + '"' : '') + '>' +
+                            '<td class="rd-col-check"><input type="checkbox" class="rd-check-recibo" value="' + id + '"' +
+                                (String(doc.FechaEmision || '').substring(0, 10) === ultimoDia ? ' checked' : '') +
+                                ' aria-label="Incluir en el recibo"></td>' +
+                            '<td class="text-nowrap">' + htmlFechas(doc) + '</td>' +
+                            '<td><span class="rd-tipo" data-tipo="' + tipo + '">' + esc(nombreDoc(doc)) + '</span></td>' +
+                            '<td class="text-nowrap">' + esc(doc.NumeroVaucher || '-') + '</td>' +
+                            '<td class="rd-monto">' + htmlMonto(doc) + '</td>' +
+                            '<td>' + htmlEstado(doc) + '</td>' +
+                            '<td>' + htmlAcciones(doc) + '</td>' +
+                            '</tr>';
                     }
+                    function llenarTabla(cuerpo, pie, docs, ultimo, sinFilas) {
+                        $(cuerpo).html(docs.length
+                            ? docs.map(function(doc) { return filaDocumento(doc, ultimo); }).join('')
+                            : '<tr class="rd-sin-filas"><td colspan="7">' + sinFilas + '</td></tr>');
+                        $(pie).html(docs.length ? htmlTotal(docs, 4, 2) : '');
+                    }
+                    llenarTabla('#tabla-estudiante-body', '#tabla-estudiante-pie', ultimos, true,
+                        'Todavía no se le emitió ningún certificado en este programa.');
+                    llenarTabla('#tabla-anteriores-body', '#tabla-anteriores-pie', anteriores, false,
+                        'No hay certificados anteriores.');
+                    $('#n-ultimos').text(ultimos.length);
+                    $('#n-anteriores').text(anteriores.length);
+                    // El documento recién generado se muestra en su pestaña; si no, se queda la que estaba
+                    if ($('#tabla-anteriores-body tr.rd-recien').length) mostrarSubtab('#subtab-anteriores');
+                    else if ($('#tabla-estudiante-body tr.rd-recien').length) mostrarSubtab('#subtab-ultimos');
                     actualizarContadorRecibo();
 
                     // Trabajo de grado
@@ -934,7 +953,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 
                     // Llevar la vista al documento recién generado; el destello es una sola vez
                     // (la marca "Último" es la que queda)
-                    var fila = document.querySelector('#tabla-estudiante-body tr.rd-recien');
+                    var fila = document.querySelector('#rd-estudiante tr.rd-recien');
                     if (fila) {
                         docResaltado = null;
                         fila.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -947,17 +966,30 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
         function idsRecibo() {
             return $('.rd-check-recibo:checked').map(function() { return this.value; }).get();
         }
+        // El contador suma las dos tablas; la casilla de cada encabezado marca solo su tabla
         function actualizarContadorRecibo() {
             var marcados = idsRecibo().length;
-            var total = $('.rd-check-recibo').length;
             $('#contador-recibo').text(marcados ? '(' + marcados + ')' : '');
-            $('#check-recibo-todos').prop({ checked: total > 0 && marcados === total, indeterminate: marcados > 0 && marcados < total });
+            [['#check-recibo-todos', '#tabla-estudiante'], ['#check-recibo-anteriores', '#tabla-anteriores']].forEach(function(par) {
+                var total = $(par[1] + ' .rd-check-recibo').length;
+                var enTabla = $(par[1] + ' .rd-check-recibo:checked').length;
+                $(par[0]).prop({ checked: total > 0 && enTabla === total, indeterminate: enTabla > 0 && enTabla < total });
+            });
         }
         $(document).on('change', '.rd-check-recibo', actualizarContadorRecibo);
-        $('#check-recibo-todos').on('change', function() {
-            $('.rd-check-recibo').prop('checked', this.checked);
+        $('#check-recibo-todos, #check-recibo-anteriores').on('change', function() {
+            $(this).closest('table').find('.rd-check-recibo').prop('checked', this.checked);
             actualizarContadorRecibo();
         });
+
+        // Pestañas "Últimos emitidos" / "Anteriores"
+        function mostrarSubtab(boton) {
+            $('.rd-subtab').removeClass('activa').attr('aria-selected', 'false');
+            $(boton).addClass('activa').attr('aria-selected', 'true');
+            $('#subpanel-ultimos, #subpanel-anteriores').attr('hidden', true);
+            $($(boton).data('subpanel')).removeAttr('hidden');
+        }
+        $('.rd-subtab').on('click', function() { mostrarSubtab(this); });
 
         $('#btn-imprimir-estudiante').on('click', function() {
             if (!estudianteActual) return;
@@ -1072,7 +1104,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                             '<td class="text-nowrap">' + htmlFechas(doc) +
                                 (doc.UsuarioEmisor ? '<div class="text-muted small">por ' + esc(doc.UsuarioEmisor) + '</div>' : '') + '</td>' +
                             '<td><span class="rd-tipo" data-tipo="' + esc(doc.TipoDocumento) + '">' + esc(nombreDoc(doc)) + '</span></td>' +
-                            '<td>' + esc(doc.NombreEstudiante || '-') + (doc.Ci ? '<div class="text-muted small">C.I. ' + esc(doc.Ci) + '</div>' : '') + '</td>' +
+                            '<td>' + esc(doc.NombreFicha || doc.NombreEstudiante || '-') + (doc.Ci ? '<div class="text-muted small">C.I. ' + esc(doc.Ci) + '</div>' : '') + '</td>' +
                             '<td class="text-nowrap">' + esc(doc.NumeroVaucher || '-') + '</td>' +
                             '<td class="rd-monto">' + htmlMonto(doc) + '</td>' +
                             '<td>' + htmlEstado(doc) + '</td>' +

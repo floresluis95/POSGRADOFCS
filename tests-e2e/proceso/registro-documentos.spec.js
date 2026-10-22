@@ -152,26 +152,27 @@ test('al entrar no se lista nada; al buscar se ven TODAS las emisiones del estud
   await expect(page.locator('#tabla-log-body tr')).toHaveCount(1);
   await page.locator('#tab-estudiante').click();
 
-  // Al buscar: las 3 emisiones, el resumen con "3" y el total
+  // Al buscar: en "Últimos emitidos" solo el más reciente; los otros 2 en "Anteriores"
   await page.locator('#input-buscar-ci').fill(ci);
   await page.locator('#btn-buscar-ci').click();
-  const filas = page.locator('#tabla-estudiante-body tr', { hasText: 'Medio Magnético' });
-  await expect(filas).toHaveCount(3, { timeout: 15_000 });
-  for (let i = 1; i <= 3; i++) await expect(page.locator('#tabla-estudiante-body')).toContainText(`VARIAS${estudianteID}-${i}`);
-  await expect(page.locator('#rd-resumen-tipos .rd-chip.ok', { hasText: 'Medio Magnético' })).toContainText('3');
-  await expect(page.locator('#tabla-estudiante-pie')).toContainText('3 documento(s)');
-  await expect(page.locator('#tabla-estudiante-pie')).toContainText('Bs. 150,00');
-
-  // Solo el último de ese tipo queda marcado
-  const ultimo = page.locator('#tabla-estudiante-body tr.rd-ultimo');
-  await expect(ultimo).toHaveCount(1);
+  const ultimo = page.locator('#tabla-estudiante-body tr', { hasText: 'Medio Magnético' });
+  await expect(ultimo).toHaveCount(1, { timeout: 15_000 });
+  await expect(ultimo).toHaveClass(/rd-ultimo/);
   await expect(ultimo).toContainText(`VARIAS${estudianteID}-3`);
-  await expect(ultimo.locator('.rd-ultimo-badge')).toHaveAttribute('data-tipo', 'MEDIO_MAGNETICO');
+  await expect(page.locator('#tabla-estudiante-pie')).toContainText('1 documento(s)');
+  await expect(page.locator('#n-ultimos')).toHaveText('1');
+  await expect(page.locator('#n-anteriores')).toHaveText('2');
+  await expect(page.locator('#tabla-anteriores')).toBeHidden();
+  await page.locator('#subtab-anteriores').click();
+  await expect(page.locator('#tabla-estudiante')).toBeHidden();
+  for (const i of [1, 2]) await expect(page.locator('#tabla-anteriores-body')).toContainText(`VARIAS${estudianteID}-${i}`);
+  await expect(page.locator('#tabla-anteriores-pie')).toContainText('2 documento(s)');
+  await expect(page.locator('#tabla-anteriores-pie')).toContainText('Bs. 100,00');
 
   // Recibo: vienen marcados los pagos del último día (los 3); con solo uno marcado sale solo ese
   await expect(page.locator('#contador-recibo')).toHaveText('(3)');
   for (const i of [1, 2]) {
-    await page.locator('#tabla-estudiante-body tr', { hasText: `VARIAS${estudianteID}-${i}` }).locator('.rd-check-recibo').uncheck();
+    await page.locator('#tabla-anteriores-body tr', { hasText: `VARIAS${estudianteID}-${i}` }).locator('.rd-check-recibo').uncheck();
   }
   await expect(page.locator('#contador-recibo')).toHaveText('(1)');
   const [recibo] = await Promise.all([page.waitForEvent('popup'), page.locator('#btn-imprimir-estudiante').click()]);
@@ -182,9 +183,12 @@ test('al entrar no se lista nada; al buscar se ven TODAS las emisiones del estud
   expect(html).toContain('Bs. 50,00');
   await recibo.close();
 
-  // Sin ninguno marcado, avisa
-  await page.locator('#check-recibo-todos').check();
+  // La casilla del encabezado marca solo su tabla; sin ninguno marcado, avisa
+  await page.locator('#check-recibo-anteriores').check();
   await expect(page.locator('#contador-recibo')).toHaveText('(3)');
+  await page.locator('#check-recibo-anteriores').uncheck();
+  await expect(page.locator('#contador-recibo')).toHaveText('(1)');
+  await page.locator('#subtab-ultimos').click();
   await page.locator('#check-recibo-todos').uncheck();
   await expect(page.locator('#contador-recibo')).toHaveText('');
   await page.locator('#btn-imprimir-estudiante').click();
@@ -210,7 +214,9 @@ test('Editar guarda los cambios sin imprimir; un voucher de otro certificado no 
   await page.goto('registrodocumentos');
   await page.locator('#input-buscar-ci').fill(ci);
   await page.locator('#btn-buscar-ci').click();
-  const fila = page.locator(`#tabla-estudiante-body tr[data-id="${id1}"]`);
+  // El primero ya no es el último emitido: está en "Anteriores"
+  await page.locator('#subtab-anteriores').click();
+  const fila = page.locator(`#tabla-anteriores-body tr[data-id="${id1}"]`);
 
   // Guardar cambios: se guarda sin abrir ninguna pestaña
   let pestañas = 0;
