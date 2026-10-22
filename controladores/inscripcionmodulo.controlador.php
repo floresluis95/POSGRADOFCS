@@ -7,6 +7,9 @@
 require_once __DIR__ . '/../modelos/inscripcionmodulo.modelo.php';
 require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
 require_once __DIR__ . '/../modelos/matricula.modelo.php';
+require_once __DIR__ . '/../modelos/certificado.modelo.php'; // certificados para la titulación
+require_once __DIR__ . '/programa.controlador.php'; // estado del programa (concluido)
+require_once __DIR__ . '/enlaces.controlador.php';
 
 class InscripcionModuloControladores
 {
@@ -15,10 +18,26 @@ class InscripcionModuloControladores
      * @param int|null $programaID
      * @param string|null $sede
      * @param string $estado 'ACTIVO' (por defecto), 'ABANDONO', o 'TODOS'
+     * @param string|null $titulacion 'LISTOS' / 'FALTAN': solo programas concluidos (certificados para titularse)
      */
-    public function ListarEstudiantesMatriculadosControlador($programaID = null, $sede = null, $estado = 'ACTIVO', $requisitos = null, $grado = null)
+    public function ListarEstudiantesMatriculadosControlador($programaID = null, $sede = null, $estado = 'ACTIVO', $requisitos = null, $grado = null, $titulacion = null)
     {
         $estudiantes = InscripcionModuloModelos::ListarEstudiantesMatriculadosModelo($programaID, $sede, $estado, $requisitos, $grado);
+
+        // Certificados para la titulación: solo cuando el programa ya concluyó (solo avisa)
+        $concluidos = array_filter($estudiantes, function ($e) {
+            $programa = ['Estado' => $e['EstadoPrograma'], 'FechaInicio' => $e['FechaInicio'], 'DuracionMeses' => $e['DuracionMeses']];
+            return ProgramasControladores::EstadoProgramaControlador($programa)['clave'] === 'concluido';
+        });
+        $titulacionPorInscripcion = CertificadoModelo::EstadoTitulacionVariosModelo(array_values($concluidos));
+        if ($titulacion === 'LISTOS' || $titulacion === 'FALTAN') {
+            $estudiantes = array_values(array_filter($estudiantes, function ($e) use ($titulacionPorInscripcion, $titulacion) {
+                $t = $titulacionPorInscripcion[$e['EstudianteID'] . '-' . $e['ProgramaID']] ?? null;
+                if (!$t || $t['total'] === 0) return false; // en curso, o nada exigido para su grado
+                return $titulacion === 'LISTOS' ? $t['completo'] : !$t['completo'];
+            }));
+        }
+        $puedeVerDocumentos = EnlacesControladores::PuedeVerPagina($_SESSION['Tipo'] ?? '', 'registrodocumentos');
 
         if (empty($estudiantes)) {
             echo '<tr>
@@ -107,6 +126,19 @@ class InscripcionModuloControladores
                 . ' data-estudiante-nombre="' . htmlspecialchars($nombreCompleto) . '">'
                 . '<i class="fa ' . ($reqCompleto ? 'fa-check-circle' : 'fa-clipboard-list') . '"></i> ' . $reqEntregados . '/' . $reqTotal
                 . '</button>';
+
+            // Programa concluido: cuántos certificados para la titulación tiene (lleva a Registro de documentos)
+            $tit = $titulacionPorInscripcion[$estudiante['EstudianteID'] . '-' . $estudiante['ProgramaID']] ?? null;
+            if ($tit && $tit['total'] > 0) {
+                $faltan = array_column(array_filter($tit['certificados'], function ($c) { return !$c['pagado']; }), 'nombre');
+                $aviso = $tit['completo'] ? 'Tiene todos los certificados para la titulación' : 'Falta para la titulación: ' . implode(', ', $faltan);
+                $contenido = '<i class="fa ' . ($tit['completo'] ? 'fa-graduation-cap' : 'fa-hourglass-half') . '"></i> Titulación ' . $tit['cumplidos'] . '/' . $tit['total'];
+                $clase = 'mt-titulacion ' . ($tit['completo'] ? 'is-completo' : 'is-pendiente');
+                $celdaRequisitos .= $puedeVerDocumentos
+                    ? '<a class="' . $clase . '" title="' . htmlspecialchars($aviso) . '" href="registrodocumentos?ci=' . urlencode($estudiante['Ci'])
+                        . '&inscripcion=' . (int)$estudiante['EstudianteID'] . '-' . (int)$estudiante['ProgramaID'] . '">' . $contenido . '</a>'
+                    : '<span class="' . $clase . '" title="' . htmlspecialchars($aviso) . '">' . $contenido . '</span>';
+            }
 
             echo '<tr>
                     <td class="text-center"><strong>' . ($key + 1) . '</strong></td>

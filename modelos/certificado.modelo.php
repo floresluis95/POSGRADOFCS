@@ -823,15 +823,60 @@ class CertificadoModelo
             $clave = $doc['TipoDocumento'] === self::TIPO_SIN_DOCUMENTO ? 'SD:' . (int)$doc['IdCertificadoSD'] : $doc['TipoDocumento'];
             $tiene[$clave] = $tiene[$clave] ?? $doc;
         }
+        return self::ArmarEstadoTitulacion($grado, $tiene, self::DatosTitulacion());
+    }
 
-        $precios = self::PreciosCertificados();
+    /**
+     * Lo mismo que EstadoTitulacionModelo para muchas inscripciones a la vez (Matriculados),
+     * con una sola consulta de documentos.
+     * @param array $inscripciones [['EstudianteID', 'ProgramaID', 'GradoAcademico'], ...]
+     * @return array 'EstudianteID-ProgramaID' => estado (mismo formato que EstadoTitulacionModelo)
+     */
+    public static function EstadoTitulacionVariosModelo(array $inscripciones)
+    {
+        if (!$inscripciones) return [];
+        $estudiantes = array_values(array_unique(array_map(function ($i) { return (int)$i['EstudianteID']; }, $inscripciones)));
+        $marcas = implode(',', array_fill(0, count($estudiantes), '?'));
+        $stmt = Conexion::Conectar()->prepare("
+            SELECT EstudianteID, ProgramaID, TipoDocumento, IdCertificadoSD, NumeroVaucher, FechaPago, FechaEmision
+            FROM documentoemitido
+            WHERE EstudianteID IN ($marcas)
+            ORDER BY FechaEmision DESC, IdDocumento DESC
+        ");
+        $stmt->execute($estudiantes);
+        $tienePorInscripcion = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $doc) {
+            $clave = $doc['TipoDocumento'] === self::TIPO_SIN_DOCUMENTO ? 'SD:' . (int)$doc['IdCertificadoSD'] : $doc['TipoDocumento'];
+            $inscripcion = (int)$doc['EstudianteID'] . '-' . (int)$doc['ProgramaID'];
+            $tienePorInscripcion[$inscripcion][$clave] = $tienePorInscripcion[$inscripcion][$clave] ?? $doc;
+        }
+
+        $datos = self::DatosTitulacion();
+        $estados = [];
+        foreach ($inscripciones as $i) {
+            $inscripcion = (int)$i['EstudianteID'] . '-' . (int)$i['ProgramaID'];
+            $estados[$inscripcion] = self::ArmarEstadoTitulacion(self::ClaveGrado($i['GradoAcademico']), $tienePorInscripcion[$inscripcion] ?? [], $datos);
+        }
+        return $estados;
+    }
+
+    /* Lo que no depende del estudiante: qué se exige, precios y catálogo sin documento */
+    private static function DatosTitulacion()
+    {
         $catalogo = [];
         foreach (self::ListarSinDocumentoModelo(false) as $c) {
             $catalogo['SD:' . $c['IdCertificadoSD']] = $c;
         }
+        return ['requisitos' => self::RequisitosTitulacionModelo(), 'precios' => self::PreciosCertificados(), 'catalogo' => $catalogo];
+    }
 
+    /* Regla común: $tiene = documentos del estudiante en el programa, por clave (el más reciente) */
+    private static function ArmarEstadoTitulacion($grado, array $tiene, array $datos)
+    {
+        $precios = $datos['precios'];
+        $catalogo = $datos['catalogo'];
         $certificados = [];
-        foreach (self::RequisitosTitulacionModelo() as $clave => $grados) {
+        foreach ($datos['requisitos'] as $clave => $grados) {
             if (empty($grados[$grado])) continue;
             if (isset(self::TiposDocumento()[$clave])) {
                 $nombre = self::TiposDocumento()[$clave];

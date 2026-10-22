@@ -1060,10 +1060,11 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     .mt-filtro-programa { flex: 1 1 280px; }
     .mt-filtro-estado { flex: 0 0 140px; }
     .mt-filtro-requisitos { flex: 0 0 150px; }
+    .mt-filtro-titulacion { flex: 0 0 150px; }
     .mt-filtro-boton { flex: 0 0 auto; }
     @media (max-width: 575px) {
         .mt-filtro-sede, .mt-filtro-grado, .mt-filtro-programa, .mt-filtro-boton { flex-basis: 100%; }
-        .mt-filtro-estado, .mt-filtro-requisitos { flex: 1 1 0; }
+        .mt-filtro-estado, .mt-filtro-requisitos, .mt-filtro-titulacion { flex: 1 1 0; }
         .mt-filtro-boton .btn { width: 100%; }
     }
 
@@ -1135,6 +1136,19 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     .mt-requisitos.is-completo { background: #e7f6ee; color: #2f855a; }
     .mt-requisitos.is-pendiente { background: #fff6e0; color: #b7791f; }
     .mt-requisitos:hover { border-color: currentColor; box-shadow: 0 2px 6px rgba(15, 23, 42, .1); }
+    /* Debajo de la pastilla: certificados para la titulación (solo programas concluidos) */
+    .mt-titulacion {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .mt-titulacion.is-completo { color: #2f855a; }
+    .mt-titulacion.is-pendiente { color: #c05621; }
+    a.mt-titulacion:hover { text-decoration: underline; }
 
     #modalRequisitos .modal-content { border: 0; border-radius: 14px; overflow: hidden; }
     .rq-barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
@@ -1320,6 +1334,14 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                             <option value="" selected>Todos</option>
                             <option value="INCOMPLETOS">Incompletos</option>
                             <option value="COMPLETOS">Completos</option>
+                        </select>
+                    </div>
+                    <div class="mt-filtro mt-filtro-titulacion" title="Certificados para la titulación (solo programas concluidos)">
+                        <label class="mt-label" for="selectTitulacionFiltro"><i class="fa fa-graduation-cap"></i> Titulación</label>
+                        <select class="form-control select2-uniforme" id="selectTitulacionFiltro" style="width: 100%;">
+                            <option value="" selected>Todos</option>
+                            <option value="LISTOS">Listos</option>
+                            <option value="FALTAN">Les faltan</option>
                         </select>
                     </div>
                     <div class="mt-filtro mt-filtro-boton">
@@ -1743,7 +1765,8 @@ $(document).ready(function() {
                 sedeFiltro: sede || '',
                 estadoFiltro: estado || 'ACTIVO',
                 gradoFiltro: $('#selectGradoFiltro').val() || '',
-                requisitosFiltro: $('#selectRequisitosFiltro').val() || ''
+                requisitosFiltro: $('#selectRequisitosFiltro').val() || '',
+                titulacionFiltro: $('#selectTitulacionFiltro').val() || ''
             },
             success: function(response) {
                 console.log('✓ Estudiantes cargados correctamente');
@@ -1844,10 +1867,11 @@ $(document).ready(function() {
         $('#selectSedeFiltro').val('').trigger('change');
         $('#selectEstadoFiltro').val('ACTIVO').trigger('change');
         $('#selectRequisitosFiltro').val('').trigger('change.select2');
+        $('#selectTitulacionFiltro').val('').trigger('change.select2');
         $('#selectProgramaFiltro').val('').trigger('change');
     });
 
-    $('#selectRequisitosFiltro').on('change', function() {
+    $('#selectRequisitosFiltro, #selectTitulacionFiltro').on('change', function() {
         window.refrescarTablaMatriculados();
     });
 

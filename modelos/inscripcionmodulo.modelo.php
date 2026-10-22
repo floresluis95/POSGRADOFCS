@@ -49,6 +49,10 @@ class InscripcionModuloModelos
                     p.NumeroTramite,
                     p.Costo as CostoPrograma,
                     p.Sede,
+                    -- Para saber si el programa ya concluyó (aviso de titulación)
+                    p.FechaInicio,
+                    p.DuracionMeses,
+                    p.Estado AS EstadoPrograma,
                     -- Plan Grupal: grupo armado en Pre-Registro (NULL si no es grupal)
                     (SELECT pp.CodigoGrupo FROM pagoprograma pp
                      WHERE pp.idInscripcion = ep.idInscripcion AND pp.Estado != 'ANULADO'
