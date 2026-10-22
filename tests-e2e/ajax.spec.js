@@ -75,7 +75,7 @@ const ARCHIVOS_POR_ROL = {
   'autoridad.ajax.php': ['adm'],
   'certificado.ajax.php': ['adm', 'sec'],
   'reportes.ajax.php': ['adm', 'sec'],
-  'asignacion.ajax.php': PERSONAL,
+  'asignacion.ajax.php': ['adm', 'sec'], // el Auxiliar no tiene Asignación docente
   'cuenta.ajax.php': PERSONAL,
   'docentes.ajax.php': PERSONAL,
   'especialidad.ajax.php': PERSONAL,
@@ -166,6 +166,17 @@ const CASOS_POR_ACCION = [
   ['doc', 'plazocuotaprograma.ajax.php', { accion: 'anularPlazo', id: ID_INEXISTENTE }, 'negado'],
 
   ['est', 'solicitudinscripcion.ajax.php', { accion: 'listar' }, 'negado'],
+
+  // C: el Auxiliar consulta módulos y cuentas (Matriculados, Pre-Registro) pero no los cambia
+  ['aux', 'modulo.ajax.php', { accion: 'cargarTablaModulos' }, 'permitido'],
+  ['aux', 'modulo.ajax.php', { accion: 'actualizarModulo' }, 'negado'],
+  ['aux', 'modulo.ajax.php', { accion: 'registrarModulosPorPrograma' }, 'negado'],
+  ['aux', 'programacuenta.ajax.php', { accion: 'listarOptionsHtml' }, 'permitido'],
+  ['aux', 'programacuenta.ajax.php', { accion: 'registrar' }, 'negado'],
+  ['aux', 'programacuenta.ajax.php', { accion: 'marcarPrincipal' }, 'negado'],
+  ['aux', 'cuenta.ajax.php', { accion: 'registrar' }, 'negado'],
+  ['aux', 'especialidad.ajax.php', { accion: 'registrar' }, 'negado'],
+  ['aux', 'restablecerpassword.ajax.php', { accion: 'docente', id: ID_INEXISTENTE }, 'negado'],
   ['doc', 'solicitudinscripcion.ajax.php', { accion: 'actualizarEstado', idSolicitud: ID_INEXISTENTE }, 'negado'],
 ];
 

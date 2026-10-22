@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/control-solicitud.php'; // corte de internet: sin envíos duplicados
 require_once __DIR__ . '/validar-sesion.php';
-ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni docentes)
+ExigirSesionAjax(['ADM', 'SEC']); // Asignación docente: Administración y Secretaría (el Auxiliar no tiene la página)
 /**
  * AJAX para asignación de docentes a módulos
  */

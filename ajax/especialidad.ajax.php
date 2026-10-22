@@ -2,6 +2,8 @@
 require_once __DIR__ . '/control-solicitud.php'; // corte de internet: sin envíos duplicados
 require_once __DIR__ . '/validar-sesion.php';
 ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni docentes)
+// Cambiar el catálogo: no el Auxiliar
+ExigirRolParaAcciones(['registrar', 'cambiarEstado'], ['ADM', 'SEC']);
 /**
  * AJAX para gestión del catálogo de especialidades (registrar, listar,
  * cambiar estado) sin recargar la página.

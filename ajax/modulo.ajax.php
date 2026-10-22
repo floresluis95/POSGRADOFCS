@@ -2,6 +2,8 @@
 require_once __DIR__ . '/control-solicitud.php'; // corte de internet: sin envíos duplicados
 require_once __DIR__ . '/validar-sesion.php';
 ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni docentes)
+// Crear y editar módulos: no el Auxiliar (solo los consulta en Matriculados)
+ExigirRolParaAcciones(['registrarModulosPorPrograma', 'actualizarModulo'], ['ADM', 'SEC']);
 /**
  * AJAX para obtener módulos por programa
  */

@@ -52,7 +52,8 @@ try {
             break;
 
         case 'docente':
-            if (!in_array($tipoSesion, ['ADM', 'SEC', 'AUX'])) {
+            // Desde la página Docentes, que el Auxiliar no tiene
+            if (!in_array($tipoSesion, ['ADM', 'SEC'])) {
                 echo json_encode(['success' => false, 'mensaje' => 'No tiene permisos para esta acción']);
                 exit;
             }

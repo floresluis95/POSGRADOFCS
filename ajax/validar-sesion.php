@@ -38,3 +38,23 @@ if (!function_exists('ExigirSesionAjax')) {
         exit;
     }
 }
+
+if (!function_exists('ExigirRolParaAcciones')) {
+    /**
+     * Acciones que escriben, reservadas a ciertos roles dentro de un ajax que el resto del
+     * personal también usa para leer (p. ej. el Auxiliar lista módulos en Matriculados pero
+     * no los crea ni edita). Se llama después de ExigirSesionAjax().
+     * @param string[] $acciones Valores de $_POST['accion'] restringidos
+     * @param string[] $tiposPermitidos Roles que sí pueden ejecutarlas
+     */
+    function ExigirRolParaAcciones(array $acciones, array $tiposPermitidos)
+    {
+        if (!in_array($_POST['accion'] ?? '', $acciones, true) || in_array($_SESSION['Tipo'] ?? '', $tiposPermitidos, true)) {
+            return;
+        }
+        http_response_code(403);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'mensaje' => 'No tiene permisos para esta acción']);
+        exit;
+    }
+}

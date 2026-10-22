@@ -456,12 +456,6 @@ if ($_SESSION["Tipo"] == "SEC") {
                     <span class="kt-menu__link-text">Estudiantes</span>
                   </a>
                 </li>
-                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="usuario" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-user-1" style="color: #9c27b0;"></i>
-                    <span class="kt-menu__link-text">Usuarios</span>
-                  </a>
-                </li>
 
                   <!-- CERTIFICADOS -->
                 <li class="kt-menu__section">
@@ -537,8 +531,8 @@ if ($_SESSION["Tipo"] == "SEC") {
 }
  ?>
 
-<!-- AUXILIAR: matriculación y pagos, calificaciones, docentes y estudiantes.
-     Sin Usuarios, Certificados ni Reportes PDF (bloqueados también en enlaces.controlador.php) -->
+<!-- AUXILIAR: matriculación y pagos, calificaciones y estudiantes. Sin Programas, Módulos,
+     Docentes, Asignación, Usuarios, Certificados ni Reportes PDF (bloqueados también en enlaces.controlador.php) -->
 <?php
 if ($_SESSION["Tipo"] == "AUX") {
  ?>
@@ -554,18 +548,6 @@ if ($_SESSION["Tipo"] == "AUX") {
                   <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
                     <i class="flaticon2-layers-1" style="color: #6f94c9;"></i> PROGRAMAS DE POSGRADO
                   </h4>
-                </li>
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="programas" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-box-1" style="color: #6f94c9;"></i>
-                    <span class="kt-menu__link-text">Programas</span>
-                  </a>
-                </li>
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="modulos" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-layers-2" style="color: #6f94c9;"></i>
-                    <span class="kt-menu__link-text">Módulos</span>
-                  </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="reportemodulos" class="kt-menu__link">
@@ -672,24 +654,6 @@ if ($_SESSION["Tipo"] == "AUX") {
                   </a>
                 </li>
 
-                <!-- DOCENTES -->
-                <li class="kt-menu__section">
-                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
-                    <i class="flaticon2-user-outline-symbol" style="color: #36a3f7;"></i> DOCENTES
-                  </h4>
-                </li>
-                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="docentes" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-avatar" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">Lista de Docentes</span>
-                  </a>
-                </li>
-                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
-                  <a href="asignaciondocente" class="kt-menu__link">
-                    <i class="kt-menu__link-icon flaticon2-add-1" style="color: #36a3f7;"></i>
-                    <span class="kt-menu__link-text">Asignación de Modulos</span>
-                  </a>
-                </li>
 
              
 

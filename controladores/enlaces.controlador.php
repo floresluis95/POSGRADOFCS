@@ -13,22 +13,26 @@
         // está aquí no se abre aunque se escriba la URL a mano (antes las vistas solo
         // exigían sesión, así un estudiante podía abrir "usuario" o "matriculados").
         // Al agregar una página nueva, agregarla también aquí al rol que corresponda.
+        // Reparto acordado con Luis (2026-10-22): el ADM configura el sistema y maneja las
+        // cuentas del personal; Secretaría lleva toda la operación (sin Usuarios: podía
+        // crear un Administrador); el Auxiliar atiende matrícula, cobros y notas.
         const PAGINAS_POR_ROL = [
             'SEC' => [
                 'programas', 'modulos', 'reportemodulos', 'preregistro', 'inscripcion', 'matriculados',
                 'historialpagos', 'ordenespago', 'solicitudesinscripcion', 'rnotasestudiante', 'reportenotas',
                 'bnotaestudiante', 'historialnotaestudiante', 'asignaciondocente',
-                'estudiantes', 'docentes', 'usuario',
+                'estudiantes', 'docentes',
                 'certificadocalificaciones', 'certificadohistorialacademico',
                 'certificadoaprobacionmonografia', 'certificadomediomagnetico', 'certificadorevision', 'registrodocumentos', 'reportes',
                 'orden-generada', 'matriculas', 'detalles',
             ],
-            // Auxiliar: como Secretaría, pero sin Usuarios, Certificados ni Reportes PDF
+            // Auxiliar: matrícula, cobros, estudiantes y notas. Sin Programas, Módulos, Docentes,
+            // Asignación docente, Usuarios, Certificados ni Reportes PDF
             'AUX' => [
-                'programas', 'modulos', 'reportemodulos', 'preregistro', 'inscripcion', 'matriculados',
+                'reportemodulos', 'preregistro', 'inscripcion', 'matriculados',
                 'historialpagos', 'ordenespago', 'solicitudesinscripcion', 'rnotasestudiante', 'reportenotas',
-                'bnotaestudiante', 'historialnotaestudiante', 'asignaciondocente',
-                'estudiantes', 'docentes',
+                'bnotaestudiante', 'historialnotaestudiante',
+                'estudiantes',
                 'orden-generada', 'matriculas', 'detalles',
             ],
             'DOC' => ['reportecalificaciones'],

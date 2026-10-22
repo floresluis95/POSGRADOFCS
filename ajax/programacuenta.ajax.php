@@ -2,6 +2,8 @@
 require_once __DIR__ . '/control-solicitud.php'; // corte de internet: sin envíos duplicados
 require_once __DIR__ . '/validar-sesion.php';
 ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni docentes)
+// Cuentas de los programas: las configura Administración o Secretaría; el Auxiliar solo las lista
+ExigirRolParaAcciones(['registrar', 'cambiarEstado', 'marcarPrincipal'], ['ADM', 'SEC']);
 /**
  * AJAX para gestión de cuentas por programa (registrar, listar,
  * cambiar estado, marcar principal) sin recargar la página.

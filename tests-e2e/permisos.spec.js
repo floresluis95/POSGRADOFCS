@@ -16,11 +16,21 @@ const CASOS = [
   ['adm', 'misordenespago', 'panel'],
   ['adm', 'reportecalificaciones', '404'],
 
-  ['sec', 'usuario', 'GESTIÓN DE USUARIOS'],
+  // Usuarios del personal: solo el ADM (Secretaría podía crear un Administrador)
+  ['sec', 'usuario', 'panel'],
+  ['sec', 'programas', 'PROGRAMAS'],
+  ['sec', 'registrodocumentos', 'REGISTRO DE DOCUMENTOS'],
   ['sec', 'reportecalificaciones', '404'],
 
+  // Auxiliar: matrícula, cobros, estudiantes y notas
   ['aux', 'matriculados', 'MATRICULADOS'],
+  ['aux', 'rnotasestudiante', 'REGISTRO DE CALIFICACIONES'],
   ['aux', 'usuario', 'panel'],
+  ['aux', 'programas', 'panel'],
+  ['aux', 'modulos', 'panel'],
+  ['aux', 'docentes', 'panel'],
+  ['aux', 'asignaciondocente', 'panel'],
+  ['aux', 'registrodocumentos', 'panel'],
 
   ['doc', 'reportecalificaciones', 'REPORTE DE CALIFICACIONES'],
   ['doc', 'matriculados', 'panel'],
