@@ -131,8 +131,7 @@ $(document).ready(function() {
                         '<div class="op-cab-monto">' + bs(orden.MontoTotal) + '</div>' +
                     '</div>' +
                     '<div class="op-pie">' +
-                        '<button type="button" class="btn btn-link text-danger" id="btnAnularOrdenCuota" ' +
-                            'data-id="' + orden.IdOrdenPago + '" data-confirmando="0">Anular orden</button>' +
+                        '<button type="button" class="btn btn-link text-danger btn-abrir-anular" id="btnAnularOrdenCuota" data-caja="#cajaAnularCuota">Anular orden</button>' +
                         // El estudiante pagó pero perdió el voucher: se aparta para poder generar la siguiente
                         '<button type="button" class="btn btn-link mr-auto btn-abrir-extraviado" data-caja="#cajaExtraviadoCuota">Voucher por validar</button>' +
                         '<button type="button" class="btn btn-outline-secondary" id="btnReimprimirOrdenCuota" ' +
@@ -144,7 +143,7 @@ $(document).ready(function() {
                         '</button>' +
                         '<button type="button" class="btn btn-primary btn-ir-cuotas-programa">Registrar voucher</button>' +
                     '</div>' +
-                    '<div id="avisoAnularOrdenCuota" class="small text-danger px-3 pb-2" style="display:none;"></div>' +
+                    window.cajaAnularOrden('cajaAnularCuota', orden.IdOrdenPago) +
                     window.cajaVoucherExtraviado('cajaExtraviadoCuota', orden.IdOrdenPago) +
                 '</div>'
             );
@@ -653,57 +652,78 @@ $(document).ready(function() {
     // Botón "Anular orden": cancela la orden de pago pendiente (baja lógica, Estado=ANULADO)
     // para poder generar una nueva con el monto/cuenta correctos. Reutiliza la misma acción
     // que usa Pre-Registro para anular una orden de matrícula: solo filtra por IdOrdenPago +
-    // Estado=PENDIENTE, así que aplica igual a las órdenes de cuota del programa.
+    // Estado=PENDIENTE, así que aplica igual a las órdenes de cuota del programa y a las de
+    // clínica. Desde aquí el motivo es obligatorio (se guarda con quién y cuándo).
     //
-    // La confirmación es EN LÍNEA (clic dos veces), sin SweetAlert2: un popup con botones
-    // propios lanzado desde DENTRO de un modal de Bootstrap ya abierto puede quedar visible
-    // pero no responder al clic (conflicto conocido entre el backdrop/foco del modal y el
-    // popup). Como esta acción se dispara desde el modal "Gestión de Pagos" que ya está
-    // abierto, se evita ese riesgo por completo con un confirm inline.
-    let anularOrdenTimeout = null;
+    // Caja EN LÍNEA, sin SweetAlert2: un popup lanzado desde DENTRO de un modal de Bootstrap
+    // ya abierto puede no responder al clic ni recibir el teclado (igual que "Voucher por validar").
+    window.cajaAnularOrden = function(idCaja, idOrdenPago) {
+        return '<div class="vx-caja vx-caja-anular" id="' + idCaja + '" style="display:none;">' +
+            '<div class="vx-caja-cab"><i class="fa fa-ban"></i> Anular orden</div>' +
+            '<div class="vx-caja-cuerpo">' +
+                '<label class="gp-label" for="' + idCaja + 'Motivo">Motivo de la anulación <span class="gp-req">*</span></label>' +
+                '<textarea class="form-control vx-motivo an-motivo" id="' + idCaja + 'Motivo" rows="2" maxlength="255" ' +
+                    'placeholder="Ej.: Monto equivocado; se generará una orden nueva"></textarea>' +
+                '<div class="vx-nota">No se puede deshacer. Después podrá generar otra orden.</div>' +
+                '<div class="vx-aviso" style="display:none;"></div>' +
+                '<div class="vx-pie">' +
+                    '<button type="button" class="btn btn-sm btn-outline-secondary btn-cerrar-anular">Cancelar</button>' +
+                    '<button type="button" class="btn btn-sm btn-danger btn-confirmar-anular" data-id="' + idOrdenPago + '">Anular orden</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    };
 
-    $(document).on('click', '#btnAnularOrdenCuota', function() {
+    // Abrir una caja (anular o voucher por validar) cierra la otra
+    $(document).on('click', '.btn-abrir-anular', function() {
+        const $caja = $($(this).data('caja'));
+        $('.vx-caja:visible').not($caja).slideUp(150);
+        $caja.find('.vx-aviso').hide();
+        $caja.slideDown(150);
+        $caja.find('.an-motivo').trigger('focus');
+    });
+    $(document).on('click', '.btn-cerrar-anular', function() {
+        $(this).closest('.vx-caja').slideUp(150);
+    });
+    $(document).on('click', '.btn-confirmar-anular', function() {
         const $btn = $(this);
-        const idOrdenPago = $btn.data('id');
-        const $aviso = $('#avisoAnularOrdenCuota');
-
-        if ($btn.data('confirmando') !== 1) {
-            $btn.data('confirmando', 1).html('¿Confirmar? Clic de nuevo');
-            $aviso.text('Esta acción no se puede deshacer. Podrá generar una nueva orden después.').show();
-
-            clearTimeout(anularOrdenTimeout);
-            anularOrdenTimeout = setTimeout(function() {
-                $btn.data('confirmando', 0).html('Anular orden');
-                $aviso.hide();
-            }, 4000);
+        const $caja = $btn.closest('.vx-caja');
+        const motivo = ($caja.find('.an-motivo').val() || '').trim();
+        const $aviso = $caja.find('.vx-aviso');
+        if (motivo.length < 5) {
+            $aviso.text('Escriba el motivo de la anulación.').show();
+            $caja.find('.an-motivo').trigger('focus');
             return;
         }
-
-        clearTimeout(anularOrdenTimeout);
-        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Anulando...');
         $aviso.hide();
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Anulando...');
 
         $.ajax({
             url: 'ajax/ordenpago.ajax.php',
             type: 'POST',
-            data: { accion: 'anularPreregistro', idOrdenPago: idOrdenPago },
             dataType: 'json',
+            data: { accion: 'anularPreregistro', idOrdenPago: $btn.data('id'), motivo: motivo },
             success: function(resp) {
-                if (resp.success) {
-                    window.cargarOrdenPagoModulos(opContexto);
-                    if (typeof window.cargarCuotasPrograma === 'function') {
-                        window.cargarCuotasPrograma(opContexto.programaID);
-                    }
-                } else {
+                if (!resp.success) {
                     $aviso.text(resp.mensaje || 'No se pudo anular la orden').show();
-                    $btn.prop('disabled', false).data('confirmando', 0).html('Anular orden');
+                    $btn.prop('disabled', false).html('Anular orden');
+                    return;
                 }
+                // Cada pestaña recarga lo suyo (cuotas aquí; clínicas en ordenpagoclinica.js)
+                $(document).trigger('orden-anulada', [$caja.attr('id')]);
             },
             error: function() {
                 $aviso.text('No se pudo anular la orden').show();
-                $btn.prop('disabled', false).data('confirmando', 0).html('Anular orden');
+                $btn.prop('disabled', false).html('Anular orden');
             }
         });
+    });
+    $(document).on('orden-anulada', function(e, idCaja) {
+        if (idCaja !== 'cajaAnularCuota') return;
+        window.cargarOrdenPagoModulos(opContexto);
+        if (typeof window.cargarCuotasPrograma === 'function') {
+            window.cargarCuotasPrograma(opContexto.programaID);
+        }
     });
 
     // ========================================
@@ -731,22 +751,9 @@ $(document).ready(function() {
         '</div>';
     };
 
-    // "Anular orden" y "Voucher extraviado" no se mezclan: abrir uno cancela el otro
-    function cancelarAnulacionEnCurso() {
-        $('#btnAnularOrdenCuota, #clBtnAnular').each(function() {
-            if ($(this).data('confirmando') === 1) {
-                $(this).data('confirmando', 0).html('Anular orden');
-            }
-        });
-        $('#avisoAnularOrdenCuota, #clAvisoAnular').hide();
-    }
-    $(document).on('click', '#btnAnularOrdenCuota, #clBtnAnular', function() {
-        $('.vx-caja:visible').slideUp(150);
-    });
-
     $(document).on('click', '.btn-abrir-extraviado', function() {
-        cancelarAnulacionEnCurso();
         const $caja = $($(this).data('caja'));
+        $('.vx-caja:visible').not($caja).slideUp(150);
         $caja.slideDown(150);
         $caja.find('.vx-motivo').trigger('focus');
     });

@@ -1388,7 +1388,18 @@ function anularPreregistro()
         return;
     }
 
-    $resultado = OrdenPagoModelos::AnularPreregistroModelo((int)$_POST['idOrdenPago']);
+    // Matriculados (cuotas y clínicas) envía el motivo y es obligatorio; Pre-Registro no lo envía
+    $motivo = null;
+    if (isset($_POST['motivo'])) {
+        $motivo = trim($_POST['motivo']);
+        if (mb_strlen($motivo) < 5) {
+            echo json_encode(['success' => false, 'mensaje' => 'Escriba el motivo de la anulación']);
+            return;
+        }
+        $motivo = mb_substr($motivo, 0, 255); // texto tal cual: las pantallas lo escapan al mostrarlo
+    }
+
+    $resultado = OrdenPagoModelos::AnularPreregistroModelo((int)$_POST['idOrdenPago'], $motivo, $motivo !== null ? OrdenPagoModelos::ResponsableSesion() : null);
     echo json_encode([
         'success' => $resultado['status'] === 'exitoso',
         'mensaje' => $resultado['mensaje']
@@ -1915,6 +1926,10 @@ function listarOrdenesGeneradas()
         // el enlace desde Matriculados (ordenespago?ci=...)
         $fila['ciBase'] = trim((string)$o['Ci']);
         $fila['responsable'] = $o['ResponsableGeneracion'];
+        // Anulada desde Matriculados: por qué, quién y cuándo (solo para el personal)
+        $fila['motivoAnulacion'] = $o['MotivoAnulacion'] ?? null;
+        $fila['responsableAnulacion'] = $o['ResponsableAnulacion'] ?? null;
+        $fila['fechaAnulacion'] = $o['FechaAnulacion'] ?? null;
         // Para validar el voucher desde esta pantalla (cuotas y clínicas se
         // confirman por inscripción; la cuota exige el monto exacto de la orden)
         $fila['idInscripcion'] = (int)($o['idinscripcion'] ?? 0);

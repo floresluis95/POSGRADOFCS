@@ -75,8 +75,12 @@
         if (o.tipo === 'MATRICULA' && o.pagoCompleto) tipo += '<span class="op-sub">Programa completo</span>';
 
         // Una orden anulada no sirve para pagar: no se ofrece imprimirla
+        // (con el motivo, si se anuló desde Matriculados)
         var accion = estado === 'ANULADO'
-            ? '<span class="op-sub">Sin validez</span>'
+            ? '<span class="op-sub">Sin validez</span>' + (o.motivoAnulacion
+                ? '<span class="op-sub op-motivo-anulacion" title="' + esc(
+                    [o.responsableAnulacion ? 'Anulada por ' + o.responsableAnulacion : '', o.fechaAnulacion ? 'el ' + String(o.fechaAnulacion).slice(0, 16) : ''].join(' ').trim()
+                  ) + '">Motivo: ' + esc(o.motivoAnulacion) + '</span>' : '')
             : '<a href="vistas/componentes/orden-pago-pdf.php?idordenpago=' + o.idOrdenPago + '" target="_blank" class="op-imprimir"' +
               (estado === 'PAGADA' ? ' data-pagada="1" data-numero="' + esc(o.numeroOrden || '') + '"' : '') + '>' +
               '<i class="fa fa-print"></i> Imprimir</a>';

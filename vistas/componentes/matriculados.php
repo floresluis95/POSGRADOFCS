@@ -338,6 +338,12 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
     #modalInscribirModulo .btn-abrir-extraviado:focus,
     #modalInscribirModulo .btn-abrir-extraviado:active { box-shadow: none !important; text-decoration: none; }
     #modalInscribirModulo .btn-abrir-extraviado:focus:not(:hover) { background: transparent !important; color: var(--gp-primario); }
+    /* Tras el clic queda enfocado: al quitar el puntero el tema lo pintaba lila */
+    #modalInscribirModulo #btnAnularOrdenCuota:focus:not(:hover),
+    #modalInscribirModulo #clBtnAnular:focus:not(:hover) { background: transparent !important; color: var(--gp-peligro) !important; }
+    /* Caja para anular: el mismo formato que "Voucher por validar", con acento rojo */
+    #modalInscribirModulo .vx-caja-anular { border-left-color: var(--gp-peligro); }
+    #modalInscribirModulo .vx-caja-anular .vx-caja-cab { background: #fef2f2; color: var(--gp-peligro); }
 
     /* Formulario de orden de clínica en pasos (ordenpagoclinica.js) */
     #modalInscribirModulo .cl-paso + .cl-paso { border-top: 1px solid var(--gp-borde); padding-top: 12px; }

@@ -230,10 +230,9 @@ test.describe('Pantalla', () => {
     await expect(modal.locator('#cajaExtraviadoCuota')).toBeVisible();
     await modal.locator('#btnAnularOrdenCuota').click();
     await expect(modal.locator('#cajaExtraviadoCuota')).toBeHidden();
-    await expect(modal.locator('#avisoAnularOrdenCuota')).toBeVisible();
+    await expect(modal.locator('#cajaAnularCuota')).toBeVisible();
     await modal.locator('.btn-abrir-extraviado').click();
-    await expect(modal.locator('#avisoAnularOrdenCuota')).toBeHidden();
-    await expect(modal.locator('#btnAnularOrdenCuota')).toHaveText('Anular orden');
+    await expect(modal.locator('#cajaAnularCuota')).toBeHidden();
     expect(valor(`SELECT Estado FROM ordenpago WHERE IdOrdenPago = ${ordenA}`)).toBe('PENDIENTE');
 
     // Orden pendiente → Voucher extraviado (motivo obligatorio)

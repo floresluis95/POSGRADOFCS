@@ -185,7 +185,7 @@ $(document).ready(function() {
         // Pendiente: anular, voucher extraviado, reimprimir. Extraviada: solo cancelar
         const acciones = extraviada
             ? '<button type="button" class="btn btn-link mr-auto px-0" id="clBtnCancelarExtraviada">Cancelar</button>'
-            : '<button type="button" class="btn btn-link text-danger px-0" id="clBtnAnular" data-id="' + orden.IdOrdenPago + '" data-confirmando="0">Anular orden</button>' +
+            : '<button type="button" class="btn btn-link text-danger px-0 btn-abrir-anular" id="clBtnAnular" data-caja="#clCajaAnular">Anular orden</button>' +
               '<button type="button" class="btn btn-link mr-auto btn-abrir-extraviado" data-caja="#clCajaExtraviado">Voucher por validar</button>' +
               '<button type="button" class="btn btn-outline-secondary" id="clBtnReimprimir" data-id="' + orden.IdOrdenPago + '"><i class="fa fa-print"></i> Reimprimir</button>';
 
@@ -223,9 +223,8 @@ $(document).ready(function() {
                         acciones +
                         '<button type="submit" id="clBtnGuardarPago" class="btn btn-primary">' + textoBotonValidar(orden) + '</button>' +
                     '</div>' +
-                    '<div id="clAvisoAnular" class="small text-danger px-3 pb-2" style="display:none;"></div>' +
                 '</form>' +
-                (extraviada ? '' : window.cajaVoucherExtraviado('clCajaExtraviado', orden.IdOrdenPago)) +
+                (extraviada ? '' : window.cajaAnularOrden('clCajaAnular', orden.IdOrdenPago) + window.cajaVoucherExtraviado('clCajaExtraviado', orden.IdOrdenPago)) +
             '</div>';
 
         $('#clinicaContenido').html(html);
@@ -576,49 +575,10 @@ $(document).ready(function() {
         });
     }
 
-    // ========================================
-    // ANULAR ORDEN PENDIENTE (confirmación en línea: un SweetAlert dentro del modal
-    // de Bootstrap ya abierto puede no responder al clic, ver ordenpagomodulos.js)
-    // ========================================
-    let anularTimeout = null;
-
-    $(document).on('click', '#clBtnAnular', function() {
-        const $btn = $(this);
-        const $aviso = $('#clAvisoAnular');
-
-        if ($btn.data('confirmando') !== 1) {
-            $btn.data('confirmando', 1).html('<i class="fa fa-exclamation-triangle"></i> ¿Anular? Clic de nuevo');
-            $aviso.text('No se puede deshacer. Después podrá generar otra orden.').show();
-            clearTimeout(anularTimeout);
-            anularTimeout = setTimeout(function() {
-                $btn.data('confirmando', 0).html('Anular orden');
-                $aviso.hide();
-            }, 4000);
-            return;
-        }
-
-        clearTimeout(anularTimeout);
-        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Anulando...');
-        $aviso.hide();
-
-        $.ajax({
-            url: 'ajax/ordenpago.ajax.php',
-            type: 'POST',
-            dataType: 'json',
-            data: { accion: 'anularPreregistro', idOrdenPago: $btn.data('id') },
-            success: function(resp) {
-                if (resp.success) {
-                    recargar();
-                } else {
-                    $aviso.text(resp.mensaje || 'No se pudo anular la orden').show();
-                    $btn.prop('disabled', false).data('confirmando', 0).html('Anular orden');
-                }
-            },
-            error: function() {
-                $aviso.text('No se pudo anular la orden').show();
-                $btn.prop('disabled', false).data('confirmando', 0).html('Anular orden');
-            }
-        });
+    // ANULAR ORDEN PENDIENTE: la caja con el motivo y el envío están en ordenpagomodulos.js
+    // (window.cajaAnularOrden); aquí solo se recarga la pestaña de clínicas
+    $(document).on('orden-anulada', function(e, idCaja) {
+        if (idCaja === 'clCajaAnular') recargar();
     });
 
 });

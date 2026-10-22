@@ -1071,17 +1071,27 @@ class OrdenPagoModelos
      * Solo toca la tabla ordenpago; estudianteprograma no se ve afectada
      * (nunca llegó a tener un registro para este preregistro).
      * @param int $idOrdenPago
+     * @param string|null $motivo Motivo de la anulación (Matriculados lo exige; Pre-Registro no lo envía)
+     * @param string|null $responsable Quién la anula
      * @return array
      */
-    public static function AnularPreregistroModelo($idOrdenPago)
+    public static function AnularPreregistroModelo($idOrdenPago, $motivo = null, $responsable = null)
     {
         try {
-            $stmt = Conexion::Conectar()->prepare(
-                "UPDATE ordenpago SET Estado = 'ANULADO'
-                 WHERE IdOrdenPago = :idOrdenPago AND Estado = 'PENDIENTE'"
-            );
-            $stmt->bindParam(":idOrdenPago", $idOrdenPago, PDO::PARAM_INT);
-            $stmt->execute();
+            $pdo = Conexion::Conectar();
+            try {
+                $stmt = $pdo->prepare(
+                    "UPDATE ordenpago SET Estado = 'ANULADO', MotivoAnulacion = :motivo,
+                            FechaAnulacion = NOW(), ResponsableAnulacion = :responsable
+                     WHERE IdOrdenPago = :idOrdenPago AND Estado = 'PENDIENTE'"
+                );
+                $stmt->execute([':motivo' => $motivo, ':responsable' => $responsable, ':idOrdenPago' => (int)$idOrdenPago]);
+            } catch (PDOException $e) {
+                if ($e->getCode() !== '42S22') throw $e;
+                // Migración 28 pendiente (sin columnas del motivo): se anula igual
+                $stmt = $pdo->prepare("UPDATE ordenpago SET Estado = 'ANULADO' WHERE IdOrdenPago = :idOrdenPago AND Estado = 'PENDIENTE'");
+                $stmt->execute([':idOrdenPago' => (int)$idOrdenPago]);
+            }
 
             if ($stmt->rowCount() === 0) {
                 return ['status' => 'error', 'mensaje' => 'El preregistro ya no está pendiente o no existe'];
@@ -1090,7 +1100,7 @@ class OrdenPagoModelos
             return ['status' => 'exitoso', 'mensaje' => 'Preregistro anulado correctamente'];
         } catch (PDOException $e) {
             error_log("Error en AnularPreregistroModelo: " . $e->getMessage());
-            return ['status' => 'error', 'mensaje' => 'Error en el servidor: ' . $e->getMessage()];
+            return ['status' => 'error', 'mensaje' => 'No se pudo anular la orden'];
         }
     }
 
@@ -1215,6 +1225,7 @@ class OrdenPagoModelos
                         op.MontoFinal, op.PagoCompleto, op.FechaGeneracion, op.FechaVencimiento,
                         op.FechaConfirmacion, op.Estado, op.Observaciones, op.ResponsableGeneracion,
                         op.MotivoExtraviado, op.FechaExtraviado, op.ResponsableExtraviado,
+                        op.MotivoAnulacion, op.FechaAnulacion, op.ResponsableAnulacion,
                         -- N° de cuota: posición entre las órdenes de cuota no anuladas de la
                         -- inscripción (PagoModuloModelo::NumeroCuotaDeOrdenModelo) y total del plan
                         CASE WHEN op.Observaciones = 'CUOTA PROGRAMA' AND op.Estado <> 'ANULADO' THEN
