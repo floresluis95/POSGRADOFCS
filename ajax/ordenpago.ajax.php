@@ -742,6 +742,7 @@ function obtenerOrdenesVencidas()
                 'idOrdenPago' => $o['IdOrdenPago'],
                 'numeroOrden' => $o['NumeroOrden'],
                 'nombreEstudiante' => $nombreCompleto,
+                'ci' => $o['Ci'],
                 'nombrePrograma' => $o['NombrePrograma'],
                 'sede' => $o['Sede'],
                 'monto' => (float)$o['MontoTotal'],

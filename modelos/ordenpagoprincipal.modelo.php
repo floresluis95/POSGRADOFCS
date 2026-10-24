@@ -1116,7 +1116,7 @@ class OrdenPagoModelos
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT
                     op.IdOrdenPago, op.NumeroOrden, op.MontoTotal, op.FechaVencimiento, op.ProgramaID,
-                    e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Celular,
+                    e.EstudianteID, e.Ci, e.Nombre, e.Apaterno, e.Amaterno, e.Celular,
                     p.NombrePrograma, p.Sede
                  FROM ordenpago op
                  INNER JOIN estudiante e ON e.EstudianteID = op.EstudianteID

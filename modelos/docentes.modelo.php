@@ -202,6 +202,29 @@
         return $resultado['total'] > 0;
     }
 
+    /* CARGA DOCENTE: todos los módulos con docente asignado (vigentes y concluidos), con su
+       programa, grado y año. El año es el de inicio del módulo o, si no lo tiene, el del
+       programa. Lo usa la sección "Carga docente" de Asignación Docente. */
+    public static function CargaDocenteModelo()
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare("SELECT
+                    d.DocenteID, d.Ci, d.Nombre, d.Apaterno, d.Amaterno, d.Especialidad, d.Estado AS EstadoDocente,
+                    m.Idmodulo, m.codigomodulo, m.nombremodulo, m.estadomodulo, m.FechaInicio, m.FechaFinal,
+                    p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Sede,
+                    YEAR(COALESCE(m.FechaInicio, p.FechaInicio)) AS Anio
+                FROM modulos m
+                INNER JOIN docente d ON d.DocenteID = m.DocenteID
+                INNER JOIN programa p ON p.ProgramaID = m.ProgramaId
+                ORDER BY d.Apaterno, d.Amaterno, d.Nombre, Anio DESC, p.GradoAcademico, p.NombrePrograma, m.Idmodulo");
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en CargaDocenteModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
     /* OBTENER DOCENTE POR ID */
     public static function ObtenerDocentePorIDModelo($DocenteID)
     {

@@ -284,6 +284,56 @@
     transform: scale(1.05);
 }
 
+/* Escritorio: el logo va al centro de la barra (no después del menú). Las
+   opciones del menú se achican para no montarse sobre el logo. */
+@media (min-width: 1025px) {
+    #kt_header > .kt-container {
+        position: relative;
+    }
+
+    #kt_header .kt-header__brand {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        z-index: 2;
+    }
+
+    #kt_header_menu .kt-menu__nav .kt-menu__item {
+        margin: 0 2px;
+    }
+
+    #kt_header_menu .kt-menu__nav .kt-menu__link {
+        padding: 9px 12px;
+        font-size: 12px;
+    }
+
+    #kt_header_menu .kt-menu__link-icon {
+        margin-right: 6px;
+        font-size: 14px;
+    }
+}
+
+/* Pantallas medianas: menos espacio a los lados del logo */
+@media (min-width: 1025px) and (max-width: 1280px) {
+    .kt-header__brand-logo img {
+        height: 42px;
+    }
+
+    #kt_header_menu .kt-menu__nav .kt-menu__link {
+        padding: 8px 8px;
+        font-size: 11px;
+        letter-spacing: 0.2px;
+    }
+
+    #kt_header_menu .kt-menu__link-icon {
+        display: none;
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .user-info-modern {
@@ -317,6 +367,26 @@
 
     #kt_header_menu .kt-menu__nav .kt-menu__link::before {
         display: none;
+    }
+
+    /* La barra del usuario también pasa a una franja blanca: el recuadro con
+       el nombre toma el azul institucional para que el texto blanco se lea. */
+    .kt-header__topbar-wrapper,
+    .kt-header__topbar-wrapper:hover {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        backdrop-filter: none;
+        box-shadow: 0 2px 8px rgba(30, 60, 114, 0.25);
+    }
+
+    .kt-header__topbar-wrapper:hover {
+        transform: none;
+    }
+
+    .user-name-modern {
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 }
 </style>

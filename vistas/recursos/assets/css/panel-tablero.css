@@ -254,6 +254,32 @@ a.pn-chip:hover { text-decoration: none; filter: brightness(.97); }
 .pn-acceso strong { display: block; font-size: 13px; font-weight: 600; }
 .pn-acceso small { display: block; font-size: 11.5px; color: var(--pn-texto-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pn-acceso > span:last-child { min-width: 0; }
+/* Accesos agrupados por tema (personal): título pequeño sobre cada grupo */
+.pn-accesos-grupo {
+    margin: 0;
+    padding: 14px 16px 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--pn-texto-2);
+}
+.pn-accesos-grupo + .pn-accesos { padding-top: 8px; }
+.pn-accesos + .pn-accesos-grupo { border-top: 1px solid var(--pn-borde); }
+/* Certificados en dorado institucional, para distinguirlos de un vistazo */
+.pn-accesos-grupo.is-certificados { color: #9a6a00; }
+.pn-accesos.is-certificados .pn-acceso-icono { background: linear-gradient(135deg, #b8860b 0%, #d4a72c 100%); }
+.pn-accesos.is-certificados .pn-acceso:hover { border-color: #e6cf8f; background: #fffbf0; }
+/* Auxiliar: los accesos ocupan la columna ancha, en tres columnas */
+.pn-grid-aux { align-items: start; }
+.pn-grid-aux .pn-accesos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1199px) {
+    .pn-grid-aux .pn-accesos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Enlaces directos dentro de las listas (nombre del estudiante → Matriculados) */
+a.pn-item-enlace { color: inherit; text-decoration: none; }
+a.pn-item-enlace:hover strong { color: var(--pn-primario-2); text-decoration: underline; }
+a.pn-item.pn-item-enlace:hover { background: #fafbfe; }
 
 /* Estudiante: programas */
 .pn-programa { padding: 18px 20px; border-bottom: 1px solid var(--pn-borde); }

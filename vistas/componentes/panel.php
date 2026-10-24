@@ -154,10 +154,10 @@
                         <span class="pn-item-icono <?php echo $pago['Concepto'] === 'CLINICA' ? 'is-clinica' : 'is-verde'; ?>">
                           <i class="fas <?php echo $pago['Concepto'] === 'CLINICA' ? 'fa-stethoscope' : 'fa-check'; ?>"></i>
                         </span>
-                        <div class="pn-item-cuerpo">
+                        <a href="matriculados?buscar=<?php echo urlencode($pago['Ci']); ?>" class="pn-item-cuerpo pn-item-enlace" title="Ver en Matriculados">
                           <strong><?php echo htmlspecialchars($pago['Estudiante']); ?></strong>
                           <small><?php echo $pago['Concepto'] === 'CLINICA' ? 'Clínica' : 'Cuota'; ?> · <?php echo htmlspecialchars($pago['NombrePrograma']); ?></small>
-                        </div>
+                        </a>
                         <div class="pn-item-fin">
                           <strong>Bs. <?php echo number_format((float)$pago['Monto'], 2, ',', '.'); ?></strong>
                           <small><?php echo $pago['Fecha'] ? date('d/m/Y', strtotime($pago['Fecha'])) : ''; ?></small>
@@ -262,12 +262,12 @@
                       ?>
                       <li class="pn-item">
                         <span class="pn-item-icono is-azul"><i class="fas fa-book-open"></i></span>
-                        <div class="pn-item-cuerpo">
+                        <a href="reportecalificaciones" class="pn-item-cuerpo pn-item-enlace" title="Registrar calificaciones">
                           <strong><?php echo htmlspecialchars($mod['codigomodulo']); ?> · <?php echo htmlspecialchars($mod['nombremodulo']); ?></strong>
                           <small><?php echo htmlspecialchars($mod['NombrePrograma']); ?>
                             <?php if (!empty($mod['FechaInicio'])): ?> · <?php echo date('d/m/Y', strtotime($mod['FechaInicio'])); ?><?php echo !empty($mod['FechaFinal']) ? ' al ' . date('d/m/Y', strtotime($mod['FechaFinal'])) : ''; ?><?php endif; ?>
                           </small>
-                        </div>
+                        </a>
                         <span class="pn-chip <?php echo $claseEstado; ?>"><?php echo htmlspecialchars(mb_convert_case($estadoMod, MB_CASE_TITLE, 'UTF-8')); ?></span>
                       </li>
                       <?php endforeach; ?>
@@ -279,6 +279,12 @@
                 <div class="pn-col">
                   <?php include __DIR__ . '/modulos/panel-accesos-eventos.php'; ?>
                 </div>
+              </div>
+
+              <?php elseif ($tipoSesion === 'AUX'): ?>
+              <!-- ===== AUXILIAR: accesos y eventos (sin indicadores de cobranza, que son de ADM/SEC) ===== -->
+              <div class="pn-grid pn-grid-aux">
+                <?php include __DIR__ . '/modulos/panel-accesos-eventos.php'; ?>
               </div>
               <?php endif; ?>
 
@@ -819,15 +825,16 @@ window.addEventListener('load', function() {
                     : '<small class="text-muted">Sin celular</small>';
                 html += '<li class="pn-item">' +
                     '<span class="pn-item-icono is-rojo"><i class="fas fa-clock"></i></span>' +
-                    '<div class="pn-item-cuerpo">' +
+                    // El nombre lleva a Matriculados filtrado por el C.I. del estudiante
+                    '<a href="matriculados?buscar=' + encodeURIComponent(o.ci || '') + '" class="pn-item-cuerpo pn-item-enlace" title="Ver en Matriculados">' +
                         '<strong>' + escapar(o.nombreEstudiante) + '</strong>' +
                         '<small>' + escapar(o.nombrePrograma) + ' · Bs. ' + Number(o.monto).toFixed(2) + ' · hace ' + parseInt(o.diasVencido, 10) + ' día(s)</small>' +
-                    '</div>' +
+                    '</a>' +
                     contacto +
                 '</li>';
             });
             if (ordenes.length > 6) {
-                html += '<li class="pn-item"><small class="text-muted">Y ' + (ordenes.length - 6) + ' más en Matriculados.</small></li>';
+                html += '<li class="pn-item"><a href="matriculados" class="pn-link">Y ' + (ordenes.length - 6) + ' más en Matriculados</a></li>';
             }
             $contenedor.html('<ul class="pn-lista">' + html + '</ul>');
         },

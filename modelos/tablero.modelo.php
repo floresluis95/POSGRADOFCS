@@ -74,7 +74,7 @@ class TableroModelo
             $stmt = Conexion::Conectar()->prepare(
                 "SELECT * FROM (
                     SELECT 'CUOTA' AS Concepto, pm.montocuota AS Monto, pm.fechapago AS Fecha, pm.FechaRegistro AS Registro,
-                           CONCAT(e.Nombre, ' ', e.Apaterno) AS Estudiante, p.NombrePrograma
+                           CONCAT(e.Nombre, ' ', e.Apaterno) AS Estudiante, e.Ci, p.NombrePrograma
                     FROM pagomodulo pm
                     INNER JOIN estudianteprograma ep ON ep.idInscripcion = pm.idinscripcion
                     INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID
@@ -82,7 +82,7 @@ class TableroModelo
                     WHERE pm.Estado = 'PAGADO'
                     UNION ALL
                     SELECT 'CLINICA', pcl.Monto, pcl.FechaPago, pcl.FechaRegistro,
-                           CONCAT(e.Nombre, ' ', e.Apaterno), p.NombrePrograma
+                           CONCAT(e.Nombre, ' ', e.Apaterno), e.Ci, p.NombrePrograma
                     FROM pagoclinica pcl
                     INNER JOIN estudianteprograma ep ON ep.idInscripcion = pcl.idinscripcion
                     INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID

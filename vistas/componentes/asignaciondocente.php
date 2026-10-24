@@ -92,6 +92,57 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
 @media (max-width: 767px) {
     .ad-col-codigo { display: none; }
 }
+
+/* Pestañas: Asignar docentes / Carga docente */
+.ad-tabs { display: flex; gap: 4px; margin-bottom: -1px; position: relative; z-index: 1; }
+.ad-tab { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; font-size: 13.5px; font-weight: 600;
+    color: var(--ad-texto-2); background: #eef1f5; border: 1px solid var(--ad-borde); border-bottom: 0;
+    border-radius: 8px 8px 0 0; cursor: pointer; }
+.ad-tab:hover { color: var(--ad-primario); background: #f6f8fb; }
+.ad-tab.is-activa { color: var(--ad-primario); background: #fff; box-shadow: inset 0 3px 0 var(--ad-primario); }
+.ad-tab:focus { outline: none; }
+.ad-tab-num { min-width: 22px; padding: 0 7px; border-radius: 10px; font-size: 11.5px; line-height: 19px; text-align: center;
+    background: var(--ad-borde); color: var(--ad-texto-2); }
+.ad-tab.is-activa .ad-tab-num { background: var(--ad-primario); color: #fff; }
+.ad-panel > .ad-card { border-top-left-radius: 0; }
+@media (max-width: 575px) { .ad-tab { flex: 1 1 0; justify-content: center; padding: 10px 8px; font-size: 12.5px; } }
+
+/* Carga docente */
+.ad-cab-ayuda { font-size: 12px; font-weight: 400; color: var(--ad-texto-2); margin-left: 6px; }
+@media (max-width: 767px) { .ad-cab-ayuda { display: none; } }
+.ad-filtro-corto { flex: 0 1 150px; min-width: 120px; }
+.ad-filtro-boton { flex: 0 0 auto; min-width: 0; }
+.ad-filtro-boton .btn { height: 34px; }
+.cd-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 16px 8px; }
+.cd-vistas { display: inline-flex; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; }
+.cd-vista { border: 0; background: #fff; padding: 6px 14px; font-size: 12.5px; font-weight: 600; color: var(--ad-texto-2); cursor: pointer; }
+.cd-vista + .cd-vista { border-left: 1px solid #cbd5e1; }
+.cd-vista.is-activa { background: var(--ad-primario); color: #fff; }
+.cd-vista:focus { outline: none; }
+.cd-filtro-texto { flex: 1 1 200px; font-size: 12px; color: var(--ad-texto-2); }
+.cd-filtro-texto b { color: var(--ad-texto); }
+.cd-exportar { margin-left: auto; }
+.cd-ayuda { margin: 0; padding: 0 16px 6px; font-size: 12px; color: var(--ad-texto-2); }
+.cd-col-oculta { display: none; }
+#tabla-carga-resumen tbody tr.cd-docente-fila { cursor: pointer; }
+#tabla-carga-resumen tbody tr.cd-docente-fila:hover td { background: #f5f8fd; }
+.cd-ver { font-size: 12px; padding: 3px 10px; white-space: nowrap; border: 1px solid #cbd5e1; background: #fff; color: var(--ad-primario); border-radius: 5px; }
+.cd-docente-fila:hover .cd-ver { background: var(--ad-primario); color: #fff; border-color: var(--ad-primario); }
+.cd-grupo td { background: var(--ad-primario-suave); border-top: 1px solid var(--ad-borde); padding: 7px 12px; }
+.cd-grupo .ad-grupo-nombre i { font-size: 11px; margin-right: 3px; opacity: .7; }
+.cd-grado { display: inline-block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+    color: var(--ad-texto-2); background: #f1f5f9; border-radius: 4px; padding: 0 6px; margin-right: 4px; }
+.cd-sede { display: block; font-size: 11px; color: var(--ad-texto-2); }
+.cd-vista i { margin-right: 5px; }
+@media (max-width: 767px) { .cd-col-especialidad, .cd-col-movil { display: none; } }
+@media (max-width: 575px) { .ad-tab { white-space: nowrap; } .ad-tab .ad-tab-num { display: none; } }
+.cd-cantidad { display: inline-block; min-width: 28px; padding: 1px 8px; border-radius: 10px; font-weight: 700;
+    background: var(--ad-primario-suave); color: var(--ad-primario); }
+.ad-estado { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11.5px; font-weight: 600;
+    background: #f1f5f9; color: var(--ad-texto-2); }
+.ad-estado.is-activo { background: #dcfce7; color: var(--ad-exito); }
+.ad-estado.is-validado, .ad-estado.is-cerrado { background: var(--ad-primario-suave); color: var(--ad-primario); }
+.ad-estado.is-inactivo { background: #fee2e2; color: var(--ad-peligro); }
 </style>
 
 <body class="kt-page--loading-enabled kt-page--loading kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header--minimize-menu kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left kt-aside--fixed kt-page--loading">
@@ -141,7 +192,7 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                     <div class="kt-subheader__breadcrumbs">
                                         <a href="#" class="kt-subheader__breadcrumbs-home"><i class="flaticon2-shelter"></i></a>
                                         <span class="kt-subheader__breadcrumbs-separator"></span>
-                                        <h4><?php echo $esDocente ? 'CONSULTA DE ASIGNACIONES' : 'MÓDULOS VIGENTES'; ?></h4>
+                                        <h4 id="ad-subtitulo"><?php echo $esDocente ? 'CONSULTA DE ASIGNACIONES' : 'MÓDULOS VIGENTES'; ?></h4>
                                     </div>
                                 </div>
                                 <div class="kt-subheader__toolbar">
@@ -215,8 +266,44 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                             }
                             ksort($sedes);
                             usort($programas, function ($a, $b) { return strcmp($a['texto'], $b['texto']); });
+
+                            // ===== Carga docente: cuántos módulos tiene cada docente (vigentes y
+                            // concluidos), filtrable por docente, año, grado, programa y estado =====
+                            require_once __DIR__ . '/../../modelos/docentes.modelo.php';
+                            $carga = DocentesModelo::CargaDocenteModelo();
+
+                            $cdDocentes = [];
+                            $cdAnios = [];
+                            $cdGrados = [];
+                            $cdProgramas = [];
+                            $cdEstados = [];
+                            foreach ($carga as $c) {
+                                $cdDocentes[$c['DocenteID']] = trim($c['Apaterno'] . ' ' . ($c['Amaterno'] ?? '') . ' ' . $c['Nombre']);
+                                if (!empty($c['Anio'])) $cdAnios[$c['Anio']] = true;
+                                if ($c['GradoAcademico'] !== '') $cdGrados[$c['GradoAcademico']] = true;
+                                $cdProgramas[$c['ProgramaID']] = ['grado' => $c['GradoAcademico'], 'texto' => $c['GradoAcademico'] . ' - ' . $c['NombrePrograma'] . ($c['Sede'] ? ' (' . $c['Sede'] . ')' : '')];
+                                $cdEstados[$c['estadomodulo']] = true;
+                            }
+                            asort($cdDocentes);
+                            krsort($cdAnios);
+                            ksort($cdGrados);
+                            uasort($cdProgramas, function ($a, $b) { return strcmp($a['texto'], $b['texto']); });
+                            ksort($cdEstados);
                             ?>
 
+                            <!-- Dos pestañas: asignar docentes a los módulos vigentes / consultar la carga de cada docente -->
+                            <div class="ad-tabs" role="tablist">
+                                <button type="button" class="ad-tab is-activa" role="tab" data-panel="asignar" aria-selected="true">
+                                    <i class="fas fa-chalkboard-teacher"></i> Asignar docentes
+                                    <span class="ad-tab-num"><?php echo $totalModulos; ?></span>
+                                </button>
+                                <button type="button" class="ad-tab" role="tab" data-panel="carga" aria-selected="false">
+                                    <i class="fas fa-user-tie"></i> Carga docente
+                                    <span class="ad-tab-num"><?php echo count($cdDocentes); ?></span>
+                                </button>
+                            </div>
+
+                            <div class="ad-panel" id="panel-asignar" role="tabpanel">
                             <div class="ad-card">
                                 <!-- Título y resumen en una línea (se recalcula con los filtros) -->
                                 <div class="ad-cab">
@@ -327,6 +414,168 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
                                     </table>
                                 </div>
                                 <?php endif; ?>
+                            </div>
+                            </div>
+
+                            <?php
+                            // Detalle agrupado por docente (en el orden de la consulta: por apellido)
+                            $cargaPorDocente = [];
+                            foreach ($carga as $c) {
+                                $cargaPorDocente[$c['DocenteID']][] = $c;
+                            }
+                            ?>
+                            <div class="ad-panel" id="panel-carga" role="tabpanel" style="display:none;">
+                            <div class="ad-card ad-carga" id="carga-docente">
+                                <div class="ad-cab">
+                                    <h3><i class="fas fa-user-tie"></i> Carga docente <span class="ad-cab-ayuda">módulos asignados a cada docente, vigentes y concluidos</span></h3>
+                                    <div class="ad-resumen">
+                                        <span><b id="cd-total-docentes"><?php echo count($cdDocentes); ?></b> docente(s)</span>
+                                        <span><b id="cd-total-modulos"><?php echo count($carga); ?></b> módulo(s)</span>
+                                        <span><b id="cd-total-programas"><?php echo count($cdProgramas); ?></b> programa(s)</span>
+                                    </div>
+                                </div>
+
+                                <div class="ad-filtros">
+                                    <div class="ad-filtro ad-filtro-buscar">
+                                        <label for="cd-docente">Docente</label>
+                                        <select class="form-control select2-uniforme" id="cd-docente">
+                                            <option value="">Todos los docentes</option>
+                                            <?php foreach ($cdDocentes as $id => $nombre): ?>
+                                                <option value="<?php echo (int)$id; ?>"><?php echo htmlspecialchars($nombre); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="ad-filtro ad-filtro-corto">
+                                        <label for="cd-anio">Año</label>
+                                        <select class="form-control select2-uniforme" id="cd-anio">
+                                            <option value="">Todos</option>
+                                            <?php foreach (array_keys($cdAnios) as $anio): ?>
+                                                <option value="<?php echo (int)$anio; ?>"><?php echo (int)$anio; ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="ad-filtro ad-filtro-corto">
+                                        <label for="cd-grado">Grado</label>
+                                        <select class="form-control select2-uniforme" id="cd-grado">
+                                            <option value="">Todos</option>
+                                            <?php foreach (array_keys($cdGrados) as $grado): ?>
+                                                <option value="<?php echo htmlspecialchars($grado); ?>"><?php echo htmlspecialchars($grado); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="ad-filtro ad-filtro-buscar">
+                                        <label for="cd-programa">Programa</label>
+                                        <select class="form-control select2-uniforme" id="cd-programa">
+                                            <option value="">Todos los programas</option>
+                                            <?php foreach ($cdProgramas as $id => $prog): ?>
+                                                <option value="<?php echo (int)$id; ?>" data-grado="<?php echo htmlspecialchars($prog['grado']); ?>"><?php echo htmlspecialchars($prog['texto']); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="ad-filtro ad-filtro-corto">
+                                        <label for="cd-estado">Estado del módulo</label>
+                                        <select class="form-control select2-uniforme" id="cd-estado">
+                                            <option value="">Todos</option>
+                                            <?php foreach (array_keys($cdEstados) as $estado): ?>
+                                                <option value="<?php echo htmlspecialchars($estado); ?>"><?php echo htmlspecialchars(mb_convert_case($estado, MB_CASE_TITLE, 'UTF-8')); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="ad-filtro ad-filtro-boton">
+                                        <button type="button" class="btn btn-sm btn-light" id="cd-limpiar" style="display:none;"><i class="fas fa-times"></i> Quitar filtros</button>
+                                    </div>
+                                </div>
+
+                                <?php if (empty($carga)): ?>
+                                    <div class="ad-vacio">
+                                        <i class="fas fa-info-circle"></i> Todavía no hay módulos con docente asignado.
+                                    </div>
+                                <?php else: ?>
+                                <!-- Una sola tabla a la vez: el resumen por docente o la lista de sus módulos -->
+                                <div class="cd-barra">
+                                    <div class="cd-vistas" role="tablist">
+                                        <button type="button" class="cd-vista is-activa" data-vista="resumen"><i class="fas fa-users"></i> Por docente</button>
+                                        <button type="button" class="cd-vista" data-vista="detalle"><i class="fas fa-list-ul"></i> Lista de módulos</button>
+                                    </div>
+                                    <div id="cd-detalle-filtro" class="cd-filtro-texto"></div>
+                                    <div class="cd-exportar" id="cd-botones-resumen"></div>
+                                    <div class="cd-exportar" id="cd-botones-detalle" style="display:none;"></div>
+                                </div>
+
+                                <div class="cd-vista-panel" id="cd-vista-resumen">
+                                    <p class="cd-ayuda"><i class="fas fa-hand-pointer"></i> Haga clic en un docente para ver sus módulos.</p>
+                                    <div class="table-responsive">
+                                        <table class="table tabla-asignacion" id="tabla-carga-resumen" data-exportar="Carga docente - Resumen" data-exportar-archivo="carga-docente-resumen" data-exportar-botones="#cd-botones-resumen">
+                                            <thead>
+                                                <tr>
+                                                    <th class="cd-col-movil" style="width: 40px;">N°</th>
+                                                    <th>Docente</th>
+                                                    <th class="cd-col-oculta">C.I.</th>
+                                                    <th class="cd-col-especialidad">Especialidad</th>
+                                                    <th class="text-center" style="width: 90px;">Módulos</th>
+                                                    <th class="text-center cd-col-movil" style="width: 90px;">Programas</th>
+                                                    <th style="width: 130px;">Años</th>
+                                                    <th class="cd-col-movil" style="width: 110px;"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="cd-resumen-cuerpo"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="cd-vista-panel" id="cd-vista-detalle" style="display:none;">
+                                    <div class="table-responsive">
+                                        <table class="table tabla-asignacion" id="tabla-carga-detalle" data-exportar="Carga docente - Detalle" data-exportar-archivo="carga-docente-detalle" data-exportar-botones="#cd-botones-detalle">
+                                            <thead>
+                                                <tr>
+                                                    <th class="cd-col-oculta">Docente</th>
+                                                    <th style="width: 60px;">Año</th>
+                                                    <th class="cd-col-oculta">Grado</th>
+                                                    <th>Programa</th>
+                                                    <th class="ad-col-codigo" style="width: 100px;">Código</th>
+                                                    <th>Módulo</th>
+                                                    <th style="width: 100px;">Estado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($cargaPorDocente as $docenteID => $modsDocente): ?>
+                                                <?php $d0 = $modsDocente[0]; ?>
+                                                <tr class="cd-grupo no-exportar" data-docente="<?php echo (int)$docenteID; ?>">
+                                                    <td colspan="7">
+                                                        <span class="ad-grupo-nombre"><i class="fas fa-user"></i> <?php echo htmlspecialchars($cdDocentes[$docenteID]); ?></span>
+                                                        <?php if ((int)$d0['EstadoDocente'] !== 1): ?><small class="ad-sin">(de baja)</small><?php endif; ?>
+                                                        <span class="ad-grupo-meta"><b class="cd-grupo-num"><?php echo count($modsDocente); ?></b> módulo(s)<?php echo $d0['Especialidad'] ? ' · ' . htmlspecialchars($d0['Especialidad']) : ''; ?></span>
+                                                    </td>
+                                                </tr>
+                                                <?php foreach ($modsDocente as $c): ?>
+                                                <tr class="cd-fila"
+                                                    data-docente="<?php echo (int)$c['DocenteID']; ?>"
+                                                    data-anio="<?php echo (int)$c['Anio']; ?>"
+                                                    data-grado="<?php echo htmlspecialchars($c['GradoAcademico']); ?>"
+                                                    data-programa="<?php echo (int)$c['ProgramaID']; ?>"
+                                                    data-estado="<?php echo htmlspecialchars($c['estadomodulo']); ?>"
+                                                    data-ci="<?php echo htmlspecialchars($c['Ci']); ?>"
+                                                    data-especialidad="<?php echo htmlspecialchars($c['Especialidad'] ?? ''); ?>"
+                                                    data-de-baja="<?php echo (int)$c['EstadoDocente'] === 1 ? '0' : '1'; ?>">
+                                                    <td class="cd-col-oculta cd-docente"><?php echo htmlspecialchars($cdDocentes[$c['DocenteID']]); ?></td>
+                                                    <td><?php echo $c['Anio'] ? (int)$c['Anio'] : '—'; ?></td>
+                                                    <td class="cd-col-oculta"><?php echo htmlspecialchars($c['GradoAcademico']); ?></td>
+                                                    <td><span class="cd-grado no-exportar"><?php echo htmlspecialchars($c['GradoAcademico']); ?></span> <?php echo htmlspecialchars($c['NombrePrograma']); ?><?php echo $c['Sede'] ? ' <small class="cd-sede">Sede: ' . htmlspecialchars($c['Sede']) . '</small>' : ''; ?></td>
+                                                    <td class="ad-col-codigo"><span class="ad-codigo"><?php echo htmlspecialchars($c['codigomodulo']); ?></span></td>
+                                                    <td><?php echo htmlspecialchars($c['nombremodulo']); ?></td>
+                                                    <td><span class="ad-estado is-<?php echo strtolower(htmlspecialchars($c['estadomodulo'])); ?>"><?php echo htmlspecialchars(mb_convert_case($c['estadomodulo'], MB_CASE_TITLE, 'UTF-8')); ?></span></td>
+                                                </tr>
+                                                <?php endforeach; ?>
+                                                <?php endforeach; ?>
+                                                <tr id="cd-sin-resultados" class="no-exportar" style="display:none;">
+                                                    <td colspan="7" class="ad-vacio">Ningún módulo coincide con los filtros.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
                             </div>
 
                         </div>
@@ -569,6 +818,160 @@ if ($esDocente && isset($_SESSION['IdUsuario'])) {
 
             $('#modalAsignarDocente').modal('hide');
         });
+
+        // ===== Carga docente =====
+        // El resumen por docente se arma con las filas del detalle que quedan visibles, así
+        // los números y lo que se exporta (Excel/PDF) siempre coinciden con los filtros.
+        const $cdFilas = $('.cd-fila');
+        const escaparHtml = function(t) { return $('<div>').text(t == null ? '' : String(t)).html(); };
+
+        // Programas por grado: al elegir un grado, el combo de programas solo muestra los suyos
+        const cdProgramasCache = [];
+        $('#cd-programa option[value!=""]').each(function() {
+            cdProgramasCache.push({ value: $(this).val(), grado: $(this).data('grado') || '', html: $(this).html() });
+        });
+        $('#cd-grado').on('change', function() {
+            const grado = $(this).val();
+            const $programa = $('#cd-programa');
+            const elegido = $programa.val();
+            let opciones = '<option value="">Todos los programas</option>';
+            cdProgramasCache.forEach(function(p) {
+                if (!grado || p.grado === grado) {
+                    opciones += '<option value="' + p.value + '" data-grado="' + escaparHtml(p.grado) + '">' + p.html + '</option>';
+                }
+            });
+            $programa.html(opciones);
+            if (elegido && $programa.find('option[value="' + elegido + '"]').length) {
+                $programa.val(elegido);
+            }
+            $programa.trigger('change.select2');
+            filtrarCarga();
+        });
+        $('#cd-docente, #cd-anio, #cd-programa, #cd-estado').on('change', filtrarCarga);
+        $('#cd-limpiar').on('click', function() {
+            $('#cd-docente, #cd-anio, #cd-estado').val('').trigger('change.select2');
+            $('#cd-grado').val('').trigger('change');
+        });
+
+        // Pestañas de la pantalla (se recuerda la elegida en la dirección: #carga)
+        function mostrarPanel(panel) {
+            $('.ad-tab').each(function() {
+                const activa = $(this).data('panel') === panel;
+                $(this).toggleClass('is-activa', activa).attr('aria-selected', activa ? 'true' : 'false');
+            });
+            $('#panel-asignar').toggle(panel === 'asignar');
+            $('#panel-carga').toggle(panel === 'carga');
+            $('#ad-subtitulo').text(panel === 'carga' ? 'CARGA DOCENTE' : 'MÓDULOS VIGENTES');
+            if (history.replaceState) history.replaceState(null, '', panel === 'carga' ? '#carga' : location.pathname + location.search);
+        }
+        $('.ad-tab').on('click', function() { mostrarPanel($(this).data('panel')); });
+        if (location.hash === '#carga') mostrarPanel('carga');
+
+        // Vista de la carga: resumen por docente o lista de módulos (una tabla a la vez)
+        function mostrarVista(vista) {
+            $('.cd-vista').each(function() { $(this).toggleClass('is-activa', $(this).data('vista') === vista); });
+            $('#cd-vista-resumen, #cd-botones-resumen').toggle(vista === 'resumen');
+            $('#cd-vista-detalle, #cd-botones-detalle').toggle(vista === 'detalle');
+        }
+        $('.cd-vista').on('click', function() { mostrarVista($(this).data('vista')); });
+
+        // Clic en un docente del resumen: sus módulos en la lista
+        $('#cd-resumen-cuerpo').on('click', 'tr.cd-docente-fila', function() {
+            $('#cd-docente').val(String($(this).data('docente'))).trigger('change.select2');
+            filtrarCarga();
+            mostrarVista('detalle');
+        });
+
+        function filtrarCarga() {
+            const filtro = {
+                docente: $('#cd-docente').val(),
+                anio: $('#cd-anio').val(),
+                grado: $('#cd-grado').val(),
+                programa: $('#cd-programa').val(),
+                estado: $('#cd-estado').val()
+            };
+
+            const porDocente = {};
+            const programas = {};
+            let modulos = 0;
+
+            $cdFilas.each(function() {
+                const $f = $(this);
+                const mostrar =
+                    (!filtro.docente || String($f.data('docente')) === filtro.docente) &&
+                    (!filtro.anio || String($f.data('anio')) === filtro.anio) &&
+                    (!filtro.grado || $f.data('grado') === filtro.grado) &&
+                    (!filtro.programa || String($f.data('programa')) === filtro.programa) &&
+                    (!filtro.estado || $f.data('estado') === filtro.estado);
+                $f.toggle(mostrar);
+                if (!mostrar) return;
+
+                modulos++;
+                programas[$f.data('programa')] = true;
+                const id = $f.data('docente');
+                if (!porDocente[id]) {
+                    porDocente[id] = {
+                        id: id,
+                        nombre: $f.find('.cd-docente').text().trim(),
+                        deBaja: String($f.data('de-baja')) === '1',
+                        ci: $f.data('ci'),
+                        especialidad: $f.data('especialidad'),
+                        modulos: 0,
+                        programas: {},
+                        anios: {}
+                    };
+                }
+                porDocente[id].modulos++;
+                porDocente[id].programas[$f.data('programa')] = true;
+                if ($f.data('anio')) porDocente[id].anios[$f.data('anio')] = true;
+            });
+
+            // Resumen: el que más módulos tiene, primero
+            const docentes = Object.keys(porDocente).map(function(id) { return porDocente[id]; })
+                .sort(function(a, b) { return b.modulos - a.modulos || a.nombre.localeCompare(b.nombre); });
+            let html = '';
+            docentes.forEach(function(d, i) {
+                const anios = Object.keys(d.anios).sort().reverse().join(', ');
+                html += '<tr class="cd-docente-fila" data-docente="' + escaparHtml(d.id) + '" title="Ver los módulos de este docente">' +
+                    '<td class="cd-col-movil">' + (i + 1) + '</td>' +
+                    '<td><b>' + escaparHtml(d.nombre) + '</b>' + (d.deBaja ? ' <small class="ad-sin">(de baja)</small>' : '') + '</td>' +
+                    '<td class="cd-col-oculta">' + escaparHtml(d.ci) + '</td>' +
+                    '<td class="cd-col-especialidad">' + escaparHtml(d.especialidad || '—') + '</td>' +
+                    '<td class="text-center"><span class="cd-cantidad">' + d.modulos + '</span></td>' +
+                    '<td class="text-center cd-col-movil">' + Object.keys(d.programas).length + '</td>' +
+                    '<td>' + escaparHtml(anios || '—') + '</td>' +
+                    '<td class="text-right cd-col-movil"><button type="button" class="cd-ver">Ver módulos <i class="fas fa-chevron-right"></i></button></td>' +
+                '</tr>';
+            });
+            $('#cd-resumen-cuerpo').html(html || '<tr><td colspan="8" class="ad-vacio">Ningún docente coincide con los filtros.</td></tr>');
+            $('#cd-sin-resultados').toggle(modulos === 0);
+
+            // Encabezado de cada docente en la lista: solo si le quedan módulos, con su cantidad
+            $('#tabla-carga-detalle tr.cd-grupo').each(function() {
+                const d = porDocente[$(this).data('docente')];
+                $(this).toggle(!!d);
+                if (d) $(this).find('.cd-grupo-num').text(d.modulos);
+            });
+
+            $('#cd-total-docentes').text(docentes.length);
+            $('#cd-total-modulos').text(modulos);
+            $('#cd-total-programas').text(Object.keys(programas).length);
+
+            // Los filtros elegidos van en el texto de la pantalla y en el título del Excel/PDF
+            const partes = [];
+            if (filtro.docente) partes.push($('#cd-docente option:selected').text().trim());
+            if (filtro.anio) partes.push('Año ' + filtro.anio);
+            if (filtro.grado) partes.push(filtro.grado);
+            if (filtro.programa) partes.push($('#cd-programa option:selected').text().trim());
+            if (filtro.estado) partes.push('Módulos ' + $('#cd-estado option:selected').text().trim().toLowerCase());
+            const sufijo = partes.length ? ' - ' + partes.join(' · ') : '';
+            $('#cd-detalle-filtro').html(partes.length ? 'Filtrado por: <b>' + escaparHtml(partes.join(' · ')) + '</b>' : '');
+            $('#cd-limpiar').toggle(partes.length > 0);
+            $('#tabla-carga-resumen').attr('data-exportar', 'Carga docente - Resumen' + sufijo);
+            $('#tabla-carga-detalle').attr('data-exportar', 'Carga docente - Detalle' + sufijo);
+        }
+
+        if ($cdFilas.length) filtrarCarga();
     });
     </script>
 </body>

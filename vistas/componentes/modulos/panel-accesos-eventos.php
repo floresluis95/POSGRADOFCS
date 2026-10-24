@@ -12,9 +12,13 @@ $nombresEvento = ['CLASE' => 'Clase', 'ACTIVIDAD' => 'Actividad', 'CLINICA' => '
   <div class="pn-card-head">
     <h3><i class="fas fa-bolt"></i> Accesos rápidos</h3>
   </div>
-  <div class="pn-accesos">
-    <?php foreach ($tablero['accesos'] as [$ruta, $icono, $titulo, $descripcion]): ?>
-    <a href="<?php echo htmlspecialchars($ruta); ?>" class="pn-acceso">
+  <?php foreach ($tablero['accesos'] as $grupo => $accesos): ?>
+  <?php if ($grupo !== ''): ?>
+  <h4 class="pn-accesos-grupo<?php echo $grupo === 'Certificados' ? ' is-certificados' : ''; ?>"><?php echo htmlspecialchars($grupo); ?></h4>
+  <?php endif; ?>
+  <div class="pn-accesos<?php echo $grupo === 'Certificados' ? ' is-certificados' : ''; ?>">
+    <?php foreach ($accesos as [$ruta, $icono, $titulo, $descripcion]): ?>
+    <a href="<?php echo htmlspecialchars($ruta); ?>" class="pn-acceso" title="<?php echo htmlspecialchars($titulo . ' · ' . $descripcion); ?>">
       <span class="pn-acceso-icono"><i class="fas <?php echo htmlspecialchars($icono); ?>"></i></span>
       <span>
         <strong><?php echo htmlspecialchars($titulo); ?></strong>
@@ -23,6 +27,7 @@ $nombresEvento = ['CLASE' => 'Clase', 'ACTIVIDAD' => 'Actividad', 'CLINICA' => '
     </a>
     <?php endforeach; ?>
   </div>
+  <?php endforeach; ?>
 </div>
 <?php endif; ?>
 
