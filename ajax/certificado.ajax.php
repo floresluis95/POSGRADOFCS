@@ -23,7 +23,7 @@ if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true) {
     exit();
 }
 
-require_once '../modelos/certificado.modelo.php';
+require_once __DIR__ . '/../modelos/certificado.modelo.php';
 
 header('Content-Type: application/json; charset=utf-8');
 

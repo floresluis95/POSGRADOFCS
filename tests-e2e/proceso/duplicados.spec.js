@@ -103,13 +103,13 @@ test.describe('Duplicados en formularios', () => {
     const n = unico();
     const campos = (ci) => ({
       ci, apaterno: 'PERSONAL', amaterno: 'PRUEBA', nombres: 'DUPLICADO', direccion: '', celular: '70000003', telefono: '',
-      correo: `pers${ci}@correo-prueba.com`, usuario: `usuario_dup_${n}`, password: 'Clave1234', password_confirmar: 'Clave1234', UICargo: 'SEC',
+      correo: `pers${ci}@correo-prueba.com`, usuario: `usr_dup_${n}`, password: 'Clave1234', password_confirmar: 'Clave1234', UICargo: 'SEC',
     });
     await enviarFormulario(page, 'usuario', campos(`P${n}`));
-    expect(valor(`SELECT COUNT(*) FROM usuario WHERE Usuario = 'usuario_dup_${n}'`)).toBe('1');
+    expect(valor(`SELECT COUNT(*) FROM usuario WHERE Usuario = 'usr_dup_${n}'`)).toBe('1');
 
     await enviarFormulario(page, 'usuario', campos(`Q${n}`));
-    expect(valor(`SELECT COUNT(*) FROM usuario WHERE Usuario = 'usuario_dup_${n}'`),
+    expect(valor(`SELECT COUNT(*) FROM usuario WHERE Usuario = 'usr_dup_${n}'`),
       'Con dos usuarios iguales, el inicio de sesión solo encuentra al primero').toBe('1');
   });
 

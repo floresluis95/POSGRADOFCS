@@ -7,8 +7,8 @@ ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni 
  * Obtiene módulos inscritos por estudiante
  */
 
-require_once "../modelos/inscripcionmodulo.modelo.php";
-require_once "../controladores/inscripcionmodulo.controlador.php";
+require_once __DIR__ . "/../modelos/inscripcionmodulo.modelo.php";
+require_once __DIR__ . "/../controladores/inscripcionmodulo.controlador.php";
 
 // Obtener módulos inscritos por estudiante (filtrado por inscripción específica)
 if (isset($_POST["accion"]) && $_POST["accion"] === "obtenerModulosInscritos" && isset($_POST["estudianteID"])) {

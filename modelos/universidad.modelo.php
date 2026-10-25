@@ -114,7 +114,7 @@ class UniversidadModelos
 
         $existente = self::BuscarPorNombreModelo($nombre) ?: self::BuscarParecidaModelo($nombre);
         if ($existente) {
-            return ['status' => 'duplicado', 'mensaje' => 'Esa universidad ya existe', 'universidad' => $existente];
+            return ['status' => 'duplicado', 'mensaje' => 'Esa universidad ya existe', 'universidad' => ['IdUniversidad' => (int)$existente['IdUniversidad']] + $existente];
         }
 
         try {
@@ -129,7 +129,7 @@ class UniversidadModelos
                 return ['status' => 'error', 'mensaje' => 'No se pudo registrar la universidad'];
             }
 
-            $id = $pdo->lastInsertId();
+            $id = (int)$pdo->lastInsertId();
             return [
                 'status' => 'exitoso',
                 'mensaje' => 'Universidad registrada correctamente',
@@ -138,10 +138,10 @@ class UniversidadModelos
         } catch (PDOException $e) {
             // Índice único: otro usuario la registró al mismo tiempo => se devuelve esa
             if ($e->getCode() === '23000' && ($existente = self::BuscarPorNombreModelo($nombre))) {
-                return ['status' => 'duplicado', 'mensaje' => 'Esa universidad ya existe', 'universidad' => $existente];
+                return ['status' => 'duplicado', 'mensaje' => 'Esa universidad ya existe', 'universidad' => ['IdUniversidad' => (int)$existente['IdUniversidad']] + $existente];
             }
             error_log("Error en RegistrarUniversidadModelo: " . $e->getMessage());
-            return ['status' => 'error', 'mensaje' => 'Error en el servidor: ' . $e->getMessage()];
+            return ['status' => 'error', 'mensaje' => 'Error en el servidor. Intente nuevamente'];
         }
     }
 }

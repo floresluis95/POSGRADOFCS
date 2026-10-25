@@ -7,8 +7,8 @@ ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni 
  * Maneja las peticiones AJAX para el reporte de calificaciones
  */
 
-require_once '../controladores/reportenotas.controlador.php';
-require_once '../modelos/reportenotas.modelo.php';
+require_once __DIR__ . '/../controladores/reportenotas.controlador.php';
+require_once __DIR__ . '/../modelos/reportenotas.modelo.php';
 
 if (isset($_POST['action'])) {
     $action = $_POST['action'];

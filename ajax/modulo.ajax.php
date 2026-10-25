@@ -8,9 +8,9 @@ ExigirRolParaAcciones(['registrarModulosPorPrograma', 'actualizarModulo'], ['ADM
  * AJAX para obtener módulos por programa
  */
 
-require_once "../modelos/modulopagos_core.php";
-require_once "../modelos/modulo.modelo.php";
-require_once "../controladores/modulo.controlador.php";
+require_once __DIR__ . "/../modelos/modulopagos_core.php";
+require_once __DIR__ . "/../modelos/modulo.modelo.php";
+require_once __DIR__ . "/../controladores/modulo.controlador.php";
 
 // Registrar módulos por programa (responde JSON, sin recargar la página)
 if (isset($_POST["accion"]) && $_POST["accion"] == "registrarModulosPorPrograma") {

@@ -12,7 +12,7 @@ require_once file_exists(__DIR__ . '/../modelos/inscripcion.modelo.php') ? __DIR
 require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
 
 // Incluir controlador de inscripción
-require_once '../controladores/inscripcion.controlador.php';
+require_once __DIR__ . '/../controladores/inscripcion.controlador.php';
 
 // El controlador ya maneja las acciones AJAX directamente
 // Este archivo sirve como punto de entrada alternativo si se necesita

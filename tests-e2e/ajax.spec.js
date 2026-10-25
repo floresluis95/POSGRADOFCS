@@ -83,7 +83,6 @@ const ARCHIVOS_POR_ROL = {
   'historialpagos.ajax.php': PERSONAL,
   'inscripcion.ajax.php': PERSONAL,
   'inscripcionmodulo.ajax.php': PERSONAL,
-  'material-categoria.ajax.php': PERSONAL,
   'modulo.ajax.php': PERSONAL,
   'pagoclinica.ajax.php': PERSONAL,
   'programacuenta.ajax.php': PERSONAL,

@@ -408,7 +408,7 @@ class ProfesionModelos {
 
         $existente = self::BuscarPorNombreModelo($nombre);
         if ($existente) {
-            return ['status' => 'duplicado', 'mensaje' => 'Esa profesión ya existe', 'profesion' => $existente];
+            return ['status' => 'duplicado', 'mensaje' => 'Esa profesión ya existe', 'profesion' => ['IdProfesion' => (int)$existente['IdProfesion']] + $existente];
         }
 
         try {
@@ -422,7 +422,7 @@ class ProfesionModelos {
                 return ['status' => 'error', 'mensaje' => 'No se pudo registrar la profesión'];
             }
 
-            $id = $pdo->lastInsertId();
+            $id = (int)$pdo->lastInsertId();
             return [
                 'status' => 'exitoso',
                 'mensaje' => 'Profesión registrada correctamente',
@@ -431,10 +431,10 @@ class ProfesionModelos {
         } catch (PDOException $e) {
             // Índice único: otro usuario la registró al mismo tiempo => se devuelve esa
             if ($e->getCode() === '23000' && ($existente = self::BuscarPorNombreModelo($nombre))) {
-                return ['status' => 'duplicado', 'mensaje' => 'Esa profesión ya existe', 'profesion' => $existente];
+                return ['status' => 'duplicado', 'mensaje' => 'Esa profesión ya existe', 'profesion' => ['IdProfesion' => (int)$existente['IdProfesion']] + $existente];
             }
             error_log("Error en RegistrarProfesionModelo: " . $e->getMessage());
-            return ['status' => 'error', 'mensaje' => 'Error en el servidor: ' . $e->getMessage()];
+            return ['status' => 'error', 'mensaje' => 'Error en el servidor. Intente nuevamente'];
         }
     }
 }

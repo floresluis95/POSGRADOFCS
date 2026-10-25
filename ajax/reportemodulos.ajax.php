@@ -6,7 +6,7 @@ ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni 
  * AJAX para Reportes de Módulos
  */
 
-require_once '../controladores/reportemodulos.controlador.php';
+require_once __DIR__ . '/../controladores/reportemodulos.controlador.php';
 
 // Obtener grados académicos
 if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerGrados') {

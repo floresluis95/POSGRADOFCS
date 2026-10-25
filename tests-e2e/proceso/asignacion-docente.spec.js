@@ -14,7 +14,7 @@ test('filtros, resumen y asignación de un docente', async ({ page }) => {
   await expect(page.locator('#stat-total')).toHaveText(String(total));
   await page.screenshot({ path: test.info().outputPath('asignacion.png') });
   // A todo el ancho: la tarjeta ocupa casi toda la ventana (antes quedaba en un contenedor fijo)
-  const ancho = await page.locator('.ad-card').evaluate((el) => el.getBoundingClientRect().width);
+  const ancho = await page.locator('.ad-card:not(.ad-carga)').evaluate((el) => el.getBoundingClientRect().width);
   expect(ancho).toBeGreaterThan(page.viewportSize().width * 0.9);
 
   // Búsqueda sin resultados: se ocultan los grupos y aparece el aviso
