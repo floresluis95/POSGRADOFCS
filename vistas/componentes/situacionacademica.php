@@ -40,6 +40,7 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
     $(document).ready(function() {
         Certificado.buscador({
             contenedor: '#buscador-certificado',
+            incluirAbandono: true,
             opcion: function(insc) {
                 return $('<option></option>').val(insc.EstudianteID).attr('data-programa-id', insc.ProgramaID);
             }

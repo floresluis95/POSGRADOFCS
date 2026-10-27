@@ -7,6 +7,7 @@
 // Incluir TCPDF
 require_once __DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php';
 require_once __DIR__ . '/../modelos/reportes.modelo.php';
+require_once __DIR__ . '/../modelos/matricula.modelo.php'; // reporte de abandonos
 
 // El servidor tiene configurada otra zona horaria (Europe/Berlin) en php.ini;
 // sin esto, la fecha/hora impresa en los reportes no corresponde a Bolivia.
@@ -876,6 +877,122 @@ class ReportesControladores extends TCPDF
             self::TotalTabla($pdf, [[167, 'TOTAL GENERAL (' . count($programas) . ' programas):', 'R'], [28, self::Bs($general['costo']), 'R'], [28, self::Bs($general['pagado']), 'R'], [28, self::Bs($general['saldo']), 'R'], [26, '', 'C']]);
         }
         $pdf->Output('Saldos_Estudiantes_' . date('Ymd_His') . '.pdf', 'I');
+    }
+
+    /**
+     * Abandonos: cuánto representaba cada inscripción abandonada (costo pactado), cuánto
+     * llegó a pagar y cuánto quedó sin cobrar. Resumen por sede, grado y programa, y
+     * detalle por estudiante (módulo desde el que abandonó y motivo).
+     * Montos de matrícula y cuotas, igual que Saldos por estudiante (sin clínica).
+     */
+    public static function GenerarReporteAbandonos(array $f)
+    {
+        $pdf = self::NuevoPdf('Reporte de Abandonos', 'L');
+        $subtitulo = self::TextoFiltros($f)
+            . (!empty($f['grado']) ? '  |  Grado: ' . $f['grado'] : '')
+            . (!empty($f['ci']) ? '  |  C.I.: ' . $f['ci'] : '')
+            . '  |  Montos de matrícula y cuotas (sin clínica)';
+        self::Titulo($pdf, 'REPORTE DE ABANDONOS', $subtitulo);
+
+        $filas = MatriculaModelos::ListarAbandonosModelo($f);
+        if (empty($filas)) {
+            self::SinDatos($pdf, 'No hay abandonos con los filtros seleccionados', 'Reporte_Abandonos');
+            return;
+        }
+
+        // Agrupar por programa (la consulta viene ordenada por sede, grado y programa)
+        $programas = [];
+        foreach ($filas as $e) {
+            $id = $e['ProgramaID'];
+            if (!isset($programas[$id])) {
+                $programas[$id] = ['datos' => $e, 'estudiantes' => [], 'costo' => 0, 'pagado' => 0, 'saldo' => 0];
+            }
+            $programas[$id]['estudiantes'][] = $e;
+            $programas[$id]['costo'] += $e['CostoTotal'];
+            $programas[$id]['pagado'] += $e['TotalPagado'];
+            $programas[$id]['saldo'] += $e['SaldoPendiente'];
+        }
+
+        // RESUMEN: programa por programa, con subtotal por grado y por sede
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 'RESUMEN POR SEDE, GRADO Y PROGRAMA', 0, 1, 'L');
+        $colRes = [[30, 'Sede', 'C'], [35, 'Grado', 'C'], [110, 'Programa', 'L'], [20, 'Abandonos', 'C'],
+                   [27, 'Costo total (Bs.)', 'R'], [27, 'Pagado (Bs.)', 'R'], [28, 'Sin cobrar (Bs.)', 'R']];
+        self::CabeceraTabla($pdf, $colRes);
+        $vacio = ['n' => 0, 'costo' => 0, 'pagado' => 0, 'saldo' => 0];
+        $total = $vacio;
+        $porSede = [];
+        $porGrado = [];
+        $i = 0;
+        $filaSubtotal = function ($texto, $t) use ($pdf) {
+            $pdf->SetFont('helvetica', 'B', 7);
+            $pdf->SetFillColor(230, 236, 246);
+            self::FilaTabla($pdf, [[175, $texto, 'R'], [20, $t['n'], 'C'], [27, self::Bs($t['costo']), 'R'],
+                                   [27, self::Bs($t['pagado']), 'R'], [28, self::Bs($t['saldo']), 'R']], true);
+            $pdf->SetFont('helvetica', '', 7);
+        };
+        $lista = array_values($programas);
+        foreach ($lista as $k => $bloque) {
+            $p = $bloque['datos'];
+            $n = count($bloque['estudiantes']);
+            self::Rayado($pdf, $i++ % 2 === 1);
+            self::FilaTabla($pdf, [[30, mb_strtoupper($p['Sede'] ?? ''), 'C'], [35, $p['GradoAcademico'], 'C'],
+                                   [110, mb_strtoupper($p['NombrePrograma']) . (!empty($p['Version']) ? ' - ' . $p['Version'] : ''), 'L'], [20, $n, 'C'],
+                                   [27, self::Bs($bloque['costo']), 'R'], [27, self::Bs($bloque['pagado']), 'R'], [28, self::Bs($bloque['saldo']), 'R']], true);
+            $claveSede = $p['Sede'] ?? '';
+            $claveGrado = $claveSede . '|' . $p['GradoAcademico'];
+            $porSede[$claveSede] = $porSede[$claveSede] ?? $vacio;
+            $porGrado[$claveGrado] = $porGrado[$claveGrado] ?? $vacio;
+            foreach (['n' => $n, 'costo' => $bloque['costo'], 'pagado' => $bloque['pagado'], 'saldo' => $bloque['saldo']] as $campo => $monto) {
+                $porSede[$claveSede][$campo] += $monto;
+                $porGrado[$claveGrado][$campo] += $monto;
+                $total[$campo] += $monto;
+            }
+
+            // Al cambiar de grado o de sede (o al final), su subtotal
+            $sig = $lista[$k + 1]['datos'] ?? null;
+            $cambiaSede = !$sig || ($sig['Sede'] ?? '') !== $claveSede;
+            if ($cambiaSede || $sig['GradoAcademico'] !== $p['GradoAcademico']) {
+                $filaSubtotal('Subtotal ' . $p['GradoAcademico'] . ' (' . mb_strtoupper($claveSede) . '):', $porGrado[$claveGrado]);
+            }
+            if ($cambiaSede) {
+                $filaSubtotal('Subtotal sede ' . mb_strtoupper($claveSede) . ':', $porSede[$claveSede]);
+            }
+        }
+        self::TotalTabla($pdf, [[175, 'TOTAL GENERAL:', 'R'], [20, $total['n'], 'C'], [27, self::Bs($total['costo']), 'R'],
+                                [27, self::Bs($total['pagado']), 'R'], [28, self::Bs($total['saldo']), 'R']]);
+        $pdf->Ln(6);
+
+        // DETALLE POR ESTUDIANTE, programa por programa
+        $colDet = [[8, 'Nº', 'C'], [60, 'Estudiante', 'L'], [20, 'C.I.', 'C'], [19, 'Fecha', 'C'], [22, 'Desde módulo', 'C'],
+                   [16, 'Con nota', 'C'], [53, 'Motivo', 'L'], [26, 'Costo total (Bs.)', 'R'], [26, 'Pagado (Bs.)', 'R'], [27, 'Sin cobrar (Bs.)', 'R']];
+        foreach ($programas as $bloque) {
+            $p = $bloque['datos'];
+            if ($pdf->GetY() > 160) $pdf->AddPage('L');
+            $pdf->SetFont('helvetica', 'B', 9);
+            $pdf->SetFillColor(42, 82, 152);
+            $pdf->SetTextColor(255);
+            $pdf->Cell(0, 7, mb_strtoupper($p['NombrePrograma']) . '  (' . mb_strtoupper($p['Sede'] ?? '') . ' - ' . $p['GradoAcademico'] . ')', 0, 1, 'L', true, '', 1);
+            $pdf->Ln(1);
+            self::CabeceraTabla($pdf, $colDet);
+            foreach ($bloque['estudiantes'] as $j => $e) {
+                self::Rayado($pdf, $j % 2 === 1);
+                self::FilaTabla($pdf, [
+                    [8, $j + 1, 'C'], [60, mb_strtoupper($e['NombreLista']), 'L'], [20, $e['Ci'], 'C'],
+                    [19, self::Fecha($e['FechaAbandono']), 'C'], [22, $e['CodigoModuloAbandono'] ?: 'DESDE EL INICIO', 'C'],
+                    [16, (int)$e['ModulosConNota'] . '/' . (int)$e['ModulosPrograma'], 'C'], [53, $e['MotivoAbandono'] ?: '-', 'L'],
+                    [26, self::Bs($e['CostoTotal']), 'R'], [26, self::Bs($e['TotalPagado']), 'R'], [27, self::Bs($e['SaldoPendiente']), 'R'],
+                ], true);
+            }
+            self::TotalTabla($pdf, [[198, 'SUBTOTAL (' . count($bloque['estudiantes']) . ' abandonos):', 'R'], [26, self::Bs($bloque['costo']), 'R'],
+                                    [26, self::Bs($bloque['pagado']), 'R'], [27, self::Bs($bloque['saldo']), 'R']]);
+            $pdf->Ln(5);
+        }
+
+        $pdf->SetFont('helvetica', 'I', 7.5);
+        $pdf->MultiCell(0, 4, 'Costo total = matrícula + programa según el plan pactado. Pagado = matrícula + cuotas pagadas. '
+            . 'Sin cobrar = lo que faltaba pagar del programa al abandonar. "Con nota" = módulos calificados / módulos del programa.', 0, 'L');
+        $pdf->Output('Reporte_Abandonos_' . date('Ymd_His') . '.pdf', 'I');
     }
 
     // Consolidado de notas de un programa: estudiantes × módulos, promedio y aprobados

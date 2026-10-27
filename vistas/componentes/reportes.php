@@ -187,7 +187,7 @@ function rpTarjeta($tipo, $icono, $titulo, $descripcion, $filtros = '')
 
       <div class="rp-tabs" role="tablist">
         <button type="button" class="rp-tab activo" data-panel="rp-estudiantes" role="tab"><i class="fas fa-user-graduate"></i> Por estudiante <span class="rp-n">3</span></button>
-        <button type="button" class="rp-tab" data-panel="rp-programas" role="tab"><i class="fas fa-graduation-cap"></i> Por programa <span class="rp-n">4</span></button>
+        <button type="button" class="rp-tab" data-panel="rp-programas" role="tab"><i class="fas fa-graduation-cap"></i> Por programa <span class="rp-n">5</span></button>
         <button type="button" class="rp-tab" data-panel="rp-cuentas" role="tab"><i class="fas fa-university"></i> Por cuenta <span class="rp-n">4</span></button>
       </div>
 
@@ -218,6 +218,17 @@ function rpTarjeta($tipo, $icono, $titulo, $descripcion, $filtros = '')
               'Costo, pagado y saldo de cada estudiante, programa por programa. Sirve para el seguimiento de cobranza.',
               rpFiltroSedePrograma('saldos', $sedesDisponibles, $programas)
               . '<label class="rp-check"><input type="checkbox" name="solo_con_saldo" value="1"> Solo estudiantes con saldo pendiente</label>');
+          $opcionesGrado = '';
+          foreach (ReportesModelos::ListaGrados() as $g) {
+              $opcionesGrado .= '<option value="' . htmlspecialchars($g) . '">' . htmlspecialchars($g) . '</option>';
+          }
+          echo rpTarjeta('abandonos', 'fa-user-times', 'Abandonos',
+              'Lo que representaban los estudiantes que abandonaron: costo, lo que pagaron y lo que quedó sin cobrar. Resumen por sede, grado y programa, y detalle por estudiante con el módulo y el motivo.',
+              rpFiltroSedePrograma('abandonos', $sedesDisponibles, $programas)
+              . '<div class="rp-campos">'
+              . '<div class="rp-campo"><label for="grado_abandonos">Grado</label><select name="grado" id="grado_abandonos" class="form-control"><option value="">Todos</option>' . $opcionesGrado . '</select></div>'
+              . '<div class="rp-campo"><label for="ci_abandonos">C.I. del estudiante</label><input type="text" name="ci" id="ci_abandonos" class="form-control" placeholder="Opcional" inputmode="numeric"></div>'
+              . '</div>');
           echo rpTarjeta('notas_programa', 'fa-table', 'Consolidado de notas',
               'Notas de todos los estudiantes en todos los módulos de un programa, con promedio y módulos aprobados.',
               rpFiltroSedePrograma('notas', $sedesDisponibles, $programas, true));

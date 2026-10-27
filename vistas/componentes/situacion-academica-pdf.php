@@ -70,6 +70,10 @@ $est = $datos['estudiante'];
 $prog = $datos['programa'];
 $nombre = mb_strtoupper(trim($est['Apaterno'] . ' ' . $est['Amaterno'] . ' ' . $est['Nombre']), 'UTF-8');
 $notaMinima = ConfiguracionModelo::NotaAprobacion();
+// Marcado como abandono en Matriculados: los módulos sin nota desde el de abandono salen
+// como ABANDONO (sin módulo registrado = desde el primero); los anteriores siguen PENDIENTE
+$abandono = ($est['EstadoInscripcion'] ?? '') === 'ABANDONO';
+$moduloAbandono = (int)($est['IdModuloAbandono'] ?? 0);
 
 $pdf = new SituacionAcademicaPDF('P', 'mm', 'LETTER', true, 'UTF-8', false);
 $pdf->SetCreator('Sistema Posgrado FCS');
@@ -109,7 +113,8 @@ foreach (['N°', 'MÓDULO', 'PUNTUACIÓN', 'SITUACIÓN'] as $i => $titulo) {
 
 foreach ($datos['modulos'] as $i => $m) {
     $nota = $m['Nota'] !== null ? (float)$m['Nota'] : null;
-    $situacion = $nota === null ? 'PENDIENTE' : ($nota >= $notaMinima ? 'APROBADO' : 'REPROBADO');
+    $dejado = $abandono && (int)$m['Idmodulo'] >= $moduloAbandono;
+    $situacion = $nota === null ? ($dejado ? 'ABANDONO' : 'PENDIENTE') : ($nota >= $notaMinima ? 'APROBADO' : 'REPROBADO');
     $puntuacion = $nota === null ? '-' : rtrim(rtrim(number_format($nota, 2), '0'), '.');
 
     // Alto de la fila según cuántas líneas ocupa el nombre del módulo

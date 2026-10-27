@@ -78,6 +78,16 @@ if (isset($_POST['tipo_reporte'])) {
             ReportesControladores::GenerarReporteSaldos($sede, $programaID, !empty($_POST['solo_con_saldo']));
             break;
 
+        case 'abandonos':
+            // Abandonos: costo, pagado y sin cobrar, por sede, grado, programa y estudiante
+            ReportesControladores::GenerarReporteAbandonos([
+                'sede' => $sede,
+                'programaID' => $programaID,
+                'grado' => in_array($_POST['grado'] ?? '', ReportesModelos::ListaGrados(), true) ? $_POST['grado'] : null,
+                'ci' => preg_replace('/\D/', '', explode('-', trim($_POST['ci'] ?? ''))[0]) ?: null,
+            ]);
+            break;
+
         case 'notas_programa':
             // Consolidado de notas (estudiantes × módulos) de un programa
             ReportesControladores::GenerarReporteNotasPrograma($programaID);

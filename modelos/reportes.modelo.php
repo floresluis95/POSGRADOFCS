@@ -131,6 +131,14 @@ class ReportesModelos
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Grados académicos distintos entre los programas activos
+    public static function ListaGrados()
+    {
+        $stmt = Conexion::Conectar()->prepare("SELECT DISTINCT GradoAcademico FROM programa WHERE Estado = 1 AND GradoAcademico IS NOT NULL AND GradoAcademico != '' ORDER BY GradoAcademico");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
     // Lista de sedes distintas entre los programas activos
     public static function ListaSedes()
     {

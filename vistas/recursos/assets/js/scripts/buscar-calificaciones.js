@@ -187,6 +187,7 @@ function mostrarResultados(data) {
                             <span class="kt-badge kt-badge--primary kt-badge--inline kt-badge--pill mt-1">
                                 ${escaparHtml(e.NombrePrograma)}${e.GradoAcademico ? ' · ' + escaparHtml(e.GradoAcademico) : ''}
                             </span>
+                            ${e.EstadoInscripcion === 'ABANDONO' ? '<span class="kt-badge kt-badge--danger kt-badge--inline kt-badge--pill mt-1 ml-1">Abandono</span>' : ''}
                         </div>
                         <div class="text-right" style="font-size:.9rem;">
                             <span class="mr-3"><strong>${notas.length}</strong> módulos</span>

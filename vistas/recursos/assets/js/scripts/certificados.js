@@ -120,6 +120,7 @@
                     '<strong>' + escapar(nombre) + '</strong>' +
                     '<small>C.I. ' + escapar(ciCompleto(insc)) + '</small>' +
                     '<span class="cert-programa">' + escapar(insc.NombrePrograma) + '</span>' +
+                    (insc.EstadoInscripcion === 'ABANDONO' ? ' <span class="badge badge-danger">Abandono</span>' : '') +
                 '</span>' +
                 '<span class="cert-resultado-lado">' +
                     '<span class="cert-grado">' + escapar(insc.GradoLegible || textoGrado(insc.GradoAcademico)) + '</span>' +
@@ -158,7 +159,7 @@
                 url: 'ajax/certificado.ajax.php',
                 method: 'POST',
                 dataType: 'json',
-                data: { accion: 'buscarEstudiantes', termino: termino },
+                data: { accion: 'buscarEstudiantes', termino: termino, incluirAbandono: op.incluirAbandono ? 1 : 0 },
                 success: function (resp) {
                     if (!resp || !resp.success) {
                         estado('<span>' + escapar((resp && resp.mensaje) || 'No se pudo buscar') + '</span>');

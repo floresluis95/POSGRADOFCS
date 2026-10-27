@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../modelos/inscripcionmodulo.modelo.php';
 require_once file_exists(__DIR__ . '/../modelos/conexion.modelo.php') ? __DIR__ . '/../modelos/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
 require_once __DIR__ . '/../modelos/matricula.modelo.php';
+require_once __DIR__ . '/../modelos/ordenpagoprincipal.modelo.php'; // responsable del abandono
 require_once __DIR__ . '/../modelos/certificado.modelo.php'; // certificados para la titulación
 require_once __DIR__ . '/programa.controlador.php'; // estado del programa (concluido)
 require_once __DIR__ . '/enlaces.controlador.php';
@@ -56,7 +57,10 @@ class InscripcionModuloControladores
             // Badge de estado: solo se muestra si no está ACTIVO (evita ruido visual
             // en el caso normal, ya que por defecto la tabla solo lista activos)
             $badgeEstadoInscripcion = $estudiante['Estado'] !== 'ACTIVO'
-                ? '<br><span class="badge badge-' . $colorEstado . '" style="font-size: 10px;">' . htmlspecialchars($estudiante['Estado']) . '</span>'
+                ? '<br><span class="badge badge-' . $colorEstado . '" style="font-size: 10px;"'
+                    . (!empty($estudiante['MotivoAbandono']) ? ' title="Motivo: ' . htmlspecialchars($estudiante['MotivoAbandono']) . '"' : '') . '>'
+                    . htmlspecialchars($estudiante['Estado'])
+                    . (!empty($estudiante['ModuloAbandono']) ? ' desde ' . htmlspecialchars($estudiante['ModuloAbandono']) : '') . '</span>'
                 : '';
 
             // Determinar tipo de pago y badge
@@ -113,7 +117,12 @@ class InscripcionModuloControladores
                 'pagoCompleto'  => $pagoCompleto,
                 'voucher'       => $estudiante['nvauchermatricula'] ?? '',
                 'fechaOrden'    => !empty($estudiante['FechaOrdenMatricula']) ? date('d/m/Y', strtotime($estudiante['FechaOrdenMatricula'])) : '',
-                'grupo'         => $estudiante['CodigoGrupo'] ?? ''
+                'grupo'         => $estudiante['CodigoGrupo'] ?? '',
+                'abandono'      => $estudiante['Estado'] === 'ABANDONO'
+                    ? trim((!empty($estudiante['ModuloAbandono']) ? 'Desde el módulo ' . $estudiante['ModuloAbandono'] : '')
+                        . (!empty($estudiante['FechaAbandono']) ? ' · marcado el ' . date('d/m/Y', strtotime($estudiante['FechaAbandono'])) : '')
+                        . (!empty($estudiante['MotivoAbandono']) ? ' · Motivo: ' . $estudiante['MotivoAbandono'] : ''), ' ·')
+                    : ''
             ];
 
             // Requisitos de matriculación entregados (obligatorios): abre la ventana "Requisitos"
@@ -259,7 +268,26 @@ class InscripcionModuloControladores
             exit();
         }
 
-        $ok = MatriculaModelos::ActualizarEstadoInscripcionModelo($idInscripcion, $nuevoEstado);
+        // Abandono: desde qué módulo (del mismo programa) y el motivo, ambos obligatorios
+        $idModulo = null;
+        $motivo = null;
+        if ($nuevoEstado === 'ABANDONO') {
+            $datos = MatriculaModelos::ModulosParaAbandonoModelo($idInscripcion);
+            $idModulo = (int)($_POST['idModuloAbandono'] ?? 0);
+            $motivo = mb_strtoupper(trim(preg_replace('/\s+/u', ' ', $_POST['motivoAbandono'] ?? '')), 'UTF-8');
+            if (!$datos || !in_array($idModulo, array_map('intval', array_column($datos['modulos'], 'Idmodulo')), true)) {
+                echo json_encode(['success' => false, 'mensaje' => 'Elija el módulo desde el que abandona']);
+                exit();
+            }
+            if ($motivo === '') {
+                echo json_encode(['success' => false, 'mensaje' => 'Indique el motivo del abandono']);
+                exit();
+            }
+            $motivo = mb_substr($motivo, 0, 255);
+        }
+        $responsable = $nuevoEstado === 'ABANDONO' ? mb_substr((string)OrdenPagoModelos::ResponsableSesion(), 0, 150) : null;
+
+        $ok = MatriculaModelos::ActualizarEstadoInscripcionModelo($idInscripcion, $nuevoEstado, $idModulo, $motivo, $responsable);
 
         echo json_encode([
             'success' => $ok,

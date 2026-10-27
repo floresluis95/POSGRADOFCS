@@ -47,7 +47,7 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'buscarEstudiantes') {
         echo json_encode(['success' => false, 'mensaje' => 'Escriba el C.I. o al menos 3 letras del nombre']);
         exit();
     }
-    $resultados = CertificadoModelo::BuscarInscripcionesModelo($termino);
+    $resultados = CertificadoModelo::BuscarInscripcionesModelo($termino, !empty($_POST['incluirAbandono']));
     foreach ($resultados as &$fila) {
         $fila['GradoLegible'] = CertificadoModelo::GradoLegible($fila['GradoAcademico']);
     }

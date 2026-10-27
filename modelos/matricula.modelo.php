@@ -211,20 +211,134 @@ class MatriculaModelos
      * @param string $estado
      * @return bool
      */
-    public static function ActualizarEstadoInscripcionModelo($idInscripcion, $estado)
+    public static function ActualizarEstadoInscripcionModelo($idInscripcion, $estado, $idModuloAbandono = null, $motivo = null, $responsable = null)
     {
         try {
+            // Al reactivar se borran los datos del abandono
+            $abandono = $estado === 'ABANDONO';
             $stmt = Conexion::Conectar()->prepare(
-                "UPDATE estudianteprograma SET Estado = :estado WHERE idInscripcion = :idInscripcion"
+                "UPDATE estudianteprograma
+                 SET Estado = :estado, IdModuloAbandono = :modulo, MotivoAbandono = :motivo,
+                     FechaAbandono = " . ($abandono ? "NOW()" : "NULL") . ", ResponsableAbandono = :responsable
+                 WHERE idInscripcion = :idInscripcion"
             );
-            $stmt->bindParam(":estado", $estado, PDO::PARAM_STR);
-            $stmt->bindParam(":idInscripcion", $idInscripcion, PDO::PARAM_INT);
-
-            return $stmt->execute();
+            return $stmt->execute([
+                ':estado' => $estado,
+                ':modulo' => $abandono ? $idModuloAbandono : null,
+                ':motivo' => $abandono ? $motivo : null,
+                ':responsable' => $abandono ? $responsable : null,
+                ':idInscripcion' => $idInscripcion,
+            ]);
         } catch (PDOException $e) {
             error_log("Error en ActualizarEstadoInscripcionModelo: " . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Condición SQL: la inscripción `$alias` cursa el módulo `$modulo` (expresión SQL
+     * interna, p. ej. ':moduloID' o 'm.Idmodulo'; nunca texto del usuario).
+     * Activo: sí. Abandono: solo en los módulos anteriores al de abandono, o donde
+     * ya tenga nota. Un abandono sin módulo (antiguo) = desde el inicio.
+     * Los módulos van en el orden en que se crearon (Idmodulo), como en la situación académica.
+     */
+    public static function SqlCursaModulo($alias, $modulo)
+    {
+        return "($alias.Estado = 'ACTIVO' OR ($alias.Estado = 'ABANDONO' AND ("
+            . "$modulo < $alias.IdModuloAbandono"
+            . " OR EXISTS (SELECT 1 FROM calificacion cm WHERE cm.EstudianteID = $alias.EstudianteID"
+            . " AND cm.Idmodulo = $modulo AND cm.Nota IS NOT NULL))))";
+    }
+
+    /**
+     * Módulos del programa de una inscripción, para elegir desde cuál abandona:
+     * con su nota (si la tiene). También devuelve el estado actual del abandono.
+     * @return array|null ['inscripcion' => [...], 'modulos' => [...]] o null si no existe
+     */
+    public static function ModulosParaAbandonoModelo($idInscripcion)
+    {
+        try {
+            $pdo = Conexion::Conectar();
+            $stmt = $pdo->prepare(
+                "SELECT idInscripcion, EstudianteID, ProgramaID, Estado, IdModuloAbandono
+                 FROM estudianteprograma WHERE idInscripcion = :id"
+            );
+            $stmt->execute([':id' => $idInscripcion]);
+            $inscripcion = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$inscripcion) {
+                return null;
+            }
+            $stmt = $pdo->prepare(
+                "SELECT m.Idmodulo, m.codigomodulo AS CodigoModulo, m.nombremodulo AS NombreModulo, m.FechaInicio,
+                        (SELECT c.Nota FROM calificacion c WHERE c.Idmodulo = m.Idmodulo
+                         AND c.EstudianteID = :est AND c.Nota IS NOT NULL LIMIT 1) AS Nota
+                 FROM modulos m
+                 WHERE m.ProgramaId = :prog AND m.estadomodulo != 'INACTIVO'
+                 ORDER BY m.Idmodulo"
+            );
+            $stmt->execute([':est' => $inscripcion['EstudianteID'], ':prog' => $inscripcion['ProgramaID']]);
+            return ['inscripcion' => $inscripcion, 'modulos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        } catch (PDOException $e) {
+            error_log("Error en ModulosParaAbandonoModelo: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Abandonos con lo que dejaron de pagar, para el reporte: costo pactado, pagado y
+     * saldo (mismos montos que Saldos por estudiante / Reporte General), módulo desde
+     * el que abandonó y motivo. Filtros opcionales: sede, grado, programa, C.I.
+     */
+    public static function ListarAbandonosModelo($filtros = [])
+    {
+        $condiciones = ["ep.Estado = 'ABANDONO'"];
+        $params = [];
+        if (!empty($filtros['sede'])) {
+            $condiciones[] = 'p.Sede = :sede';
+            $params[':sede'] = $filtros['sede'];
+        }
+        if (!empty($filtros['grado'])) {
+            $condiciones[] = 'p.GradoAcademico = :grado';
+            $params[':grado'] = $filtros['grado'];
+        }
+        if (!empty($filtros['programaID'])) {
+            $condiciones[] = 'p.ProgramaID = :programa';
+            $params[':programa'] = (int)$filtros['programaID'];
+        }
+        if (!empty($filtros['ci'])) {
+            $condiciones[] = 'e.Ci = :ci';
+            $params[':ci'] = $filtros['ci'];
+        }
+        $stmt = Conexion::Conectar()->prepare(
+            "SELECT ep.idInscripcion, ep.FechaInscripcion, ep.FechaAbandono, ep.MotivoAbandono, ep.ResponsableAbandono,
+                    e.EstudianteID, e.Ci, e.Celular,
+                    TRIM(CONCAT_WS(' ', e.Apaterno, e.Amaterno, e.Nombre)) AS NombreLista,
+                    p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Sede, p.Version,
+                    ma.codigomodulo AS CodigoModuloAbandono, ma.nombremodulo AS ModuloAbandono,
+                    (SELECT COUNT(*) FROM calificacion c WHERE c.EstudianteID = ep.EstudianteID
+                     AND c.ProgramaId = ep.ProgramaID AND c.Nota IS NOT NULL) AS ModulosConNota,
+                    (SELECT COUNT(*) FROM modulos mt WHERE mt.ProgramaId = ep.ProgramaID AND mt.estadomodulo != 'INACTIVO') AS ModulosPrograma,
+                    pp.TipoPlan,
+                    COALESCE(ep.costomatricula, 0) AS CostoMatricula,
+                    COALESCE(pp.MontoTotalPagar, 0) AS CostoPrograma,
+                    COALESCE(pagado.TotalPagado, 0) AS CuotasCobrado,
+                    (COALESCE(pp.MontoTotalPagar, 0) + COALESCE(ep.costomatricula, 0)) AS CostoTotal,
+                    (COALESCE(pagado.TotalPagado, 0) + COALESCE(ep.costomatricula, 0)) AS TotalPagado,
+                    GREATEST(COALESCE(pp.MontoTotalPagar, 0) - COALESCE(pagado.TotalPagado, 0), 0) AS SaldoPendiente
+             FROM estudianteprograma ep
+             INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID
+             INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
+             LEFT JOIN modulos ma ON ma.Idmodulo = ep.IdModuloAbandono
+             LEFT JOIN pagoprograma pp ON pp.idInscripcion = ep.idInscripcion
+             LEFT JOIN (
+                 SELECT idinscripcion, SUM(montocuota) AS TotalPagado
+                 FROM pagomodulo WHERE Estado = 'PAGADO' GROUP BY idinscripcion
+             ) pagado ON pagado.idinscripcion = ep.idInscripcion
+             WHERE " . implode(' AND ', $condiciones) . "
+             ORDER BY p.Sede, p.GradoAcademico, p.NombrePrograma, e.Apaterno, e.Amaterno, e.Nombre"
+        );
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**

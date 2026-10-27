@@ -73,6 +73,16 @@ if (isset($_POST["accion"]) && $_POST["accion"] == "cargarTablaMatriculados") {
     exit();
 }
 
+// Módulos del programa para elegir desde cuál abandona
+if (isset($_POST["accion"]) && $_POST["accion"] == "modulosAbandono") {
+    header('Content-Type: application/json; charset=utf-8');
+    $datos = MatriculaModelos::ModulosParaAbandonoModelo((int)($_POST['idinscripcion'] ?? 0));
+    echo json_encode($datos
+        ? ['success' => true, 'modulos' => $datos['modulos']]
+        : ['success' => false, 'mensaje' => 'Inscripción no encontrada']);
+    exit();
+}
+
 // Marcar/revertir el abandono de una inscripción
 if (isset($_POST["accion"]) && $_POST["accion"] == "actualizarEstadoInscripcion") {
     $controlador = new InscripcionModuloControladores();

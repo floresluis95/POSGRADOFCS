@@ -34,6 +34,7 @@ if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX', 'DOC'], true)) {
 try {
     require_once __DIR__ . '/../../vendor/tecnickcom/tcpdf/tcpdf.php';
     require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
+    require_once __DIR__ . '/../../modelos/matricula.modelo.php'; // quién cursa el módulo (abandonos)
 } catch (Exception $e) {
     ob_end_clean();
     die('Error al cargar librerías: ' . $e->getMessage());
@@ -73,11 +74,12 @@ try {
             FROM estudiante e
             INNER JOIN estudianteprograma ep ON e.EstudianteID = ep.EstudianteID
             WHERE ep.ProgramaID = :programaID
-            AND ep.Estado = 'ACTIVO'
+            AND " . MatriculaModelos::SqlCursaModulo('ep', ':moduloID') . "
             ORDER BY e.Apaterno, e.Amaterno, e.Nombre";
 
     $stmt = $conexion->prepare($sql);
     $stmt->bindParam(':programaID', $programaID, PDO::PARAM_INT);
+    $stmt->bindParam(':moduloID', $moduloID, PDO::PARAM_INT);
     $stmt->execute();
     $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

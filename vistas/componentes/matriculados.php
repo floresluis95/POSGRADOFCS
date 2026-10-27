@@ -1438,6 +1438,7 @@ require_once 'controladores/inscripcionmodulo.controlador.php';
                     </div>
                     <span id="detalleEstado" class="badge"></span>
                 </div>
+                <div class="alert alert-danger py-2" id="detalleAbandono" style="display:none;"><i class="fa fa-user-times"></i> <span></span></div>
 
                 <h6 class="detalle-seccion"><i class="fa fa-address-book"></i> Contacto</h6>
                 <div class="row">

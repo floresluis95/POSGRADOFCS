@@ -626,6 +626,34 @@ $(document).ready(function() {
     // estudianteprograma.Estado, lo que la saca (o la vuelve a meter) de la lista de
     // "Activos" en Matriculados y permite identificarla en el reporte de pagos.
     // ========================================
+    // Motivos frecuentes del abandono ("OTRO" exige el detalle)
+    const MOTIVOS_ABANDONO = ['NO CANCELÓ CUOTAS', 'MOTIVOS PERSONALES', 'MOTIVOS LABORALES', 'MOTIVOS DE SALUD', 'OTRO'];
+
+    function escaparTexto(texto) {
+        return $('<div>').text(texto == null ? '' : String(texto)).html();
+    }
+
+    // Abandono: el estudiante sigue en las planillas de los módulos anteriores al elegido
+    // (y donde ya tenga nota); desde ese módulo en adelante ya no aparece.
+    function formularioAbandono(nombre, modulos) {
+        // Sugerido: el primer módulo sin nota
+        const sugerido = (modulos.find(function(m) { return m.Nota === null; }) || modulos[modulos.length - 1] || {}).Idmodulo;
+        const opciones = modulos.map(function(m) {
+            return '<option value="' + m.Idmodulo + '"' + (m.Idmodulo == sugerido ? ' selected' : '') + '>'
+                + escaparTexto(m.CodigoModulo + ' - ' + m.NombreModulo) + (m.Nota !== null ? ' (nota ' + escaparTexto(m.Nota) + ')' : '') + '</option>';
+        }).join('');
+        return '<div class="text-left" style="font-size:.95rem;">'
+            + '<p><strong>' + escaparTexto(nombre) + '</strong> ya no aparecerá en las planillas de calificaciones desde el módulo elegido. '
+            + 'En los módulos anteriores sigue apareciendo. Su historial de pagos no se modifica.</p>'
+            + '<label for="abandonoModulo" class="mb-1"><strong>Abandona desde el módulo</strong></label>'
+            + '<select id="abandonoModulo" class="form-control mb-3">' + opciones + '</select>'
+            + '<label for="abandonoMotivo" class="mb-1"><strong>Motivo</strong></label>'
+            + '<select id="abandonoMotivo" class="form-control mb-2">'
+            + MOTIVOS_ABANDONO.map(function(m) { return '<option>' + m + '</option>'; }).join('') + '</select>'
+            + '<input type="text" id="abandonoDetalle" class="form-control" maxlength="200" placeholder="Detalle (obligatorio si es OTRO)">'
+            + '</div>';
+    }
+
     $(document).on('click', '.btn-marcar-abandono', function(e) {
         e.preventDefault();
 
@@ -634,15 +662,49 @@ $(document).ready(function() {
         const nuevoEstado = $(this).data('nuevo-estado');
         const esAbandono = nuevoEstado === 'ABANDONO';
 
+        // Para el abandono primero se traen los módulos del programa
+        const modulos = esAbandono
+            ? $.ajax({ url: 'ajax/inscripcionmodulo.ajax.php', type: 'POST', dataType: 'json',
+                       data: { accion: 'modulosAbandono', idinscripcion: idinscripcion } })
+            : $.Deferred().resolve({ success: true, modulos: [] }).promise();
+
+        modulos.then(function(resp) {
+            if (!resp || !resp.success) {
+                Swal.fire({ type: 'error', title: 'Error', text: (resp && resp.mensaje) || 'No se pudieron cargar los módulos' });
+                return;
+            }
+            if (esAbandono && !resp.modulos.length) {
+                Swal.fire({ type: 'warning', title: 'Sin módulos', text: 'El programa todavía no tiene módulos: no se puede indicar desde cuál abandona.' });
+                return;
+            }
+            pedirConfirmacion(resp.modulos);
+        }, function() {
+            Swal.fire({ type: 'error', title: 'Error', text: 'No se pudieron cargar los módulos' });
+        });
+
+        function pedirConfirmacion(listaModulos) {
         Swal.fire({
             type: 'warning',
             title: esAbandono ? '¿Marcar como Abandono?' : '¿Reactivar estudiante?',
             html: esAbandono
-                ? '<strong>' + nombre + '</strong> dejará de aparecer como activo en Matriculados. Su historial de pagos no se modifica.'
-                : '<strong>' + nombre + '</strong> volverá a aparecer como activo en Matriculados.',
+                ? formularioAbandono(nombre, listaModulos)
+                : '<strong>' + escaparTexto(nombre) + '</strong> volverá a aparecer como activo en Matriculados y en las planillas.',
             showCancelButton: true,
             confirmButtonText: esAbandono ? 'Sí, marcar abandono' : 'Sí, reactivar',
-            cancelButtonText: 'Cancelar'
+            cancelButtonText: 'Cancelar',
+            preConfirm: function() {
+                if (!esAbandono) return {};
+                const motivo = $('#abandonoMotivo').val();
+                const detalle = $.trim($('#abandonoDetalle').val());
+                if (motivo === 'OTRO' && !detalle) {
+                    Swal.showValidationMessage('Escriba el detalle del motivo');
+                    return false;
+                }
+                return {
+                    idModuloAbandono: $('#abandonoModulo').val(),
+                    motivoAbandono: motivo === 'OTRO' ? detalle : motivo + (detalle ? ': ' + detalle : '')
+                };
+            }
         }).then(function(result) {
             if (!result.value) { // SweetAlert2 v8: no tiene isConfirmed
                 return;
@@ -651,11 +713,11 @@ $(document).ready(function() {
             $.ajax({
                 url: 'ajax/inscripcionmodulo.ajax.php',
                 type: 'POST',
-                data: {
+                data: $.extend({
                     accion: 'actualizarEstadoInscripcion',
                     idinscripcion: idinscripcion,
                     nuevoEstado: nuevoEstado
-                },
+                }, result.value),
                 dataType: 'json',
                 success: function(resp) {
                     if (resp.success) {
@@ -672,6 +734,7 @@ $(document).ready(function() {
                 }
             });
         });
+        }
     });
 
     // ========================================
@@ -687,6 +750,7 @@ $(document).ready(function() {
         // Encabezado: estudiante y estado de la inscripción
         $('#detalleEstudianteNombre').text(d.nombre);
         $('#detalleEstudianteCI').text(d.ci);
+        $('#detalleAbandono').toggle(!!d.abandono).find('span').text(d.abandono || '');
         $('#detalleEstado')
             .text(d.estado)
             .removeClass('badge-success badge-danger')

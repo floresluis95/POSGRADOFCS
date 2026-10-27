@@ -15,18 +15,21 @@ class CertificadoModelo
      * @param string $termino
      * @return array
      */
-    public static function BuscarInscripcionesModelo($termino)
+    public static function BuscarInscripcionesModelo($termino, $incluirAbandono = false)
     {
         $termino = trim(preg_replace('/\s+/u', ' ', (string)$termino));
+        // Los certificados son solo para activos; la Situación Académica también
+        // muestra a los marcados como abandono en Matriculados
+        $estados = $incluirAbandono ? "('ACTIVO', 'ABANDONO')" : "('ACTIVO')";
         $sql = "
             SELECT
-                ep.idInscripcion, ep.FechaInscripcion,
+                ep.idInscripcion, ep.FechaInscripcion, ep.Estado AS EstadoInscripcion,
                 e.EstudianteID, e.Ci, e.Complemento, e.Exp, e.Nombre, e.Apaterno, e.Amaterno,
                 p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Sede, p.Version
             FROM estudianteprograma ep
             INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
             INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
-            WHERE ep.Estado = 'ACTIVO'
+            WHERE ep.Estado IN $estados
         ";
         $parametros = [];
         if (preg_match('/^\d+[A-Za-z0-9-]*$/', $termino)) {

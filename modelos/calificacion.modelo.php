@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/../core/conexion.modelo.php';
 require_once __DIR__ . '/configuracion.modelo.php'; // nota mínima de aprobación
+require_once __DIR__ . '/matricula.modelo.php'; // quién cursa cada módulo (abandonos)
 
 class CalificacionModelo
 {
@@ -128,6 +129,7 @@ class CalificacionModelo
                     e.Apaterno,
                     e.Amaterno,
                     e.Ci,
+                    ep.Estado AS EstadoInscripcion,
                     c.CalificacionID,
                     c.Nota,
                     c.FechaRegistro
@@ -137,7 +139,7 @@ class CalificacionModelo
                     AND c.Idmodulo = :moduloID
                     AND c.ProgramaId = :programaID
                 WHERE ep.ProgramaID = :programaID
-                AND ep.Estado = 'ACTIVO'
+                AND " . MatriculaModelos::SqlCursaModulo('ep', ':moduloID') . "
                 ORDER BY e.Apaterno, e.Amaterno, e.Nombre ASC"
             );
             $stmt->bindParam(":moduloID", $moduloID, PDO::PARAM_INT);
@@ -443,10 +445,10 @@ class CalificacionModelo
                     p.Codigo as CodigoPrograma,
                     p.Sigla,
                     p.Sede,
-                    (SELECT COUNT(DISTINCT EstudianteID)
-                     FROM estudianteprograma
-                     WHERE ProgramaID = p.ProgramaID
-                     AND Estado = 'ACTIVO') as TotalEstudiantes,
+                    (SELECT COUNT(DISTINCT epm.EstudianteID)
+                     FROM estudianteprograma epm
+                     WHERE epm.ProgramaID = p.ProgramaID
+                     AND " . MatriculaModelos::SqlCursaModulo('epm', 'm.Idmodulo') . ") as TotalEstudiantes,
                     (SELECT COUNT(*)
                      FROM calificacion c
                      WHERE c.Idmodulo = m.Idmodulo
@@ -652,7 +654,10 @@ class CalificacionModelo
                         c.FechaRegistro,
                         p.ProgramaID,
                         p.NombrePrograma,
-                        p.GradoAcademico
+                        p.GradoAcademico,
+                        (SELECT ep.Estado FROM estudianteprograma ep
+                         WHERE ep.EstudianteID = e.EstudianteID AND ep.ProgramaID = p.ProgramaID
+                         ORDER BY (ep.Estado = 'ACTIVO') DESC LIMIT 1) AS EstadoInscripcion
                     FROM calificacion c
                     INNER JOIN estudiante e ON c.EstudianteID = e.EstudianteID
                     INNER JOIN modulos m ON c.Idmodulo = m.Idmodulo
@@ -1224,7 +1229,8 @@ class CalificacionModelo
             $pdo = Conexion::Conectar();
             $stmt = $pdo->prepare(
                 "SELECT e.EstudianteID, e.Ci, e.Complemento, e.Exp, e.Nombre, e.Apaterno, e.Amaterno,
-                        p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Version, p.Sede
+                        p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Version, p.Sede,
+                        ep.Estado AS EstadoInscripcion, ep.IdModuloAbandono
                  FROM estudianteprograma ep
                  INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID
                  INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
