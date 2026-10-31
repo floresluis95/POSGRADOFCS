@@ -170,7 +170,7 @@
                     Sistema de Gestión
                 </h4>
                 <p style="margin-bottom: 15px;">
-                    Sistema Integral de Gestión Académica para Programas de Posgrado de la Facultad de Ciencias de la Salud - UTO.
+                    Sistema Integral de Gestión Académica para Programas de Posgrado de la <?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Facultad())); ?> - <?php echo htmlspecialchars(InstitucionModelo::Area()); ?>.
                 </p>
                 <div class="footer-info-badge">
                     <strong>Versión:</strong> 1.0.0
@@ -184,10 +184,10 @@
                     Institución
                 </h4>
                 <ul>
-                    <li>Universidad Técnica de Oruro</li>
-                    <li>Facultad de Ciencias de la Salud</li>
+                    <li><?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Universidad())); ?></li>
+                    <li><?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Facultad())); ?></li>
                     <li>Dirección de Posgrado</li>
-                    <li>Oruro - Bolivia</li>
+                    <li><?php echo htmlspecialchars(InstitucionModelo::Ciudad()); ?></li>
                 </ul>
             </div>
 
@@ -232,8 +232,8 @@
             <div class="footer-bottom-content">
                 <div class="footer-copyright">
                     <?php echo date('Y'); ?> &copy;
-                    <a href="https://www.uto.edu.bo" target="_blank">Universidad Técnica de Oruro</a>
-                    - Facultad de Ciencias de la Salud. Todos los derechos reservados.
+                    <a href="https://www.uto.edu.bo" target="_blank"><?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Universidad())); ?></a>
+                    - <?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Facultad())); ?>. Todos los derechos reservados.
                 </div>
 
                 <div class="footer-tech-info">

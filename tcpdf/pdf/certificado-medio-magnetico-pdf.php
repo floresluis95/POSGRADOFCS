@@ -23,6 +23,7 @@ if (!in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC'], true)) {
 
 require_once '../../vendor/autoload.php';
 require_once '../../modelos/certificado.modelo.php';
+require_once __DIR__ . '/../../modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
 
 date_default_timezone_set('America/La_Paz');
 
@@ -100,27 +101,27 @@ $interlineado = 7.3;             // Times 12 con interlineado 1,5
 // ===================================
 // MEMBRETE
 // ===================================
-$logoUTO = '../../extensiones/imagenespdf/logouto.png';
-$logoFCS = '../../extensiones/imagenespdf/logofcs.png';
-if (file_exists($logoUTO)) {
-    $pdf->Image($logoUTO, 32, 12.5, 21.7, 21.7, 'PNG');
+$logoUTO = InstitucionModelo::LogoPdf('LOGO_IZQUIERDO');
+$logoFCS = InstitucionModelo::LogoPdf('LOGO_DERECHO');
+if ($logoUTO) {
+    $pdf->Image($logoUTO, 32, 12.5, 21.7, 21.7, 'PNG', '', '', false, 300, '', false, false, 0, 'CM');
 }
-if (file_exists($logoFCS)) {
-    $pdf->Image($logoFCS, 170, 12.5, 18.2, 23.5, 'PNG');
+if ($logoFCS) {
+    $pdf->Image($logoFCS, 170, 12.5, 18.2, 23.5, 'PNG', '', '', false, 300, '', false, false, 0, 'CM');
 }
 
 // Arial Narrow: Helvetica al 82 % de ancho
 $pdf->setFontStretching(82);
 $pdf->SetY(12.5);
 $pdf->SetFont('helvetica', 'B', 18);
-$pdf->Cell(0, 7.2, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
-$pdf->Cell(0, 7.2, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C');
+$pdf->Cell(0, 7.2, InstitucionModelo::Universidad(), 0, 1, 'C');
+$pdf->Cell(0, 7.2, InstitucionModelo::Facultad(), 0, 1, 'C');
 $pdf->SetFont('helvetica', 'B', 14);
-$pdf->Cell(0, 5.8, 'COORDINACIÓN DE POSGRADO - ODONTOLOGÍA', 0, 1, 'C');
+$pdf->Cell(0, 5.8, InstitucionModelo::Unidad(), 0, 1, 'C');
 $pdf->Ln(2.5);
 $pdf->SetFont('helvetica', '', 8);
-$pdf->Cell(0, 3.6, 'C. Presidente Montes entre C/ Murguía y Aldana Edificio de Posgrado UTO 2do Piso, Teléfonos: 5237317- Fax 5247110', 0, 1, 'C');
-$pdf->Cell(0, 3.6, 'Oruro – Bolivia', 0, 1, 'C');
+$pdf->Cell(0, 3.6, InstitucionModelo::DireccionCompleta(' - ', false), 0, 1, 'C');
+$pdf->Cell(0, 3.6, InstitucionModelo::Ciudad(), 0, 1, 'C');
 $pdf->setFontStretching(100);
 
 // Línea gruesa (3 pt) bajo el membrete, de margen a margen
@@ -192,8 +193,8 @@ function firmaMedioMagnetico($pdf, $x, $y, $ancho, $nombreFirma, array $cargos)
     }
 }
 
-firmaMedioMagnetico($pdf, 26, $yFirmas, 80, $coordinador, ['COORDINADOR DE POSGRADO ODONTOLOGÍA', 'UNIVERSIDAD TÉCNICA DE ORURO']);
-firmaMedioMagnetico($pdf, 111, $yFirmas, 80, $director, ['DIRECTOR POSGRADO', 'UNIVERSIDAD TÉCNICA DE ORURO']);
+firmaMedioMagnetico($pdf, 26, $yFirmas, 80, $coordinador, [InstitucionModelo::CargoFirma(), InstitucionModelo::Universidad()]);
+firmaMedioMagnetico($pdf, 111, $yFirmas, 80, $director, ['DIRECTOR POSGRADO', InstitucionModelo::Universidad()]);
 
 // N° de recibo al pie, a la izquierda
 $pdf->SetY($yFirmas + 24);

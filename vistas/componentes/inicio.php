@@ -384,7 +384,7 @@ body.portal-publico {
   <header class="pi-header">
     <div class="pi-contenedor">
       <a href="inicio" class="pi-marca">
-        <img alt="Posgrado Odontología - Universidad Técnica de Oruro" src="vistas/recursos/assets/media/logos/logo.png" />
+        <img alt="<?php echo htmlspecialchars(InstitucionModelo::NombreSistema() . " - " . InstitucionModelo::Universidad()); ?>" src="<?php echo InstitucionModelo::LogoUrl('LOGO_SISTEMA'); ?>" />
       </a>
       <nav class="pi-nav">
         <a href="#programas">Programas</a>
@@ -404,8 +404,8 @@ body.portal-publico {
   <section class="pi-hero" id="programas">
     <div class="pi-contenedor">
       <div>
-        <span class="pi-eyebrow">Universidad Técnica de Oruro · Facultad de Ciencias de la Salud</span>
-        <h1>Posgrado en Odontología</h1>
+        <span class="pi-eyebrow"><?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Universidad())); ?> · <?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Facultad())); ?></span>
+        <h1>Posgrado en <?php echo htmlspecialchars(InstitucionModelo::Area()); ?></h1>
         <p class="pi-hero-texto">
           Especialidades, maestrías y diplomados para profesionales de la salud.
           Conoce nuestros programas, las últimas noticias y el cronograma de defensas.
@@ -436,7 +436,7 @@ body.portal-publico {
           <?php
               $imagenSlide = !empty($s['ImagenURL']) ? $s['ImagenURL'] : $imagenesRespaldoNoticia[$i % count($imagenesRespaldoNoticia)];
               $tituloSlide = !empty($s['TituloPersonalizado']) ? $s['TituloPersonalizado'] : $s['NombrePrograma'];
-              $descSlide = !empty($s['DescripcionPersonalizada']) ? $s['DescripcionPersonalizada'] : ($s['Detalle'] ?: 'Programa de posgrado de la Facultad de Ciencias de la Salud.');
+              $descSlide = !empty($s['DescripcionPersonalizada']) ? $s['DescripcionPersonalizada'] : ($s['Detalle'] ?: 'Programa de posgrado de la ' . InstitucionModelo::Formal(InstitucionModelo::Facultad()) . '.');
               $fechaInicioSlide = !empty($s['FechaInicio']) ? date('d/m/Y', strtotime($s['FechaInicio'])) : 'A definir';
           ?>
           <div class="pi-slide<?php echo $i === 0 ? ' is-activa' : ''; ?>" role="group" aria-label="<?php echo ($i + 1) . ' de ' . count($slidesCarrusel); ?>">
@@ -591,13 +591,13 @@ body.portal-publico {
     <div class="pi-contenedor">
       <div class="pi-footer-grid">
         <div>
-          <div class="pi-footer-marca"><img src="vistas/recursos/assets/media/logos/logo.png" alt="Posgrado Odontología"></div>
-          <p>Coordinación de Posgrado - Odontología<br>Facultad de Ciencias de la Salud · Universidad Técnica de Oruro</p>
+          <div class="pi-footer-marca"><img src="<?php echo InstitucionModelo::LogoUrl('LOGO_SISTEMA'); ?>" alt="<?php echo htmlspecialchars(InstitucionModelo::NombreSistema()); ?>"></div>
+          <p><?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Unidad())); ?><br><?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Facultad())); ?> · <?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Universidad())); ?></p>
         </div>
         <div>
           <h4>Contacto</h4>
-          <p><i class="fas fa-map-marker-alt"></i> Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso, Oruro - Bolivia</p>
-          <p><i class="fas fa-phone"></i> Telf: 5237317 · Fax: 5247110</p>
+          <p><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars(implode(', ', array_filter([InstitucionModelo::Direccion(), InstitucionModelo::Ciudad()], 'strlen'))); ?></p>
+          <p><i class="fas fa-phone"></i> <?php echo htmlspecialchars(InstitucionModelo::Telefonos()); ?></p>
         </div>
         <div>
           <h4>Síguenos</h4>
@@ -611,7 +611,7 @@ body.portal-publico {
       </div>
     </div>
     <div class="pi-footer-base">
-      <div class="pi-contenedor">&copy; <?php echo date('Y'); ?> Universidad Técnica de Oruro · Posgrado Facultad de Ciencias de la Salud</div>
+      <div class="pi-contenedor">&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Universidad())); ?> · Posgrado <?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Facultad())); ?></div>
     </div>
   </footer>
 

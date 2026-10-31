@@ -7,6 +7,7 @@
 // Incluir TCPDF
 require_once __DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php';
 require_once __DIR__ . '/../modelos/reportes.modelo.php';
+require_once __DIR__ . '/../modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
 require_once __DIR__ . '/../modelos/matricula.modelo.php'; // reporte de abandonos
 
 // El servidor tiene configurada otra zona horaria (Europe/Berlin) en php.ini;
@@ -21,27 +22,27 @@ class ReportesControladores extends TCPDF
         $pageWidth = $this->getPageWidth();
         $logoSize = 18; // mismo ancho y alto para ambos logos
 
-        $logoUTO = __DIR__ . '/../extensiones/imagenespdf/logouto.png';
-        $logoFCS = __DIR__ . '/../extensiones/imagenespdf/logofcs.png';
+        $logoUTO = InstitucionModelo::LogoPdf('LOGO_IZQUIERDO');
+        $logoFCS = InstitucionModelo::LogoPdf('LOGO_DERECHO');
 
-        if (file_exists($logoUTO)) {
-            $this->Image($logoUTO, 15, 8, $logoSize, $logoSize, 'PNG');
+        if ($logoUTO) {
+            $this->Image($logoUTO, 15, 8, $logoSize, $logoSize, 'PNG', '', '', false, 300, '', false, false, 0, 'CM');
         }
-        if (file_exists($logoFCS)) {
-            $this->Image($logoFCS, $pageWidth - 15 - $logoSize, 8, $logoSize, $logoSize, 'PNG');
+        if ($logoFCS) {
+            $this->Image($logoFCS, $pageWidth - 15 - $logoSize, 8, $logoSize, $logoSize, 'PNG', '', '', false, 300, '', false, false, 0, 'CM');
         }
 
         $this->SetY(8);
         $this->SetTextColor(30, 60, 114);
         $this->SetFont('helvetica', 'B', 12);
-        $this->Cell(0, 5, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
+        $this->Cell(0, 5, InstitucionModelo::Universidad(), 0, 1, 'C');
         $this->SetFont('helvetica', 'B', 9);
-        $this->Cell(0, 4, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C');
-        $this->Cell(0, 4, 'COORDINACIÓN DE POSGRADO - ODONTOLOGÍA', 0, 1, 'C');
+        $this->Cell(0, 4, InstitucionModelo::Facultad(), 0, 1, 'C');
+        $this->Cell(0, 4, InstitucionModelo::Unidad(), 0, 1, 'C');
 
         $this->SetFont('helvetica', '', 7);
         $this->SetTextColor(100);
-        $this->Cell(0, 4, 'Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso - Telf: 5237317 - Fax: 5247110 - Oruro - Bolivia', 0, 1, 'C');
+        $this->Cell(0, 4, InstitucionModelo::DireccionCompleta(), 0, 1, 'C');
 
         // Bajar el cursor hasta después de los logos, para que la fecha no quede oculta detrás de ellos
         $yTrasLogos = 8 + $logoSize + 2;

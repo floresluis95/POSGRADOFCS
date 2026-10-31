@@ -29,6 +29,7 @@ require_once $baseDir . '/vendor/autoload.php';
 // La conexión está en core/ (modelos/conexion.modelo.php ya no existe; antes este PDF salía en blanco)
 require_once file_exists($baseDir . '/modelos/conexion.modelo.php') ? $baseDir . '/modelos/conexion.modelo.php' : $baseDir . '/core/conexion.modelo.php';
 require_once $baseDir . '/modelos/voucher.modelo.php';
+require_once $baseDir . '/modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
 
 // Validar ID de inscripción
 if (!isset($_GET['idinscripcion']) || empty($_GET['idinscripcion'])) {
@@ -114,25 +115,25 @@ $pdf->AddPage();
 // ========================================
 // ENCABEZADO CON LOGOS
 // ========================================
-$pdf->Image('../../imagenespdf/logouto.png', 15, 10, 25);
-$pdf->Image('../../imagenespdf/logofcs.png', 175, 10, 20);
+$pdf->Image(InstitucionModelo::LogoPdf('LOGO_IZQUIERDO'), 15, 10, 25);
+$pdf->Image(InstitucionModelo::LogoPdf('LOGO_DERECHO'), 175, 10, 20);
 
 $pdf->SetFont('helvetica', 'B', 16);
 $pdf->SetTextColor(0, 0, 0);
 $pdf->SetXY(15, 15);
-$pdf->Cell(0, 8, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
+$pdf->Cell(0, 8, InstitucionModelo::Universidad(), 0, 1, 'C');
 
 $pdf->SetFont('helvetica', '', 11);
 $pdf->SetXY(15, 22);
-$pdf->Cell(0, 6, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C');
+$pdf->Cell(0, 6, InstitucionModelo::Facultad(), 0, 1, 'C');
 
 $pdf->SetXY(15, 28);
-$pdf->Cell(0, 6, 'POSGRADO - ODONTOLOGÍA', 0, 1, 'C');
+$pdf->Cell(0, 6, InstitucionModelo::Unidad(), 0, 1, 'C');
 
 $pdf->SetFont('helvetica', '', 9);
 $pdf->SetTextColor(80, 80, 80);
 $pdf->SetXY(15, 34);
-$pdf->Cell(0, 4, 'Av. del Minero Barrio San José "Excomibol" - Tel. 5237317', 0, 1, 'C');
+$pdf->Cell(0, 4, InstitucionModelo::DireccionCompleta(), 0, 1, 'C');
 
 // Línea decorativa
 $pdf->SetDrawColor(102, 126, 234);

@@ -10,6 +10,7 @@
  */
 
 require_once __DIR__ . '/../../vendor/tecnickcom/tcpdf/tcpdf.php';
+require_once __DIR__ . '/../../modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
 
 /**
  * Dibuja un bloque completo de la orden de pago (se usa dos veces: original y copia)
@@ -28,14 +29,14 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     // ========================================
     // CABECERA
     // ========================================
-    $imagen_izquierda = '../../extensiones/imagenespdf/logouto.png';
-    $imagen_derecha = '../../extensiones/imagenespdf/logofcs.png';
+    $imagen_izquierda = InstitucionModelo::LogoPdf('LOGO_IZQUIERDO');
+    $imagen_derecha = InstitucionModelo::LogoPdf('LOGO_DERECHO');
 
     $width_img = 13;
-    if (file_exists($imagen_izquierda)) {
+    if ($imagen_izquierda) {
         $pdf->Image($imagen_izquierda, $x_left, $yInicio, $width_img);
     }
-    if (file_exists($imagen_derecha)) {
+    if ($imagen_derecha) {
         $pdf->Image($imagen_derecha, $page_width - $margin - $width_img, $yInicio, $width_img);
     }
 
@@ -43,19 +44,19 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
     $pdf->SetY($yInicio);
     $pdf->SetFont('helvetica', 'B', 10.5);
     $pdf->SetX($x_left);
-    $pdf->Cell($content_width, 5, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
+    $pdf->Cell($content_width, 5, InstitucionModelo::Universidad(), 0, 1, 'C');
 
     $pdf->SetFont('helvetica', 'B', 9.5);
     $pdf->SetX($x_left);
-    $pdf->Cell($content_width, 4.5, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C');
+    $pdf->Cell($content_width, 4.5, InstitucionModelo::Facultad(), 0, 1, 'C');
 
     $pdf->SetFont('helvetica', 'B', 8.5);
     $pdf->SetX($x_left);
-    $pdf->Cell($content_width, 4, 'COORDINACIÓN DE POSGRADO-ODONTOLOGÍA', 0, 1, 'C');
+    $pdf->Cell($content_width, 4, InstitucionModelo::Unidad(), 0, 1, 'C');
 
     $pdf->SetFont('helvetica', '', 7);
     $pdf->SetX($x_left);
-    $pdf->Cell($content_width, 3.6, 'Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso - Telf: 5237317 - Fax 5247110 - Oruro - Bolivia', 0, 1, 'C');
+    $pdf->Cell($content_width, 3.6, InstitucionModelo::DireccionCompleta(), 0, 1, 'C');
 
     if ($esCopia) {
         // Se dibuja la etiqueta arriba a la derecha (junto al logo) sin perder la posición Y actual
@@ -344,7 +345,7 @@ function dibujarOrdenPago($pdf, $yInicio, $esCopia, $datos, $colorEtiqueta, $col
         $pdf->SetFont('helvetica', 'B', 8);
         $pdf->SetLineWidth(0.3);
         $pdf->SetDrawColor(0, 0, 0);
-        $pdf->Cell($content_width, 5.5, 'IMPORTANTE: ESTA COPIA DEBE ENTREGARSE EN LA SECRETARÍA DE POSGRADO ODONTOLOGÍA', 1, 1, 'C');
+        $pdf->Cell($content_width, 5.5, 'IMPORTANTE: ESTA COPIA DEBE ENTREGARSE EN LA SECRETARÍA DE ' . mb_strtoupper(InstitucionModelo::NombreSistema(), 'UTF-8'), 1, 1, 'C');
         $pdf->SetLineWidth(0.2);
     }
 

@@ -595,8 +595,11 @@ function renderDetallePagosEstudiante(datos, tieneClinica, hayEstudiantes) {
  * en A4 horizontal y sin la columna de acciones.
  */
 function imprimirTabla(titulo, contenidoHtml) {
-    const logoUTO = new URL('extensiones/imagenespdf/logouto.png', document.baseURI).href;
-    const logoFCS = new URL('extensiones/imagenespdf/logofcs.png', document.baseURI).href;
+    // Datos y logos de la institución (Configuración), los mismos de los reportes PDF
+    const inst = window.INSTITUCION || {};
+    const esc = function(t) { return String(t || '').replace(/[&<>"]/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    const logoUTO = new URL(inst.logoIzquierdo || 'extensiones/imagenespdf/logouto.png', document.baseURI).href;
+    const logoFCS = new URL(inst.logoDerecho || 'extensiones/imagenespdf/logofcs.png', document.baseURI).href;
     const ahora = new Date();
     const pad = function(n) { return String(n).padStart(2, '0'); };
     const fecha = pad(ahora.getDate()) + '/' + pad(ahora.getMonth() + 1) + '/' + ahora.getFullYear() +
@@ -695,12 +698,12 @@ function imprimirTabla(titulo, contenidoHtml) {
             </div>
             <div class="hoja">
             <div class="cabecera">
-                <img class="logo-izq" src="${logoUTO}" alt="UTO">
-                <img class="logo-der" src="${logoFCS}" alt="FCS">
-                <p class="uni">UNIVERSIDAD TÉCNICA DE ORURO</p>
-                <p class="fac">FACULTAD DE CIENCIAS DE LA SALUD</p>
-                <p class="fac">COORDINACIÓN DE POSGRADO - ODONTOLOGÍA</p>
-                <p class="dir">Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso - Telf: 5237317 - Fax: 5247110 - Oruro - Bolivia</p>
+                <img class="logo-izq" src="${logoUTO}" alt="">
+                <img class="logo-der" src="${logoFCS}" alt="">
+                <p class="uni">${esc(inst.universidad)}</p>
+                <p class="fac">${esc(inst.facultad)}</p>
+                <p class="fac">${esc(inst.unidad)}</p>
+                <p class="dir">${esc(inst.direccionCompleta)}</p>
             </div>
             <div class="cabecera-fecha">Fecha: ${fecha}</div>
             <hr class="cabecera-linea">

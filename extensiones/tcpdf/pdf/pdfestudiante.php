@@ -27,6 +27,7 @@ if (empty($_SESSION['Validar']) || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'S
 $baseDir = realpath(__DIR__ . '/../../../');
 require_once $baseDir . '/vendor/autoload.php';
 require_once $baseDir . '/modelos/inscripcionmodulo.modelo.php';
+require_once $baseDir . '/modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
 
 // Validar ID de inscripción
 if (!isset($_GET['idinscripcion']) || empty($_GET['idinscripcion'])) {
@@ -64,30 +65,30 @@ $pdf->SetAutoPageBreak(TRUE, 15);
 $pdf->AddPage();
 
 // Imagen izquierda
-$pdf->Image('../../imagenespdf/logouto.png', 15, 10, 25);  // (x, y, ancho)
+$pdf->Image(InstitucionModelo::LogoPdf('LOGO_IZQUIERDO'), 15, 10, 25);  // (x, y, ancho)
 
 // Imagen derecha
-$pdf->Image('../../imagenespdf/logofcs.png', 175, 10, 20);// ========================================
+$pdf->Image(InstitucionModelo::LogoPdf('LOGO_DERECHO'), 175, 10, 20);// ========================================
 // ENCABEZADO
 // ========================================
 $pdf->SetFont('helvetica', 'B', 18);
 $pdf->SetTextColor(0, 0, 0);
 $pdf->SetXY(15, 15);
-$pdf->Cell(0, 10, 'UNIVERSIDAD TECNICA DE ORURO', 0, 1, 'C');
+$pdf->Cell(0, 10, InstitucionModelo::Universidad(), 0, 1, 'C');
 
 $pdf->SetFont('helvetica', '', 12);
 $pdf->SetXY(15, 22);
-$pdf->Cell(0, 8, 'COORDINACION -POSGRADO ODONTOLOGIA', 0, 1, 'C');
+$pdf->Cell(0, 8, InstitucionModelo::Unidad(), 0, 1, 'C');
 
 $pdf->SetFont('helvetica', '', 10);
 $pdf->SetTextColor(80, 80, 80);
 $pdf->SetXY(15, 28);
-$pdf->Cell(0, 5, 'Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso', 0, 1, 'C');
+$pdf->Cell(0, 5, InstitucionModelo::Direccion(), 0, 1, 'C');
 
 $pdf->SetFont('helvetica', '', 10);
 $pdf->SetTextColor(80, 80, 80);
 $pdf->SetXY(15, 33);
-$pdf->Cell(0, 5, 'Telf: 5237317 - Fax: 5247110 - Oruro - Bolivia', 0, 1, 'C');
+$pdf->Cell(0, 5, implode(' - ', array_filter([InstitucionModelo::Telefonos(), InstitucionModelo::Ciudad()], 'strlen')), 0, 1, 'C');
 
 // Línea decorativa horizontal
 $pdf->SetDrawColor(0, 0, 0);

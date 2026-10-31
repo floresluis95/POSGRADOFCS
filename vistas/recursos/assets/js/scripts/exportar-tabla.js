@@ -241,7 +241,7 @@
             footer: function (pagina, total) {
                 return {
                     columns: [
-                        { text: 'Posgrado FCS · Universidad Técnica de Oruro', alignment: 'left' },
+                        { text: (window.INSTITUCION ? window.INSTITUCION.nombreSistema + ' · ' + window.INSTITUCION.universidad : 'Posgrado'), alignment: 'left' },
                         { text: 'Página ' + pagina + ' de ' + total, alignment: 'right' }
                     ],
                     margin: [28, 8, 28, 0], fontSize: 7, color: '#6b7280'

@@ -9,6 +9,7 @@
 
 session_start();
 require_once __DIR__ . '/../../modelos/configuracion.modelo.php'; // nota mínima de aprobación
+require_once __DIR__ . '/../../modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
 if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true
     || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX', 'DOC'], true)) {
     die('Acceso denegado');
@@ -454,15 +455,15 @@ th {
     </button>
 
    <div class="header">
-    <img src="../../extensiones/imagenespdf/logouto.png"  class="logo-izquierda">
+    <img src="<?php echo InstitucionModelo::LogoSrc('LOGO_IZQUIERDO', '../../'); ?>"  class="logo-izquierda">
     
-    <img src="../../extensiones/imagenespdf/logofcs.png"  class="logo-derecha">
+    <img src="<?php echo InstitucionModelo::LogoSrc('LOGO_DERECHO', '../../'); ?>"  class="logo-derecha">
 
-    <h1>UNIVERSIDAD TECNICA DE ORURO</h1>
-    <h2>FACULTAD DE CIENCIAS DE LA SALUD</h2>
-    <h2>COORDINACION POSGRADO AREA - ODONTOLOGIA</h2>
-    <p>AV. Del Moreno Edificio San Agustin II (Ex Almacenes COMIBOL) Telefonos: 52 - 37317 - Fax: 52 - 47110 </p>
-    <p>Oruro - Bolivia</p>
+    <h1><?php echo htmlspecialchars(InstitucionModelo::Universidad()); ?></h1>
+    <h2><?php echo htmlspecialchars(InstitucionModelo::Facultad()); ?></h2>
+    <h2><?php echo htmlspecialchars(InstitucionModelo::Unidad()); ?></h2>
+    <p><?php echo htmlspecialchars(InstitucionModelo::DireccionCompleta(' - ', false)); ?></p>
+    <p><?php echo htmlspecialchars(InstitucionModelo::Ciudad()); ?></p>
     <p style="font-size: 9pt; margin-top: 5px;">Generado el: <?php echo $fechaImpresion; ?></p>
 </div>
         
@@ -590,7 +591,7 @@ th {
             <div class="firma">
                 <div class="linea"></div>
                 <p>Sello y Firma de Autorización</p>
-                <p style="font-weight: normal; font-size: 9pt;">COORDINACION POSGRADO ODONTOLOGIA</p>
+                <p style="font-weight: normal; font-size: 9pt;"><?php echo htmlspecialchars(InstitucionModelo::CargoFirma()); ?></p>
             </div>
         </div>
 

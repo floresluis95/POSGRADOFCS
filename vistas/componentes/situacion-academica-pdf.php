@@ -24,6 +24,7 @@ if (empty($_SESSION['Validar']) || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'S
 require_once __DIR__ . '/../../vendor/tecnickcom/tcpdf/tcpdf.php';
 require_once __DIR__ . '/../../modelos/calificacion.modelo.php';
 require_once __DIR__ . '/../../modelos/autoridad.modelo.php';
+require_once __DIR__ . '/../../modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
 
 $estudianteID = (int)($_GET['estudianteID'] ?? 0);
 $programaID = (int)($_GET['programaID'] ?? 0);
@@ -41,22 +42,22 @@ class SituacionAcademicaPDF extends TCPDF
     {
         $ancho = $this->getPageWidth();
         $logo = 20;
-        $uto = __DIR__ . '/../../extensiones/imagenespdf/logouto.png';
-        $fcs = __DIR__ . '/../../extensiones/imagenespdf/logofcs.png';
-        if (file_exists($uto)) $this->Image($uto, 18, 10, $logo, $logo, 'PNG');
-        if (file_exists($fcs)) $this->Image($fcs, $ancho - 18 - $logo, 10, $logo, $logo, 'PNG');
+        $uto = InstitucionModelo::LogoPdf('LOGO_IZQUIERDO');
+        $fcs = InstitucionModelo::LogoPdf('LOGO_DERECHO');
+        if ($uto) $this->Image($uto, 18, 10, $logo, $logo, 'PNG', '', '', false, 300, '', false, false, 0, 'CM');
+        if ($fcs) $this->Image($fcs, $ancho - 18 - $logo, 10, $logo, $logo, 'PNG', '', '', false, 300, '', false, false, 0, 'CM');
 
         $this->SetTextColor(0);
         $this->SetY(10);
         $this->setFontStretching(88);
         $this->SetFont('helvetica', 'B', 14);
-        $this->Cell(0, 6, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
-        $this->Cell(0, 6, 'FACULTAD CIENCIAS DE LA SALUD', 0, 1, 'C');
+        $this->Cell(0, 6, InstitucionModelo::Universidad(), 0, 1, 'C');
+        $this->Cell(0, 6, InstitucionModelo::Facultad(), 0, 1, 'C');
         $this->SetFont('helvetica', 'B', 11);
-        $this->Cell(0, 5, 'COORDINACION POSTGRADO - ODONTOLOGIA', 0, 1, 'C');
+        $this->Cell(0, 5, InstitucionModelo::Unidad(), 0, 1, 'C');
         $this->SetFont('helvetica', '', 7.5);
-        $this->Cell(0, 3.5, 'Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso - Teléfono: 5237317 - Fax: 5247110', 0, 1, 'C');
-        $this->Cell(0, 3.5, 'Oruro – Bolivia', 0, 1, 'C');
+        $this->Cell(0, 3.5, InstitucionModelo::DireccionCompleta(' - ', false), 0, 1, 'C');
+        $this->Cell(0, 3.5, InstitucionModelo::Ciudad(), 0, 1, 'C');
         $this->setFontStretching(100);
     }
 
@@ -139,8 +140,8 @@ $pdf->Ln(20);
 $autoridades = AutoridadModelo::ListarModelo();
 $pdf->SetFont('times', 'B', 11);
 $pdf->Cell(0, 5, AutoridadModelo::NombreParaDocumento($autoridades, 'COORDINADOR'), 0, 1, 'C');
-$pdf->Cell(0, 5, 'COORDINADOR POSTGRADO ODONTOLOGÍA', 0, 1, 'C');
-$pdf->Cell(0, 5, 'FACULTAD CIENCIAS DE LA SALUD', 0, 1, 'C');
+$pdf->Cell(0, 5, InstitucionModelo::CargoFirma(), 0, 1, 'C');
+$pdf->Cell(0, 5, InstitucionModelo::Facultad(), 0, 1, 'C');
 
 ob_end_clean();
 $pdf->Output('Situacion_Academica_' . $est['Ci'] . '.pdf', 'I');

@@ -11,6 +11,7 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['Validar']) || $_SESSION['Validar'] !== true || ($_SESSION['Tipo'] ?? '') !== 'ADM') die('Acceso denegado');
 
 require_once __DIR__ . '/../../modelos/certificado.modelo.php';
+require_once __DIR__ . '/../../modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
 
 date_default_timezone_set("America/La_Paz");
 $fechaGeneracion = date('d/m/Y H:i:s');
@@ -178,14 +179,14 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#111;back
 <div class="papel"><div class="hoja">
 
 <div class="header">
-    <div class="logo"><img src="../../extensiones/imagenespdf/logouto.png"></div>
+    <div class="logo"><img src="<?php echo InstitucionModelo::LogoSrc('LOGO_IZQUIERDO', '../../'); ?>"></div>
     <div class="header-content">
-        <h3>UNIVERSIDAD TÉCNICA DE ORURO</h3>
-        <h4>FACULTAD DE CIENCIAS DE LA SALUD</h4>
-        <h4>COORDINACIÓN DE POSGRADO - ODONTOLOGÍA</h4>
-        <p>Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso · Telf: 5237317 - Fax: 5247110 - Oruro - Bolivia</p>
+        <h3><?php echo htmlspecialchars(InstitucionModelo::Universidad()); ?></h3>
+        <h4><?php echo htmlspecialchars(InstitucionModelo::Facultad()); ?></h4>
+        <h4><?php echo htmlspecialchars(InstitucionModelo::Unidad()); ?></h4>
+        <p><?php echo htmlspecialchars(InstitucionModelo::DireccionCompleta(' · ')); ?></p>
     </div>
-    <div class="logo"><img src="../../extensiones/imagenespdf/logofcs.png"></div>
+    <div class="logo"><img src="<?php echo InstitucionModelo::LogoSrc('LOGO_DERECHO', '../../'); ?>"></div>
 </div>
 
 <div class="titulo-recibo">

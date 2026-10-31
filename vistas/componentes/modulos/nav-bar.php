@@ -477,7 +477,7 @@ $menuItems = obtenerMenuPorTipo($tipoUsuario);
         <!-- begin:: Brand -->
         <div class="kt-header__brand kt-grid__item" id="kt_header_brand">
             <a class="kt-header__brand-logo" href="panel">
-                <img alt="Posgrado Odontología - Universidad Técnica de Oruro" src="vistas/recursos/assets/media/logos/logo.png" />
+                <img alt="<?php echo htmlspecialchars(InstitucionModelo::NombreSistema() . " - " . InstitucionModelo::Universidad()); ?>" src="<?php echo InstitucionModelo::LogoUrl('LOGO_SISTEMA'); ?>" />
             </a>
         </div>
         <!-- end:: Brand -->

@@ -35,6 +35,7 @@ require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php')
     ? __DIR__ . '/../../modelos/conexion.modelo.php'
     : __DIR__ . '/../../core/conexion.modelo.php';
 require_once '../../modelos/calificacion.modelo.php';
+require_once __DIR__ . '/../../modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
 
 // Configurar zona horaria
 date_default_timezone_set("America/La_Paz");
@@ -176,33 +177,33 @@ $pdf->AddPage();
 // ===================================
 // ENCABEZADO (formato oficial FORMATO_CALIFICACIONES.docx)
 // ===================================
-$logoUTO = '../../extensiones/imagenespdf/logouto.png';
-$logoFCS = '../../extensiones/imagenespdf/logofcs.png';
+$logoUTO = InstitucionModelo::LogoPdf('LOGO_IZQUIERDO');
+$logoFCS = InstitucionModelo::LogoPdf('LOGO_DERECHO');
 
 // Logo izquierdo y derecho: misma caja de 22x22mm para los dos (con
 // $fitbox='CM' cada logo se escala manteniendo su proporción y se centra
 // dentro de la caja), porque logouto.png y logofcs.png tienen proporciones
 // muy distintas y con solo el ancho fijo salían de alturas muy diferentes.
-if (file_exists($logoUTO)) {
+if ($logoUTO) {
     $pdf->Image($logoUTO, 15, 10, 22, 22, 'PNG', '', '', true, 300, '', false, false, 0, 'CM');
 }
-if (file_exists($logoFCS)) {
+if ($logoFCS) {
     $pdf->Image($logoFCS, 173, 10, 22, 22, 'PNG', '', '', true, 300, '', false, false, 0, 'CM');
 }
 
 // Título centrado
 $pdf->SetFont('helvetica', 'B', 13);
 $pdf->SetY(12);
-$pdf->Cell(0, 5, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
+$pdf->Cell(0, 5, InstitucionModelo::Universidad(), 0, 1, 'C');
 
 $pdf->SetFont('helvetica', 'B', 11);
-$pdf->Cell(0, 5, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C');
-$pdf->Cell(0, 5, 'COORDINACIÓN POSGRADO ÁREA - ODONTOLOGÍA', 0, 1, 'C');
+$pdf->Cell(0, 5, InstitucionModelo::Facultad(), 0, 1, 'C');
+$pdf->Cell(0, 5, InstitucionModelo::Unidad(), 0, 1, 'C');
 
 $pdf->SetFont('helvetica', '', 8);
-$pdf->Cell(0, 4, 'Presidente Montes N°6390 y Aldana, edificio Posgrado UTO 2do piso', 0, 1, 'C');
-$pdf->Cell(0, 4, 'Teléfono (591)2- 52 75798 - Fax:(591) 2- 52 55443', 0, 1, 'C');
-$pdf->Cell(0, 4, 'Oruro – Bolivia', 0, 1, 'C');
+$pdf->Cell(0, 4, InstitucionModelo::Direccion(), 0, 1, 'C');
+$pdf->Cell(0, 4, InstitucionModelo::Telefonos(), 0, 1, 'C');
+$pdf->Cell(0, 4, InstitucionModelo::Ciudad(), 0, 1, 'C');
 
 $pdf->Ln(5);
 
@@ -358,7 +359,7 @@ $pdf->Cell(90, 1, '', 'T', 1, 'C');
 $pdf->SetFont('helvetica', 'B', 9);
 $pdf->Cell(90, 5, 'DOCENTE', 0, 0, 'C');
 $pdf->Cell(10, 5, '', 0, 0);
-$pdf->Cell(90, 5, 'COORDINADOR POSGRADO ODONTOLOGIA', 0, 1, 'C');
+$pdf->Cell(90, 5, InstitucionModelo::CargoFirma(), 0, 1, 'C');
 
 $pdf->SetFont('helvetica', '', 8);
 $pdf->Cell(90, 4, htmlspecialchars($docenteNombre), 0, 0, 'C');

@@ -23,8 +23,8 @@
 <div class="footer-resumido kt-grid__item" id="kt_footer">
     <div class="kt-container">
         <?php echo date('Y'); ?> &copy;
-        <a href="https://www.uto.edu.bo" target="_blank">Universidad Técnica de Oruro</a>
-        - Facultad de Ciencias de la Salud. Todos los derechos reservados.
+        <a href="https://www.uto.edu.bo" target="_blank"><?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Universidad())); ?></a>
+        - <?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Facultad())); ?>. Todos los derechos reservados.
     </div>
 </div>
 

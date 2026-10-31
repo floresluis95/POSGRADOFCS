@@ -44,6 +44,7 @@
     require_once 'modelos/reportes.modelo.php';
     require_once 'modelos/reportenotas.modelo.php';
     require_once 'modelos/configuracion.modelo.php'; // nota mínima de aprobación y demás parámetros
+    require_once 'modelos/institucion.modelo.php'; // datos y logos de la institución (encabezados, firmas, pantallas)
     require_once 'modelos/calificacion.modelo.php';
     require_once 'modelos/cuenta.modelo.php';
     require_once 'modelos/programacuenta.modelo.php';

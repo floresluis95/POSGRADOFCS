@@ -691,7 +691,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
   <div id="kt_header_mobile" class="kt-header-mobile kt-header-mobile--fixed">
     <div class="kt-header-mobile__logo">
       <a href="index.php">
-        <img alt="Posgrado Odontología" src="vistas/recursos/assets/media/logos/logo.png" height="36" />
+        <img alt="<?php echo htmlspecialchars(InstitucionModelo::NombreSistema()); ?>" src="<?php echo InstitucionModelo::LogoUrl('LOGO_SISTEMA'); ?>" height="36" />
       </a>
     </div>
     <div class="kt-header-mobile__toolbar">

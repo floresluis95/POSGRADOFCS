@@ -48,16 +48,45 @@ switch ($_POST['accion'] ?? '') {
         ]);
         break;
 
+    // Datos de la institución (encabezado de los reportes, firmas y pantallas)
+    case 'obtenerInstitucion':
+        require_once __DIR__ . '/../modelos/institucion.modelo.php';
+        $campos = [];
+        foreach (InstitucionModelo::TEXTOS as $clave => $campo) {
+            $campos[$clave] = ['valor' => InstitucionModelo::Texto($clave), 'porDefecto' => $campo[1]];
+        }
+        $ultimo = null;
+        foreach (array_keys(InstitucionModelo::TEXTOS) as $clave) {
+            $d = ConfiguracionModelo::Detalle($clave);
+            if ($d && $d['ResponsableActualizacion'] && (!$ultimo || $d['FechaActualizacion'] > $ultimo['FechaActualizacion'])) {
+                $ultimo = $d;
+            }
+        }
+        echo json_encode(['success' => true, 'campos' => $campos, 'actualizado' => $ultimo]);
+        break;
+
+    case 'guardarInstitucion':
+        require_once __DIR__ . '/../modelos/institucion.modelo.php';
+        $valores = is_array($_POST['institucion'] ?? null) ? $_POST['institucion'] : [];
+        $ok = InstitucionModelo::GuardarTextos($valores, AutoridadControlador::UsuarioSesion());
+        echo json_encode([
+            'success' => $ok,
+            'mensaje' => $ok ? 'Datos de la institución actualizados' : 'No se pudo guardar',
+        ]);
+        break;
+
     // Firma del coordinador y sello de Posgrado (imágenes) para las órdenes de pago
     // que genera el estudiante
     case 'estadoImagenesFirma':
-        require_once __DIR__ . '/../modelos/imagenfirma.modelo.php';
+        require_once __DIR__ . '/../modelos/institucion.modelo.php';
         $imagenes = [];
         foreach (ImagenFirmaModelo::Estado() as $clave => $detalle) {
             $png = $detalle ? ImagenFirmaModelo::Obtener($clave) : null;
             $imagenes[$clave] = [
                 'nombre' => ImagenFirmaModelo::CLAVES[$clave],
                 'imagen' => $png ? 'data:image/png;base64,' . base64_encode($png) : null,
+                // Logo sin subir: se muestra el de por defecto (no se puede quitar)
+                'porDefecto' => (!$png && isset(InstitucionModelo::LOGOS[$clave])) ? InstitucionModelo::LOGOS[$clave][1] : null,
                 'actualizado' => $detalle,
             ];
         }

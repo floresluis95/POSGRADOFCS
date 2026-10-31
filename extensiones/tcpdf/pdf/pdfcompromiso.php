@@ -26,6 +26,7 @@ require_once $baseDir . '/vendor/autoload.php';
 require_once $baseDir . '/modelos/inscripcionmodulo.modelo.php';
 require_once $baseDir . '/modelos/autoridad.modelo.php';
 require_once $baseDir . '/modelos/configuracion.modelo.php'; // nota mínima de aprobación
+require_once $baseDir . '/modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
 // Solo por numeroALetrasOrdenPagoOficial() (montos en letras).
 require_once $baseDir . '/vistas/componentes/orden-pago-pdf-render.php';
 
@@ -111,16 +112,16 @@ $pdf->SetAutoPageBreak(true, 15);
 $pdf->AddPage();
 
 // Encabezado
-$pdf->Image(__DIR__ . '/../../imagenespdf/logouto.png', 15, 10, 24);
-$pdf->Image(__DIR__ . '/../../imagenespdf/logofcs.png', 179, 10, 22);
+$pdf->Image(InstitucionModelo::LogoPdf('LOGO_IZQUIERDO'), 15, 10, 24);
+$pdf->Image(InstitucionModelo::LogoPdf('LOGO_DERECHO'), 179, 10, 22);
 
 // El texto va entre los logos (x 42..176) para no montarse sobre ellos.
 $pdf->SetFont('helvetica', 'B', 11);
 $pdf->SetXY(42, 15);
-$pdf->Cell(134, 6, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C');
+$pdf->Cell(134, 6, InstitucionModelo::Universidad(), 0, 1, 'C');
 $pdf->SetFont('helvetica', '', 9.5);
 $pdf->SetX(42);
-$pdf->Cell(134, 6, 'COORDINACIÓN DE POSGRADO ÁREA DE ODONTOLOGÍA F.C.S.-U.T.O.', 0, 1, 'C');
+$pdf->Cell(134, 6, InstitucionModelo::Unidad(), 0, 1, 'C');
 
 $pdf->SetFont('helvetica', 'B', 14);
 $pdf->SetXY(15, 36);
@@ -135,7 +136,7 @@ $programaHtml = '<b>' . $e($programa) . '</b>';
 
 $intro = 'Documento privado de compromiso que suscriben por una parte el(la) señor(a) ' . $nombreHtml
     . ' con carnet de identidad <b>' . $e($carnet) . '</b> y por otra parte el ' . $director
-    . ' como Director de Posgrado, ' . $coordinador . ' como Coordinador de Posgrado en el Área de Odontología. '
+    . ' como Director de Posgrado, ' . $coordinador . ' como Coordinador de Posgrado en el Área de ' . InstitucionModelo::Area() . '. '
     . 'Documento que con sola una firma y rúbrica del interesado surtirá efectos legales al tenor de las siguientes cláusulas:';
 
 // Cláusula SEGUNDA: una línea para la matrícula y otra para la colegiatura,
@@ -195,7 +196,7 @@ if (!empty($datos['pagoCompleto'])) {
 }
 
 $clausulas = [
-    'PRIMERA:' => '<b>Antecedentes.-</b> La Coordinación de Posgrado de la F.C.S. Área de Odontología U.T.O., se ha permitido '
+    'PRIMERA:' => '<b>Antecedentes.-</b> La Coordinación de Posgrado de la F.C.S. Área de ' . InstitucionModelo::Area() . ' U.T.O., se ha permitido '
         . 'desarrollar el programa de ' . $programaHtml . ', mismo que se desarrolla en las fechas y horario según convocatoria.',
 
     'SEGUNDA:' => '<b>Aceptación y modalidades de pago.-</b> El participante, una vez aceptado en el programa y ser alumno regular, '

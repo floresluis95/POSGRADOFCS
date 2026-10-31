@@ -473,12 +473,12 @@
         <!-- Texto institucional -->
         <section class="lg-intro">
             <a href="inicio" class="lg-marca">
-                <img src="vistas/recursos/assets/media/logos/logo.png" alt="Posgrado Odontología - Universidad Técnica de Oruro">
+                <img src="<?php echo InstitucionModelo::LogoUrl('LOGO_SISTEMA'); ?>" alt="<?php echo htmlspecialchars(InstitucionModelo::NombreSistema() . " - " . InstitucionModelo::Universidad()); ?>">
             </a>
-            <span class="lg-eyebrow">Universidad Técnica de Oruro</span>
-            <h1>Posgrado <span>Facultad de Ciencias de la Salud</span></h1>
+            <span class="lg-eyebrow"><?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Universidad())); ?></span>
+            <h1>Posgrado <span><?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Facultad())); ?></span></h1>
             <p class="lg-intro-texto">
-                Sistema académico de la Coordinación de Posgrado en Odontología:
+                Sistema académico de la Coordinación de Posgrado en <?php echo htmlspecialchars(InstitucionModelo::Area()); ?>:
                 inscripciones, pagos, calificaciones y certificados en un solo lugar.
             </p>
             <div class="lg-chips">
@@ -554,13 +554,13 @@
 
                 <div class="lg-pie">
                     <a href="inicio" class="link-volver-inicio"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
-                    <span>&copy; <?php echo date('Y'); ?> Universidad Técnica de Oruro</span>
+                    <span>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars(InstitucionModelo::Formal(InstitucionModelo::Universidad())); ?></span>
                 </div>
             </main>
         </div>
     </div>
 
-    <div class="lg-direccion"><i class="fas fa-map-marker-alt"></i>Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso · Telf: 5237317 · Oruro - Bolivia</div>
+    <div class="lg-direccion"><i class="fas fa-map-marker-alt"></i><?php echo htmlspecialchars(InstitucionModelo::DireccionCompleta(' · ')); ?></div>
 
     <!-- Modal "¿Olvidó su contraseña?": recuperación con un código enviado al correo
          registrado (ajax/recuperarpassword.ajax.php). Paso 1: usuario o C.I.;

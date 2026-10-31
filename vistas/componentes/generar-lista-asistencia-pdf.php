@@ -35,6 +35,7 @@ try {
     require_once __DIR__ . '/../../vendor/tecnickcom/tcpdf/tcpdf.php';
     require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php') ? __DIR__ . '/../../modelos/conexion.modelo.php' : __DIR__ . '/../../core/conexion.modelo.php';
     require_once __DIR__ . '/../../modelos/matricula.modelo.php'; // quién cursa el módulo (abandonos)
+    require_once __DIR__ . '/../../modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
 } catch (Exception $e) {
     ob_end_clean();
     die('Error al cargar librerías: ' . $e->getMessage());
@@ -137,18 +138,18 @@ $altoLogo = 22;
 $yPos = 10;
 
 // --- LOGOS ---
-$pdf->Image('../../extensiones/imagenespdf/logouto.png', 10, $yPos, $anchoLogo, $altoLogo);
-$pdf->Image('../../extensiones/imagenespdf/logofcs.png', 247.4, $yPos, $anchoLogo, $altoLogo);
+$pdf->Image(InstitucionModelo::LogoPdf('LOGO_IZQUIERDO'), 10, $yPos, $anchoLogo, $altoLogo, '', '', '', false, 300, '', false, false, 0, 'CM');
+$pdf->Image(InstitucionModelo::LogoPdf('LOGO_DERECHO'), 247.4, $yPos, $anchoLogo, $altoLogo, '', '', '', false, 300, '', false, false, 0, 'CM');
 
 // --- ENCABEZADO CON INTERLINEADO REDUCIDO ---
 // Reducimos de 7 a 4 o 5 para que el texto esté más pegado
-$pdf->Cell(0, 4, 'UNIVERSIDAD TÉCNICA DE ORURO', 0, 1, 'C', false);
-$pdf->Cell(0, 4, 'FACULTAD DE CIENCIAS DE LA SALUD', 0, 1, 'C', false);
-$pdf->Cell(0, 4, 'COORDINACIÓN DE POSGRADO - ODONTOLOGÍA', 0, 1, 'C', false);
+$pdf->Cell(0, 4, InstitucionModelo::Universidad(), 0, 1, 'C', false);
+$pdf->Cell(0, 4, InstitucionModelo::Facultad(), 0, 1, 'C', false);
+$pdf->Cell(0, 4, InstitucionModelo::Unidad(), 0, 1, 'C', false);
 
 $pdf->SetFont('helvetica', '', 8); // Fuente ligeramente más pequeña para datos de contacto
-$pdf->Cell(0, 3.5, 'Calle Presidente Montes entre Murguía y Aldana, Edificio UTO 2do Piso, Teléfonos: 5237317 - Fax: 5247110', 0, 1, 'C', false);
-$pdf->Cell(0, 3.5, 'Oruro - Bolivia', 0, 1, 'C', false);
+$pdf->Cell(0, 3.5, InstitucionModelo::DireccionCompleta(' - ', false), 0, 1, 'C', false);
+$pdf->Cell(0, 3.5, InstitucionModelo::Ciudad(), 0, 1, 'C', false);
 
 $pdf->Ln(2); // Salto pequeño antes de la línea
 

@@ -6,10 +6,17 @@ require_once file_exists(__DIR__ . '/conexion.modelo.php') ? __DIR__ . '/conexio
  * FIRMA o SELLO). Se imprimen solo en las órdenes de pago de matrícula y cuota que
  * genera el propio estudiante desde el sistema; las del personal se firman a mano.
  * Se cambian desde Configuración cuando cambia el coordinador.
+ * En la misma tabla van los logos de la institución (LOGO_*, ver InstitucionModelo).
  */
 class ImagenFirmaModelo
 {
-    const CLAVES = ['FIRMA' => 'Firma del coordinador', 'SELLO' => 'Sello de Posgrado'];
+    const CLAVES = [
+        'FIRMA' => 'Firma del coordinador',
+        'SELLO' => 'Sello de Posgrado',
+        'LOGO_IZQUIERDO' => 'Logo izquierdo de los reportes',
+        'LOGO_DERECHO' => 'Logo derecho de los reportes',
+        'LOGO_SISTEMA' => 'Logo del sistema (pantallas)',
+    ];
 
     /** Color con que se imprime la firma (azul de bolígrafo) */
     const AZUL_TINTA = [24, 46, 140];
@@ -55,14 +62,15 @@ class ImagenFirmaModelo
     /**
      * Guarda la imagen subida como PNG. A la firma se le vuelve transparente el fondo
      * blanco del escaneo (así no tapa las líneas de la orden al imprimirla encima).
-     * @param string $clave FIRMA o SELLO
+     * @param string $clave FIRMA, SELLO o LOGO_*
      * @param string $contenido archivo subido (PNG o JPG)
      * @return string|true mensaje de error o true
      */
     public static function Guardar($clave, $contenido, $responsable)
     {
         if (!isset(self::CLAVES[$clave])) return 'Imagen no válida';
-        $png = self::PrepararPng($contenido, $clave === 'FIRMA');
+        // Los logos no se recortan: el recorte sigue el trazo oscuro y cortaría sus partes claras
+        $png = self::PrepararPng($contenido, $clave === 'FIRMA', in_array($clave, ['FIRMA', 'SELLO'], true));
         if ($png === null) return 'El archivo no es una imagen PNG o JPG válida';
 
         try {
@@ -96,10 +104,10 @@ class ImagenFirmaModelo
 
     /**
      * PNG con transparencia, recortado al lado máximo; con $fondoTransparente los
-     * píxeles casi blancos pasan a transparentes.
+     * píxeles casi blancos pasan a transparentes y con $recortar se quitan los bordes vacíos.
      * @return string|null
      */
-    private static function PrepararPng($contenido, $fondoTransparente)
+    private static function PrepararPng($contenido, $fondoTransparente, $recortar = true)
     {
         $info = @getimagesizefromstring($contenido);
         if (!$info || !in_array($info[2], [IMAGETYPE_PNG, IMAGETYPE_JPEG], true)) return null;
@@ -134,7 +142,9 @@ class ImagenFirmaModelo
         }
 
         // Se recortan los bordes vacíos: así el tamaño impreso es el de la firma o el sello
-        $destino = self::RecortarBordes($destino);
+        if ($recortar) {
+            $destino = self::RecortarBordes($destino);
+        }
 
         ob_start();
         imagepng($destino);

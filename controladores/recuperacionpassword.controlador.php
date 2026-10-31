@@ -10,6 +10,7 @@
 
 require_once __DIR__ . '/../modelos/recuperacionpassword.modelo.php';
 require_once __DIR__ . '/usuario.controlador.php';
+require_once __DIR__ . '/../modelos/institucion.modelo.php'; // nombre del área en el correo
 require_once __DIR__ . '/../core/correo.php';
 
 class RecuperacionPasswordControlador
@@ -120,7 +121,7 @@ class RecuperacionPasswordControlador
         return '
         <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;color:#333;">
             <div style="background:#1e3c72;color:#fff;padding:18px 24px;border-radius:10px 10px 0 0;">
-                <strong style="font-size:16px;">Posgrado Odontología - UTO</strong>
+                <strong style="font-size:16px;">' . htmlspecialchars(InstitucionModelo::NombreSistema()) . '</strong>
             </div>
             <div style="border:1px solid #e3e6ef;border-top:0;padding:24px;border-radius:0 0 10px 10px;">
                 <p>Hola ' . $nombre . ',</p>
@@ -136,6 +137,6 @@ class RecuperacionPasswordControlador
     {
         return "Hola $nombre,\n\nSu código para restablecer la contraseña es: $codigo\n\n"
             . "Vence en " . RecuperacionPasswordModelo::MINUTOS_VIGENCIA . " minutos y solo puede usarse una vez.\n"
-            . "Si usted no lo solicitó, ignore este correo.\n\nPosgrado Odontología - UTO";
+            . "Si usted no lo solicitó, ignore este correo.\n\n" . InstitucionModelo::NombreSistema();
     }
 }
