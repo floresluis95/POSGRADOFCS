@@ -360,6 +360,9 @@ $sedes = ProgramasModelos::ListarSedesModelo();
                         <small class="form-text text-muted">
                             <i class="fa fa-info-circle"></i> Puede cambiar o dejar sin asignar docente
                         </small>
+                        <button type="button" class="btn btn-link btn-sm p-0 mt-1 btn-ir-registrar-docente">
+                            <i class="fa fa-user-plus"></i> ¿No está el docente? Registrar nuevo docente
+                        </button>
                     </div>
                 </div>
 
@@ -935,6 +938,9 @@ $(document).ready(function() {
                                 <small class="form-text text-muted">
                                     <i class="fa fa-info-circle"></i> Puede asignar un docente al módulo (opcional)
                                 </small>
+                                <button type="button" class="btn btn-link btn-sm p-0 mt-1 btn-ir-registrar-docente">
+                                    <i class="fa fa-user-plus"></i> ¿No está el docente? Registrar nuevo docente
+                                </button>
                             </div>                             
                         </div>
                     </div>
@@ -1104,6 +1110,29 @@ $(document).ready(function() {
             }
         });
     }
+
+    // ========================================
+    // IR A REGISTRAR UN DOCENTE QUE NO ESTÁ EN LA LISTA
+    // ========================================
+    // Lleva a Docentes con el formulario de registro abierto; al guardar, el
+    // sistema vuelve aquí con el mismo programa seleccionado (sessionStorage).
+    $(document).on('click', '.btn-ir-registrar-docente', function() {
+        const programaID = $('#selectPrograma').val() || '';
+        Swal.fire({
+            type: 'question',
+            title: 'Registrar nuevo docente',
+            html: 'Irá a la pantalla de <strong>Docentes</strong>. Al guardar al docente volverá aquí con este programa.<br><br>' +
+                  '<small>Lo que haya escrito en este formulario y no haya guardado se perderá.</small>',
+            showCancelButton: true,
+            confirmButtonText: 'Ir a registrar',
+            cancelButtonText: 'Quedarme aquí',
+            confirmButtonColor: '#2a5298'
+        }).then(function(resultado) {
+            if (!resultado.value) return; // SweetAlert2 v8: no tiene isConfirmed
+            try { sessionStorage.setItem('volverAModulos', programaID); } catch (e) {}
+            location.href = 'docentes';
+        });
+    });
 
     // ========================================
     // LIMPIAR SELECT2 AL CERRAR EL MODAL
@@ -1650,6 +1679,28 @@ $(document).ready(function() {
     --md-fondo: #f7f8fa;
 }
 .md { color: var(--md-texto); padding-bottom: 24px; }
+
+/* Enlace "¿No está el docente? Registrar nuevo docente": gris sobrio; al pasar el
+   cursor, azul marino con fondo suave (sin el azul brillante ni el subrayado de btn-link) */
+.btn.btn-link.btn-ir-registrar-docente {
+    color: var(--md-texto-2);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 3px 8px !important;
+    margin-left: -8px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    transition: color .15s, background-color .15s, border-color .15s;
+}
+.btn.btn-link.btn-ir-registrar-docente:hover,
+.btn.btn-link.btn-ir-registrar-docente:focus {
+    color: var(--md-primario);
+    background-color: var(--md-primario-suave);
+    border-color: #c9d4e8;
+    text-decoration: none;
+    box-shadow: none;
+}
 .md-card { background: #fff; border: 1px solid var(--md-borde); border-radius: 12px; overflow: hidden; }
 .md-card-head {
     display: flex;

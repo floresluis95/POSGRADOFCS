@@ -150,8 +150,15 @@ $csrf_token = bin2hex(random_bytes(32));
 
             <form method="post" id="formNuevoDocente" enctype="multipart/form-data" class="needs-validation" novalidate>
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
+                <!-- Llenados por JS cuando se llega desde Módulos ("Registrar nuevo docente") -->
+                <input type="hidden" name="volver" id="volverDestino" value="">
+                <input type="hidden" name="volverPrograma" id="volverPrograma" value="">
 
                 <div class="modal-body" style="padding: 30px; max-height: 65vh; overflow-y: auto;">
+                    <div id="avisoVolverModulos" class="alert mb-4" style="display:none; border-left: 4px solid #2a5298; background-color: #eef3fb; color: #1e3c72;">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Viene desde <strong>Módulos</strong>: al guardar al docente volverá automáticamente para asignarlo.
+                    </div>
 
                     <h4 class="form-section">
                         <i class="fas fa-globe mr-2"></i> Nacionalidad
@@ -406,6 +413,9 @@ $csrf_token = bin2hex(random_bytes(32));
                 </div>
 
                 <div class="modal-footer" style="background-color: #f8f9fa; border-top: 2px solid #e9ecef;">
+                    <button type="button" class="btn btn-outline-primary mr-auto" id="btnVolverModulos" style="display:none;">
+                        <i class="fas fa-arrow-left"></i> Volver a Módulos sin registrar
+                    </button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         <i class="fas fa-times"></i> Cancelar
                     </button>
@@ -1510,6 +1520,27 @@ function copyToClipboard(text, element) {
 
     document.body.removeChild(tempInput);
 }
+
+// Llegada desde Módulos ("Registrar nuevo docente"): se abre el formulario y, al
+// guardar, el servidor devuelve a Módulos con el mismo programa. La marca se borra
+// al leerla para que entrar después a Docentes desde el menú sea lo normal.
+jQuery(document).ready(function() {
+    let programaVolver = null;
+    try {
+        programaVolver = sessionStorage.getItem('volverAModulos');
+        sessionStorage.removeItem('volverAModulos');
+    } catch (e) {}
+    if (programaVolver === null) return;
+
+    jQuery('#volverDestino').val('modulos');
+    jQuery('#volverPrograma').val(programaVolver);
+    jQuery('#avisoVolverModulos').show();
+    jQuery('#btnVolverModulos').show().on('click', function() {
+        try { sessionStorage.setItem('programaIDSeleccionado', programaVolver); } catch (e) {}
+        location.href = 'modulos';
+    });
+    jQuery('#ModalInsertarDocente').modal('show');
+});
 
 // Validación del formulario de nuevo docente
 jQuery(document).ready(function() {

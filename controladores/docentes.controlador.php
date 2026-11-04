@@ -240,50 +240,56 @@ private function ConstruirFilaDocente($Docente, $numero)
         );
         
         
-        $Ci = $DatosDocente['Ci']; 
+        $Ci = $DatosDocente['Ci'];
         // Asume que la función Buscardocente existe.
         $existe = DocentesModelo::BuscarDocenteModelo($Ci);
 
+        // ¿Se llegó desde Módulos con "Registrar nuevo docente"? Al guardar se vuelve
+        // allá con el mismo programa abierto (Módulos lo restaura desde sessionStorage).
+        $volverModulos  = ($_POST['volver'] ?? '') === 'modulos';
+        $programaVolver = (int)($_POST['volverPrograma'] ?? 0);
+
         if ($existe == true) {
-            echo'
-                            <script src="vistas/recursos/sweetalert.min.js"></script>
-                            <script>
-                            swal("ERROR!", "El Docente ya esta registrado en el sistema", "error")
-                            .then(function () {
-                                location.href="docentes";
-                            })
-                            ;
-                            </script>';
+            self::AvisoRegistroDocente('ERROR!', 'El Docente ya esta registrado en el sistema', 'error', $volverModulos, $programaVolver, false);
         } else {
             // Llama a la función del modelo con el array de datos
             $resultado = DocentesModelo::RegistrarDocenteModelo($DatosDocente);
-            
-             if ($resultado == 'exitoso')
-                            {
-                                echo'
-                                <script src="vistas/recursos/sweetalert.min.js"></script>
-                                <script>
-                                swal("EXITOSO!", "Se registro al Docente", "success")
-                                .then(function () {
-                                    location.href="docentes";
-                                })
-                                ;
-                                </script>';  
-                            }
-                        else
-                            {
-                               echo'
-                            <script src="vistas/recursos/sweetalert.min.js"></script>
-                            <script>
-                            swal("ERROR!", "No se registro al Docente", "error")
-                            .then(function () {
-                                location.href="docentes";
-                            })
-                            ;
-                            </script>';
-                            }
+
+            if ($resultado == 'exitoso') {
+                $mensaje = $volverModulos
+                    ? 'Se registro al Docente. Ahora puede asignarlo al módulo.'
+                    : 'Se registro al Docente';
+                self::AvisoRegistroDocente('EXITOSO!', $mensaje, 'success', $volverModulos, $programaVolver, true);
+            } else {
+                self::AvisoRegistroDocente('ERROR!', 'No se registro al Docente', 'error', $volverModulos, $programaVolver, false);
+            }
         }
     }
+    }
+
+    /**
+     * Aviso tras registrar un docente y a dónde se va después.
+     * Si vino desde Módulos: con éxito vuelve a Módulos (con su programa); con error
+     * se queda en Docentes con el formulario abierto otra vez para corregir.
+     */
+    private static function AvisoRegistroDocente($titulo, $mensaje, $tipo, $volverModulos, $programaVolver, $exito)
+    {
+        $destino = 'location.href="docentes";';
+        if ($volverModulos) {
+            $destino = $exito
+                ? 'try { sessionStorage.setItem("programaIDSeleccionado", "' . $programaVolver . '"); } catch (e) {}
+                   location.href="modulos";'
+                : 'try { sessionStorage.setItem("volverAModulos", "' . $programaVolver . '"); } catch (e) {}
+                   location.href="docentes";';
+        }
+        echo '
+            <script src="vistas/recursos/sweetalert.min.js"></script>
+            <script>
+            swal(' . json_encode($titulo) . ', ' . json_encode($mensaje) . ', ' . json_encode($tipo) . ')
+            .then(function () {
+                ' . $destino . '
+            });
+            </script>';
     }
   
 
