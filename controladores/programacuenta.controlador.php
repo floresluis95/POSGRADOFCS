@@ -18,7 +18,7 @@ class ProgramaCuentaControlador
         $cuentas = ProgramaCuentaModelo::ListarPorProgramaModelo($programaID);
 
         if (empty($cuentas)) {
-            echo '<tr><td colspan="5" class="text-center text-muted">Este programa aún no tiene cuentas registradas</td></tr>';
+            echo '<tr><td colspan="6" class="text-center text-muted">Este programa aún no tiene cuentas registradas</td></tr>';
             return;
         }
 
@@ -49,7 +49,31 @@ class ProgramaCuentaControlador
                         data-nuevoestado="' . ($activa ? '0' : '1') . '">
                         ' . ($activa ? 'Dar de baja' : 'Activar') . '
                     </button>
-                </td>
+                </td>';
+
+            // Corregir o borrar una cuenta mal registrada. Con órdenes de pago no se
+            // borra (se da de baja) y el tipo queda fijo; número y banco sí se corrigen.
+            $ordenes = (int)($cuenta['Ordenes'] ?? 0);
+            $h = function ($v) { return htmlspecialchars((string)$v, ENT_QUOTES); };
+            echo '<td class="text-center text-nowrap">
+                    <button type="button" class="btn btn-sm btn-outline-primary btnEditarCuentaPrograma"
+                        data-idcuenta="' . (int)$cuenta['ProgramaCuentaID'] . '"
+                        data-tipo="' . $h($cuenta['TipoCuenta']) . '"
+                        data-numero="' . $h($cuenta['NumeroCuenta']) . '"
+                        data-banco="' . $h($cuenta['Banco'] ?? '') . '"
+                        data-ordenes="' . $ordenes . '"
+                        title="Corregir la cuenta"><i class="fa fa-edit"></i></button>';
+            if ($ordenes > 0) {
+                echo ' <span class="d-inline-block" tabindex="0" title="Tiene ' . $ordenes . ' orden(es) de pago: no se puede borrar. Puede darla de baja.">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" disabled style="pointer-events:none;"><i class="fa fa-trash"></i></button>
+                      </span>';
+            } else {
+                echo ' <button type="button" class="btn btn-sm btn-outline-danger btnEliminarCuentaPrograma"
+                        data-idcuenta="' . (int)$cuenta['ProgramaCuentaID'] . '"
+                        data-numero="' . $h($cuenta['NumeroCuenta']) . '"
+                        title="Borrar la cuenta (aún no tiene órdenes de pago)"><i class="fa fa-trash"></i></button>';
+            }
+            echo '</td>
             </tr>';
         }
     }

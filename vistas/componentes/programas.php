@@ -1047,7 +1047,13 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                         <input type="text" class="form-control" id="inputBancoCuenta" name="Banco" placeholder="Banco (opcional)">
                       </div>
                       <div class="col-md-3 mb-2">
-                        <button type="submit" class="btn btn-success btn-block"><i class="fa fa-plus"></i> Agregar cuenta</button>
+                        <!-- Con una cuenta en edición, el mismo formulario guarda la corrección -->
+                        <input type="hidden" id="inputCuentaEditarID" value="">
+                        <button type="submit" class="btn btn-success btn-block" id="btnGuardarCuentaPrograma"><i class="fa fa-plus"></i> Agregar cuenta</button>
+                        <button type="button" class="btn btn-link btn-sm btn-block p-0 mt-1" id="btnCancelarEdicionCuenta" style="display:none;">Cancelar corrección</button>
+                      </div>
+                      <div class="col-12" id="avisoEdicionCuenta" style="display:none;">
+                        <small class="text-muted"><i class="fa fa-edit"></i> Corrigiendo una cuenta. <span id="avisoTipoFijo" style="display:none;">El tipo no se puede cambiar porque la cuenta ya tiene órdenes de pago.</span></small>
                       </div>
                     </form>
 
@@ -1059,6 +1065,7 @@ kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--left
                           <th>Banco</th>
                           <th class="text-center">Principal</th>
                           <th class="text-center">Estado</th>
+                          <th class="text-center">Acciones</th>
                         </tr>
                       </thead>
                       <tbody id="tablaCuentasBody">
@@ -1460,10 +1467,72 @@ $(document).on('click', '.btnAbrirCuentasPrograma', function() {
 
     $('#cuentasProgramaID').val(programaID);
     $('#cuentasProgramaNombre').text(nombrePrograma);
-    $('#formRegistrarCuentaPrograma')[0].reset();
+    salirEdicionCuenta();
 
     refrescarTablaCuentasPrograma();
     refrescarTiposCuentaDatalist();
+});
+
+// Corregir una cuenta mal registrada: sus datos suben al formulario de arriba y el
+// botón pasa a "Guardar corrección". Con órdenes de pago el tipo queda fijo.
+function salirEdicionCuenta() {
+    $('#formRegistrarCuentaPrograma')[0].reset();
+    $('#inputCuentaEditarID').val('');
+    $('#inputTipoCuenta').prop('readonly', false);
+    $('#btnGuardarCuentaPrograma').removeClass('btn-primary').addClass('btn-success')
+        .html('<i class="fa fa-plus"></i> Agregar cuenta');
+    $('#btnCancelarEdicionCuenta, #avisoEdicionCuenta, #avisoTipoFijo').hide();
+}
+
+$(document).on('click', '.btnEditarCuentaPrograma', function() {
+    var $b = $(this);
+    var conOrdenes = parseInt($b.data('ordenes'), 10) > 0;
+    $('#inputCuentaEditarID').val($b.data('idcuenta'));
+    $('#inputTipoCuenta').val($b.data('tipo')).prop('readonly', conOrdenes);
+    $('#inputNumeroCuenta').val($b.data('numero'));
+    $('#inputBancoCuenta').val($b.data('banco'));
+    $('#btnGuardarCuentaPrograma').removeClass('btn-success').addClass('btn-primary')
+        .html('<i class="fa fa-save"></i> Guardar corrección');
+    $('#btnCancelarEdicionCuenta, #avisoEdicionCuenta').show();
+    $('#avisoTipoFijo').toggle(conOrdenes);
+    $('#inputNumeroCuenta').trigger('focus');
+});
+
+$('#btnCancelarEdicionCuenta').on('click', salirEdicionCuenta);
+
+$(document).on('click', '.btnEliminarCuentaPrograma', function() {
+    var idcuenta = $(this).data('idcuenta');
+    var numero = $(this).data('numero');
+
+    // En esta página swal(...) es el alias roto de SweetAlert2 (no muestra nada): se usa Swal.fire
+    Swal.fire({
+        type: 'warning',
+        title: '¿Borrar la cuenta?',
+        text: 'Se borrará la cuenta N° ' + numero + '. Aún no tiene órdenes de pago, así que no afecta a ningún estudiante.',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, borrar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonClass: 'btn btn-danger',
+        focusCancel: true
+    }).then(function(resultado) {
+        if (!resultado.value) { return; } // SweetAlert2 v8: no tiene isConfirmed
+        $.ajax({
+            url: 'ajax/programacuenta.ajax.php',
+            method: 'POST',
+            data: { accion: 'eliminar', ProgramaCuentaID: idcuenta },
+            dataType: 'json',
+            success: function(respuesta) {
+                if (String($('#inputCuentaEditarID').val()) === String(idcuenta)) {
+                    salirEdicionCuenta();
+                }
+                refrescarTablaCuentasPrograma();
+                Swal.fire(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
+            },
+            error: function() {
+                Swal.fire('ERROR!', 'No se pudo conectar con el servidor', 'error');
+            }
+        });
+    });
 });
 
 $('#formRegistrarCuentaPrograma').on('submit', function(e) {
@@ -1473,22 +1542,27 @@ $('#formRegistrarCuentaPrograma').on('submit', function(e) {
     var tipoCuenta = $('#inputTipoCuenta').val();
     var numeroCuenta = $('#inputNumeroCuenta').val();
     var banco = $('#inputBancoCuenta').val();
+    var idEditar = $('#inputCuentaEditarID').val();
+
+    var datos = idEditar
+        ? { accion: 'editar', ProgramaCuentaID: idEditar, TipoCuenta: tipoCuenta, NumeroCuenta: numeroCuenta, Banco: banco }
+        : { accion: 'registrar', ProgramaID: programaID, TipoCuenta: tipoCuenta, NumeroCuenta: numeroCuenta, Banco: banco };
 
     $.ajax({
         url: 'ajax/programacuenta.ajax.php',
         method: 'POST',
-        data: { accion: 'registrar', ProgramaID: programaID, TipoCuenta: tipoCuenta, NumeroCuenta: numeroCuenta, Banco: banco },
+        data: datos,
         dataType: 'json',
         success: function(respuesta) {
             if (respuesta.estado === 'exitoso') {
-                $('#formRegistrarCuentaPrograma')[0].reset();
+                salirEdicionCuenta();
                 refrescarTablaCuentasPrograma();
                 refrescarTiposCuentaDatalist();
             }
-            swal(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
+            Swal.fire(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
         },
         error: function() {
-            swal('ERROR!', 'No se pudo conectar con el servidor', 'error');
+            Swal.fire('ERROR!', 'No se pudo conectar con el servidor', 'error');
         }
     });
 });
@@ -1504,10 +1578,10 @@ $(document).on('click', '.btnCambiarEstadoCuentaPrograma', function() {
         dataType: 'json',
         success: function(respuesta) {
             refrescarTablaCuentasPrograma();
-            swal(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
+            Swal.fire(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
         },
         error: function() {
-            swal('ERROR!', 'No se pudo conectar con el servidor', 'error');
+            Swal.fire('ERROR!', 'No se pudo conectar con el servidor', 'error');
         }
     });
 });
@@ -1522,10 +1596,10 @@ $(document).on('click', '.btnMarcarPrincipalCuenta', function() {
         dataType: 'json',
         success: function(respuesta) {
             refrescarTablaCuentasPrograma();
-            swal(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
+            Swal.fire(respuesta.estado === 'exitoso' ? 'EXITOSO!' : 'ERROR!', respuesta.mensaje, respuesta.estado === 'exitoso' ? 'success' : 'error');
         },
         error: function() {
-            swal('ERROR!', 'No se pudo conectar con el servidor', 'error');
+            Swal.fire('ERROR!', 'No se pudo conectar con el servidor', 'error');
         }
     });
 });

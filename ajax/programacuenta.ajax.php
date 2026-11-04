@@ -3,7 +3,7 @@ require_once __DIR__ . '/control-solicitud.php'; // corte de internet: sin enví
 require_once __DIR__ . '/validar-sesion.php';
 ExigirSesionAjax(['ADM', 'SEC', 'AUX']); // Solo el personal (no estudiantes ni docentes)
 // Cuentas de los programas: las configura Administración o Secretaría; el Auxiliar solo las lista
-ExigirRolParaAcciones(['registrar', 'cambiarEstado', 'marcarPrincipal'], ['ADM', 'SEC']);
+ExigirRolParaAcciones(['registrar', 'editar', 'eliminar', 'cambiarEstado', 'marcarPrincipal'], ['ADM', 'SEC']);
 /**
  * AJAX para gestión de cuentas por programa (registrar, listar,
  * cambiar estado, marcar principal) sin recargar la página.
@@ -42,6 +42,57 @@ switch ($accion) {
             'error'     => 'No se pudo registrar la cuenta',
         ];
 
+        echo json_encode([
+            'estado' => $resultado,
+            'mensaje' => $mensajes[$resultado] ?? $mensajes['error'],
+        ]);
+        exit();
+
+    case 'editar':
+        // Corregir una cuenta mal registrada (número, banco y, si aún no tiene órdenes, el tipo)
+        header('Content-Type: application/json; charset=utf-8');
+
+        $id = (int)($_POST['ProgramaCuentaID'] ?? 0);
+        $tipoCuenta = strtoupper(htmlspecialchars(trim($_POST['TipoCuenta'] ?? '')));
+        $numeroCuenta = strtoupper(htmlspecialchars(trim($_POST['NumeroCuenta'] ?? '')));
+        $banco = strtoupper(htmlspecialchars(trim($_POST['Banco'] ?? '')));
+
+        if ($id <= 0 || $tipoCuenta === '' || $numeroCuenta === '') {
+            echo json_encode(['estado' => 'error', 'mensaje' => 'Debe indicar el tipo y el número de cuenta']);
+            exit();
+        }
+
+        $resultado = ProgramaCuentaModelo::EditarModelo([
+            'ProgramaCuentaID' => $id,
+            'TipoCuenta' => $tipoCuenta,
+            'NumeroCuenta' => $numeroCuenta,
+            'Banco' => $banco,
+        ]);
+
+        $mensajes = [
+            'exitoso'   => 'La cuenta se corrigió correctamente',
+            'duplicado' => 'Ese tipo y número de cuenta ya está registrado para este programa',
+            'en_uso'    => 'Esta cuenta ya tiene órdenes de pago: puede corregir el número o el banco, pero no el tipo',
+            'error'     => 'No se pudo corregir la cuenta',
+        ];
+        echo json_encode([
+            'estado' => $resultado,
+            'mensaje' => $mensajes[$resultado] ?? $mensajes['error'],
+        ]);
+        exit();
+
+    case 'eliminar':
+        // Borrar una cuenta mal registrada: solo si aún no tiene órdenes de pago
+        header('Content-Type: application/json; charset=utf-8');
+
+        $id = (int)($_POST['ProgramaCuentaID'] ?? 0);
+        $resultado = $id > 0 ? ProgramaCuentaModelo::EliminarModelo($id) : 'error';
+
+        $mensajes = [
+            'exitoso' => 'La cuenta se borró correctamente',
+            'en_uso'  => 'Esta cuenta ya tiene órdenes de pago y no se puede borrar. Si ya no se usa, puede darla de baja.',
+            'error'   => 'No se pudo borrar la cuenta',
+        ];
         echo json_encode([
             'estado' => $resultado,
             'mensaje' => $mensajes[$resultado] ?? $mensajes['error'],
