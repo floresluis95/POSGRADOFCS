@@ -210,8 +210,14 @@
                     $ci = trim($_POST['ci']);
                     $usuario = trim($_POST['usuario'] ?? '');
                     $errorDatos = null;
+                    $celular = self::NumeroTelefono($_POST['celular'] ?? '');
+                    $telefono = self::NumeroTelefono($_POST['telefono'] ?? '');
                     if ($ci === '') {
                         $errorDatos = 'Ingrese el C.I.';
+                    } elseif (mb_strlen($ci) > 20) {
+                        $errorDatos = 'El C.I. no puede tener más de 20 caracteres';
+                    } elseif ($celular === null || $telefono === null) {
+                        $errorDatos = 'El celular o el teléfono es demasiado largo. Escriba solo el número (por ejemplo 70123456)';
                     } elseif (!preg_match('/^[A-Za-z0-9._-]{3,20}$/', $usuario)) {
                         $errorDatos = 'El usuario debe tener de 3 a 20 caracteres: letras, números, punto, guion o guion bajo (sin espacios)';
                     } elseif (UsuarioModelos::ExisteNombreUsuarioModelo($usuario)) {
@@ -234,12 +240,12 @@
 
                     $DatosPersonal = array(
                         "CedulaIdentidad" => $ci,
-                        "ApellidoPaterno" => strtoupper($_POST['apaterno']),
-                        "ApellidoMaterno" => strtoupper($_POST['amaterno']),
-                        "Nombres" => strtoupper($_POST['nombres']),
-                        "Direccion" => strtoupper($_POST['direccion']),
-                        "Celular" => $_POST['celular'],
-                        "Telefono" => $_POST['telefono'],
+                        "ApellidoPaterno" => self::Recortar(mb_strtoupper($_POST['apaterno'] ?? '', 'UTF-8'), 50),
+                        "ApellidoMaterno" => self::Recortar(mb_strtoupper($_POST['amaterno'] ?? '', 'UTF-8'), 50),
+                        "Nombres" => self::Recortar(mb_strtoupper($_POST['nombres'] ?? '', 'UTF-8'), 50),
+                        "Direccion" => self::Recortar(mb_strtoupper($_POST['direccion'] ?? '', 'UTF-8'), 200),
+                        "Celular" => $celular,
+                        "Telefono" => $telefono,
                         "Correo" => $correo
                     );
 
@@ -332,15 +338,30 @@
                     }
                 }
 
+                $celularEditado = self::NumeroTelefono($_POST['editarcelular'] ?? '');
+                $telefonoEditado = self::NumeroTelefono($_POST['editartelefono'] ?? '');
+                if ($celularEditado === null || $telefonoEditado === null) {
+                    echo'
+                    <script src="vistas/recursos/sweetalert.min.js"></script>
+                    <script>
+                    swal("ERROR!", "El celular o el teléfono es demasiado largo. Escriba solo el número (por ejemplo 70123456)", "error")
+                    .then(function () {
+                        location.href="usuario";
+                      })
+                      ;
+                     </script>';
+                    return;
+                }
+
                 $DatosPersonal = array(
                     // Se edita por IdPersonal: hay personal que comparte C.I. y se editaba junto
                     "IdPersonal" => (int)($_POST['editaridpersonal'] ?? 0),
-                    "ApellidoPaterno" => strtoupper($_POST['editarapaterno']),
-                    "ApellidoMaterno" => strtoupper($_POST['editaramaterno']),
-                    "Nombres" => strtoupper($_POST['editarnombres']),
-                    "Direccion" => strtoupper($_POST['editardireccion']),
-                    "Celular" => $_POST['editarcelular'],
-                    "Telefono" => $_POST['editartelefono'],
+                    "ApellidoPaterno" => self::Recortar(mb_strtoupper($_POST['editarapaterno'] ?? '', 'UTF-8'), 50),
+                    "ApellidoMaterno" => self::Recortar(mb_strtoupper($_POST['editaramaterno'] ?? '', 'UTF-8'), 50),
+                    "Nombres" => self::Recortar(mb_strtoupper($_POST['editarnombres'] ?? '', 'UTF-8'), 50),
+                    "Direccion" => self::Recortar(mb_strtoupper($_POST['editardireccion'] ?? '', 'UTF-8'), 200),
+                    "Celular" => $celularEditado,
+                    "Telefono" => $telefonoEditado,
                     "Correo" => self::CorreoValido($correoEditado)
                 );
 
@@ -532,6 +553,33 @@
         {
             $correo = strtolower(trim($correo));
             return filter_var($correo, FILTER_VALIDATE_EMAIL) ? $correo : null;
+        }
+
+        /**
+         * Celular/teléfono para personal.Celular y personal.Telefono (columnas INT NOT NULL).
+         * En el servidor MySQL está en modo estricto: un valor vacío, con espacios, guiones
+         * o con el +591 hacía fallar el INSERT ("Registro incorrecto de usuario"); en XAMPP
+         * local no, porque no es estricto. Deja solo los dígitos, quita el código de país
+         * 591, y vacío queda en 0 (el teléfono fijo es opcional).
+         * @return int|null null si no cabe en la columna (número demasiado largo)
+         */
+        public static function NumeroTelefono($valor)
+        {
+            $digitos = preg_replace('/\D/', '', (string) $valor);
+            if (strlen($digitos) > 8 && strpos($digitos, '591') === 0) {
+                $digitos = substr($digitos, 3);
+            }
+            $digitos = ltrim($digitos, '0');
+            if ($digitos === '') {
+                return 0;
+            }
+            return (strlen($digitos) <= 10 && (int) $digitos <= 2147483647) ? (int) $digitos : null;
+        }
+
+        /* Recorta al largo de la columna (en modo estricto un texto más largo hace fallar el INSERT) */
+        private static function Recortar($texto, $largo)
+        {
+            return mb_substr(trim((string) $texto), 0, $largo, 'UTF-8');
         }
 
         /**
