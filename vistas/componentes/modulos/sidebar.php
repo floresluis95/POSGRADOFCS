@@ -221,6 +221,12 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Calendario Académico</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="bibliotecatesis" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-open-text-book" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Biblioteca de Tesis</span>
+                  </a>
+                </li>
 
                 <!-- PERSONAL -->
                 <li class="kt-menu__section">
@@ -453,6 +459,12 @@ if ($_SESSION["Tipo"] == "SEC") {
                     <span class="kt-menu__link-text">Calendario Académico</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="bibliotecatesis" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-open-text-book" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Biblioteca de Tesis</span>
+                  </a>
+                </li>
 
                 <!-- PERSONAL -->
                 <li class="kt-menu__section">
@@ -599,6 +611,12 @@ if ($_SESSION["Tipo"] == "AUX") {
                   <a href="calendario" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-calendar-3" style="color: #6f94c9;"></i>
                     <span class="kt-menu__link-text">Calendario Académico</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="bibliotecatesis" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-open-text-book" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Biblioteca de Tesis</span>
                   </a>
                 </li>
 

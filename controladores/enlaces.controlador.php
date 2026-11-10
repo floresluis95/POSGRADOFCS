@@ -23,7 +23,7 @@
                 'historialpagos', 'ordenespago', 'solicitudesinscripcion', 'reportenotas',
                 'bnotaestudiante', 'historialnotaestudiante', 'asignaciondocente',
                 'estudiantes', 'docentes', 'reportes',
-                'orden-generada', 'matriculas', 'detalles',
+                'orden-generada', 'matriculas', 'detalles', 'bibliotecatesis',
             ],
             // Auxiliar: matrícula, cobros, estudiantes y notas. Sin Programas, Módulos, Docentes,
             // Asignación docente, Usuarios, Certificados ni Reportes PDF
@@ -32,7 +32,7 @@
                 'historialpagos', 'ordenespago', 'solicitudesinscripcion', 'rnotasestudiante', 'reportenotas',
                 'bnotaestudiante', 'historialnotaestudiante',
                 'estudiantes',
-                'orden-generada', 'matriculas', 'detalles',
+                'orden-generada', 'matriculas', 'detalles', 'bibliotecatesis',
             ],
             'DOC' => ['reportecalificaciones'],
             'EST' => ['historialnotaestudiante', 'historialmodulosestudiante', 'historialreciboestudiante', 'misordenespago', 'misrequisitos', 'miscertificados'],

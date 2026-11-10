@@ -50,7 +50,8 @@
                 $enlace == 'autoridades'||
                 $enlace == 'requisitos'||
                 $enlace == 'misrequisitos'||
-                $enlace == 'miscertificados'
+                $enlace == 'miscertificados'||
+                $enlace == 'bibliotecatesis'
 
                 )
             {
