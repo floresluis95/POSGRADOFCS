@@ -16,6 +16,10 @@
                 $link = new PDO("mysql:host=" . $config['host'] . ";dbname=" . $baseDatos, $config['usuario'], $config['password']);
                 $link->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $link->exec("set names utf8");
+                // NOW()/CURRENT_TIMESTAMP de MySQL con la misma hora que date() de PHP (Bolivia, -04:00).
+                // Sin esto MySQL usa la zona del servidor y FechaModificacion (NOW()) quedaba con
+                // otra hora que FechaRegistro (date() de PHP). El respaldo la cambia a +00:00 aparte.
+                $link->exec("SET time_zone = '" . date('P') . "'");
                 return $link;
             } catch (PDOException $e) {
                 // El detalle (usuario, servidor) va al log de PHP, no a la pantalla
