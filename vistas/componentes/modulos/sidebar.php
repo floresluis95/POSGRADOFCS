@@ -225,6 +225,14 @@ if ($_SESSION["Tipo"] == "ADM") {
                   <a href="bibliotecatesis" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-open-text-book" style="color: #6f94c9;"></i>
                     <span class="kt-menu__link-text">Biblioteca de Tesis</span>
+                    <?php
+                    // Solicitudes de préstamo por atender y devoluciones vencidas
+                    require_once __DIR__ . "/../../../modelos/prestamotesis.modelo.php";
+                    $btAvisos = PrestamoTesisModelo::Contadores();
+                    $btAvisos = $btAvisos["pendientes"] + $btAvisos["vencidas"];
+                    if ($btAvisos > 0): ?>
+                    <span class="kt-menu__link-badge"><span class="kt-badge kt-badge--danger kt-badge--inline" title="Préstamos de tesis por atender o vencidos"><?php echo $btAvisos; ?></span></span>
+                    <?php endif; ?>
                   </a>
                 </li>
 
@@ -674,11 +682,25 @@ if ($_SESSION["Tipo"] == "DOC") {
                   <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
                     <i class="flaticon2-user-outline-symbol" style="color: #36a3f7;"></i> DOCENTES
                   </h4>
-             
+                </li>
+
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="reportecalificaciones" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-add-1" style="color: #36a3f7;"></i>
                     <span class="kt-menu__link-text">Reporte de calificaciones</span>
+                  </a>
+                </li>
+
+                <!-- BIBLIOTECA -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-open-text-book" style="color: #36a3f7;"></i> BIBLIOTECA
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="bibliotecatesis" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-open-text-book" style="color: #36a3f7;"></i>
+                    <span class="kt-menu__link-text">Biblioteca de Tesis</span>
                   </a>
                 </li>
               </ul>
@@ -760,6 +782,19 @@ if ($_SESSION["Tipo"] == "EST") {
                   <a href="miscertificados" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-document" style="color: #fd397a;"></i>
                     <span class="kt-menu__link-text">MIS CERTIFICADOS</span>
+                  </a>
+                </li>
+
+                <!-- BIBLIOTECA -->
+                <li class="kt-menu__section">
+                  <h4 class="kt-menu__section-text" style="color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 1px;">
+                    <i class="flaticon2-open-text-book" style="color: #fd397a;"></i> BIBLIOTECA
+                  </h4>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="bibliotecatesis" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-open-text-book" style="color: #fd397a;"></i>
+                    <span class="kt-menu__link-text">BIBLIOTECA DE TESIS</span>
                   </a>
                 </li>
                

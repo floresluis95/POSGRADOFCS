@@ -9,6 +9,8 @@ require_once __DIR__ . '/validar-sesion.php';
 ExigirSesionAjax(['ADM']);
 
 require_once __DIR__ . '/../controladores/autoridad.controlador.php';
+require_once __DIR__ . '/../modelos/configuracion.modelo.php';
+require_once __DIR__ . '/../modelos/prestamotesis.modelo.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -31,6 +33,22 @@ switch ($_POST['accion'] ?? '') {
             'success' => true,
             'notaAprobacion' => ConfiguracionModelo::NotaAprobacion(),
             'detalle' => ConfiguracionModelo::Detalle('NOTA_APROBACION'),
+            'plazoPrestamo' => PrestamoTesisModelo::PlazoDias(),
+            'detallePlazo' => ConfiguracionModelo::Detalle('PLAZO_PRESTAMO_TESIS'),
+        ]);
+        break;
+
+    // Días de préstamo de una tesis (Biblioteca de tesis)
+    case 'guardarPlazoPrestamo':
+        $dias = trim($_POST['plazoPrestamo'] ?? '');
+        if (!ctype_digit($dias) || (int)$dias < 1 || (int)$dias > 90) {
+            echo json_encode(['success' => false, 'mensaje' => 'El plazo debe ser un número entero de 1 a 90 días']);
+            break;
+        }
+        $ok = ConfiguracionModelo::Guardar('PLAZO_PRESTAMO_TESIS', (int)$dias, AutoridadControlador::UsuarioSesion());
+        echo json_encode([
+            'success' => $ok,
+            'mensaje' => $ok ? 'Plazo de préstamo: ' . (int)$dias . ' días' : 'No se pudo guardar',
         ]);
         break;
 

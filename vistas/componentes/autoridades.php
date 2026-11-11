@@ -230,6 +230,27 @@
                 </button>
               </div>
             </form>
+            <hr>
+            <form id="formPlazoPrestamo" autocomplete="off">
+              <div class="row align-items-end">
+                <div class="col-md-4 form-group">
+                  <label for="plazoPrestamo"><strong>Días de préstamo de una tesis</strong> <small class="text-muted">(1 a 90)</small></label>
+                  <input type="number" class="form-control" id="plazoPrestamo" name="plazoPrestamo" min="1" max="90" step="1" required>
+                </div>
+                <div class="col-md-8 form-group">
+                  <p class="text-muted mb-1" style="font-size:13px;">
+                    Biblioteca de tesis: al entregar el ejemplar, la fecha de devolución es hoy más estos días.
+                    Los préstamos ya entregados conservan su fecha.
+                  </p>
+                  <small class="text-muted" id="actualizadoPlazo"></small>
+                </div>
+              </div>
+              <div class="text-right">
+                <button type="submit" class="btn btn-success" id="btnGuardarPlazo">
+                  <i class="fas fa-save"></i> Guardar plazo
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 
@@ -352,8 +373,34 @@ document.addEventListener('DOMContentLoaded', function () {
             var d = resp.detalle;
             $('#actualizadoNota').text(d && d.ResponsableActualizacion
                 ? 'Actualizado: ' + d.FechaActualizacion + ' por ' + d.ResponsableActualizacion : '');
+            $('#plazoPrestamo').val(resp.plazoPrestamo);
+            var dp = resp.detallePlazo;
+            $('#actualizadoPlazo').text(dp && dp.ResponsableActualizacion
+                ? 'Actualizado: ' + dp.FechaActualizacion + ' por ' + dp.ResponsableActualizacion : '');
         }, 'json');
     }
+
+    $('#formPlazoPrestamo').on('submit', function (e) {
+        e.preventDefault();
+        var dias = parseInt($('#plazoPrestamo').val(), 10);
+        if (isNaN(dias) || dias < 1 || dias > 90) {
+            Swal.fire('Atención', 'El plazo debe ser un número entero de 1 a 90 días', 'warning');
+            return;
+        }
+        var $btn = $('#btnGuardarPlazo').prop('disabled', true);
+        $.post('ajax/autoridad.ajax.php', { accion: 'guardarPlazoPrestamo', plazoPrestamo: dias }, function (resp) {
+            if (resp && resp.success) {
+                Swal.fire({ type: 'success', title: resp.mensaje, timer: 1800, showConfirmButton: false });
+                cargarParametros();
+            } else {
+                Swal.fire('Atención', (resp && resp.mensaje) || 'No se pudo guardar', 'warning');
+            }
+        }, 'json').fail(function () {
+            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+        }).always(function () {
+            $btn.prop('disabled', false);
+        });
+    });
 
     $('#formParametros').on('submit', function (e) {
         e.preventDefault();

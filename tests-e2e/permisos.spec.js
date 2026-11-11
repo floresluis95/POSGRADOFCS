@@ -43,12 +43,12 @@ const CASOS = [
   ['est', 'usuario', 'panel'],
   ['est', 'matriculados', 'panel'],
 
-  // Biblioteca de tesis (solo consulta): todo el personal administrativo
+  // Biblioteca de tesis: todos los roles (estudiantes y docentes consultan y piden préstamos)
   ['adm', 'bibliotecatesis', 'BIBLIOTECA DE TESIS'],
   ['sec', 'bibliotecatesis', 'BIBLIOTECA DE TESIS'],
   ['aux', 'bibliotecatesis', 'BIBLIOTECA DE TESIS'],
-  ['doc', 'bibliotecatesis', 'panel'],
-  ['est', 'bibliotecatesis', 'panel'],
+  ['doc', 'bibliotecatesis', 'BIBLIOTECA DE TESIS'],
+  ['est', 'bibliotecatesis', 'BIBLIOTECA DE TESIS'],
 ];
 
 test.describe('Permisos de páginas por rol', () => {

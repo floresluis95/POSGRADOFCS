@@ -34,8 +34,9 @@
                 'estudiantes',
                 'orden-generada', 'matriculas', 'detalles', 'bibliotecatesis',
             ],
-            'DOC' => ['reportecalificaciones'],
-            'EST' => ['historialnotaestudiante', 'historialmodulosestudiante', 'historialreciboestudiante', 'misordenespago', 'misrequisitos', 'miscertificados'],
+            // Biblioteca de tesis también para docentes y estudiantes: consultan y piden préstamos (2026-11-11)
+            'DOC' => ['reportecalificaciones', 'bibliotecatesis'],
+            'EST' => ['historialnotaestudiante', 'historialmodulosestudiante', 'historialreciboestudiante', 'misordenespago', 'misrequisitos', 'miscertificados', 'bibliotecatesis'],
         ];
 
         /**
@@ -51,7 +52,7 @@
             }
             if ($tipo === 'ADM') {
                 // El ADM ve todo lo del personal; las páginas del estudiante no le sirven
-                return !in_array($enlace, self::PAGINAS_POR_ROL['EST'], true) || $enlace === 'historialnotaestudiante';
+                return !in_array($enlace, self::PAGINAS_POR_ROL['EST'], true) || in_array($enlace, ['historialnotaestudiante', 'bibliotecatesis'], true);
             }
             return in_array($enlace, self::PAGINAS_POR_ROL[$tipo] ?? [], true);
         }
