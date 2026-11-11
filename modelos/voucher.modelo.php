@@ -59,7 +59,7 @@ class VoucherModelo
     public static function VoucherYaUsadoModelo($numeroVoucher, $pdo = null, $idDocumentoPropio = 0)
     {
         $numero = trim((string)$numeroVoucher);
-        if ($numero === '' || mb_strtoupper($numero, 'UTF-8') === 'SIN MATRÍCULA') {
+        if ($numero === '' || in_array(mb_strtoupper($numero, 'UTF-8'), ['SIN MATRÍCULA', 'CARGA HISTÓRICA'], true)) { // CARGA HISTÓRICA: inscripciones de la carga masiva (no es un voucher)
             return null;
         }
 

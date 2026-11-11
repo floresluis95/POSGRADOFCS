@@ -156,6 +156,12 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Costos de Certificados</span>
                   </a>
                 </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="cargamasiva" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-download" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Carga Masiva (Excel)</span>
+                  </a>
+                </li>
 
                 <!-- REPORTES PDF -->
                 <li class="kt-menu__section">
