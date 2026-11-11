@@ -1,20 +1,18 @@
 <?php
 /**
- * Comprobante de Pago Completo del Programa - PDF
- * Muestra el detalle del pago completo incluyendo descuentos
+ * Comprobante de Pago Completo del Programa - PDF (hoja carta)
+ * Mismo formato que los Reportes PDF: encabezado institucional con logos (ReportesControladores),
+ * tablas con cabecera azul, monto en letras y firma del Coordinador.
  */
 
-// El servidor tiene otra zona horaria configurada en php.ini; sin esto, las
-// fechas impresas en el PDF no corresponden a la hora de Bolivia.
+// Hora de Bolivia (el php.ini del servidor puede traer otra zona)
 date_default_timezone_set('America/La_Paz');
 
-// Configurar errores
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
-// Antes se podía descargar sin iniciar sesión (con solo el idinscripcion en la URL):
-// tiene datos personales y de pagos, así que es solo para el personal.
+// Tiene datos personales y de pagos: solo para el personal
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -23,375 +21,309 @@ if (empty($_SESSION['Validar']) || !in_array($_SESSION['Tipo'] ?? '', ['ADM', 'S
     die('Acceso denegado. Inicie sesión en el sistema.');
 }
 
-// Rutas base
 $baseDir = realpath(__DIR__ . '/../../../');
 require_once $baseDir . '/vendor/autoload.php';
-// La conexión está en core/ (modelos/conexion.modelo.php ya no existe; antes este PDF salía en blanco)
-require_once file_exists($baseDir . '/modelos/conexion.modelo.php') ? $baseDir . '/modelos/conexion.modelo.php' : $baseDir . '/core/conexion.modelo.php';
+require_once $baseDir . '/core/conexion.modelo.php';
 require_once $baseDir . '/modelos/voucher.modelo.php';
-require_once $baseDir . '/modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
+require_once $baseDir . '/modelos/autoridad.modelo.php';
+require_once $baseDir . '/modelos/pagoclinica.modelo.php';
+require_once $baseDir . '/modelos/institucion.modelo.php';
+// Encabezado y pie de página de los Reportes PDF (logos, universidad, facultad, fecha)
+require_once $baseDir . '/controladores/reportes.controlador.php';
+// Monto en letras, con la misma redacción que la Orden de Pago
+require_once $baseDir . '/vistas/componentes/orden-pago-pdf-render.php';
 
-// Validar ID de inscripción
-if (!isset($_GET['idinscripcion']) || empty($_GET['idinscripcion'])) {
+$idInscripcion = intval($_GET['idinscripcion'] ?? 0);
+if ($idInscripcion <= 0) {
     die('Error: ID de inscripción no especificado');
 }
 
-$idInscripcion = intval($_GET['idinscripcion']);
-
-// Obtener datos del estudiante y pago
 try {
     $pdo = Conexion::Conectar();
     $stmt = $pdo->prepare("
-        SELECT e.EstudianteID, e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Complemento, e.Exp,
-               ep.idInscripcion, ep.ProgramaID, ep.FechaInscripcion,
-               ep.costomatricula, ep.montoPagado, ep.montoDescuento, ep.porcentajeDescuento,
-               ep.pagoCompleto, ep.nvauchermatricula,
+        SELECT e.Nombre, e.Apaterno, e.Amaterno, e.Ci, e.Complemento, e.Exp,
+               ep.idInscripcion, ep.FechaInscripcion, ep.costomatricula, ep.montoPagado,
+               ep.montoDescuento, ep.porcentajeDescuento, ep.pagoCompleto, ep.nvauchermatricula,
                " . VoucherModelo::SqlFechaOrdenMatricula('ep.idInscripcion') . " AS FechaOrdenMatricula,
-               p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico,
-               p.Costo AS CostoTotalPrograma, p.Version, p.NumeroTramite
+               (SELECT opm.NumeroOrden FROM ordenpago opm
+                 WHERE opm.idinscripcion = ep.idInscripcion AND " . VoucherModelo::CONDICION_ORDEN_MATRICULA . "
+                 ORDER BY opm.IdOrdenPago ASC LIMIT 1) AS NumeroOrden,
+               p.NombrePrograma, p.Codigo AS CodigoPrograma, p.GradoAcademico, p.Sede, p.Version,
+               p.Costo AS CostoPrograma,
+               pp.CostoTotalPrograma AS PlanCosto, pp.PorcentajeDescuento AS PlanPorcentaje,
+               pp.MontoDescuento AS PlanDescuento, pp.MontoTotalPagar AS PlanTotal
         FROM estudianteprograma ep
         INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
         INNER JOIN programa p ON ep.ProgramaID = p.ProgramaID
+        LEFT JOIN pagoprograma pp ON pp.idInscripcion = ep.idInscripcion
         WHERE ep.idInscripcion = :idinscripcion
     ");
     $stmt->bindParam(':idinscripcion', $idInscripcion, PDO::PARAM_INT);
     $stmt->execute();
-    $estudiante = $stmt->fetch(PDO::FETCH_ASSOC);
+    $est = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$estudiante) {
-        die('Error: No se encontró información del estudiante');
-    }
-
-    // Verificar que sea pago completo
-    if ($estudiante['pagoCompleto'] != 1) {
-        die('Error: Este estudiante no tiene pago completo registrado');
-    }
-
+    // Pagos del programa: al validar el voucher del pago completo, el sistema lo guarda como
+    // la cuota 1 PAGADA en pagomodulo (en estudianteprograma queda montoPagado = 0 y
+    // nvauchermatricula = 'SIN MATRÍCULA'), así que el monto y el voucher reales están aquí
+    $stmtCuotas = $pdo->prepare("
+        SELECT pm.NumeroCuota, pm.montocuota, pm.fechapago, pm.nvaucher, op.NumeroOrden
+        FROM pagomodulo pm
+        LEFT JOIN ordenpago op ON op.IdOrdenPago = pm.IdOrdenPago
+        WHERE pm.idinscripcion = :idinscripcion AND pm.Estado = 'PAGADO'
+        ORDER BY pm.NumeroCuota, pm.Idpagomodulo
+    ");
+    $stmtCuotas->execute([':idinscripcion' => $idInscripcion]);
+    $cuotas = $stmtCuotas->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    die('Error al obtener datos: ' . $e->getMessage());
+    error_log('pdfpagocompletoprograma: ' . $e->getMessage());
+    die('Error al obtener los datos del pago.');
 }
 
-// Calcular montos
-$pagoCompleto = intval($estudiante['pagoCompleto']);
-$montoPagado = floatval($estudiante['montoPagado']);
-$montoDescuento = floatval($estudiante['montoDescuento']);
-$porcentajeDescuento = floatval($estudiante['porcentajeDescuento']);
-$costoMatriculaBD = floatval($estudiante['CostoMatricula']); // Costo de matrícula del programa
-$costoProgramaBD = floatval($estudiante['CostoTotalPrograma']); // Costo del programa
-
-// El costo TOTAL original es: Matrícula + Programa
-// Este es el monto ANTES del descuento
-$costoTotalOriginal = $costoMatriculaBD + $costoProgramaBD;
-
-// Verificación de coherencia: costoTotalOriginal - montoDescuento debe ser igual a montoPagado
-// Si hay una diferencia mayor a 0.01, usar montoPagado + montoDescuento como referencia
-$diferencia = abs(($costoTotalOriginal - $montoDescuento) - $montoPagado);
-if ($diferencia > 0.01) {
-    // Si hay inconsistencia, recalcular el costo original sumando monto pagado + descuento
-    $costoTotalOriginal = $montoPagado + $montoDescuento;
+if (!$est) {
+    die('Error: No se encontró información del estudiante');
+}
+if ((int)$est['pagoCompleto'] !== 1) {
+    die('Error: Este estudiante no tiene pago completo registrado');
 }
 
-// Crear PDF
-$pdf = new TCPDF('P', 'mm', 'LETTER', true, 'UTF-8', false);
+// ---------------------------------------------------------------------
+// Montos
+// Programa: costo, descuento y total del plan pactado (pagoprograma), igual que el
+// saldo de Gestión de Pagos. Sin plan: costo del programa sin descuento.
+// ---------------------------------------------------------------------
+$bs = fn($monto) => number_format((float)$monto, 2);
+$fecha = fn($f) => $f ? date('d/m/Y', strtotime($f)) : '-';
 
-// Configurar documento
+if ($est['PlanTotal'] !== null) {
+    $costoPrograma = (float)$est['PlanCosto'];
+    $descuento     = (float)$est['PlanDescuento'];
+    $porcentaje    = (float)$est['PlanPorcentaje'];
+    $totalPrograma = (float)$est['PlanTotal'];
+} else {
+    $costoPrograma = (float)$est['CostoPrograma'];
+    $descuento     = 0.0;
+    $porcentaje    = 0.0;
+    $totalPrograma = $costoPrograma;
+}
+if ($porcentaje <= 0 && $descuento > 0 && $costoPrograma > 0) {
+    $porcentaje = round($descuento / $costoPrograma * 100, 2);
+}
+
+// Pagos realizados: matrícula (si la hubo), cuotas del programa y clínicas pagadas
+$pagos = [];
+$matricula = (float)$est['montoPagado'];
+$voucherMatricula = trim((string)$est['nvauchermatricula']);
+if ($matricula > 0 && $voucherMatricula !== '' && mb_strtoupper($voucherMatricula, 'UTF-8') !== 'SIN MATRÍCULA') {
+    $pagos[] = ['Matrícula', $est['NumeroOrden'], $est['FechaOrdenMatricula'], $voucherMatricula, $matricula];
+}
+$pagadoPrograma = 0.0;
+foreach ($cuotas as $c) {
+    $pagadoPrograma += (float)$c['montocuota'];
+    $concepto = count($cuotas) === 1 ? 'Pago del programa (al contado)' : 'Programa - cuota N° ' . (int)$c['NumeroCuota'];
+    $pagos[] = [$concepto, $c['NumeroOrden'], $c['fechapago'], $c['nvaucher'], (float)$c['montocuota']];
+}
+$pagadoClinicas = 0.0;
+$clinicasPendientes = 0;
+foreach (array_reverse(PagoClinicaModelo::ListarPorInscripcionModelo($idInscripcion)) as $cl) {
+    if ($cl['Estado'] !== 'CONFIRMADO') {
+        $clinicasPendientes++;
+        continue;
+    }
+    $pagadoClinicas += (float)$cl['MontoTotal'];
+    $pagos[] = ['Clínica', $cl['NumeroOrden'], $cl['FechaPago'], $cl['NumeroVoucher'], (float)$cl['MontoTotal']];
+}
+$totalPagado = array_sum(array_column($pagos, 4));
+$pagoMatricula = ($pagos && $pagos[0][0] === 'Matrícula') ? $matricula : 0.0;
+$saldoPrograma = max(0, round($totalPrograma - $pagadoPrograma, 2));
+$porcentajeTexto = rtrim(rtrim(number_format($porcentaje, 2), '0'), '.');
+
+$nombreCompleto = mb_strtoupper(trim($est['Apaterno'] . ' ' . $est['Amaterno'] . ' ' . $est['Nombre']), 'UTF-8');
+$ci = trim($est['Ci'] . (!empty($est['Complemento']) ? '-' . $est['Complemento'] : '') . ' ' . ($est['Exp'] ?? ''));
+$numeroComprobante = 'PC-' . str_pad($idInscripcion, 6, '0', STR_PAD_LEFT);
+
+// ---------------------------------------------------------------------
+// Documento
+// ---------------------------------------------------------------------
+$pdf = new ReportesControladores('P', 'mm', 'LETTER', true, 'UTF-8', false);
 $pdf->SetCreator('Sistema Posgrado FCS');
-$pdf->SetAuthor('Posgrado FCS');
-$nombreCompleto = $estudiante['Nombre'] . ' ' . $estudiante['Apaterno'] . ' ' . $estudiante['Amaterno'];
+$pdf->SetAuthor(InstitucionModelo::Unidad());
 $pdf->SetTitle('Comprobante de Pago Completo - ' . $nombreCompleto);
-$pdf->SetSubject('Comprobante de Pago Completo del Programa');
-
-// Quitar header y footer automáticos
-$pdf->setPrintHeader(false);
-$pdf->setPrintFooter(false);
-
-// Configurar márgenes
-$pdf->SetMargins(15, 15, 15);
-$pdf->SetAutoPageBreak(TRUE, 15);
-
-// Agregar página
+$pdf->SetMargins(15, 40, 15);
+$pdf->SetAutoPageBreak(true, 25);
 $pdf->AddPage();
+$ancho = $pdf->getPageWidth() - 30;
 
-// ========================================
-// ENCABEZADO CON LOGOS
-// ========================================
-$pdf->Image(InstitucionModelo::LogoPdf('LOGO_IZQUIERDO'), 15, 10, 25);
-$pdf->Image(InstitucionModelo::LogoPdf('LOGO_DERECHO'), 175, 10, 20);
+$azul   = [30, 60, 114];
+$texto  = [51, 51, 51];
+$suave  = [234, 239, 247];
+$borde  = [200, 200, 200];
 
-$pdf->SetFont('helvetica', 'B', 16);
-$pdf->SetTextColor(0, 0, 0);
-$pdf->SetXY(15, 15);
-$pdf->Cell(0, 8, InstitucionModelo::Universidad(), 0, 1, 'C');
-
-$pdf->SetFont('helvetica', '', 11);
-$pdf->SetXY(15, 22);
-$pdf->Cell(0, 6, InstitucionModelo::Facultad(), 0, 1, 'C');
-
-$pdf->SetXY(15, 28);
-$pdf->Cell(0, 6, InstitucionModelo::Unidad(), 0, 1, 'C');
-
+// Título
+$pdf->SetTextColor(...$texto);
+$pdf->SetFont('helvetica', 'B', 14);
+$pdf->Cell(0, 8, 'COMPROBANTE DE PAGO COMPLETO DEL PROGRAMA', 0, 1, 'C');
 $pdf->SetFont('helvetica', '', 9);
-$pdf->SetTextColor(80, 80, 80);
-$pdf->SetXY(15, 34);
-$pdf->Cell(0, 4, InstitucionModelo::DireccionCompleta(), 0, 1, 'C');
+$pdf->Cell(0, 5, 'N° ' . $numeroComprobante, 0, 1, 'C');
+$pdf->Ln(3);
 
-// Línea decorativa
-$pdf->SetDrawColor(102, 126, 234);
-$pdf->SetLineWidth(0.8);
-$pdf->Line(15, 42, 195, 42);
+// Título de sección (barra azul, igual que los programas del Estado de Cuenta)
+$seccion = function ($titulo) use ($pdf, $azul, $texto) {
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->SetFillColor(...$azul);
+    $pdf->SetTextColor(255);
+    $pdf->Cell(0, 6, $titulo, 0, 1, 'L', true);
+    $pdf->SetTextColor(...$texto);
+};
 
-// ========================================
-// TÍTULO DEL DOCUMENTO
-// ========================================
-$pdf->SetFont('helvetica', 'B', 18);
-$pdf->SetTextColor(102, 126, 234);
-$pdf->SetXY(15, 46);
-$pdf->Cell(0, 10, 'COMPROBANTE DE PAGO COMPLETO', 0, 1, 'C');
+// Celda etiqueta + valor (etiqueta con fondo celeste, valor en blanco)
+$dato = function ($etiqueta, $valor, $anchoEtiqueta, $anchoValor, $fin = false) use ($pdf, $suave, $borde) {
+    $pdf->SetDrawColor(...$borde);
+    $pdf->SetFillColor(...$suave);
+    $pdf->SetFont('helvetica', 'B', 8.5);
+    $pdf->Cell($anchoEtiqueta, 6, $etiqueta, 1, 0, 'L', true);
+    $pdf->SetFont('helvetica', '', 8.5);
+    $pdf->Cell($anchoValor, 6, $valor, 1, $fin ? 1 : 0, 'L', false, '', 1);
+};
 
-// Número de comprobante
-$numeroComprobante = 'PC-' . str_pad($idInscripcion, 6, '0', STR_PAD_LEFT) . '-' . date('Ymd');
-$pdf->SetFont('helvetica', '', 9);
-$pdf->SetTextColor(100, 100, 100);
-$pdf->SetXY(15, 56);
-$pdf->Cell(0, 5, 'N° Comprobante: ' . $numeroComprobante, 0, 1, 'C');
-$pdf->SetXY(15, 61);
-$pdf->Cell(0, 5, 'Fecha de emisión: ' . date('d/m/Y H:i'), 0, 1, 'C');
+// 1. Datos del estudiante
+$seccion('DATOS DEL ESTUDIANTE');
+$dato('Estudiante:', $nombreCompleto, 32, $ancho - 32, true);
+$dato('C.I.:', $ci, 32, 58);
+$dato('Fecha de inscripción:', $fecha($est['FechaInscripcion']), 36, $ancho - 126, true);
+$pdf->Ln(3);
 
-// ========================================
-// DATOS DEL ESTUDIANTE
-// ========================================
-$y = 72;
+// 2. Datos del programa
+$seccion('DATOS DEL PROGRAMA');
+$pdf->SetDrawColor(...$borde);
+$pdf->SetFillColor(...$suave);
+// Nombre largo: la fila crece y la etiqueta toma la misma altura
+$nombrePrograma = mb_strtoupper($est['NombrePrograma'], 'UTF-8');
+$pdf->SetFont('helvetica', '', 8.5);
+$altoPrograma = max(6, $pdf->getStringHeight($ancho - 32, $nombrePrograma) + 2);
+$pdf->SetFont('helvetica', 'B', 8.5);
+$pdf->MultiCell(32, $altoPrograma, 'Programa:', 1, 'L', true, 0, '', '', true, 0, false, true, $altoPrograma, 'M');
+$pdf->SetFont('helvetica', '', 8.5);
+$pdf->MultiCell($ancho - 32, $altoPrograma, $nombrePrograma, 1, 'L', false, 1, '', '', true, 0, false, true, $altoPrograma, 'M');
+$dato('Código:', $est['CodigoPrograma'] ?: '-', 32, 58);
+$dato('Grado académico:', mb_strtoupper($est['GradoAcademico'] ?? '-', 'UTF-8'), 36, $ancho - 126, true);
+$dato('Sede:', mb_strtoupper($est['Sede'] ?: '-', 'UTF-8'), 32, 58);
+$dato('Versión:', $est['Version'] ?: '-', 36, $ancho - 126, true);
+$pdf->Ln(3);
 
-// Recuadro de información
-$pdf->SetFillColor(248, 249, 250);
-$pdf->SetDrawColor(102, 126, 234);
-$pdf->SetLineWidth(0.3);
-$pdf->Rect(15, $y, 180, 35, 'DF');
+// Cabecera de tabla azul: [[ancho, texto], ...]
+$cabecera = function (array $cols) use ($pdf, $azul, $texto, $borde) {
+    $pdf->SetFont('helvetica', 'B', 8);
+    $pdf->SetFillColor(42, 82, 152);
+    $pdf->SetTextColor(255);
+    $pdf->SetDrawColor(...$azul);
+    foreach ($cols as $i => $c) {
+        $pdf->Cell($c[0], 6, $c[1], 1, $i === count($cols) - 1 ? 1 : 0, 'C', true, '', 1);
+    }
+    $pdf->SetFont('helvetica', '', 8.5);
+    $pdf->SetTextColor(...$texto);
+    $pdf->SetDrawColor(...$borde);
+};
+// Fila de total con fondo azul
+$filaTotal = function ($etiqueta, $monto, $anchoEtiqueta, $anchoMonto) use ($pdf, $azul, $texto, $borde) {
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->SetFillColor(...$azul);
+    $pdf->SetTextColor(255);
+    $pdf->SetDrawColor(...$azul);
+    $pdf->Cell($anchoEtiqueta, 7, $etiqueta, 1, 0, 'R', true);
+    $pdf->Cell($anchoMonto, 7, 'Bs. ' . number_format((float)$monto, 2), 1, 1, 'R', true);
+    $pdf->SetFont('helvetica', '', 8.5);
+    $pdf->SetTextColor(...$texto);
+    $pdf->SetDrawColor(...$borde);
+};
+$rayado = function ($i) use ($pdf) {
+    $v = $i % 2 === 1 ? 245 : 255;
+    $pdf->SetFillColor($v, $v, $v);
+};
 
-$y += 5;
-
-$pdf->SetFont('helvetica', 'B', 11);
-$pdf->SetTextColor(102, 126, 234);
-$pdf->SetXY(20, $y);
-$pdf->Cell(0, 6, 'DATOS DEL ESTUDIANTE', 0, 1, 'L');
-
-$y += 8;
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(60, 60, 60);
-$pdf->SetXY(20, $y);
-$pdf->Cell(40, 5, 'Estudiante:', 0, 0, 'L');
-$pdf->SetFont('helvetica', '', 9);
-$pdf->SetTextColor(0, 0, 0);
-$pdf->SetX(60);
-$pdf->Cell(0, 5, strtoupper($nombreCompleto), 0, 1, 'L');
-
-$y += 6;
-
-$ci = $estudiante['Ci'];
-if (!empty($estudiante['Complemento'])) {
-    $ci .= '-' . $estudiante['Complemento'];
+// 3. Costo del programa (plan pactado)
+$seccion('COSTO DEL PROGRAMA');
+$wN = 12; $wM = 40; $wC = $ancho - $wN - $wM;
+$cabecera([[$wN, 'N°'], [$wC, 'CONCEPTO'], [$wM, 'MONTO (Bs.)']]);
+$filas = [['Costo del programa', $bs($costoPrograma)]];
+if ($descuento > 0) {
+    $filas[] = ['Descuento por pago al contado' . ($porcentaje > 0 ? ' (' . $porcentajeTexto . '%)' : ''), '- ' . $bs($descuento)];
 }
-$ci .= ' ' . $estudiante['Exp'];
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(60, 60, 60);
-$pdf->SetXY(20, $y);
-$pdf->Cell(40, 5, 'C.I.:', 0, 0, 'L');
-$pdf->SetFont('helvetica', '', 9);
-$pdf->SetTextColor(0, 0, 0);
-$pdf->SetX(60);
-$pdf->Cell(0, 5, $ci, 0, 1, 'L');
-
-$y += 6;
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(60, 60, 60);
-$pdf->SetXY(20, $y);
-$pdf->Cell(40, 5, 'Programa:', 0, 0, 'L');
-$pdf->SetFont('helvetica', '', 9);
-$pdf->SetTextColor(0, 0, 0);
-$pdf->SetX(60);
-$pdf->MultiCell(130, 5, strtoupper($estudiante['NombrePrograma']), 0, 'L');
-
-$y += 6;
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(60, 60, 60);
-$pdf->SetXY(20, $y);
-$pdf->Cell(40, 5, 'Código:', 0, 0, 'L');
-$pdf->SetFont('helvetica', '', 9);
-$pdf->SetTextColor(0, 0, 0);
-$pdf->SetX(60);
-$pdf->Cell(50, 5, $estudiante['CodigoPrograma'], 0, 0, 'L');
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(60, 60, 60);
-$pdf->SetX(120);
-$pdf->Cell(30, 5, 'Grado:', 0, 0, 'L');
-$pdf->SetFont('helvetica', '', 9);
-$pdf->SetTextColor(0, 0, 0);
-$pdf->SetX(150);
-$pdf->Cell(0, 5, $estudiante['GradoAcademico'], 0, 1, 'L');
-
-// ========================================
-// DETALLE DEL PAGO
-// ========================================
-$y = 115;
-
-$pdf->SetFont('helvetica', 'B', 12);
-$pdf->SetTextColor(102, 126, 234);
-$pdf->SetXY(15, $y);
-$pdf->Cell(0, 8, 'DETALLE DEL PAGO COMPLETO', 0, 1, 'L');
-
-$y += 12;
-
-// Tabla de desglose
-$pdf->SetFillColor(231, 243, 255); // Fondo azul claro
-$pdf->SetDrawColor(200, 200, 200);
-$pdf->SetLineWidth(0.2);
-
-// 1. Costo de Matrícula
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->SetTextColor(60, 60, 60);
-$pdf->SetXY(15, $y);
-$pdf->Cell(130, 8, '1. MATRÍCULA DEL PROGRAMA:', 1, 0, 'L', true);
-$pdf->SetFont('helvetica', '', 10);
-$pdf->SetTextColor(0, 0, 0);
-$pdf->Cell(50, 8, 'Bs. ' . number_format($costoMatriculaBD, 2), 1, 1, 'R', true);
-
-$y += 8;
-
-// 2. Costo del Programa
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->SetTextColor(60, 60, 60);
-$pdf->SetXY(15, $y);
-$pdf->Cell(130, 8, '2. COSTO DEL PROGRAMA:', 1, 0, 'L', true);
-$pdf->SetFont('helvetica', '', 10);
-$pdf->SetTextColor(0, 0, 0);
-$pdf->Cell(50, 8, 'Bs. ' . number_format($costoProgramaBD, 2), 1, 1, 'R', true);
-
-$y += 8;
-
-// 3. Subtotal (Matrícula + Programa)
-$pdf->SetFillColor(255, 243, 205); // Fondo amarillo claro
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->SetTextColor(60, 60, 60);
-$pdf->SetXY(15, $y);
-$pdf->Cell(130, 8, 'SUBTOTAL (MATRÍCULA + PROGRAMA):', 1, 0, 'L', true);
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->SetTextColor(0, 0, 0);
-$pdf->Cell(50, 8, 'Bs. ' . number_format($costoTotalOriginal, 2), 1, 1, 'R', true);
-
-$y += 8;
-
-// 4. Descuento aplicado (si existe)
-if ($montoDescuento > 0) {
-    $pdf->SetFillColor(212, 237, 218); // Fondo verde claro
-    $pdf->SetFont('helvetica', 'B', 10);
-    $pdf->SetTextColor(40, 167, 69);
-    $pdf->SetXY(15, $y);
-    $pdf->Cell(130, 8, 'DESCUENTO APLICADO (' . number_format($porcentajeDescuento, 1) . '%):', 1, 0, 'L', true);
-    $pdf->SetFont('helvetica', 'B', 10);
-    $pdf->Cell(50, 8, '- Bs. ' . number_format($montoDescuento, 2), 1, 1, 'R', true);
-
-    $y += 8;
+foreach ($filas as $i => $f) {
+    $rayado($i);
+    $pdf->Cell($wN, 6, $i + 1, 1, 0, 'C', true);
+    $pdf->Cell($wC, 6, $f[0], 1, 0, 'L', true);
+    $pdf->Cell($wM, 6, $f[1], 1, 1, 'R', true);
 }
+$filaTotal('TOTAL DEL PROGRAMA', $totalPrograma, $wN + $wC, $wM);
+$pdf->Ln(3);
 
-// Línea de separación más gruesa
-$pdf->SetLineWidth(0.5);
-$pdf->Line(15, $y, 195, $y);
-$y += 0.5;
+// 4. Pagos realizados: programa, matrícula y clínicas, con su orden, fecha y voucher
+$seccion('PAGOS REALIZADOS');
+$wN = 9; $wO = 44; $wF = 22; $wV = 32; $wM = 28; $wC = $ancho - $wN - $wO - $wF - $wV - $wM;
+$cabecera([[$wN, 'N°'], [$wC, 'CONCEPTO'], [$wO, 'N° DE ORDEN'], [$wF, 'FECHA PAGO'], [$wV, 'N° VOUCHER'], [$wM, 'MONTO (Bs.)']]);
+if (!$pagos) {
+    $pdf->Cell($ancho, 6, 'No hay pagos registrados', 1, 1, 'C');
+}
+foreach ($pagos as $i => $p) {
+    $rayado($i);
+    $pdf->Cell($wN, 6, $i + 1, 1, 0, 'C', true);
+    $pdf->Cell($wC, 6, $p[0], 1, 0, 'L', true, '', 1);
+    $pdf->Cell($wO, 6, $p[1] ?: '-', 1, 0, 'C', true, '', 1);
+    $pdf->Cell($wF, 6, $fecha($p[2]), 1, 0, 'C', true);
+    $pdf->Cell($wV, 6, $p[3] ?: '-', 1, 0, 'C', true, '', 1);
+    $pdf->Cell($wM, 6, $bs($p[4]), 1, 1, 'R', true);
+}
+$filaTotal('TOTAL PAGADO', $totalPagado, $ancho - $wM, $wM);
 
-// Total a pagar
-$pdf->SetFillColor(102, 126, 234);
-$pdf->SetFont('helvetica', 'B', 12);
-$pdf->SetTextColor(255, 255, 255);
-$pdf->SetXY(15, $y);
-$pdf->Cell(130, 10, 'TOTAL PAGADO:', 1, 0, 'L', true);
-$pdf->SetFont('helvetica', 'B', 12);
-$pdf->Cell(50, 10, 'Bs. ' . number_format($montoPagado, 2), 1, 1, 'R', true);
+// Monto en letras
+$pdf->SetFillColor(...$suave);
+$pdf->SetFont('helvetica', 'B', 8.5);
+$pdf->Cell(20, 6, 'Son:', 1, 0, 'L', true);
+$pdf->SetFont('helvetica', '', 8.5);
+$pdf->Cell($ancho - 20, 6, numeroALetrasOrdenPagoOficial($totalPagado), 1, 1, 'L', false, '', 1);
 
-// ========================================
-// INFORMACIÓN ADICIONAL
-// ========================================
-$y += 15;
+// Resumen: lo pagado del programa, de clínicas y el estado
+$estadoPrograma = $saldoPrograma <= 0.009 ? 'PROGRAMA PAGADO EN SU TOTALIDAD' : 'SALDO DEL PROGRAMA: Bs. ' . $bs($saldoPrograma);
+$dato('Pagado programa:', 'Bs. ' . $bs($pagadoPrograma + $pagoMatricula), 32, 58);
+$dato('Pagado clínicas:', 'Bs. ' . $bs($pagadoClinicas) . ($clinicasPendientes > 0 ? '  (' . $clinicasPendientes . ' pendiente' . ($clinicasPendientes === 1 ? '' : 's') . ')' : ''), 36, $ancho - 126, true);
+$dato('Estado:', $estadoPrograma, 32, $ancho - 32, true);
+$pdf->Ln(4);
 
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->SetTextColor(60, 60, 60);
-$pdf->SetXY(15, $y);
-$pdf->Cell(0, 6, 'INFORMACIÓN DEL PAGO:', 0, 1, 'L');
-
-$y += 8;
-
+// Constancia
+$textoClinicas = $pagadoClinicas > 0
+    ? ' Adicionalmente, registra el pago de ' . count(array_filter($pagos, fn($p) => $p[0] === 'Clínica')) . ' clínica(s) por Bs. ' . $bs($pagadoClinicas) . '.'
+    : '';
 $pdf->SetFont('helvetica', '', 9);
-$pdf->SetTextColor(0, 0, 0);
-$pdf->SetXY(15, $y);
-$pdf->Cell(50, 5, 'Fecha de inscripción:', 0, 0, 'L');
-$pdf->Cell(0, 5, date('d/m/Y', strtotime($estudiante['FechaInscripcion'])), 0, 1, 'L');
+$pdf->writeHTMLCell(0, 0, '', '',
+    '<p style="text-align:justify; line-height:1.5">Se deja constancia de que el(la) estudiante <b>' . htmlspecialchars($nombreCompleto)
+    . '</b>, con C.I. ' . htmlspecialchars($ci) . ', '
+    . ($saldoPrograma <= 0.009 ? 'canceló la totalidad del costo' : 'realizó pagos a cuenta del costo')
+    . ' del programa <b>' . htmlspecialchars($nombrePrograma) . '</b>, que asciende a <b>Bs. ' . $bs($totalPrograma) . '</b> ('
+    . numeroALetrasOrdenPagoOficial($totalPrograma) . ')'
+    . ($descuento > 0 ? ', con el descuento por pago al contado ya aplicado' : '') . '.'
+    . htmlspecialchars($textoClinicas)
+    . ' El presente comprobante se emite para los fines que al interesado convengan.</p>',
+    0, 1);
+$pdf->Ln(3);
+$meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+$pdf->Cell(0, 5, InstitucionModelo::Ciudad() . ', ' . date('j') . ' de ' . $meses[date('n') - 1] . ' de ' . date('Y'), 0, 1, 'R');
 
-$y += 6;
-
-$pdf->SetXY(15, $y);
-$pdf->Cell(50, 5, 'N° Voucher:', 0, 0, 'L');
-$pdf->Cell(0, 5, $estudiante['nvauchermatricula'] ?: 'N/A', 0, 1, 'L');
-
-$y += 6;
-
-$pdf->SetXY(15, $y);
-$pdf->Cell(50, 5, 'Fecha de la orden de pago:', 0, 0, 'L');
-$pdf->Cell(0, 5, $estudiante['FechaOrdenMatricula'] ? date('d/m/Y', strtotime($estudiante['FechaOrdenMatricula'])) : 'N/A', 0, 1, 'L');
-
-// ========================================
-// NOTA IMPORTANTE
-// ========================================
-$y += 12;
-
-$pdf->SetFillColor(255, 243, 205);
-$pdf->SetDrawColor(255, 193, 7);
-$pdf->SetLineWidth(0.5);
-$pdf->Rect(15, $y, 180, 20, 'DF');
-
-$y += 5;
-
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->SetTextColor(133, 100, 4);
-$pdf->SetXY(20, $y);
-$pdf->Cell(0, 5, 'NOTA IMPORTANTE:', 0, 1, 'L');
-
-$y += 6;
-
-$pdf->SetFont('helvetica', '', 9);
-$pdf->SetXY(20, $y);
-$pdf->MultiCell(170, 4, 'Este comprobante certifica que el estudiante ha cancelado el PAGO COMPLETO del programa, incluyendo la matrícula y todos los módulos del programa de posgrado. El descuento aplicado ya está reflejado en el monto total pagado.', 0, 'L');
-
-// ========================================
-// SELLO Y FIRMA
-// ========================================
-$y = 220;
-
-// Línea para firma
-$pdf->SetDrawColor(100, 100, 100);
+// Firma del Coordinador (se edita en Configuración > Autoridades)
+// Bloque de firma: 14 mm de espacio + línea + 3 renglones ≈ 29 mm
+if ($pdf->GetY() + 29 > $pdf->getPageHeight() - 25) {
+    $pdf->AddPage();
+}
+$pdf->Ln(14);
+$autoridades = AutoridadModelo::ListarModelo();
+$xFirma = ($pdf->getPageWidth() - 80) / 2;
+$pdf->SetDrawColor(80, 80, 80);
 $pdf->SetLineWidth(0.3);
-$pdf->Line(25, $y, 85, $y);
-$pdf->Line(115, $y, 175, $y);
-
+$pdf->Line($xFirma, $pdf->GetY(), $xFirma + 80, $pdf->GetY());
+$pdf->Ln(1);
 $pdf->SetFont('helvetica', 'B', 9);
-$pdf->SetTextColor(60, 60, 60);
-$pdf->SetXY(25, $y + 2);
-$pdf->Cell(60, 5, 'COORDINADOR DE POSGRADO', 0, 0, 'C');
-$pdf->SetXY(115, $y + 2);
-$pdf->Cell(60, 5, 'SELLO DE LA INSTITUCIÓN', 0, 0, 'C');
+$pdf->Cell(0, 5, AutoridadModelo::NombreParaDocumento($autoridades, 'COORDINADOR'), 0, 1, 'C');
+$pdf->SetFont('helvetica', '', 8.5);
+$pdf->Cell(0, 4, InstitucionModelo::CargoFirma(), 0, 1, 'C');
+$pdf->Cell(0, 4, InstitucionModelo::Facultad(), 0, 1, 'C');
 
-// ========================================
-// PIE DE PÁGINA
-// ========================================
-$pdf->SetY(-20);
-$pdf->SetFont('helvetica', 'I', 8);
-$pdf->SetTextColor(128, 128, 128);
-$pdf->Cell(0, 4, 'Este documento es un comprobante oficial del pago completo del programa', 0, 1, 'C');
-$pdf->Cell(0, 4, 'Sistema de Gestión de Posgrado FCS - Generado el ' . date('d/m/Y H:i:s'), 0, 1, 'C');
-
-// Generar PDF
 $pdf->Output('Comprobante_Pago_Completo_' . $idInscripcion . '_' . date('Ymd') . '.pdf', 'I');
-?>
