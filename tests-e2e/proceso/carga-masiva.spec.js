@@ -131,6 +131,97 @@ test('plantilla, revisión y registro de estudiantes, notas y trabajo de grado',
        DELETE FROM estudiante WHERE EstudianteID = ${estudianteID};`);
 });
 
+test('pagos del Excel: plan, matrícula y cuotas para que el saldo y los reportes salgan bien', async ({ page }) => {
+  test.setTimeout(120_000);
+  const programaID = String(valor(SQL_PROGRAMA));
+  const costo = Number(valor(`SELECT Costo FROM programa WHERE ProgramaID = ${programaID}`));
+  const profesion = String(valor('SELECT NombreProfesion FROM profesion ORDER BY IdProfesion LIMIT 1'));
+  const ciPagos = unico();
+  const ciSinPagos = unico();
+  const voucherCuota = unico();
+  const voucherUsado = String(valor(`SELECT nvaucher FROM pagomodulo WHERE nvaucher REGEXP '^[0-9]+(-[0-9]+)?$' LIMIT 1`) || '');
+  const total = Math.round(costo * 0.9 * 100) / 100; // con 10 % de descuento
+  const cuota1 = Math.round(total / 2 * 100) / 100;
+
+  await ingresar(page, 'adm');
+  await page.goto('cargamasiva');
+  await page.locator('#cm-programa').selectOption(programaID);
+  const [descarga] = await Promise.all([page.waitForEvent('download'), page.locator('#cm-descargar').click()]);
+  const rutaPlantilla = await descarga.path();
+
+  const base = { exp: 'LP', apaterno: 'PAGOS', profesion, fechaInscripcion: '01/02/2024' };
+  const filas = [
+    { ...base, ci: ciPagos, nombre: 'CON CUOTAS', 'pago:total': total, 'pago:matricula': 500,
+      'pago:cuota1monto': cuota1, 'pago:cuota1fecha': '10/02/2024', 'pago:cuota1voucher': voucherCuota,
+      'pago:cuota2monto': '1.000,50' },
+    { ...base, ci: ciSinPagos, nombre: 'SIN PAGOS' },
+    { ...base, ci: unico(), nombre: 'SE PASA', 'pago:total': 100, 'pago:cuota1monto': 150 },
+    { ...base, ci: unico(), nombre: 'VOUCHER REPETIDO', 'pago:cuota1monto': 10, 'pago:cuota1voucher': voucherCuota },
+  ];
+  if (voucherUsado) filas.push({ ...base, ci: unico(), nombre: 'VOUCHER USADO', 'pago:cuota1monto': 10, 'pago:cuota1voucher': voucherUsado });
+  const { buffer, columnas } = await llenarPlantilla(page, rutaPlantilla, filas);
+  expect(columnas['pago:cuota1monto']).toBeTruthy();
+
+  const subir = async () => {
+    await page.locator('#cm-archivo').setInputFiles({ name: 'pagos.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer });
+    await page.locator('#cm-revisar').click();
+    await expect(page.locator('#cm-resultado .cm-tabla tbody tr')).toHaveCount(filas.length, { timeout: 20_000 });
+  };
+  await subir();
+  const tabla = page.locator('#cm-resultado .cm-tabla');
+  await expect(tabla).toContainText('pasan el total a pagar');
+  await expect(tabla).toContainText('repetido en el Excel (fila 3)');
+  if (voucherUsado) await expect(tabla).toContainText('ya fue registrado en');
+  await expect(tabla).toContainText('Sin pagos: en los reportes figurará con saldo');
+  await expect(page.locator('#cm-resultado .cm-cifra.ok b')).toHaveText('2');
+
+  await page.locator('#cm-registrar').click();
+  await page.getByRole('button', { name: 'Sí, registrar' }).click();
+  await expect(page.locator('#cm-resultado .cm-badge.ok')).toHaveCount(2, { timeout: 30_000 });
+
+  const insc = String(valor(`SELECT ep.idInscripcion FROM estudianteprograma ep JOIN estudiante e ON e.EstudianteID = ep.EstudianteID WHERE e.Ci = ${ciPagos}`));
+  expect(valor(`SELECT CONCAT_WS('|', CostoTotalPrograma, MontoDescuento, MontoTotalPagar, NumeroCuotas, TipoPlan) FROM pagoprograma WHERE idInscripcion = ${insc}`))
+    .toBe([costo.toFixed(2), (costo - total).toFixed(2), total.toFixed(2), 2, 'REGULAR'].join('|'));
+  expect(valor(`SELECT GROUP_CONCAT(CONCAT_WS(':', NumeroCuota, montocuota, fechapago, nvaucher, Estado) ORDER BY NumeroCuota SEPARATOR ';') FROM pagomodulo WHERE idinscripcion = ${insc}`))
+    .toBe(`1:${cuota1.toFixed(2)}:2024-02-10:${voucherCuota}:PAGADO;2:1000.50:2024-02-01:CARGA HISTÓRICA:PAGADO`);
+  expect(valor(`SELECT CONCAT_WS('|', costomatricula, montoPagado, nvauchermatricula) FROM estudianteprograma WHERE idInscripcion = ${insc}`))
+    .toBe('500|500.00|CARGA HISTÓRICA');
+
+  // Saldo como lo calcula Gestión de Pagos y los reportes (plan pactado - cuotas pagadas)
+  expect(Number(valor(`SELECT pp.MontoTotalPagar - (SELECT SUM(montocuota) FROM pagomodulo WHERE idinscripcion = ${insc} AND Estado = 'PAGADO') FROM pagoprograma pp WHERE pp.idInscripcion = ${insc}`)))
+    .toBeCloseTo(total - cuota1 - 1000.5, 2);
+
+  // El inscrito sin pagos: subir otra vez con pagos los agrega (inscripción histórica sin pagos)
+  const inscSin = String(valor(`SELECT ep.idInscripcion FROM estudianteprograma ep JOIN estudiante e ON e.EstudianteID = ep.EstudianteID WHERE e.Ci = ${ciSinPagos}`));
+  expect(valor(`SELECT COUNT(*) FROM pagoprograma WHERE idInscripcion = ${inscSin}`)).toBe('0');
+  const segunda = await llenarPlantilla(page, rutaPlantilla, [
+    { ...base, ci: ciSinPagos, nombre: 'SIN PAGOS', 'pago:cuota1monto': costo },
+    { ...base, ci: ciPagos, nombre: 'CON CUOTAS', 'pago:cuota1monto': 5 },
+  ]);
+  await page.locator('#cm-archivo').setInputFiles({ name: 'pagos2.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: segunda.buffer });
+  await page.locator('#cm-revisar').click();
+  await expect(page.locator('#cm-resultado .cm-tabla tbody tr')).toHaveCount(2, { timeout: 20_000 });
+  await expect(page.locator('#cm-resultado .cm-tabla tbody tr').nth(1)).toContainText('Ya tenía pagos registrados');
+  await page.locator('#cm-registrar').click();
+  await page.getByRole('button', { name: 'Sí, registrar' }).click();
+  await expect(page.locator('#cm-resultado .cm-badge.ok').first()).toBeVisible({ timeout: 30_000 });
+  expect(valor(`SELECT MontoTotalPagar FROM pagoprograma WHERE idInscripcion = ${inscSin}`)).toBe(costo.toFixed(2));
+  expect(valor(`SELECT COUNT(*) FROM pagomodulo WHERE idinscripcion = ${insc}`)).toBe('2'); // no se duplicó
+
+  // El comprobante de pago completo se genera (PDF) con las cuotas cargadas
+  const pdf = await page.request.get(`extensiones/tcpdf/pdf/pdfpagocompletoprograma.php?idinscripcion=${insc}`);
+  expect(pdf.headers()['content-type']).toContain('application/pdf');
+
+  // Limpieza
+  for (const ci of [ciPagos, ciSinPagos]) {
+    const id = String(valor(`SELECT EstudianteID FROM estudiante WHERE Ci = ${ci}`));
+    sql(`DELETE pm FROM pagomodulo pm JOIN estudianteprograma ep ON ep.idInscripcion = pm.idinscripcion WHERE ep.EstudianteID = ${id};
+         DELETE FROM pagoprograma WHERE EstudianteID = ${id};
+         DELETE FROM estudianteprograma WHERE EstudianteID = ${id};
+         DELETE FROM estudiante WHERE EstudianteID = ${id};`);
+  }
+});
+
 test('solo el ADM usa la carga masiva', async ({ page }) => {
   await ingresar(page, 'sec');
   const r = await page.request.post('ajax/cargamasiva.ajax.php', { form: { accion: 'plantilla', programaID: '1' } });

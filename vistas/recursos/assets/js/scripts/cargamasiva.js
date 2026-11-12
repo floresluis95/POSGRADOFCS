@@ -46,7 +46,23 @@
         { k: 'tribunal2', t: 'Tribunal: Miembro 2', w: 28, g: 'tesis' },
         { k: 'secretaria', t: 'Tribunal: Secretario(a)', w: 28, g: 'tesis' }
     ];
-    var ESTILO_ENCABEZADO = { obligatorio: 1, opcional: 2, nota: 3, tesis: 4 };
+    // Pagos (opcionales): total del programa, matrícula y, por cada cuota, monto, fecha y voucher.
+    // Claves "pago:..." → fila.pagos (ver CargaMasivaModelo::AnalizarPagos)
+    function columnasPagos(costo, cuotas) {
+        var costoTexto = Number(costo || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        var cols = [
+            { k: 'pago:total', t: 'Total a pagar del programa Bs. (vacío = ' + costoTexto + ')', w: 16, g: 'pago', tipo: 'monto' },
+            { k: 'pago:matricula', t: 'Matrícula Bs.', w: 12, g: 'pago', tipo: 'monto' },
+            { k: 'pago:voucherMatricula', t: 'Voucher matrícula', w: 14, g: 'pago' }
+        ];
+        for (var n = 1; n <= cuotas; n++) {
+            cols.push({ k: 'pago:cuota' + n + 'monto', t: 'Cuota ' + n + ' Bs.', w: 12, g: 'pago', tipo: 'monto' });
+            cols.push({ k: 'pago:cuota' + n + 'fecha', t: 'Cuota ' + n + ' fecha de pago', w: 13, g: 'pago', tipo: 'fecha' });
+            cols.push({ k: 'pago:cuota' + n + 'voucher', t: 'Cuota ' + n + ' voucher', w: 14, g: 'pago' });
+        }
+        return cols;
+    }
+    var ESTILO_ENCABEZADO = { obligatorio: 1, opcional: 2, nota: 3, tesis: 4, pago: 12 };
 
     // ------------------------------------------------------------------ utilidades
     function xml(texto) {
@@ -96,17 +112,18 @@
             '<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>' +
             '<font><b/><sz val="14"/><color rgb="FF1F3A5F"/><name val="Calibri"/></font>' +
             '<font><b/><sz val="11"/><color rgb="FF1F3A5F"/><name val="Calibri"/></font></fonts>' +
-            '<fills count="7"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' +
+            '<fills count="8"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' +
             '<fill><patternFill patternType="solid"><fgColor rgb="FF1F3A5F"/></patternFill></fill>' +
             '<fill><patternFill patternType="solid"><fgColor rgb="FF5B7FA6"/></patternFill></fill>' +
             '<fill><patternFill patternType="solid"><fgColor rgb="FFB8892B"/></patternFill></fill>' +
             '<fill><patternFill patternType="solid"><fgColor rgb="FF2F5D3A"/></patternFill></fill>' +
-            '<fill><patternFill patternType="solid"><fgColor rgb="FFFFF8E1"/></patternFill></fill></fills>' +
+            '<fill><patternFill patternType="solid"><fgColor rgb="FFFFF8E1"/></patternFill></fill>' +
+            '<fill><patternFill patternType="solid"><fgColor rgb="FF595959"/></patternFill></fill></fills>' +
             '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>' +
             '<border><left style="thin"><color rgb="FFCBD5E1"/></left><right style="thin"><color rgb="FFCBD5E1"/></right>' +
             '<top style="thin"><color rgb="FFCBD5E1"/></top><bottom style="thin"><color rgb="FFCBD5E1"/></bottom><diagonal/></border></borders>' +
             '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
-            '<cellXfs count="11">' +
+            '<cellXfs count="13">' +
             '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +                                                                 // 0
             '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' + // 1 obligatorio
             '<xf numFmtId="0" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' + // 2 opcional
@@ -118,6 +135,8 @@
             '<xf numFmtId="0" fontId="0" fillId="6" borderId="1" xfId="0" applyFill="1" applyBorder="1"/>' +                                // 8 nota (dato)
             '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf>' + // 9 instrucciones
             '<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +                                                 // 10 subtítulo
+            '<xf numFmtId="4" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>' +                        // 11 monto (#,##0.00)
+            '<xf numFmtId="0" fontId="1" fillId="7" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' + // 12 pagos
             '</cellXfs></styleSheet>';
     }
 
@@ -128,7 +147,7 @@
             var nombre = (m.codigomodulo ? m.codigomodulo + ' · ' : '') + m.nombremodulo;
             columnas.push({ k: 'nota:' + m.Idmodulo, t: 'Nota M' + (i + 1) + ': ' + nombre, w: 16, g: 'nota', tipo: 'nota' });
         });
-        columnas = columnas.concat(TESIS);
+        columnas = columnas.concat(columnasPagos(programa.Costo, datos.cuotas || 1), TESIS);
 
         var ultima = letra(columnas.length - 1);
         var nombrePrograma = programa.NombrePrograma + (programa.Version ? ' (' + programa.Version + ')' : '');
@@ -137,7 +156,7 @@
         var cols = '';
         var encabezados = '';
         columnas.forEach(function (c, i) {
-            var estiloDato = c.tipo === 'fecha' ? 7 : (c.tipo === 'nota' ? 8 : 6);
+            var estiloDato = c.tipo === 'fecha' ? 7 : (c.tipo === 'nota' ? 8 : (c.tipo === 'monto' ? 11 : 6));
             cols += '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + c.w + '" style="' + estiloDato + '" customWidth="1"/>';
             encabezados += celdaTexto(letra(i) + '2', c.t, ESTILO_ENCABEZADO[c.g]);
         });
@@ -155,6 +174,9 @@
             } else if (c.tipo === 'nota') {
                 val.push('<dataValidation type="decimal" operator="between" allowBlank="1" showErrorMessage="1" errorTitle="Nota no válida" error="La nota va de 0 a 100" sqref="' + rango + '">' +
                     '<formula1>0</formula1><formula2>100</formula2></dataValidation>');
+            } else if (c.tipo === 'monto') {
+                val.push('<dataValidation type="decimal" operator="greaterThanOrEqual" allowBlank="1" showErrorMessage="1" errorTitle="Monto no válido" error="Escriba el monto en Bs. (solo números)" sqref="' + rango + '">' +
+                    '<formula1>0</formula1></dataValidation>');
             }
         });
         var hojaEstudiantes = hojaXml(filas, {
@@ -171,11 +193,13 @@
             [nombrePrograma + ' · ' + datos.modulos.length + ' módulos', 10],
             ['', 0],
             ['1. Llene la hoja "Estudiantes" desde la fila 3: una fila por estudiante. No cambie los encabezados de la fila 2 ni borre las hojas ocultas.', 9],
-            ['2. Columnas azul oscuro (con *): obligatorias. Azul claro: opcionales. Doradas: notas de cada módulo (de 0 a 100; vacío = sin nota). Verdes: trabajo de grado (opcional).', 9],
+            ['2. Columnas azul oscuro (con *): obligatorias. Azul claro: opcionales. Doradas: notas de cada módulo (de 0 a 100; vacío = sin nota). Grises: pagos (opcionales). Verdes: trabajo de grado (opcional).', 9],
             ['3. Fechas en formato dd/mm/aaaa (por ejemplo 15/03/2024).', 9],
             ['4. Expedido, Profesión y Universidad se eligen de la lista desplegable. Si falta una profesión o universidad, agréguela primero en el sistema y descargue la plantilla otra vez.', 9],
             ['5. Si el C.I. ya está registrado, se usa ese estudiante y NO se cambian sus datos (el apellido debe coincidir). Las notas o el trabajo de grado que ya tenga en el sistema tampoco se reemplazan.', 9],
-            ['6. La inscripción se registra como CARGA HISTÓRICA: pago completo, sin órdenes ni vouchers, para poder emitir los certificados.', 9],
+            ['6. La inscripción se registra como CARGA HISTÓRICA (sin órdenes de pago), para poder emitir los certificados.', 9],
+            ['   PAGOS (columnas grises): llénelos para que el saldo y los reportes de costos salgan correctos. "Total a pagar del programa": lo que el estudiante debía pagar con su descuento (vacío = costo del programa, ' + Number(programa.Costo || 0).toFixed(2) + ' Bs.). Por cada cuota pagada: monto en Bs., fecha de pago (vacía = fecha de inscripción) y N° de voucher (opcional; si lo escribe, no puede estar usado en el sistema). Las cuotas no pueden sumar más que el total; lo que falte queda como saldo. Sin pagos, el estudiante figura con saldo igual al costo del programa.', 9],
+            ['   Si el estudiante ya se cargó antes sin pagos, puede subir el Excel otra vez con los pagos: se agregan solo a las inscripciones de carga histórica que todavía no tienen pagos.', 9],
             ['7. Trabajo de grado: si llena alguna columna verde, el título y la fecha de aprobación son obligatorios. Cada miembro del tribunal debe ser una persona distinta.', 9],
             ['8. Suba el archivo en Carga masiva: primero se REVISA (no guarda nada) y usted ve qué filas tienen errores; luego registra solo las filas correctas.', 9],
             ['', 0],
@@ -360,13 +384,18 @@
         for (var r = filaEnc + 1; r < hoja.length; r++) {
             var celdas = hoja[r];
             if (!celdas) continue;
-            var fila = { fila: r + 1, notas: {} };
+            var fila = { fila: r + 1, notas: {}, pagos: {} };
             var conDatos = false;
             mapa.forEach(function (clave, col) {
                 var v = celdas[col];
                 if (v == null || String(v).trim() === '') return;
                 conDatos = true;
                 if (clave.indexOf('nota:') === 0) fila.notas[clave.slice(5)] = numeroDeExcel(v);
+                else if (clave.indexOf('pago:') === 0) {
+                    var campo = clave.slice(5);
+                    fila.pagos[campo] = /fecha$/.test(campo) ? fechaDeExcel(v)
+                        : (/voucher/i.test(campo) ? numeroDeExcel(v).replace(/\.0+$/, '') : numeroDeExcel(v));
+                }
                 else if (fechas[clave]) fila[clave] = fechaDeExcel(v);
                 else if (notas[clave]) fila[clave] = numeroDeExcel(v);
                 else if (clave === 'ci' || clave === 'celular') fila[clave] = numeroDeExcel(v).replace(/\.0+$/, '');
@@ -391,7 +420,8 @@
                 ? '<div class="cm-cifra ok"><b>' + res.registradas + '</b><span>registradas</span></div>' +
                   '<div class="cm-cifra"><b>' + res.estudiantesNuevos + '</b><span>estudiantes nuevos</span></div>' +
                   '<div class="cm-cifra"><b>' + res.notas + '</b><span>notas</span></div>' +
-                  '<div class="cm-cifra"><b>' + res.trabajos + '</b><span>trabajos de grado</span></div>'
+                  '<div class="cm-cifra"><b>' + res.trabajos + '</b><span>trabajos de grado</span></div>' +
+                  '<div class="cm-cifra"><b>' + (res.pagos || 0) + '</b><span>con pagos</span></div>'
                 : '<div class="cm-cifra ok"><b>' + res.validas + '</b><span>listas para registrar</span></div>') +
             '<div class="cm-cifra ' + (res.conError ? 'error' : '') + '"><b>' + res.conError + '</b><span>con errores' + (registrado ? ' (no se registraron)' : '') + '</span></div>' +
             '</div>';
@@ -499,7 +529,7 @@
             Swal.fire({
                 type: 'question',
                 title: '¿Registrar ' + resp.resumen.validas + ' estudiante' + (resp.resumen.validas === 1 ? '' : 's') + '?',
-                html: 'Se crearán los estudiantes nuevos, sus inscripciones como <b>carga histórica</b>, las notas y los trabajos de grado.<br><small>Las filas con error no se registran.</small>',
+                html: 'Se crearán los estudiantes nuevos, sus inscripciones como <b>carga histórica</b>, las notas, los pagos y los trabajos de grado.<br><small>Las filas con error no se registran.</small>',
                 showCancelButton: true, confirmButtonText: 'Sí, registrar', cancelButtonText: 'Cancelar'
             }).then(function (r) {
                 if (!r.value) return;

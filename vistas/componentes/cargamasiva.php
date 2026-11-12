@@ -83,7 +83,8 @@ $cm_programas = CargaMasivaModelo::ProgramasModelo();
         <ul>
             <li>Una fila por estudiante desde la fila 3; fechas en dd/mm/aaaa; notas de 0 a 100.</li>
             <li>Si el C.I. ya existe, se usa ese estudiante sin cambiar sus datos.</li>
-            <li>La inscripción queda como <b>carga histórica</b>: pago completo, sin órdenes ni vouchers.</li>
+            <li>La inscripción queda como <b>carga histórica</b> (sin órdenes de pago).</li>
+            <li>Pagos (opcionales): total a pagar del programa, matrícula y cada cuota con su monto, fecha y voucher. Con ellos el saldo y los reportes de costos salen correctos; sin ellos, el estudiante figura con saldo igual al costo del programa.</li>
             <li>Primero se <b>revisa</b> (no se guarda nada); luego usted decide registrar.</li>
         </ul>
         <div class="cm-subir">

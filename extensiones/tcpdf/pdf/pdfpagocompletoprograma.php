@@ -12,6 +12,33 @@ error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
+// En producción el PDF no salía: cualquier aviso de PHP impreso antes del documento hace que
+// TCPDF se niegue a enviarlo ("Some data has already been output") y la pestaña queda en
+// blanco. Todo lo que se imprima se guarda aquí y se descarta antes de enviar el PDF; si algo
+// falla de verdad, se muestra el motivo en vez de una página vacía.
+ob_start();
+$mostrarFallo = function ($detalle) {
+    error_log('pdfpagocompletoprograma: ' . $detalle);
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    if (!headers_sent()) {
+        header('Content-Type: text/html; charset=utf-8');
+    }
+    echo '<div style="font-family:Arial,sans-serif;max-width:640px;margin:40px auto;padding:16px;border:1px solid #ccc">'
+        . '<b>No se pudo generar el comprobante de pago completo.</b><br><br>'
+        . '<small>Detalle: ' . htmlspecialchars($detalle, ENT_QUOTES, 'UTF-8') . '</small></div>';
+};
+register_shutdown_function(function () use ($mostrarFallo) {
+    $e = error_get_last();
+    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        $mostrarFallo($e['message'] . ' (' . basename($e['file']) . ':' . $e['line'] . ')');
+    }
+});
+set_exception_handler(function ($ex) use ($mostrarFallo) {
+    $mostrarFallo($ex->getMessage() . ' (' . basename($ex->getFile()) . ':' . $ex->getLine() . ')');
+});
+
 // Tiene datos personales y de pagos: solo para el personal
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -75,8 +102,8 @@ try {
     $stmtCuotas->execute([':idinscripcion' => $idInscripcion]);
     $cuotas = $stmtCuotas->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    error_log('pdfpagocompletoprograma: ' . $e->getMessage());
-    die('Error al obtener los datos del pago.');
+    $mostrarFallo('Error al obtener los datos del pago: ' . $e->getMessage());
+    exit;
 }
 
 if (!$est) {
@@ -153,10 +180,11 @@ $pdf->SetAutoPageBreak(true, 25);
 $pdf->AddPage();
 $ancho = $pdf->getPageWidth() - 30;
 
-$azul   = [30, 60, 114];
-$texto  = [51, 51, 51];
-$suave  = [234, 239, 247];
-$borde  = [200, 200, 200];
+// Sobrio: texto negro, grises suaves y sin barras de color
+$azul   = [60, 60, 60];    // líneas de sección y de totales (gris oscuro)
+$texto  = [0, 0, 0];
+$suave  = [242, 242, 242]; // fondo de etiquetas y cabeceras
+$borde  = [190, 190, 190];
 
 // Título
 $pdf->SetTextColor(...$texto);
@@ -166,16 +194,16 @@ $pdf->SetFont('helvetica', '', 9);
 $pdf->Cell(0, 5, 'N° ' . $numeroComprobante, 0, 1, 'C');
 $pdf->Ln(3);
 
-// Título de sección (barra azul, igual que los programas del Estado de Cuenta)
+// Título de sección: texto en negrita con una línea debajo
 $seccion = function ($titulo) use ($pdf, $azul, $texto) {
     $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->SetFillColor(...$azul);
-    $pdf->SetTextColor(255);
-    $pdf->Cell(0, 6, $titulo, 0, 1, 'L', true);
     $pdf->SetTextColor(...$texto);
+    $pdf->SetDrawColor(...$azul);
+    $pdf->Cell(0, 6, $titulo, 'B', 1, 'L');
+    $pdf->Ln(1);
 };
 
-// Celda etiqueta + valor (etiqueta con fondo celeste, valor en blanco)
+// Celda etiqueta + valor (etiqueta con fondo gris claro, valor en blanco)
 $dato = function ($etiqueta, $valor, $anchoEtiqueta, $anchoValor, $fin = false) use ($pdf, $suave, $borde) {
     $pdf->SetDrawColor(...$borde);
     $pdf->SetFillColor(...$suave);
@@ -210,34 +238,30 @@ $dato('Sede:', mb_strtoupper($est['Sede'] ?: '-', 'UTF-8'), 32, 58);
 $dato('Versión:', $est['Version'] ?: '-', 36, $ancho - 126, true);
 $pdf->Ln(3);
 
-// Cabecera de tabla azul: [[ancho, texto], ...]
-$cabecera = function (array $cols) use ($pdf, $azul, $texto, $borde) {
+// Cabecera de tabla gris claro: [[ancho, texto], ...]
+$cabecera = function (array $cols) use ($pdf, $suave, $texto, $borde) {
     $pdf->SetFont('helvetica', 'B', 8);
-    $pdf->SetFillColor(42, 82, 152);
-    $pdf->SetTextColor(255);
-    $pdf->SetDrawColor(...$azul);
+    $pdf->SetFillColor(...$suave);
+    $pdf->SetTextColor(...$texto);
+    $pdf->SetDrawColor(...$borde);
     foreach ($cols as $i => $c) {
         $pdf->Cell($c[0], 6, $c[1], 1, $i === count($cols) - 1 ? 1 : 0, 'C', true, '', 1);
     }
     $pdf->SetFont('helvetica', '', 8.5);
+};
+// Fila de total: negrita con fondo gris claro
+$filaTotal = function ($etiqueta, $monto, $anchoEtiqueta, $anchoMonto) use ($pdf, $suave, $texto, $borde) {
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->SetFillColor(...$suave);
     $pdf->SetTextColor(...$texto);
     $pdf->SetDrawColor(...$borde);
-};
-// Fila de total con fondo azul
-$filaTotal = function ($etiqueta, $monto, $anchoEtiqueta, $anchoMonto) use ($pdf, $azul, $texto, $borde) {
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->SetFillColor(...$azul);
-    $pdf->SetTextColor(255);
-    $pdf->SetDrawColor(...$azul);
     $pdf->Cell($anchoEtiqueta, 7, $etiqueta, 1, 0, 'R', true);
     $pdf->Cell($anchoMonto, 7, 'Bs. ' . number_format((float)$monto, 2), 1, 1, 'R', true);
     $pdf->SetFont('helvetica', '', 8.5);
-    $pdf->SetTextColor(...$texto);
-    $pdf->SetDrawColor(...$borde);
 };
+// Filas sin rayado de color (fondo blanco)
 $rayado = function ($i) use ($pdf) {
-    $v = $i % 2 === 1 ? 245 : 255;
-    $pdf->SetFillColor($v, $v, $v);
+    $pdf->SetFillColor(255, 255, 255);
 };
 
 // 3. Costo del programa (plan pactado)
@@ -326,4 +350,8 @@ $pdf->SetFont('helvetica', '', 8.5);
 $pdf->Cell(0, 4, InstitucionModelo::CargoFirma(), 0, 1, 'C');
 $pdf->Cell(0, 4, InstitucionModelo::Facultad(), 0, 1, 'C');
 
+// Descartar cualquier aviso impreso antes (si no, TCPDF no envía el PDF)
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
 $pdf->Output('Comprobante_Pago_Completo_' . $idInscripcion . '_' . date('Ymd') . '.pdf', 'I');
