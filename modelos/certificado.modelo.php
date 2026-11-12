@@ -24,7 +24,7 @@ class CertificadoModelo
         $sql = "
             SELECT
                 ep.idInscripcion, ep.FechaInscripcion, ep.Estado AS EstadoInscripcion,
-                e.EstudianteID, e.Ci, e.Complemento, e.Exp, e.Nombre, e.Apaterno, e.Amaterno,
+                e.EstudianteID, e.Ci, e.Complemento, e.Exp, e.Nombre, e.Apaterno, e.Amaterno, e.Celular,
                 p.ProgramaID, p.NombrePrograma, p.GradoAcademico, p.Codigo, p.Sede, p.Version
             FROM estudianteprograma ep
             INNER JOIN estudiante e ON ep.EstudianteID = e.EstudianteID
@@ -266,6 +266,9 @@ class CertificadoModelo
             'APROBACION_MONOGRAFIA' => 'Aprobación Programa de Posgrado', // la clave se conserva (historial)
             'MEDIO_MAGNETICO' => 'Medio Magnético',
             'REVISION' => 'Certificado de Revisión',
+            // Formulario de Solicitud para Trámite Universitario (valorado pre-impreso de la UTO):
+            // solo se llenan los datos; el voucher valida el pago pero no se imprime (2026-11-12)
+            'TRAMITE' => 'Trámite A/B',
         ];
     }
 
@@ -543,6 +546,7 @@ class CertificadoModelo
             'APROBACION_MONOGRAFIA' => 'tcpdf/pdf/certificado-aprobacion-monografia-pdf.php',
             'MEDIO_MAGNETICO' => 'tcpdf/pdf/certificado-medio-magnetico-pdf.php',
             'REVISION' => 'tcpdf/pdf/certificado-revision-pdf.php',
+            'TRAMITE' => 'tcpdf/pdf/certificado-tramite-pdf.php',
         ];
     }
 
@@ -579,6 +583,8 @@ class CertificadoModelo
     const CAMPOS_EDITABLES = [
         'nombre', 'programa', 'nivel', 'anio', 'vaucher', 'monto', 'fecha', 'curso', 'titulo', 'tribunal',
         'entrega', 'horaEntrega', 'calificacion', 'tratamiento', 'tipotrabajo', 'coordinador', 'director', 'fechaPago',
+        // Trámite A/B
+        'dirigido', 'cargo', 'ci', 'telefono', 'descripcion', 'formato',
     ];
 
     /**
@@ -619,6 +625,9 @@ class CertificadoModelo
             }
         }
 
+        if (isset($datos['formato']) && !in_array($datos['formato'], ['1', '2'], true)) {
+            return ['success' => false, 'mensaje' => 'El formato del formulario es 1 (celeste) o 2 (negro)'];
+        }
         if (!empty($datos['fechaPago']) && $datos['fechaPago'] > date('Y-m-d')) {
             return ['success' => false, 'mensaje' => 'La fecha de pago del voucher no puede ser posterior a hoy'];
         }

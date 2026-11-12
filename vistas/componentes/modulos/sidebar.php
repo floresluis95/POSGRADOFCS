@@ -139,6 +139,12 @@ if ($_SESSION["Tipo"] == "ADM") {
                   </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="certificadotramite" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-writing" style="color: #d9a941;"></i>
+                    <span class="kt-menu__link-text">Trámite A/B</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="situacionacademica" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-list-2" style="color: #d9a941;"></i>
                     <span class="kt-menu__link-text">Situación Académica</span>
@@ -1031,6 +1037,16 @@ if ($_SESSION["Tipo"] == "EST") {
   background: rgba(217, 169, 65, 0.2);
 }
 .kt-menu__item--active > a[href="certificadorevision"] {
+  background: rgba(217, 169, 65, 0.3);
+  box-shadow: 0 4px 12px rgba(217, 169, 65, 0.4);
+}
+.kt-menu__nav a[href="certificadotramite"] {
+  border-left-color: #d9a941;
+}
+.kt-menu__nav a[href="certificadotramite"]:hover {
+  background: rgba(217, 169, 65, 0.2);
+}
+.kt-menu__item--active > a[href="certificadotramite"] {
   background: rgba(217, 169, 65, 0.3);
   box-shadow: 0 4px 12px rgba(217, 169, 65, 0.4);
 }

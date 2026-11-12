@@ -273,6 +273,34 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'registrarSinDocumento') {
     exit();
 }
 
+// Trámite A/B: ajuste de impresión (mm que se corren todos los datos sobre el formulario
+// pre-impreso, según la impresora). +X = derecha, +Y = abajo; de -25 a 25 mm. Solo ADM.
+if (isset($_POST['accion']) && $_POST['accion'] === 'guardarAjusteTramite') {
+    if (($_SESSION['Tipo'] ?? '') !== 'ADM') {
+        echo json_encode(['success' => false, 'mensaje' => 'Solo el Administrador cambia el ajuste de impresión']);
+        exit();
+    }
+    // Cada formato del formulario (1 celeste / 2 negro) tiene su propio ajuste
+    $prefijo = ($_POST['formato'] ?? '1') === '2' ? 'TRAMITE2_AJUSTE' : 'TRAMITE_AJUSTE';
+    $valores = [];
+    foreach (['ajusteX' => $prefijo . '_X', 'ajusteY' => $prefijo . '_Y'] as $campo => $clave) {
+        $v = str_replace(',', '.', trim((string)($_POST[$campo] ?? '0')));
+        if ($v === '') $v = '0';
+        if (!is_numeric($v) || abs((float)$v) > 25) {
+            echo json_encode(['success' => false, 'mensaje' => 'El ajuste va de -25 a 25 mm']);
+            exit();
+        }
+        $valores[$clave] = number_format((float)$v, 1, '.', '');
+    }
+    $nombre = trim(($_SESSION['Nombres'] ?? '') . ' ' . ($_SESSION['ApellidoPaterno'] ?? '')) ?: ($_SESSION['Usuario'] ?? null);
+    $ok = true;
+    foreach ($valores as $clave => $v) {
+        $ok = ConfiguracionModelo::Guardar($clave, $v, $nombre) && $ok;
+    }
+    echo json_encode(['success' => $ok, 'mensaje' => $ok ? 'Ajuste de impresión guardado' : 'No se pudo guardar el ajuste']);
+    exit();
+}
+
 // Corregir los datos guardados de un documento sin imprimirlo (Registro de documentos)
 if (isset($_POST['accion']) && $_POST['accion'] === 'editarDocumento') {
     $idDocumento = intval($_POST['idDocumento'] ?? 0);

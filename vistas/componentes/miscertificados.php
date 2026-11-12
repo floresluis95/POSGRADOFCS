@@ -218,6 +218,7 @@
 [data-tipo="APROBACION_MONOGRAFIA"] { --mc-tipo-color: #6b21a8; --mc-tipo-suave: #f3e8ff; }
 [data-tipo="MEDIO_MAGNETICO"] { --mc-tipo-color: #b45309; --mc-tipo-suave: #fff1dc; }
 [data-tipo="REVISION"] { --mc-tipo-color: #be123c; --mc-tipo-suave: #ffe4ea; }
+[data-tipo="TRAMITE"] { --mc-tipo-color: #475569; --mc-tipo-suave: #eef2f6; }
 
 /* Sin pagos */
 .mc-vacio { text-align: center; padding: 44px 20px; color: var(--mc-texto-2); }

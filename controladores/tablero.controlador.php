@@ -38,6 +38,7 @@ class TableroControlador
             ['certificadoaprobacionmonografia', 'fa-award', 'Aprobación', 'Programa de posgrado'],
             ['certificadomediomagnetico', 'fa-compact-disc', 'Medio magnético', 'Entrega del trabajo'],
             ['certificadorevision', 'fa-spell-check', 'Revisión', 'Certificado de revisión'],
+            ['certificadotramite', 'fa-file-signature', 'Trámite A/B', 'Formulario de solicitud'],
             ['registrodocumentos', 'fa-folder-open', 'Registro de documentos', 'Emitidos, recibos y titulación'],
         ],
         'Reportes y agenda' => [

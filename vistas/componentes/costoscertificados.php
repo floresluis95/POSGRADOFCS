@@ -263,7 +263,8 @@ document.addEventListener('DOMContentLoaded', function () {
         HISTORIAL_ACADEMICO: 'Formato pre-impreso, hoja oficio',
         APROBACION_MONOGRAFIA: 'Aprobación del trabajo de grado',
         MEDIO_MAGNETICO: 'Carta con membrete propio',
-        REVISION: 'Informe de cumplimiento de requisitos'
+        REVISION: 'Informe de cumplimiento de requisitos',
+        TRAMITE: 'Formulario de solicitud pre-impreso (UTO)'
     };
     var grados = {};
     var tipos = {};

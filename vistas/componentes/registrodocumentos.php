@@ -347,6 +347,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                                             'APROBACION_MONOGRAFIA' => 'certificadoaprobacionmonografia',
                                             'MEDIO_MAGNETICO' => 'certificadomediomagnetico',
                                             'REVISION' => 'certificadorevision',
+                                            'TRAMITE' => 'certificadotramite',
                                         ];
                                         foreach (CertificadoModelo::TiposDocumento() as $claveTipo => $nombreTipo):
                                             if (!isset($paginasCertificado[$claveTipo])) continue; ?>
@@ -1144,10 +1145,13 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
             titulo: 'Título del trabajo', tribunal: 'Tribunal (uno por línea)', entrega: 'Fecha de entrega',
             horaEntrega: 'Hora de entrega', calificacion: 'Calificación', tratamiento: 'Tratamiento',
             tipotrabajo: 'Tipo de trabajo', coordinador: 'Coordinador(a)', director: 'Director(a)',
-            fechaPago: 'Fecha de pago del voucher'
+            fechaPago: 'Fecha de pago del voucher',
+            // Trámite A/B
+            dirigido: 'Dirigido a', cargo: 'Cargo', ci: 'Cédula de identidad', telefono: 'N° de teléfono',
+            descripcion: 'Descripción de la solicitud', formato: 'Formato del formulario (1 = celeste, 2 = negro)'
         };
         var CAMPOS_FECHA = ['fecha', 'entrega', 'fechaPago'];
-        var CAMPOS_ANCHOS = ['nombre', 'programa', 'titulo', 'tribunal'];
+        var CAMPOS_ANCHOS = ['nombre', 'programa', 'titulo', 'tribunal', 'dirigido', 'cargo', 'descripcion'];
 
         function abrirVentana() { $('#ventana-reimprimir').addClass('abierta'); }
         function cerrarVentana() { $('#ventana-reimprimir').removeClass('abierta'); }
@@ -1187,7 +1191,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                     var $grupo = $('<div></div>').toggleClass('rd-campo-ancho', CAMPOS_ANCHOS.indexOf(clave) !== -1);
                     $grupo.append($('<label class="rd-label"></label>').attr('for', idCampo).text(ETIQUETAS_CAMPO[clave]));
                     var $control;
-                    if (clave === 'titulo' || clave === 'tribunal') {
+                    if (clave === 'titulo' || clave === 'tribunal' || clave === 'descripcion') {
                         $control = $('<textarea class="form-control" rows="3"></textarea>')
                             .val(clave === 'tribunal' ? String(valor).split('|').join('\n') : valor);
                     } else {
