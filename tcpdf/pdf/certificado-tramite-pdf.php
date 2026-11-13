@@ -104,17 +104,26 @@ if ($voucherRepetido) {
 $FORMATOS = [
     '1' => [
         'nombre' => 'Formato 1 (celeste, líneas de puntos)',
-        'fecha' => ['y' => 73.2, 'dia' => [44.4, 59.6], 'mes' => [61.0, 76.5], 'anio' => [78.2, 94.0]],
-        // Dirigido a y Cargo 5 mm más a la derecha (pedido de Luis tras imprimir, 2026-11-12)
-        'dirigido' => ['y' => 89.9, 'x1' => 65.5, 'x2' => 180.0],
-        'cargo' => ['y' => 97.0, 'x1' => 57.0, 'x2' => 180.0],
-        'nombre1' => ['y' => 121.4, 'x1' => 83.0, 'x2' => 180.0],
-        'nombre2' => ['y' => 128.5, 'x1' => 35.5, 'x2' => 180.0],
-        'ci' => ['y' => 135.6, 'x1' => 85.5, 'x2' => 114.8],
-        'telefono' => ['y' => 135.6, 'x1' => 146.5, 'x2' => 180.0],
-        'descripcion' => [159.5, 166.8, 173.9, 181.0], 'descX1' => 35.5, 'descX2' => 180.0,
+        // Medido de nuevo sobre el escaneo del formulario en blanco que mandó Luis
+        // (img20261113_08070353, 200 dpi, 2026-11-13). Cada tramo = donde empiezan y terminan
+        // los puntos, con 1,5 mm de margen. Los datos van CENTRADOS en su tramo, menos la
+        // descripción, que empieza 5 mm después de donde empiezan los puntos.
+        'fecha' => ['y' => 77.6, 'dia' => [46.1, 61.2], 'mes' => [62.3, 78.8], 'anio' => [79.7, 95.5]],
+        'dirigido' => ['y' => 94.4, 'x1' => 62.6, 'x2' => 179.7],
+        'cargo' => ['y' => 101.6, 'x1' => 54.7, 'x2' => 179.7],
+        'nombre1' => ['y' => 125.7, 'x1' => 84.5, 'x2' => 179.6],
+        'nombre2' => ['y' => 132.6, 'x1' => 38.6, 'x2' => 179.6],
+        'ci' => ['y' => 139.8, 'x1' => 86.1, 'x2' => 114.3],
+        'telefono' => ['y' => 139.8, 'x1' => 146.6, 'x2' => 179.6],
+        // Descripción medio centímetro más a la derecha (pedido de Luis, 2026-11-13)
+        'descripcion' => [163.6, 170.9, 178.1, 185.4], 'descX1' => 43.0, 'descX2' => 179.7,
         'claveAjuste' => 'TRAMITE_AJUSTE',
         'corrimiento' => [0.0, 0.0],
+        // Letra algo más chica y un poco más separada de los puntos, para que no los toque
+        'centrar' => true,
+        'letraMax' => 9.0,
+        'letraMaxDescripcion' => 8.5,
+        'sobreLinea' => 1.3,
     ],
     '2' => [
         'nombre' => 'Formato 2 (negro, líneas continuas)',
@@ -153,10 +162,11 @@ $ajusteImpresion = function ($eje) use ($prueba, $F) {
 };
 define('AJUSTE_X', $ajusteImpresion('X') + $F['corrimiento'][0]);
 define('AJUSTE_Y', $ajusteImpresion('Y') + $F['corrimiento'][1]);
-$SOBRE_LINEA = 0.9;   // el texto queda 0,9 mm encima de la línea
-$LETRA_MAX = 10;      // pt
+$SOBRE_LINEA = $F['sobreLinea'] ?? 0.9;   // mm que el texto queda encima de la línea
+$LETRA_MAX = $F['letraMax'] ?? 10;        // pt
 $LETRA_MIN = 6.5;     // pt: más chico ya no se lee bien
-$LETRA_MAX_DESCRIPCION = 9.5; // pt: la descripción, algo más pequeña que los demás datos (Luis la pidió de 8,5 a más grande)
+$LETRA_MAX_DESCRIPCION = $F['letraMaxDescripcion'] ?? 9.5; // pt (formato 2: Luis la pidió de 8,5 a más grande)
+$ALINEAR = !empty($F['centrar']) ? 'C' : 'L'; // alineación de los datos de una línea (no la descripción)
 
 $FECHA = $F['fecha'];
 $DIRIGIDO = $F['dirigido'];
@@ -314,10 +324,10 @@ $escribir(date('d', $t), $FECHA['dia'][0], $FECHA['dia'][1], $FECHA['y'], $LETRA
 $escribir(date('m', $t), $FECHA['mes'][0], $FECHA['mes'][1], $FECHA['y'], $LETRA_MAX, 'C');
 $escribir(date('Y', $t), $FECHA['anio'][0], $FECHA['anio'][1], $FECHA['y'], $LETRA_MAX, 'C');
 
-$dato($dirigido, $DIRIGIDO, 'Dirigido a');
-$dato($cargo, $CARGO, 'Cargo');
-$dato($ci, $CI, 'Cédula de identidad');
-$dato($telefono, $TELEFONO, 'N° de teléfono');
+$dato($dirigido, $DIRIGIDO, 'Dirigido a', $ALINEAR);
+$dato($cargo, $CARGO, 'Cargo', $ALINEAR);
+$dato($ci, $CI, 'Cédula de identidad', $ALINEAR);
+$dato($telefono, $TELEFONO, 'N° de teléfono', $ALINEAR);
 
 // Nombre: primero en su línea; si no entra, sigue en la línea de abajo
 foreach ([[$NOMBRE[0]], $NOMBRE] as $lineasNombre) {
@@ -328,7 +338,7 @@ if (!$r) {
     $falla('El nombre es demasiado largo para las líneas del formulario.');
 }
 foreach ($r[1] as $i => $texto) {
-    $escribir($texto, $NOMBRE[$i]['x1'], $NOMBRE[$i]['x2'], $NOMBRE[$i]['y'], $r[0]);
+    $escribir($texto, $NOMBRE[$i]['x1'], $NOMBRE[$i]['x2'], $NOMBRE[$i]['y'], $r[0], $ALINEAR);
 }
 
 // Descripción: hasta 4 líneas, todas con el mismo tamaño de letra
