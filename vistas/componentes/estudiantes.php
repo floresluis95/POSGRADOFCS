@@ -427,14 +427,21 @@ $csrf_token = bin2hex(random_bytes(32));
                         <i class="fas fa-id-card mr-2"></i> Datos de Identificación
                     </h4>
 
-                    <!-- C.I. y complementos: el C.I. no es editable (identifica al estudiante
-                         en el resto del sistema: matrícula, pagos, etc.) -->
+                    <!-- C.I. y complementos: el C.I. no se edita aquí; solo el ADM lo corrige con
+                         su botón (corregir-ci.js), que también cambia el usuario de la cuenta -->
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="inputCiEditar"><i class="fas fa-id-card text-primary"></i> C.I.</label>
                                 <input type="text" id="inputCiEditar" class="form-control" readonly
                                        style="background-color: #f8f9fa;">
+                                <?php if (($_SESSION['Tipo'] ?? '') === 'ADM') { ?>
+                                <button type="button" class="btn btn-outline-warning btn-sm mt-1 btnCorregirCi"
+                                        data-tipo="estudiante" data-id="#editarEstudianteID" data-ci="#inputCiEditar">
+                                    <i class="fas fa-edit"></i> Corregir C.I.
+                                </button>
+                                <script src="vistas/recursos/assets/js/scripts/corregir-ci.js?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/js/scripts/corregir-ci.js'); ?>"></script>
+                                <?php } ?>
                             </div>
                         </div>
                         <div class="col-md-4">

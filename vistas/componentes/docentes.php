@@ -730,7 +730,16 @@ $csrf_token = bin2hex(random_bytes(32));
                                 <label for="editCi"><i class="fas fa-id-card text-primary"></i> C.I. *</label>
                                 <input type="text" id="editCi" name="editCi" class="form-control"
                                        placeholder="1234567" required readonly style="background-color: #e9ecef;">
+                                <?php if (($_SESSION['Tipo'] ?? '') === 'ADM') { ?>
+                                <!-- Solo el ADM corrige el C.I. (corregir-ci.js); también cambia el usuario de la cuenta -->
+                                <button type="button" class="btn btn-outline-warning btn-sm mt-1 btnCorregirCi"
+                                        data-tipo="docente" data-id="#editDocenteID" data-ci="#editCi">
+                                    <i class="fas fa-edit"></i> Corregir C.I.
+                                </button>
+                                <script src="vistas/recursos/assets/js/scripts/corregir-ci.js?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/js/scripts/corregir-ci.js'); ?>"></script>
+                                <?php } else { ?>
                                 <small class="text-muted">El CI no se puede modificar</small>
+                                <?php } ?>
                             </div>
                         </div>
                         <div class="col-md-4">

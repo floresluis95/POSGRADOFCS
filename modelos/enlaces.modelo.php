@@ -53,7 +53,8 @@
                 $enlace == 'misrequisitos'||
                 $enlace == 'miscertificados'||
                 $enlace == 'bibliotecatesis'||
-                $enlace == 'cargamasiva'
+                $enlace == 'cargamasiva'||
+                $enlace == 'catalogos'
 
                 )
             {

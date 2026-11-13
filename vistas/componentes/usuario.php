@@ -338,6 +338,14 @@
                 <input type="hidden" id="UEIdUsuario" name="editaridusuario">
                 <input type="text" id="UECedulaIdentidad" name="editarci" class="form-control" readonly
                        style="background-color: #e9ecef;">
+                <?php if (($_SESSION['Tipo'] ?? '') === 'ADM') { ?>
+                <!-- Corregir el C.I. del personal (corregir-ci.js); también cambia su usuario si era el C.I. -->
+                <button type="button" class="btn btn-outline-warning btn-sm mt-1 btnCorregirCi"
+                        data-tipo="personal" data-id="#UEIdPersonal" data-ci="#UECedulaIdentidad">
+                  <i class="fas fa-edit"></i> Corregir C.I.
+                </button>
+                <script src="vistas/recursos/assets/js/scripts/corregir-ci.js?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/js/scripts/corregir-ci.js'); ?>"></script>
+                <?php } ?>
               </div>
             </div>
             <div class="col-md-4">

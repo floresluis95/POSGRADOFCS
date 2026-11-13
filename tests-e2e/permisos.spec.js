@@ -49,6 +49,11 @@ const CASOS = [
   ['aux', 'bibliotecatesis', 'BIBLIOTECA DE TESIS'],
   ['doc', 'bibliotecatesis', 'BIBLIOTECA DE TESIS'],
   ['est', 'bibliotecatesis', 'BIBLIOTECA DE TESIS'],
+
+  // Universidades y Profesiones: solo el ADM corrige (2026-11-13)
+  ['adm', 'catalogos', 'UNIVERSIDADES Y PROFESIONES'],
+  ['sec', 'catalogos', 'panel'],
+  ['aux', 'catalogos', 'panel'],
 ];
 
 test.describe('Permisos de páginas por rol', () => {

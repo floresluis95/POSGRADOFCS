@@ -274,6 +274,13 @@ if ($_SESSION["Tipo"] == "ADM") {
                   </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <!-- Corregir universidades y profesiones (solo ADM) -->
+                  <a href="catalogos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon2-list-3" style="color: #9c27b0;"></i>
+                    <span class="kt-menu__link-text">Universidades y Profesiones</span>
+                  </a>
+                </li>
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="autoridades" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-correct" style="color: #9c27b0;"></i>
                     <span class="kt-menu__link-text">Configuración</span>
