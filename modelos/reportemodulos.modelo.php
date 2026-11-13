@@ -230,6 +230,18 @@ class ReporteModulosModelo
     }
 
     /**
+     * Monto a pagar del programa de una inscripción: el de su plan (pagoprograma). Una
+     * inscripción de CARGA HISTÓRICA subida sin pagos no tiene plan: se le cuenta el costo del
+     * programa (saldo = costo) SIN crear filas, para que después se le puedan subir los pagos
+     * re-subiendo el Excel (CargaMasivaModelo solo los agrega si no tiene pagoprograma ni pagomodulo).
+     * Usa los alias ep (estudianteprograma), p (programa) y pp (pagoprograma).
+     */
+    private static function SqlMontoPrograma()
+    {
+        return "COALESCE(pp.MontoTotalPagar, CASE WHEN ep.nvauchermatricula = 'CARGA HISTÓRICA' THEN p.Costo END, 0)";
+    }
+
+    /**
      * Reporte de pagos por programa: cuántos estudiantes inscritos tiene cada programa,
      * cuántos con cada tipo de plan (Regular/Contado con descuento/Grupal), cuántos ya
      * completaron su pago, y cuánto se ha cobrado vs. cuánto falta cobrar en total.
@@ -286,10 +298,10 @@ class ReporteModulosModelo
                             ep.idInscripcion,
                             ep.Estado AS EstadoInscripcion,
                             pp.TipoPlan,
-                            (COALESCE(pp.MontoTotalPagar, 0) + COALESCE(ep.costomatricula, 0)) AS CostoTotalPrograma,
+                            (" . self::SqlMontoPrograma() . " + COALESCE(ep.costomatricula, 0)) AS CostoTotalPrograma,
                             (COALESCE(pagado.TotalPagadoInscripcion, 0) + COALESCE(ep.costomatricula, 0)) AS TotalPagado,
                             COALESCE(ep.costomatricula, 0) AS CostoMatricula,
-                            GREATEST(COALESCE(pp.MontoTotalPagar, 0) - COALESCE(pagado.TotalPagadoInscripcion, 0), 0) AS SaldoPendiente,
+                            GREATEST(" . self::SqlMontoPrograma() . " - COALESCE(pagado.TotalPagadoInscripcion, 0), 0) AS SaldoPendiente,
                             (COALESCE(ep.montoDescuento, 0) + COALESCE(pp.MontoDescuento, 0)) AS MontoDescuentoTotal,
                             CASE WHEN (COALESCE(ep.montoDescuento, 0) > 0 OR COALESCE(pp.PorcentajeDescuento, 0) > 0) THEN 1 ELSE 0 END AS TieneDescuento,
                             CASE
@@ -346,12 +358,15 @@ class ReporteModulosModelo
                         -- Desglose para el detalle: matrícula y programa ya con su descuento
                         -- (o aumento, si el descuento es negativo); CostoTotal = la suma de ambos
                         COALESCE(ep.montoDescuento, 0) AS DescuentoMatricula,
-                        pp.MontoTotalPagar AS CostoPrograma,
+                        " . self::SqlMontoPrograma() . " AS CostoPrograma,
                         COALESCE(pp.CostoTotalPrograma - pp.MontoTotalPagar, 0) AS DescuentoPrograma,
                         COALESCE(pagado.TotalPagado, 0) AS CuotasCobrado,
-                        (COALESCE(pp.MontoTotalPagar, 0) + COALESCE(ep.costomatricula, 0)) AS CostoTotal,
+                        (" . self::SqlMontoPrograma() . " + COALESCE(ep.costomatricula, 0)) AS CostoTotal,
                         (COALESCE(pagado.TotalPagado, 0) + COALESCE(ep.costomatricula, 0)) AS TotalPagado,
-                        GREATEST(COALESCE(pp.MontoTotalPagar, 0) - COALESCE(pagado.TotalPagado, 0), 0) AS SaldoPendiente,
+                        GREATEST(" . self::SqlMontoPrograma() . " - COALESCE(pagado.TotalPagado, 0), 0) AS SaldoPendiente,
+                        -- Carga histórica sin pagos todavía: se le pueden subir re-subiendo el Excel
+                        (pp.idInscripcion IS NULL AND pagado.idinscripcion IS NULL
+                         AND ep.nvauchermatricula = 'CARGA HISTÓRICA') AS CargaHistoricaSinPagos,
                         COALESCE(pagado.CuotasPagadas, 0) AS CuotasPagadas,
                         -- Clínicas del estudiante (aparte de matrícula y cuotas)
                         (SELECT COALESCE(SUM(pcl.Monto), 0) FROM pagoclinica pcl
@@ -360,6 +375,7 @@ class ReporteModulosModelo
                          WHERE op.idinscripcion = ep.idInscripcion AND op.Observaciones = 'CLINICA' AND op.Estado = 'PENDIENTE') AS ClinicaPorCobrar
                     FROM estudianteprograma ep
                     INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID
+                    INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
                     LEFT JOIN pagoprograma pp ON pp.idInscripcion = ep.idInscripcion
                     LEFT JOIN (
                         SELECT idinscripcion, SUM(montocuota) AS TotalPagado, COUNT(*) AS CuotasPagadas

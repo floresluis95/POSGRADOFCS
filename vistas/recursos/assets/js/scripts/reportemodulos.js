@@ -508,6 +508,8 @@ function renderDetallePagosEstudiante(datos, tieneClinica, hayEstudiantes) {
         const clinicaPorCobrar = parseFloat(e.ClinicaPorCobrar) || 0;
         const abandono = e.EstadoInscripcion === 'ABANDONO';
         const tienePlan = !!e.TipoPlan;
+        // Carga histórica sin pagos: saldo = costo del programa; los pagos se suben re-subiendo el Excel
+        const historicaSinPagos = !tienePlan && String(e.CargaHistoricaSinPagos) === '1';
         const completado = tienePlan && saldo <= 0;
         const pct = porcentaje(pagado, costoTotal);
 
@@ -529,6 +531,8 @@ function renderDetallePagosEstudiante(datos, tieneClinica, hayEstudiantes) {
         let estado;
         if (abandono) {
             estado = '<span class="rp-chip is-peligro">Abandonó</span>';
+        } else if (historicaSinPagos) {
+            estado = '<span class="rp-chip is-alerta" title="Carga histórica: re-suba el Excel con las columnas de pagos">Pagos por subir</span>';
         } else if (!tienePlan) {
             estado = '<span class="rp-chip">Sin plan</span>';
         } else if (completado) {
@@ -544,7 +548,7 @@ function renderDetallePagosEstudiante(datos, tieneClinica, hayEstudiantes) {
                 (cuotasTexto ? '<span class="rp-sub">' + cuotasTexto + '</span>' : '') + '</td>' +
             '<td class="text-right">' + (costoMatricula > 0 ? formatoMoneda(costoMatricula) : '<span class="rp-muted">Sin matrícula</span>') +
                 notaAjuste(parseFloat(e.DescuentoMatricula) || 0) + '</td>' +
-            '<td class="text-right">' + (tienePlan ? formatoMoneda(costoPrograma) : '<span class="rp-muted">Sin plan</span>') +
+            '<td class="text-right">' + (tienePlan || historicaSinPagos ? formatoMoneda(costoPrograma) : '<span class="rp-muted">Sin plan</span>') +
                 (tienePlan ? notaAjuste(parseFloat(e.DescuentoPrograma) || 0) : '') + '</td>' +
             '<td class="text-right"><strong>' + formatoMoneda(costoTotal) + '</strong></td>' +
             '<td class="text-right"><span class="rp-cobrado">' + formatoMoneda(pagado) + '</span>' +
