@@ -104,63 +104,68 @@ class ProgramasModelos
     }
 
     $stmt = null;
-} 
- 
-private static function GenerarCodigo($sede, $grado, $fechaInicio)
-{
-    // Convertir a mayúsculas por consistencia
-    $sede = strtoupper(trim($sede));
-    $grado = strtoupper(trim($grado));
-
-    // --- Prefijo por sede ---
-    switch ($sede) {
-        case 'ORURO':
-            $prefijoSede = 'ORU';
-            break;
-        case 'LA PAZ':
-            $prefijoSede = 'LPZ';
-            break;
-        case 'COCHABAMBA':
-            $prefijoSede = 'CBB';
-            break;
-        case 'SANTA CRUZ':
-            $prefijoSede = 'SCZ';
-            break;
-        default:
-            $prefijoSede = 'OTR'; // Otro
-            break;
-    }
-
-    // --- Prefijo por grado ---
-    switch ($grado) {
-        case 'DIPLOMADO':
-            $prefijoGrado = 'DIP';
-            break;
-        case 'MAESTRÍA':
-        case 'MAESTRIA':
-            $prefijoGrado = 'MAE';
-            break;
-        case 'ESPECIALIDAD':
-            $prefijoGrado = 'ESP';
-            break;
-        default:
-            $prefijoGrado = 'OTR';
-            break;
-    }
-
-    // --- Obtener año ---
-    $anio = date('Y', strtotime($fechaInicio));
-
-    // --- Contar programas existentes ---
-    $conexion = Conexion::conectar();
-    $stmt = $conexion->prepare("SELECT COUNT(*) AS total FROM programa");
-    $stmt->execute();
-    $total = $stmt->fetch(PDO::FETCH_ASSOC)["total"] + 1;
-
-    // --- Armar el código final ---
-    $codigo = "{$prefijoSede}-{$prefijoGrado}-{$total}-{$anio}";
-    return $codigo;
 }
+
+/**
+ * Código institucional del programa: SEDE-GRADO-N-AÑO (ej. ORU-ESP-1-2024).
+ *
+ * N es el consecutivo PROPIO de cada sede y grado: la 1.ª especialidad de Oruro es
+ * ORU-ESP-1, la 2.ª ORU-ESP-2…; las maestrías y diplomados de Oruro llevan su propia
+ * cuenta (ORU-MAE-1, ORU-DIP-1) y lo mismo cada sede (LPZ-ESP-1). El consecutivo no
+ * vuelve a 1 cada año: el año (de la fecha de inicio) solo acompaña al número.
+ * Antes N era el total de programas del sistema, y especialidades, maestrías y
+ * diplomados compartían la numeración (2026-11-14).
+ *
+ * Al editar ($programaID): si sigue en la misma sede y grado conserva su número y
+ * solo se actualiza el año; si cambió de sede o de grado toma el siguiente número
+ * de su nueva categoría.
+ */
+public static function GenerarCodigo($sede, $grado, $fechaInicio, $programaID = null)
+{
+    $prefijo = self::PrefijoSede($sede) . '-' . self::PrefijoGrado($grado) . '-';
+    $anio = date('Y', strtotime($fechaInicio));
+    $conexion = Conexion::conectar();
+
+    if ($programaID) {
+        $stmt = $conexion->prepare("SELECT Codigo FROM programa WHERE ProgramaID = :id");
+        $stmt->execute([':id' => $programaID]);
+        $actual = (string)$stmt->fetchColumn();
+        if (preg_match('/^' . preg_quote($prefijo, '/') . '(\d+)-\d{4}$/', $actual, $m)) {
+            return $prefijo . $m[1] . '-' . $anio;
+        }
+    }
+
+    // Siguiente número de la categoría (el mayor + 1: si se borró uno, no se repite)
+    $stmt = $conexion->prepare(
+        "SELECT MAX(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(Codigo, '-', 3), '-', -1) AS UNSIGNED))
+         FROM programa WHERE Codigo LIKE :prefijo AND ProgramaID <> :id"
+    );
+    $stmt->execute([':prefijo' => $prefijo . '%', ':id' => (int)$programaID]);
+    $numero = (int)$stmt->fetchColumn() + 1;
+
+    return $prefijo . $numero . '-' . $anio;
+}
+
+/** ORURO → ORU, LA PAZ → LPZ…; otra sede: sus 3 primeras letras (POTOSÍ → POT). */
+public static function PrefijoSede($sede)
+{
+    $sede = mb_strtoupper(trim((string)$sede), 'UTF-8');
+    $conocidas = ['ORURO' => 'ORU', 'LA PAZ' => 'LPZ', 'COCHABAMBA' => 'CBB', 'SANTA CRUZ' => 'SCZ'];
+    if (isset($conocidas[$sede])) {
+        return $conocidas[$sede];
+    }
+    $letras = preg_replace('/[^A-Z]/', '', strtr($sede, ['Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ñ' => 'N', 'Ü' => 'U']));
+    return $letras !== '' ? substr($letras, 0, 3) : 'OTR';
+}
+
+/** DIPLOMADO → DIP, ESPECIALIDAD → ESP, MAESTRÍA → MAE, DOCTORADO → DOC. */
+public static function PrefijoGrado($grado)
+{
+    $grado = mb_strtoupper(trim((string)$grado), 'UTF-8');
+    $grados = ['DIPLOMADO' => 'DIP', 'ESPECIALIDAD' => 'ESP', 'MAESTRIA' => 'MAE', 'MAESTRÍA' => 'MAE', 'DOCTORADO' => 'DOC'];
+    return $grados[$grado] ?? 'OTR';
+}
+
     public static function Buscarprogramamodelo($nombreprograma)
     {
         $stmt =conexion::Conectar()->prepare("SELECT * FROM `programa`where NombrePrograma= :nombreprograma");
@@ -174,11 +179,14 @@ private static function GenerarCodigo($sede, $grado, $fechaInicio)
     public static function ActualizarProgramaModelo($datos)
     {
         $sigla = !empty(trim($datos["Sigla"] ?? '')) ? strtoupper(trim($datos["Sigla"])) : null;
+        // El código sigue a la sede, el grado y el año de inicio (ver GenerarCodigo)
+        $codigo = self::GenerarCodigo($datos["Sede"], $datos["GradoAcademico"], $datos["FechaInicio"], (int)$datos["ProgramaID"]);
 
         $stmt = Conexion::conectar()->prepare("
             UPDATE programa
             SET NombrePrograma = :nombre,
                 GradoAcademico = :grado,
+                Codigo = :codigo,
                 Sigla = :sigla,
                 DuracionMeses = :duracionmeses,
                 Modulos = :modulos,
@@ -194,6 +202,7 @@ private static function GenerarCodigo($sede, $grado, $fechaInicio)
         $stmt->bindParam(":id", $datos["ProgramaID"], PDO::PARAM_INT);
         $stmt->bindParam(":nombre", $datos["NombrePrograma"], PDO::PARAM_STR);
         $stmt->bindParam(":grado", $datos["GradoAcademico"], PDO::PARAM_STR);
+        $stmt->bindParam(":codigo", $codigo, PDO::PARAM_STR);
         $stmt->bindParam(":sigla", $sigla, PDO::PARAM_STR);
         $stmt->bindParam(":duracionmeses", $datos["DuracionMeses"], PDO::PARAM_INT);
         $stmt->bindParam(":modulos", $datos["Modulos"], PDO::PARAM_INT);
