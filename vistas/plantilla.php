@@ -76,6 +76,8 @@ ob_start();
 
   <!--begin::Tema institucional (paleta formal, colores por grado academico) -->
   <link href="vistas/recursos/assets/css/tema-institucional.css?v=<?php echo filemtime(__DIR__ . '/recursos/assets/css/tema-institucional.css'); ?>" rel="stylesheet" type="text/css" />
+  <!-- Al pasar el mouse: un solo color (dorado institucional) en botones, enlaces, menús y pestañas -->
+  <link href="vistas/recursos/assets/css/hover-uniforme.css?v=<?php echo filemtime(__DIR__ . '/recursos/assets/css/hover-uniforme.css'); ?>" rel="stylesheet" type="text/css" />
   <!--end::Tema institucional -->
 
   <!--begin::Layout Skins(used by all pages) -->

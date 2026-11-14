@@ -1,0 +1,134 @@
+/* =========================================================================
+   AL PASAR EL MOUSE: un solo color en todo el sistema (2026-11-14)
+
+   El sistema es azul institucional; al pasar el mouse (o al llegar con el
+   teclado) sobre un botón, enlace, opción de menú, pestaña o página de una
+   tabla, se pinta de VERDE PETRÓLEO institucional (el "acento clínico" de la
+   paleta, --inst-acento-ini), sobrio y distinto del azul. Antes cada pantalla
+   tenía el suyo. (Primero se probó dorado; se cambió por uno más formal.)
+
+   Para cambiar el color en todo el sistema basta con cambiar las variables.
+   Se usa !important solo en :hover / :focus-visible para ganarle a los estilos
+   propios de cada pantalla.
+
+   Se mantiene el ROJO de los botones de eliminar / anular (avisa que es
+   destructivo) y no cambian los botones desactivados.
+   ========================================================================= */
+:root {
+    --hv-fondo: #0f6674;         /* fondo de botones al pasar el mouse (verde petróleo) */
+    --hv-borde: #0b525d;
+    --hv-texto: #ffffff;         /* blanco sobre el petróleo (contraste 6.6:1) */
+    --hv-claro: #e6f2f3;         /* fondo suave: menús desplegables, pestañas */
+    --hv-texto-suave: #0b525d;   /* texto sobre el fondo suave */
+    --hv-enlace: #0f6674;        /* texto de enlaces sobre fondo blanco (contraste 6.6:1) */
+    --hv-sombra: 0 4px 12px rgba(15, 102, 116, .28);
+}
+
+/* ---------- Botones ----------
+   .btn de Bootstrap y los botones propios de cada pantalla (pg-btn, rp-btn,
+   pgm-btn, pi-btn, pg-accion…: todo <button>/<a> cuya clase lleve "-btn" o
+   "-accion"). Quedan fuera los destructivos (eliminar, anular, dar de baja):
+   siguen en rojo. */
+:is(.btn, :is(button, a)[class*="-btn"], :is(button, a)[class*="-accion"]):not(:disabled):not(.disabled):not(.btn-link):not(.close):not([class*="danger"]):not([class*="peligro"]):not([class*="eliminar"]):not([class*="anular"]):not([class*="btn-link"]):not(.text-danger):is(:hover, :focus-visible),
+.swal2-popup .swal2-styled:not(.swal2-deny):hover,
+.swal-button:not([disabled]):not(.swal-button--danger):hover,
+.exp-btn:hover,
+.op-atajo:hover,
+.rp-limpiar:hover {
+    background: var(--hv-fondo) !important;
+    background-image: none !important;
+    border-color: var(--hv-borde) !important;
+    color: var(--hv-texto) !important;
+    box-shadow: var(--hv-sombra) !important;
+}
+
+:is(.btn, :is(button, a)[class*="-btn"], :is(button, a)[class*="-accion"]):not(:disabled):not(.disabled):not(.btn-link):not(.close):not([class*="danger"]):not([class*="peligro"]):not([class*="eliminar"]):not([class*="anular"]):not([class*="btn-link"]):not(.text-danger):is(:hover, :focus-visible) :is(i, svg, span, small, strong) {
+    color: var(--hv-texto) !important;
+}
+
+/* ---------- Enlaces de texto (dentro del contenido) ---------- */
+.kt-content a:not([class]):hover,
+.modal a:not([class]):hover,
+.btn-link:not(:disabled):hover,
+[class*="btn-link"]:hover,
+.kt-link:hover,
+.rp-enlace:hover,
+.cr-enlace:hover,
+.olvido-link:hover,
+a.text-primary:hover,
+a.text-info:hover {
+    color: var(--hv-enlace) !important;
+    text-decoration: underline !important;
+    text-decoration-color: var(--hv-fondo) !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 3px;
+}
+
+/* ---------- Menú del encabezado (fondo azul) ---------- */
+.kt-header .kt-menu__nav .kt-menu__link:hover::before { background: transparent !important; }
+.kt-header .kt-menu__nav .kt-menu__link:hover,
+.kt-header .kt-menu__nav .kt-menu__item--hover > .kt-menu__link {
+    background: var(--hv-fondo) !important;
+    color: var(--hv-texto) !important;
+    box-shadow: var(--hv-sombra) !important;
+}
+.kt-header .kt-menu__nav .kt-menu__link:hover :is(.kt-menu__link-text, .kt-menu__link-icon, i),
+.kt-header .kt-menu__nav .kt-menu__item--hover > .kt-menu__link :is(.kt-menu__link-text, .kt-menu__link-icon, i) {
+    color: var(--hv-texto) !important;
+}
+
+/* ---------- Menú lateral (fondo gris azulado) ---------- */
+.kt-aside .kt-menu__nav .kt-menu__item:not(.kt-menu__item--active):not(.menu-item-actual) > .kt-menu__link:hover {
+    background: var(--hv-fondo) !important;
+    border-left-color: var(--hv-borde) !important;
+}
+.kt-aside .kt-menu__nav .kt-menu__item:not(.kt-menu__item--active):not(.menu-item-actual) > .kt-menu__link:hover :is(.kt-menu__link-text, .kt-menu__link-icon, i, span) {
+    color: var(--hv-texto) !important;
+}
+
+/* ---------- Menús desplegables (usuario, acciones) ---------- */
+.dropdown-item:not(.disabled):hover,
+.dropdown-item:not(.disabled):focus-visible,
+.kt-nav .kt-nav__item > .kt-nav__link:hover {
+    background: var(--hv-claro) !important;
+    color: var(--hv-texto-suave) !important;
+    box-shadow: inset 3px 0 0 var(--hv-fondo);
+}
+.dropdown-item:not(.disabled):hover :is(i, span),
+.kt-nav .kt-nav__item > .kt-nav__link:hover :is(i, span) {
+    color: var(--hv-texto-suave) !important;
+}
+
+/* ---------- Pestañas ---------- */
+.nav-tabs .nav-link:not(.active):hover,
+.nav-pills .nav-link:not(.active):hover,
+.rp-tab:not(.activo):hover,
+.rd-tab:not(.activa):hover,
+.rd-subtab:not(.activa):hover {
+    background: var(--hv-claro) !important;
+    color: var(--hv-texto-suave) !important;
+    border-bottom-color: var(--hv-fondo) !important;
+}
+
+/* ---------- Paginación de las tablas ---------- */
+.page-item:not(.active):not(.disabled) .page-link:hover,
+.dataTables_wrapper .dataTables_paginate .paginate_button:not(.active):not(.disabled):not(.current) .page-link:hover,
+.dataTables_wrapper .dataTables_paginate .paginate_button:not(.current):not(.disabled):hover {
+    background: var(--hv-fondo) !important;
+    border-color: var(--hv-borde) !important;
+    color: var(--hv-texto) !important;
+}
+
+/* ---------- Opción resaltada en los buscadores (Select2) ---------- */
+.select2-container--default .select2-results__option--highlighted[aria-selected],
+.select2-container--default .select2-results__option--highlighted[data-selected] {
+    background: var(--hv-claro) !important;
+    color: var(--hv-texto-suave) !important;
+}
+
+/* ---------- Enlaces sobre fondo oscuro (pie de página) ---------- */
+.kt-footer a:hover,
+.kt-aside a:not(.kt-menu__link):hover {
+    color: #9fd6db !important;
+    text-decoration: underline !important;
+}
