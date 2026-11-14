@@ -9,6 +9,11 @@ ExigirSesionAjax(['ADM', 'SEC']); // Solo Administración y Secretaría (igual q
 
 require_once '../controladores/reportes.controlador.php';
 
+// El contador en vivo de la pantalla llega por GET (solo lee): se trata igual que un POST
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['tipo_reporte'] ?? '') === 'contar_estudiantes') {
+    $_POST = $_GET;
+}
+
 if (isset($_POST['tipo_reporte'])) {
     $tipoReporte = $_POST['tipo_reporte'];
 
@@ -42,10 +47,43 @@ if (isset($_POST['tipo_reporte'])) {
         'hasta' => $fechaHasta,
     ];
 
+    // Filtros de la Lista general y del Reporte personalizado (una fila por inscripción)
+    $filtrosEstudiantes = [
+        'sede' => $sede,
+        'programaID' => $programaID,
+        'grado' => in_array($_POST['grado'] ?? '', ReportesModelos::ListaGrados(), true) ? $_POST['grado'] : null,
+        'gestion' => in_array((int)($_POST['gestion'] ?? 0), ReportesModelos::ListaGestiones(), true) ? (int)$_POST['gestion'] : null,
+        'situacion' => in_array($_POST['situacion'] ?? '', ['ACTIVO', 'ABANDONO', 'SIN_INSCRIPCION'], true) ? $_POST['situacion'] : null,
+        'profesionID' => (int)($_POST['profesion_id'] ?? 0) ?: null,
+        'universidadID' => (int)($_POST['universidad_id'] ?? 0) ?: null,
+        'desde' => $fechaDesde,
+        'hasta' => $fechaHasta,
+        'orden' => ($_POST['orden'] ?? '') === 'programa' ? 'programa' : 'apellido',
+    ];
+
     switch ($tipoReporte) {
+        case 'contar_estudiantes':
+            // Contador en vivo de la pantalla (JSON): cuántos saldrán en la Lista general / Personalizado
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(ReportesControladores::ContarEstudiantes($filtrosEstudiantes, !empty($_POST['solo_con_saldo'])));
+            break;
+
         case 'estudiantes':
-            // Reporte completo de estudiantes
-            ReportesControladores::GenerarReporteEstudiantes();
+            // Lista general: una fila por inscripción, con programa, gestión y abandonos marcados
+            ReportesControladores::GenerarReporteEstudiantes($filtrosEstudiantes);
+            break;
+
+        case 'personalizado':
+            // Reporte personalizado: columnas, agrupación y orden elegidos en pantalla (sin cambios de BD)
+            ReportesControladores::GenerarReportePersonalizado($filtrosEstudiantes, [
+                'titulo' => $_POST['titulo'] ?? '',
+                'columnas' => is_array($_POST['columnas'] ?? null) ? $_POST['columnas'] : [],
+                'agrupar' => $_POST['agrupar'] ?? '',
+                'orden' => $_POST['orden_personalizado'] ?? 'apellido',
+                'orientacion' => $_POST['orientacion'] ?? '',
+                'marcar' => !empty($_POST['marcar_abandonos']),
+                'soloConSaldo' => !empty($_POST['solo_con_saldo']),
+            ]);
             break;
 
         case 'por_programa':

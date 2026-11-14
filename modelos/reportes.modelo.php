@@ -575,5 +575,153 @@ class ReportesModelos
     {
         return HistorialPagosModelos::BuscarHistorialPorCiModelo($ci);
     }
+
+    // ---------------------------------------------------------------------
+    // LISTA GENERAL Y REPORTE PERSONALIZADO (solo lectura, sin cambios de BD)
+    // ---------------------------------------------------------------------
+
+    // Gestiones (año de inicio) de los programas activos, de la más reciente a la más antigua
+    public static function ListaGestiones()
+    {
+        $stmt = Conexion::Conectar()->prepare("SELECT DISTINCT YEAR(FechaInicio) FROM programa WHERE Estado = 1 AND FechaInicio IS NOT NULL ORDER BY 1 DESC");
+        $stmt->execute();
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    // Profesiones que tiene al menos un estudiante
+    public static function ListaProfesionesConEstudiantes()
+    {
+        $stmt = Conexion::Conectar()->prepare(
+            "SELECT DISTINCT pf.IdProfesion, pf.NombreProfesion FROM profesion pf
+             INNER JOIN estudiante e ON e.IdProfesion = pf.IdProfesion AND e.Estado = 1
+             ORDER BY pf.NombreProfesion"
+        );
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Universidades que tiene al menos un estudiante
+    public static function ListaUniversidadesConEstudiantes()
+    {
+        $stmt = Conexion::Conectar()->prepare(
+            "SELECT DISTINCT u.IdUniversidad, u.NombreUniversidad FROM universidad u
+             INNER JOIN estudiante e ON e.IdUniversidad = u.IdUniversidad AND e.Estado = 1
+             ORDER BY u.NombreUniversidad"
+        );
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Una fila por inscripción (estudiante × programa) con los datos del estudiante, del
+     * programa (con la gestión = año de inicio) y de la situación (activo o abandono).
+     * Filtros opcionales: sede, programaID, grado, gestion, situacion (ACTIVO | ABANDONO |
+     * SIN_INSCRIPCION), profesionID, universidadID, desde/hasta (fecha de inscripción).
+     * Con situacion = SIN_INSCRIPCION devuelve los estudiantes que no tienen ninguna
+     * inscripción (los filtros del programa no se aplican).
+     */
+    public static function InscripcionesFiltradas(array $f)
+    {
+        $camposEstudiante = "e.EstudianteID, e.Ci, e.Complemento, e.Exp, e.Nombre, e.Apaterno, e.Amaterno,
+                TRIM(CONCAT_WS(' ', e.Apaterno, e.Amaterno, e.Nombre)) AS NombreLista,
+                e.FechaNacimiento, e.Edad, e.Lugarn, e.Correo, e.Celular, e.Telefono, e.Direccion, e.Trabajo, e.FechaEgreso,
+                pf.NombreProfesion, u.NombreUniversidad";
+        $condiciones = ['e.Estado = 1'];
+        $params = [];
+        if (!empty($f['profesionID'])) {
+            $condiciones[] = 'e.IdProfesion = :profesion';
+            $params[':profesion'] = (int)$f['profesionID'];
+        }
+        if (!empty($f['universidadID'])) {
+            $condiciones[] = 'e.IdUniversidad = :universidad';
+            $params[':universidad'] = (int)$f['universidadID'];
+        }
+
+        if (($f['situacion'] ?? '') === 'SIN_INSCRIPCION') {
+            $condiciones[] = 'NOT EXISTS (SELECT 1 FROM estudianteprograma x WHERE x.EstudianteID = e.EstudianteID)';
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT $camposEstudiante, NULL AS idInscripcion, NULL AS FechaInscripcion, 'SIN_INSCRIPCION' AS Situacion,
+                        NULL AS MotivoAbandono, NULL AS FechaAbandono, NULL AS ProgramaID, NULL AS NombrePrograma, NULL AS Sigla,
+                        NULL AS GradoAcademico, NULL AS Sede, NULL AS Version, NULL AS Gestion,
+                        NULL AS CodigoModuloAbandono, NULL AS ModuloAbandono, 0 AS ModulosAprobados, NULL AS Promedio, 0 AS ModulosPrograma
+                 FROM estudiante e
+                 LEFT JOIN profesion pf ON pf.IdProfesion = e.IdProfesion
+                 LEFT JOIN universidad u ON u.IdUniversidad = e.IdUniversidad
+                 WHERE " . implode(' AND ', $condiciones) . "
+                 ORDER BY e.Apaterno, e.Amaterno, e.Nombre"
+            );
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        $condiciones[] = 'p.Estado = 1';
+        $condiciones[] = ($f['situacion'] ?? '') === 'ACTIVO' ? "ep.Estado IN ('ACTIVO', 'CONFIRMADO')"
+            : (($f['situacion'] ?? '') === 'ABANDONO' ? "ep.Estado = 'ABANDONO'" : "ep.Estado IN ('ACTIVO', 'CONFIRMADO', 'ABANDONO')");
+        if (!empty($f['sede'])) {
+            $condiciones[] = 'p.Sede = :sede';
+            $params[':sede'] = $f['sede'];
+        }
+        if (!empty($f['programaID'])) {
+            $condiciones[] = 'p.ProgramaID = :programa';
+            $params[':programa'] = (int)$f['programaID'];
+        }
+        if (!empty($f['grado'])) {
+            $condiciones[] = 'p.GradoAcademico = :grado';
+            $params[':grado'] = $f['grado'];
+        }
+        if (!empty($f['gestion'])) {
+            $condiciones[] = 'YEAR(p.FechaInicio) = :gestion';
+            $params[':gestion'] = (int)$f['gestion'];
+        }
+        if (!empty($f['desde'])) {
+            $condiciones[] = 'ep.FechaInscripcion >= :desde';
+            $params[':desde'] = $f['desde'];
+        }
+        if (!empty($f['hasta'])) {
+            $condiciones[] = 'ep.FechaInscripcion <= :hasta';
+            $params[':hasta'] = $f['hasta'];
+        }
+
+        $nota = (float)ConfiguracionModelo::NotaAprobacion(); // nunca escribir la nota mínima a mano
+        $stmt = Conexion::Conectar()->prepare(
+            "SELECT $camposEstudiante,
+                    ep.idInscripcion, ep.FechaInscripcion,
+                    IF(ep.Estado = 'ABANDONO', 'ABANDONO', 'ACTIVO') AS Situacion,
+                    ep.MotivoAbandono, ep.FechaAbandono,
+                    p.ProgramaID, p.NombrePrograma, p.Sigla, p.GradoAcademico, p.Sede, p.Version, YEAR(p.FechaInicio) AS Gestion,
+                    ma.codigomodulo AS CodigoModuloAbandono, ma.nombremodulo AS ModuloAbandono,
+                    (SELECT COUNT(*) FROM calificacion c WHERE c.EstudianteID = ep.EstudianteID AND c.ProgramaId = ep.ProgramaID
+                     AND c.Nota IS NOT NULL AND c.Nota >= $nota) AS ModulosAprobados,
+                    (SELECT ROUND(AVG(c.Nota), 1) FROM calificacion c WHERE c.EstudianteID = ep.EstudianteID
+                     AND c.ProgramaId = ep.ProgramaID AND c.Nota IS NOT NULL) AS Promedio,
+                    (SELECT COUNT(*) FROM modulos mt WHERE mt.ProgramaId = ep.ProgramaID AND mt.estadomodulo != 'INACTIVO') AS ModulosPrograma
+             FROM estudianteprograma ep
+             INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID
+             INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
+             LEFT JOIN profesion pf ON pf.IdProfesion = e.IdProfesion
+             LEFT JOIN universidad u ON u.IdUniversidad = e.IdUniversidad
+             LEFT JOIN modulos ma ON ma.Idmodulo = ep.IdModuloAbandono
+             WHERE " . implode(' AND ', $condiciones) . "
+             ORDER BY e.Apaterno, e.Amaterno, e.Nombre, p.FechaInicio"
+        );
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Montos de cada inscripción (costo, pagado, saldo, plan y cuotas) con el mismo
+     * cálculo que el Reporte General / Saldos por estudiante.
+     * @return array [idInscripcion => fila de ObtenerReportePagosPorEstudianteModelo]
+     */
+    public static function MontosPorInscripcion(array $programaIDs)
+    {
+        $montos = [];
+        foreach (array_unique(array_filter(array_map('intval', $programaIDs))) as $id) {
+            foreach (ReporteModulosModelo::ObtenerReportePagosPorEstudianteModelo($id) ?: [] as $fila) {
+                $montos[(int)$fila['idInscripcion']] = $fila;
+            }
+        }
+        return $montos;
+    }
 }
 ?>

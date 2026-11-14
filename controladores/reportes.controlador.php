@@ -69,78 +69,371 @@ class ReportesControladores extends TCPDF
         $this->Cell(0, 10, 'Página ' . $this->getAliasNumPage() . ' de ' . $this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
     }
 
-    // Reporte 1: Lista General de Estudiantes
-    public static function GenerarReporteEstudiantes()
+    // ---------------------------------------------------------------------
+    // LISTA GENERAL Y REPORTE PERSONALIZADO DE ESTUDIANTES
+    // Una fila por inscripción (estudiante × programa). Los abandonos van sombreados.
+    // ---------------------------------------------------------------------
+
+    /**
+     * Columnas que se pueden elegir en el reporte personalizado:
+     * clave => [título, ancho base en mm, alineación, grupo]. La vista arma las casillas
+     * con esta misma lista y el servidor solo acepta estas claves.
+     */
+    public static function ColumnasPersonalizado()
     {
-        $pdf = new self();
-        $pdf->SetCreator('Sistema Posgrado FCS');
-        $pdf->SetAuthor('Posgrado FCS');
-        $pdf->SetTitle('Lista de Estudiantes');
-        $pdf->SetSubject('Reporte de Estudiantes Activos');
+        return [
+            'ci'              => ['C.I.', 24, 'C', 'Datos personales'],
+            'nombre'          => ['Estudiante', 60, 'L', 'Datos personales'],
+            'fecha_nac'       => ['F. nacimiento', 20, 'C', 'Datos personales'],
+            'edad'            => ['Edad', 10, 'C', 'Datos personales'],
+            'lugar'           => ['Lugar nac.', 22, 'L', 'Datos personales'],
+            'celular'         => ['Celular', 20, 'C', 'Contacto'],
+            'telefono'        => ['Teléfono', 20, 'C', 'Contacto'],
+            'correo'          => ['Correo', 48, 'L', 'Contacto'],
+            'direccion'       => ['Dirección', 40, 'L', 'Contacto'],
+            'trabajo'         => ['Trabajo', 30, 'L', 'Contacto'],
+            'profesion'       => ['Profesión', 38, 'L', 'Formación'],
+            'universidad'     => ['Universidad', 42, 'L', 'Formación'],
+            'egreso'          => ['F. egreso', 20, 'C', 'Formación'],
+            'programa'        => ['Programa', 62, 'L', 'Programa'],
+            'sigla'           => ['Sigla', 16, 'C', 'Programa'],
+            'grado'           => ['Grado', 24, 'C', 'Programa'],
+            'sede'            => ['Sede', 22, 'C', 'Programa'],
+            'gestion'         => ['Gestión', 14, 'C', 'Programa'],
+            'version'         => ['Versión', 13, 'C', 'Programa'],
+            'inscripcion'     => ['F. inscripción', 20, 'C', 'Programa'],
+            'situacion'       => ['Situación', 26, 'C', 'Programa'],
+            'abandono_modulo' => ['Módulo abandono', 32, 'L', 'Programa'],
+            'abandono_motivo' => ['Motivo abandono', 42, 'L', 'Programa'],
+            'aprobados'       => ['Mód. aprobados', 18, 'C', 'Académico'],
+            'promedio'        => ['Promedio', 14, 'C', 'Académico'],
+            'plan'            => ['Plan', 20, 'C', 'Pagos'],
+            'cuotas'          => ['Cuotas pag.', 16, 'C', 'Pagos'],
+            'costo'           => ['Costo (Bs.)', 22, 'R', 'Pagos'],
+            'pagado'          => ['Pagado (Bs.)', 22, 'R', 'Pagos'],
+            'saldo'           => ['Saldo (Bs.)', 22, 'R', 'Pagos'],
+        ];
+    }
 
-        $pdf->SetMargins(15, 40, 15);
-        $pdf->SetHeaderMargin(10);
-        $pdf->SetFooterMargin(10);
-        $pdf->SetAutoPageBreak(TRUE, 25);
+    // Agrupaciones y órdenes aceptados (clave => texto para la vista)
+    public static function AgrupacionesPersonalizado()
+    {
+        return ['' => 'Sin agrupar', 'programa' => 'Programa', 'sede' => 'Sede', 'grado' => 'Grado',
+                'gestion' => 'Gestión', 'situacion' => 'Situación', 'profesion' => 'Profesión', 'universidad' => 'Universidad'];
+    }
 
-        $pdf->AddPage();
+    public static function OrdenesPersonalizado()
+    {
+        return ['apellido' => 'Apellido', 'ci' => 'C.I.', 'programa' => 'Programa', 'inscripcion' => 'Fecha de inscripción', 'saldo' => 'Saldo (mayor primero)'];
+    }
 
-        // Título del reporte
-        $pdf->SetFont('helvetica', 'B', 14);
-        $pdf->SetTextColor(51, 51, 51);
-        $pdf->Cell(0, 10, 'LISTA GENERAL DE ESTUDIANTES', 0, 1, 'C');
-        $pdf->SetFont('helvetica', '', 10);
-        $pdf->Cell(0, 5, 'Total de estudiantes activos en el sistema', 0, 1, 'C');
-        $pdf->Ln(5);
+    // Lista general: columnas fijas; el orden "programa" agrupa por programa
+    public static function GenerarReporteEstudiantes(array $f = [])
+    {
+        $porPrograma = ($f['orden'] ?? '') === 'programa';
+        self::ReporteTablaEstudiantes('LISTA GENERAL DE ESTUDIANTES', $f, [
+            'columnas' => ['ci', 'nombre', 'profesion', 'celular', 'programa', 'sede', 'gestion', 'situacion'],
+            'agrupar' => $porPrograma ? 'programa' : '',
+            'orden' => 'apellido',
+            'orientacion' => 'L',
+            'marcar' => true,
+        ], 'Lista_Estudiantes');
+    }
 
-        // Obtener datos
-        $estudiantes = ReportesModelos::ListaEstudiantesCompleta();
+    // Reporte personalizado: columnas, agrupación, orden y orientación elegidos en pantalla
+    public static function GenerarReportePersonalizado(array $f, array $config)
+    {
+        $titulo = trim(preg_replace('/\s+/', ' ', (string)($config['titulo'] ?? '')));
+        $titulo = $titulo !== '' ? mb_strtoupper(mb_substr($titulo, 0, 90)) : 'REPORTE PERSONALIZADO DE ESTUDIANTES';
+        self::ReporteTablaEstudiantes($titulo, $f, $config, 'Reporte_Personalizado');
+    }
 
-        // Header de tabla
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetFillColor(30, 60, 114);
-        $pdf->SetTextColor(255);
-        $pdf->SetDrawColor(30, 60, 114);
+    private static function TextoFiltrosEstudiantes(array $f)
+    {
+        $partes = [];
+        if (($f['situacion'] ?? '') !== 'SIN_INSCRIPCION') {
+            $partes[] = self::TextoFiltros($f);
+            if (!empty($f['grado'])) $partes[] = 'Grado: ' . mb_strtoupper($f['grado']);
+            if (!empty($f['gestion'])) $partes[] = 'Gestión: ' . (int)$f['gestion'];
+        }
+        $situaciones = ['ACTIVO' => 'Solo activos', 'ABANDONO' => 'Solo abandonos', 'SIN_INSCRIPCION' => 'Estudiantes sin inscripción a ningún programa'];
+        $partes[] = $situaciones[$f['situacion'] ?? ''] ?? 'Activos y abandonos';
+        if (!empty($f['profesionID'])) {
+            foreach (ReportesModelos::ListaProfesionesConEstudiantes() as $p) {
+                if ((int)$p['IdProfesion'] === (int)$f['profesionID']) $partes[] = 'Profesión: ' . mb_strtoupper($p['NombreProfesion']);
+            }
+        }
+        if (!empty($f['universidadID'])) {
+            foreach (ReportesModelos::ListaUniversidadesConEstudiantes() as $u) {
+                if ((int)$u['IdUniversidad'] === (int)$f['universidadID']) $partes[] = 'Universidad: ' . mb_strtoupper($u['NombreUniversidad']);
+            }
+        }
+        if (!empty($f['desde']) || !empty($f['hasta'])) $partes[] = 'Inscripción: ' . self::TextoPeriodo($f['desde'] ?? null, $f['hasta'] ?? null);
+        return implode('  |  ', $partes);
+    }
 
-        $pdf->Cell(10, 8, 'Nº', 1, 0, 'C', true);
-        $pdf->Cell(30, 8, 'C.I.', 1, 0, 'C', true);
-        $pdf->Cell(60, 8, 'Nombre Completo', 1, 0, 'C', true);
-        $pdf->Cell(45, 8, 'Profesión', 1, 0, 'C', true);
-        $pdf->Cell(35, 8, 'Celular', 1, 1, 'C', true);
+    // Texto de una celda según la columna ($m = montos de la inscripción o null)
+    private static function ValorColumna($clave, array $r, $m)
+    {
+        $sinIns = $r['Situacion'] === 'SIN_INSCRIPCION';
+        $abandono = $r['Situacion'] === 'ABANDONO';
+        switch ($clave) {
+            case 'ci':          return trim(self::CiCompleto($r) . ' ' . ($r['Exp'] ?? ''));
+            case 'nombre':      return mb_strtoupper($r['NombreLista']);
+            case 'fecha_nac':   return self::Fecha($r['FechaNacimiento'] ?? null);
+            case 'edad':
+                if (!empty($r['FechaNacimiento'])) return (string)(new DateTime($r['FechaNacimiento']))->diff(new DateTime())->y;
+                return (int)$r['Edad'] > 0 ? (string)(int)$r['Edad'] : '-';
+            case 'lugar':       return mb_strtoupper($r['Lugarn'] ?: '-');
+            case 'celular':     return $r['Celular'] ?: '-';
+            case 'telefono':    return $r['Telefono'] ?: '-';
+            case 'correo':      return $r['Correo'] ?: '-';
+            case 'direccion':   return mb_strtoupper($r['Direccion'] ?: '-');
+            case 'trabajo':     return mb_strtoupper($r['Trabajo'] ?: '-');
+            case 'profesion':   return mb_strtoupper($r['NombreProfesion'] ?: '-');
+            case 'universidad': return mb_strtoupper($r['NombreUniversidad'] ?: '-');
+            case 'egreso':      return self::Fecha($r['FechaEgreso'] ?? null);
+            case 'programa':    return $sinIns ? '-' : mb_strtoupper($r['NombrePrograma']);
+            case 'sigla':       return $r['Sigla'] ?: '-';
+            case 'grado':       return $r['GradoAcademico'] ?: '-';
+            case 'sede':        return mb_strtoupper($r['Sede'] ?: '-');
+            case 'gestion':     return $r['Gestion'] ?: '-';
+            case 'version':     return $r['Version'] ?: '-';
+            case 'inscripcion': return self::Fecha($r['FechaInscripcion'] ?? null);
+            case 'situacion':
+                if ($sinIns) return 'SIN INSCRIPCIÓN';
+                return $abandono ? 'ABANDONO' . (!empty($r['CodigoModuloAbandono']) ? ' (' . $r['CodigoModuloAbandono'] . ')' : '') : 'ACTIVO';
+            case 'abandono_modulo':
+                if (!$abandono) return '-';
+                $modulo = trim(($r['CodigoModuloAbandono'] ?? '') . ' ' . ($r['ModuloAbandono'] ?? ''));
+                return $modulo !== '' ? mb_strtoupper($modulo) : 'DESDE EL INICIO';
+            case 'abandono_motivo': return $abandono ? mb_strtoupper($r['MotivoAbandono'] ?: '-') : '-';
+            case 'aprobados':   return $sinIns ? '-' : (int)$r['ModulosAprobados'] . '/' . (int)$r['ModulosPrograma'];
+            case 'promedio':    return $r['Promedio'] !== null ? number_format((float)$r['Promedio'], 1) : '-';
+            case 'plan':        return $m ? ($m['TipoPlan'] ?: 'SIN PLAN') : '-';
+            case 'cuotas':      return $m ? (int)$m['CuotasPagadas'] . ((int)$m['NumeroCuotas'] > 0 ? '/' . (int)$m['NumeroCuotas'] : '') : '-';
+            case 'costo':       return $m ? self::Bs($m['CostoTotal']) : '-';
+            case 'pagado':      return $m ? self::Bs($m['TotalPagado']) : '-';
+            case 'saldo':       return $m ? self::Bs($m['SaldoPendiente']) : '-';
+        }
+        return '';
+    }
 
-        // Datos
-        $pdf->SetFont('helvetica', '', 8);
-        $pdf->SetTextColor(51, 51, 51);
-        $pdf->SetDrawColor(200, 200, 200);
-        $contador = 1;
-        $fill = false;
+    // Etiqueta del grupo de una fila
+    private static function EtiquetaGrupo($agrupar, array $r)
+    {
+        $sinIns = $r['Situacion'] === 'SIN_INSCRIPCION';
+        switch ($agrupar) {
+            case 'programa':
+                return $sinIns ? 'SIN INSCRIPCIÓN'
+                    : mb_strtoupper($r['NombrePrograma']) . '  (' . mb_strtoupper($r['Sede']) . ' - ' . $r['GradoAcademico'] . ' - GESTIÓN ' . $r['Gestion'] . ')';
+            case 'sede':        return 'SEDE: ' . ($sinIns ? 'SIN INSCRIPCIÓN' : mb_strtoupper($r['Sede']));
+            case 'grado':       return 'GRADO: ' . ($sinIns ? 'SIN INSCRIPCIÓN' : mb_strtoupper($r['GradoAcademico']));
+            case 'gestion':     return 'GESTIÓN ' . ($sinIns ? '-' : $r['Gestion']);
+            case 'situacion':   return 'SITUACIÓN: ' . ($sinIns ? 'SIN INSCRIPCIÓN' : $r['Situacion']);
+            case 'profesion':   return 'PROFESIÓN: ' . mb_strtoupper($r['NombreProfesion'] ?: 'SIN DATO');
+            case 'universidad': return 'UNIVERSIDAD: ' . mb_strtoupper($r['NombreUniversidad'] ?: 'SIN DATO');
+        }
+        return '';
+    }
 
-        foreach ($estudiantes as $est) {
-            $pdf->SetFillColor(245, 245, 245);
+    private static function ContarSituacion(array $filas, $situacion)
+    {
+        return count(array_filter($filas, function ($r) use ($situacion) { return $r['Situacion'] === $situacion; }));
+    }
 
-            $ci = $est['Ci'];
-            if (!empty($est['Complemento'])) $ci .= '-' . $est['Complemento'];
-            $ci .= ' ' . $est['Exp'];
+    /**
+     * Filas del reporte con los filtros aplicados (el PDF y el contador de la pantalla usan
+     * esto mismo, así el número que se ve antes de generar coincide con el PDF).
+     * @return array [filas, montos por idInscripcion (vacío si no se pidieron)]
+     */
+    private static function FilasEstudiantes(array $f, $soloConSaldo, $conMontos)
+    {
+        $filas = ReportesModelos::InscripcionesFiltradas($f);
+        $montos = ($conMontos || $soloConSaldo) ? ReportesModelos::MontosPorInscripcion(array_column($filas, 'ProgramaID')) : [];
+        if ($soloConSaldo) {
+            $filas = array_values(array_filter($filas, function ($r) use ($montos) {
+                $m = $montos[(int)$r['idInscripcion']] ?? null;
+                return $r['Situacion'] === 'ACTIVO' && $m && (float)$m['SaldoPendiente'] > 0;
+            }));
+        }
+        return [$filas, $montos];
+    }
 
-            $nombreCompleto = $est['Apaterno'] . ' ' . $est['Amaterno'] . ' ' . $est['Nombre'];
+    // Contador de la pantalla: cuántos registros saldrán en el PDF con estos filtros
+    public static function ContarEstudiantes(array $f, $soloConSaldo = false)
+    {
+        list($filas) = self::FilasEstudiantes($f, $soloConSaldo, false);
+        return [
+            'registros' => count($filas),
+            'estudiantes' => count(array_unique(array_column($filas, 'EstudianteID'))),
+            'activos' => self::ContarSituacion($filas, 'ACTIVO'),
+            'abandonos' => self::ContarSituacion($filas, 'ABANDONO'),
+            'sinInscripcion' => self::ContarSituacion($filas, 'SIN_INSCRIPCION'),
+        ];
+    }
 
-            $pdf->Cell(10, 6, $contador++, 1, 0, 'C', $fill);
-            $pdf->Cell(30, 6, $ci, 1, 0, 'C', $fill);
-            $pdf->Cell(60, 6, mb_strtoupper($nombreCompleto), 1, 0, 'L', $fill);
-            $pdf->Cell(45, 6, substr($est['NombreProfesion'], 0, 30), 1, 0, 'L', $fill);
-            $pdf->Cell(35, 6, $est['Celular'], 1, 1, 'C', $fill);
+    /**
+     * Arma el PDF de la tabla de estudiantes (Lista general y Personalizado).
+     * $config: columnas[], agrupar, orden, orientacion (P | L | auto), marcar (abandonos
+     * sombreados), soloConSaldo.
+     */
+    private static function ReporteTablaEstudiantes($titulo, array $f, array $config, $archivo)
+    {
+        $catalogo = self::ColumnasPersonalizado();
+        $claves = array_values(array_unique(array_filter((array)($config['columnas'] ?? []), function ($k) use ($catalogo) {
+            return is_string($k) && isset($catalogo[$k]);
+        })));
+        if (!$claves) $claves = ['ci', 'nombre', 'celular', 'programa', 'situacion'];
+        $agrupar = (string)($config['agrupar'] ?? '');
+        if (!array_key_exists($agrupar, self::AgrupacionesPersonalizado())) $agrupar = '';
+        $orden = array_key_exists($config['orden'] ?? '', self::OrdenesPersonalizado()) ? $config['orden'] : 'apellido';
+        $marcar = !empty($config['marcar']);
+        $soloConSaldo = !empty($config['soloConSaldo']);
 
-            $fill = !$fill;
+        // Anchos: se reparten en el ancho útil de la hoja; la hoja se elige sola si no la indicaron
+        $anchoBase = 8;
+        foreach ($claves as $k) $anchoBase += $catalogo[$k][1];
+        $orientacion = in_array($config['orientacion'] ?? '', ['P', 'L'], true) ? $config['orientacion'] : ($anchoBase > 190 ? 'L' : 'P');
+        $escala = ($orientacion === 'L' ? 277 : 180) / $anchoBase;
+        $anchoN = 8 * $escala;
+        $anchos = [];
+        foreach ($claves as $k) $anchos[$k] = $catalogo[$k][1] * $escala;
+        $letra = $escala < 0.8 ? 6 : 7;
+
+        // Montos solo si hacen falta (columnas de pago, filtro de saldo u orden por saldo)
+        $conMontos = $soloConSaldo || $orden === 'saldo' || array_intersect($claves, ['plan', 'cuotas', 'costo', 'pagado', 'saldo']);
+        list($filas, $montos) = self::FilasEstudiantes($f, $soloConSaldo, (bool)$conMontos);
+        $monto = function ($r) use ($montos) { return $montos[(int)$r['idInscripcion']] ?? null; };
+
+        usort($filas, function ($a, $b) use ($agrupar, $orden, $monto) {
+            if ($agrupar) {
+                $g = strcmp(self::EtiquetaGrupo($agrupar, $a), self::EtiquetaGrupo($agrupar, $b));
+                if ($g !== 0) return $g;
+            }
+            switch ($orden) {
+                case 'ci': $c = (int)$a['Ci'] <=> (int)$b['Ci']; break;
+                case 'programa': $c = strcmp((string)$a['NombrePrograma'], (string)$b['NombrePrograma']) ?: ((int)$b['Gestion'] <=> (int)$a['Gestion']); break;
+                case 'inscripcion': $c = strcmp((string)$a['FechaInscripcion'], (string)$b['FechaInscripcion']); break;
+                case 'saldo': // los abandonos al final: su saldo no se cobra (igual que en Saldos)
+                    $c = ($a['Situacion'] === 'ABANDONO') <=> ($b['Situacion'] === 'ABANDONO')
+                        ?: (float)($monto($b)['SaldoPendiente'] ?? 0) <=> (float)($monto($a)['SaldoPendiente'] ?? 0);
+                    break;
+                default: $c = 0;
+            }
+            return $c ?: strcmp($a['NombreLista'], $b['NombreLista']);
+        });
+
+        $pdf = self::NuevoPdf($titulo, $orientacion);
+        self::Titulo($pdf, $titulo, self::TextoFiltrosEstudiantes($f) . ($soloConSaldo ? '  |  Solo con saldo pendiente' : ''));
+
+        if (!$filas) {
+            self::SinDatos($pdf, 'No hay estudiantes con los filtros seleccionados', $archivo);
+            return;
         }
 
-        // Total
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetFillColor(30, 60, 114);
-        $pdf->SetTextColor(255);
-        $pdf->Cell(100, 7, 'TOTAL DE ESTUDIANTES:', 1, 0, 'R', true);
-        $pdf->Cell(80, 7, count($estudiantes), 1, 1, 'C', true);
+        if ($marcar && self::ContarSituacion($filas, 'ABANDONO') > 0) {
+            $pdf->SetFont('helvetica', '', 7.5);
+            $pdf->SetFillColor(254, 226, 226);
+            $pdf->SetDrawColor(220, 38, 38);
+            $pdf->Cell(6, 4, '', 1, 0, 'C', true);
+            $pdf->SetTextColor(80);
+            $pdf->Cell(0, 4, '  Fila sombreada en rojo: el estudiante ABANDONÓ ese programa (entre paréntesis, el módulo desde el que abandonó).', 0, 1, 'L');
+            $pdf->Ln(2);
+        }
 
-        $pdf->Output('Lista_Estudiantes_' . date('Ymd_His') . '.pdf', 'I');
+        $sumables = array_values(array_intersect($claves, ['costo', 'pagado', 'saldo']));
+        $cabecera = [[$anchoN, 'Nº', 'C']];
+        foreach ($claves as $k) $cabecera[] = [$anchos[$k], $catalogo[$k][0], 'C'];
+        $ponerCabecera = function () use ($pdf, $cabecera, $letra) {
+            self::CabeceraTabla($pdf, $cabecera);
+            $pdf->SetFont('helvetica', '', $letra);
+        };
+        $limite = $pdf->getPageHeight() - 25;
+
+        $resumenConteo = function (array $grupo) {
+            $abandonos = self::ContarSituacion($grupo, 'ABANDONO');
+            return count($grupo) . (count($grupo) === 1 ? ' registro' : ' registros')
+                . ($abandonos ? ' (' . $abandonos . ' abandono' . ($abandonos === 1 ? '' : 's') . ')' : '');
+        };
+
+        // Fila de totales: el texto ocupa las columnas anteriores a la primera sumable
+        $filaTotal = function ($texto, array $grupo) use ($pdf, $claves, $anchos, $anchoN, $sumables, $monto, $letra, $limite) {
+            $suma = array_fill_keys($sumables, 0.0);
+            $campo = ['costo' => 'CostoTotal', 'pagado' => 'TotalPagado', 'saldo' => 'SaldoPendiente'];
+            foreach ($grupo as $r) {
+                if ($r['Situacion'] !== 'ACTIVO' || !($m = $monto($r))) continue; // montos sin abandonos (igual que Saldos)
+                foreach ($sumables as $k) $suma[$k] += (float)$m[$campo[$k]];
+            }
+            if ($sumables && self::ContarSituacion($grupo, 'ABANDONO') > 0) $texto .= ' - montos sin abandonos';
+            $columnas = [];
+            $acumulado = $anchoN;
+            foreach ($claves as $k) {
+                if (in_array($k, $sumables, true)) {
+                    if ($acumulado > 0) $columnas[] = [$acumulado, $texto, 'R'];
+                    $texto = '';
+                    $acumulado = 0;
+                    $columnas[] = [$anchos[$k], self::Bs($suma[$k]), 'R'];
+                } else {
+                    $acumulado += $anchos[$k];
+                }
+            }
+            if ($acumulado > 0) $columnas[] = [$acumulado, $texto, $sumables ? 'C' : 'R'];
+            if ($pdf->GetY() + 7 > $limite) $pdf->AddPage();
+            self::TotalTabla($pdf, $columnas);
+            $pdf->SetFont('helvetica', '', $letra);
+        };
+
+        // Bloques: uno solo si no se agrupa
+        $bloques = [];
+        foreach ($filas as $r) $bloques[$agrupar ? self::EtiquetaGrupo($agrupar, $r) : ''][] = $r;
+
+        foreach ($bloques as $etiqueta => $grupo) {
+            if ($agrupar) {
+                if ($pdf->GetY() + 25 > $limite) $pdf->AddPage();
+                $pdf->SetFont('helvetica', 'B', 9);
+                $pdf->SetFillColor(42, 82, 152);
+                $pdf->SetTextColor(255);
+                $pdf->Cell(0, 7, $etiqueta . '   ·   ' . $resumenConteo($grupo), 0, 1, 'L', true, '', 1);
+                $pdf->Ln(1);
+            }
+            $ponerCabecera();
+            foreach ($grupo as $i => $r) {
+                if ($pdf->GetY() + 6 > $limite) {
+                    $pdf->AddPage();
+                    $ponerCabecera();
+                }
+                if ($marcar && $r['Situacion'] === 'ABANDONO') {
+                    $pdf->SetFillColor(254, 226, 226);
+                    $pdf->SetTextColor(153, 27, 27);
+                } else {
+                    self::Rayado($pdf, $i % 2 === 1);
+                    $pdf->SetTextColor(51);
+                }
+                $m = $monto($r);
+                $celdas = [[$anchoN, $i + 1, 'C']];
+                foreach ($claves as $k) $celdas[] = [$anchos[$k], self::ValorColumna($k, $r, $m), $catalogo[$k][2]];
+                self::FilaTabla($pdf, $celdas, true);
+            }
+            $pdf->SetTextColor(51);
+            if ($agrupar && count($bloques) > 1) {
+                $filaTotal('SUBTOTAL: ' . $resumenConteo($grupo), $grupo);
+                $pdf->Ln(4);
+            }
+        }
+
+        // Total general y resumen
+        $filaTotal('TOTAL: ' . $resumenConteo($filas), $filas);
+        $pdf->Ln(3);
+        $estudiantes = count(array_unique(array_column($filas, 'EstudianteID')));
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetTextColor(80);
+        $pdf->MultiCell(0, 5, 'Estudiantes distintos: ' . $estudiantes
+            . '   |   Inscripciones activas: ' . self::ContarSituacion($filas, 'ACTIVO')
+            . '   |   Abandonos: ' . self::ContarSituacion($filas, 'ABANDONO')
+            . ($estudiantes < count($filas) ? '   (un estudiante inscrito en varios programas aparece una vez por programa)' : ''), 0, 'L');
+
+        $pdf->Output($archivo . '_' . date('Ymd_His') . '.pdf', 'I');
     }
 
     // Reporte 2: Estudiantes por Programa (opcionalmente acotado por Sede)

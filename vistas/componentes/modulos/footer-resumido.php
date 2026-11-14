@@ -61,13 +61,42 @@
         }
     }
 
+    // Se recalcula en el siguiente cuadro (agrupa varios avisos seguidos en uno solo)
+    var pendiente = false;
+    function programarAjuste() {
+        if (pendiente) return;
+        pendiente = true;
+        (window.requestAnimationFrame || setTimeout)(function () {
+            pendiente = false;
+            ajustarFooterResumido();
+        });
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', ajustarFooterResumido);
     } else {
         ajustarFooterResumido();
     }
     window.addEventListener('load', ajustarFooterResumido);
-    window.addEventListener('resize', ajustarFooterResumido);
+    window.addEventListener('resize', programarAjuste);
+    // Al volver a la pestaña (p. ej. después de abrir un PDF en otra) el alto de la
+    // ventana o del contenido pudo cambiar mientras estaba oculta.
+    window.addEventListener('pageshow', programarAjuste);
+    window.addEventListener('focus', programarAjuste);
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) programarAjuste();
+    });
+    // El contenido cambia de alto sin recargar (pestañas, tablas por ajax, acordeones):
+    // antes el footer quedaba fijo encima del contenido y tapaba el final de la página.
+    if (window.ResizeObserver) {
+        document.addEventListener('DOMContentLoaded', function () {
+            var contenido = document.querySelector('.kt-wrapper') || document.body;
+            new ResizeObserver(programarAjuste).observe(contenido);
+        });
+        if (document.readyState !== 'loading') {
+            new ResizeObserver(programarAjuste).observe(document.querySelector('.kt-wrapper') || document.body);
+        }
+    }
 })();
 </script>
 
