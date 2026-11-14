@@ -285,7 +285,11 @@ $(document).ready(function() {
             url: 'ajax/programacuenta.ajax.php',
             type: 'POST',
             data: { accion: 'listarOptionsHtml', ProgramaID: clContexto.programaID, TipoCuenta: 'CLINICA' },
-            success: function(html) { $('#clCuentaPago').html(html); },
+            success: function(html) {
+                $('#clCuentaPago').html(html);
+                // Si falta la cuenta de clínica, se registra aquí mismo (cuenta-rapida.js)
+                if (window.CuentaRapida) CuentaRapida.preparar('#clCuentaPago', clContexto.programaID, 'CLINICA');
+            },
             error: function() { $('#clCuentaPago').html('<option value="">No se pudieron cargar las cuentas</option>'); }
         });
     }

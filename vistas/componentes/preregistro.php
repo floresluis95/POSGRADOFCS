@@ -1882,6 +1882,8 @@ function iniciarPreregistro() {
             data: { accion: 'listarOptionsHtml', ProgramaID: programaId, TipoCuenta: 'MATRICULA' },
             success: function(html) {
                 $('#cuentaPago').html(html);
+                // Si falta la cuenta, se registra aquí mismo sin perder lo llenado
+                CuentaRapida.preparar('#cuentaPago', programaId, 'MATRICULA');
             },
             error: function() {
                 $('#cuentaPago').html('<option value="">No se pudieron cargar las cuentas</option>');

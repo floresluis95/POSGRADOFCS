@@ -188,6 +188,10 @@ ob_start();
   <script src="vistas/recursos/assets/js/scripts/exportar-excel.js?v=<?php echo filemtime(__DIR__ . '/recursos/assets/js/scripts/exportar-excel.js'); ?>" type="text/javascript"></script>
   <!-- Botones "Excel | PDF" junto a las tablas <table data-exportar="Título">; window.exportarPdf -->
   <script src="vistas/recursos/assets/js/scripts/exportar-tabla.js?v=<?php echo filemtime(__DIR__ . '/recursos/assets/js/scripts/exportar-tabla.js'); ?>" type="text/javascript"></script>
+  <!-- Registrar la cuenta de un programa sin salir de Pre-Registro / cuotas / clínica: window.CuentaRapida
+       (registrar cuentas es solo de ADM y SEC, igual que en Programas › Cuentas) -->
+  <script>window.PUEDE_REGISTRAR_CUENTA = <?php echo in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC'], true) ? 'true' : 'false'; ?>;</script>
+  <script src="vistas/recursos/assets/js/scripts/cuenta-rapida.js?v=<?php echo filemtime(__DIR__ . '/recursos/assets/js/scripts/cuenta-rapida.js'); ?>" type="text/javascript"></script>
   <?php
   // No cargar SweetAlert2 en páginas que usan SweetAlert v1
   $action = isset($_GET['action']) ? $_GET['action'] : '';

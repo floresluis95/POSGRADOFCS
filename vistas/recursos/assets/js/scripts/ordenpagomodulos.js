@@ -385,6 +385,8 @@ $(document).ready(function() {
             data: { accion: 'listarOptionsHtml', ProgramaID: opContexto.programaID, TipoCuenta: 'CUOTAS' },
             success: function(html) {
                 $('#opCuentaPago').html(html);
+                // Si falta la cuenta de cuotas, se registra aquí mismo (cuenta-rapida.js)
+                if (window.CuentaRapida) CuentaRapida.preparar('#opCuentaPago', opContexto.programaID, 'CUOTAS');
             },
             error: function() {
                 $('#opCuentaPago').html('<option value="">No se pudieron cargar las cuentas</option>');
