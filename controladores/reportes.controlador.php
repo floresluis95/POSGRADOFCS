@@ -583,7 +583,7 @@ class ReportesControladores extends TCPDF
             $pdf->SetFillColor(245, 245, 245);
 
             $pdf->Cell(22, 6, $mod['CodigoModulo'], 1, 0, 'C', $fill);
-            $pdf->Cell(58, 6, mb_strtoupper(substr($mod['NombreModulo'], 0, 36)), 1, 0, 'L', $fill);
+            $pdf->Cell(58, 6, mb_strtoupper(mb_substr($mod['NombreModulo'], 0, 36, 'UTF-8'), 'UTF-8'), 1, 0, 'L', $fill);
             $pdf->Cell(70, 6, substr($mod['NombrePrograma'], 0, 30) . ' (' . $mod['Sede'] . ')', 1, 0, 'L', $fill);
             $pdf->Cell(38, 6, $mod['Docente'] ? mb_strtoupper(substr($mod['Docente'], 0, 22)) : 'SIN ASIGNAR', 1, 0, 'L', $fill);
             $pdf->Cell(25, 6, $mod['EstadoModulo'], 1, 0, 'C', $fill);

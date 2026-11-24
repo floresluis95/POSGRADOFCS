@@ -273,7 +273,7 @@ $(document).ready(function() {
             html: `
                 <div style="text-align: left; padding: 20px;">
                     <h5 style="color: #5867dd; margin-bottom: 15px;">
-                        <i class="la la-book"></i> ${moduloNombre}
+                        <i class="la la-book"></i> ${escAttr(moduloNombre)}
                     </h5>
                     <div class="form-group" style="margin-bottom: 15px;">
                         <label for="fechaInicioPDF" style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">

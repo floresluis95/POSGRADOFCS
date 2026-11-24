@@ -385,7 +385,8 @@ function poblarFiltrosModulosReporte(modulos) {
 }
 
 function escaparHtml(texto) {
-    return $('<div>').text(texto == null ? '' : texto).html();
+    // También comillas: se usa dentro de atributos data-modulo-nombre="..."
+    return $('<div>').text(texto == null ? '' : texto).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function actualizarFecha() {
@@ -527,7 +528,7 @@ function mostrarTablaModulos(modulos) {
             <tr>
                 <td class="text-center">${index + 1}</td>
                 <td><strong>${modulo.codigomodulo}</strong></td>
-                <td>${modulo.nombremodulo}</td>
+                <td>${escaparHtml(modulo.nombremodulo)}</td>
                 <td>${modulo.NombrePrograma}${sigla ? ' <span class="kt-badge kt-badge--brand kt-badge--inline">' + sigla + '</span>' : ''}<br><small class="text-muted">${modulo.GradoAcademico}</small></td>
                 <td class="text-center"><small>${modulo.Sede || '-'}</small></td>
                 <td class="text-center">
@@ -678,7 +679,7 @@ function generarPlanillaPDF(moduloID, programaID, moduloNombre, moduloCodigo, pr
         html: `
             <div style="text-align: left; padding: 20px;">
                 <h5 style="color: #5867dd; margin-bottom: 15px;">
-                    <i class="la la-book"></i> ${moduloNombre}
+                    <i class="la la-book"></i> ${escaparHtml(moduloNombre)}
                 </h5>
                 <p style="margin-bottom: 20px; color: #666;">
                     <strong>Código:</strong> ${moduloCodigo}<br>

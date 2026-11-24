@@ -4,6 +4,11 @@
 
 console.log('=== Script Orden de Pago Cargado ===');
 
+// Escapa texto para meterlo en HTML o en atributos (el nombre del módulo puede traer comillas)
+function escaparOrdenPago(valor) {
+    return $('<div>').text(valor == null ? '' : String(valor)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 $(document).ready(function() {
     // Inicializar Select2 con búsqueda forzada
     $('.select2-estudiantes').select2({
@@ -354,13 +359,13 @@ function mostrarTablaPagos(modulos) {
                                class="check-modulo"
                                data-programa-id="${programa.programaID}"
                                data-pago-id="${modulo.Idpagomodulo}"
-                               data-modulo-nombre="${modulo.nombremodulo}"
+                               data-modulo-nombre="${escaparOrdenPago(modulo.nombremodulo)}"
                                data-costo="${costo}"
                                ${checkboxDisabled}>
                     </td>
                     <td class="text-center">${index + 1}</td>
-                    <td><span style="background: #667eea; color: white; padding: 4px 8px; border-radius: 10px; font-size: 10px;">${modulo.codigomodulo}</span></td>
-                    <td style="font-weight: 500;">${modulo.nombremodulo}</td>
+                    <td><span style="background: #667eea; color: white; padding: 4px 8px; border-radius: 10px; font-size: 10px;">${escaparOrdenPago(modulo.codigomodulo)}</span></td>
+                    <td style="font-weight: 500;">${escaparOrdenPago(modulo.nombremodulo)}</td>
                     <td class="text-right" style="font-weight: 700; color: #11998e;">Bs. ${costo.toFixed(2)}</td>
                     <td class="text-center">${fechaPago}</td>
                     <td class="text-center">${estadoBadge}</td>
@@ -479,7 +484,7 @@ function abrirModalOrdenMultiple(programaID, idinscripcion, programaNombre, vers
     // Crear lista de módulos
     let listaModulos = '<ul style="margin: 0; padding-left: 20px;">';
     modulos.forEach(modulo => {
-        listaModulos += `<li>${modulo.nombremodulo} - Bs. ${modulo.costo.toFixed(2)}</li>`;
+        listaModulos += `<li>${escaparOrdenPago(modulo.nombremodulo)} - Bs. ${modulo.costo.toFixed(2)}</li>`;
     });
     listaModulos += '</ul>';
     $('#modal_modulo_nombre').html(listaModulos);

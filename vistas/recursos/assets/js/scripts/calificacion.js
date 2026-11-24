@@ -140,7 +140,8 @@ function seleccionarDocente() {
 function escaparHtml(valor) {
     const div = document.createElement('div');
     div.textContent = valor === null || valor === undefined ? '' : String(valor);
-    return div.innerHTML;
+    // innerHTML no escapa comillas: hacen falta para usarlo dentro de atributos (data-...)
+    return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 /**
@@ -512,9 +513,9 @@ function renderTablaAsignacionesAbiertas(modulosAbiertos) {
         html += '<button class="btn btn-sm btn-brand btn-evaluar" ';
         html += 'data-modulo-id="' + asig.Idmodulo + '" ';
         html += 'data-programa-id="' + asig.ProgramaID + '" ';
-        html += 'data-modulo-nombre="' + asig.nombremodulo + '" ';
-        html += 'data-modulo-codigo="' + asig.codigomodulo + '" ';
-        html += 'data-programa-nombre="' + asig.NombrePrograma + '" ';
+        html += 'data-modulo-nombre="' + escaparHtml(asig.nombremodulo) + '" ';
+        html += 'data-modulo-codigo="' + escaparHtml(asig.codigomodulo) + '" ';
+        html += 'data-programa-nombre="' + escaparHtml(asig.NombrePrograma) + '" ';
         html += 'data-grado="' + asig.GradoAcademico + '" ';
         html += 'data-fecha-inicio="' + (asig.FechaInicio || '') + '" ';
         html += 'data-fecha-final="' + (asig.FechaFinal || '') + '" ';
@@ -528,9 +529,9 @@ function renderTablaAsignacionesAbiertas(modulosAbiertos) {
         html += '<button class="btn btn-sm btn-success btn-imprimir-asignacion" ';
         html += 'data-modulo-id="' + asig.Idmodulo + '" ';
         html += 'data-programa-id="' + asig.ProgramaID + '" ';
-        html += 'data-modulo-nombre="' + asig.nombremodulo + '" ';
-        html += 'data-modulo-codigo="' + asig.codigomodulo + '" ';
-        html += 'data-programa-nombre="' + asig.NombrePrograma + '" ';
+        html += 'data-modulo-nombre="' + escaparHtml(asig.nombremodulo) + '" ';
+        html += 'data-modulo-codigo="' + escaparHtml(asig.codigomodulo) + '" ';
+        html += 'data-programa-nombre="' + escaparHtml(asig.NombrePrograma) + '" ';
         html += 'data-grado="' + asig.GradoAcademico + '" ';
         html += 'data-fecha-inicio="' + (asig.FechaInicio || '') + '" ';
         html += 'data-fecha-final="' + (asig.FechaFinal || '') + '" ';
@@ -543,9 +544,9 @@ function renderTablaAsignacionesAbiertas(modulosAbiertos) {
         html += '<button class="btn btn-sm btn-danger btn-asistencia-asignacion" ';
         html += 'data-modulo-id="' + asig.Idmodulo + '" ';
         html += 'data-programa-id="' + asig.ProgramaID + '" ';
-        html += 'data-modulo-nombre="' + asig.nombremodulo + '" ';
-        html += 'data-modulo-codigo="' + asig.codigomodulo + '" ';
-        html += 'data-programa-nombre="' + asig.NombrePrograma + '" ';
+        html += 'data-modulo-nombre="' + escaparHtml(asig.nombremodulo) + '" ';
+        html += 'data-modulo-codigo="' + escaparHtml(asig.codigomodulo) + '" ';
+        html += 'data-programa-nombre="' + escaparHtml(asig.NombrePrograma) + '" ';
         html += 'data-grado="' + asig.GradoAcademico + '" ';
         html += 'data-total-estudiantes="' + totalEstudiantes + '" ';
         html += 'title="Lista de asistencia">';
@@ -897,7 +898,7 @@ function guardarCalificaciones() {
     // Confirmar guardado
     Swal.fire({
         title: '¿Guardar calificaciones?',
-        html: 'Se guardarán <strong>' + calificaciones.length + '</strong> calificaciones para el módulo:<br><strong>' + asignacionSeleccionada.moduloNombre + '</strong>',
+        html: 'Se guardarán <strong>' + calificaciones.length + '</strong> calificaciones para el módulo:<br><strong>' + escaparHtml(asignacionSeleccionada.moduloNombre) + '</strong>',
         type: 'question',
         showCancelButton: true,
         confirmButtonColor: '#1dc9b7',
@@ -1018,7 +1019,7 @@ function imprimirReporteCalificaciones(moduloID, programaID, moduloNombre, modul
         html: `
             <div style="text-align: left; padding: 20px;">
                 <h5 style="color: #5867dd; margin-bottom: 15px;">
-                    <i class="la la-book"></i> ${moduloNombre}
+                    <i class="la la-book"></i> ${escaparHtml(moduloNombre)}
                 </h5>
                 <p style="margin-bottom: 20px; color: #666;">
                     <strong>Código:</strong> ${moduloCodigo}<br>
@@ -1187,7 +1188,7 @@ function mostrarModalModulosCerrados() {
         html += `<td class="text-center">${index + 1}</td>`;
         html += `<td><span class="kt-badge kt-badge--inline kt-badge--primary">${asig.GradoAcademico}</span></td>`;
         html += `<td><strong>${asig.NombrePrograma}</strong><br><small class="text-muted">${asig.CodigoPrograma}</small></td>`;
-        html += `<td>${asig.nombremodulo}${validacionInfo}</td>`;
+        html += `<td>${escaparHtml(asig.nombremodulo)}${validacionInfo}</td>`;
         html += `<td class="text-center"><span class="kt-badge kt-badge--dark kt-badge--inline">${asig.codigomodulo}</span></td>`;
         html += `<td class="text-center">`;
         html += `<span class="kt-badge kt-badge--danger kt-badge--inline"><i class="la la-lock"></i> CERRADO</span>`;
@@ -1200,9 +1201,9 @@ function mostrarModalModulosCerrados() {
         html += `<button class="btn btn-sm btn-success btn-imprimir-cerrado" `;
         html += `data-modulo-id="${asig.Idmodulo}" `;
         html += `data-programa-id="${asig.ProgramaID}" `;
-        html += `data-modulo-nombre="${asig.nombremodulo}" `;
-        html += `data-modulo-codigo="${asig.codigomodulo}" `;
-        html += `data-programa-nombre="${asig.NombrePrograma}" `;
+        html += `data-modulo-nombre="${escaparHtml(asig.nombremodulo)}" `;
+        html += `data-modulo-codigo="${escaparHtml(asig.codigomodulo)}" `;
+        html += `data-programa-nombre="${escaparHtml(asig.NombrePrograma)}" `;
         html += `data-grado="${asig.GradoAcademico}" `;
         html += `data-docente-nombre="${nombreDocenteParaImprimir()}" `;
         html += `data-fecha-inicio="${asig.FechaInicio || ''}" `;
@@ -1216,8 +1217,8 @@ function mostrarModalModulosCerrados() {
         if (typeof esAdministrador !== 'undefined' && esAdministrador === true) {
             html += `<button class="btn btn-sm btn-warning btn-reabrir-modulo" `;
             html += `data-modulo-id="${asig.Idmodulo}" `;
-            html += `data-modulo-nombre="${asig.nombremodulo}" `;
-            html += `data-modulo-codigo="${asig.codigomodulo}" `;
+            html += `data-modulo-nombre="${escaparHtml(asig.nombremodulo)}" `;
+            html += `data-modulo-codigo="${escaparHtml(asig.codigomodulo)}" `;
             html += `title="Reabrir módulo (solo administradores)">`;
             html += `<i class="la la-unlock"></i> Reabrir`;
             html += `</button>`;
@@ -1294,7 +1295,7 @@ function reabrirModuloDesdeEstudiante(moduloID, moduloNombre, moduloCodigo) {
         title: '¿Reabrir este módulo?',
         html: `
             <div style="text-align: left;">
-                <p><strong>Módulo:</strong> ${moduloNombre}</p>
+                <p><strong>Módulo:</strong> ${escaparHtml(moduloNombre)}</p>
                 <p><strong>Código:</strong> ${moduloCodigo}</p>
                 <br>
                 <p style="color: #fd397a;">
@@ -1346,7 +1347,7 @@ function ejecutarReaperturaModulo(moduloID, moduloNombre) {
                     type: 'success',
                     title: 'Módulo reabierto',
                     html: `
-                        <p>El módulo <strong>${moduloNombre}</strong> ha sido reabierto exitosamente.</p>
+                        <p>El módulo <strong>${escaparHtml(moduloNombre)}</strong> ha sido reabierto exitosamente.</p>
                         <p>Los docentes ahora pueden editar las calificaciones.</p>
                     `,
                     timer: 2000,

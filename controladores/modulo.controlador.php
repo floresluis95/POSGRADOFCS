@@ -16,11 +16,20 @@ class ModuloControlador
      * Deja el nombre del módulo listo para guardar: sin espacios repetidos y en
      * mayúsculas. Se usa mb_strtoupper porque strtoupper no convierte las letras
      * con tilde ("ácido" quedaba "áCIDO" en el historial y los certificados).
+     * Se guarda el texto tal cual (con sus comillas): antes se guardaba con
+     * htmlspecialchars y los PDF imprimían "&quot;" en vez de la comilla.
+     * Escapar le toca a cada pantalla al mostrarlo, no a la base de datos.
      */
     private static function NormalizarNombreModulo($texto)
     {
         $texto = preg_replace('/\s+/u', ' ', trim($texto));
-        return htmlspecialchars(mb_strtoupper($texto, 'UTF-8'));
+        return mb_strtoupper($texto, 'UTF-8');
+    }
+
+    // El código del módulo ("MODULO I"), igual que el nombre: sin htmlspecialchars al guardar
+    private static function NormalizarCodigoModulo($texto)
+    {
+        return mb_strtoupper(preg_replace('/\s+/u', ' ', trim($texto)), 'UTF-8');
     }
 
     // Quita tildes para comparar palabras ("HIALURONICO" y "HIALURÓNICO" cuentan como la misma)
@@ -318,7 +327,7 @@ class ModuloControlador
             $fechaFinKey = 'fechafin_' . $i;
 
             if (isset($_POST[$codigoKey])) {
-                $codigomodulo = strtoupper(htmlspecialchars(trim($_POST[$codigoKey])));
+                $codigomodulo = self::NormalizarCodigoModulo($_POST[$codigoKey]);
 
                 // El nombre es opcional, si está vacío usar el código como nombre
                 $nombremodulo = isset($_POST[$nombreKey]) && !empty(trim($_POST[$nombreKey]))
@@ -547,7 +556,7 @@ class ModuloControlador
         $idmodulo = (int)$_POST['idmodulo'];
         $programaID = (int)$_POST['programaID'];
         $nombremodulo = self::NormalizarNombreModulo($_POST['nombremodulo']);
-        $codigomodulo = strtoupper(htmlspecialchars(trim($_POST['codigomodulo'])));
+        $codigomodulo = self::NormalizarCodigoModulo($_POST['codigomodulo']);
 
         if (mb_strlen($nombremodulo, 'UTF-8') > self::LARGO_MAXIMO_NOMBRE) {
             return ['estado' => 'validacion', 'mensaje' => 'El nombre del módulo supera los ' . self::LARGO_MAXIMO_NOMBRE . ' caracteres permitidos'];
