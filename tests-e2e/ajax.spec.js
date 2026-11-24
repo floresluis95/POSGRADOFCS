@@ -75,6 +75,7 @@ const ARCHIVOS_POR_ROL = {
   'autoridad.ajax.php': ['adm'],
   'certificado.ajax.php': ['adm'], // SEC solo el buscador de defensas (ver casos por acción)
   'reportes.ajax.php': ['adm', 'sec'],
+  'pagos.ajax.php': ['adm', 'sec'], // Pagos recibidos: solo consulta; el Auxiliar no la tiene
   'asignacion.ajax.php': ['adm', 'sec'], // el Auxiliar no tiene Asignación docente
   'cuenta.ajax.php': PERSONAL,
   'docentes.ajax.php': PERSONAL,

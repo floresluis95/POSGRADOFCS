@@ -20,7 +20,7 @@
         const PAGINAS_POR_ROL = [
             'SEC' => [
                 'programas', 'modulos', 'reportemodulos', 'preregistro', 'inscripcion', 'matriculados',
-                'historialpagos', 'ordenespago', 'solicitudesinscripcion', 'reportenotas',
+                'historialpagos', 'pagos', 'ordenespago', 'solicitudesinscripcion', 'reportenotas',
                 'bnotaestudiante', 'historialnotaestudiante', 'asignaciondocente',
                 'estudiantes', 'docentes', 'reportes',
                 'orden-generada', 'matriculas', 'detalles', 'bibliotecatesis',

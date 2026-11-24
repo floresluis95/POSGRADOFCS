@@ -50,6 +50,13 @@ if ($_SESSION["Tipo"] == "ADM") {
                     <span class="kt-menu__link-text">Catálogo de Requisitos</span>
                   </a>
                 </li>
+                <!-- Pagos recibidos: todo lo cobrado (matrícula, cuotas, clínicas y certificados) -->
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="pagos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon-coins" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Pagos recibidos</span>
+                  </a>
+                </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
                   <a href="historialpagos" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-time" style="color: #6f94c9;"></i>
@@ -368,6 +375,13 @@ if ($_SESSION["Tipo"] == "SEC") {
                   <a href="matriculados" class="kt-menu__link">
                     <i class="kt-menu__link-icon flaticon2-group" style="color: #6f94c9;"></i>
                     <span class="kt-menu__link-text">Matriculados</span>
+                  </a>
+                </li>
+                <!-- Pagos recibidos: todo lo cobrado (matrícula, cuotas, clínicas y certificados) -->
+                <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
+                  <a href="pagos" class="kt-menu__link">
+                    <i class="kt-menu__link-icon flaticon-coins" style="color: #6f94c9;"></i>
+                    <span class="kt-menu__link-text">Pagos recibidos</span>
                   </a>
                 </li>
                 <li class="kt-menu__item menu-item-modern" aria-haspopup="true">
