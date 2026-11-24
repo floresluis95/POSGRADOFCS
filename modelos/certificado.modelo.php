@@ -957,6 +957,24 @@ class CertificadoModelo
             $sql .= " AND e.Ci LIKE :ci ";
             $parametros[':ci'] = $ci . '%';
         }
+        // Estudiante (Pagos de certificados): solo números = C.I. (empieza por); si no, cada
+        // palabra debe estar en el nombre de la ficha o en el escrito en el documento
+        // (cualquier orden: "ala ilsen" encuentra a ALA VALDIVIA ILSEN ARIANA)
+        $estudiante = trim(preg_replace('/\s+/u', ' ', (string)($filtros['estudiante'] ?? '')));
+        if ($estudiante !== '') {
+            if (ctype_digit($estudiante)) {
+                $sql .= " AND e.Ci LIKE :ciEstudiante ";
+                $parametros[':ciEstudiante'] = $estudiante . '%';
+            } else {
+                foreach (array_slice(explode(' ', $estudiante), 0, 6) as $i => $palabra) {
+                    $sql .= " AND (CONCAT_WS(' ', e.Nombre, e.Apaterno, e.Amaterno) LIKE :palabra{$i}a
+                                   OR d.NombreEstudiante LIKE :palabra{$i}b) ";
+                    $comodin = '%' . addcslashes($palabra, '%_\\') . '%';
+                    $parametros[":palabra{$i}a"] = $comodin;
+                    $parametros[":palabra{$i}b"] = $comodin;
+                }
+            }
+        }
         // Sede y grado académico: los del programa del documento
         if (!empty($filtros['sede'])) {
             $sql .= " AND p.Sede = :sede ";

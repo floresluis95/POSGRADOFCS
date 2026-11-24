@@ -36,6 +36,7 @@ $filtros = $modoEstudiante
         'programaID' => $programaID ?: null,
         'sede' => trim($_GET['sede'] ?? '') ?: null,
         'grado' => array_key_exists($_GET['grado'] ?? '', CertificadoModelo::GradosAcademicos()) ? $_GET['grado'] : null,
+        'estudiante' => mb_substr(trim($_GET['estudiante'] ?? ''), 0, 80) ?: null,
     ];
 
 // Sin ningún filtro la pantalla muestra las últimas 100 emisiones: el reporte, lo mismo
@@ -212,6 +213,9 @@ body{font-family:Arial,sans-serif;font-size:9pt;line-height:1.25;color:#111;back
     <div><span class="etq">Sede · Grado</span><strong><?php
         echo htmlspecialchars(($filtros['sede'] ?: 'Todas las sedes') . ' · '
             . ($filtros['grado'] ? CertificadoModelo::GradosAcademicos()[$filtros['grado']] : 'Todos los grados')); ?></strong></div>
+    <?php if (!empty($filtros['estudiante'])): ?>
+    <div><span class="etq">Estudiante (búsqueda)</span><strong><?php echo htmlspecialchars(mb_strtoupper($filtros['estudiante'], 'UTF-8')); ?></strong></div>
+    <?php endif; ?>
 </div>
 <?php endif; ?>
 

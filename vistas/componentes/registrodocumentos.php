@@ -187,19 +187,20 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 .rd-contador-recibo { font-weight: 700; }
 
 /* ---------- Reporte de pagos: filtros ---------- */
-/* Dos filas: Sede · Grado · Programa / Certificado · Desde · Hasta · botones */
+/* Dos filas: Estudiante · Sede · Grado · Programa / Certificado · Desde · Hasta · botones */
 .rd-filtros { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; align-items: end; margin-bottom: 16px; }
 .rd-filtro { min-width: 0; }
 .rd-filtro .form-control { height: 42px; }
-.rd-f-sede, .rd-f-grado { grid-column: span 3; }
-.rd-f-programa { grid-column: span 6; }
+.rd-f-estudiante { grid-column: span 4; }
+.rd-f-sede, .rd-f-grado { grid-column: span 2; }
+.rd-f-programa { grid-column: span 4; }
 .rd-f-tipo { grid-column: span 4; }
 .rd-f-fecha { grid-column: span 2; }
 .rd-filtro-botones { grid-column: span 4; display: flex; justify-content: flex-end; gap: 8px; }
 .rd-filtro-botones .rd-btn-primario, .rd-filtro-botones .rd-btn-secundario { height: 42px; }
 @media (max-width: 991.98px) {
     .rd-f-sede, .rd-f-grado, .rd-f-tipo, .rd-f-fecha { grid-column: span 6; }
-    .rd-f-programa, .rd-filtro-botones { grid-column: span 12; }
+    .rd-f-estudiante, .rd-f-programa, .rd-filtro-botones { grid-column: span 12; }
 }
 @media (max-width: 575.98px) {
     .rd-filtros > .rd-filtro { grid-column: span 12; }
@@ -510,6 +511,11 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                                         sort($sedesFiltro);
                                         ?>
                                         <div class="rd-filtros">
+                                            <div class="rd-filtro rd-f-estudiante">
+                                                <label class="rd-label" for="filtro-estudiante">Estudiante</label>
+                                                <input type="search" class="form-control" id="filtro-estudiante" maxlength="80" autocomplete="off"
+                                                       placeholder="Nombre, apellido o C.I.">
+                                            </div>
                                             <div class="rd-filtro rd-f-sede">
                                                 <label class="rd-label" for="filtro-sede">Sede</label>
                                                 <select class="form-control rd-select-buscador" id="filtro-sede">
@@ -573,7 +579,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                                                     </tr>
                                                 </thead>
                                                 <tbody id="tabla-log-body">
-                                                    <tr class="rd-sin-filas"><td colspan="7">Elija el periodo y pulse <strong>Consultar</strong>.</td></tr>
+                                                    <tr class="rd-sin-filas"><td colspan="7">Busque por estudiante (nombre o C.I.) o elija el periodo y pulse <strong>Consultar</strong>.</td></tr>
                                                 </tbody>
                                                 <tfoot id="tabla-log-pie"></tfoot>
                                             </table>
@@ -1050,9 +1056,15 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
                 programaID: $('#filtro-programa').val() || '',
                 tipo: $('#filtro-tipo').val() || '',
                 desde: $('#filtro-desde').val() || '',
-                hasta: $('#filtro-hasta').val() || ''
+                hasta: $('#filtro-hasta').val() || '',
+                estudiante: $.trim($('#filtro-estudiante').val() || '')
             };
         }
+
+        // Enter en el buscador de estudiante = Consultar
+        $('#filtro-estudiante').on('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); cargarReporte(); }
+        });
 
         // Selects con buscador
         $('.rd-select-buscador').select2({
@@ -1080,7 +1092,13 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
             reporteConsultado = true;
             var f = filtrosReporte();
             filtrosConsultados = f;
-            var hayFiltros = f.desde || f.hasta || f.programaID || f.tipo;
+            var hayFiltros = f.desde || f.hasta || f.programaID || f.tipo || f.sede || f.grado || f.estudiante;
+
+            // Nombre: al menos 3 letras (con 1 o 2 saldría medio sistema); el C.I. con cualquier largo
+            if (f.estudiante && !/^\d+$/.test(f.estudiante) && f.estudiante.replace(/\s/g, '').length < 3) {
+                Swal.fire({ type: 'info', title: 'Escriba un poco más', text: 'Escriba al menos 3 letras del nombre o el número de C.I.' });
+                return;
+            }
 
             $.ajax({
                 url: 'ajax/certificado.ajax.php',
@@ -1120,7 +1138,7 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
 
         $('#btn-filtrar-pagos').on('click', cargarReporte);
         $('#btn-limpiar-pagos').on('click', function() {
-            $('#filtro-desde, #filtro-hasta').val('');
+            $('#filtro-desde, #filtro-hasta, #filtro-estudiante').val('');
             $('#filtro-sede, #filtro-grado').val('');
             filtrarProgramas();
             $('#filtro-programa, #filtro-tipo, #filtro-sede, #filtro-grado').val('').trigger('change.select2');
@@ -1128,11 +1146,11 @@ require_once 'modelos/certificado.modelo.php'; // tipos de certificado del filtr
             filtrosConsultados = null;
             docsReporte = [];
             $('#tabla-log-pie').empty();
-            $('#tabla-log-body').html('<tr class="rd-sin-filas"><td colspan="7">Elija el periodo y pulse <strong>Consultar</strong>.</td></tr>');
+            $('#tabla-log-body').html('<tr class="rd-sin-filas"><td colspan="7">Busque por estudiante (nombre o C.I.) o elija el periodo y pulse <strong>Consultar</strong>.</td></tr>');
         });
         $('#btn-imprimir-pagos').on('click', function() {
             if (!filtrosConsultados || !docsReporte.length) {
-                Swal.fire({ type: 'info', title: 'Primero consulte', text: 'Elija el periodo, el programa o el certificado y pulse Consultar.' });
+                Swal.fire({ type: 'info', title: 'Primero consulte', text: 'Busque al estudiante o elija el periodo, el programa o el certificado y pulse Consultar.' });
                 return;
             }
             abrirRecibo(filtrosConsultados);

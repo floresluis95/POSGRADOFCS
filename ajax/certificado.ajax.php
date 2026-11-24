@@ -180,6 +180,8 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'listarDocumentosEmitidos') 
         'programaID' => intval($_POST['programaID'] ?? 0) ?: null,
         'sede' => trim($_POST['sede'] ?? '') ?: null,
         'grado' => array_key_exists($_POST['grado'] ?? '', CertificadoModelo::GradosAcademicos()) ? $_POST['grado'] : null,
+        // Nombre o C.I. del estudiante (texto libre, hasta 80 letras)
+        'estudiante' => mb_substr(trim($_POST['estudiante'] ?? ''), 0, 80) ?: null,
     ];
     $conFiltros = (bool)array_filter($filtros);
     $documentos = CertificadoModelo::ListarDocumentosEmitidosModelo($ci !== '' ? $ci : null, $conFiltros ? 5000 : 100, $filtros);
