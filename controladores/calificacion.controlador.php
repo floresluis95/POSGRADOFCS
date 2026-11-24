@@ -189,6 +189,21 @@ class CalificacionControlador
     }
 
     /**
+     * Listar los módulos (con docente asignado) del programa elegido, para
+     * el filtro "Módulo" previo a elegir docente (AJAX)
+     */
+    public function ListarModulosAsignacionesControlador()
+    {
+        $programaID = isset($_POST['programaID']) ? (int)$_POST['programaID'] : 0;
+        $modulos = $programaID > 0 ? CalificacionModelo::ObtenerModulosConDocentePorProgramaModelo($programaID) : [];
+
+        echo json_encode([
+            'status' => 'success',
+            'data' => $modulos
+        ]);
+    }
+
+    /**
      * Listar docentes cuyas asignaciones coinciden con la sede y/o el
      * programa y/o código de programa indicados, para poblar el SELECT de
      * docente según esos filtros (AJAX)
@@ -198,8 +213,9 @@ class CalificacionControlador
         $sede = isset($_POST['sede']) ? trim($_POST['sede']) : '';
         $programaID = isset($_POST['programaID']) ? trim($_POST['programaID']) : '';
         $codigoPrograma = isset($_POST['codigoPrograma']) ? trim($_POST['codigoPrograma']) : '';
+        $moduloID = isset($_POST['moduloID']) ? (int)$_POST['moduloID'] : 0;
 
-        $docentes = CalificacionModelo::ListarDocentesConAsignacionesFiltradoModelo($sede, $programaID, $codigoPrograma);
+        $docentes = CalificacionModelo::ListarDocentesConAsignacionesFiltradoModelo($sede, $programaID, $codigoPrograma, $moduloID);
 
         $data = array_map(function ($docente) {
             $nombreCompleto = $docente['Nombre'] . ' ' . $docente['Apaterno'] . ' ' . $docente['Amaterno'];

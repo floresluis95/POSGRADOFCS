@@ -10,6 +10,8 @@ let docenteSeleccionado = null;
 let asignacionSeleccionada = null;
 let estudiantesActuales = [];
 let modulosCerrados = [];
+// Módulo elegido en el filtro "Módulo" del paso 1: se resalta en el paso 2
+let moduloFiltroID = '';
 
 // Formatear una fecha "YYYY-MM-DD" (tal como viene de la BD) a "DD/MM/AAAA"
 function formatearFechaDDMMAAAA(fecha) {
@@ -46,6 +48,7 @@ $(document).ready(function() {
 
     $('#filtro-programa-docente').on('change', function() {
         actualizarCodigosFiltroDocente();
+        cargarModulosFiltroDocente($(this).val());
         cargarDocentesFiltrados($('#filtro-sede-docente').val(), $(this).val(), '');
     });
 
@@ -53,7 +56,19 @@ $(document).ready(function() {
         cargarDocentesFiltrados(
             $('#filtro-sede-docente').val(),
             $('#filtro-programa-docente').val(),
-            $(this).val()
+            $(this).val(),
+            moduloFiltroID
+        );
+    });
+
+    // Módulo: deja solo al docente de ese módulo y lo selecciona directamente
+    $('#filtro-modulo-docente').on('change', function() {
+        moduloFiltroID = $(this).val() || '';
+        cargarDocentesFiltrados(
+            $('#filtro-sede-docente').val(),
+            $('#filtro-programa-docente').val(),
+            $('#filtro-codigo-docente').val(),
+            moduloFiltroID
         );
     });
 
@@ -175,6 +190,7 @@ function cargarProgramasFiltroDocente(sede, actualizarDocentes) {
 
             $programa.html(opciones).val('');
             actualizarCodigosFiltroDocente();
+            cargarModulosFiltroDocente('');
 
             if (actualizarDocentes) {
                 cargarDocentesFiltrados(sede, '', '');
@@ -202,7 +218,47 @@ function actualizarCodigosFiltroDocente() {
         .trigger('change.select2');
 }
 
-function cargarDocentesFiltrados(sede, programaID, codigoPrograma) {
+// Módulos (con docente asignado) del programa elegido. Sin programa el
+// filtro queda deshabilitado.
+function cargarModulosFiltroDocente(programaID) {
+    const $modulo = $('#filtro-modulo-docente');
+    moduloFiltroID = '';
+
+    if (!programaID) {
+        $modulo.html('<option value="">Primero elija un programa</option>')
+            .prop('disabled', true).val('').trigger('change.select2');
+        return;
+    }
+
+    $modulo.html('<option value="">Cargando módulos...</option>').prop('disabled', true).trigger('change.select2');
+
+    $.ajax({
+        url: 'ajax/calificacion.ajax.php',
+        method: 'POST',
+        data: { accion: 'listarModulosAsignaciones', programaID: programaID },
+        dataType: 'json',
+        success: function(response) {
+            // Si mientras tanto cambiaron de programa, esta respuesta ya no sirve
+            if (String($('#filtro-programa-docente').val()) !== String(programaID)) return;
+
+            const modulos = response.status === 'success' ? response.data : [];
+            let opciones = '<option value="">' +
+                (modulos.length ? 'Todos los módulos' : 'Este programa no tiene módulos con docente') + '</option>';
+            modulos.forEach(function(m) {
+                const cerrado = m.EstadoModulo === 'VALIDADO' || m.EstadoModulo === 'CERRADO';
+                opciones += '<option value="' + m.Idmodulo + '">' +
+                    escaparHtml(m.codigomodulo) + ' - ' + escaparHtml(m.nombremodulo) +
+                    (cerrado ? ' (cerrado)' : '') + '</option>';
+            });
+            $modulo.html(opciones).prop('disabled', modulos.length === 0).val('').trigger('change.select2');
+        },
+        error: function() {
+            $modulo.html('<option value="">No se pudieron cargar los módulos</option>').trigger('change.select2');
+        }
+    });
+}
+
+function cargarDocentesFiltrados(sede, programaID, codigoPrograma, moduloID) {
     $.ajax({
         url: 'ajax/calificacion.ajax.php',
         method: 'POST',
@@ -210,7 +266,8 @@ function cargarDocentesFiltrados(sede, programaID, codigoPrograma) {
             accion: 'listarDocentesFiltrados',
             sede: sede || '',
             programaID: programaID || '',
-            codigoPrograma: codigoPrograma || ''
+            codigoPrograma: codigoPrograma || '',
+            moduloID: moduloID || ''
         },
         dataType: 'json',
         success: function(response) {
@@ -232,7 +289,12 @@ function cargarDocentesFiltrados(sede, programaID, codigoPrograma) {
                 });
             }
 
-            $docente.html(opciones).prop('disabled', !hayDocentes).val('').trigger('change');
+            // Con un módulo elegido hay un único docente: se selecciona solo
+            // y pasa directo a sus módulos (con el elegido resaltado)
+            const unicoDocente = moduloID && hayDocentes && response.data.length === 1
+                ? String(response.data[0].DocenteID) : '';
+
+            $docente.html(opciones).prop('disabled', !hayDocentes).val(unicoDocente).trigger('change');
         }
     });
 }
@@ -331,6 +393,25 @@ function mostrarAsignaciones(asignaciones) {
     $('#total-asignaciones').text(modulosAbiertos.length);
 
     renderTablaAsignacionesAbiertas(modulosAbiertos);
+
+    // Módulo elegido en el filtro: llevar la vista a su fila, o avisar si
+    // está cerrado (no figura en la tabla de abiertos)
+    if (moduloFiltroID) {
+        const cerrado = modulosCerrados.some(m => String(m.Idmodulo) === String(moduloFiltroID));
+        if (cerrado) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Módulo cerrado',
+                text: 'El módulo elegido ya está cerrado. Puede verlo en "Ver Módulos Cerrados".',
+                confirmButtonText: 'Entendido'
+            });
+        } else {
+            setTimeout(function() {
+                const fila = document.querySelector('#asignaciones-container tr.rn-fila-elegida');
+                if (fila) fila.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 450);
+        }
+    }
 }
 
 function renderTablaAsignacionesAbiertas(modulosAbiertos) {
@@ -407,11 +488,16 @@ function renderTablaAsignacionesAbiertas(modulosAbiertos) {
             fechaInfo += '<br><span class="rn-marca-pendiente"><i class="fa fa-exclamation-circle"></i> Falta calificar · terminó el ' + formatearFechaDDMMAAAA(asig.FechaFinal) + '</span>';
         }
 
-        html += '<tr class="asignacion-row' + (faltaCalificar ? ' rn-fila-pendiente' : '') + '">';
+        var esElegido = !!moduloFiltroID && String(asig.Idmodulo) === String(moduloFiltroID);
+        if (esElegido) {
+            fechaInfo += '<br><span class="rn-marca-elegida"><i class="fa fa-filter"></i> Módulo elegido en el filtro</span>';
+        }
+
+        html += '<tr class="asignacion-row' + (esElegido ? ' rn-fila-elegida' : (faltaCalificar ? ' rn-fila-pendiente' : '')) + '">';
         html += '<td class="text-center">' + (index + 1) + '</td>';
         html += '<td><span class="kt-badge kt-badge--inline kt-badge--primary">' + asig.GradoAcademico + '</span></td>';
         html += '<td><strong>' + asig.NombrePrograma + '</strong><br><small class="text-muted">' + asig.CodigoPrograma + '</small></td>';
-        html += '<td>' + asig.nombremodulo + '</td>';
+        html += '<td>' + escaparHtml(asig.nombremodulo) + '</td>';
         html += '<td class="text-center"><span class="kt-badge kt-badge--dark kt-badge--inline">' + asig.codigomodulo + '</span></td>';
         html += '<td class="text-center"><span class="kt-badge kt-badge--' + (totalEstudiantes > 0 ? 'success' : 'secondary') + ' kt-badge--inline kt-badge--bold">' + totalEstudiantes + '</span></td>';
         html += '<td class="text-center">';

@@ -62,6 +62,10 @@ $esAdministrador = ($tipoUsuario === 'ADM');
 /* Módulo del docente que ya terminó y falta calificar (tabla del paso 2) */
 .table-calificaciones tr.rn-fila-pendiente td { background: #fff7f7; }
 .table-calificaciones tr.rn-fila-pendiente td:first-child { box-shadow: inset 3px 0 0 #b91c1c; }
+/* Módulo elegido en el filtro "Módulo" del paso 1 (se resalta en el paso 2) */
+.table-calificaciones tr.rn-fila-elegida td { background: #e8f4f5; }
+.table-calificaciones tr.rn-fila-elegida td:first-child { box-shadow: inset 3px 0 0 #0f6674; }
+.rn-marca-elegida { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 700; color: #0f6674; }
 .rn-marca-pendiente { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 700; color: #b91c1c; }
 .rn-pasos { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
 .rn-paso { display: flex; align-items: center; gap: 12px; }
@@ -386,30 +390,37 @@ $esAdministrador = ($tipoUsuario === 'ADM');
                                 <div class="rn-card-head">
                                     <div>
                                         <h3><i class="fa fa-chalkboard-teacher"></i> Seleccionar docente</h3>
-                                        <p>Los filtros son opcionales: acotan la lista de docentes por sede, programa o código.</p>
+                                        <p>Los filtros son opcionales: acotan la lista de docentes por sede, programa, código o módulo.</p>
                                     </div>
                                 </div>
                                 <div class="rn-card-body">
                                     <div class="row">
-                                        <div class="col-md-3 mb-3 mb-md-0">
+                                        <div class="col-md-4 mb-3">
                                             <label for="filtro-sede-docente" class="rn-label"><i class="fa fa-map-marker-alt"></i> Sede</label>
                                             <select id="filtro-sede-docente" class="form-control select2-uniforme">
                                                 <option value="">Todas las sedes</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-3 mb-3 mb-md-0">
+                                        <div class="col-md-4 mb-3">
                                             <label for="filtro-programa-docente" class="rn-label"><i class="fa fa-university"></i> Programa</label>
                                             <select id="filtro-programa-docente" class="form-control select2-uniforme">
                                                 <option value="">Todos los programas</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-3 mb-3 mb-md-0">
+                                        <div class="col-md-4 mb-3">
                                             <label for="filtro-codigo-docente" class="rn-label"><i class="fa fa-code"></i> Código de programa</label>
                                             <select id="filtro-codigo-docente" class="form-control select2-uniforme">
                                                 <option value="">Todos los códigos</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <label for="filtro-modulo-docente" class="rn-label"><i class="fa fa-book"></i> Módulo</label>
+                                            <select id="filtro-modulo-docente" class="form-control select2-uniforme" disabled>
+                                                <option value="">Primero elija un programa</option>
+                                            </select>
+                                            <small class="rn-ayuda-campo">Al elegirlo se carga su docente y se resalta el módulo.</small>
+                                        </div>
+                                        <div class="col-md-6">
                                             <label for="select-docente" class="rn-label"><i class="fa fa-user-tie"></i> Docente <span class="text-danger">*</span></label>
                                             <select id="select-docente" class="form-control select2-uniforme">
                                                 <option value="">-- Seleccione un docente --</option>

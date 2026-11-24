@@ -367,6 +367,31 @@ class CalificacionModelo
     }
 
     /**
+     * Módulos de un programa que ya tienen docente asignado, para el filtro
+     * "Módulo" de "Registro de Calificaciones" (depende del Programa elegido).
+     * Orden de creación: los códigos son romanos ("MODULO IX" < "MODULO V" como texto).
+     * @param int $programaID
+     * @return array
+     */
+    public static function ObtenerModulosConDocentePorProgramaModelo($programaID)
+    {
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT m.Idmodulo, m.nombremodulo, m.codigomodulo, m.estadomodulo AS EstadoModulo, m.DocenteID
+                 FROM modulos m
+                 WHERE m.ProgramaId = :programaID AND m.DocenteID IS NOT NULL AND m.DocenteID <> 0
+                 ORDER BY m.Idmodulo"
+            );
+            $stmt->bindValue(':programaID', (int)$programaID, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en ObtenerModulosConDocentePorProgramaModelo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Docentes que tienen al menos un módulo asignado que coincide con la
      * sede, el programa y/o el código de programa indicados (todos opcionales).
      * Se usa para acotar el SELECT de docente de "Registro de Calificaciones"
@@ -376,7 +401,7 @@ class CalificacionModelo
      * @param string $codigoPrograma
      * @return array
      */
-    public static function ListarDocentesConAsignacionesFiltradoModelo($sede = '', $programaID = '', $codigoPrograma = '')
+    public static function ListarDocentesConAsignacionesFiltradoModelo($sede = '', $programaID = '', $codigoPrograma = '', $moduloID = '')
     {
         try {
             $sql = "SELECT DISTINCT
@@ -399,6 +424,10 @@ class CalificacionModelo
             if (!empty($codigoPrograma)) {
                 $condiciones[] = "p.Codigo = :codigoPrograma";
                 $parametros[':codigoPrograma'] = $codigoPrograma;
+            }
+            if (!empty($moduloID)) {
+                $condiciones[] = "m.Idmodulo = :moduloID";
+                $parametros[':moduloID'] = (int)$moduloID;
             }
 
             if (!empty($condiciones)) {

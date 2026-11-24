@@ -61,6 +61,10 @@ if (isset($_POST['accion'])) {
             $controlador->ListarProgramasAsignacionesControlador();
             break;
 
+        case 'listarModulosAsignaciones':
+            $controlador->ListarModulosAsignacionesControlador();
+            break;
+
         case 'listarDocentesFiltrados':
             $controlador->ListarDocentesFiltradosControlador();
             break;
