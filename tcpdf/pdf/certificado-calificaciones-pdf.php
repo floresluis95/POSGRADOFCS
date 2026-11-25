@@ -234,6 +234,22 @@ $pdf->AddFont(FUENTE_CERT, 'B', $dirFuentes . 'cambriab.php');
 $pdf->AddFont(FUENTE_CERT, 'I', $dirFuentes . 'cambriai.php');
 $pdf->AddFont(FUENTE_CERT, 'BI', $dirFuentes . 'cambriaz.php');
 
+// Nombres de los módulos: un solo tamaño para todos (en todas las hojas), el más
+// grande con el que entra el nombre más largo en su renglón; alineados a la
+// izquierda desde la misma sangría (para no pisar la línea vertical del formato),
+// centrados en alto y con el interlineado más junto que el normal.
+const INTERLINEADO_NORMAL = 1.25;   // el de TCPDF
+const INTERLINEADO_NOMBRES = 1.0;
+$MARGEN_NOMBRE_DER = 2.5;           // margen derecho dentro de la columna
+$W_NOMBRE_UTIL = $W_NOMBREMOD - $SANGRIA_NOMBREMOD - $MARGEN_NOMBRE_DER;
+$pdf->setCellHeightRatio(INTERLINEADO_NOMBRES);
+$tamanoNombres = 10;
+foreach ($modulos as $mod) {
+    $tamanoNombres = min($tamanoNombres, tamanoQueEntra($pdf, mb_strtoupper($mod['nombremodulo'], 'UTF-8'), 'I', $tamanoNombres,
+        $W_NOMBRE_UTIL, $ALTO_FILA - 2 * $MARGEN_CASILLA));
+}
+$pdf->setCellHeightRatio(INTERLINEADO_NORMAL);
+
 $modulosPorHoja = array_chunk($modulos, 6);
 $coordenadas = compact('Y_NOMBRE', 'Y_VAUCHER', 'Y_PROGRAMA', 'Y_NIVEL', 'Y_ANIO', 'Y_TABLA', 'ALTO_FILA',
     'X_SIGLA', 'X_NOMBREMOD', 'X_NUM', 'X_LITERAL', 'W_LITERAL', 'X_DIA', 'ANCHO_DIA', 'X_MES', 'ANCHO_MES',
@@ -264,8 +280,13 @@ foreach ($modulosPorHoja as $chunk) {
 
         casillaTabla($pdf, $X_SIGLA + $m, $y + $m, $W_SIGLA - 2 * $m, $altoUtil,
             siglaModulo($mod['codigomodulo']), 'I', 10, 'C');
-        casillaTabla($pdf, $X_NOMBREMOD + $SANGRIA_NOMBREMOD, $y + $m, $W_NOMBREMOD - $SANGRIA_NOMBREMOD - 2 * $m, $altoUtil,
-            mb_strtoupper($mod['nombremodulo'], 'UTF-8'), 'I', 10, 'L', true);
+        // Nombre del módulo: todos al mismo tamaño (el que entra para el más largo),
+        // a la izquierda desde la misma sangría, centrados en alto y más juntos
+        $pdf->setCellHeightRatio(INTERLINEADO_NOMBRES);
+        $pdf->SetFont(FUENTE_CERT, 'I', $tamanoNombres);
+        $pdf->MultiCell($W_NOMBRE_UTIL, $altoUtil, mb_strtoupper($mod['nombremodulo'], 'UTF-8'), 0, 'L', false, 0,
+            $X_NOMBREMOD + $SANGRIA_NOMBREMOD, $y + $m, true, 0, false, false, $altoUtil, 'M');
+        $pdf->setCellHeightRatio(INTERLINEADO_NORMAL);
         casillaTabla($pdf, $X_NUM + $m, $y + $m, $W_NUM - 2 * $m, $altoUtil,
             (string) $nota, 'B', 10, 'C');
         casillaTabla($pdf, $X_LITERAL + $SANGRIA_LITERAL, $y + $m, $W_LITERAL - $SANGRIA_LITERAL - $m, $altoUtil,
