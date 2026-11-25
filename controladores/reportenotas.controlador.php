@@ -130,6 +130,25 @@ class ReporteNotasControlador
     }
 
     /**
+     * Planillas de calificaciones ya generadas de un módulo (AJAX), para
+     * volver a abrirlas e imprimirlas tal como salieron.
+     */
+    public function ListarPlanillasGuardadasControlador()
+    {
+        require_once __DIR__ . '/../modelos/planillaguardada.modelo.php';
+        $moduloID = intval($_POST['moduloID'] ?? 0);
+        $programaID = intval($_POST['programaID'] ?? 0);
+        if ($moduloID <= 0 || $programaID <= 0) {
+            echo json_encode(['status' => 'error', 'message' => 'Parámetros incompletos']);
+            return;
+        }
+        echo json_encode([
+            'status' => 'success',
+            'data' => PlanillaGuardadaModelo::Listar($programaID, $moduloID, trim((string)($_POST['moduloCodigo'] ?? '')))
+        ]);
+    }
+
+    /**
      * Obtener resumen de auditoría (AJAX)
      */
     public function ObtenerResumenAuditoriaControlador()

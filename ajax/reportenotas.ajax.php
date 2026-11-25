@@ -34,6 +34,12 @@ if (isset($_POST['action'])) {
             $controller->ObtenerResumenAuditoriaControlador();
             break;
 
+        case 'listarPlanillasGuardadas':
+            // Planillas ya generadas del módulo, para volver a imprimirlas
+            $controller = new ReporteNotasControlador();
+            $controller->ListarPlanillasGuardadasControlador();
+            break;
+
         case 'resetearCalificaciones':
             // Solo ADM (lo valida el controlador); SEC y AUX solo consultan
             $controller = new ReporteNotasControlador();

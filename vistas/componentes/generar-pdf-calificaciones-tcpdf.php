@@ -86,6 +86,9 @@ require_once file_exists(__DIR__ . '/../../modelos/conexion.modelo.php')
     : __DIR__ . '/../../core/conexion.modelo.php';
 require_once __DIR__ . '/../../modelos/calificacion.modelo.php';
 require_once __DIR__ . '/../../modelos/institucion.modelo.php'; // datos y logos de la institución (encabezado)
+require_once __DIR__ . '/../../modelos/configuracion.modelo.php'; // nota mínima de aprobación (escala)
+require_once __DIR__ . '/../../modelos/autoridad.modelo.php'; // nombre del coordinador (firma)
+require_once __DIR__ . '/../../modelos/planillaguardada.modelo.php'; // historial de planillas generadas
 
 // Obtener estudiantes y calificaciones
 $estudiantes = CalificacionModelo::ObtenerEstudiantesPorModuloModelo($moduloID, $programaID);
@@ -154,239 +157,219 @@ function fechaLarga($fechaYmd) {
     return date('j', $ts) . ' de ' . $meses[(int)date('n', $ts)] . ' del ' . date('Y', $ts);
 }
 
-// Crear PDF
+// ================================================================
+// DISEÑO DE LA PLANILLA (2026-11-25): mismo formato que la planilla oficial en
+// Word (LISTA_1.docx de Cirugía Bucal): encabezado con logos y doble línea,
+// cuadro PROGRAMA / MÓDULO / DOCENTE / FECHA, título, tabla POSGRADUANTES /
+// CALIFICACIÓN, escala en recuadro, lugar y fecha, y firmas con línea punteada.
+// Versión formal: solo negro y gris claro (sin colores).
+// ================================================================
+const PL_ETIQUETA = [232, 232, 232]; // fondo gris de etiquetas y cabeceras
+const PL_GRIS = [70, 70, 70];
+
+$notaMinima = ConfiguracionModelo::NotaAprobacion();
+$autoridades = AutoridadModelo::ListarModelo();
+$coordinadorNombre = AutoridadModelo::NombreParaDocumento($autoridades, 'COORDINADOR');
+
 $pdf = new TCPDF('P', 'mm', 'LETTER', true, 'UTF-8', false);
-
-// Información del documento
-$pdf->SetCreator('Sistema de Gestión Académica - Posgrado FCS');
-$pdf->SetAuthor('UMSS - Facultad de Ciencias de la Salud');
-$pdf->SetTitle('Reporte de Calificaciones - ' . $moduloCodigo);
+$pdf->SetCreator('Sistema de Gestión Académica - ' . InstitucionModelo::NombreSistema());
+$pdf->SetAuthor(InstitucionModelo::Universidad());
+$pdf->SetTitle('Planilla de Calificaciones - ' . $moduloCodigo);
 $pdf->SetSubject('Planilla de Calificaciones');
-
-// Configuración de la página
-$pdf->SetMargins(15, 15, 15);
-$pdf->SetAutoPageBreak(TRUE, 15);
-$pdf->SetFont('helvetica', '', 9);
-
-// Quitar header y footer por defecto
 $pdf->setPrintHeader(false);
 $pdf->setPrintFooter(false);
-
-// Agregar página
+$margen = 22;
+$pdf->SetMargins($margen, 10, $margen);
+$pdf->SetAutoPageBreak(false); // los saltos de página se controlan a mano (repite la cabecera de la tabla)
 $pdf->AddPage();
 
-// ENCABEZADO (formato oficial FORMATO_CALIFICACIONES.docx)
-$logoUTO = InstitucionModelo::LogoPdf('LOGO_IZQUIERDO');
-$logoFCS = InstitucionModelo::LogoPdf('LOGO_DERECHO');
+$anchoUtil = $pdf->getPageWidth() - 2 * $margen;
+$xDer = $margen + $anchoUtil;
 
-// Logo izquierdo y derecho: se fuerza la misma caja de 22x22mm para los dos
-// (con $fitbox='CM' cada logo se escala manteniendo su proporción y se centra
-// dentro de la caja) porque logouto.png y logofcs.png tienen proporciones muy
-// distintas (1047x1006 vs 239x305) y, con solo el ancho fijo, salían de alturas
-// visiblemente diferentes.
-if ($logoUTO) {
-    $pdf->Image($logoUTO, 15, 10, 22, 22, 'PNG', '', '', true, 300, '', false, false, 0, 'CM');
+// ---------- Encabezado institucional ----------
+$logoIzq = InstitucionModelo::LogoPdf('LOGO_IZQUIERDO');
+$logoDer = InstitucionModelo::LogoPdf('LOGO_DERECHO');
+// Misma caja de 21x21 mm para los dos logos ($fitbox 'CM': se escala sin
+// deformar y se centra), porque tienen proporciones muy distintas.
+if ($logoIzq) {
+    $pdf->Image($logoIzq, $margen, 10, 21, 21, '', '', '', true, 300, '', false, false, 0, 'CM');
 }
-
-if ($logoFCS) {
-    $pdf->Image($logoFCS, 173, 10, 22, 22, 'PNG', '', '', true, 300, '', false, false, 0, 'CM');
+if ($logoDer) {
+    $pdf->Image($logoDer, $xDer - 21, 10, 21, 21, '', '', '', true, 300, '', false, false, 0, 'CM');
 }
-
-// Título centrado
-$pdf->SetFont('helvetica', 'B', 13);
-$pdf->SetY(12);
-$pdf->Cell(0, 5, InstitucionModelo::Universidad(), 0, 1, 'C');
-
-$pdf->SetFont('helvetica', 'B', 11);
-$pdf->Cell(0, 5, InstitucionModelo::Facultad(), 0, 1, 'C');
-$pdf->Cell(0, 5, InstitucionModelo::Unidad(), 0, 1, 'C');
-
-$pdf->SetFont('helvetica', '', 8);
-// Dirección, teléfonos y ciudad: los de Configuración (Datos de la institución)
-$pdf->Cell(0, 4, InstitucionModelo::Direccion(), 0, 1, 'C');
-$pdf->Cell(0, 4, InstitucionModelo::Telefonos(), 0, 1, 'C');
-$pdf->Cell(0, 4, InstitucionModelo::Ciudad(), 0, 1, 'C');
-
-$pdf->Ln(5);
-
-// INFORMACIÓN DEL MÓDULO
-$pdf->SetFont('helvetica', '', 9);
-
-// Tabla de información
-$tbl = '
-<table border="1" cellpadding="4">
-    <tr>
-        <td width="25%" style="font-weight:bold; background-color:#f0f0f0;">PROGRAMA:</td>
-        <td width="75%">' . htmlspecialchars($programaNombre) . ($sigla ? ' (' . htmlspecialchars($sigla) . ')' : '') . '</td>
-    </tr>
-    <tr>
-        <td style="font-weight:bold; background-color:#f0f0f0;">MÓDULO:</td>
-        <td><strong>' . htmlspecialchars($moduloCodigo) . ' - ' . htmlspecialchars($moduloNombre) . '</strong></td>
-    </tr>
-    <tr>
-        <td style="font-weight:bold; background-color:#f0f0f0;">DOCENTE:</td>
-        <td>' . htmlspecialchars($docenteNombre) . '</td>
-    </tr>
-    <tr>
-        <td style="font-weight:bold; background-color:#f0f0f0;">FECHA:</td>
-        <td>
-            <strong>Inicio:</strong> ' . ($fechaInicioFormateada ?: '__________') . ' &nbsp;&nbsp;&nbsp;
-            <strong>Finalización:</strong> ' . ($fechaFinFormateada ?: '__________') . '
-        </td>
-    </tr>
-</table>';
-
-$pdf->writeHTML($tbl, true, false, false, false, '');
-
-$pdf->Ln(5);
-
-// TÍTULO DE LA PLANILLA
-$pdf->SetFont('helvetica', 'B', 12);
-$pdf->Cell(0, 6, 'PLANILLA DE CALIFICACIONES', 0, 1, 'C');
-$pdf->Ln(2);
-
-// TABLA DE CALIFICACIONES (encabezado agrupado "POSGRADUANTES" / "CALIFICACION",
-// igual al formato oficial FORMATO_CALIFICACIONES.docx)
-$pdf->SetFont('helvetica', '', 8);
-
-// Definir anchos de columnas (total 185mm = ancho útil de la página)
-$w0 = 10;  // N°
-$w1 = 75;  // NOMBRE COMPLETO
-$w2 = 20;  // SIGLA
-$w3 = 20;  // MÓDULO
-$w4 = 20;  // NUM.
-$w5 = 40;  // LITERAL
-
-// Fila 1 del encabezado: grupos "POSGRADUANTES" / "CALIFICACION"
-$pdf->SetFillColor(30, 60, 114); // Azul institucional
-$pdf->SetTextColor(255, 255, 255);
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->Cell($w0 + $w1 + $w2 + $w3, 6, 'POSGRADUANTES', 1, 0, 'C', true);
-$pdf->Cell($w4 + $w5, 6, 'CALIFICACION', 1, 1, 'C', true);
-
-// Fila 2 del encabezado: columnas individuales
-$pdf->Cell($w0, 7, 'N°', 1, 0, 'C', true);
-$pdf->Cell($w1, 7, 'NOMBRE COMPLETO', 1, 0, 'C', true);
-$pdf->Cell($w2, 7, 'SIGLA', 1, 0, 'C', true);
-$pdf->Cell($w3, 7, 'MÓDULO', 1, 0, 'C', true);
-$pdf->Cell($w4, 7, 'NUM.', 1, 0, 'C', true);
-$pdf->Cell($w5, 7, 'LITERAL', 1, 1, 'C', true);
-
-// Restaurar colores para el contenido
+$pdf->SetXY($margen + 23, 10);
+$anchoCentro = $anchoUtil - 46;
 $pdf->SetTextColor(0, 0, 0);
-$pdf->SetFont('helvetica', '', 8);
+$pdf->SetFont('times', 'B', 16);
+$pdf->Cell($anchoCentro, 7, InstitucionModelo::Universidad(), 0, 2, 'C');
+$pdf->SetFont('times', 'B', 12);
+$pdf->Cell($anchoCentro, 5.5, InstitucionModelo::Facultad(), 0, 2, 'C');
+$pdf->Cell($anchoCentro, 5.5, InstitucionModelo::Unidad(), 0, 2, 'C');
+$pdf->SetFont('helvetica', '', 7);
+$pdf->SetTextColorArray(PL_GRIS);
+$pdf->Cell($anchoCentro, 3.5, InstitucionModelo::DireccionCompleta(' - ', false), 0, 2, 'C', false, '', 1);
+$pdf->Cell($anchoCentro, 3.5, InstitucionModelo::Ciudad(), 0, 2, 'C');
+$pdf->SetTextColor(0, 0, 0);
 
-// Verificar si hay estudiantes
-if (empty($estudiantes) || count($estudiantes) === 0) {
+// Doble línea bajo el encabezado
+$y = max($pdf->GetY(), 31) + 2;
+$pdf->SetDrawColor(0, 0, 0);
+$pdf->SetLineWidth(0.5);
+$pdf->Line($margen, $y, $xDer, $y);
+$pdf->SetLineWidth(0.2);
+$pdf->Line($margen, $y + 0.9, $xDer, $y + 0.9);
+
+// ---------- Cuadro de datos del módulo ----------
+$pdf->SetXY($margen, $y + 6);
+$pdf->SetLineWidth(0.2);
+$wEtiqueta = round($anchoUtil * 0.35, 1);
+$wValor = $anchoUtil - $wEtiqueta;
+
+$filaDato = function ($etiqueta, $valor) use ($pdf, $wEtiqueta, $wValor) {
+    $pdf->SetFont('helvetica', '', 9);
+    $alto = max(6, $pdf->getNumLines($valor, $wValor) * 4.2 + 1.5);
+    $pdf->SetFillColorArray(PL_ETIQUETA);
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->MultiCell($wEtiqueta, $alto, $etiqueta, 1, 'C', true, 0, '', '', true, 0, false, true, $alto, 'M');
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->MultiCell($wValor, $alto, $valor, 1, 'C', false, 1, '', '', true, 0, false, true, $alto, 'M');
+};
+
+$moduloTexto = trim(($moduloCodigo !== '' ? $moduloCodigo . ' – ' : '') . $moduloNombre);
+$filaDato('PROGRAMA:', $programaNombre . ($sigla !== '' ? ' (' . $sigla . ')' : ''));
+$filaDato('MÓDULO:', $moduloTexto);
+$filaDato('DOCENTE:', $docenteNombre !== '' ? $docenteNombre : '—');
+
+// FECHA: inicio y finalización en dos mitades, como en el formato
+$pdf->SetFillColorArray(PL_ETIQUETA);
+$pdf->SetFont('helvetica', 'B', 9);
+$pdf->Cell($wEtiqueta, 6, 'FECHA:', 1, 0, 'C', true);
+$pdf->SetFont('helvetica', '', 9);
+$pdf->Cell($wValor / 2, 6, $fechaInicio ? fechaLarga($fechaInicio) : '__________', 1, 0, 'C');
+$pdf->Cell($wValor / 2, 6, $fechaFin ? fechaLarga($fechaFin) : '__________', 1, 1, 'C');
+
+// ---------- Título ----------
+$pdf->Ln(2);
+$pdf->SetFont('helvetica', 'B', 10);
+$pdf->Cell($anchoUtil, 6, 'PLANILLA DE CALIFICACIONES', 'B', 1, 'C');
+$pdf->Ln(5);
+
+// ---------- Tabla de calificaciones ----------
+// N° | NOMBRE COMPLETO | SIGLA | MÓDULO | NUM. | LITERAL (proporciones del formato)
+$proporcion = [36, 265, 97, 85, 58, 146];
+$total = array_sum($proporcion);
+$w = array_map(function ($p) use ($anchoUtil, $total) { return round($anchoUtil * $p / $total, 2); }, $proporcion);
+$w[1] += $anchoUtil - array_sum($w); // ajuste de redondeo
+
+$cabeceraTabla = function () use ($pdf, $w) {
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFillColorArray(PL_ETIQUETA);
+    $pdf->SetFont('helvetica', 'B', 8.5);
+    $pdf->Cell($w[0] + $w[1] + $w[2] + $w[3], 5.5, 'POSGRADUANTES', 1, 0, 'C', true);
+    $pdf->Cell($w[4] + $w[5], 5.5, 'CALIFICACIÓN', 1, 1, 'C', true);
+    foreach (['N°', 'NOMBRE COMPLETO', 'SIGLA', 'MÓDULO', 'NUM.', 'LITERAL'] as $i => $titulo) {
+        $pdf->Cell($w[$i], 5.5, $titulo, 1, $i === 5 ? 1 : 0, 'C', true);
+    }
+};
+
+$altoFila = 7;
+$limiteHoja = $pdf->getPageHeight() - 12;
+$cabeceraTabla();
+
+if (empty($estudiantes)) {
     $pdf->SetFont('helvetica', 'I', 9);
-    $pdf->Cell($w0 + $w1 + $w2 + $w3 + $w4 + $w5, 10, 'No hay estudiantes inscritos en este módulo', 1, 1, 'C');
+    $pdf->Cell(array_sum($w), 10, 'No hay estudiantes inscritos en este módulo', 1, 1, 'C');
 } else {
-    // Iterar sobre los estudiantes
-    foreach ($estudiantes as $index => $estudiante) {
-        // Obtener datos del estudiante
-        $nombre = isset($estudiante['Nombre']) ? $estudiante['Nombre'] : '';
-        $apaterno = isset($estudiante['Apaterno']) ? $estudiante['Apaterno'] : '';
-        $amaterno = isset($estudiante['Amaterno']) ? $estudiante['Amaterno'] : '';
-        $nombreCompleto = trim($apaterno . ' ' . $amaterno . ' ' . $nombre);
-
-        $nota = isset($estudiante['Nota']) ? $estudiante['Nota'] : null;
-
+    foreach (array_values($estudiantes) as $index => $estudiante) {
+        if ($pdf->GetY() + $altoFila > $limiteHoja) {
+            $pdf->AddPage();
+            $cabeceraTabla(); // la cabecera se repite en cada hoja
+        }
+        $nombreCompleto = trim(($estudiante['Apaterno'] ?? '') . ' ' . ($estudiante['Amaterno'] ?? '') . ' ' . ($estudiante['Nombre'] ?? ''));
+        $nota = $estudiante['Nota'] ?? null;
         if ($nota === null || $nota === '') {
             $notaMostrar = '-';
             $notaLiteral = '-';
         } else {
-            $notaInt = intval($nota);
-            $notaMostrar = $notaInt;
-            $notaLiteral = numeroALetras($notaInt);
+            $notaMostrar = (string)intval($nota);
+            $notaLiteral = numeroALetras(intval($nota));
         }
 
-        // Alternar color de fondo
-        if ($index % 2 == 0) {
-            $pdf->SetFillColor(255, 255, 255); // Blanco
-        } else {
-            $pdf->SetFillColor(248, 249, 250); // Gris claro
-        }
-
-        // Dibujar fila
-        $pdf->Cell($w0, 6, $index + 1, 1, 0, 'C', true);
-        $pdf->Cell($w1, 6, $nombreCompleto, 1, 0, 'L', true);
-        $pdf->Cell($w2, 6, $sigla, 1, 0, 'C', true);
-        $pdf->Cell($w3, 6, $moduloCodigo, 1, 0, 'C', true);
-
-        // Nota numérica en negrita
-        $pdf->SetFont('helvetica', 'B', 8);
-        $pdf->Cell($w4, 6, $notaMostrar, 1, 0, 'C', true);
-        $pdf->SetFont('helvetica', '', 8);
-
-        $pdf->Cell($w5, 6, $notaLiteral, 1, 1, 'L', true);
+        $pdf->SetFont('helvetica', '', 8.5);
+        $pdf->Cell($w[0], $altoFila, $index + 1, 1, 0, 'C');
+        // stretch=1: si un texto es más largo que la celda se comprime en vez de salirse
+        $pdf->Cell($w[1], $altoFila, $nombreCompleto, 1, 0, 'L', false, '', 1);
+        $pdf->Cell($w[2], $altoFila, $sigla, 1, 0, 'C', false, '', 1);
+        $pdf->Cell($w[3], $altoFila, $moduloCodigo, 1, 0, 'C', false, '', 1);
+        $pdf->SetFont('helvetica', 'B', 8.5);
+        $pdf->Cell($w[4], $altoFila, $notaMostrar, 1, 0, 'C');
+        $pdf->SetFont('helvetica', '', 8.5);
+        $pdf->Cell($w[5], $altoFila, $notaLiteral, 1, 1, 'C', false, '', 1);
     }
 }
 
-// PIE DE PÁGINA: escala de calificación + lugar/fecha + firmas, fijo al
-// fondo de la hoja. Antes la escala se imprimía justo después de la tabla y
-// las firmas por separado con Ln(15), así que en módulos con pocos
-// estudiantes quedaban pegadas debajo de la tabla en vez de al pie de la
-// página. Se reserva una altura fija y, si ya no entra en la página actual
-// (tabla muy larga), se pasa a una nueva antes de fijarla. Se desactiva el
-// salto de página automático mientras se dibuja el pie porque, con
-// AutoPageBreak activo, cada Cell() individual vuelve a chequear el margen
-// de 15mm y puede partir el bloque del pie a la mitad al acercarse al fondo
-// real de la hoja (bug detectado: firmas en la página 1 y el resto del pie
-// solo en la página 2).
-$alturaPie = 55;
-if ($pdf->GetY() > $pdf->getPageHeight() - $pdf->getBreakMargin() - $alturaPie) {
+// ---------- Pie: escala + lugar/fecha + firmas, fijo al fondo de la hoja ----------
+// Si ya no entra en la hoja actual (tabla muy larga), pasa a una nueva.
+$alturaPie = 58;
+if ($pdf->GetY() > $pdf->getPageHeight() - 12 - $alturaPie) {
     $pdf->AddPage();
 }
-$pdf->SetAutoPageBreak(false);
-$pdf->SetY(-$alturaPie);
+$yPie = $pdf->getPageHeight() - 12 - $alturaPie + 4;
 
-// ESCALA DE CALIFICACIÓN
-$pdf->SetFont('helvetica', 'B', 8);
-$pdf->Cell(45, 5, 'ESCALA DE CALIFICACION', 0, 0, 'L');
-$pdf->SetFont('helvetica', '', 8);
-$pdf->Cell(70, 5, '0  -  75    REPROBADO', 1, 0, 'C');
-$pdf->Cell(70, 5, '76  -  100    APROBADO', 1, 1, 'C');
-
-$pdf->Ln(8);
+// Escala en recuadro, con la nota mínima de Configuración (nunca 75/76 a mano)
+$pdf->SetXY($margen, $yPie);
+$pdf->SetFont('helvetica', '', 7.5);
+$pdf->Cell(36, 11, 'ESCALA DE CALIFICACIÓN', 0, 0, 'L');
+$xCaja = $pdf->GetX();
+$pdf->SetDrawColor(0, 0, 0);
+$pdf->Rect($xCaja, $yPie, 46, 11);
 $pdf->SetFont('helvetica', '', 9);
+$pdf->SetXY($xCaja + 3, $yPie + 0.8);
+$pdf->Cell(17, 4.7, '0  –  ' . ($notaMinima - 1), 0, 0, 'L');
+$pdf->Cell(24, 4.7, 'REPROBADO', 0, 1, 'L');
+$pdf->SetX($xCaja + 3);
+$pdf->Cell(17, 4.7, $notaMinima . '  –  100', 0, 0, 'L');
+$pdf->Cell(24, 4.7, 'APROBADO', 0, 1, 'L');
+
 // Lugar y fecha de firma (editable, independiente de inicio/fin del módulo)
-$pdf->Cell(0, 5, 'Oruro, ' . fechaLarga($fechaGeneracion), 0, 1, 'C');
+$pdf->SetXY($margen, $yPie + 15);
+$pdf->SetFont('helvetica', '', 9);
+$pdf->Cell($anchoUtil, 5, 'Oruro, ' . fechaLarga($fechaGeneracion), 0, 1, 'R');
 
-$pdf->Ln(12);
-
-$pdf->Cell(90, 1, '', 'T', 0, 'C');
-$pdf->Cell(10, 1, '', 0, 0);
-$pdf->Cell(90, 1, '', 'T', 1, 'C');
-
-$pdf->SetFont('helvetica', 'B', 9);
-$pdf->Cell(90, 5, 'DOCENTE', 0, 0, 'C');
-$pdf->Cell(10, 5, '', 0, 0);
-$pdf->Cell(90, 5, InstitucionModelo::CargoFirma(), 0, 1, 'C');
-
-$pdf->SetFont('helvetica', '', 8);
-$pdf->Cell(90, 4, htmlspecialchars($docenteNombre), 0, 0, 'C');
-$pdf->Cell(10, 4, '', 0, 0);
-$pdf->Cell(90, 4, '', 0, 1, 'C');
-$pdf->SetAutoPageBreak(true, 15);
-
-// Crear directorio si no existe
-$dirPDFs = __DIR__ . '/../../pdfs_generados';
-if (!file_exists($dirPDFs)) {
-    @mkdir($dirPDFs, 0777, true);
+// Firmas: línea punteada, nombre y cargo debajo
+$anchoFirma = ($anchoUtil - 16) / 2;
+$yFirma = $pdf->getPageHeight() - 12 - 16;
+$pdf->SetLineStyle(['width' => 0.25, 'dash' => '1,1', 'color' => [0, 0, 0]]);
+$pdf->Line($margen, $yFirma, $margen + $anchoFirma, $yFirma);
+$pdf->Line($xDer - $anchoFirma, $yFirma, $xDer, $yFirma);
+$pdf->SetLineStyle(['width' => 0.2, 'dash' => 0, 'color' => [0, 0, 0]]);
+foreach ([[$margen, $docenteNombre, 'DOCENTE'], [$xDer - $anchoFirma, $coordinadorNombre, InstitucionModelo::CargoFirma()]] as $firma) {
+    $pdf->SetXY($firma[0], $yFirma + 1.5);
+    $pdf->SetFont('helvetica', 'B', 8.5);
+    $pdf->Cell($anchoFirma, 4.5, $firma[1], 0, 2, 'C', false, '', 1);
+    $pdf->SetFont('helvetica', '', 8);
+    $pdf->Cell($anchoFirma, 4, $firma[2], 0, 0, 'C', false, '', 1);
 }
 
-// Nombre del archivo
-$nombreArchivo = 'calificaciones_' . $moduloCodigo . '_' . date('Ymd_His') . '.pdf';
-$rutaCompleta = $dirPDFs . '/' . $nombreArchivo;
-
-// Obtener el PDF como string una sola vez ('S'): de ahí se guarda una copia en
-// disco (para el historial en pdfs_generados) y se envía la misma copia al
-// navegador, en vez de llamar Output() dos veces sobre el mismo objeto (guardar
-// y mostrar por separado), que en TCPDF puede dejar la segunda salida corrupta.
+// ---------- Guardar copia (historial "Planillas generadas") y mostrar ----------
 $pdfContenido = $pdf->Output('', 'S');
-
-if (is_dir($dirPDFs) && is_writable($dirPDFs)) {
-    @file_put_contents($rutaCompleta, $pdfContenido);
+$nombreArchivo = PlanillaGuardadaModelo::Guardar($pdfContenido, [
+    'programaID' => $programaID,
+    'moduloID' => $moduloID,
+    'programaNombre' => $programaNombre,
+    'moduloCodigo' => $moduloCodigo,
+    'moduloNombre' => $moduloNombre,
+    'docenteNombre' => $docenteNombre,
+    'fechaInicio' => $fechaInicio,
+    'fechaFin' => $fechaFin,
+    'fechaGeneracion' => $fechaGeneracion,
+    'totalEstudiantes' => count($estudiantes ?: []),
+    'usuario' => trim(($_SESSION['Nombres'] ?? '') . ' ' . ($_SESSION['ApellidoPaterno'] ?? '')) ?: ($_SESSION['Usuario'] ?? ''),
+    'tipoUsuario' => $_SESSION['Tipo'] ?? '',
+]);
+if ($nombreArchivo === '') {
+    $nombreArchivo = 'calificaciones_' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $moduloCodigo) . '.pdf';
 }
 
 // Si se requiere JSON response (para AJAX), no se envía el PDF inline
@@ -397,8 +380,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         'status' => 'success',
         'message' => 'PDF generado correctamente',
         'archivo' => $nombreArchivo,
-        'ruta' => 'pdfs_generados/' . $nombreArchivo,
-        'totalEstudiantes' => count($estudiantes)
+        'totalEstudiantes' => count($estudiantes ?: [])
     ]);
     exit;
 }
@@ -412,4 +394,3 @@ header('Content-Length: ' . strlen($pdfContenido));
 header('Cache-Control: private, max-age=0, must-revalidate');
 echo $pdfContenido;
 exit;
-?>
