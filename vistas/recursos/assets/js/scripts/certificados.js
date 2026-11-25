@@ -108,6 +108,177 @@
         // "Busque al estudiante…" (#cert-vacio) solo mientras no hay uno elegido
         $select.on('change', function () { $('#cert-vacio').toggle(!$(this).val()); });
 
+        // Certificados ya generados (2026-11-25): al elegir al estudiante primero se ven los
+        // de este tipo que ya tiene en ese programa, para reimprimirlos sin volver a pedir el
+        // voucher. El formulario del certificado nuevo (todo lo que la página tiene debajo de
+        // la tarjeta del estudiante) se pasa a una ventana que se abre con "Nuevo certificado".
+        const conHistorial = !!op.tipo && op.historial !== false;
+        const $historial = conHistorial
+            ? $('<div class="card-certificado cert-historial" id="cert-historial" style="display:none;"></div>')
+                .insertAfter($cont.closest('.card-certificado'))
+            : $();
+        let consultaHistorial = 0;
+        let elegidoActual = null;
+        let nombreTipoActual = '';
+
+        // Ventana propia (no de Bootstrap): la confirmación con vista previa (modal de
+        // Bootstrap) se abre encima de ella sin cerrarla. Queda dentro de .certificado-container
+        // para conservar los estilos de las tarjetas. Los <script> y los <form> ocultos de la
+        // página se quedan donde están; los controles conservan sus eventos al moverse.
+        const $ventana = conHistorial
+            ? $('<div class="cert-ventana" id="cert-ventana-nuevo" role="dialog" aria-modal="true" aria-labelledby="cert-ventana-titulo">' +
+                    '<div class="cert-ventana-caja">' +
+                        '<div class="cert-ventana-cabeza">' +
+                            '<div><small id="cert-ventana-estudiante"></small><h4 id="cert-ventana-titulo">Nuevo certificado</h4></div>' +
+                            '<button type="button" class="cert-ventana-cerrar" aria-label="Cerrar"><i class="fas fa-times"></i></button>' +
+                        '</div>' +
+                        '<div class="cert-ventana-cuerpo"></div>' +
+                    '</div>' +
+                '</div>').appendTo($cont.closest('.certificado-container').length ? $cont.closest('.certificado-container') : 'body')
+            : $();
+        if (conHistorial) {
+            $historial.nextAll().not('script, form, style, link, #cert-vacio, #cert-ventana-nuevo')
+                .appendTo($ventana.find('.cert-ventana-cuerpo'));
+        }
+
+        function abrirVentana() {
+            const nombre = elegidoActual ? [elegidoActual.Apaterno, elegidoActual.Amaterno, elegidoActual.Nombre].filter(Boolean).join(' ') : '';
+            $('#cert-ventana-titulo').text('Nuevo: ' + (nombreTipoActual || 'certificado'));
+            $('#cert-ventana-estudiante').text(nombre);
+            $ventana.addClass('abierta');
+            $('body').addClass('cert-ventana-abierta');
+            $ventana.find('.cert-ventana-cuerpo').scrollTop(0);
+        }
+
+        function cerrarVentana() {
+            $ventana.removeClass('abierta');
+            $('body').removeClass('cert-ventana-abierta');
+        }
+
+        $ventana.on('click', '.cert-ventana-cerrar', cerrarVentana);
+        $(document).on('keydown', function (e) {
+            // Escape cierra la ventana, salvo que esté abierta la confirmación encima
+            if (e.key === 'Escape' && $ventana.hasClass('abierta') && !$('.modal.show').length && !$('.swal2-container').length) {
+                cerrarVentana();
+            }
+        });
+
+        function fechaHora(texto) {
+            const m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/.exec(texto || '');
+            return m ? (m[3] + '/' + m[2] + '/' + m[1] + (m[4] ? ' ' + m[4] + ':' + m[5] : '')) : escapar(texto);
+        }
+
+        function pintarHistorial(insc, nombreTipo, documentos) {
+            const enRegistro = 'registrodocumentos?ci=' + encodeURIComponent(insc.Ci || '') +
+                '&inscripcion=' + encodeURIComponent(insc.EstudianteID + '-' + insc.ProgramaID);
+            let cuerpo;
+            if (!documentos.length) {
+                cuerpo = '<div class="cert-historial-vacio"><i class="fas fa-inbox"></i>' +
+                    '<p>Este estudiante todavía no tiene ningún <strong>' + escapar(nombreTipo) + '</strong> generado en este programa.</p></div>';
+            } else {
+                cuerpo = '<div class="table-responsive"><table class="table cert-historial-tabla">' +
+                    '<thead><tr><th>Generado</th><th>N° de voucher</th><th class="text-right">Monto</th><th>Estado</th><th>Por</th><th></th></tr></thead><tbody>' +
+                    documentos.map(function (d) {
+                        const aprobado = d.estado === 'APROBADO';
+                        return '<tr>' +
+                            '<td>' + fechaHora(d.fechaEmision) + '</td>' +
+                            '<td>' + (d.vaucher ? escapar(d.vaucher) : '<span class="text-muted">—</span>') + '</td>' +
+                            '<td class="text-right">' + (d.monto !== null && d.monto !== '' ? formatoBs(d.monto) : '<span class="text-muted">—</span>') + '</td>' +
+                            '<td><span class="cert-estado-doc ' + (aprobado ? 'is-aprobado' : 'is-pendiente') + '">' +
+                                (aprobado ? 'Aprobado' : 'Pendiente') + '</span></td>' +
+                            '<td>' + escapar(d.emisor || '') + '</td>' +
+                            '<td class="text-right">' + (d.reimprimible
+                                ? '<button type="button" class="btn btn-sm cert-reimprimir" data-documento="' + d.idDocumento + '">' +
+                                  '<i class="fas fa-print"></i> Reimprimir</button>'
+                                : '<a class="btn btn-sm btn-outline-secondary" href="' + enRegistro + '" title="Generado antes de que se guardaran sus datos">Ver en Registro</a>') +
+                            '</td></tr>';
+                    }).join('') +
+                    '</tbody></table></div>' +
+                    '<p class="cert-historial-nota"><i class="fas fa-info-circle"></i> Se reimprime tal como se generó. ' +
+                    'Para corregir algún dato use <a href="' + enRegistro + '">Registro de documentos</a>.</p>';
+            }
+            $historial.html(
+                '<h3><i class="fas fa-folder-open"></i> ' + escapar(nombreTipo) + ' ya generados' +
+                    (documentos.length ? ' <span class="cert-cabeza-extra">' + documentos.length + '</span>' : '') + '</h3>' +
+                '<div class="certificado-cuerpo">' + cuerpo +
+                    '<div class="cert-historial-acciones">' +
+                        '<button type="button" class="btn-generar-certificado cert-nuevo"><i class="fas fa-plus"></i> Nuevo certificado</button>' +
+                    '</div>' +
+                '</div>'
+            ).show();
+        }
+
+        // Si no se pudieron consultar los anteriores, igual se puede hacer uno nuevo
+        function pintarSinConsulta() {
+            $historial.html(
+                '<h3><i class="fas fa-folder-open"></i> Certificados ya generados</h3>' +
+                '<div class="certificado-cuerpo">' +
+                    '<p class="cert-historial-nota text-danger"><i class="fas fa-exclamation-triangle"></i> No se pudieron consultar los certificados anteriores. ' +
+                    'Puede verlos en Registro de documentos.</p>' +
+                    '<div class="cert-historial-acciones">' +
+                        '<button type="button" class="btn-generar-certificado cert-nuevo"><i class="fas fa-plus"></i> Nuevo certificado</button>' +
+                    '</div>' +
+                '</div>'
+            ).show();
+        }
+
+        function cargarHistorial(insc) {
+            const consulta = ++consultaHistorial;
+            elegidoActual = insc;
+            nombreTipoActual = '';
+            cerrarVentana();
+            $historial.html(
+                '<h3><i class="fas fa-folder-open"></i> Certificados ya generados</h3>' +
+                '<div class="certificado-cuerpo"><span class="text-muted"><i class="fas fa-spinner fa-spin"></i> Buscando certificados anteriores...</span></div>'
+            ).show();
+            $.ajax({
+                url: 'ajax/certificado.ajax.php',
+                method: 'POST',
+                dataType: 'json',
+                data: { accion: 'documentosDelEstudiante', estudianteID: insc.EstudianteID, programaID: insc.ProgramaID, tipo: op.tipo },
+                success: function (resp) {
+                    if (consulta !== consultaHistorial) return; // ya se eligió a otro estudiante
+                    if (!resp || !resp.success) {
+                        pintarSinConsulta();
+                        return;
+                    }
+                    nombreTipoActual = resp.nombreTipo || '';
+                    pintarHistorial(insc, resp.nombreTipo || 'Certificados', resp.documentos || []);
+                },
+                error: function () {
+                    if (consulta !== consultaHistorial) return;
+                    pintarSinConsulta();
+                }
+            });
+        }
+
+        // Reimprimir con los datos guardados (igual que "Imprimir" en Registro de documentos):
+        // la pestaña se abre en el mismo clic, si no el navegador la bloquea
+        $historial.on('click', '.cert-reimprimir', function () {
+            const idDocumento = $(this).data('documento');
+            const destino = 'cert_pdf_' + Date.now();
+            const ventana = window.open('', destino);
+            $.post('ajax/certificado.ajax.php', { accion: 'obtenerDocumento', idDocumento: idDocumento }, function (data) {
+                if (!data || !data.success || !data.documento.datos || !data.documento.rutaPdf) {
+                    if (ventana) ventana.close();
+                    aviso('error', 'No se puede reimprimir', (data && data.mensaje) || 'El documento no tiene datos guardados.');
+                    return;
+                }
+                const $form = $('<form method="POST" class="d-none"></form>').attr({ action: data.documento.rutaPdf, target: destino });
+                $form.append($('<input type="hidden" name="idDocumento">').val(data.documento.idDocumento));
+                Object.keys(data.documento.datos).forEach(function (clave) {
+                    $form.append($('<input type="hidden">').attr('name', clave).val(data.documento.datos[clave]));
+                });
+                $form.appendTo('body')[0].submit();
+                $form.remove();
+            }, 'json').fail(function () {
+                if (ventana) ventana.close();
+                aviso('error', 'No se puede reimprimir', 'No se pudo obtener el documento.');
+            });
+        });
+
+        $historial.on('click', '.cert-nuevo', abrirVentana);
+
         function estado(html) {
             $('#cert-estado').html(html || '').toggle(!!html);
         }
@@ -178,6 +349,10 @@
             estado('');
             $('#cert-resultados').empty();
             $('#cert-elegido').hide().empty();
+            consultaHistorial++;
+            $historial.hide().empty();
+            elegidoActual = null;
+            cerrarVentana();
             $select.empty().append('<option value="">-- Seleccione --</option>').val('').trigger('change');
             if (op.alLimpiar) op.alLimpiar();
         }
@@ -202,6 +377,7 @@
             $opcion.attr('data-grado-clave', claveGrado(insc.GradoAcademico));
             $select.empty().append($opcion).val($opcion.val()).trigger('change');
             ponerPrecio(insc);
+            if (conHistorial) cargarHistorial(insc);
         }
 
         // Monto: el precio del certificado para el grado del programa (se puede cambiar)

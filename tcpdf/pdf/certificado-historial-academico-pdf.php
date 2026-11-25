@@ -54,6 +54,20 @@ if (empty($modulos)) {
     die('Error: El estudiante no tiene calificaciones registradas en este programa');
 }
 
+// Fechas de aprobación cambiadas a mano en la pantalla ("Editar fechas"): solo para este
+// historial, {"Idmodulo":"AAAA-MM-DD"}. Las que faltan o no son fechas válidas usan la de
+// registro de la nota. Viajan en $_POST, así que quedan guardadas con el documento.
+$fechasAprobacion = json_decode((string)($_POST['fechasAprobacion'] ?? ''), true);
+$fechasAprobacion = is_array($fechasAprobacion) ? $fechasAprobacion : [];
+foreach ($modulos as &$mod) {
+    $editada = (string)($fechasAprobacion[$mod['Idmodulo']] ?? '');
+    $fechaValida = DateTime::createFromFormat('Y-m-d', $editada);
+    if ($fechaValida && $fechaValida->format('Y-m-d') === $editada) {
+        $mod['FechaRegistro'] = $editada;
+    }
+}
+unset($mod);
+
 // El N° de voucher es único en todo el sistema (también entre certificados). La
 // demostración (completo=1) no registra nada, así que no se revisa.
 $voucherRepetido = empty($_POST['completo']) ? CertificadoModelo::VoucherRepetidoMensaje($vaucher, intval($_POST['idDocumento'] ?? 0)) : null;

@@ -21,8 +21,22 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
 
                             <!-- Paso 2: las notas que saldrán en el historial -->
                             <div class="card-certificado" id="card-modulos" style="display:none;">
-                                <h3><span class="paso-numero">2</span> Calificaciones</h3>
+                                <h3><span class="paso-numero">2</span> Calificaciones
+                                    <button type="button" class="cert-editar-fechas" id="btn-editar-fechas" style="display:none;"
+                                        title="Cambiar la fecha de aprobación que sale en el historial (no cambia las notas)">
+                                        <i class="fas fa-calendar-alt"></i> Editar fechas
+                                    </button>
+                                </h3>
                                 <div class="certificado-cuerpo">
+                                    <!-- Edición de fechas de aprobación: solo para este historial (se guardan con él) -->
+                                    <div class="cert-fechas-barra" id="barra-fechas" style="display:none;">
+                                        <span><i class="fas fa-magic"></i> Llenar todas con el <strong>fin del módulo +</strong></span>
+                                        <input type="number" class="form-control" id="dias-despues" min="0" max="365" value="5" aria-label="Días después del fin del módulo">
+                                        <span>días</span>
+                                        <button type="button" class="btn btn-sm cert-fechas-aplicar" id="btn-aplicar-dias">Aplicar</button>
+                                        <button type="button" class="btn btn-sm btn-link" id="btn-restablecer-fechas">Volver a las fechas de registro</button>
+                                        <button type="button" class="btn btn-sm cert-fechas-listo" id="btn-listo-fechas"><i class="fas fa-check"></i> Listo</button>
+                                    </div>
                                     <div class="table-responsive">
                                         <table class="table tabla-certificado" id="tabla-modulos-certificado">
                                             <thead>
@@ -89,6 +103,8 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
         <input type="hidden" name="vaucher" id="hidden-vaucher">
         <input type="hidden" name="monto" id="hidden-monto">
         <input type="hidden" name="fecha" id="hidden-fecha">
+        <!-- Fechas de aprobación cambiadas a mano: {"Idmodulo":"AAAA-MM-DD"} (vacío = las de registro) -->
+        <input type="hidden" name="fechasAprobacion" id="hidden-fechas-aprobacion">
     </form>
 
     <script>
@@ -96,6 +112,111 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
         $('#input-fecha').val(new Date().toLocaleDateString('en-CA'));
 
         var modulosActuales = [];
+
+        // ===== Fechas de aprobación =====
+        // Por defecto, la fecha en que se registró la nota (calificacion.FechaRegistro).
+        // "Editar fechas" permite cambiarlas solo para este historial: se envían al PDF en
+        // fechasAprobacion y quedan guardadas con el documento (se reimprime igual).
+        // No cambian las notas ni la base de datos.
+        var fechasEditadas = {};   // Idmodulo -> 'AAAA-MM-DD' (solo las cambiadas)
+        var editandoFechas = false;
+
+        function ymd(valor) { return valor ? String(valor).substring(0, 10) : ''; }
+        function dma(valor) { return valor ? ymd(valor).split('-').reverse().join('/') : '-'; }
+        function fechaAprobacion(mod) { return fechasEditadas[mod.Idmodulo] || ymd(mod.FechaRegistro); }
+        function esc(texto) { return $('<div>').text(texto || '').html(); }
+
+        function sumarDias(fechaYmd, dias) {
+            var p = ymd(fechaYmd).split('-');
+            if (p.length !== 3) return '';
+            var d = new Date(+p[0], +p[1] - 1, +p[2] + dias);
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+
+        function pintarModulos() {
+            var $tbody = $('#tabla-modulos-certificado tbody').empty();
+            modulosActuales.forEach(function(mod, i) {
+                var fecha = fechaAprobacion(mod);
+                var cambiada = !!fechasEditadas[mod.Idmodulo];
+                var fin = ymd(mod.FechaFinal);
+                // Aviso si la aprobación queda antes de que termine el módulo
+                var antesDelFin = fin && fecha && fecha < fin;
+                var celda;
+                if (editandoFechas) {
+                    celda = '<input type="date" class="form-control form-control-sm cert-fecha-aprob' + (cambiada ? ' is-cambiada' : '') + '"' +
+                        ' data-modulo="' + mod.Idmodulo + '" value="' + fecha + '">' +
+                        '<small class="cert-fecha-fin">' + (fin ? 'Fin del módulo: ' + dma(fin) : 'Sin fecha de fin') + '</small>';
+                } else {
+                    celda = '<span class="' + (cambiada ? 'cert-fecha-cambiada' : '') + '"' + (cambiada ? ' title="Fecha cambiada para este historial"' : '') + '>' +
+                        dma(fecha) + '</span>';
+                }
+                if (antesDelFin) {
+                    celda += '<small class="cert-fecha-alerta"><i class="fas fa-exclamation-triangle"></i> antes del fin del módulo (' + dma(fin) + ')</small>';
+                }
+                $tbody.append(
+                    '<tr>' +
+                    '<td class="cert-n">' + (i + 1) + '</td>' +
+                    '<td class="cert-sigla">' + esc(mod.codigomodulo) + '</td>' +
+                    '<td>' + esc(mod.nombremodulo) + '</td>' +
+                    '<td class="text-center"><span class="cert-nota">' + parseInt(mod.Nota, 10) + '</span></td>' +
+                    '<td class="text-center cert-celda-fecha">' + celda + '</td>' +
+                    '</tr>'
+                );
+            });
+            $('#barra-fechas').toggle(editandoFechas);
+            var cambiadas = Object.keys(fechasEditadas).length;
+            $('#btn-editar-fechas').toggleClass('activo', editandoFechas)
+                .html('<i class="fas fa-calendar-alt"></i> ' + (editandoFechas ? 'Editando fechas' : 'Editar fechas') +
+                    (cambiadas ? ' <span class="cert-fechas-cuenta">' + cambiadas + '</span>' : ''));
+        }
+
+        function fijarFecha(mod, fecha) {
+            if (!fecha || fecha === ymd(mod.FechaRegistro)) {
+                delete fechasEditadas[mod.Idmodulo];
+            } else {
+                fechasEditadas[mod.Idmodulo] = fecha;
+            }
+        }
+
+        $('#btn-editar-fechas').on('click', function() {
+            editandoFechas = !editandoFechas;
+            pintarModulos();
+        });
+        $('#btn-listo-fechas').on('click', function() {
+            editandoFechas = false;
+            pintarModulos();
+        });
+        $('#tabla-modulos-certificado').on('change', '.cert-fecha-aprob', function() {
+            var id = String($(this).data('modulo'));
+            var mod = modulosActuales.find(function(m) { return String(m.Idmodulo) === id; });
+            if (mod) fijarFecha(mod, this.value);
+            pintarModulos();
+        });
+        $('#btn-aplicar-dias').on('click', function() {
+            var dias = parseInt($('#dias-despues').val(), 10);
+            if (isNaN(dias) || dias < 0) {
+                Certificado.aviso('warning', 'Días no válidos', 'Escriba cuántos días después del fin del módulo (0 o más)');
+                return;
+            }
+            var sinFin = 0;
+            modulosActuales.forEach(function(mod) {
+                if (!mod.FechaFinal) { sinFin++; return; }
+                fijarFecha(mod, sumarDias(mod.FechaFinal, dias));
+            });
+            pintarModulos();
+            if (sinFin) {
+                Certificado.aviso('info', 'Algunos módulos sin fecha de fin',
+                    sinFin + (sinFin === 1 ? ' módulo no tiene' : ' módulos no tienen') + ' fecha de fin registrada: cámbielos a mano.');
+            }
+        });
+        $('#btn-restablecer-fechas').on('click', function() {
+            fechasEditadas = {};
+            pintarModulos();
+        });
+
+        function ponerFechasEnFormulario() {
+            $('#hidden-fechas-aprobacion').val(Object.keys(fechasEditadas).length ? JSON.stringify(fechasEditadas) : '');
+        }
 
         Certificado.buscador({
             contenedor: '#buscador-certificado',
@@ -143,18 +264,11 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                         '<div class="cert-avance-texto"><span><strong>' + modulosActuales.length + (total ? ' de ' + total : '') + '</strong> módulos con nota</span></div>' +
                         '<div class="cert-barra"><span style="width:' + porcentaje + '%"></span></div>'
                     );
-                    modulosActuales.forEach(function(mod, i) {
-                        var fecha = mod.FechaRegistro ? String(mod.FechaRegistro).substring(0, 10).split('-').reverse().join('/') : '-';
-                        $tbody.append(
-                            '<tr>' +
-                            '<td class="cert-n">' + (i + 1) + '</td>' +
-                            '<td class="cert-sigla">' + $('<div>').text(mod.codigomodulo || '').html() + '</td>' +
-                            '<td>' + $('<div>').text(mod.nombremodulo || '').html() + '</td>' +
-                            '<td class="text-center"><span class="cert-nota">' + parseInt(mod.Nota, 10) + '</span></td>' +
-                            '<td class="text-center">' + fecha + '</td>' +
-                            '</tr>'
-                        );
-                    });
+                    // Cada estudiante empieza con las fechas de registro de sus notas
+                    fechasEditadas = {};
+                    editandoFechas = false;
+                    $('#btn-editar-fechas').toggle(!!modulosActuales.length);
+                    pintarModulos();
                 },
                 error: function() {
                     Certificado.aviso('error', 'Error', 'No se pudieron obtener las calificaciones');
@@ -180,6 +294,7 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
             $('#hidden-vaucher').val($('#input-vaucher').val().trim());
             $('#hidden-monto').val('');
             $('#hidden-fecha').val(fecha);
+            ponerFechasEnFormulario();
             var $completo = $('<input type="hidden" name="completo" value="1">').appendTo($form);
             $form.attr('target', '_blank')[0].submit();
             $completo.remove();
@@ -216,6 +331,8 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
             $('#hidden-vaucher').val(vaucher);
             $('#hidden-monto').val(monto);
             $('#hidden-fecha').val(fecha);
+            ponerFechasEnFormulario();
+            var cambiadas = Object.keys(fechasEditadas).length;
 
             Certificado.confirmar({
                 titulo: 'Historial Académico',
@@ -228,7 +345,10 @@ include __DIR__ . '/modulos/certificado-encabezado.php';
                     ['Monto pagado', Certificado.formatoBs(monto)],
                     ['Fecha', fecha.split('-').reverse().join('/')],
                     ['Módulos', modulosActuales.length + (modulosActuales.length === 1 ? ' módulo' : ' módulos') +
-                        (modulosActuales.length > 12 ? ' (' + Math.ceil(modulosActuales.length / 12) + ' hojas)' : '')]
+                        (modulosActuales.length > 12 ? ' (' + Math.ceil(modulosActuales.length / 12) + ' hojas)' : '')],
+                    ['Fechas de aprobación', cambiadas
+                        ? cambiadas + (cambiadas === 1 ? ' cambiada a mano' : ' cambiadas a mano')
+                        : 'Las de registro de cada nota']
                 ],
                 ortografia: [
                     { texto: String($opt.data('programa')).toLocaleUpperCase('es') }

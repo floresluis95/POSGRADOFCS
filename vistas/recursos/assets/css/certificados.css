@@ -558,3 +558,91 @@
     .cert-acciones .btn-generar-certificado { justify-content: center; }
     .certificado-container .voucher-partes { max-width: none; }
 }
+
+/* ---------- Certificados ya generados (2026-11-25) ----------
+   Al elegir al estudiante se ven primero los certificados de este tipo que ya
+   tiene; el formulario del certificado nuevo está en una ventana (.cert-ventana)
+   que se abre con "Nuevo certificado" (lo maneja certificados.js). */
+
+.cert-historial-tabla { margin-bottom: 8px; font-size: 13px; }
+.cert-historial-tabla th {
+    font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+    color: var(--cert-texto-2); border-top: 0; white-space: nowrap;
+}
+.cert-historial-tabla td { vertical-align: middle; }
+.cert-estado-doc { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+.cert-estado-doc.is-aprobado { background: #e7f5ec; color: #1e7a46; }
+.cert-estado-doc.is-pendiente { background: #fff4e0; color: #9a6200; }
+.cert-reimprimir {
+    background: var(--cert-primario-suave); color: var(--cert-primario);
+    border: 1px solid #cdd8ec; font-weight: 600; white-space: nowrap;
+}
+.cert-reimprimir:hover { background: #0f6674; border-color: #0f6674; color: #fff; }
+.cert-historial-nota { margin: 0 0 14px; font-size: 12px; color: var(--cert-texto-2); }
+.cert-historial-vacio { display: flex; align-items: center; gap: 12px; padding: 6px 0 14px; color: var(--cert-texto-2); }
+.cert-historial-vacio i { font-size: 22px; color: #94a3b8; }
+.cert-historial-vacio p { margin: 0; }
+.cert-historial-acciones { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.cert-nuevo-abierto { font-size: 13px; color: var(--cert-texto-2); }
+
+/* Ventana del certificado nuevo: debajo del backdrop de Bootstrap (1040) para que la
+   confirmación con vista previa (modal de Bootstrap) quede encima sin cerrarla */
+.cert-ventana {
+    position: fixed; inset: 0; z-index: 1035;
+    display: none; align-items: flex-start; justify-content: center;
+    padding: 28px 16px; background: rgba(15, 23, 42, .55);
+}
+.cert-ventana.abierta { display: flex; }
+body.cert-ventana-abierta { overflow: hidden; }
+.cert-ventana-caja {
+    width: 100%; max-width: 940px; max-height: calc(100vh - 56px);
+    display: flex; flex-direction: column;
+    background: #f4f6fa; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .35);
+}
+.cert-ventana-cabeza {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 16px 22px; background: #fff; border-bottom: 1px solid var(--cert-borde);
+}
+.cert-ventana-cabeza small { display: block; font-size: 12px; font-weight: 600; color: var(--cert-texto-2); text-transform: uppercase; letter-spacing: .03em; }
+.cert-ventana-cabeza h4 { margin: 2px 0 0; font-size: 18px; font-weight: 700; color: var(--cert-texto); }
+.cert-ventana-cerrar {
+    width: 38px; height: 38px; flex-shrink: 0; border-radius: 10px;
+    border: 1px solid var(--cert-borde); background: #fff; color: var(--cert-texto-2); font-size: 16px;
+}
+.cert-ventana-cerrar:hover { background: #0f6674; border-color: #0f6674; color: #fff; }
+.cert-ventana-cuerpo { overflow-y: auto; padding: 18px 18px 4px; }
+@media (max-width: 575.98px) {
+    .cert-ventana { padding: 0; }
+    .cert-ventana-caja { max-height: 100vh; border-radius: 0; }
+}
+
+/* ---------- Historial académico: editar fechas de aprobación (2026-11-25) ---------- */
+.cert-editar-fechas {
+    margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600;
+    border: 1px solid #cdd8ec; background: var(--cert-primario-suave); color: var(--cert-primario);
+}
+.cert-editar-fechas i { color: inherit !important; }
+.cert-editar-fechas.activo { background: var(--cert-primario); border-color: var(--cert-primario); color: #fff; }
+.cert-editar-fechas:hover { background: #0f6674; border-color: #0f6674; color: #fff; }
+.cert-fechas-cuenta {
+    display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px;
+    background: #f59e0b; color: #fff; font-size: 11px; line-height: 18px; text-align: center;
+}
+.cert-fechas-barra {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    padding: 10px 12px; margin-bottom: 12px; border-radius: 10px;
+    background: var(--cert-primario-suave); font-size: 13px; color: var(--cert-texto);
+}
+.cert-fechas-barra input { width: 70px; height: 32px; }
+.cert-fechas-aplicar { background: var(--cert-primario); color: #fff; font-weight: 600; }
+.cert-fechas-listo { margin-left: auto; background: #fff; border: 1px solid var(--cert-borde); font-weight: 600; }
+.cert-fechas-aplicar:hover, .cert-fechas-listo:hover { background: #0f6674; border-color: #0f6674; color: #fff; }
+.cert-celda-fecha { min-width: 150px; }
+.cert-fecha-aprob { max-width: 150px; margin: 0 auto; }
+.cert-fecha-aprob.is-cambiada { border-color: #f59e0b; background: #fffbeb; }
+.cert-fecha-cambiada { font-weight: 700; color: #b45309; }
+.cert-fecha-fin, .cert-fecha-alerta { display: block; font-size: 11px; margin-top: 2px; }
+.cert-fecha-fin { color: var(--cert-texto-2); }
+.cert-fecha-alerta { color: #b03a2e; }

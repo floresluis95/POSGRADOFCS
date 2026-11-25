@@ -193,6 +193,39 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'listarDocumentosEmitidos') 
     exit();
 }
 
+// Certificados de un tipo ya generados para un estudiante en un programa: cada pantalla
+// de certificado los muestra apenas se elige al estudiante, para reimprimirlos sin
+// pedir de nuevo el voucher; "Nuevo certificado" recién abre el formulario.
+if (isset($_POST['accion']) && $_POST['accion'] === 'documentosDelEstudiante') {
+    $estudianteID = intval($_POST['estudianteID'] ?? 0);
+    $programaID = intval($_POST['programaID'] ?? 0);
+    $tipo = trim($_POST['tipo'] ?? '');
+    $tipos = CertificadoModelo::TiposDocumento();
+    if (!$estudianteID || !$programaID || !isset($tipos[$tipo])) {
+        echo json_encode(['success' => false, 'mensaje' => 'Datos incompletos']);
+        exit();
+    }
+    $rutas = CertificadoModelo::RutasPdf();
+    $documentos = array_map(function ($d) use ($rutas) {
+        return [
+            'idDocumento' => (int)$d['IdDocumento'],
+            'fechaEmision' => $d['FechaEmision'],
+            'vaucher' => $d['NumeroVaucher'],
+            'monto' => $d['Monto'],
+            'estado' => $d['Estado'],
+            'emisor' => $d['UsuarioEmisor'],
+            // Sin datos guardados (emitidos antes de guardarlos) no se pueden reimprimir aquí
+            'reimprimible' => (bool)$d['TieneDatos'] && isset($rutas[$d['TipoDocumento']]),
+        ];
+    }, CertificadoModelo::ListarDocumentosEmitidosModelo(null, 50, [
+        'estudianteID' => $estudianteID,
+        'programaID' => $programaID,
+        'tipo' => $tipo,
+    ]));
+    echo json_encode(['success' => true, 'nombreTipo' => $tipos[$tipo], 'documentos' => $documentos]);
+    exit();
+}
+
 // Datos guardados de un documento emitido, para reimprimirlo (y corregirlo) desde
 // Registro de documentos
 if (isset($_POST['accion']) && $_POST['accion'] === 'obtenerDocumento') {
