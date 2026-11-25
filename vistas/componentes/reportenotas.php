@@ -457,6 +457,7 @@ $csrf_token = bin2hex(random_bytes(32));
 
 <!-- Scripts necesarios -->
 <script src="vistas/recursos/assets/vendors/general/jquery/dist/jquery.js"></script>
+<script src="vistas/recursos/assets/js/scripts/planillas-generadas.js?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/js/scripts/planillas-generadas.js'); ?>"></script>
 <script src="vistas/recursos/assets/js/scripts/reportenotas.js?v=<?php echo time(); ?>"></script>
 
 </body>

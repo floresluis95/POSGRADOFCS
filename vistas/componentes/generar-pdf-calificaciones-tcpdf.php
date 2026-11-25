@@ -90,6 +90,14 @@ require_once __DIR__ . '/../../modelos/configuracion.modelo.php'; // nota mínim
 require_once __DIR__ . '/../../modelos/autoridad.modelo.php'; // nombre del coordinador (firma)
 require_once __DIR__ . '/../../modelos/planillaguardada.modelo.php'; // historial de planillas generadas
 
+// El docente solo puede generar la planilla de los módulos que tiene asignados
+// (antes bastaba con cambiar moduloID en la dirección para ver otro módulo).
+if (!PlanillaGuardadaModelo::PuedeVerModulo($programaID, $moduloID)) {
+    ob_end_clean();
+    http_response_code(403);
+    die('No tiene permisos para generar la planilla de este módulo.');
+}
+
 // Obtener estudiantes y calificaciones
 $estudiantes = CalificacionModelo::ObtenerEstudiantesPorModuloModelo($moduloID, $programaID);
 

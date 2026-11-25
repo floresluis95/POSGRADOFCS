@@ -121,6 +121,11 @@ if (isset($_POST['accion'])) {
             $controlador->VerificarPermisoEdicionControlador();
             break;
 
+        case 'listarPlanillasGuardadas':
+            // Botón "Generadas": planillas ya generadas del módulo (el docente, solo las suyas)
+            $controlador->ListarPlanillasGuardadasControlador();
+            break;
+
         default:
             echo json_encode([
                 'status' => 'error',

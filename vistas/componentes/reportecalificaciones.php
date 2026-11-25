@@ -206,6 +206,7 @@ date_default_timezone_set("America/La_Paz");
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="vistas/recursos/assets/js/scripts/planillas-generadas.js?v=<?php echo filemtime(__DIR__ . '/../recursos/assets/js/scripts/planillas-generadas.js'); ?>"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
@@ -588,6 +589,12 @@ function mostrarTablaModulos(modulos) {
                         data-fecha-inicio="${fechaInicio}" data-fecha-final="${fechaFinal}" data-sigla="${escaparHtml(sigla)}">
                     <i class="fa fa-print"></i> Imprimir
                 </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm btn-planillas-generadas"
+                        data-modulo-id="${modulo.Idmodulo}" data-programa-id="${modulo.ProgramaID}"
+                        data-modulo-nombre="${escaparHtml(modulo.nombremodulo)}" data-modulo-codigo="${escaparHtml(modulo.codigomodulo)}"
+                        title="Volver a abrir e imprimir una planilla ya generada">
+                    <i class="fa fa-folder-open"></i> Generadas
+                </button>
             `;
         }
 
@@ -634,6 +641,22 @@ $(document).on('click', '.btn-imprimir-reporte', function() {
     const sigla = $btn.data('sigla');
 
     generarPlanillaPDF(moduloID, programaID, moduloNombre, moduloCodigo, programaNombre, grado, fechaInicioDB, fechaFinalDB, sigla);
+});
+
+// Planillas ya generadas de un módulo del docente, para volver a imprimirlas
+// tal como salieron (solo las de sus módulos: lo valida el servidor).
+$(document).on('click', '.btn-planillas-generadas', function() {
+    const $btn = $(this);
+    mostrarPlanillasGeneradas({
+        url: 'ajax/calificacion.ajax.php',
+        moduloNombre: $btn.data('modulo-nombre'),
+        datos: {
+            accion: 'listarPlanillasGuardadas',
+            moduloID: $btn.data('modulo-id'),
+            programaID: $btn.data('programa-id'),
+            moduloCodigo: $btn.data('modulo-codigo')
+        }
+    });
 });
 
 // Lista de asistencia directamente desde la tabla de módulos del reporte.

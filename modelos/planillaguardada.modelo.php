@@ -48,6 +48,9 @@ class PlanillaGuardadaModelo
      */
     public static function Listar($programaID, $moduloID, $moduloCodigo)
     {
+        if (!self::PuedeVerModulo($programaID, $moduloID)) {
+            return [];
+        }
         $dir = self::Carpeta();
         $lista = [];
         if (!is_dir($dir)) {
@@ -71,7 +74,8 @@ class PlanillaGuardadaModelo
         }
 
         // Archivos de antes de este cambio: calificaciones_{código}_{AAAAMMDD_HHMMSS}.pdf
-        $codigo = trim((string)$moduloCodigo);
+        // (solo para el personal: no se sabe de qué programa son)
+        $codigo = in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX'], true) ? trim((string)$moduloCodigo) : '';
         if ($codigo !== '') {
             foreach (glob($dir . '/calificaciones_*.pdf') ?: [] as $ruta) {
                 $nombre = basename($ruta);
@@ -90,6 +94,48 @@ class PlanillaGuardadaModelo
 
         usort($lista, function ($a, $b) { return strcmp($b['generado'], $a['generado']); });
         return $lista;
+    }
+
+    /**
+     * ¿El usuario de la sesión puede ver las planillas de este módulo?
+     * ADM, SEC y AUX: todas. Docente: solo las de módulos que tiene asignados
+     * (modulos.DocenteID). Cualquier otro tipo de usuario: ninguna.
+     */
+    public static function PuedeVerModulo($programaID, $moduloID)
+    {
+        $tipo = $_SESSION['Tipo'] ?? '';
+        if (in_array($tipo, ['ADM', 'SEC', 'AUX'], true)) {
+            return true;
+        }
+        if ($tipo !== 'DOC' || empty($_SESSION['DocenteID'])) {
+            return false;
+        }
+        if (!class_exists('Conexion')) {
+            require_once file_exists(__DIR__ . '/conexion.modelo.php') ? __DIR__ . '/conexion.modelo.php' : __DIR__ . '/../core/conexion.modelo.php';
+        }
+        try {
+            $stmt = Conexion::Conectar()->prepare(
+                "SELECT 1 FROM modulos WHERE Idmodulo = :modulo AND ProgramaId = :programa AND DocenteID = :docente LIMIT 1"
+            );
+            $stmt->execute([':modulo' => (int)$moduloID, ':programa' => (int)$programaID, ':docente' => (int)$_SESSION['DocenteID']]);
+            return (bool)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log('PlanillaGuardadaModelo::PuedeVerModulo: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * ¿El usuario de la sesión puede abrir este archivo? Los anteriores (sin
+     * programa ni módulo en el nombre) solo los ve el personal, porque no se
+     * puede saber de qué programa son.
+     */
+    public static function PuedeVerArchivo($archivo)
+    {
+        if (preg_match('/^calificaciones_P(\d+)_M(\d+)_\d{8}_\d{6}\.pdf$/', (string)$archivo, $m)) {
+            return self::PuedeVerModulo((int)$m[1], (int)$m[2]);
+        }
+        return in_array($_SESSION['Tipo'] ?? '', ['ADM', 'SEC', 'AUX'], true);
     }
 
     /**

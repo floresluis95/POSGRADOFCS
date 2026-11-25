@@ -360,70 +360,21 @@ $(document).ready(function() {
     // salió, en otra pestaña, para volver a imprimirla. Igual que al imprimir,
     // se cierra primero el modal de módulos y al terminar se vuelve a él.
     $(document).on('click', '.btnPlanillasGeneradas', function() {
-        const moduloID = $(this).data('modulo-id');
-        const programaID = $(this).data('programa-id');
-        const moduloNombre = $(this).data('modulo-nombre');
-        const moduloCodigo = $(this).data('modulo-codigo');
+        const $btn = $(this);
         const $modalModulos = $('#ModalModulosPrograma');
 
-        function fechaHora(texto) {
-            // "2026-11-25 12:04:56" -> "25/11/2026 12:04"
-            const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(texto || '');
-            return m ? (m[3] + '/' + m[2] + '/' + m[1] + ' ' + m[4] + ':' + m[5]) : escAttr(texto || '');
-        }
-        function fecha(texto) {
-            const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(texto || '');
-            return m ? (m[3] + '/' + m[2] + '/' + m[1]) : '';
-        }
-
         $modalModulos.one('hidden.bs.modal', function() {
-            // Promise nativo (no .then/.always de jQuery): así el modal de
-            // módulos vuelve a abrirse recién cuando se cierra el SweetAlert.
-            Promise.resolve($.ajax({
+            // Ventana compartida con "Reporte de calificaciones" del docente
+            // (vistas/recursos/assets/js/scripts/planillas-generadas.js)
+            mostrarPlanillasGeneradas({
                 url: 'ajax/reportenotas.ajax.php',
-                type: 'POST',
-                dataType: 'json',
-                data: { action: 'listarPlanillasGuardadas', moduloID: moduloID, programaID: programaID, moduloCodigo: moduloCodigo }
-            })).then(function(resp) {
-                const lista = (resp && resp.status === 'success') ? (resp.data || []) : null;
-                let html;
-                if (lista === null) {
-                    html = '<div class="alert alert-danger">' + escAttr((resp && resp.message) || 'No se pudo cargar la lista') + '</div>';
-                } else if (!lista.length) {
-                    html = '<p class="text-muted my-3"><i class="fas fa-info-circle"></i> Todavía no se generó ninguna planilla de este módulo.<br>' +
-                           'Use el botón <strong>Imprimir</strong> para generarla.</p>';
-                } else {
-                    html = '<div style="max-height:360px; overflow:auto; text-align:left;">' +
-                           '<table class="table table-sm table-bordered mb-0" style="font-size:13px;">' +
-                           '<thead class="thead-light"><tr><th>Generada</th><th>Detalle</th><th class="text-center">PDF</th></tr></thead><tbody>';
-                    lista.forEach(function(p) {
-                        let detalle;
-                        if (p.anterior) {
-                            detalle = '<span class="badge badge-secondary">Anterior</span> ' +
-                                      '<small class="text-muted">sin datos guardados; revise que sea de este programa</small>';
-                        } else {
-                            detalle = (p.usuario ? 'Por <strong>' + escAttr(p.usuario) + '</strong><br>' : '') +
-                                      '<small class="text-muted">' +
-                                      (p.fechaInicio || p.fechaFin ? 'Módulo: ' + fecha(p.fechaInicio) + ' al ' + fecha(p.fechaFin) : '') +
-                                      (p.fechaFirma ? ' · Firma: ' + fecha(p.fechaFirma) : '') +
-                                      (p.estudiantes !== null && p.estudiantes !== undefined ? ' · ' + p.estudiantes + ' estudiante(s)' : '') +
-                                      '</small>';
-                        }
-                        html += '<tr><td style="white-space:nowrap;">' + fechaHora(p.generado) + '</td><td>' + detalle + '</td>' +
-                                '<td class="text-center"><a class="btn btn-sm btn-danger" target="_blank" rel="noopener" ' +
-                                'href="vistas/componentes/ver-planilla-guardada.php?archivo=' + encodeURIComponent(p.archivo) + '">' +
-                                '<i class="fas fa-file-pdf"></i> Abrir</a></td></tr>';
-                    });
-                    html += '</tbody></table></div>';
+                moduloNombre: $btn.data('modulo-nombre'),
+                datos: {
+                    action: 'listarPlanillasGuardadas',
+                    moduloID: $btn.data('modulo-id'),
+                    programaID: $btn.data('programa-id'),
+                    moduloCodigo: $btn.data('modulo-codigo')
                 }
-                return Swal.fire({
-                    title: 'Planillas generadas',
-                    html: '<p class="mb-2"><strong>' + escAttr(moduloNombre) + '</strong></p>' + html,
-                    width: 720,
-                    confirmButtonText: 'Cerrar'
-                });
-            }, function() {
-                return Swal.fire({ type: 'error', title: 'Error', text: 'No se pudo cargar la lista de planillas generadas' });
             }).then(function() {
                 $modalModulos.modal('show');
             });

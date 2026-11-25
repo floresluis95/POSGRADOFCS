@@ -624,6 +624,29 @@ class CalificacionControlador
     }
 
     /**
+     * Planillas ya generadas de un módulo (AJAX), para volver a imprimirlas.
+     * El docente solo recibe las de sus módulos (lo valida el modelo).
+     */
+    public function ListarPlanillasGuardadasControlador()
+    {
+        require_once __DIR__ . '/../modelos/planillaguardada.modelo.php';
+        $moduloID = intval($_POST['moduloID'] ?? 0);
+        $programaID = intval($_POST['programaID'] ?? 0);
+        if ($moduloID <= 0 || $programaID <= 0) {
+            echo json_encode(['status' => 'error', 'message' => 'Parámetros incompletos']);
+            return;
+        }
+        if (!PlanillaGuardadaModelo::PuedeVerModulo($programaID, $moduloID)) {
+            echo json_encode(['status' => 'error', 'message' => 'Este módulo no está asignado a su cuenta']);
+            return;
+        }
+        echo json_encode([
+            'status' => 'success',
+            'data' => PlanillaGuardadaModelo::Listar($programaID, $moduloID, trim((string)($_POST['moduloCodigo'] ?? '')))
+        ]);
+    }
+
+    /**
      * Verificar permiso de edición para un módulo (AJAX)
      */
     public function VerificarPermisoEdicionControlador()
