@@ -182,7 +182,7 @@ function filtrarReportePagos() {
     const m = function(v) { return parseFloat(v) || 0; };
     const criterios = {
         saldo: function(a, b) { return m(b.SaldoPendiente) - m(a.SaldoPendiente); },
-        avance: function(a, b) { return porcentaje(m(a.TotalPagado), m(a.CostoTotalProgramado)) - porcentaje(m(b.TotalPagado), m(b.CostoTotalProgramado)); },
+        avance: function(a, b) { return porcentaje(m(a.PagadoActivos), m(a.CostoTotalProgramado)) - porcentaje(m(b.PagadoActivos), m(b.CostoTotalProgramado)); },
         inscritos: function(a, b) { return (parseInt(b.TotalInscritos, 10) || 0) - (parseInt(a.TotalInscritos, 10) || 0); }
     };
     if (criterios[orden]) filtrados.sort(criterios[orden]);
@@ -229,7 +229,7 @@ function filtrarProgramas() {
 function renderTablaReportePagos(datos) {
     const t = {
         inscritos: 0, completaron: 0, pendientes: 0, abandonos: 0, conDescuento: 0,
-        matriculas: 0, programado: 0, pagado: 0, montoDescuentos: 0, saldo: 0,
+        matriculas: 0, programado: 0, pagado: 0, pagadoActivos: 0, pagadoAbandonos: 0, montoDescuentos: 0, saldo: 0,
         clinicaCobrado: 0, clinicaPorCobrar: 0, clinicaPendientes: 0, programasClinica: 0
     };
 
@@ -253,14 +253,18 @@ function renderTablaReportePagos(datos) {
         const conDescuento = n(p.CountConDescuento);
         const matriculas = m(p.TotalMatriculas);
         const programado = m(p.CostoTotalProgramado);
+        // Cobrado incluye lo que pagaron los que abandonaron; programado y saldo son solo
+        // de los que siguen, por eso el % de avance usa lo pagado por los activos
         const pagado = m(p.TotalPagado);
+        const pagadoActivos = m(p.PagadoActivos);
+        const pagadoAbandonos = m(p.PagadoAbandonos);
         const saldo = m(p.SaldoPendiente);
         const montoDescuentos = m(p.MontoTotalDescuentos);
         const tieneClinica = n(p.TieneClinica) === 1;
         const clinicaCobrado = m(p.ClinicaCobrado);
         const clinicaPorCobrar = m(p.ClinicaPorCobrar);
         const clinicaPendientes = n(p.ClinicaNumPendientes);
-        const pct = porcentaje(pagado, programado);
+        const pct = porcentaje(pagadoActivos, programado);
 
         t.inscritos += inscritos;
         t.completaron += completaron;
@@ -270,6 +274,8 @@ function renderTablaReportePagos(datos) {
         t.matriculas += matriculas;
         t.programado += programado;
         t.pagado += pagado;
+        t.pagadoActivos += pagadoActivos;
+        t.pagadoAbandonos += pagadoAbandonos;
         t.montoDescuentos += montoDescuentos;
         t.saldo += saldo;
         t.clinicaCobrado += clinicaCobrado;
@@ -315,7 +321,8 @@ function renderTablaReportePagos(datos) {
                 (montoDescuentos > 0 ? '<span class="rp-sub">desc. ' + formatoMoneda(montoDescuentos) + '</span>' : '') + '</td>' +
             '<td class="text-right"><span class="' + (pagado > 0 ? 'rp-cobrado' : 'rp-muted') + '">' + formatoMoneda(pagado) + '</span>' +
                 (programado > 0 ? '<div class="rp-avance">' + barraAvance(pct) + '<small>' + pct + '%</small></div>' : '') +
-                (matriculas > 0 ? '<span class="rp-sub" title="Matrícula ya cancelada, incluida en Cobrado">incl. matr. ' + formatoMoneda(matriculas) + '</span>' : '') + '</td>' +
+                (matriculas > 0 ? '<span class="rp-sub" title="Matrícula ya cancelada, incluida en Cobrado">incl. matr. ' + formatoMoneda(matriculas) + '</span>' : '') +
+                (pagadoAbandonos > 0 ? '<span class="rp-sub" title="Lo que pagaron antes de abandonar: está en Cobrado, no en el % de avance">incl. aband. ' + formatoMoneda(pagadoAbandonos) + '</span>' : '') + '</td>' +
             '<td class="text-right"><span class="' + (saldo > 0 ? 'rp-saldo' : 'rp-muted') + '">' + formatoMoneda(saldo) + '</span></td>' +
             celdasClinica +
             '<td class="text-center rp-no-print">' +
@@ -330,7 +337,7 @@ function renderTablaReportePagos(datos) {
 
     $('#tablaReportePagosBody').html(html);
 
-    const pctTotal = porcentaje(t.pagado, t.programado);
+    const pctTotal = porcentaje(t.pagadoActivos, t.programado);
     $('#tablaReportePagosFooter').html(
         '<tr>' +
             '<td>Totales <span class="rp-sub">' + datos.length + ' programa(s)</span></td>' +
@@ -355,7 +362,7 @@ function renderTablaReportePagos(datos) {
 
 // Indicadores generales, según los programas visibles (filtro de grado + búsqueda)
 function renderKpisReportePagos(t) {
-    const pct = porcentaje(t.pagado, t.programado);
+    const pct = porcentaje(t.pagadoActivos, t.programado);
     const icono = function(fa) { return '<i class="fa ' + fa + ' rp-kpi-icono"></i>'; };
     $('#reportePagosKpis').html(
         kpi('is-violeta', icono('fa-user-graduate') + 'Estudiantes inscritos', t.inscritos,
@@ -363,7 +370,8 @@ function renderKpisReportePagos(t) {
         kpi('is-pizarra', icono('fa-file-invoice-dollar') + 'Total programado', formatoMoneda(t.programado),
             t.montoDescuentos > 0 ? 'Descuentos ' + formatoMoneda(t.montoDescuentos) : 'Matrícula + cuotas') +
         kpi('is-cobrado', icono('fa-check-circle') + 'Cobrado', formatoMoneda(t.pagado),
-            'Incluye matrículas ' + formatoMoneda(t.matriculas)) +
+            'Incluye matrículas ' + formatoMoneda(t.matriculas) +
+            (t.pagadoAbandonos > 0 ? ' &middot; abandonos ' + formatoMoneda(t.pagadoAbandonos) : '')) +
         kpi('is-saldo', icono('fa-hourglass-half') + 'Saldo pendiente', formatoMoneda(t.saldo),
             (100 - pct) + '% del total programado') +
         kpi('is-clinica', icono('fa-stethoscope') + 'Clínicas cobradas', formatoMoneda(t.clinicaCobrado),
@@ -385,7 +393,8 @@ function renderComposicionCobro(t) {
         $c.html('');
         return;
     }
-    const pctCobrado = porcentaje(t.pagado, t.programado);
+    // Programado = lo cobrado a los activos + su saldo (lo de abandonos va aparte)
+    const pctCobrado = porcentaje(t.pagadoActivos, t.programado);
     const pctSaldo = Math.max(0, 100 - pctCobrado);
     const segmento = function(clase, pctSeg, etiqueta, monto) {
         if (pctSeg <= 0) return '';
@@ -396,12 +405,13 @@ function renderComposicionCobro(t) {
         '<div class="rp-comp-cabecera">' +
             '<span class="rp-comp-titulo">Composición del total programado</span>' +
             '<span class="rp-comp-leyenda">' +
-                '<span><i class="rp-dot is-cobrado"></i> Cobrado <b>' + formatoMoneda(t.pagado) + '</b> (' + pctCobrado + '%)</span>' +
+                '<span><i class="rp-dot is-cobrado"></i> Cobrado <b>' + formatoMoneda(t.pagadoActivos) + '</b> (' + pctCobrado + '%)' +
+                    (t.pagadoAbandonos > 0 ? ' <small title="Lo pagado por estudiantes que abandonaron no es parte del total programado">+ ' + formatoMoneda(t.pagadoAbandonos) + ' de abandonos</small>' : '') + '</span>' +
                 '<span><i class="rp-dot is-saldo"></i> Saldo pendiente <b>' + formatoMoneda(t.saldo) + '</b> (' + pctSaldo + '%)</span>' +
             '</span>' +
         '</div>' +
         '<div class="rp-comp-barra" role="img" aria-label="Cobrado ' + pctCobrado + ' por ciento, saldo pendiente ' + pctSaldo + ' por ciento">' +
-            segmento('is-cobrado', pctCobrado, 'Cobrado', t.pagado) +
+            segmento('is-cobrado', pctCobrado, 'Cobrado', t.pagadoActivos) +
             segmento('is-saldo', pctSaldo, 'Saldo pendiente', t.saldo) +
         '</div>'
     );
@@ -489,7 +499,8 @@ function renderDetallePagosEstudiante(datos, tieneClinica, hayEstudiantes) {
         return;
     }
 
-    const t = { matricula: 0, programa: 0, costo: 0, pagado: 0, saldo: 0, clinicaCobrado: 0, clinicaPorCobrar: 0, completaron: 0 };
+    // Costo y saldo sin los que abandonaron; Cobrado con lo que pagaron (igual que la fila del programa)
+    const t = { matricula: 0, programa: 0, costo: 0, pagado: 0, pagadoActivos: 0, saldo: 0, clinicaCobrado: 0, clinicaPorCobrar: 0, completaron: 0 };
     // Descuento (positivo) o aumento (negativo) bajo el monto
     const notaAjuste = function(monto) {
         if (Math.abs(monto) < 0.005) return '';
@@ -513,11 +524,12 @@ function renderDetallePagosEstudiante(datos, tieneClinica, hayEstudiantes) {
         const completado = tienePlan && saldo <= 0;
         const pct = porcentaje(pagado, costoTotal);
 
+        t.pagado += pagado;
         if (!abandono) {
             t.matricula += costoMatricula;
             t.programa += costoPrograma;
             t.costo += costoTotal;
-            t.pagado += pagado;
+            t.pagadoActivos += pagado;
             t.saldo += saldo;
             if (completado) t.completaron++;
         }
@@ -567,7 +579,7 @@ function renderDetallePagosEstudiante(datos, tieneClinica, hayEstudiantes) {
 
     // Fila de totales (sin los que abandonaron, igual que los indicadores)
     $('#tablaDetallePagosEstudianteFooter').html('<tr>' +
-        '<td colspan="2">Totales <span class="rp-sub">sin los que abandonaron</span></td>' +
+        '<td colspan="2">Totales <span class="rp-sub">costo y saldo sin los que abandonaron; cobrado con lo que pagaron</span></td>' +
         '<td class="text-right">' + formatoMoneda(t.matricula) + '</td>' +
         '<td class="text-right">' + formatoMoneda(t.programa) + '</td>' +
         '<td class="text-right"><strong>' + formatoMoneda(t.costo) + '</strong></td>' +
@@ -580,7 +592,7 @@ function renderDetallePagosEstudiante(datos, tieneClinica, hayEstudiantes) {
             : '') +
     '</tr>');
 
-    const pct = porcentaje(t.pagado, t.costo);
+    const pct = porcentaje(t.pagadoActivos, t.costo);
     $('#detallePagosKpis').html(
         kpi('', 'Estudiantes', datos.length, t.completaron + ' completaron el pago') +
         kpi('is-cobrado', 'Cobrado', formatoMoneda(t.pagado), 'de ' + formatoMoneda(t.costo)) +

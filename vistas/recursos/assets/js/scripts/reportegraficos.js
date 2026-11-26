@@ -242,7 +242,8 @@
                     nombre: p.NombrePrograma,
                     codigo: p.Codigo,
                     programado: parseFloat(p.CostoTotalProgramado) || 0,
-                    cobrado: parseFloat(p.TotalPagado) || 0,
+                    // Barra = programado (cobrado + saldo) de los que siguen: sin lo de abandonos
+                    cobrado: parseFloat(p.PagadoActivos) || 0,
                     saldo: parseFloat(p.SaldoPendiente) || 0,
                     inscritos: parseInt(p.TotalInscritos, 10) || 0
                 };

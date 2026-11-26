@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 mostrarError((r && r.mensaje) || 'No se pudieron cargar los pagos');
                 return;
             }
-            pintar(r.pagos || [], r.recortado, r.limite, estudiante);
+            pintar(r.pagos || [], r.recortado, r.limite, estudiante, r.totales);
         }).fail(function () {
             if (id === consultaActual) mostrarError('No se pudo conectar con el servidor');
         });
@@ -362,14 +362,21 @@ document.addEventListener('DOMContentLoaded', function () {
         $('#pgCuerpo').html('<tr class="pg-vacio"><td colspan="7"><i class="fas fa-exclamation-triangle"></i>' + esc(mensaje) + '</td></tr>');
     }
 
-    function pintar(pagos, recortado, limite, estudiante) {
-        // Totales por concepto (de todo lo consultado, sin el filtro de concepto)
+    function pintar(pagos, recortado, limite, estudiante, totalesServidor) {
+        // Totales por concepto de TODO lo consultado (sin el filtro de concepto). Los calcula
+        // el servidor: con más de <limite> pagos la lista se recorta, pero los totales no
         var totales = { MATRICULA: [0, 0], CUOTAS: [0, 0], CLINICA: [0, 0], CERTIFICADO: [0, 0] };
-        pagos.forEach(function (p) {
-            if (!totales[p.Concepto]) return;
-            totales[p.Concepto][0] += parseFloat(p.Monto) || 0;
-            totales[p.Concepto][1]++;
-        });
+        if (totalesServidor) {
+            Object.keys(totales).forEach(function (c) {
+                if (totalesServidor[c]) totales[c] = [parseFloat(totalesServidor[c].monto) || 0, parseInt(totalesServidor[c].cantidad, 10) || 0];
+            });
+        } else {
+            pagos.forEach(function (p) {
+                if (!totales[p.Concepto]) return;
+                totales[p.Concepto][0] += parseFloat(p.Monto) || 0;
+                totales[p.Concepto][1]++;
+            });
+        }
         $('.pg-total[data-concepto]').each(function () {
             var t = totales[$(this).data('concepto')];
             $(this).find('[data-total]').text(bs(t[0]));
@@ -377,9 +384,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         var lista = estado.concepto ? pagos.filter(function (p) { return p.Concepto === estado.concepto; }) : pagos;
-        var total = lista.reduce(function (s, p) { return s + (parseFloat(p.Monto) || 0); }, 0);
+        var conceptos = estado.concepto ? [estado.concepto] : Object.keys(totales);
+        var total = conceptos.reduce(function (s, c) { return s + totales[c][0]; }, 0);
+        var cantidad = conceptos.reduce(function (s, c) { return s + totales[c][1]; }, 0);
+        // Total de las filas de la tabla (si la lista se recortó, es menos que el total)
+        var totalLista = lista.reduce(function (s, p) { return s + (parseFloat(p.Monto) || 0); }, 0);
         $('#pgTotal').text(bs(total));
-        $('#pgTotalN').text(nPagos(lista.length) + (estado.concepto ? ' de ' + NOMBRES[estado.concepto].toLowerCase() : ''));
+        $('#pgTotalN').text(nPagos(cantidad) + (estado.concepto ? ' de ' + NOMBRES[estado.concepto].toLowerCase() : ''));
         $('#pgResumen').text(nPagos(lista.length) + (estudiante ? ' · búsqueda: "' + estudiante + '"' : '') + ' · del más reciente al más antiguo');
 
         $('#pgAviso').html(recortado
@@ -411,7 +422,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 '</tr>';
         });
         $('#pgCuerpo').html(html);
-        $('#pgPie').html('<tr><td colspan="6" class="text-right">Total (' + nPagos(lista.length) + ')</td><td class="pg-monto">' + numero(total) + '</td></tr>');
+        $('#pgPie').html('<tr><td colspan="6" class="text-right">' + (recortado ? 'Total de los ' + nPagos(lista.length) + ' mostrados' : 'Total (' + nPagos(lista.length) + ')') +
+            '</td><td class="pg-monto">' + numero(totalLista) + '</td></tr>');
     }
 
     // ----- Eventos -----

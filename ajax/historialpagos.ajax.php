@@ -208,7 +208,8 @@ function actualizarMatricula()
 
     echo json_encode([
         'success' => $resultado === 'exitoso',
-        'mensaje' => $resultado === 'exitoso' ? 'Matrícula actualizada correctamente' : 'No se pudo actualizar la matrícula'
+        'mensaje' => $resultado === 'exitoso' ? 'Matrícula actualizada correctamente'
+            : ($resultado === 'error' ? 'No se pudo actualizar la matrícula' : $resultado) // voucher repetido
     ]);
 }
 
@@ -232,7 +233,8 @@ function actualizarCuota()
 
     echo json_encode([
         'success' => $resultado === 'exitoso',
-        'mensaje' => $resultado === 'exitoso' ? 'Cuota actualizada correctamente' : 'No se pudo actualizar la cuota'
+        'mensaje' => $resultado === 'exitoso' ? 'Cuota actualizada correctamente'
+            : ($resultado === 'error' ? 'No se pudo actualizar la cuota' : $resultado) // voucher repetido o pasa el monto del programa
     ]);
 }
 

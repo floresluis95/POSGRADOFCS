@@ -544,7 +544,7 @@ class CargaMasivaModelo
 
         if ($p['matricula'] > 0) {
             $db->prepare("UPDATE estudianteprograma SET costomatricula = ?, montoPagado = ?, nvauchermatricula = ? WHERE idInscripcion = ?")
-               ->execute([(int) round($p['matricula']), $p['matricula'], $p['voucherMatricula'] ?: self::VOUCHER_HISTORICO, $inscripcionID]);
+               ->execute([$p['matricula'], $p['matricula'], $p['voucherMatricula'] ?: self::VOUCHER_HISTORICO, $inscripcionID]);
         }
 
         // Sin voucher en el Excel la cuota lleva CARGA HISTÓRICA (no cuenta para el voucher único)

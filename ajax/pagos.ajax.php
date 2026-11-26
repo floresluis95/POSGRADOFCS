@@ -34,6 +34,7 @@ try {
         'success' => true,
         'pagos' => $resultado['pagos'],
         'recortado' => $resultado['recortado'],
+        'totales' => $resultado['totales'], // de todo lo consultado, aunque la lista se recorte
         'limite' => PagosModelo::LIMITE,
     ]);
 } catch (Exception $e) {

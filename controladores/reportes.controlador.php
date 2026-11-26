@@ -361,11 +361,15 @@ class ReportesControladores extends TCPDF
         $filaTotal = function ($texto, array $grupo) use ($pdf, $claves, $anchos, $anchoN, $sumables, $monto, $letra, $limite) {
             $suma = array_fill_keys($sumables, 0.0);
             $campo = ['costo' => 'CostoTotal', 'pagado' => 'TotalPagado', 'saldo' => 'SaldoPendiente'];
+            // Costo y saldo sin abandonos; lo pagado sí incluye lo que pagaron antes de
+            // abandonar (igual que el Reporte General, Por cuenta y Pagos recibidos)
             foreach ($grupo as $r) {
-                if ($r['Situacion'] !== 'ACTIVO' || !($m = $monto($r))) continue; // montos sin abandonos (igual que Saldos)
-                foreach ($sumables as $k) $suma[$k] += (float)$m[$campo[$k]];
+                if (!($m = $monto($r))) continue;
+                foreach ($sumables as $k) {
+                    if ($r['Situacion'] === 'ACTIVO' || $k === 'pagado') $suma[$k] += (float)$m[$campo[$k]];
+                }
             }
-            if ($sumables && self::ContarSituacion($grupo, 'ABANDONO') > 0) $texto .= ' - montos sin abandonos';
+            if ($sumables && self::ContarSituacion($grupo, 'ABANDONO') > 0) $texto .= ' - costo y saldo sin abandonos';
             $columnas = [];
             $acumulado = $anchoN;
             foreach ($claves as $k) {
@@ -662,13 +666,15 @@ class ReportesControladores extends TCPDF
         $sumMatriculados = 0;
         $sumComprometido = 0;
         $sumRecaudado = 0;
+        $sumRecaudadoActivos = 0;
         $sumModulos = 0;
         $sumValidados = 0;
         $sumCalificados = 0;
         $sumAprobados = 0;
 
         foreach ($programas as $prog) {
-            $pctCobro = $prog['MontoComprometido'] > 0 ? ($prog['MontoRecaudado'] / $prog['MontoComprometido']) * 100 : 0;
+            // % de cobro: lo recaudado de los que siguen sobre lo comprometido (ambos sin abandonos)
+            $pctCobro = $prog['MontoComprometido'] > 0 ? ($prog['RecaudadoActivos'] / $prog['MontoComprometido']) * 100 : 0;
             $pctAprobacion = $prog['TotalCalificados'] > 0 ? ($prog['TotalAprobados'] / $prog['TotalCalificados']) * 100 : 0;
 
             // Resaltar en rojo claro los programas con baja cobranza o baja aprobación (señal de alerta)
@@ -695,6 +701,7 @@ class ReportesControladores extends TCPDF
             $sumMatriculados += $prog['TotalMatriculados'];
             $sumComprometido += $prog['MontoComprometido'];
             $sumRecaudado += $prog['MontoRecaudado'];
+            $sumRecaudadoActivos += $prog['RecaudadoActivos'];
             $sumModulos += $prog['TotalModulos'];
             $sumValidados += $prog['ModulosValidados'];
             $sumCalificados += $prog['TotalCalificados'];
@@ -703,7 +710,7 @@ class ReportesControladores extends TCPDF
         }
 
         // Totales generales
-        $pctCobroTotal = $sumComprometido > 0 ? ($sumRecaudado / $sumComprometido) * 100 : 0;
+        $pctCobroTotal = $sumComprometido > 0 ? ($sumRecaudadoActivos / $sumComprometido) * 100 : 0;
         $pctAprobTotal = $sumCalificados > 0 ? ($sumAprobados / $sumCalificados) * 100 : 0;
 
         $pdf->SetFont('helvetica', 'B', 7.5);
@@ -729,6 +736,10 @@ class ReportesControladores extends TCPDF
         $pdf->SetFillColor(255, 247, 230);
         $pdf->Cell(5, 5, '', 1, 0, 'C', true);
         $pdf->Cell(90, 5, ' Aprobación por debajo del 60% (revisar apoyo académico)', 0, 1, 'L');
+        $pdf->Ln(1);
+        $pdf->MultiCell(0, 4, 'Comprometido: matrícula + monto pactado del programa de los estudiantes que siguen (sin abandonos). '
+            . 'Recaudado: matrícula + cuotas pagadas, incluido lo que pagaron los que abandonaron. '
+            . '% Cobro: lo recaudado de los que siguen sobre lo comprometido. Las clínicas y los certificados van aparte.', 0, 'L');
 
         $pdf->Output('Reporte_Ejecutivo_' . date('Ymd_His') . '.pdf', 'I');
     }
@@ -1155,13 +1166,14 @@ class ReportesControladores extends TCPDF
                     [26, $abandono ? 'ABANDONO' : ((float)$e['SaldoPendiente'] > 0 ? 'CON SALDO' : 'AL DÍA'), 'C'],
                 ], true);
                 $pdf->SetTextColor(51);
+                // Lo pagado por quien abandonó sí entró; su costo y saldo ya no se cuentan
+                $sub['pagado'] += $e['TotalPagado'];
                 if (!$abandono) {
                     $sub['costo'] += $e['CostoTotal'];
-                    $sub['pagado'] += $e['TotalPagado'];
                     $sub['saldo'] += $e['SaldoPendiente'];
                 }
             }
-            self::TotalTabla($pdf, [[167, 'SUBTOTAL (sin abandonos):', 'R'], [28, self::Bs($sub['costo']), 'R'], [28, self::Bs($sub['pagado']), 'R'], [28, self::Bs($sub['saldo']), 'R'], [26, '', 'C']]);
+            self::TotalTabla($pdf, [[167, 'SUBTOTAL (costo y saldo sin abandonos):', 'R'], [28, self::Bs($sub['costo']), 'R'], [28, self::Bs($sub['pagado']), 'R'], [28, self::Bs($sub['saldo']), 'R'], [26, '', 'C']]);
             $pdf->Ln(5);
             foreach ($sub as $k => $v) $general[$k] += $v;
             $general['n'] += count($bloque['estudiantes']);

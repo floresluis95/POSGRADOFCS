@@ -236,7 +236,7 @@ class ReporteModulosModelo
      * re-subiendo el Excel (CargaMasivaModelo solo los agrega si no tiene pagoprograma ni pagomodulo).
      * Usa los alias ep (estudianteprograma), p (programa) y pp (pagoprograma).
      */
-    private static function SqlMontoPrograma()
+    public static function SqlMontoPrograma()
     {
         return "COALESCE(pp.MontoTotalPagar, CASE WHEN ep.nvauchermatricula = 'CARGA HISTÓRICA' THEN p.Costo END, 0)";
     }
@@ -273,11 +273,17 @@ class ReporteModulosModelo
                         SUM(CASE WHEN d.EstadoInscripcion != 'ABANDONO' THEN d.Completado ELSE 0 END) AS CountCompletados,
                         SUM(CASE WHEN d.EstadoInscripcion != 'ABANDONO' AND d.idInscripcion IS NOT NULL AND d.Completado = 0 THEN 1 ELSE 0 END) AS CountPendientes,
                         SUM(d.TieneDescuento) AS CountConDescuento,
-                        COALESCE(SUM(d.CostoTotalPrograma), 0) AS CostoTotalProgramado,
+                        -- Abandonos: lo programado, el saldo y los descuentos son solo de los que
+                        -- siguen (lo que debía el que abandonó ya no se cobra); lo PAGADO sí incluye
+                        -- lo que pagaron antes de abandonar (ese dinero entró), igual que Por cuenta
+                        -- y Pagos recibidos. PagadoActivos sirve para el % de avance.
+                        COALESCE(SUM(CASE WHEN d.EstadoInscripcion != 'ABANDONO' THEN d.CostoTotalPrograma END), 0) AS CostoTotalProgramado,
                         COALESCE(SUM(d.TotalPagado), 0) AS TotalPagado,
+                        COALESCE(SUM(CASE WHEN d.EstadoInscripcion != 'ABANDONO' THEN d.TotalPagado END), 0) AS PagadoActivos,
+                        COALESCE(SUM(CASE WHEN d.EstadoInscripcion = 'ABANDONO' THEN d.TotalPagado END), 0) AS PagadoAbandonos,
                         COALESCE(SUM(d.CostoMatricula), 0) AS TotalMatriculas,
-                        COALESCE(SUM(d.SaldoPendiente), 0) AS SaldoPendiente,
-                        COALESCE(SUM(d.MontoDescuentoTotal), 0) AS MontoTotalDescuentos,
+                        COALESCE(SUM(CASE WHEN d.EstadoInscripcion != 'ABANDONO' THEN d.SaldoPendiente END), 0) AS SaldoPendiente,
+                        COALESCE(SUM(CASE WHEN d.EstadoInscripcion != 'ABANDONO' THEN d.MontoDescuentoTotal END), 0) AS MontoTotalDescuentos,
                         -- Clínicas: se reportan aparte, NO se suman a lo programado/pagado/saldo
                         -- de matrícula y cuotas (ver PagoClinicaModelo)
                         EXISTS (SELECT 1 FROM programacuenta pc

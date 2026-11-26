@@ -82,12 +82,7 @@ class PagosModelo
             ORDER BY o.IdOrdenPago LIMIT 1
         )";
 
-        $sql = "
-            SELECT mov.Fecha, mov.Concepto, mov.Detalle, mov.Monto, mov.Voucher,
-                   p.ProgramaID, p.NombrePrograma, p.Codigo AS CodigoPrograma, p.Sede,
-                   pc.Banco, pc.NumeroCuenta,
-                   e.EstudianteID, e.Ci, e.Complemento, e.Exp,
-                   TRIM(CONCAT_WS(' ', e.Apaterno, e.Amaterno, e.Nombre)) AS Estudiante
+        $desde = "
             FROM (
                 SELECT COALESCE(op.ProgramaCuentaID, " . self::SqlCuentaPrincipal('MATRICULA', 'ep.ProgramaID') . ") AS CuentaID,
                        ep.ProgramaID, ep.EstudianteID, 'MATRICULA' AS Concepto, NULL AS Detalle,
@@ -132,17 +127,37 @@ class PagosModelo
             INNER JOIN programa p ON p.ProgramaID = mov.ProgramaID
             INNER JOIN estudiante e ON e.EstudianteID = mov.EstudianteID
             LEFT JOIN programacuenta pc ON pc.ProgramaCuentaID = mov.CuentaID
-            " . ($condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '') . "
+            " . ($condiciones ? 'WHERE ' . implode(' AND ', $condiciones) : '');
+
+        $sql = "
+            SELECT mov.Fecha, mov.Concepto, mov.Detalle, mov.Monto, mov.Voucher,
+                   p.ProgramaID, p.NombrePrograma, p.Codigo AS CodigoPrograma, p.Sede,
+                   pc.Banco, pc.NumeroCuenta,
+                   e.EstudianteID, e.Ci, e.Complemento, e.Exp,
+                   TRIM(CONCAT_WS(' ', e.Apaterno, e.Amaterno, e.Nombre)) AS Estudiante
+            $desde
             ORDER BY mov.Fecha DESC, Estudiante
             LIMIT " . (self::LIMITE + 1);
 
-        $stmt = Conexion::Conectar()->prepare($sql);
+        $pdo = Conexion::Conectar();
+        $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         $pagos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $recortado = count($pagos) > self::LIMITE;
         if ($recortado) {
             array_pop($pagos);
+        }
+
+        // Totales por concepto de TODO lo consultado (no solo de las filas que se muestran:
+        // con más de LIMITE pagos la lista se recorta, pero los totales tienen que ser exactos)
+        $totales = array_fill_keys(array_keys(self::CONCEPTOS), ['monto' => 0.0, 'cantidad' => 0]);
+        $stmt = $pdo->prepare("SELECT mov.Concepto, COALESCE(SUM(mov.Monto), 0) AS Monto, COUNT(*) AS Cantidad $desde GROUP BY mov.Concepto");
+        $stmt->execute($params);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $fila) {
+            if (isset($totales[$fila['Concepto']])) {
+                $totales[$fila['Concepto']] = ['monto' => round((float)$fila['Monto'], 2), 'cantidad' => (int)$fila['Cantidad']];
+            }
         }
 
         // Nombre legible del certificado ("CALIFICACIONES" -> "Certificado de calificaciones")
@@ -154,7 +169,7 @@ class PagosModelo
         }
         unset($pago);
 
-        return ['pagos' => $pagos, 'recortado' => $recortado];
+        return ['pagos' => $pagos, 'recortado' => $recortado, 'totales' => $totales];
     }
 
     // Programas para el filtro (también los ya cerrados: sus pagos siguen contando)

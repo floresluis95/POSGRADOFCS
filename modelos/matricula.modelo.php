@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../core/conexion.modelo.php';
+require_once __DIR__ . '/reportemodulos.modelo.php'; // monto del programa por inscripción (mismo cálculo que los reportes)
 
 /**
  * Modelo de Matrícula/Inscripción
@@ -320,11 +321,13 @@ class MatriculaModelos
                     (SELECT COUNT(*) FROM modulos mt WHERE mt.ProgramaId = ep.ProgramaID AND mt.estadomodulo != 'INACTIVO') AS ModulosPrograma,
                     pp.TipoPlan,
                     COALESCE(ep.costomatricula, 0) AS CostoMatricula,
-                    COALESCE(pp.MontoTotalPagar, 0) AS CostoPrograma,
+                    -- Monto del programa: el del plan o, en carga histórica sin pagos, el costo
+                    -- del programa (misma regla que el Reporte General)
+                    " . ReporteModulosModelo::SqlMontoPrograma() . " AS CostoPrograma,
                     COALESCE(pagado.TotalPagado, 0) AS CuotasCobrado,
-                    (COALESCE(pp.MontoTotalPagar, 0) + COALESCE(ep.costomatricula, 0)) AS CostoTotal,
+                    (" . ReporteModulosModelo::SqlMontoPrograma() . " + COALESCE(ep.costomatricula, 0)) AS CostoTotal,
                     (COALESCE(pagado.TotalPagado, 0) + COALESCE(ep.costomatricula, 0)) AS TotalPagado,
-                    GREATEST(COALESCE(pp.MontoTotalPagar, 0) - COALESCE(pagado.TotalPagado, 0), 0) AS SaldoPendiente
+                    GREATEST(" . ReporteModulosModelo::SqlMontoPrograma() . " - COALESCE(pagado.TotalPagado, 0), 0) AS SaldoPendiente
              FROM estudianteprograma ep
              INNER JOIN estudiante e ON e.EstudianteID = ep.EstudianteID
              INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID

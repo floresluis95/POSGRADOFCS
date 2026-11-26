@@ -3,6 +3,7 @@ require_once __DIR__ . '/../core/conexion.modelo.php';
 require_once __DIR__ . '/voucher.modelo.php';
 require_once __DIR__ . '/pagoclinica.modelo.php';
 require_once __DIR__ . '/modulopagos_core.php'; // cuotas sin voucher validado
+require_once __DIR__ . '/reportemodulos.modelo.php'; // monto del programa (tope al corregir una cuota)
 
 /**
  * Modelo de Historial de Pagos
@@ -232,6 +233,20 @@ class HistorialPagosModelos
             $pdo = Conexion::Conectar();
             $pdo->beginTransaction();
 
+            // El voucher es único en todo el sistema: si se cambió, no puede estar en otro pago
+            $stmtActual = $pdo->prepare("SELECT nvauchermatricula FROM estudianteprograma WHERE idInscripcion = :id FOR UPDATE");
+            $stmtActual->execute([':id' => $idInscripcion]);
+            $voucherActual = $stmtActual->fetchColumn();
+            if ($voucherActual === false) {
+                $pdo->rollBack();
+                return 'error';
+            }
+            $error = self::RevisarVoucherCambiado($pdo, $voucherActual, $datos['numeroVoucher']);
+            if ($error !== null) {
+                $pdo->rollBack();
+                return $error;
+            }
+
             $campos = "nvauchermatricula = :numeroVoucher, FechaInscripcion = :fechaPago,
                        costomatricula = :monto, montoPagado = :monto";
             if ($datos['foto'] !== null) {
@@ -273,6 +288,47 @@ class HistorialPagosModelos
         try {
             $pdo = Conexion::Conectar();
             $pdo->beginTransaction();
+
+            $stmtActual = $pdo->prepare(
+                "SELECT pm.idinscripcion, pm.nvaucher, pm.Estado,
+                        " . ReporteModulosModelo::SqlMontoPrograma() . " AS MontoPrograma
+                 FROM pagomodulo pm
+                 INNER JOIN estudianteprograma ep ON ep.idInscripcion = pm.idinscripcion
+                 INNER JOIN programa p ON p.ProgramaID = ep.ProgramaID
+                 LEFT JOIN pagoprograma pp ON pp.idInscripcion = ep.idInscripcion
+                 WHERE pm.Idpagomodulo = :id FOR UPDATE"
+            );
+            $stmtActual->execute([':id' => $idPagoModulo]);
+            $actual = $stmtActual->fetch(PDO::FETCH_ASSOC);
+            if (!$actual) {
+                $pdo->rollBack();
+                return 'error';
+            }
+
+            $error = self::RevisarVoucherCambiado($pdo, $actual['nvaucher'], $datos['numeroVoucher']);
+            if ($error !== null) {
+                $pdo->rollBack();
+                return $error;
+            }
+
+            // Una cuota pagada no puede dejar lo pagado por encima del monto del programa
+            // (el saldo nunca baja de 0, así que un exceso quedaría escondido en los reportes)
+            if ($actual['Estado'] === 'PAGADO') {
+                $stmtOtras = $pdo->prepare(
+                    "SELECT COALESCE(SUM(montocuota), 0) FROM pagomodulo
+                     WHERE idinscripcion = :insc AND Estado = 'PAGADO' AND Idpagomodulo <> :id"
+                );
+                $stmtOtras->execute([':insc' => $actual['idinscripcion'], ':id' => $idPagoModulo]);
+                $otras = round((float)$stmtOtras->fetchColumn(), 2);
+                $montoPrograma = round((float)$actual['MontoPrograma'], 2);
+                if ($montoPrograma > 0 && $otras + (float)$datos['monto'] - $montoPrograma > 0.009) {
+                    $pdo->rollBack();
+                    return 'Con Bs. ' . number_format((float)$datos['monto'], 2, ',', '.') . ' lo pagado (Bs. '
+                        . number_format($otras + (float)$datos['monto'], 2, ',', '.') . ') pasa el monto del programa (Bs. '
+                        . number_format($montoPrograma, 2, ',', '.') . '). Esta cuota puede ser de hasta Bs. '
+                        . number_format(max(0, $montoPrograma - $otras), 2, ',', '.');
+                }
+            }
 
             $campos = "nvaucher = :numeroVoucher, fechapago = :fechaPago, montocuota = :monto";
             if ($datos['foto'] !== null) {
@@ -329,13 +385,10 @@ class HistorialPagosModelos
                 return 'error';
             }
 
-            $voucherCambio = mb_strtolower(trim($actual['NumeroVoucher']), 'UTF-8') !== mb_strtolower(trim($datos['numeroVoucher']), 'UTF-8');
-            if ($voucherCambio) {
-                $usadoEn = VoucherModelo::VoucherYaUsadoModelo($datos['numeroVoucher'], $pdo);
-                if ($usadoEn !== null) {
-                    $pdo->rollBack();
-                    return VoucherModelo::MensajeVoucherRepetido($datos['numeroVoucher'], $usadoEn);
-                }
+            $error = self::RevisarVoucherCambiado($pdo, $actual['NumeroVoucher'], $datos['numeroVoucher']);
+            if ($error !== null) {
+                $pdo->rollBack();
+                return $error;
             }
 
             $campos = "NumeroVoucher = :numeroVoucher, FechaPago = :fechaPago, Monto = :monto";
@@ -363,6 +416,19 @@ class HistorialPagosModelos
             error_log("Error en ActualizarClinicaModelo: " . $e->getMessage());
             return 'error';
         }
+    }
+
+    /**
+     * Voucher único al corregir un pago: si el N° cambió, no puede estar en otro pago.
+     * @return string|null Mensaje de voucher repetido, o null si está libre (o no cambió)
+     */
+    private static function RevisarVoucherCambiado($pdo, $voucherActual, $voucherNuevo)
+    {
+        if (mb_strtolower(trim((string)$voucherActual), 'UTF-8') === mb_strtolower(trim((string)$voucherNuevo), 'UTF-8')) {
+            return null;
+        }
+        $usadoEn = VoucherModelo::VoucherYaUsadoModelo($voucherNuevo, $pdo);
+        return $usadoEn !== null ? VoucherModelo::MensajeVoucherRepetido($voucherNuevo, $usadoEn) : null;
     }
 
     /**

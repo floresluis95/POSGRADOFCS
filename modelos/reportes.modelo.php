@@ -178,17 +178,7 @@ class ReportesModelos
                 -- Matrícula
                 (SELECT COUNT(*) FROM estudianteprograma ep WHERE ep.ProgramaID = p.ProgramaID AND ep.Estado = 'ACTIVO') as TotalMatriculados,
 
-                -- Dinero comprometido por matrícula de inscripciones activas
-                -- (costomatricula ya es el monto con descuento: no se resta otra vez)
-                (SELECT COALESCE(SUM(ep.costomatricula), 0)
-                    FROM estudianteprograma ep
-                    WHERE ep.ProgramaID = p.ProgramaID AND ep.Estado = 'ACTIVO') as MontoComprometido,
-
-                -- Dinero efectivamente recaudado (cuotas pagadas, vía pagomodulo)
-                (SELECT COALESCE(SUM(pm.montocuota), 0)
-                    FROM pagomodulo pm
-                    INNER JOIN estudianteprograma ep ON pm.idinscripcion = ep.idInscripcion
-                    WHERE ep.ProgramaID = p.ProgramaID AND pm.Estado = 'PAGADO') as MontoRecaudado,
+                -- Montos (comprometido / recaudado): se agregan abajo desde el Reporte General
 
                 -- Módulos
                 (SELECT COUNT(*) FROM modulos m WHERE m.ProgramaId = p.ProgramaID) as TotalModulos,
@@ -211,7 +201,25 @@ class ReportesModelos
             $stmt->bindValue($key, $val);
         }
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $programas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Montos con el mismo cálculo que el Reporte General (antes se comparaba solo la
+        // matrícula contra solo las cuotas y el % de cobro pasaba de 1000%):
+        //  - Comprometido: matrícula + monto pactado del programa, sin abandonos.
+        //  - Recaudado: matrícula + cuotas pagadas, también lo que pagaron los que abandonaron.
+        //  - RecaudadoActivos: lo recaudado de los que siguen (base del % de cobro).
+        $montos = [];
+        foreach (ReporteModulosModelo::ObtenerReportePagosPorProgramaModelo(null, $sede, $programaID) as $fila) {
+            $montos[(int)$fila['ProgramaID']] = $fila;
+        }
+        foreach ($programas as &$prog) {
+            $m = $montos[(int)$prog['ProgramaID']] ?? null;
+            $prog['MontoComprometido'] = $m ? (float)$m['CostoTotalProgramado'] : 0.0;
+            $prog['MontoRecaudado'] = $m ? (float)$m['TotalPagado'] : 0.0;
+            $prog['RecaudadoActivos'] = $m ? (float)$m['PagadoActivos'] : 0.0;
+        }
+        unset($prog);
+        return $programas;
     }
 
     /**
